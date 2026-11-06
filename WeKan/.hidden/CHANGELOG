@@ -1,3 +1,7 @@
+* Fri Nov 06 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Accounts: Register the first user as Admin and later users as Normal; remove
+  seeded accounts, enforce permissions, hash passwords and test concurrent signups.
+
 * Fri Nov 11 2022 Lauri Ojansivu <support@wekan.team> 1.0.0
 - Initial release
 

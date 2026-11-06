@@ -1,0 +1,65 @@
+' Only run in a disposable project/database copy.
+Public Sub Main()
+  Dim denied As Boolean
+  Dim r As Result
+  WebDatabase.Register("first-user", "first user password")
+  WebDatabase.Register("registered-normal", "normal user password")
+  If Not WebDatabase.Login("first-user", "first user password") Then Error.Raise("Registered login failed")
+  Session["username"] = "first-user"
+  If Not WebDatabase.GetIsAdmin("first-user") Then Error.Raise("First user is not Admin")
+  If WebDatabase.GetIsAdmin("registered-normal") Then Error.Raise("Later user became Admin")
+  Try WebDatabase.Register("first-user", "duplicate password")
+  denied = Error
+  If Not denied Then Error.Raise("Duplicate registration accepted")
+  Try WebDatabase.Register("", "valid password")
+  denied = Error
+  If Not denied Then Error.Raise("Empty registration accepted")
+  Try WebDatabase.Register("short-password-user", "short")
+  denied = Error
+  If Not denied Then Error.Raise("Short registration password accepted")
+  If WebDatabase.Login("first-user", "wrong") Then Error.Raise("Wrong password accepted")
+  If WebDatabase.Login("first-user' OR '1'='1", "first-user") Then Error.Raise("SQL injection accepted")
+  Session["username"] = "first-user"
+  If Not WebDatabase.GetIsAdmin("first-user") Then Error.Raise("Admin check failed")
+  WebDatabase.NewUser("worker", " worker password ", False)
+  If Not WebDatabase.Login("worker", " worker password ") Then Error.Raise("Hashed user login failed")
+  If WebDatabase.Login("worker", "worker password") Then Error.Raise("Password whitespace lost")
+  WebDatabase.NewUser("other", "other password", False)
+  Session["username"] = "worker"
+  WebDatabase.SetFullname("worker", "Worker")
+  If WebDatabase.GetFullname("worker") <> "Worker" Then Error.Raise("Own profile failed")
+  Try WebDatabase.GetUsers()
+  denied = Error
+  If Not denied Then Error.Raise("User list access was not denied")
+  Try WebDatabase.SetFullname("other", "Changed")
+  denied = Error
+  If Not denied Then Error.Raise("Other profile write was not denied")
+  Try WebDatabase.NewUser("intruder", "password", True)
+  denied = Error
+  If Not denied Then Error.Raise("Non-admin user creation accepted")
+  Try WebDatabase.ForceResetPassword("first-user", "other", "changed")
+  denied = Error
+  If Not denied Then Error.Raise("Caller-supplied admin name trusted")
+  Try WebDatabase.SetIsAdmin("worker", True)
+  denied = Error
+  If Not denied Then Error.Raise("Privilege escalation accepted")
+  Try WebDatabase.DeleteUser("other")
+  denied = Error
+  If Not denied Then Error.Raise("Unauthorized delete accepted")
+  If WebDatabase.SetPassword("worker", "wrong", "new password") Then Error.Raise("Wrong old password accepted")
+  If Not WebDatabase.SetPassword("worker", " worker password ", "new password") Then Error.Raise("Password change failed")
+  If Not WebDatabase.Login("worker", "new password") Then Error.Raise("Changed password failed")
+  If WebDatabase.Login("worker", " worker password ") Then Error.Raise("Old password still accepted")
+  Session["username"] = "first-user"
+  If Not WebDatabase.ForceResetPassword("first-user", "other", "reset password") Then Error.Raise("Admin reset failed")
+  If Not WebDatabase.Login("other", "reset password") Then Error.Raise("Reset password failed")
+  r = WebDatabase.OpenConnection().Exec("SELECT password FROM users WHERE username = &1", "other")
+  If r!password = "reset password" Then Error.Raise("Plaintext password stored")
+  WebDatabase.DeleteUser("other")
+  If WebDatabase.UserExists("other") Then Error.Raise("User delete failed")
+  Session["username"] = Null
+  Try WebDatabase.GetUsers()
+  denied = Error
+  If Not denied Then Error.Raise("Anonymous admin access accepted")
+  Print "Registration roles, authentication, profile permissions and negative authorization tests passed"
+End

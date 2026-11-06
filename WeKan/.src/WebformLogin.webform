@@ -129,6 +129,11 @@
           Text = ("Login")
         }
       }
+      { Register WebButton
+        #MoveScaled(1,24,24,4)
+        Text = ("Register")
+        Tooltip = ("First registered user is Admin; subsequent users are Normal")
+      }
       { WebContainer5 WebContainer
         #MoveScaled(1,24.4286,52.8571,2.5714)
         Expand = True

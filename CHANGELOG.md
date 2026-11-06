@@ -1,3 +1,18 @@
+# Upcoming WeKan ® for Gambas release
+
+This work adds the following features and fixes:
+
+- Added registration without seeded accounts: the first successful registration
+  becomes Admin and later registrations become Normal, including concurrent
+  first registrations. Create the SQLite schema on first use and stop shipping
+  the demo database. Thanks to xet7.
+- Fixed recursive/swallowed permission checks, hash new passwords, authorize
+  resets against the actual session, preserve password whitespace and avoid
+  logging password hashes. Added isolated authentication, permission and
+  concurrent-registration regression tests. Thanks to xet7.
+
+Thanks to above GitHub users for their contributions and translators for their translations.
+
 # v1.0 2021-12-08 WeKan ® for Gambas release
 
 This release adds the following new features:

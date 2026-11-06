@@ -1,0 +1,27 @@
+' Used only by the disposable registration-race test harness.
+Public Sub Main()
+  Dim attempt As Integer
+  Dim r As Result
+  Dim admins As Integer
+  Select Case Env["WEBA_TEST_MODE"]
+    Case "prepare"
+      WebDatabase.OpenConnection()
+    Case "register"
+      For attempt = 1 To 30
+        Try WebDatabase.Register(Env["WEBA_TEST_USER"], "concurrent test password")
+        If Not Error Then Return
+        Sleep 0.05
+      Next
+      Error.Raise("Concurrent registration did not succeed after retry")
+    Case "verify"
+      r = WebDatabase.OpenConnection().Find("users")
+      If r.Count <> 2 Then Error.Raise("Concurrent registrations lost an account")
+      For Each r
+        If r!admin Then Inc admins
+      Next
+      If admins <> 1 Then Error.Raise("Concurrent registrations must produce exactly one Admin")
+      Print "Concurrent first registrations: one Admin, one Normal"
+    Case Else
+      Error.Raise("Test mode required")
+  End Select
+End

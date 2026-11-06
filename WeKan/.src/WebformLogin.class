@@ -74,7 +74,7 @@ Private Sub Login()
     Return
   Endif
 
-  sPassword = Trim(WebTextPass.Text)
+  sPassword = WebTextPass.Text
   If Not sPassword Then
 
     WebNoticeText.Text = "Password is empty..."
@@ -109,8 +109,8 @@ Private Sub Login()
   Endif
 
 Catch
-  Debug "Error at Login()"
-  Debug "Error: " & Error.Text & "   " & "Where: " & Error.Where
+  WebNoticeText.Text = "Sign in could not be completed"
+  WebInfo.Show()
 
 
 End
@@ -121,4 +121,15 @@ Public Sub WebTimer1_Timer()
 
   WebInfo.Hide()
 
+End
+
+Public Sub Register_Click()
+  Try WebDatabase.Register(Trim(WebTextName.Text), WebTextPass.Text)
+  If Error Then
+    WebNoticeText.Text = "Registration failed. Use a unique username and a password of at least 8 characters."
+    WebInfo.Show()
+    WebTimer1.Start()
+    Return
+  Endif
+  Login()
 End

@@ -18,3 +18,7 @@ vgcore.*
 .profile/*
 .desc/*
 #----
+
+# Runtime data is created on first use, never shipped with accounts.
+database.db
+database.db-*
