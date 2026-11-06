@@ -67,13 +67,17 @@ https://devblogs.microsoft.com/commandline/systemd-support-is-now-available-in-w
 1. Run `./install-deps.sh`
 2. In Gambas, click Open Project, and select directory WeKan.
 3. Click play button that looks like triangle to right. This starts webserver and opens webbrowser.
-4. Enter a username and a password of at least eight characters, then click
+4. Enter a username and a nonempty password, then click
    **Register**. The first successfully registered account is **Admin**; subsequent
    registrations are **Normal**. Registration also signs the user in. For later
    visits use **Login**. No default accounts or passwords are shipped.
 5. The app creates `WeKan/database.db` and its schema on first use. Keep a backup
    of this runtime file; it is ignored by git. An existing installation retains
    its accounts: removing the bundled demo database does not migrate deployed data.
+   Short passwords are accepted by default. **Admin panel → Password Length**
+   lets an administrator enable a minimum of 1–256 characters. The configured
+   minimum applies to registration and newly chosen passwords (creation/change/
+   reset) only while enforcement is enabled; existing credentials remain valid.
 6. Create a board, select it in the tree and click **New card**. Edit a card by
    selecting it in the tree. Status is `Todo`, `Doing` or `Done`; dates use
    `YYYY-MM-DD`. The reports support all owned boards or the selected board.

@@ -2,6 +2,7 @@
 
 Export
 Private $hConn As Connection
+Public RegistrationError As String
 
 Public Function OpenConnection() As Connection
   If $hConn Then Return $hConn
@@ -42,6 +43,14 @@ Private Sub EnsureAccountSchema()
     t.PrimaryKey = ["username"]
     t.Update()
   Endif
+  If Not $hConn.Tables.Exist("account_settings") Then
+    t = $hConn.Tables.Add("account_settings")
+    t.Fields.Add("id", db.Integer)
+    t.Fields.Add("password_length_enforce", db.Boolean)
+    t.Fields.Add("password_min_length", db.Integer)
+    t.PrimaryKey = ["id"]
+    t.Update()
+  Endif
   If Not $hConn.Tables.Exist("account_bootstrap") Then
     t = $hConn.Tables.Add("account_bootstrap")
     t.Fields.Add("id", db.Integer)
@@ -54,10 +63,21 @@ Public Sub Register(username As String, password As String)
   Dim r As Result
   Dim first As Boolean
   Dim transaction As Boolean
-  Init()
+  RegistrationError = "Registration could not be completed. Please retry."
   username = Trim(username)
-  If Not username Or Len(username) > 255 Then Error.Raise("Enter a username (maximum 255 characters)")
-  If Len(password) < 8 Then Error.Raise("Use a password of at least 8 characters")
+  If Not username Or Len(username) > 255 Then
+    RegistrationError = "Enter a username (maximum 255 characters)"
+    Error.Raise(RegistrationError)
+  Endif
+  Init()
+  If PasswordError(password) Then
+    RegistrationError = PasswordError(password)
+    Error.Raise(RegistrationError)
+  Endif
+  If UserExists(username) Then
+    RegistrationError = "Username already exists. Choose another username or log in."
+    Error.Raise(RegistrationError)
+  Endif
   $hConn.Begin()
   transaction = True
   r = $hConn.Find("users")
@@ -74,7 +94,50 @@ Public Sub Register(username As String, password As String)
   transaction = False
 Catch
   If transaction Then Try $hConn.Rollback()
-  Error.Propagate()
+  Error.Raise(RegistrationError)
+End
+
+Public Function PasswordLengthEnforced() As Boolean
+  Dim r As Result
+  Init()
+  r = $hConn.Find("account_settings", "id = &1", 1)
+  If Not r.Available Then Return False
+  Return r["password_length_enforce"]
+End
+
+Public Function PasswordMinLength() As Integer
+  Dim r As Result
+  Init()
+  r = $hConn.Find("account_settings", "id = &1", 1)
+  If Not r.Available Then Return 8
+  Return r["password_min_length"]
+End
+
+Public Sub SetPasswordPolicy(enforce As Boolean, minimum As Integer)
+  Dim r As Result
+  Init()
+  AdminRequired()
+  If minimum < 1 Or minimum > 256 Then Error.Raise("Choose a minimum from 1 to 256 characters")
+  r = $hConn.Edit("account_settings", "id = &1", 1)
+  If Not r.Available Then
+    r = $hConn.Create("account_settings")
+    r["id"] = 1
+  Endif
+  r["password_length_enforce"] = enforce
+  r["password_min_length"] = minimum
+  r.Update()
+End
+
+Private Function PasswordError(password As String) As String
+  If Not password Then Return "Enter a password"
+  If PasswordLengthEnforced() Then
+    If String.Len(password) < PasswordMinLength() Then Return "Use a password of at least " & Str(PasswordMinLength()) & " characters"
+  Endif
+End
+
+Private Sub RequirePassword(password As String)
+  Dim message As String = PasswordError(password)
+  If message Then Error.Raise(message)
 End
 
 Private Sub Init()
@@ -131,7 +194,8 @@ End
 Public Sub NewUser(username As String, password As String, is_admin As Boolean)
   Init()
   AdminRequired()
-  If Not Trim(username) Or Len(password) < 8 Then Error.Raise("Username and password of at least 8 characters required")
+  If Not Trim(username) Then Error.Raise("Enter a username")
+  RequirePassword(password)
   $hConn.Exec("INSERT INTO users (username, password, fullname, admin) VALUES (&1, &2, &3, &4)", Trim(username), Crypt.Sha256(password), "", is_admin)
 End
 
@@ -160,7 +224,7 @@ End
 Public Function SetPassword(username As String, oldpass As String, newpass As String) As Boolean
   Init()
   AdminOrOwnRequired(username)
-  If Len(newpass) < 8 Then Error.Raise("Use a password of at least 8 characters")
+  RequirePassword(newpass)
   If Not Login(username, oldpass) Then Return False
   $hConn.Exec("UPDATE users SET password = &1 WHERE username = &2", Crypt.Sha256(newpass), username)
   Return True
@@ -170,7 +234,7 @@ Public Function ForceResetPassword(adminuser As String, username As String, newp
   Init()
   ' Always authorize the session, never a caller-supplied administrator name.
   AdminRequired()
-  If Len(newpass) < 8 Then Error.Raise("Use a password of at least 8 characters")
+  RequirePassword(newpass)
   If Not UserExists(username) Then Return False
   $hConn.Exec("UPDATE users SET password = &1 WHERE username = &2", Crypt.Sha256(newpass), username)
   Return True

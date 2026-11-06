@@ -215,6 +215,9 @@
     Visible = False
     Arrangement = Arrange.Horizontal
     Spacing = True
+    { PasswordLength WebButton
+      Text = ("Password Length")
+    }
     { Username WebTextBox
       Tooltip = ("Username")
     }
@@ -236,6 +239,24 @@
     }
     { DeleteUser WebButton
       Text = ("Delete user")
+    }
+  }
+  { PasswordPolicyPanel WebContainer
+    Visible = False
+    Arrangement = Arrange.Horizontal
+    Spacing = True
+    { PolicyTitle WebLabel
+      Text = ("Admin Panel / Password Length")
+    }
+    { PolicyEnforce WebCheckBox
+      Text = ("Enforce minimum password length")
+    }
+    { PolicyMinimum WebTextBox
+      Text = "8"
+      Tooltip = ("Minimum length, 1 to 256; only required when enforcement is enabled")
+    }
+    { SavePasswordPolicy WebButton
+      Text = ("Save password length settings")
     }
   }
   { Notice WebLabel

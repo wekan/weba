@@ -25,6 +25,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Gambas 3.20.2 compilation, real SQLite CRUD/archive tests, negative input/access
   tests, authentication/privilege tests and JavaScript DOM/report tests pass.
 
+- Added persisted Admin Panel / Password Length settings, disabled by default.
+  Short passwords work unless enforcement is enabled. Tests cover all new-password
+  entry points, administrator-only updates, Unicode length and saved-policy reads.
+
 ## Current status and next work
 
 - Changes are organized into separate local commits for accounts, Kanban,

@@ -116,6 +116,7 @@ End
 Private Sub ShowView(view As String)
   AccountPanel.Visible = view = "Profile"
   AdminPanel.Visible = False
+  PasswordPolicyPanel.Hide()
   If view = "Admin panel" Then AdminPanel.Visible = WebDatabase.GetIsAdmin(Session["username"])
   If view = "Profile" Then Fullname.Text = WebDatabase.GetFullname(Session["username"])
   $view = view
@@ -125,6 +126,7 @@ End
 Public Sub Home_Click()
   AccountPanel.Hide()
   AdminPanel.Hide()
+  PasswordPolicyPanel.Hide()
   $archive = False
   $board = 0
   $view = "Boards"
@@ -134,6 +136,7 @@ End
 Public Sub Archive_Click()
   AccountPanel.Hide()
   AdminPanel.Hide()
+  PasswordPolicyPanel.Hide()
   $archive = True
   $board = 0
   $view = "Archive"
@@ -252,7 +255,6 @@ Catch
 End
 
 Public Sub ChangePassword_Click()
-  If Len(NewPassword.Text) < 8 Then Error.Raise("Use a password of at least 8 characters")
   If Not WebDatabase.SetPassword(Session["username"], OldPassword.Text, NewPassword.Text) Then Error.Raise("Current password incorrect")
   OldPassword.Text = ""
   NewPassword.Text = ""
@@ -262,7 +264,6 @@ Catch
 End
 
 Public Sub CreateUser_Click()
-  If Len(UserPassword.Text) < 8 Then Error.Raise("Use a password of at least 8 characters")
   WebDatabase.NewUser(Username.Text, UserPassword.Text, False)
   UserPassword.Text = ""
   Visual.Refresh()
@@ -271,7 +272,6 @@ Catch
 End
 
 Public Sub ResetPassword_Click()
-  If Len(UserPassword.Text) < 8 Then Error.Raise("Use a password of at least 8 characters")
   If Not WebDatabase.ForceResetPassword(Session["username"], Username.Text, UserPassword.Text) Then Error.Raise("Unknown user")
   UserPassword.Text = ""
   Notice.Text = "Password reset"
@@ -297,6 +297,23 @@ Public Sub DeleteUser_Click()
   If Message.Question("Delete this user?", "Delete", "Cancel") <> 1 Then Return
   WebDatabase.DeleteUser(Username.Text)
   Visual.Refresh()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub PasswordLength_Click()
+  If Not WebDatabase.GetIsAdmin(Session["username"]) Then Error.Raise("Administrator required")
+  PolicyEnforce.Value = WebDatabase.PasswordLengthEnforced()
+  PolicyMinimum.Text = Str(WebDatabase.PasswordMinLength())
+  PasswordPolicyPanel.Show()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub SavePasswordPolicy_Click()
+  If Not IsInteger(PolicyMinimum.Text) Then Error.Raise("Enter a minimum from 1 to 256")
+  WebDatabase.SetPasswordPolicy(PolicyEnforce.Value, CInt(PolicyMinimum.Text))
+  Notice.Text = "Password length settings saved"
 Catch
   Notice.Text = Error.Text
 End

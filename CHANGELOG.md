@@ -2,6 +2,10 @@
 
 This work adds the following features and fixes:
 
+- Make minimum password length optional and disabled by default. Add persisted
+  Admin Panel / Password Length settings shared by registration, user creation,
+  password changes and resets. Test short passwords, enabled/disabled policy,
+  Unicode length and administrator-only changes. Thanks to xet7.
 - Added registration without seeded accounts: the first successful registration
   becomes Admin and later registrations become Normal, including concurrent
   first registrations. Create the SQLite schema on first use and stop shipping

@@ -82,6 +82,10 @@ Ship no accounts, passwords or user database. On a fresh installation, the first
 successful registration is Admin and subsequent registrations are Normal. Protect
 the first-admin claim with a unique constraint inside the registration transaction.
 Test empty/duplicate registrations, concurrent-claim safety and role assignment.
+Minimum password length is disabled by default. Only enforce the configured
+1–256 character minimum when Admin Panel / Password Length enables it. Apply the
+same persisted policy to registration, user creation, changes and resets; do not
+hardcode eight characters in either client or server guards. Reject empty passwords.
 Preserve password whitespace, hash stored passwords, and never log passwords,
 hashes or raw AJAX URLs that can carry credentials. Gambas `Crypt.Check` returns
 True on mismatch; tests must verify correct and incorrect passwords.

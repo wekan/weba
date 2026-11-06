@@ -14,9 +14,8 @@ Public Sub Main()
   Try WebDatabase.Register("", "valid password")
   denied = Error
   If Not denied Then Error.Raise("Empty registration accepted")
-  Try WebDatabase.Register("short-password-user", "short")
-  denied = Error
-  If Not denied Then Error.Raise("Short registration password accepted")
+  WebDatabase.Register("short-password-user", "s")
+  If Not WebDatabase.Login("short-password-user", "s") Then Error.Raise("Short registration password rejected by default")
   If WebDatabase.Login("first-user", "wrong") Then Error.Raise("Wrong password accepted")
   If WebDatabase.Login("first-user' OR '1'='1", "first-user") Then Error.Raise("SQL injection accepted")
   Session["username"] = "first-user"
