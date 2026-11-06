@@ -2,6 +2,10 @@
 
 This work adds the following features and fixes:
 
+- Document implemented native workspace/card actions, JSON exchange limits,
+  isolated browser checks and remaining WeKan parity work in README/TODO.
+  Record verified SQLite ARM64/Chromium coverage and pending database/browser
+  conformance checks. Thanks to xet7.
 - Refresh native detail-editor controls when selecting a checklist through the
   checklist-item tree, retaining selection and showing the appropriate fields.
   Verify the packaged card-detail browser workflow. Thanks to xet7.

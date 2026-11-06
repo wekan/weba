@@ -1,4 +1,6 @@
 * Sat Nov 07 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Update native-menu/card/exchange instructions and TODO with
+  verified coverage, format/file limits and remaining feature parity.
 - Card detail editor: Refresh visible controls when tree selection changes the
   entry kind; verify checklist selection in the packaged browser workflow.
 - Registration: Release result cursors before transactional writes/rollback and

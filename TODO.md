@@ -6,13 +6,14 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Verification follow-up
 
-- The existing concurrent-registration test can exhaust its retry loop; the
-  complete suite passed on rerun. Investigate that intermittent
-  test before treating repeated full-suite runs as deterministic.
+- Reproduced the concurrent first-registration retry failures. Release result
+  cursors before writes/rollback and hash before starting the transaction; three
+  consecutive complete store/race runs passed afterward. Continue monitoring
+  under production concurrency and other database drivers.
 
 ## Translation coverage
 
-- Imported 73 matching WeKan keys for 237 registered languages. Language selection
+- Imported 91 matching WeKan keys for 237 registered languages. Language selection
   on login and in the account menu persists locally; browser language is the initial
   default, with English fallback and RTL metadata from WeKan.
 - Native interface labels and selected report headings/calendar dates are localized.
@@ -108,9 +109,25 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Priority confirmed: boards, lists and cards first; then administrator,
   automation and integration groups. Native Gambas menus must invoke working
   authorized database operations, not placeholder actions.
-- Stable list identities are implemented and checked, including duplicate-name
-  touch moves and retention of legacy card assignments. Structural action menus
-  and richer card details are the next implementation steps.
+- Implemented stable list identities, native context menus, rename/copy/colors,
+  stars, saved watch preferences, WIP limits, archives/restoration, history and
+  scoped weba JSON export. Duplicate-title lists retain their own cards.
+- Implemented comments, checklists/items, real subtasks, dependencies, typed
+  card fields, manual time records/timers and binary attachments. Rich copies
+  remap internal relationships; running timers are not copied.
+- Implemented cross-board card/list/swimlane moves and archived permanent
+  deletion with exact-title confirmation. Moves spanning only part of a card
+  relationship are rejected; move the complete linked group or remove the link.
+- Implemented weba-2 JSON export/import with empty layouts, ordering, archived
+  cards, metadata and rich content. Imports create a new owned board atomically;
+  20 MiB JSON and 10 MiB individual attachment limits apply. Running imported
+  time records become stopped records. Meteor WeKan JSON import remains pending.
+- SQLite store tests and real Chromium native-menu, rich-card, cross-board,
+  deletion and packaged JSON exchange tests pass. Desktop/mobile full-layout
+  regression passed after adding the new controls.
+- Next priorities within boards/lists/cards: shared membership/permissions,
+  board-defined labels/custom fields, rich text, notifications and remaining
+  card actions. Administrator, automation and integrations remain later groups.
 
 ## Current status and next work
 
@@ -153,17 +170,19 @@ Use the actual parent source rather than treating the prototype's old menus as
 an exhaustive list. Reference areas: `client/components/boards`, `cards`,
 `sidebar`, `rules`, `settings`, `users`, `activities` and `gantt`.
 
-- Renaming/archiving lists and swimlanes, cross-board drag/drop, multi-selection,
-  board rename, stars, colors, visibility and board membership/roles.
-- Card comments, checklists, subtasks, dependencies, attachments, rich text,
-  custom fields, time tracking, history and notifications.
+- Cross-board drag/drop gestures (native menu moves exist), multi-selection,
+  board visibility and board membership/roles.
+- Rich text, mentions, complete date controls, board-defined custom fields and
+  notifications. Saved watch flags currently record preferences only; they do
+  not deliver notifications. Card-level text/number/date/checkbox fields exist.
 - Public boards, templates, organizations, teams and global/multiboard search.
 - Full Gantt durations/dependencies, timeline, roadmap, statistics/history,
   scrum, time, assignee grouping, maps, chat, email and version-control views.
 - WeKan chart types (flow/history/forecast/etc.) with the required persisted
   historical data; do not present invented historical measurements.
 - Board settings, labels and custom-field management, automation rules,
-  notification settings, integrations, import/export and account preferences.
+  notification delivery/settings, integrations, Meteor WeKan/other import formats
+  and account preferences. Native weba JSON exchange exists.
 - Admin settings, people/teams/organizations, problems summaries and other
   current administrator pages, each with server-side authorization.
 - Reuse/adapt existing WeKan HTML/JS/CSS where independent of Meteor/Blaze;

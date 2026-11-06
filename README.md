@@ -225,11 +225,48 @@ screenshots to an existing task-owned temporary directory. It does not use your
 normal browser profile or application database. Chromium must be started with
 its own disposable profile and remote-debugging port before running this check.
 
+## Native board and card actions
+
+Board tiles and swimlane/list/card headers open native Gambas context menus.
+Rename/copy, colors, stars, WIP limits, same-board moves, archives/restoration,
+scoped history and JSON export persist through owner-checked database operations.
+Card/list/swimlane menus also move items between owned active boards. Relationships
+must stay within one board: a move that splits a subtask/dependency group is rejected.
+Archived items can be permanently removed by typing their exact title; container
+removal includes its cards, file bytes and dependent records.
+
+The card editor and menu provide comments, checklists/items, real subtask cards,
+dependencies, card-level text/number/date/checkbox fields, time entries/timers and
+native attachment upload/download (10 MiB each). Copying containers/cards preserves
+rich records and remaps internal links. Running timers are excluded from copies.
+Watch preferences are saved, but notification delivery is still pending.
+
+The page sidebar's **Import weba JSON** file control imports a `weba-2` export into
+a new board after confirming its title. JSON exchange includes empty layouts,
+order, archive state, metadata, rich records and base64 file content; identifiers
+are remapped transactionally. Import JSON is limited to 20 MiB. Imported running
+time entries become stopped records. This format does not yet accept Meteor
+WeKan export files or transfer activity history/member accounts.
+
+Focused isolated browser checks use the same runner as the layout test:
+
+```sh
+WEBA_MENUS_ONLY=1 WEBA_BROWSER_URL=http://127.0.0.1:9231 python3 tests/run-http.py --browser
+WEBA_DETAILS_ONLY=1 WEBA_BROWSER_URL=http://127.0.0.1:9231 python3 tests/run-http.py --browser
+WEBA_TRANSFER_ONLY=1 WEBA_BROWSER_URL=http://127.0.0.1:9231 python3 tests/run-http.py --browser --archive
+WEBA_EXCHANGE_ONLY=1 WEBA_BROWSER_URL=http://127.0.0.1:9231 python3 tests/run-http.py --browser --archive
+```
+
+Shared membership/roles, public boards, rich text, board-level field definitions,
+notification delivery, full administrator menus, automation and integrations
+remain tracked in `TODO.md`. SQLite on Linux ARM64 and Chromium are tested;
+other Gambas database drivers and browsers still require conformance checks.
+
 ## Interface translations
 
 The login page and signed-in account menu have a language selector. The selected
 language is saved in this browser; a new browser starts with its preferred language
-when available. The imported WeKan catalog currently provides 73 matching interface
+when available. The imported WeKan catalog currently provides 91 matching interface
 keys for 237 languages, including their native language names and RTL metadata.
 Only the selected catalog is fetched, from local application assets. No external
 translation service is used. Labels and report/calendar headings are translated;
