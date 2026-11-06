@@ -12,6 +12,7 @@ Private $fileId As Integer
 Private $contextBoard As Integer
 Private $contextKind As String
 Private $contextId As Integer
+Private $importText As String
 Private $action As String
 Private $browsingArchive As Boolean
 Private $listId As Integer
@@ -623,6 +624,34 @@ End
 
 Public Sub CloseAction_Click()
   ActionPanel.Hide()
+  $importText = ""
+End
+
+Public Sub ImportBoard_Click()
+  ImportBoard.Upload()
+End
+
+Public Sub ImportBoard_Finish()
+  Dim data As Collection
+  If Not ImportBoard.Path Then Return
+  If Stat(ImportBoard.Path).Size > 20 * 1024 * 1024 Then Error.Raise("Import JSON exceeds 20 MiB")
+  $importText = File.Load(ImportBoard.Path)
+  data = BoardTransfer.ReadData($importText)
+  $action = "Import"
+  ActionTitle.Text = "Import as a new board: " & CStr(data["title"])
+  ActionText.Text = CStr(data["title"])
+  ActionText.Show()
+  ActionFlag.Hide()
+  DestinationBoard.Hide()
+  DestinationBoardLabel.Hide()
+  DestinationLane.Hide()
+  DestinationLaneLabel.Hide()
+  DestinationList.Hide()
+  DestinationListLabel.Hide()
+  ActionPanel.Show()
+Catch
+  $importText = ""
+  Notice.Text = Error.Text
 End
 
 Private Sub BeginAction(action As String)
@@ -762,6 +791,11 @@ Public Sub ActionConfirm_Click()
   Dim afterRef As String
   Dim oldTitle As String
   Select $action
+    Case "Import"
+      $board = BoardTransfer.ImportData($importText, ActionText.Text)
+      $importText = ""
+      $view = "Swimlanes"
+      $archive = False
     Case "Delete"
       WorkspaceActions.DeleteArchived($contextBoard, $contextKind, $contextId, ActionText.Text)
       If $contextKind = "board" And $board = $contextBoard Then $board = 0

@@ -102,6 +102,19 @@ const fs = require('node:fs');
     assert.equal(await page.$$eval('[id$=".Boards"] img',els=>els.filter(e=>e.getBoundingClientRect().width>0).length),0,'tree uses Font Awesome instead of visible bitmap icons');
     assert.equal(await page.$$eval('.weba-add-list .fa-plus-square-o',els=>els.length),3,'list-add uses the same regular Font Awesome icon as WeKan');
     assert.equal(await page.$$eval('.weba-column',els=>els.length),3,'empty board shows its initial lists');
+    if(process.env.WEBA_EXCHANGE_ONLY) {
+      await page.click('.weba-add-card-top');await settle();await fill('CardTitle','Exchange card');await click('SaveCard');await click('CloseEditor');
+      await page.evaluate(()=>{HTMLAnchorElement.prototype.click=function(){if(this.download)fetch(this.href).then(r=>r.text()).then(text=>window.__exportText=text);};});
+      await click('SidebarToggle');await click('BoardSettings');await click('ContextExport');await page.waitForFunction(()=>window.__exportText!==undefined);
+      const exported=await page.evaluate(()=>window.__exportText);assert.equal(JSON.parse(exported).format,'weba-2');
+      attachmentFile=path.join(process.env.TMPDIR,'weba-exchange-'+process.pid+'.json');fs.writeFileSync(attachmentFile,exported);
+      const [chooser]=await Promise.all([page.waitForFileChooser(),click('ImportBoard')]);await chooser.accept([attachmentFile]);
+      await visible('ActionPanel');await fill('ActionText','Imported board');await click('ActionConfirm');
+      await page.waitForFunction(()=>document.querySelector('[id$=".PageTitle"]').textContent.replace(/\u00a0/g,' ')==='Imported board');
+      assert.equal(await page.$$eval('.weba-column',els=>els.length),3);
+      assert.ok(await page.$$eval('.weba-data .weba-card strong',els=>els.some(e=>e.textContent==='Exchange card')));
+      console.log('Browser native JSON export/download and file import into a new board passed');return;
+    }
     if(process.env.WEBA_TRANSFER_ONLY) {
       await page.click('.weba-add-card-top');await settle();await fill('CardTitle','Moved card');await click('SaveCard');await click('CloseEditor');
       await click('Home');await click('AddBoardTile');await fill('BoardTitle','Destination');await click('NewBoard');await click('CloseSidebar');

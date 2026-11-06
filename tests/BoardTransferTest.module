@@ -1,0 +1,71 @@
+Public Sub Main()
+  Dim source As Integer
+  Dim target As Integer
+  Dim listId As Integer
+  Dim cardId As Integer
+  Dim child As Integer
+  Dim checklist As Integer
+  Dim r As Result
+  Dim text As String
+  Dim data As Collection
+  Dim item As Collection
+  Dim denied As Boolean
+  Dim count As Integer
+  WebDatabase.Register("transfer-owner", "x")
+  Session["username"] = "transfer-owner"
+  source = KanbanStore.AddBoard("Export source")
+  r = KanbanStore.Lanes(source)
+  r = KanbanStore.Lists(source, "Default")
+  listId = r!id
+  KanbanStore.AddLane(source, "Empty lane")
+  KanbanStore.AddList(source, "Default", "Todo", "")
+  cardId = KanbanStore.SaveCard(source, 0, "Rich card", "Body", "Default", "Todo", "transfer-owner", "red", "2026-11-07", listId)
+  checklist = CardContent.Save(source, cardId, 0, "checklist", "Checks", "", 0, False, 0)
+  CardContent.Save(source, cardId, 0, "checkitem", "Checked", "", checklist, True, 0)
+  CardContent.Save(source, cardId, 0, "comment", "", "plain <script>", 0, False, 0)
+  CardContent.AddFile(source, cardId, "binary.txt", "a" & Chr(0) & "b")
+  child = CardContent.NewSubtask(source, cardId, "Child")
+  WorkspaceStore.SetSetting(source, "list", listId, "color", "#aaccee")
+  WorkspaceStore.SetArchived(source, "card", child, True)
+  text = BoardTransfer.ExportData(source, "board", source)
+  WebDatabase.Register("transfer-reader", "x")
+  Session["username"] = "transfer-reader"
+  target = BoardTransfer.ImportData(text, "Imported")
+  r = KanbanStore.Lanes(target)
+  If r.Count <> 2 Then Error.Raise("Empty lane lost in exchange")
+  r = KanbanStore.Lists(target, "Default")
+  If r.Count <> 4 Then Error.Raise("Duplicate or empty lists lost in exchange")
+  r = KanbanStore.Cards(target)
+  If r.Count <> 1 Then Error.Raise("Active card state changed")
+  cardId = r!id
+  If WorkspaceStore.Setting(target, "list", KanbanStore.CardListId(target, cardId), "color") <> "#aaccee" Then Error.Raise("Metadata mapping lost")
+  r = KanbanStore.Cards(target, True)
+  If r.Count <> 1 Then Error.Raise("Archived card state changed")
+  child = r!id
+  r = CardContent.Entries(target, cardId, "subtask")
+  If r!amount <> child Then Error.Raise("Relationship not remapped")
+  r = CardContent.Entries(target, cardId, "checkitem")
+  If r.Count <> 1 Or Not r!done Then Error.Raise("Checklist state lost")
+  checklist = r!parent_id
+  r = CardContent.Entry(target, cardId, checklist)
+  If r!kind <> "checklist" Then Error.Raise("Checklist parent not remapped")
+  r = CardContent.Files(target, cardId)
+  If r!content.Data <> "a" & Chr(0) & "b" Then Error.Raise("Binary content lost")
+  r = KanbanStore.Boards(False)
+  count = r.Count
+  data = BoardTransfer.ReadData(text)
+  item = data["cards"][0]
+  item["list_id"] = -99
+  Try BoardTransfer.ImportData(JSON.Encode(data), "Invalid")
+  denied = Error
+  If Not denied Then Error.Raise("Missing list accepted")
+  r = KanbanStore.Boards(False)
+  If r.Count <> count Then Error.Raise("Failed import left partial board")
+  Try BoardTransfer.ImportData("{}", "Invalid")
+  denied = Error
+  If Not denied Then Error.Raise("Unknown format accepted")
+  Try BoardTransfer.ExportData(source, "board", source)
+  denied = Error
+  If Not denied Then Error.Raise("Other owner exported source")
+  Print "JSON exchange: empty/duplicate containers, rich records, archived state, binary files, mapped identities and atomic rejection passed"
+End

@@ -105,7 +105,7 @@ Public Sub SetSetting(boardId As Integer, kind As String, itemId As Integer, nam
     Next
   Endif
   If name = "wip" Then
-    If CInt(value) < 0 Or CInt(value) > 100000 Then Error.Raise("Invalid WIP limit")
+    If CFloat(value) <> CInt(value) Or CInt(value) < 0 Or CInt(value) > 100000 Then Error.Raise("Invalid WIP limit")
   Endif
   r = $db.Edit("kb_meta", "board_id = &1 AND kind = &2 AND item_id = &3 AND setting = &4", boardId, kind, itemId, name)
   If Not r.Available Then
@@ -352,31 +352,7 @@ Private Function CloneList(sourceBoard As Integer, listId As Integer, targetBoar
 End
 
 Public Function ExportData(boardId As Integer, kind As String, itemId As Integer) As String
-  Dim result As New Collection
-  Dim rows As New Variant[]
-  Dim r As Result
-  Dim item As Collection
-  Dim field As String
-  Dim laneTitle As String
-  Record(boardId, kind, itemId)
-  result["format"] = "weba-1"
-  result["kind"] = kind
-  result["title"] = Record(boardId, kind, itemId)!title
-  r = $db.Find("kb_cards", "board_id = &1", boardId)
-  If kind = "lane" Then laneTitle = Record(boardId, kind, itemId)!title
-  For Each r
-    If kind = "card" And r!id <> itemId Then Continue
-    If kind = "lane" And r!lane <> laneTitle Then Continue
-    If kind = "list" And KanbanStore.CardListId(boardId, r!id) <> itemId Then Continue
-    item = New Collection
-    For Each field In ["id", "title", "description", "lane", "status", "assignee", "labels", "due_day", "archived"]
-      item[field] = r[field]
-    Next
-    item["list_id"] = KanbanStore.CardListId(boardId, r!id)
-    rows.Add(item)
-  Next
-  result["cards"] = rows
-  Return JSON.Encode(result)
+  Return BoardTransfer.ExportData(boardId, kind, itemId)
 End
 
 Public Function ListCount(boardId As Integer, listId As Integer) As Integer

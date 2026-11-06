@@ -537,6 +537,9 @@
         { NewBoard WebButton
           Text = ("Create board")
         }
+        { ImportBoard WebFileButton
+          Text = ("Import weba JSON")
+        }
         { BoardSettings WebButton
           Text = ("Board settings")
         }

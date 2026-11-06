@@ -2,6 +2,12 @@
 
 This work adds the following features and fixes:
 
+- Add versioned weba JSON export/import through native file controls. Preserve
+  empty/duplicate containers, order, archived cards, metadata, checklists,
+  relationships and binary attachments; remap IDs into a new owned board and
+  roll back malformed imports. Limit import JSON to 20 MiB; this format does
+  not yet import Meteor WeKan exports. Verify store and packaged browser
+  round trips. Reject fractional WIP limits. Thanks to xet7.
 - Move cards, lists and swimlanes between owned active boards while retaining
   IDs, rich content, files and internal card relationships. Reject partial
   relationship moves and inaccessible destinations. Permanently delete archived

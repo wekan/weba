@@ -1,4 +1,7 @@
 * Sat Nov 07 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- JSON exchange: Export/import weba-2 boards and scoped containers with empty
+  layouts, ordering, archive state, rich content and attachments. Remap IDs in
+  a transaction into a new board; validate malformed input and native file UI.
 - Workspace actions: Add transactional cross-board moves preserving rich card
   data and relationships; delete archived items with title confirmation, owner
   checks and dependent-record cleanup. Test SQLite and packaged browser flows.
