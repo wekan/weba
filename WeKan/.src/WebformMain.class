@@ -1,0 +1,79 @@
+' Gambas class file
+
+Export
+
+Public Sub _new()
+
+  Boards.Clear()
+  ModVar.IndexTree = 1
+
+  Boards.Add(ModVar.IndexTree, "Menu", "Icons/16x16/folder.png")
+  Boards[1].Expanded = True
+  Inc ModVar.IndexTree
+
+  Boards.Add(ModVar.IndexTree, "Item1", "Icons/16x16/aide.png", "1")
+  Inc ModVar.IndexTree
+
+
+End
+
+Public Sub WebForm_Open()
+
+  WebformMain.Debug = False
+
+End
+
+Public Sub WebButton1_Click()
+
+  ModLogs.AddLogs("WebformMain - WebButton1_Click()")
+
+End
+
+Public Sub WebMenuImportFromMongodumpJSON_Click()
+
+  Dim SomeResponse As Integer
+
+  SomeResponse = Message.Info("Importing from Mongodump JSON", "Ok")
+
+End
+
+Public Sub WebMenuAbout_Click()
+
+  Dim SomeResponse As Integer
+
+  SomeResponse = Message.Info("WeKan ®", "Ok")
+
+End
+
+Public Sub WebMenuLogout_Click()
+
+  ' Button Logout
+
+  Dim Reponse As Integer
+
+  Reponse = Message.Question("Do you really want to logout ?", "Yes", "No")
+
+  Select Case Reponse
+    Case 0
+      ' No
+      ModLogs.AddLogs("Logout - Reponse No")
+      Return
+    Case 1
+      ' Yes
+      ModLogs.AddLogs("Logout - Reponse Yes")
+
+      Session.Abandon()
+      WebForm.Goto(WebformLogin)
+  End Select
+
+Catch
+  ModLogs.AddLogs("Error at WebButtonLogout_Click()")
+  ModLogs.AddLogs("Error: " & Error.Text & "   " & "Where: " & Error.Where)
+
+End
+
+Public Sub WebLabel1_Render()
+
+  
+
+End

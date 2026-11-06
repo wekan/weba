@@ -1,0 +1,285 @@
+' Gambas module file
+
+'' Single connection to database and functions.
+
+Export
+
+Private $hConn As Connection
+Private $bconOpen As Boolean
+
+Private Sub Init()
+
+  If $bconOpen Then Return
+
+  'Open conection
+  $hConn = New Connection
+
+  ModLogs.AddLogs("WebDatabase - Init() - ModVar.PathDatabase = " & ModVar.PathDatabase)
+
+  With $hConn
+     .Type = "sqlite3"
+     .Host = ModVar.PathDatabase
+     .Name = "database.db"
+  End With
+
+  Try $hConn.Open()
+  If Not Error Then
+    $bconOpen = True
+    ModLogs.AddLogs("WebDatabase - Init() - SQlite DB opened successfuly")
+  Else
+    $bconOpen = False
+    ModLogs.AddLogs("Cannot open Database. Error = " & Error.Text)
+    Error.Raise("Cannot open Database. Error = " & Error.Text)
+    Return
+  Endif
+
+Catch
+  ModLogs.AddLogs("WebDatabase - Init() - Error: " & Error.Text & "   " & "Where: " & Error.Where)
+
+
+End
+
+'' Check the required permissions
+Private Sub AdminRequired()
+
+  If Not GetIsAdmin(Session["username"]) Then
+    Error.Raise("You do not have permission to perform this operation")
+  Endif
+
+Catch
+  ModLogs.AddLogs("WebDatabase - AdminRequired() - Error: " & Error.Text & "   " & "Where: " & Error.Where)
+
+
+End
+
+'' Check the required permissions
+Private Sub AdminOrOwnRequired(username As String)
+  Dim sessionUser As String
+
+  sessionUser = Session["username"]
+
+  If Not UserExists(sessionUser) Then
+    Error.Raise("You do not have permission to perform this operation")
+  Endif
+
+  If username = sessionUser Then Return
+  If GetIsAdmin(sessionUser) Then Return
+
+  Error.Raise("You do not have permission to perform this operation")
+
+Catch
+  ModLogs.AddLogs("WebDatabase - AdminOrOwnRequired() - Error: " & Error.Text & "   " & "Where: " & Error.Where)
+
+End
+
+
+Public Function Login(username As String, password As String) As Boolean
+
+  Dim query As String
+  Dim rs As Result
+  Dim sPasswordCrypted As String
+
+  Init()
+
+  If $bconOpen = True Then
+
+    sPasswordCrypted = Crypt.Sha256(password, "pf12345678901")
+
+    ModLogs.AddLogs("WebDatabase - Login() - Password crypted: " & sPasswordCrypted)
+
+    query = DB.Subst("SELECT username FROM users WHERE username = &1 AND password = &2;", username, sPasswordCrypted)
+    rs = $hConn.Exec(query)
+
+    If rs.Count > 0 Then 
+      ModLogs.AddLogs("WebDatabase - Login() - Password crypted = Password Database: OK")
+    Else 
+      ModLogs.AddLogs("WebDatabase - Login() - Password not found in Database for User: " & username)
+    Endif
+
+    Return rs.Count > 0
+
+  Else 
+    Return False
+  End If
+
+Catch
+  ModLogs.AddLogs("WebDatabase - Login() - Error: " & Error.Text & "   " & "Where: " & Error.Where)
+
+End
+
+Public Function GetUsers() As Result
+
+  Init()
+  AdminRequired()
+
+  Return $hConn.Exec("SELECT username, fullname, admin FROM users;")
+
+Catch
+  ModLogs.AddLogs("WebDatabase - AdminOrOwnRequired() - Error: " & Error.Text & "   " & "Where: " & Error.Where)
+
+End
+
+Public Sub NewUser(username As String, password As String, is_admin As Boolean)
+
+  Dim query As String
+
+  Init()
+  AdminRequired()
+
+  query = DB.Subst("INSERT INTO users (username, password, fullname, admin) VALUES (&1, &2, '', &3)", username, password, is_admin)
+  $hConn.Exec(query)
+
+Catch
+  ModLogs.AddLogs("WebDatabase - NewUser() - Error: " & Error.Text & "   " & "Where: " & Error.Where)
+
+End
+
+Public Sub DeleteUser(username As String)
+
+  Dim query As String
+
+  Init()
+  AdminRequired()
+
+  query = DB.Subst("DELETE FROM users WHERE username = &1", username)
+  $hConn.Exec(query)
+
+Catch
+  ModLogs.AddLogs("WebDatabase - DeleteUser() - Error: " & Error.Text & "   " & "Where: " & Error.Where)
+
+End
+
+Public Function UserExists(username As String) As Boolean
+
+  Dim query As String
+  Dim rs As Result
+
+  Init()
+
+  Try query = DB.Subst("SELECT username FROM users WHERE username = &1;", username)
+  Try rs = $hConn.Exec(query)
+  Return rs.Count > 0
+
+Catch
+  ModLogs.AddLogs("WebDatabase - UserExists() - Error: " & Error.Text & "   " & "Where: " & Error.Where)
+
+End
+
+Public Function GetFullname(username As String) As String
+
+  Dim query As String
+  Dim rs As Result
+
+  Init()
+  AdminOrOwnRequired(username)
+
+  query = DB.Subst("SELECT fullname FROM users WHERE username = &1", username)
+  rs = $hConn.Exec(query)
+  Return rs["fullname"]
+
+Catch
+  ModLogs.AddLogs("WebDatabase - GetFullname() - Error: " & Error.Text & "   " & "Where: " & Error.Where)
+
+End
+
+Public Sub SetFullname(username As String, fullname As String)
+
+  Dim query As String
+
+  Init()
+  AdminOrOwnRequired(username)
+
+  query = DB.Subst("UPDATE users SET fullname = &1 WHERE username = &2", fullname, username)
+  $hConn.Exec(query)
+
+Catch
+  ModLogs.AddLogs("WebDatabase - SetFullname() - Error: " & Error.Text & "   " & "Where: " & Error.Where)
+
+End
+
+Public Function SetPassword(username As String, oldpass As String, newpass As String) As Boolean
+
+  Dim query As String
+  Dim rs As Result
+  Dim sOldPasswordCrypted As String
+  Dim sNewPasswordCrypted As String
+
+  Init()
+  AdminOrOwnRequired(username)
+
+  sOldPasswordCrypted = Crypt.Sha256(oldpass, "pf12345678901")
+
+  query = DB.Subst("SELECT username FROM users WHERE username = &1 AND password = &2;", username, sOldPasswordCrypted)
+  rs = $hConn.Exec(query)
+  If Not rs.Count Then Return False
+
+  sNewPasswordCrypted = Crypt.Sha256(newpass, "pf12345678901")
+
+  query = DB.Subst("UPDATE users SET password = &1 WHERE username = &2 AND password = &3;", sNewPasswordCrypted, username, sOldPasswordCrypted)
+  $hConn.Exec(query)
+
+  Return True
+
+Catch
+  ModLogs.AddLogs("WebDatabase - SetPassword() - Error: " & Error.Text & "   " & "Where: " & Error.Where)
+
+End
+
+
+Public Function ForceResetPassword(adminuser As String, username As String, newpass As String) As Boolean
+
+  Dim query As String
+  Dim rs As Result
+  Dim sNewPasswordCrypted As String
+
+  Init()
+  AdminOrOwnRequired(adminuser)
+
+  query = DB.Subst("SELECT username FROM users WHERE username = &1 ;", username)
+  rs = $hConn.Exec(query)
+  If Not rs.Count Then Return False
+
+  sNewPasswordCrypted = Crypt.Sha256(newpass, "pf12345678901")
+
+  query = DB.Subst("UPDATE users SET password = &1 WHERE username = &2 ;", sNewPasswordCrypted, username)
+  $hConn.Exec(query)
+
+  Return True
+
+Catch
+  ModLogs.AddLogs("WebDatabase - ForceResetPassword() - Error: " & Error.Text & "   " & "Where: " & Error.Where)
+
+End
+
+
+Public Function GetIsAdmin(username As String) As Boolean
+
+  Dim query As String
+  Dim rs As Result
+
+  Init()
+  AdminOrOwnRequired(username)
+
+  query = DB.Subst("SELECT admin FROM users WHERE username = &1", username)
+  rs = $hConn.Exec(query)
+  Return rs["admin"]
+
+Catch
+  ModLogs.AddLogs("WebDatabase - GetIsAdmin() - Error: " & Error.Text & "   " & "Where: " & Error.Where)
+
+End
+
+Public Sub SetIsAdmin(username As String, is_admin As Boolean)
+
+  Dim query As String
+
+  Init()
+  AdminRequired()
+
+  query = DB.Subst("UPDATE users SET admin = &1 WHERE username = &2", is_admin, username)
+  $hConn.Exec(query)
+
+Catch
+  ModLogs.AddLogs("WebDatabase - SetIsAdmin() - Error: " & Error.Text & "   " & "Where: " & Error.Where)
+
+End

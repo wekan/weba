@@ -1,0 +1,24 @@
+' Gambas module file
+
+
+ Public Sub AddLogs(DataLine As String)
+
+  ' Save logs
+
+  Dim hFile As File
+  Dim DateLog As String
+  Dim TextLine As String
+
+  TextLine = Replace(DataLine, "\n", "")
+
+  DateLog = Format$(Now, "yyyy-mm-dd hh:nn:ss.uu")
+
+  If Exist(ModVar.PathLogFile) Then
+    Try hFile = Open ModVar.PathLogFile For Append
+    If Not Error Then
+      Print #hFile, DateLog & " " & Str(TextLine)
+      Close #hFile
+    End If
+  End If
+
+End

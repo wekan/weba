@@ -1,0 +1,567 @@
+# Gambas Form File 3.0
+
+{ WebForm WebForm
+  #MoveScaled(0,0,182,153)
+  Height = "100%"
+  Expand = True
+  Background = &HF2F2F2&
+  Arrangement = Arrange.Horizontal
+  Margin = True
+  Spacing = True
+  { WebMenuFile WebMenu
+    Text = ("File")
+    { WebMenuNew WebMenu
+      Text = ("New")
+      { WebMenuNewBoard WebMenu
+        Text = ("Board")
+      }
+      { WebMenuNewTemplate WebMenu
+        Text = ("Template")
+      }
+    }
+    { WebMenuImport WebMenu
+      Text = ("Import")
+      { WebMenuImportBoardFromPreviousExport WebMenu
+        Text = ("Previous export JSON")
+      }
+      { WebMenuImportFromMongodumpJSON WebMenu
+        Text = ("Mongodump JSON")
+      }
+      { WebMenuImportBoartFromCSV WebMenu
+        Text = ("CSV")
+      }
+      { WebMenuImportBoardFromTSV WebMenu
+        Text = ("TSV")
+      }
+    }
+    { WebMenuImportFOSSUI WebMenu
+      Text = ("FOSS UI")
+      { WebMenuImportLazarus WebMenu
+        Text = ("Lazarus")
+      }
+      { WebMenuImportSwiftUI WebMenu
+        Text = ("SwiftUI")
+      }
+      { WebMenuImportHaxeUI WebMenu
+        Text = ("HaxeUI")
+      }
+      { WebMenuImportNuBuilder WebMenu
+        Text = ("nuBuilder")
+      }
+      { WebMenuImportGodot WebMenu
+        Text = ("Godot")
+      }
+    }
+    { WebMenuImportFOSS WebMenu
+      Text = ("Import FOSS")
+      { ImportFromEmacsOrgMode WebMenu
+        Text = ("Emacs Org mode")
+      }
+      { WebMenuImportFromFocalboard WebMenu
+        Text = ("Focalboard")
+      }
+      { WebMenuImportRClone WebMenu
+        Text = ("RClone")
+      }
+      { WebMenuImportFossilSCM WebMenu
+        Text = ("Fossil SCM")
+      }
+      { WebMenuImportGitea WebMenu
+        Text = ("Gitea")
+      }
+      { WebMenuImportFromKanboard WebMenu
+        Text = ("Kanboard")
+      }
+      { WebMenuImportFromLeo WebMenu
+        Text = ("Leo Literate Editor")
+      }
+      { WebMenuImportNextcloudDeck WebMenu
+        Text = ("Nextcloud Deck")
+      }
+      { WebMenuImportOpenXChange WebMenu
+        Text = ("OpenXChange")
+      }
+      { WebMenuImportFromTaskwarrior WebMenu
+        Text = ("Taskwarrior")
+      }
+      { WebMenuImportFromTodoTxt WebMenu
+        Text = ("Todo.txt")
+      }
+      { WebMenuImportFromRedmineCSV WebMenu
+        Text = ("Redmine CSV")
+      }
+      { WebMenuImportFromRestyaboard WebMenu
+        Text = ("Restyaboard")
+      }
+    }
+    { WebMenuImportPropietary WebMenu
+      Text = ("Import Propietary")
+      { WebMenuImportBoardFromTrello WebMenu
+        Text = ("Trello")
+      }
+      { WebMenuImportFromJira WebMenu
+        Text = ("Jira")
+      }
+      { WebMenuImportFromAsana WebMenu
+        Text = ("Asana")
+      }
+      { WebMenuImportClickup WebMenu
+        Text = ("Clickup")
+      }
+      { WebMenuImportFactro WebMenu
+        Text = ("Factro")
+      }
+      { WebMenuImportGoogleWorkplace WebMenu
+        Text = ("Google Workplace")
+      }
+      { WebMenuImportMantis WebMenu
+        Text = ("Mantis")
+      }
+      { WebMenuImportMicrosoftTodo WebMenu
+        Text = ("Microsoft ToDo")
+      }
+      { WebMenuImportFromMicrosoftPlanner WebMenu
+        Text = ("Microsoft Planner")
+      }
+      { WebMenuImportRememberTheMilk WebMenu
+        Text = ("Remember The Milk")
+      }
+      { WebMenuImportFromZenkit WebMenu
+        Text = ("Zenkit")
+      }
+      { WebMenuImportZimbra WebMenu
+        Text = ("Zimbra")
+      }
+      { WebMenuImportZube WebMenu
+        Text = ("Zube")
+      }
+    }
+    { WebMenuSync WebMenu
+      Text = ("Sync")
+      { WebMenuSyncGithubProjects WebMenu
+        Text = ("Github Projects")
+      }
+      { WebMenuSyncTrello WebMenu
+        Text = ("Trello")
+      }
+      { WebMenuSyncJira WebMenu
+        Text = ("Jira")
+      }
+      { WebMenuSyncMSSQL WebMenu
+        Text = ("Microsoft SQL Server")
+      }
+      { WebMenuSyncMongoDB WebMenu
+        Text = ("MongoDB")
+      }
+      { WebMenuSyncMySQL WebMenu
+        Text = ("MySQL")
+      }
+      { WebMenuSyncOracle WebMenu
+        Text = ("Oracle")
+      }
+      { WebMenuSyncPostgreSQL WebMenu
+        Text = ("PostgreSQL")
+      }
+      { WebMenuSyncSQLite WebMenu
+        Text = ("SQLite")
+      }
+      { WebMenuTrello WebMenu
+        Text = ("Trello")
+      }
+      { WebMenuSyncWebsite WebMenu
+        Text = ("Website")
+      }
+      { WebMenuSyncWeKan WebMenu
+        Text = ("WeKan")
+      }
+    }
+    { WebMenuExportBoard WebMenu
+      Text = ("Export")
+      { WebMenuExportBoardToJSON WebMenu
+        Text = ("JSON")
+      }
+      { WebMenuExportBoardToExcel WebMenu
+        Text = ("Excel")
+      }
+      { WebMenuExportBoardCSVcomma WebMenu
+        Text = ("CSV ,")
+      }
+      { WebMenuExportBoardToCSVhalfComma WebMenu
+        Text = ("CSV ;")
+      }
+      { WebMenuExportBoardToTSV WebMenu
+        Text = ("TSV")
+      }
+      { WebMenuExportBoardToHTML WebMenu
+        Text = ("HTML")
+      }
+    }
+    { WebMenuAbout WebMenu
+      Text = ("About")
+      Image = "Icons/16x16/about.png"
+    }
+    { WebMenuLogout WebMenu
+      Text = ("Logout")
+      Image = "icon:/16/quit"
+    }
+  }
+  { WebMenuEdit WebMenu
+    Text = ("Edit")
+    { WebMenuMultiSelection WebMenu
+      Text = ("Copy/Move: Multi-Selection")
+    }
+    { WebMenuMoveBoardToArchive WebMenu
+      Text = ("Move: Board to Archive")
+    }
+  }
+  { WebMenuSearch WebMenu
+    Text = ("Search")
+    { WebMenuSearchOneBoard WebMenu
+      Text = ("One Board")
+    }
+    { WebMenuSearchAllBoards WebMenu
+      Text = ("All Boards")
+    }
+    { WebMenuFilter WebMenu
+      Text = ("Filter")
+    }
+    { WebMenuSortCards WebMenu
+      Text = ("Sort Cards")
+    }
+  }
+  { WebMenuViewOneBoard WebMenu
+    Text = ("One Board")
+    { WebMenuSwimlanes WebMenu
+      Text = ("Swimlanes")
+    }
+    { WebMenuLists WebMenu
+      Text = ("Lists")
+    }
+    { WebMenuCalendar WebMenu
+      Text = ("Calendar")
+    }
+    { WebMenuGantt WebMenu
+      Text = ("Gantt")
+    }
+    { WebMenuBoardActivities WebMenu
+      Text = ("Activities")
+    }
+    { WebMenuOneBoardLabels WebMenu
+      Text = ("Labels")
+    }
+    { WebMenuOneBoardAttachments WebMenu
+      Text = ("Attachments")
+    }
+  }
+  { WebMenuViewManyBoards WebMenu
+    Text = ("Many Boards")
+    { WebMenuAllBoards WebMenu
+      Text = ("All Boards")
+    }
+    { WebMenuMyCards WebMenu
+      Text = ("My Cards")
+    }
+    { WebMenuDueCards WebMenu
+      Text = ("Due Cards")
+    }
+    { WebMenuPublicBoards WebMenu
+      Text = ("Public Boards")
+    }
+    { WebMenuTemplates WebMenu
+      Text = ("Templates")
+    }
+    { WebMenuArchive WebMenu
+      Text = ("Archive")
+    }
+  }
+  { WebMenuSettings WebMenu
+    Text = ("Settings")
+    { WebMenuAdminPanel WebMenu
+      Text = ("Admin Panel")
+    }
+    { WebMenuUserSettings WebMenu
+      Text = ("User Settings")
+      { WebMenuChangeLanguage WebMenu
+        Text = ("Change Language")
+      }
+      { WebMenuEditProfile WebMenu
+        Text = ("Edit Profile")
+      }
+      { WebMenuChangeAvatar WebMenu
+        Text = ("Change Avatar")
+      }
+      { WebMenuChangePassword WebMenu
+        Text = ("Change Password")
+      }
+    }
+    { WebMenuLayout WebMenu
+      Text = ("Layout")
+      { WebMenuDragHandles WebMenu
+        Text = ("Show desktop drag handles")
+      }
+      { WebMenuColor WebMenu
+        Text = ("Color")
+      }
+      { WebMenuTheme WebMenu
+        Text = ("Theme")
+      }
+      { WebMenuBackgroudImage WebMenu
+        Text = ("Background Image")
+      }
+      { WebMenuFont WebMenu
+        Text = ("Font")
+      }
+      { WebMenuFontSize WebMenu
+        Text = ("Font Size")
+      }
+    }
+    { WebMenuOneBoardSettings WebMenu
+      Text = ("One Board")
+      { WebMenuSettingsRules WebMenu
+        Text = ("Rules")
+      }
+      { WebMenuOneBoardCustomFields WebMenu
+        Text = ("Custom Fields")
+      }
+      { WebMenuOneBoardArchive WebMenu
+        Text = ("Archive")
+      }
+      { WebMenuSubTasks WebMenu
+        Text = ("Subtasks")
+      }
+      { WebMenu3 WebMenu
+        Text = ("Move Board To Archive")
+      }
+      { WebMenuCalendarSettings WebMenu
+        Text = ("Calendar")
+        { WebMenuSettingsCalendarDayOfTheWeekStart WebMenu
+          Text = ("Set day of the week start")
+        }
+        { WebMenuCaledarShowWeekNumberAtDueEtcDates WebMenu
+          Text = ("Show week number at Due etc dates")
+        }
+      }
+      { WebMenuShowAtCard WebMenu
+        Text = ("Show at Card")
+        { WebMenuCardsCount WebMenu
+          Text = ("Cards count")
+        }
+        { WebMenuMinicardLabelText WebMenu
+          Text = ("Minicard label text")
+        }
+        { WebMenuFieldsVisible WebMenu
+          Text = ("Fields visible")
+        }
+        { WebMenuSubtasks2 WebMenu
+          Text = ("Subtasks")
+        }
+      }
+      { WebMenu1 WebMenu
+        Text = ("Board Members")
+        { WebMenuOrg WebMenu
+          Text = ("Organizations")
+        }
+        { WebMenuTeam WebMenu
+          Text = ("Teams")
+        }
+        { WebMenuMembers WebMenu
+          Text = ("People")
+        }
+      }
+      { WebMenuNotificationsSettings WebMenu
+        Text = ("Notifications")
+        { WebMenuNotificationsDrawer WebMenu
+          Text = ("Drawer")
+        }
+        { WebMenuNotificationsEmail WebMenu
+          Text = ("Email")
+        }
+        { WebMenuNotificationsPush WebMenu
+          Text = ("Push")
+        }
+        { WebMenuWatching WebMenu
+          Text = ("Watching/Tracking/Muted")
+        }
+        { WebMenuOutgoingWebhooks WebMenu
+          Text = ("Outgoing Webhooks")
+        }
+      }
+    }
+  }
+  { WebContainer22 WebContainer
+    #MoveScaled(1,1,32,151)
+    Class = "is-rounded-light"
+    Width = "300px"
+    Arrangement = Arrange.Vertical
+    Border = True
+    { WebContainer23 WebContainer
+      #MoveScaled(1,1,30,7)
+      Height = "30px"
+      Background = Color.SoftRoyal
+      Arrangement = Arrange.Vertical
+      Margin = True
+      { WebLabel3 WebLabel
+        #MoveScaled(1,1,28,3)
+        Height = "100%"
+        Text = ("Organization")
+        Alignment = Align.Center
+      }
+    }
+    { Boards WebTree
+      #MoveScaled(1,8,30,24)
+      Expand = True
+      Background = &HF2F2F2&
+    }
+  }
+  { WebContainer1 WebContainer
+    #MoveScaled(34,1,72,151)
+    Expand = True
+    Arrangement = Arrange.Vertical
+    Spacing = True
+    { WebContainer3 WebContainer
+      #MoveScaled(1,1,70,64)
+      Class = "is-rounded-light"
+      Expand = True
+      Arrangement = Arrange.Vertical
+      Border = True
+      { WebContainer8 WebContainer
+        #MoveScaled(1,1,68,7)
+        Height = "30px"
+        Background = Color.SoftRoyal
+        Arrangement = Arrange.Vertical
+        Margin = True
+        { WebLabel1 WebLabel
+          #MoveScaled(1,1,66,3)
+          Height = "100%"
+          Text = ("Board information")
+          Alignment = Align.Center
+        }
+      }
+      { WebContainer9 WebContainer
+        #MoveScaled(1,8,68,47)
+        Expand = True
+        Background = &HE9E9E9&
+      }
+    }
+    { WebContainer4 WebContainer
+      #MoveScaled(1,66,70,78)
+      Class = "is-rounded-light"
+      Expand = True
+      Arrangement = Arrange.Vertical
+      Border = True
+      { WebContainer10 WebContainer
+        #MoveScaled(1,1,68,7)
+        Height = "30px"
+        Background = Color.SoftRoyal
+        Arrangement = Arrange.Vertical
+        { WebLabel2 WebLabel
+          #MoveScaled(1,1,66,3)
+          Height = "100%"
+          Text = ("Global Status")
+          Alignment = Align.Center
+        }
+      }
+      { WebContainer14 WebContainer
+        #MoveScaled(1,8,68,47)
+        Expand = True
+        Background = &HE9E9E9&
+      }
+    }
+  }
+  { WebContainer2 WebContainer
+    #MoveScaled(107,1,71,151)
+    Expand = True
+    Arrangement = Arrange.Vertical
+    Spacing = True
+    { WebContainer5 WebContainer
+      #MoveScaled(1,1,69,56)
+      Class = "is-rounded-light"
+      Expand = True
+      Arrangement = Arrange.Vertical
+      Border = True
+      { WebContainer11 WebContainer
+        #MoveScaled(1,1,67,7)
+        Height = "30px"
+        Background = Color.SoftRoyal
+      }
+      { WebContainer15 WebContainer
+        #MoveScaled(1,8,67,37)
+        Expand = True
+        Background = &HE9E9E9&
+        Arrangement = Arrange.Vertical
+        Margin = True
+        Spacing = True
+        { WebContainer18 WebContainer
+          #MoveScaled(1,1,65,8)
+          Arrangement = Arrange.Horizontal
+          { WebImage1 WebImage
+            #MoveScaled(1,1,7,6)
+            Height = "32px"
+            Image = "Icons/32x32/1password.svg"
+          }
+          { WebTextBox1 WebTextBox
+            #MoveScaled(8,1,27,6)
+            Expand = True
+            Font = "sans-serif,1em"
+            Text = ("AAAAAAAA")
+            Password = True
+          }
+        }
+        { WebContainer19 WebContainer
+          #MoveScaled(1,10,65,9)
+          Arrangement = Arrange.Horizontal
+          { WebContainer21 WebContainer
+            #MoveScaled(1,1,8,7)
+            Width = "32px"
+            Height = "32px"
+          }
+          { WebButton1 WebButton
+            #MoveScaled(9,1,29,7)
+            Width = "200px"
+            Foreground = Color.Royal
+            Font = "sans-serif,bold,0.9em"
+            Text = ("Change password")
+          }
+          { WebContainer20 WebContainer
+            #MoveScaled(38,1,26,7)
+            Expand = True
+          }
+        }
+      }
+    }
+    { WebContainer6 WebContainer
+      #MoveScaled(1,58,69,40)
+      Class = "is-rounded-light"
+      Expand = True
+      Arrangement = Arrange.Vertical
+      Border = True
+      { WebContainer12 WebContainer
+        #MoveScaled(1,1,67,7)
+        Height = "30px"
+        Background = Color.SoftRoyal
+      }
+      { WebContainer16 WebContainer
+        #MoveScaled(1,8,67,18)
+        Expand = True
+        Background = &HE9E9E9&
+      }
+    }
+    { WebContainer7 WebContainer
+      #MoveScaled(1,99,69,42)
+      Class = "is-rounded-light"
+      Expand = True
+      Arrangement = Arrange.Vertical
+      Border = True
+      { WebContainer13 WebContainer
+        #MoveScaled(1,1,67,7)
+        Height = "30px"
+        Background = Color.SoftRoyal
+      }
+      { WebContainer17 WebContainer
+        #MoveScaled(1,8,67,18)
+        Expand = True
+        Background = &HE9E9E9&
+      }
+    }
+  }
+}

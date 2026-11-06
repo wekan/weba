@@ -1,0 +1,14 @@
+' Gambas module file
+
+  Public IndexTree As Integer = 1
+
+  ' Variables page Web
+  Public SessionTimeout As Integer = 30 ' Default 300s
+  Public SessionStartTime As Float = 0 
+  Public LogLevel As Integer = 0
+  Public PathLogFile As String = "/tmp/kanban.log"
+
+  Public FileConfig1 As String = Application.Path &/ "kanban.ini"
+  Public PathDatabase As String = Application.Path 
+
+  Public PathLinkLogin As String

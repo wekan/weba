@@ -1,0 +1,124 @@
+' Gambas class file
+
+Export
+
+Public Sub _new()
+
+  Dim Path As String
+
+  WebForm.Debug = False
+
+  'Application Version is at Gambas IDE menu: Project / Properties / General / Version
+  WebLabelVersion.Text = "v" & Application.Version
+
+  Path = Request.Path
+  If Path = "/" Then Path = ""
+
+  ModLogs.AddLogs("1-UserAgent= " & Request.UserAgent)
+  ModLogs.AddLogs("2-URL= " & Request.Query)
+  ModLogs.AddLogs("3-URL= " & Application.Request)
+  ModLogs.AddLogs("4-Path = " & Path) 
+
+
+Catch
+  Debug "Error at _new()"
+  Debug "Error: " & Error.Text & "   " & "Where: " & Error.Where
+
+
+
+End
+
+
+Public Sub WebForm_Open()
+
+  WebTextName.SetFocus()
+
+End
+
+Public Sub WebButtonLogin_Click()
+
+  Login()
+
+End
+
+
+Public Sub WebTextName_Activate()
+
+  Login()
+
+End
+
+Public Sub WebTextPass_Activate()
+
+  Login()
+
+End
+
+Private Sub Login()
+
+  Dim sUsername As String
+  Dim sPassword As String
+
+  'Loading of the * .ini file if present
+  'ModFunction.Load_File_Init()
+
+  sUsername = Trim(WebTextName.Text)
+  If Not sUsername Then
+    WebNoticeText.Text = "Username is empty..."
+
+    WebInfo.show()
+
+    WebTimer1.Start()
+
+    WebTextName.SetFocus(True)
+    Return
+  Endif
+
+  sPassword = Trim(WebTextPass.Text)
+  If Not sPassword Then
+
+    WebNoticeText.Text = "Password is empty..."
+
+    WebInfo.show()
+
+    WebTimer1.Start()
+
+    WebTextPass.SetFocus(True)
+    Return
+  Endif
+
+  If WebDatabase.Login(sUsername, sPassword) Then
+
+    ' Create a new Session
+    Session["username"] = sUsername
+    Session.Timeout = ModVar.SessionTimeout
+
+    ModVar.SessionStartTime = Timer
+
+    WebForm.Goto(WebFormMain)
+
+  Else
+
+    WebNoticeText.Text = "Username or Password incorrect..."
+
+    WebInfo.show()
+
+    WebTimer1.Start()
+
+    WebTextName.SetFocus(True)
+  Endif
+
+Catch
+  Debug "Error at Login()"
+  Debug "Error: " & Error.Text & "   " & "Where: " & Error.Where
+
+
+End
+
+Public Sub WebTimer1_Timer()
+
+  WebTimer1.Stop()
+
+  WebInfo.Hide()
+
+End
