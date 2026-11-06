@@ -18,6 +18,29 @@ const path = require('node:path');
     await page.setViewport({width:1440,height:1000});
     await page.goto(process.env.WEBA_TEST_URL,{waitUntil:'networkidle2'});
     await click('ShowRegistration');
+    const passwords = await page.evaluate(() => {
+      const box = name => document.querySelector(`[id$=".${name}"]`).getBoundingClientRect();
+      return [['WebTextPass','ShowPassword'],['ConfirmPassword','ShowConfirmPassword']].map(([field,button]) => {
+        const input=document.querySelector(`[id$=".${field}:entry"]`);
+        const a=box(field),b=box(button);
+        return {right:a.right,buttonLeft:b.left,top:a.top,buttonTop:b.top,background:getComputedStyle(input).backgroundColor};
+      });
+    });
+    for (const row of passwords) {
+      assert.ok(row.buttonLeft >= row.right-1,'visibility button follows its password input');
+      assert.ok(Math.abs(row.top-row.buttonTop)<2,'visibility button shares the input row');
+      assert.equal(row.background,'rgb(255, 255, 255)','password input has a white background');
+    }
+    await click('ShowPassword');
+    assert.equal(await page.$eval(entry('WebTextPass'),e=>e.type),'text');
+    assert.equal(await page.$eval(entry('ConfirmPassword'),e=>e.type),'password');
+    await click('ShowConfirmPassword');
+    assert.equal(await page.$eval(entry('ConfirmPassword'),e=>e.type),'text');
+    await click('ShowPassword'); await click('ShowConfirmPassword');
+    if(process.env.WEBA_LOGIN_LAYOUT_ONLY) {
+      console.log('Login/register layout: white inputs, right-side independent visibility buttons passed');
+      return;
+    }
     await fill('WebTextName','layout-'+Date.now());
     await fill('WebTextPass','layout-comparison-password');
     await fill('ConfirmPassword','layout-comparison-password');

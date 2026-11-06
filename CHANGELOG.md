@@ -1,5 +1,7 @@
 # Upcoming WeKan ® for Gambas release
 
+- Place independent Show/Hide password buttons beside both password fields and
+  give the confirmation field the same white input styling. Thanks to xet7.
 This work adds the following features and fixes:
 
 - Arrange native Gambas controls in the current WeKan order: one header with

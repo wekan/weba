@@ -4,7 +4,16 @@ Updated 2026-11-06. Target: the signed-in pages of the current `wekan/wekan`
 checkout, implemented with Gambas Web UI, SQLite persistence and portable Gambas
 DB operations. This is an initial implementation, not complete WeKan parity.
 
+## Verification follow-up
+
+- The full Chromium layout run timed out checking the card-editor focus outline
+  after saving a card. Login/register geometry and independent visibility checks
+  passed separately; investigate the unrelated card-focus check.
+
 ## Implemented and checked
+
+- Login/register: matching white password inputs with independent visibility
+  buttons on the right; verified with HTTP sessions and Chromium geometry checks.
 
 - Native Gambas navigation, board/card tree, card editor and search controls.
 - Persistent owner-scoped boards and cards: create/edit, statuses, swimlanes,

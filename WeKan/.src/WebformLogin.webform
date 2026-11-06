@@ -89,7 +89,7 @@
     }
     { WebContainer1 WebContainer
       #MoveScaled(7.8571,1,54.8571,34.8571)
-      Width = "20%"
+      Width = "360px"
       Height = "100%"
       Arrangement = Arrange.Vertical
       Spacing = True
@@ -109,12 +109,21 @@
         Class = "control-label"
         Text = ("Password")
       }
-      { WebTextPass WebTextBox
-        #MoveScaled(1,14.7143,52.8571,3.5714)
-        Class = "input is-rounded-light is-focused"
-        Foreground = &H4677A0&
-        Font = "sans-serif,italic,0.9em"
-        Password = True
+      { PasswordRow WebContainer
+        Arrangement = Arrange.Horizontal
+        Spacing = True
+        { WebTextPass WebTextBox
+          Expand = True
+          Class = "input is-rounded-light is-focused"
+          Background = &HFFFFFF&
+          Foreground = &H4677A0&
+          Font = "sans-serif,italic,0.9em"
+          Password = True
+        }
+        { ShowPassword WebButton
+          Text = ("Show password")
+          Tooltip = ("Show or hide the password")
+        }
       }
       { WebContainer3 WebContainer
         #MoveScaled(1,19.2857,52.8571,4.1429)
@@ -129,10 +138,6 @@
           Text = ("Login")
         }
       }
-      { ShowPassword WebButton
-        Text = ("Show password")
-        Tooltip = ("Show or hide the password fields")
-      }
       { ShowRegistration WebButton
         Text = ("Register")
       }
@@ -143,8 +148,21 @@
         { ConfirmCaption WebLabel
           Text = ("Repeat password")
         }
-        { ConfirmPassword WebTextBox
-          Password = True
+        { ConfirmPasswordRow WebContainer
+          Arrangement = Arrange.Horizontal
+          Spacing = True
+          { ConfirmPassword WebTextBox
+            Expand = True
+            Class = "input is-rounded-light is-focused"
+            Background = &HFFFFFF&
+            Foreground = &H4677A0&
+            Font = "sans-serif,italic,0.9em"
+            Password = True
+          }
+          { ShowConfirmPassword WebButton
+            Text = ("Show password")
+            Tooltip = ("Show or hide the repeated password")
+          }
         }
         { Register WebButton
           Text = ("Create account")

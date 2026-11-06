@@ -16,8 +16,12 @@ answer=command(['raise',prefix+'.Register','click',[],False])
 assert 'Passwords&nbsp;do&nbsp;not&nbsp;match' in answer
 assert 'location.reload' not in answer
 answer=command(['raise',prefix+'.ShowPassword','click',[],False])
-assert 'ConfirmPassword' in answer and 'WebTextPass' in answer and 'text' in answer
+assert 'WebTextPass' in answer and 'ConfirmPassword' not in answer and 'text' in answer
+answer=command(['raise',prefix+'.ShowConfirmPassword','click',[],False])
+assert 'ConfirmPassword' in answer and 'WebTextPass' not in answer and 'text' in answer
 answer=command(['raise',prefix+'.ShowPassword','click',[],False])
+assert 'WebTextPass' in answer and 'password' in answer
+answer=command(['raise',prefix+'.ShowConfirmPassword','click',[],False])
 assert 'ConfirmPassword' in answer and 'password' in answer
 command(['update',prefix+'.ConfirmPassword','text','x',True])
 assert 'location.reload' in command(['raise',prefix+'.Register','click',[],False])
