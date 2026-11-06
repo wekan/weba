@@ -14,7 +14,7 @@ Public Sub WebForm_Open()
     Return
   Endif
   Status.Text = "Todo"
-  AccountToggle.Text = Session["username"] & " ▾"
+  AccountToggle.Text = Session["username"]
   Admin.Visible = WebDatabase.GetIsAdmin(Session["username"])
   RefreshTree()
 Catch
@@ -393,7 +393,7 @@ Private Sub UpdateHeader()
     Next
   Endif
   PageTitle.Tooltip = PageTitle.Text
-  ViewMenu.Text = If($view = "Boards", "View ▾", $view & " ▾")
+  ViewMenu.Text = If($view = "Boards", "View", $view)
 End
 
 Public Sub Remaining_Click()
@@ -445,7 +445,8 @@ Public Sub AdminUsers_Click()
 End
 
 Public Sub LanguageSelector_Render()
-  Print "<script>" & File.Load(".public/i18n-catalog.js") & File.Load(".public/i18n.js") & "</script>"
+  Print "<link rel=\"stylesheet\" href=\"fontawesome.css\">"
+  Print "<script>" & File.Load(".public/i18n-catalog.js") & File.Load(".public/i18n.js") & File.Load(".public/ui.js") & "</script>"
   Print "<select data-weba-language aria-label=\"Language\" style=\"width:100%;height:32px;background:white;color:black\"></select>"
 End
 

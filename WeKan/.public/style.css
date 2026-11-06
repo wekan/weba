@@ -11945,7 +11945,9 @@ ul, #myUL {
 
 /* Create the caret/arrow with a unicode, and style it */
 .caret::before {
-  content: "\25B8";     /* 25B6 */
+  content: "\f0da";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
   color: black;
   display: inline-block;
   margin-right: 6px;
@@ -11975,7 +11977,9 @@ ul, #myUL {
 
 
 .gw-treeview-arrow::before {
-   content: "\25B8";     /* 25B6 */
+   content: "\f0da";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
   color: black;
   display: inline-block;
   margin-right: 6px;

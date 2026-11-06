@@ -9,11 +9,11 @@
     Class = "weba-topbar"
     Arrangement = Arrange.Horizontal
     { Home WebButton
-      Text = "⌂"
+      Class = "weba-icon-only fa fa-home"
       Tooltip = ("All Boards")
     }
     { ToggleNavigation WebButton
-      Text = ("☰")
+      Class = "weba-icon-only fa fa-bars"
       Tooltip = ("Show or hide navigation")
     }
     { PageTitle WebLabel
@@ -28,21 +28,23 @@
       Expand = True
     }
     { AddBoard WebButton
-      Text = ("＋")
+      Class = "weba-icon-only fa fa-plus"
       Tooltip = ("Add Board")
     }
     { HeaderSearch WebButton
-      Text = ("⌕")
+      Class = "weba-icon-only fa fa-search"
       Tooltip = ("Search")
     }
     { ViewMenu WebButton
-      Text = ("View ▾")
+      Class = "weba-native-caret"
+      Text = ("View")
     }
     { AccountToggle WebButton
-      Text = ("Account ▾")
+      Class = "weba-native-caret"
+      Text = ("Account")
     }
     { SidebarToggle WebButton
-      Text = ("☰")
+      Class = "weba-icon-only fa fa-bars"
       Tooltip = ("Show or hide page sidebar")
     }
   }
@@ -164,7 +166,7 @@
           Spacing = True
           Width = "340px"
           { CloseEditor WebButton
-            Text = ("×")
+      Class = "weba-icon-only fa fa-times-thin"
             Tooltip = ("Close card details")
           }
           { CardHeading WebLabel
@@ -220,7 +222,8 @@
         Class = "weba-overview-actions"
         Arrangement = Arrange.Vertical
         { AddBoardTile WebButton
-          Text = ("＋ Add Board")
+          Text = ("Add Board")
+          Class = "weba-with-plus"
         }
       }
       { AccountPanel WebContainer
@@ -272,7 +275,7 @@
       Width = "300px"
       Visible = False
       { CloseSidebar WebButton
-        Text = ("×")
+      Class = "weba-icon-only fa fa-times-thin"
         Tooltip = ("Close page sidebar")
       }
       { PageActions WebContainer

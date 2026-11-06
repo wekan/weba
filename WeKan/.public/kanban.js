@@ -33,7 +33,11 @@
           root.gw.update(section.dataset.action,'text',[action,encode(lane),encode(list),encode(title)].join('|'),null);
         }
         function button(parent, glyph, title, action, cls = '') {
-          const el = add(parent,'button',glyph,'weba-board-button '+cls,false);
+          const el = add(parent,'button',undefined,'weba-board-button '+cls,false);
+          const icons={'+':'plus','☰':'bars','⊞':'plus-square-o','▸':'caret-right','▾':'caret-down','✓':'check','×':'times-thin'};
+          const icon=icons[glyph] || (glyph.startsWith('+ ')?'plus':null);
+          if(icon){const i=add(el,'i',undefined,'fa fa-'+icon);i.setAttribute('aria-hidden','true');if(glyph.startsWith('+ '))add(el,'span',glyph.slice(2),undefined,false);}
+          else el.textContent=glyph;
           el.type='button'; el.title=t(title); el.setAttribute('aria-label',t(title));
           el.onclick=event=>{event.stopPropagation();action(el);}; return el;
         }
@@ -50,7 +54,7 @@
         }
         function toggle(key, target, trigger) {
           if (collapsed.has(key)) collapsed.delete(key); else collapsed.add(key);
-          target.hidden=collapsed.has(key); trigger.textContent=target.hidden?'▸':'▾';
+          target.hidden=collapsed.has(key); trigger.querySelector('i').className='fa fa-'+(target.hidden?'caret-right':'caret-down');
           trigger.setAttribute('aria-expanded',String(!target.hidden));
         }
         function menu(parent, actions) {
@@ -110,6 +114,9 @@
         const now = new Date(), controls = add(report, 'div', undefined, 'weba-calendar-controls');
         const previous = add(controls, 'button', 'Previous month'), label = add(controls, 'strong'), next = add(controls, 'button', 'Next month');
         previous.type = next.type = 'button';
+        for(const [button,icon,title] of [[previous,'chevron-left','Previous month'],[next,'chevron-right','Next month']]){
+          button.textContent='';button.title=t(title);button.setAttribute('aria-label',t(title));add(button,'i',undefined,'fa fa-'+icon).setAttribute('aria-hidden','true');
+        }
         const grid = add(report, 'div', undefined, 'weba-calendar');
         let year = now.getFullYear(), month = now.getMonth();
         function draw() {
@@ -146,7 +153,7 @@
           add(row,'td',card.dataset.status,undefined,['Todo','Doing','Done'].includes(card.dataset.status));
           add(row,'td',card.dataset.lane,undefined,false);
           add(row,'td',card.dataset.due || 'No due date');
-          if (view === 'Gantt') add(add(row,'td'),'span',card.dataset.due ? '◆ '+card.dataset.due : 'Unscheduled','weba-milestone');
+          if (view === 'Gantt') add(add(row,'td'),'span',card.dataset.due || 'Unscheduled','weba-milestone');
         });
         if (view === 'Gantt') add(report,'p','Due-date milestones. Durations and dependencies are not recorded yet.');
       } else {

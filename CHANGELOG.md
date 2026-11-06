@@ -2,6 +2,10 @@
 
 This work adds the following features and fixes:
 
+- Replace Unicode and bitmap interface symbols with WeKan’s local Font Awesome
+  fonts, compatibility aliases and matching icon classes. Cover native headers,
+  view menus, trees, board controls, calendar navigation and close actions.
+  Thanks to xet7.
 - Open boards in Swimlanes by default and place swimlane/list controls at the
   same header/footer edges as WeKan. Add functional inline list/swimlane composers,
   persistent empty layouts, correctly targeted native card editing and card-tile

@@ -1,4 +1,6 @@
 * Fri Nov 06 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Icons: Use WeKan’s Font Awesome assets and compatibility aliases throughout
+  native navigation, tree items, reports and board controls.
 - Boards: Default to Swimlanes; align header/footer controls with WeKan, persist
   empty swimlanes/custom lists, place new lists after the selected one and route
   card actions to the native editor. Add store, DOM, HTTP and browser regressions.

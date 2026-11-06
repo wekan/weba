@@ -27,6 +27,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Implemented and checked
 
+- WeKan Font Awesome solid/regular/brand fonts and v4 aliases replace native
+  Unicode/bitmap interface icons, including header, tree and board controls.
+
 - Opening a board defaults to Swimlanes, including an empty board. Swimlane
   controls sit at the right edge of its header; list collapse is at the left,
   with add-card/menu/add-list at the right and another add-card at the bottom.

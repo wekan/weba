@@ -92,5 +92,13 @@
 .weba-card[role=button]{cursor:pointer}
 .weba-columns[hidden],.weba-list-body[hidden]{display:none!important}
 
-.weba-add-list{font-size:0}
-.weba-add-list::before{font-family:"WeBa Font Awesome";font-weight:900;font-size:14px;content:"\f0fe"}
+
+
+.weba-icon-only.fa{font-family:"Font Awesome 6 Free"!important;font-weight:900!important;font-size:16px!important}
+.weba-native-icon,.weba-board-button>.fa{margin-inline-end:6px;pointer-events:none}
+.weba-board-button>.fa:only-child{margin:0}
+.weba-tree-icon{display:inline-block;width:20px;margin-inline-end:3px}
+.weba-native-caret::after,.weba-with-plus::before{font-family:"Font Awesome 6 Free";font-weight:900}
+.weba-native-caret::after{content:"\f0d7";margin-inline-start:7px}
+.weba-with-plus::before{content:"\2b";margin-inline-end:7px}
+.weba-milestone::before{font-family:"Font Awesome 6 Free";font-weight:900;content:"\f219";margin-inline-end:5px}

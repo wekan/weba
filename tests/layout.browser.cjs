@@ -72,6 +72,12 @@ const path = require('node:path');
       console.log('Browser translations: Finnish login, persisted selection, Arabic RTL and signed-in language picker passed');
       return;
     }
+    await page.evaluate(()=>document.fonts.ready);
+    const nativeIcon=await page.$eval(selector('Home'),e=>({className:e.className,text:e.textContent,content:getComputedStyle(e,'::before').content,font:getComputedStyle(e).fontFamily}));
+    assert.ok(nativeIcon.className.includes('fa-home'));
+    assert.equal(nativeIcon.text,'');assert.ok(nativeIcon.font.includes('Font Awesome 6 Free'));
+    assert.ok(nativeIcon.content && nativeIcon.content!=='none');
+    if(process.env.WEBA_ICONS_ONLY){console.log('Browser native Font Awesome header icons passed');return;}
     await shot('weba-overview');
     const geometry = await page.evaluate(() => {
       const box = name => {const r=document.querySelector(`[id$=".${name}"]`).getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height};};
@@ -90,6 +96,7 @@ const path = require('node:path');
     await page.click('.weba-board-tile');
     await page.waitForFunction(()=>document.querySelector('[id$=".PageTitle"]').textContent.replace(/\u00a0/g,' ')==='Layout board');
     await page.waitForFunction(()=>document.querySelector('.weba-content')?.dataset.view==='Swimlanes');
+    assert.equal(await page.$$eval('.weba-add-list .fa-plus-square-o',els=>els.length),3,'list-add uses the same regular Font Awesome icon as WeKan');
     assert.equal(await page.$$eval('.weba-column',els=>els.length),3,'empty board shows its initial lists');
     if(process.env.WEBA_SWIMLANES_ONLY) {
       const positions=await page.evaluate(()=>{

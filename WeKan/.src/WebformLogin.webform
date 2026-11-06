@@ -207,11 +207,11 @@
         #MoveScaled(1,1,1.7143,2)
         Expand = True
       }
-      { WebImage3 WebImage
+      { WebImage3 WebLabel
         #MoveScaled(3.7143,1,4.2857,2)
         Width = "24px"
         Height = "24px"
-        Image = "Icons/30x30/warning.png"
+        Class = "fa fa-warning weba-notice-icon"
       }
       { WebNoticeText WebLabel
         #MoveScaled(9,1,16.2857,2)
