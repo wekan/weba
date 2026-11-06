@@ -1,0 +1,402 @@
+' Portable board/list/swimlane/card menu operations.
+Export
+Private $db As Connection
+Private $copyMap As Collection
+
+Public Sub OpenStore()
+  Dim t As Table
+  If $db Then Return
+  KanbanStore.OpenDatabase()
+  $db = WebDatabase.OpenConnection()
+  If Not $db.Tables.Exist("kb_meta") Then
+    t = $db.Tables.Add("kb_meta")
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("kind", db.String, 16)
+    t.Fields.Add("item_id", db.Integer)
+    t.Fields.Add("setting", db.String, 64)
+    t.Fields.Add("value", db.String)
+    t.PrimaryKey = ["board_id", "kind", "item_id", "setting"]
+    t.Update()
+  Endif
+  If Not $db.Tables.Exist("kb_history") Then
+    t = $db.Tables.Add("kb_history")
+    t.Fields.Add("id", db.Serial)
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("kind", db.String, 16)
+    t.Fields.Add("item_id", db.Integer)
+    t.Fields.Add("actor", db.String, 255)
+    t.Fields.Add("message", db.String)
+    t.Fields.Add("created_at", db.Date)
+    t.PrimaryKey = ["id"]
+    t.Update()
+  Endif
+End
+
+Public Sub Log(boardId As Integer, kind As String, itemId As Integer, message As String)
+  Dim r As Result
+  OpenStore()
+  KanbanStore.RequireBoard(boardId)
+  r = $db.Create("kb_history")
+  r["board_id"] = boardId
+  r["kind"] = kind
+  r["item_id"] = itemId
+  r["actor"] = Session["username"]
+  r["message"] = message
+  r["created_at"] = Now
+  r.Update()
+End
+
+Public Function History(boardId As Integer, kind As String, itemId As Integer) As Result
+  Record(boardId, kind, itemId)
+  If kind = "board" Then Return KanbanStore.Activities(boardId)
+  Return $db.Find("kb_history", "board_id = &1 AND kind = &2 AND item_id = &3 ORDER BY id DESC", boardId, kind, itemId)
+End
+
+Public Function Record(boardId As Integer, kind As String, itemId As Integer) As Result
+  Dim r As Result
+  Dim tableName As String
+  OpenStore()
+  KanbanStore.RequireBoard(boardId)
+  Select kind
+    Case "board"
+      If boardId <> itemId Then Error.Raise("Board not accessible")
+      tableName = "kb_boards"
+    Case "lane"
+      tableName = "kb_lanes"
+    Case "list"
+      tableName = "kb_lists"
+    Case "card"
+      tableName = "kb_cards"
+    Case Else
+      Error.Raise("Unknown menu context")
+  End Select
+  If kind = "board" Then
+    r = $db.Find(tableName, "id = &1", itemId)
+  Else
+    r = $db.Find(tableName, "id = &1 AND board_id = &2", itemId, boardId)
+  Endif
+  If Not r.Available Then Error.Raise("Item not accessible")
+  Return r
+End
+
+Public Function Setting(boardId As Integer, kind As String, itemId As Integer, name As String, Optional fallback As String) As String
+  Dim r As Result
+  Record(boardId, kind, itemId)
+  r = $db.Find("kb_meta", "board_id = &1 AND kind = &2 AND item_id = &3 AND setting = &4", boardId, kind, itemId, name)
+  If r.Available Then Return r["value"]
+  Return fallback
+End
+
+Public Sub SetSetting(boardId As Integer, kind As String, itemId As Integer, name As String, value As String)
+  Dim r As Result
+  Dim index As Integer
+  Record(boardId, kind, itemId)
+  Select name
+    Case "star", "watch", "archived", "wip_strict"
+      If value <> "0" And value <> "1" Then Error.Raise("Expected a boolean setting")
+    Case "color", "wip", "description"
+    Case Else
+      Error.Raise("Unknown item setting")
+  End Select
+  If name = "color" And value Then
+    If Len(value) <> 7 Or Left(value) <> "#" Then Error.Raise("Use #RRGGBB")
+    For index = 2 To 7
+      If InStr("0123456789abcdef", LCase(Mid(value, index, 1))) = 0 Then Error.Raise("Use #RRGGBB")
+    Next
+  Endif
+  If name = "wip" Then
+    If CInt(value) < 0 Or CInt(value) > 100000 Then Error.Raise("Invalid WIP limit")
+  Endif
+  r = $db.Edit("kb_meta", "board_id = &1 AND kind = &2 AND item_id = &3 AND setting = &4", boardId, kind, itemId, name)
+  If Not r.Available Then
+    r = $db.Create("kb_meta")
+    r["board_id"] = boardId
+    r["kind"] = kind
+    r["item_id"] = itemId
+    r["setting"] = name
+  Endif
+  r["value"] = value
+  r.Update()
+End
+
+Public Sub Toggle(boardId As Integer, kind As String, itemId As Integer, name As String)
+  If name <> "star" And name <> "watch" Then Error.Raise("Unknown toggle")
+  SetSetting(boardId, kind, itemId, name, If(Setting(boardId, kind, itemId, name) = "1", "0", "1"))
+End
+
+Public Function Archived(boardId As Integer, kind As String, itemId As Integer) As Boolean
+  Dim r As Result = Record(boardId, kind, itemId)
+  If kind = "board" Or kind = "card" Then Return r!archived
+  Return Setting(boardId, kind, itemId, "archived") = "1"
+End
+
+Public Sub SetArchived(boardId As Integer, kind As String, itemId As Integer, value As Boolean)
+  Record(boardId, kind, itemId)
+  Select kind
+    Case "board"
+      KanbanStore.ArchiveBoard(boardId, value)
+    Case "card"
+      KanbanStore.ArchiveCard(boardId, itemId, value)
+    Case Else
+      SetSetting(boardId, kind, itemId, "archived", If(value, "1", "0"))
+      KanbanStore.Activity(boardId, "Changed " & kind & " archive state", kind, itemId)
+  End Select
+End
+
+Public Function ListHidden(boardId As Integer, listId As Integer) As Boolean
+  Dim r As Result
+  Dim lane As Result
+  If Not listId Then Return False
+  r = Record(boardId, "list", listId)
+  If Archived(boardId, "list", listId) Then Return True
+  lane = $db.Find("kb_lanes", "board_id = &1 AND title = &2", boardId, r!lane)
+  If lane.Available Then Return Archived(boardId, "lane", lane!id)
+  Return False
+End
+
+Public Sub Rename(boardId As Integer, kind As String, itemId As Integer, title As String)
+  Dim r As Result
+  Dim linked As Result
+  Dim tableName As String
+  Dim oldTitle As String
+  Dim failure As String
+  r = Record(boardId, kind, itemId)
+  title = Trim(title)
+  If Not title Or String.Len(title) > If(kind = "list", 32, 255) Then Error.Raise("Enter a valid title")
+  oldTitle = r!title
+  If kind = "lane" Then
+    r = $db.Find("kb_lanes", "board_id = &1 AND title = &2 AND id <> &3", boardId, title, itemId)
+    If r.Available Then Error.Raise("Swimlane already exists")
+  Endif
+  KanbanStore.PrimeCardLinks(boardId)
+  $db.Begin()
+  Select kind
+    Case "board"
+      tableName = "kb_boards"
+    Case "lane"
+      tableName = "kb_lanes"
+    Case "list"
+      tableName = "kb_lists"
+    Case "card"
+      tableName = "kb_cards"
+  End Select
+  r = $db.Edit(tableName, "id = &1", itemId)
+  r["title"] = title
+  r.Update()
+  If kind = "list" Then
+    linked = $db.Find("kb_card_lists", "board_id = &1 AND list_id = &2", boardId, itemId)
+    For Each linked
+      r = $db.Edit("kb_cards", "id = &1 AND board_id = &2", linked!card_id, boardId)
+      If Not r.Available Then Continue
+      r["status"] = title
+      r.Update()
+    Next
+  Else If kind = "lane" Then
+    r = $db.Edit("kb_lists", "board_id = &1 AND lane = &2", boardId, oldTitle)
+    For Each r
+      r["lane"] = title
+      r.Update()
+    Next
+    If oldTitle = "Default" Then
+      r = $db.Edit("kb_cards", "board_id = &1 AND (lane = &2 OR lane = &3 OR lane IS NULL)", boardId, oldTitle, "")
+    Else
+      r = $db.Edit("kb_cards", "board_id = &1 AND lane = &2", boardId, oldTitle)
+    Endif
+    For Each r
+      r["lane"] = title
+      r.Update()
+    Next
+    r = $db.Edit("kb_order", "board_id = &1 AND kind = &2 AND item = &3", boardId, "lane", oldTitle)
+    If r.Available Then
+      r["item"] = title
+      r.Update()
+    Endif
+  Endif
+  KanbanStore.Activity(boardId, "Renamed " & kind & ": " & oldTitle & " → " & title, kind, itemId)
+  $db.Commit()
+Catch
+  failure = Error.Text
+  Try $db.Rollback()
+  Error.Raise(failure)
+End
+
+Private Function CloneCard(sourceBoard As Integer, cardId As Integer, targetBoard As Integer, listId As Integer, lane As String, listTitle As String, title As String) As Integer
+  Dim r As Result = Record(sourceBoard, "card", cardId)
+  Dim id As Integer
+  id = KanbanStore.SaveCard(targetBoard, 0, title, r!description, lane, listTitle, r!assignee, r!labels, r!due_day, listId)
+  $copyMap[CStr(cardId)] = id
+  CardContent.CopyRecords(sourceBoard, cardId, targetBoard, id)
+  CopySettings(sourceBoard, "card", cardId, targetBoard, id)
+  Return id
+End
+
+Public Function Copy(boardId As Integer, kind As String, itemId As Integer, title As String, Optional targetLane As String) As Integer
+  Dim source As Result
+  Dim r As Result
+  Dim laneRows As Result
+  Dim newId As Integer
+  Dim listId As Integer
+  Dim failure As String
+  Dim original As String
+  Dim relationKind As String
+  Dim relations As Result
+  Dim targetId As Integer
+  Dim targetBoard As Integer
+  source = Record(boardId, kind, itemId)
+  title = Trim(title)
+  If Not title Or String.Len(title) > If(kind = "list", 32, 255) Then Error.Raise("Enter a valid copy title")
+  KanbanStore.PrimeCardLinks(boardId)
+  CardContent.OpenStore()
+  $copyMap = New Collection
+  If kind = "list" Then
+    If Not targetLane Then targetLane = source!lane
+    r = $db.Find("kb_lanes", "board_id = &1 AND title = &2", boardId, targetLane)
+    If Not r.Available Then Error.Raise("Destination swimlane not accessible")
+  Endif
+  $db.Begin()
+  Select kind
+    Case "card"
+      listId = KanbanStore.CardListId(boardId, itemId)
+      newId = CloneCard(boardId, itemId, boardId, listId, source!lane, source!status, title)
+    Case "board"
+      newId = KanbanStore.AddBoard(title)
+      laneRows = KanbanStore.Lanes(boardId)
+      For Each laneRows
+        If Archived(boardId, "lane", laneRows!id) Then Continue
+        CloneLane(boardId, laneRows!id, newId, laneRows!title)
+      Next
+    Case "lane"
+      newId = CloneLane(boardId, itemId, boardId, title)
+    Case "list"
+      newId = CloneList(boardId, itemId, boardId, targetLane, title)
+  End Select
+  targetBoard = boardId
+  If kind = "board" Then targetBoard = newId
+  For Each original In $copyMap.Keys
+    For Each relationKind In ["dependency", "subtask"]
+      relations = CardContent.Entries(boardId, CInt(original), relationKind)
+      For Each relations
+        targetId = CInt(relations!amount)
+        If $copyMap.Exist(CStr(targetId)) Then
+          targetId = $copyMap[CStr(targetId)]
+        Else If targetBoard <> boardId Then
+          Continue
+        Endif
+        CardContent.Save(targetBoard, $copyMap[original], 0, relationKind, "", "", 0, False, targetId)
+      Next
+    Next
+  Next
+  CopySettings(boardId, kind, itemId, targetBoard, newId)
+  KanbanStore.Activity(boardId, "Copied " & kind & ": " & title, kind, itemId)
+  $db.Commit()
+  Return newId
+Catch
+  failure = Error.Text
+  Try $db.Rollback()
+  Error.Raise(failure)
+End
+
+Private Sub CopySettings(sourceBoard As Integer, kind As String, sourceId As Integer, targetBoard As Integer, targetId As Integer)
+  Dim name As String
+  Dim value As String
+  For Each name In ["color", "wip", "wip_strict", "description"]
+    value = Setting(sourceBoard, kind, sourceId, name)
+    If value Then SetSetting(targetBoard, kind, targetId, name, value)
+  Next
+End
+
+Private Function CloneLane(sourceBoard As Integer, laneId As Integer, targetBoard As Integer, title As String) As Integer
+  Dim source As Result = Record(sourceBoard, "lane", laneId)
+  Dim r As Result
+  Dim lists As Result
+  Dim id As Integer
+  r = $db.Find("kb_lanes", "board_id = &1 AND title = &2", targetBoard, title)
+  If r.Available Then Error.Raise("Swimlane already exists")
+  r = $db.Create("kb_lanes")
+  r["board_id"] = targetBoard
+  r["title"] = title
+  r.Update()
+  id = $db.LastInsertId
+  lists = KanbanStore.Lists(sourceBoard, source!title)
+  For Each lists
+    If Archived(sourceBoard, "list", lists!id) Then Continue
+    CloneList(sourceBoard, lists!id, targetBoard, title, lists!title)
+  Next
+  CopySettings(sourceBoard, "lane", laneId, targetBoard, id)
+  Return id
+End
+
+Private Function CloneList(sourceBoard As Integer, listId As Integer, targetBoard As Integer, lane As String, title As String) As Integer
+  Dim r As Result
+  Dim source As Result = Record(sourceBoard, "list", listId)
+  Dim cards As Result
+  Dim id As Integer
+  Dim rank As Integer
+  If String.Len(title) > 32 Then Error.Raise("List titles have at most 32 characters")
+  r = $db.Find("kb_lists", "board_id = &1 AND lane = &2 ORDER BY sort_order DESC", targetBoard, lane)
+  If r.Available Then rank = r!sort_order + 1
+  r = $db.Create("kb_lists")
+  r["board_id"] = targetBoard
+  r["lane"] = lane
+  r["title"] = title
+  r["sort_order"] = rank
+  r.Update()
+  id = $db.LastInsertId
+  cards = $db.Find("kb_cards", "board_id = &1 AND archived = &2", sourceBoard, False)
+  For Each cards
+    If KanbanStore.CardListId(sourceBoard, cards!id) <> listId Then Continue
+    CloneCard(sourceBoard, cards!id, targetBoard, id, lane, title, cards!title)
+  Next
+  CopySettings(sourceBoard, "list", listId, targetBoard, id)
+  Return id
+End
+
+Public Function ExportData(boardId As Integer, kind As String, itemId As Integer) As String
+  Dim result As New Collection
+  Dim rows As New Variant[]
+  Dim r As Result
+  Dim item As Collection
+  Dim field As String
+  Dim laneTitle As String
+  Record(boardId, kind, itemId)
+  result["format"] = "weba-1"
+  result["kind"] = kind
+  result["title"] = Record(boardId, kind, itemId)!title
+  r = $db.Find("kb_cards", "board_id = &1", boardId)
+  If kind = "lane" Then laneTitle = Record(boardId, kind, itemId)!title
+  For Each r
+    If kind = "card" And r!id <> itemId Then Continue
+    If kind = "lane" And r!lane <> laneTitle Then Continue
+    If kind = "list" And KanbanStore.CardListId(boardId, r!id) <> itemId Then Continue
+    item = New Collection
+    For Each field In ["id", "title", "description", "lane", "status", "assignee", "labels", "due_day", "archived"]
+      item[field] = r[field]
+    Next
+    item["list_id"] = KanbanStore.CardListId(boardId, r!id)
+    rows.Add(item)
+  Next
+  result["cards"] = rows
+  Return JSON.Encode(result)
+End
+
+Public Function ListCount(boardId As Integer, listId As Integer) As Integer
+  Dim r As Result
+  Dim count As Integer
+  Record(boardId, "list", listId)
+  r = KanbanStore.Cards(boardId)
+  For Each r
+    If KanbanStore.CardListId(boardId, r!id) = listId Then Inc count
+  Next
+  Return count
+End
+
+Public Sub RequireCapacity(boardId As Integer, listId As Integer, cardId As Integer)
+  Dim limit As Integer
+  If Setting(boardId, "list", listId, "wip_strict", "0") <> "1" Then Return
+  limit = CInt(Setting(boardId, "list", listId, "wip", "0"))
+  If limit <= 0 Then Return
+  If cardId Then
+    If KanbanStore.CardListId(boardId, cardId) = listId Then Return
+  Endif
+  If ListCount(boardId, listId) >= limit Then Error.Raise("List WIP limit reached")
+End

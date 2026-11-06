@@ -104,6 +104,206 @@
       Text = ("Logout")
     }
   }
+  { DetailsPanel WebContainer
+    Class = "weba-details-panel"
+    Visible = False
+    Ignore = True
+    Width = "520px"
+    Arrangement = Arrange.Vertical
+    Spacing = True
+    { CloseDetails WebButton
+      Class = "weba-icon-only weba-popup-close fa fa-times-thin"
+      Tooltip = ("Close")
+    }
+    { DetailsTitle WebLabel
+      Text = ("Card details")
+    }
+    { DetailKind WebComboBox
+      Tooltip = ("Card detail type")
+    }
+    { DetailTree WebTree
+      Height = "160px"
+    }
+    { DetailNew WebButton
+      Text = ("New")
+    }
+    { DetailTitle WebTextBox
+      Tooltip = ("Title")
+    }
+    { DetailBody WebTextArea
+      Tooltip = ("Comment or value")
+      Height = "100px"
+    }
+    { DetailParent WebComboBox
+      Tooltip = ("Checklist")
+    }
+    { DetailType WebComboBox
+      Tooltip = ("Field type")
+    }
+    { DetailNumber WebTextBox
+      Tooltip = ("Linked card ID or minutes")
+    }
+    { DetailDone WebCheckBox
+      Text = ("Done")
+    }
+    { DetailSave WebButton
+      Text = ("Save")
+    }
+    { DetailDelete WebButton
+      Text = ("Delete selected item")
+    }
+    { DetailStart WebButton
+      Text = ("Start timer")
+    }
+    { DetailStop WebButton
+      Text = ("Stop timer")
+    }
+    { DetailUpload WebFileButton
+      Text = ("Upload attachment")
+    }
+    { DetailDownload WebButton
+      Text = ("Download attachment")
+    }
+  }
+  { ContextAction WebTextBox
+    Visible = False
+  }
+  { ContextMenu WebContainer
+    Class = "weba-context-menu"
+    Visible = False
+    Ignore = True
+    Arrangement = Arrange.Vertical
+    Width = "240px"
+    { CloseContext WebButton
+      Class = "weba-icon-only weba-popup-close fa fa-times-thin"
+      Tooltip = ("Close")
+    }
+    { ContextTitle WebLabel
+      Text = ("Menu")
+    }
+    { ContextAddCard WebButton
+      Text = ("Add card")
+    }
+    { ContextAddList WebButton
+      Text = ("Add list")
+    }
+    { ContextAddLane WebButton
+      Text = ("Add swimlane")
+    }
+    { ContextComments WebButton
+      Text = ("Comments")
+    }
+    { ContextChecklists WebButton
+      Text = ("Checklists")
+    }
+    { ContextChecklistItems WebButton
+      Text = ("Checklist items")
+    }
+    { ContextSubtasks WebButton
+      Text = ("Subtasks")
+    }
+    { ContextDependencies WebButton
+      Text = ("Dependencies")
+    }
+    { ContextFields WebButton
+      Text = ("Custom fields")
+    }
+    { ContextTime WebButton
+      Text = ("Time tracking")
+    }
+    { ContextAttachments WebButton
+      Text = ("Attachments")
+    }
+    { ContextRename WebButton
+      Text = ("Rename")
+    }
+    { ContextCopy WebButton
+      Text = ("Copy")
+    }
+    { ContextMove WebButton
+      Text = ("Move")
+    }
+    { ContextColor WebButton
+      Text = ("Color")
+    }
+    { ContextStar WebButton
+      Text = ("Star / unstar")
+    }
+    { ContextWatch WebButton
+      Text = ("Watch / unwatch")
+    }
+    { ContextWip WebButton
+      Text = ("Work in progress limit")
+    }
+    { ContextDescription WebButton
+      Text = ("Description")
+    }
+    { ContextHistory WebButton
+      Text = ("History")
+    }
+    { ContextExport WebButton
+      Text = ("Export JSON")
+    }
+    { ContextArchive WebButton
+      Text = ("Archive")
+    }
+    { ContextRestore WebButton
+      Text = ("Restore")
+    }
+  }
+  { ActionPanel WebContainer
+    Class = "weba-action-panel"
+    Visible = False
+    Ignore = True
+    Width = "380px"
+    Arrangement = Arrange.Vertical
+    Spacing = True
+    { CloseAction WebButton
+      Class = "weba-icon-only weba-popup-close fa fa-times-thin"
+      Tooltip = ("Close")
+    }
+    { ActionTitle WebLabel
+      Text = ("Edit")
+    }
+    { ActionText WebTextBox
+      Tooltip = ("Title or value")
+    }
+    { DestinationLaneLabel WebLabel
+      Text = ("Destination swimlane")
+    }
+    { DestinationLane WebComboBox
+    }
+    { DestinationListLabel WebLabel
+      Text = ("Destination list")
+    }
+    { DestinationList WebComboBox
+    }
+    { ActionFlag WebCheckBox
+      Text = ("Prevent exceeding limit")
+    }
+    { ActionConfirm WebButton
+      Text = ("Save")
+    }
+  }
+  { ItemBrowser WebContainer
+    Class = "weba-item-browser"
+    Visible = False
+    Ignore = True
+    Width = "480px"
+    Height = "440px"
+    Arrangement = Arrange.Vertical
+    Spacing = True
+    { CloseBrowser WebButton
+      Class = "weba-icon-only weba-popup-close fa fa-times-thin"
+      Tooltip = ("Close")
+    }
+    { BrowserTitle WebLabel
+      Text = ("Archive")
+    }
+    { BrowserTree WebTree
+      Expand = True
+    }
+  }
   { DragAction WebTextBox
     Visible = False
   }
@@ -122,6 +322,9 @@
         Class = "weba-board-navigation"
         Arrangement = Arrange.Vertical
         Expand = True
+        { Starred WebButton
+          Text = ("Starred")
+        }
         { Remaining WebButton
           Text = ("Remaining")
         }
@@ -224,6 +427,30 @@
           { SaveCard WebButton
             Text = ("Save card")
           }
+          { CardComments WebButton
+            Text = ("Comments")
+          }
+          { CardChecklists WebButton
+            Text = ("Checklists")
+          }
+          { CardChecklistItems WebButton
+            Text = ("Checklist items")
+          }
+          { CardSubtasks WebButton
+            Text = ("Subtasks")
+          }
+          { CardDependencies WebButton
+            Text = ("Dependencies")
+          }
+          { CardFields WebButton
+            Text = ("Custom fields")
+          }
+          { CardTime WebButton
+            Text = ("Time tracking")
+          }
+          { CardAttachments WebButton
+            Text = ("Attachments")
+          }
           { ArchiveCard WebButton
             Text = ("Archive / restore card")
           }
@@ -301,6 +528,12 @@
         }
         { NewBoard WebButton
           Text = ("Create board")
+        }
+        { BoardSettings WebButton
+          Text = ("Board settings")
+        }
+        { ArchivedItems WebButton
+          Text = ("Archived items")
         }
         { ArchiveBoard WebButton
           Text = ("Archive board")

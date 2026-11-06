@@ -101,7 +101,7 @@ Public Sub RequireBoard(boardId As Integer)
   If Not r.Available Then Error.Raise("Board not accessible")
 End
 
-Public Sub AddBoard(title As String)
+Public Function AddBoard(title As String) As Integer
   Dim r As Result
   RequireUser()
   If Not Trim(title) Then Error.Raise("Enter a board title")
@@ -110,6 +110,7 @@ Public Sub AddBoard(title As String)
   r["title"] = Trim(title)
   r["archived"] = False
   r.Update()
+  Return $db.LastInsertId
 End
 
 Public Sub ArchiveBoard(boardId As Integer, archived As Boolean)
@@ -149,6 +150,8 @@ Public Function SaveCard(boardId As Integer, cardId As Integer, title As String,
   If Not listId Then list = $db.Find("kb_lists", "board_id = &1 AND lane = &2 AND title = &3 ORDER BY sort_order, id", boardId, lane, status)
   If Not list.Available Then Error.Raise("Invalid status")
   listId = list!id
+  If WorkspaceStore.ListHidden(boardId, listId) Then Error.Raise("Restore the list or swimlane first")
+  WorkspaceStore.RequireCapacity(boardId, listId, cardId)
   If cardId Then
     r = $db.Edit("kb_cards", "id = &1 AND board_id = &2", cardId, boardId)
     If Not r.Available Then Error.Raise("Card not accessible")
@@ -167,7 +170,7 @@ Public Function SaveCard(boardId As Integer, cardId As Integer, title As String,
   r.Update()
   If Not cardId Then cardId = $db.LastInsertId
   PutCardList(boardId, cardId, listId)
-  Activity(boardId, "Saved card: " & title)
+  Activity(boardId, "Saved card: " & title, "card", cardId)
   Return cardId
 End
 
@@ -178,10 +181,10 @@ Public Sub ArchiveCard(boardId As Integer, cardId As Integer, archived As Boolea
   If Not r.Available Then Error.Raise("Card not accessible")
   r["archived"] = archived
   r.Update()
-  Activity(boardId, "Card archive state changed")
+  Activity(boardId, "Card archive state changed", "card", cardId)
 End
 
-Public Sub Activity(boardId As Integer, message As String)
+Public Sub Activity(boardId As Integer, message As String, Optional kind As String = "board", Optional itemId As Integer)
   Dim r As Result
   RequireBoard(boardId)
   r = $db.Create("kb_activity")
@@ -190,6 +193,7 @@ Public Sub Activity(boardId As Integer, message As String)
   r["message"] = message
   r["created_at"] = Now
   r.Update()
+  WorkspaceStore.Log(boardId, kind, itemId, message)
 End
 
 Public Function Activities(boardId As Integer) As Result
@@ -230,7 +234,8 @@ End
 Public Function Lanes(boardId As Integer) As Result
   Dim c As Result
   RequireBoard(boardId)
-  EnsureLane(boardId, "Default")
+  c = $db.Find("kb_lanes", "board_id = &1", boardId)
+  If Not c.Available Then EnsureLane(boardId, "Default")
   c = $db.Find("kb_cards", "board_id = &1", boardId)
   For Each c
     EnsureLane(boardId, If(Trim(c!lane), c!lane, "Default"))
@@ -316,6 +321,7 @@ End
 Private Sub RequireActiveBoard(boardId As Integer)
   Dim r As Result
   RequireBoard(boardId)
+  WorkspaceStore.OpenStore()
   r = $db.Find("kb_boards", "id = &1", boardId)
   If r!archived Then Error.Raise("Archived board cannot be reordered")
 End
@@ -355,6 +361,8 @@ Public Sub MoveCard(boardId As Integer, cardId As Integer, laneTitle As String, 
   r = GetList(boardId, listTitle, laneTitle)
   listId = r!id
   listTitle = r!title
+  If WorkspaceStore.ListHidden(boardId, listId) Then Error.Raise("Destination is archived")
+  WorkspaceStore.RequireCapacity(boardId, listId, cardId)
   If beforeId = cardId Then Return
   $db.Begin()
   ids = CardOrder(boardId, laneTitle, "#" & CStr(listId))
@@ -374,7 +382,7 @@ Public Sub MoveCard(boardId As Integer, cardId As Integer, laneTitle As String, 
   For index = 0 To ids.Max
     PutOrder(boardId, "card", ids[index], index)
   Next
-  Activity(boardId, "Moved card: " & CStr(cardId))
+  Activity(boardId, "Moved card: " & CStr(cardId), "card", cardId)
   $db.Commit()
 Catch
   failure = Error.Text
@@ -469,7 +477,7 @@ Public Sub MoveList(boardId As Integer, sourceLane As String, listTitle As Strin
     r["sort_order"] = index
     r.Update()
   Next
-  Activity(boardId, "Moved list: " & listTitle)
+  Activity(boardId, "Moved list: " & listTitle, "list", listId)
   $db.Commit()
 Catch
   failure = Error.Text
@@ -523,4 +531,10 @@ Private Sub EnsureCardLinks(boardId As Integer)
   For Each r
     CardListId(boardId, r!id)
   Next
+End
+
+Public Sub PrimeCardLinks(boardId As Integer)
+  RequireBoard(boardId)
+  Lanes(boardId)
+  EnsureCardLinks(boardId)
 End

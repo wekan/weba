@@ -1,4 +1,9 @@
 * Sat Nov 07 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Native menus: Add persisted board/list/swimlane/card actions, scoped history,
+  archive restoration, WIP enforcement and JSON card export. Add comments,
+  checklists, real subtasks, dependencies, typed fields, timers and binary
+  attachments; validate ownership and rich-copy relationships with SQLite
+  and real Chromium menu, upload and download tests.
 - Lists: Persist stable card/list identities, retain legacy assignments and
   allow duplicate titles without merging cards during display or movement.
 

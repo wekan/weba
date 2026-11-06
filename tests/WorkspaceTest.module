@@ -1,0 +1,65 @@
+Public Sub Main()
+  Dim r As Result
+  Dim boardId As Integer
+  Dim listId As Integer
+  Dim laneId As Integer
+  Dim cardId As Integer
+  Dim copied As Integer
+  Dim second As Integer
+  Dim denied As Boolean
+  Dim decoded As Variant
+  WebDatabase.Register("workspace-owner", "x")
+  Session["username"] = "workspace-owner"
+  boardId = KanbanStore.AddBoard("Workspace")
+  r = KanbanStore.Lanes(boardId)
+  laneId = r!id
+  r = KanbanStore.Lists(boardId, "Default")
+  listId = r!id
+  cardId = KanbanStore.SaveCard(boardId, 0, "Card", "Body", "Default", "Todo", "workspace-owner", "red", "2026-11-07", listId)
+  WorkspaceStore.Rename(boardId, "list", listId, "Ready")
+  r = KanbanStore.Cards(boardId)
+  If r!status <> "Ready" Or KanbanStore.CardListId(boardId, cardId) <> listId Then Error.Raise("List rename lost its cards")
+  WorkspaceStore.Rename(boardId, "lane", laneId, "Main")
+  r = KanbanStore.Cards(boardId)
+  If r!lane <> "Main" Then Error.Raise("Lane rename lost cards")
+  WorkspaceStore.SetSetting(boardId, "board", boardId, "color", "#225588")
+  WorkspaceStore.Toggle(boardId, "board", boardId, "star")
+  If WorkspaceStore.Setting(boardId, "board", boardId, "star") <> "1" Then Error.Raise("Star not saved")
+  WorkspaceStore.SetSetting(boardId, "list", listId, "color", "#aaccee")
+  copied = WorkspaceStore.Copy(boardId, "list", listId, "Ready", "Main")
+  If copied = listId Then Error.Raise("Copy retained source identity")
+  r = KanbanStore.Lists(boardId, "Main")
+  If r.Count <> 4 Then Error.Raise("Copy merged duplicate titles")
+  If WorkspaceStore.Setting(boardId, "list", copied, "color") <> "#aaccee" Then Error.Raise("Copy lost settings")
+  WorkspaceStore.SetArchived(boardId, "list", listId, True)
+  If Not WorkspaceStore.ListHidden(boardId, listId) Then Error.Raise("Archive not saved")
+  Try KanbanStore.MoveCard(boardId, cardId, "Main", "#" & CStr(listId), 0)
+  denied = Error
+  If Not denied Then Error.Raise("Archived destination accepted")
+  WorkspaceStore.SetArchived(boardId, "list", listId, False)
+  WorkspaceStore.Rename(boardId, "board", boardId, "Renamed workspace")
+  r = WorkspaceStore.Record(boardId, "board", boardId)
+  If r!title <> "Renamed workspace" Then Error.Raise("Board rename failed")
+  second = WorkspaceStore.Copy(boardId, "board", boardId, "Board copy")
+  r = KanbanStore.Cards(second)
+  If r.Count <> 2 Then Error.Raise("Board copy lost or duplicated cards")
+  decoded = JSON.Decode(WorkspaceStore.ExportData(boardId, "list", listId))
+  If decoded["cards"].Count <> 1 Then Error.Raise("Scoped export included the wrong list")
+  r = WorkspaceStore.History(boardId, "list", listId)
+  If r.Count < 2 Then Error.Raise("Scoped history missing")
+  Try WorkspaceStore.SetSetting(boardId, "board", boardId, "color", "red;bad")
+  denied = Error
+  If Not denied Then Error.Raise("Invalid color accepted")
+  WebDatabase.Register("workspace-other", "x")
+  Session["username"] = "workspace-other"
+  Try WorkspaceStore.Rename(boardId, "board", boardId, "Forbidden")
+  denied = Error
+  If Not denied Then Error.Raise("Other owner renamed a board")
+  Try WorkspaceStore.Copy(boardId, "card", cardId, "Forbidden")
+  denied = Error
+  If Not denied Then Error.Raise("Other owner copied private data")
+  Try WorkspaceStore.ExportData(boardId, "board", boardId)
+  denied = Error
+  If Not denied Then Error.Raise("Other owner exported private data")
+  Print "Workspace menus: rename/copy/settings/stars/archive/restore/history/export and owner checks passed"
+End

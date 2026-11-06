@@ -32,8 +32,11 @@
     if(!visible(panel))return;
     const viewport=bounds(),margin=8,gap=6;
     const trigger=anchor?.resolve?.() || (anchor?.trigger?.isConnected?anchor.trigger:null);
-    const rect=trigger?trigger.getBoundingClientRect():anchor?.rect||{left:viewport.left+margin,bottom:viewport.top+64,top:viewport.top+64};
-    const maxWidth=Math.max(1,viewport.width-margin*2),maxHeight=Math.max(1,viewport.height-margin*2);
+    const rect=trigger&&visible(trigger)?trigger.getBoundingClientRect():anchor?.rect||{left:viewport.left+margin,bottom:viewport.top+64,top:viewport.top+64};
+    const maxWidth=Math.max(1,viewport.width-margin*2),viewportHeight=Math.max(1,viewport.height-margin*2);
+    const availableBelow=viewport.top+viewport.height-margin-rect.bottom-gap,availableAbove=rect.top-viewport.top-margin-gap;
+    const bestSpace=Math.max(availableBelow,availableAbove);
+    const maxHeight=bestSpace>=200?Math.min(viewportHeight,bestSpace):viewportHeight;
     style(panel,'position','fixed');style(panel,'box-sizing','border-box');
     style(panel,'inset-inline-end','auto');style(panel,'inset-block-start','auto');
     style(panel,'right','auto');style(panel,'bottom','auto');
@@ -103,7 +106,7 @@
       const target=event.target.closest('button,[role="button"]');
       if(!target)return;
       if(target.matches('.weba-add-card-top,.weba-add-card-bottom,[id$=".NewCard"],.weba-card'))rememberEditor(target);
-      for(const [button,panel] of [['ViewMenu','Views'],['AccountToggle','AccountMenu']]){
+      for(const [button,panel] of [['ViewMenu','Views'],['AccountToggle','AccountMenu'],['ContextRename','ActionPanel'],['ContextCopy','ActionPanel'],['ContextMove','ActionPanel'],['ContextColor','ActionPanel'],['ContextWip','ActionPanel'],['ContextDescription','ActionPanel'],['ContextAddList','ActionPanel'],['ContextAddLane','ActionPanel'],['ContextHistory','ItemBrowser'],['ArchivedItems','ItemBrowser'],['BoardSettings','ContextMenu'],...['Comments','Checklists','ChecklistItems','Subtasks','Dependencies','Fields','Time','Attachments'].flatMap(name=>[['Context'+name,'DetailsPanel'],['Card'+name,'DetailsPanel']])]){
         if(target.id.endsWith('.'+button)){
           const popup=document.querySelector(`[id$=".${panel}"]`);
           if(popup)near(popup,target);
@@ -114,7 +117,7 @@
       if(event.key!=='Escape')return;
       const html=[...document.querySelectorAll('.weba-structure-menu,.weba-structure-composer')].filter(visible).pop();
       if(html){html.querySelector('.weba-popup-close')?.click();event.preventDefault();return;}
-      for(const [panel,close] of [['Editor','CloseEditor'],['Views','CloseViews'],['AccountMenu','CloseAccount']]){
+      for(const [panel,close] of [['DetailsPanel','CloseDetails'],['ActionPanel','CloseAction'],['ContextMenu','CloseContext'],['ItemBrowser','CloseBrowser'],['Editor','CloseEditor'],['Views','CloseViews'],['AccountMenu','CloseAccount']]){
         if(visible(document.querySelector(`[id$=".${panel}"]`))){document.querySelector(`[id$=".${close}"]`)?.click();event.preventDefault();break;}
       }
     });

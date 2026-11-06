@@ -7,6 +7,7 @@
   const monthDays = (year, month) => new Date(year, month + 1, 0).getDate();
   function render() {
     document.querySelectorAll('.weba-content').forEach(section => {
+      if(section.dataset.boardColor)document.documentElement.style.setProperty('--weba-board-color',section.dataset.boardColor);
       const data = section.querySelector('.weba-data'), report = section.querySelector('.weba-report');
       if (!data || !report) return;
       report.replaceChildren(); data.hidden = false;
@@ -15,6 +16,14 @@
           if (root.gw && section.dataset.tree) root.gw.update(section.dataset.tree, '$' + btoa(tile.dataset.boardKey), null);
         };
       });
+      function nativeMenu(kind,id,trigger,action){
+        const panel=document.querySelector('[id$=".ContextMenu"]');
+        if(!panel||!section.dataset.context||!root.gw)return false;
+        root.webaPopup?.near(panel,trigger);
+        if(action)root.webaPopup?.near(document.querySelector('[id$=".ActionPanel"]'),trigger);
+        root.gw.update(section.dataset.context,'text',kind+'|'+id+(action?'|'+action:''),null);return true;
+      }
+      data.querySelectorAll('[data-context-kind]').forEach(button=>button.onclick=event=>{event.stopPropagation();nativeMenu(button.dataset.contextKind,button.dataset.contextId,button);});
       const cards = [...data.querySelectorAll('.weba-card')].sort((a,b)=>Number(a.dataset.order||0)-Number(b.dataset.order||0)), view = section.dataset.view;
       function add(parent, tag, text, cls, localize = true) {
         const el = document.createElement(tag);
@@ -76,6 +85,7 @@
           row.dataset.lane=lane;
           const laneKey=section.dataset.board+'|'+lane;
           const laneHeader=add(row,'header',undefined,'weba-swimlane-header');
+          const laneColor=layout.find(e=>e.dataset.lane===lane)?.dataset.color;if(laneColor)laneHeader.style.backgroundColor=laneColor;
           if(view==='Swimlanes') add(laneHeader,'h3',lane,undefined,false);
           const columns=add(row,'div',undefined,'weba-columns');
           if(view==='Swimlanes') {
@@ -84,8 +94,8 @@
             const caret=button(controls,columns.hidden?'▸':'▾','Collapse',el=>toggle(laneKey,columns,el),'weba-collapse-lane');
             caret.setAttribute('aria-expanded',String(!columns.hidden));
             if(editable) {
-              button(controls,'☰','Swimlane',trigger=>menu(laneHeader,[['Add swimlane',()=>composer(row,'lane',lane)],['Collapse',()=>toggle(laneKey,columns,caret)]],trigger),'weba-lane-menu');
-              button(controls,'+','Add swimlane',()=>composer(row,'lane',lane),'weba-add-lane');
+              button(controls,'☰','Swimlane',trigger=>{const id=layout.find(e=>e.dataset.lane===lane)?.dataset.laneId;if(id&&nativeMenu('lane',id,trigger))return;menu(laneHeader,[['Add swimlane',()=>composer(row,'lane',lane)],['Collapse',()=>toggle(laneKey,columns,caret)]],trigger);},'weba-lane-menu');
+              button(controls,'+','Add swimlane',trigger=>{const id=layout.find(e=>e.dataset.lane===lane)?.dataset.laneId;if(id&&nativeMenu('lane',id,trigger,'Add swimlane'))return;composer(row,'lane',lane);},'weba-add-lane');
               handle(controls,'lane');
             }
           }
@@ -100,6 +110,8 @@
             const status=item.title,reference=item.id?'#'+item.id:status;
             const column=add(columns,'section',undefined,'weba-column');
             column.dataset.list=status;column.dataset.listId=item.id;column.dataset.lane=item.lane;
+            const meta=laneLayout.flatMap(l=>[...l.querySelectorAll("[data-list]")]).find(e=>e.dataset.listId===item.id);
+            if(meta?.dataset.color)column.style.backgroundColor=meta.dataset.color;
             const listHeader=add(column,'header',undefined,'weba-list-header');
             const controls=add(listHeader,'div',undefined,'weba-list-controls');
             const body=add(column,'div',undefined,'weba-list-body');
@@ -112,13 +124,20 @@
             if(editable) {
               handle(controls,'list');
               button(controls,'+','Add card',()=>send('card',actualLane,reference),'weba-add-card-top');
-              button(controls,'☰','List',trigger=>menu(listHeader,[['Add card',()=>{if(root.webaPopup)root.webaPopup.rememberEditor(trigger);send('card',actualLane,reference);}],['Add list',()=>composer(columns,'list',actualLane,reference,column)],['Collapse',()=>toggle(listKey,body,caret)]],trigger),'weba-list-menu');
-              button(controls,'⊞','Add list',()=>composer(columns,'list',actualLane,reference,column),'weba-add-list');
+              button(controls,'☰','List',trigger=>{if(item.id&&nativeMenu('list',item.id,trigger))return;menu(listHeader,[['Add card',()=>{if(root.webaPopup)root.webaPopup.rememberEditor(trigger);send('card',actualLane,reference);}],['Add list',()=>composer(columns,'list',actualLane,reference,column)],['Collapse',()=>toggle(listKey,body,caret)]],trigger);},'weba-list-menu');
+              button(controls,'⊞','Add list',trigger=>{if(item.id&&nativeMenu('list',item.id,trigger,'Add list'))return;composer(columns,'list',actualLane,reference,column);},'weba-add-list');
             }
-            add(listHeader,'h4',status,undefined,['Todo','Doing','Done'].includes(status));
+            const title=add(listHeader,'h4',status,undefined,['Todo','Doing','Done'].includes(status));
+            if(meta?.dataset.star==='1')add(title,'i',undefined,'fa fa-star').setAttribute('aria-hidden','true');
+            const limit=Number(meta?.dataset.wip||0),count=Number(meta?.dataset.count||0);
+            if(limit>0)add(title,'span',`${count}/${limit}`,'weba-wip-badge'+(count>limit?' weba-wip-exceeded':''),false);
             cards.filter(c=>item.id?c.dataset.listId===item.id:c.dataset.status===status && (view!=='Swimlanes'||(c.dataset.lane||'Default')===lane)).forEach(c=>{
               const clone=c.cloneNode(true);body.append(clone);
-              if(editable&&c.dataset.cardId){clone.classList.add('weba-draggable-card');handle(clone,'card');}
+              if(c.dataset.color)clone.style.backgroundColor=c.dataset.color;
+              if(editable&&c.dataset.cardId){
+                clone.classList.add('weba-draggable-card');handle(clone,'card');
+                const menuButton=button(clone,'☰','Card actions',trigger=>nativeMenu('card',c.dataset.cardId,trigger),'weba-card-menu');
+              }
               if(c.dataset.cardKey) {
                 clone.tabIndex=0;clone.setAttribute('role','button');
                 const open=()=>{if(root.webaPopup)root.webaPopup.rememberEditor(clone);if(root.gw&&section.dataset.tree)root.gw.update(section.dataset.tree,'$'+btoa(c.dataset.cardKey),null);};
@@ -175,7 +194,7 @@
         });
         if (view === 'Gantt') add(report,'p','Due-date milestones. Durations and dependencies are not recorded yet.');
       } else {
-        if (!cards.length && !['Boards','Archive'].includes(view) && !data.querySelector('[data-board-key]')) add(report,'p','No cards. Open the page menu to create a board, then select it and add a card.');
+        if (!cards.length && !['Boards','Archive','Starred'].includes(view) && !data.querySelector('[data-board-key]')) add(report,'p','No cards. Open the page menu to create a board, then select it and add a card.');
         return;
       }
       data.hidden = true;

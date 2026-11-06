@@ -3,6 +3,16 @@
 Export
 
 Private $board As Integer
+Private $loadingDetails As Boolean
+Private $detailsBoard As Integer
+Private $detailsCard As Integer
+Private $entryId As Integer
+Private $fileId As Integer
+Private $contextBoard As Integer
+Private $contextKind As String
+Private $contextId As Integer
+Private $action As String
+Private $browsingArchive As Boolean
 Private $listId As Integer
 Private $card As Integer
 Private $view As String = "Boards"
@@ -65,6 +75,7 @@ Public Sub Boards_Select()
     Next
     Editor.Show()
   Endif
+  UpdateCardActions()
   If Left(Boards.Key, 1) = "b" Or $view = "Boards" Or $view = "Archive" Then $view = "Swimlanes"
   ContentRow.Show()
   AccountPanel.Hide()
@@ -108,6 +119,7 @@ Public Sub NewCard_Click()
   Endif
   Editor.Show()
   $card = 0
+  UpdateCardActions()
   CardTitle.Text = ""
   Description.Text = ""
   Assignee.Text = Session["username"]
@@ -117,6 +129,7 @@ End
 
 Public Sub SaveCard_Click()
   $card = KanbanStore.SaveCard($board, $card, CardTitle.Text, Description.Text, Lane.Text, Status.Text, Assignee.Text, Labels.Text, DueDay.Text, $listId)
+  UpdateCardActions()
   Notice.Text = "Card saved"
   RefreshTree()
 Catch
@@ -126,6 +139,8 @@ End
 Public Sub ArchiveCard_Click()
   KanbanStore.ArchiveCard($board, $card, Not $archive)
   $card = 0
+  Editor.Hide()
+  UpdateCardActions()
   RefreshTree()
 Catch
   Notice.Text = Error.Text
@@ -201,10 +216,12 @@ Public Sub Visual_Render()
   Dim text As String
   Dim lane As Result
   Dim list As Result
+  Dim boardColor As String = "#2980b9"
   If Not Session["username"] Then Return
   Print "<script>" & File.Load(".public/kanban.js") & "</script>"
   Print "<link rel=\"stylesheet\" href=\"kanban.css\">"
-  Print "<section data-drag=\"" & Html(DragAction.Name) & "\" data-board=\"" & Str($board) & "\" data-action=\"" & Html(BoardAction.Name) & "\" data-editable=\"" & If($board And Not $archive, "true", "false") & "\" class=\"weba-content\" data-tree=\"" & Html(Boards.Name) & "\" data-view=\"" & Html($view) & "\">"
+  If $board Then boardColor = WorkspaceStore.Setting($board, "board", $board, "color", "#2980b9")
+  Print "<section data-board-color=\"" & Html(boardColor) & "\" data-context=\"" & Html(ContextAction.Name) & "\" data-drag=\"" & Html(DragAction.Name) & "\" data-board=\"" & Str($board) & "\" data-action=\"" & Html(BoardAction.Name) & "\" data-editable=\"" & If($board And Not $archive, "true", "false") & "\" class=\"weba-content\" data-tree=\"" & Html(Boards.Name) & "\" data-view=\"" & Html($view) & "\">"
   If $view = "Profile" Then
     Print "<p>Signed in as " & Html(Session["username"]) & "</p>"
   Else If $view = "Admin panel" Then
@@ -226,10 +243,12 @@ Public Sub Visual_Render()
       Print "<div class=\"weba-layout\" hidden>"
       lane = KanbanStore.Lanes($board)
       For Each lane
-        Print "<section data-order=\"" & Str(KanbanStore.ItemOrder($board, "lane", lane!title, lane!id)) & "\" data-lane=\"" & Html(lane!title) & "\">"
+        If WorkspaceStore.Archived($board, "lane", lane!id) Then Continue
+        Print "<section data-color=\"" & Html(WorkspaceStore.Setting($board, "lane", lane!id, "color")) & "\" data-lane-id=\"" & Str(lane!id) & "\" data-order=\"" & Str(KanbanStore.ItemOrder($board, "lane", lane!title, lane!id)) & "\" data-lane=\"" & Html(lane!title) & "\">"
         list = KanbanStore.Lists($board, lane!title)
         For Each list
-          Print "<span data-list-id=\"" & Str(list!id) & "\" data-list=\"" & Html(list!title) & "\"></span>"
+          If WorkspaceStore.Archived($board, "list", list!id) Then Continue
+          Print "<span data-count=\"" & Str(WorkspaceStore.ListCount($board, list!id)) & "\" data-wip=\"" & Html(WorkspaceStore.Setting($board, "list", list!id, "wip", "0")) & "\" data-color=\"" & Html(WorkspaceStore.Setting($board, "list", list!id, "color")) & "\" data-star=\"" & WorkspaceStore.Setting($board, "list", list!id, "star", "0") & "\" data-list-id=\"" & Str(list!id) & "\" data-list=\"" & Html(list!title) & "\"></span>"
         Next
         Print "</section>"
       Next
@@ -238,13 +257,15 @@ Public Sub Visual_Render()
     Print "<div class=\"weba-data\">"
     For Each b
       If $board And b!id <> $board Then Continue
-      If Not $board And ($view = "Boards" Or $view = "Archive") Then
-        Print "<button type=\"button\" class=\"weba-board-tile\" data-board-key=\"b" & Str(b!id) & "\"><strong>" & Html(b!title) & "</strong></button>"
+      If $view = "Starred" And WorkspaceStore.Setting(b!id, "board", b!id, "star") <> "1" Then Continue
+      If Not $board And ($view = "Boards" Or $view = "Archive" Or $view = "Starred") Then
+        Print "<div class=\"weba-board-tile-group\"><button style=\"background-color:" & Html(WorkspaceStore.Setting(b!id, "board", b!id, "color", "#2980b9")) & "\" type=\"button\" class=\"weba-board-tile\" data-board-key=\"b" & Str(b!id) & "\"><strong>" & Html(b!title) & "</strong></button><button class=\"weba-board-context fa fa-bars\" data-context-kind=\"board\" data-context-id=\"" & Str(b!id) & "\" aria-label=\"Board menu\"></button></div>"
         Continue
       Endif
       Print "<h3>" & Html(b!title) & "</h3>"
       c = KanbanStore.Cards(b!id, $archive)
       For Each c
+        If Not $archive And WorkspaceStore.ListHidden(b!id, KanbanStore.CardListId(b!id, c!id)) Then Continue
         If $view = "My cards" And c!assignee <> Session["username"] Then Continue
         If $view = "Due cards" Then
           If Not c!due_day Then Continue
@@ -252,7 +273,7 @@ Public Sub Visual_Render()
         Endif
         text = c!title & " " & c!description & " " & c!labels & " " & c!assignee
         If Filter.Text And InStr(LCase(text), LCase(Filter.Text)) = 0 Then Continue
-        Print "<article data-list-id=\"" & Str(KanbanStore.CardListId(b!id, c!id)) & "\" data-order=\"" & Str(KanbanStore.ItemOrder(b!id, "card", CStr(c!id), c!id)) & "\" data-card-id=\"" & Str(c!id) & "\" class=\"weba-card\" data-card-key=\"c" & Str(c!id) & ":" & Str(b!id) & "\" data-status=\"" & Html(c!status) & "\" data-lane=\"" & Html(c!lane) & "\" data-due=\"" & Html(c!due_day) & "\">"
+        Print "<article data-color=\"" & Html(WorkspaceStore.Setting(b!id, "card", c!id, "color")) & "\" data-list-id=\"" & Str(KanbanStore.CardListId(b!id, c!id)) & "\" data-order=\"" & Str(KanbanStore.ItemOrder(b!id, "card", CStr(c!id), c!id)) & "\" data-card-id=\"" & Str(c!id) & "\" class=\"weba-card\" data-card-key=\"c" & Str(c!id) & ":" & Str(b!id) & "\" data-status=\"" & Html(c!status) & "\" data-lane=\"" & Html(c!lane) & "\" data-due=\"" & Html(c!due_day) & "\">"
         Print "<strong>" & Html(c!title) & "</strong><p>" & Html(c!description) & "</p><small>" & Html(c!status) & " · " & Html(c!assignee) & " · " & Html(c!labels) & " · " & Html(c!due_day) & "</small></article>"
       Next
     Next
@@ -391,7 +412,7 @@ End
 
 Private Sub UpdateHeader()
   Dim b As Result
-  Dim overview As Boolean = Not $board And ($view = "Boards" Or $view = "Archive")
+  Dim overview As Boolean = Not $board And ($view = "Boards" Or $view = "Archive" Or $view = "Starred")
   ViewMenu.Visible = $view <> "Profile" And $view <> "Admin panel"
   AddBoard.Visible = ViewMenu.Visible
   HeaderSearch.Visible = ViewMenu.Visible
@@ -536,4 +557,630 @@ Public Sub DragAction_Change()
 Catch
   Notice.Text = Error.Text
   Visual.Refresh()
+End
+
+Public Sub ContextAction_Change()
+  Dim wire As String
+  Dim fields As String[]
+  If Not ContextAction.Text Then Return
+  wire = ContextAction.Text
+  ContextAction.Text = ""
+  fields = Split(wire, "|")
+  If fields.Count < 2 Or fields.Count > 3 Then Error.Raise("Invalid menu context")
+  OpenContext(fields[0], CInt(fields[1]), If(fields[0] = "board", CInt(fields[1]), $board))
+  If fields.Count = 3 Then
+    If fields[2] <> "Add list" And fields[2] <> "Add swimlane" Then Error.Raise("Unknown menu action")
+    BeginAction(fields[2])
+  Endif
+Catch
+  Notice.Text = Error.Text
+End
+
+Private Sub OpenContext(kind As String, itemId As Integer, boardId As Integer)
+  Dim r As Result = WorkspaceStore.Record(boardId, kind, itemId)
+  Dim archived As Boolean = WorkspaceStore.Archived(boardId, kind, itemId)
+  $contextBoard = boardId
+  $contextKind = kind
+  $contextId = itemId
+  ContextTitle.Text = r!title
+  ContextMenu.Show()
+  ContextArchive.Visible = Not archived
+  ContextRestore.Visible = archived
+  ContextRename.Visible = Not archived
+  ContextCopy.Visible = True
+  ContextAddCard.Visible = Not archived And kind <> "card"
+  ContextAddList.Visible = Not archived And kind <> "card"
+  ContextAddLane.Visible = Not archived And (kind = "lane" Or kind = "board")
+  ContextMove.Visible = Not archived And kind <> "board"
+  ContextComments.Visible = kind = "card"
+  ContextChecklists.Visible = kind = "card"
+  ContextChecklistItems.Visible = kind = "card"
+  ContextSubtasks.Visible = kind = "card"
+  ContextDependencies.Visible = kind = "card"
+  ContextFields.Visible = kind = "card"
+  ContextTime.Visible = kind = "card"
+  ContextAttachments.Visible = kind = "card"
+  ContextWip.Visible = kind = "list"
+  ContextDescription.Visible = kind = "board"
+  ContextStar.Class = If(WorkspaceStore.Setting(boardId, kind, itemId, "star") = "1", "weba-starred", "")
+  ContextWatch.Class = If(WorkspaceStore.Setting(boardId, kind, itemId, "watch") = "1", "weba-watched", "")
+  ContextStar.Text = If(WorkspaceStore.Setting(boardId, kind, itemId, "star") = "1", "Unstar", "Star")
+  ContextWatch.Text = If(WorkspaceStore.Setting(boardId, kind, itemId, "watch") = "1", "Unwatch", "Watch")
+End
+
+Public Sub BoardSettings_Click()
+  If Not $board Then Error.Raise("Select a board first")
+  OpenContext("board", $board, $board)
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub CloseContext_Click()
+  ContextMenu.Hide()
+End
+
+Public Sub CloseAction_Click()
+  ActionPanel.Hide()
+End
+
+Private Sub BeginAction(action As String)
+  Dim r As Result = WorkspaceStore.Record($contextBoard, $contextKind, $contextId)
+  $action = action
+  ActionTitle.Text = action & ": " & r!title
+  ActionText.Text = r!title
+  ActionFlag.Visible = action = "WIP"
+  ActionFlag.Value = False
+  If action = "WIP" Then ActionFlag.Value = WorkspaceStore.Setting($contextBoard, $contextKind, $contextId, "wip_strict", "0") = "1"
+  ActionText.Visible = action <> "Move"
+  If action = "Add list" Or action = "Add swimlane" Then ActionText.Text = ""
+  DestinationLane.Visible = action = "Move" Or action = "Add list" Or (action = "Copy" And $contextKind = "list")
+  DestinationLaneLabel.Visible = DestinationLane.Visible
+  DestinationList.Visible = action = "Move" And $contextKind = "card"
+  DestinationListLabel.Visible = DestinationList.Visible
+  LoadDestinationLanes()
+  If $contextKind = "list" Or $contextKind = "card" Then
+    DestinationLane.Index = DestinationLane.List.Find(r!lane)
+  Else If $contextKind = "lane" Then
+    DestinationLane.Index = DestinationLane.List.Find(r!title)
+  Endif
+  LoadDestinationLists()
+  If action = "Copy" Then ActionText.Text = r!title & " copy"
+  If action = "Color" Then ActionText.Text = WorkspaceStore.Setting($contextBoard, $contextKind, $contextId, "color", "#2980b9")
+  If action = "WIP" Then ActionText.Text = WorkspaceStore.Setting($contextBoard, $contextKind, $contextId, "wip", "0")
+  If action = "Description" Then ActionText.Text = WorkspaceStore.Setting($contextBoard, $contextKind, $contextId, "description")
+  ContextMenu.Hide()
+  ActionPanel.Show()
+End
+
+Private Sub LoadDestinationLanes()
+  Dim r As Result
+  Dim values As New String[]
+  r = KanbanStore.Lanes($contextBoard)
+  For Each r
+    values.Add(r!title)
+  Next
+  DestinationLane.List = values
+  If values.Count Then DestinationLane.Index = 0
+  LoadDestinationLists()
+End
+
+Private Sub LoadDestinationLists()
+  Dim r As Result
+  Dim values As New String[]
+  If DestinationLane.Text Then
+    r = KanbanStore.Lists($contextBoard, DestinationLane.Text)
+    For Each r
+      values.Add(CStr(r!id) & " | " & r!title)
+    Next
+  Endif
+  DestinationList.List = values
+  If values.Count Then DestinationList.Index = 0
+End
+
+Public Sub DestinationLane_Click()
+  LoadDestinationLists()
+End
+
+Public Sub ContextRename_Click()
+  BeginAction("Rename")
+Catch
+  Notice.Text = Error.Text
+End
+Public Sub ContextCopy_Click()
+  BeginAction("Copy")
+Catch
+  Notice.Text = Error.Text
+End
+Public Sub ContextMove_Click()
+  BeginAction("Move")
+Catch
+  Notice.Text = Error.Text
+End
+Public Sub ContextColor_Click()
+  BeginAction("Color")
+Catch
+  Notice.Text = Error.Text
+End
+Public Sub ContextWip_Click()
+  BeginAction("WIP")
+Catch
+  Notice.Text = Error.Text
+End
+Public Sub ContextDescription_Click()
+  BeginAction("Description")
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub ActionConfirm_Click()
+  Dim r As Result
+  Dim destination As Integer
+  Dim afterRef As String
+  Dim oldTitle As String
+  Select $action
+    Case "Add list"
+      If $contextKind = "list" Then
+        r = WorkspaceStore.Record($contextBoard, "list", $contextId)
+        If r!lane = DestinationLane.Text Then afterRef = "#" & CStr($contextId)
+      Endif
+      KanbanStore.AddList($contextBoard, DestinationLane.Text, ActionText.Text, afterRef)
+    Case "Add swimlane"
+      KanbanStore.AddLane($contextBoard, ActionText.Text)
+    Case "Rename"
+      r = WorkspaceStore.Record($contextBoard, $contextKind, $contextId)
+      oldTitle = r!title
+      WorkspaceStore.Rename($contextBoard, $contextKind, $contextId, ActionText.Text)
+      If $contextKind = "lane" And Lane.Text = oldTitle Then Lane.Text = ActionText.Text
+      If $contextKind = "list" And $listId = $contextId Then Status.Text = ActionText.Text
+      If $contextKind = "card" And $card = $contextId Then CardTitle.Text = ActionText.Text
+    Case "Copy"
+      WorkspaceStore.Copy($contextBoard, $contextKind, $contextId, ActionText.Text, DestinationLane.Text)
+    Case "Color"
+      WorkspaceStore.SetSetting($contextBoard, $contextKind, $contextId, "color", ActionText.Text)
+    Case "WIP"
+      WorkspaceStore.SetSetting($contextBoard, $contextKind, $contextId, "wip", ActionText.Text)
+      WorkspaceStore.SetSetting($contextBoard, $contextKind, $contextId, "wip_strict", If(ActionFlag.Value, "1", "0"))
+    Case "Description"
+      WorkspaceStore.SetSetting($contextBoard, $contextKind, $contextId, "description", ActionText.Text)
+    Case "Move"
+      r = WorkspaceStore.Record($contextBoard, $contextKind, $contextId)
+      Select $contextKind
+        Case "card"
+          destination = CInt(Split(DestinationList.Text, " | ")[0])
+          KanbanStore.MoveCard($contextBoard, $contextId, DestinationLane.Text, "#" & CStr(destination), 0)
+          If $card = $contextId Then
+            r = KanbanStore.GetList($contextBoard, "#" & CStr(destination), DestinationLane.Text)
+            Lane.Text = DestinationLane.Text
+            Status.Text = r!title
+            $listId = destination
+          Endif
+        Case "list"
+          KanbanStore.MoveList($contextBoard, r!lane, "#" & CStr($contextId), DestinationLane.Text, "")
+          If $listId = $contextId Then Lane.Text = DestinationLane.Text
+        Case "lane"
+          KanbanStore.MoveLane($contextBoard, r!title, DestinationLane.Text)
+      End Select
+    Case Else
+      Error.Raise("Unknown menu action")
+  End Select
+  ActionPanel.Hide()
+  Notice.Text = "Saved"
+  RefreshTree()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub ContextStar_Click()
+  WorkspaceStore.Toggle($contextBoard, $contextKind, $contextId, "star")
+  ContextMenu.Hide()
+  RefreshTree()
+Catch
+  Notice.Text = Error.Text
+End
+Public Sub ContextWatch_Click()
+  WorkspaceStore.Toggle($contextBoard, $contextKind, $contextId, "watch")
+  ContextMenu.Hide()
+Catch
+  Notice.Text = Error.Text
+End
+Public Sub ContextArchive_Click()
+  WorkspaceStore.SetArchived($contextBoard, $contextKind, $contextId, True)
+  ContextMenu.Hide()
+  Editor.Hide()
+  If $contextKind = "board" And $board = $contextBoard Then $board = 0
+  RefreshTree()
+Catch
+  Notice.Text = Error.Text
+End
+Public Sub ContextRestore_Click()
+  WorkspaceStore.SetArchived($contextBoard, $contextKind, $contextId, False)
+  ContextMenu.Hide()
+  RefreshTree()
+  If $browsingArchive Then ArchivedItems_Click()
+Catch
+  Notice.Text = Error.Text
+End
+Public Sub ContextHistory_Click()
+  Dim r As Result
+  $browsingArchive = False
+  BrowserTitle.Text = "History: " & ContextTitle.Text
+  BrowserTree.Clear()
+  r = WorkspaceStore.History($contextBoard, $contextKind, $contextId)
+  For Each r
+    BrowserTree.Add("event:" & CStr(r!id), Str(r!created_at) & " · " & r!actor & " · " & r!message)
+  Next
+  ContextMenu.Hide()
+  ItemBrowser.Show()
+Catch
+  Notice.Text = Error.Text
+End
+Public Sub ContextExport_Click()
+  Dim text As String = WorkspaceStore.ExportData($contextBoard, $contextKind, $contextId)
+  WebForm.Exec("(function(){const b=new Blob([" & JS(text) & "],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='weba-export.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);})();")
+  ContextMenu.Hide()
+Catch
+  Notice.Text = Error.Text
+End
+Public Sub ArchivedItems_Click()
+  Dim r As Result
+  $browsingArchive = True
+  If Not $board Then Error.Raise("Select a board first")
+  $contextBoard = $board
+  BrowserTitle.Text = "Archived items"
+  BrowserTree.Clear()
+  r = KanbanStore.Lanes($board)
+  For Each r
+    If WorkspaceStore.Archived($board, "lane", r!id) Then BrowserTree.Add("lane:" & CStr(r!id), "Swimlane: " & r!title)
+  Next
+  r = WebDatabase.OpenConnection().Find("kb_lists", "board_id = &1", $board)
+  For Each r
+    If WorkspaceStore.Archived($board, "list", r!id) Then BrowserTree.Add("list:" & CStr(r!id), "List: " & r!title)
+  Next
+  r = KanbanStore.Cards($board, True)
+  For Each r
+    BrowserTree.Add("card:" & CStr(r!id), "Card: " & r!title)
+  Next
+  ItemBrowser.Show()
+Catch
+  Notice.Text = Error.Text
+End
+Public Sub BrowserTree_Select()
+  Dim fields As String[]
+  If Not $browsingArchive Or Not BrowserTree.Key Then Return
+  fields = Split(BrowserTree.Key, ":")
+  OpenContext(fields[0], CInt(fields[1]), $contextBoard)
+End
+Public Sub CloseBrowser_Click()
+  ItemBrowser.Hide()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub ContextAddCard_Click()
+  Dim r As Result
+  Dim laneRows As Result
+  $board = $contextBoard
+  $view = "Swimlanes"
+  If $contextKind = "list" Then
+    r = WorkspaceStore.Record($contextBoard, "list", $contextId)
+  Else If $contextKind = "lane" Then
+    laneRows = WorkspaceStore.Record($contextBoard, "lane", $contextId)
+    r = KanbanStore.Lists($contextBoard, laneRows!title)
+    If Not r.Available Then Error.Raise("Add a list first")
+  Endif
+  ContextMenu.Hide()
+  RefreshTree()
+  NewCard_Click()
+  If r Then
+    Lane.Text = r!lane
+    Status.Text = r!title
+    $listId = r!id
+  Endif
+Catch
+  Notice.Text = Error.Text
+End
+Public Sub ContextAddList_Click()
+  BeginAction("Add list")
+Catch
+  Notice.Text = Error.Text
+End
+Public Sub ContextAddLane_Click()
+  BeginAction("Add swimlane")
+Catch
+  Notice.Text = Error.Text
+End
+Public Sub Starred_Click()
+  Home_Click()
+  $view = "Starred"
+  RefreshTree()
+End
+
+Private Sub ShowDetails(index As Integer, boardId As Integer, cardId As Integer)
+  Dim r As Result = WorkspaceStore.Record(boardId, "card", cardId)
+  $loadingDetails = True
+  $detailsBoard = boardId
+  $detailsCard = cardId
+  DetailsTitle.Text = r!title
+  DetailKind.List = ["Comments", "Checklists", "Checklist items", "Subtasks", "Dependencies", "Custom fields", "Time tracking", "Attachments"]
+  DetailType.List = ["text", "number", "date", "checkbox"]
+  DetailType.Index = 0
+  DetailKind.Index = index
+  ContextMenu.Hide()
+  DetailsPanel.Show()
+  $loadingDetails = False
+  LoadDetails()
+Catch
+  $loadingDetails = False
+  Error.Propagate()
+End
+
+Private Function DetailCode() As String
+  Return ["comment", "checklist", "checkitem", "subtask", "dependency", "custom", "time", "file"][DetailKind.Index]
+End
+
+Private Sub LoadDetails()
+  Dim r As Result
+  Dim value As String
+  Dim checklists As New String[]
+  Dim kind As String = DetailCode()
+  DetailTree.Clear()
+  $entryId = 0
+  $fileId = 0
+  DetailTitle.Text = ""
+  DetailBody.Text = ""
+  DetailNumber.Text = "0"
+  DetailDone.Value = False
+  DetailTitle.Visible = kind <> "file"
+  DetailBody.Visible = kind = "comment" Or kind = "custom" Or kind = "time"
+  DetailNumber.Visible = kind = "subtask" Or kind = "dependency" Or kind = "time"
+  DetailDone.Visible = kind = "checkitem" Or kind = "custom"
+  DetailType.Visible = kind = "custom"
+  DetailParent.Visible = kind = "checkitem"
+  DetailSave.Visible = kind <> "file"
+  DetailNew.Visible = kind <> "file"
+  DetailStart.Visible = kind = "time"
+  DetailStop.Visible = kind = "time"
+  DetailUpload.Visible = kind = "file"
+  DetailDownload.Visible = kind = "file"
+  r = CardContent.Entries($detailsBoard, $detailsCard, "checklist")
+  For Each r
+    checklists.Add(CStr(r!id) & " | " & r!title)
+    If kind = "checklist" Or kind = "checkitem" Then
+      DetailTree.Add("e" & CStr(r!id), r!title)
+      DetailTree["e" & CStr(r!id)].Expanded = True
+    Endif
+  Next
+  DetailParent.List = checklists
+  If checklists.Count Then DetailParent.Index = 0
+  If kind = "file" Then
+    r = CardContent.Files($detailsBoard, $detailsCard)
+    For Each r
+      DetailTree.Add("f" & CStr(r!id), r!filename)
+    Next
+  Else If kind <> "checklist" Then
+    r = CardContent.Entries($detailsBoard, $detailsCard, kind)
+    For Each r
+      value = r!title
+      If kind = "comment" Then value = r!author & ": " & r!body
+      If kind = "custom" Then value &= ": " & r!body
+      If kind = "time" Then value &= " · " & Str(Round(r!amount, -2)) & " min"
+      If kind = "checkitem" Then
+        value = If(r!done, "[x] ", "[ ] ") & value
+        DetailTree.Add("e" & CStr(r!id), value, "", "e" & CStr(r!parent_id))
+      Else
+        DetailTree.Add("e" & CStr(r!id), value)
+      Endif
+    Next
+  Endif
+End
+
+Public Sub DetailKind_Click()
+  If $loadingDetails Then Return
+  LoadDetails()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub DetailTree_Select()
+  Dim r As Result
+  Dim index As Integer
+  If Not DetailTree.Key Then Return
+  If Left(DetailTree.Key) = "f" Then
+    $fileId = CInt(Mid(DetailTree.Key, 2))
+    Return
+  Endif
+  $entryId = CInt(Mid(DetailTree.Key, 2))
+  $loadingDetails = True
+  r = CardContent.Entry($detailsBoard, $detailsCard, $entryId)
+  DetailKind.Index = ["comment", "checklist", "checkitem", "subtask", "dependency", "custom", "time"].Find(r!kind)
+  DetailTitle.Text = r!title
+  DetailBody.Text = r!body
+  DetailNumber.Text = Str(r!amount)
+  DetailDone.Value = r!done
+  DetailType.Index = DetailType.List.Find(r!value_type)
+  $loadingDetails = False
+  If r!parent_id Then
+    For index = 0 To DetailParent.List.Max
+      If CInt(Split(DetailParent.List[index], " | ")[0]) = r!parent_id Then DetailParent.Index = index
+    Next
+  Endif
+Catch
+  $loadingDetails = False
+  Notice.Text = Error.Text
+End
+
+Public Sub DetailNew_Click()
+  $entryId = 0
+  DetailTitle.Text = ""
+  DetailBody.Text = ""
+  DetailNumber.Text = "0"
+  DetailDone.Value = False
+End
+
+Public Sub DetailSave_Click()
+  Dim parentId As Integer
+  Dim kind As String = DetailCode()
+  Dim number As Float
+  If DetailNumber.Text Then number = CFloat(DetailNumber.Text)
+  If kind = "checkitem" Then parentId = CInt(Split(DetailParent.Text, " | ")[0])
+  If kind = "subtask" And number = 0 Then
+    CardContent.NewSubtask($detailsBoard, $detailsCard, DetailTitle.Text)
+  Else
+    CardContent.Save($detailsBoard, $detailsCard, $entryId, kind, DetailTitle.Text, DetailBody.Text, parentId, DetailDone.Value, number, DetailType.Text)
+  Endif
+  LoadDetails()
+  RefreshTree()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub DetailDelete_Click()
+  If DetailCode() = "file" Then
+    CardContent.DeleteFile($detailsBoard, $detailsCard, $fileId)
+  Else
+    CardContent.DeleteEntry($detailsBoard, $detailsCard, $entryId)
+  Endif
+  LoadDetails()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub DetailStart_Click()
+  CardContent.StartTimer($detailsBoard, $detailsCard)
+  LoadDetails()
+Catch
+  Notice.Text = Error.Text
+End
+Public Sub DetailStop_Click()
+  CardContent.StopTimer($detailsBoard, $detailsCard)
+  LoadDetails()
+Catch
+  Notice.Text = Error.Text
+End
+Public Sub DetailUpload_Click()
+  DetailUpload.Upload()
+End
+Public Sub DetailUpload_Finish()
+  If Stat(DetailUpload.Path).Size > 10485760 Then Error.Raise("Choose a file up to 10 MiB")
+  CardContent.AddFile($detailsBoard, $detailsCard, DetailUpload.File, File.Load(DetailUpload.Path))
+  LoadDetails()
+Catch
+  Notice.Text = Error.Text
+End
+Public Sub DetailDownload_Click()
+  Dim r As Result = CardContent.FileRecord($detailsBoard, $detailsCard, $fileId)
+  Dim data As String = Base64(r!content.Data)
+  WebForm.Exec("(function(){const bytes=Uint8Array.from(atob(" & JS(data) & "),c=>c.charCodeAt(0));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([bytes],{type:'application/octet-stream'}));a.download=" & JS(r!filename) & ";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);})();")
+Catch
+  Notice.Text = Error.Text
+End
+Public Sub CloseDetails_Click()
+  DetailsPanel.Hide()
+End
+
+Public Sub ContextComments_Click()
+  ShowDetails(0, $contextBoard, $contextId)
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub ContextChecklists_Click()
+  ShowDetails(1, $contextBoard, $contextId)
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub ContextChecklistItems_Click()
+  ShowDetails(2, $contextBoard, $contextId)
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub ContextSubtasks_Click()
+  ShowDetails(3, $contextBoard, $contextId)
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub ContextDependencies_Click()
+  ShowDetails(4, $contextBoard, $contextId)
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub ContextFields_Click()
+  ShowDetails(5, $contextBoard, $contextId)
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub ContextTime_Click()
+  ShowDetails(6, $contextBoard, $contextId)
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub ContextAttachments_Click()
+  ShowDetails(7, $contextBoard, $contextId)
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub CardComments_Click()
+  ShowDetails(0, $board, $card)
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub CardChecklists_Click()
+  ShowDetails(1, $board, $card)
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub CardChecklistItems_Click()
+  ShowDetails(2, $board, $card)
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub CardSubtasks_Click()
+  ShowDetails(3, $board, $card)
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub CardDependencies_Click()
+  ShowDetails(4, $board, $card)
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub CardFields_Click()
+  ShowDetails(5, $board, $card)
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub CardTime_Click()
+  ShowDetails(6, $board, $card)
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub CardAttachments_Click()
+  ShowDetails(7, $board, $card)
+Catch
+  Notice.Text = Error.Text
+End
+
+Private Sub UpdateCardActions()
+  CardComments.Enabled = $card > 0
+  CardChecklists.Enabled = $card > 0
+  CardChecklistItems.Enabled = $card > 0
+  CardSubtasks.Enabled = $card > 0
+  CardDependencies.Enabled = $card > 0
+  CardFields.Enabled = $card > 0
+  CardTime.Enabled = $card > 0
+  CardAttachments.Enabled = $card > 0
 End

@@ -2,6 +2,14 @@
 
 This work adds the following features and fixes:
 
+- Add native Gambas context menus for boards, swimlanes, lists and cards: rename,
+  copy, same-board movement, colors, stars, saved watch preferences, WIP limits,
+  archives/restoration, scoped activity and JSON card export. Preserve list
+  identity and copy rich card content with validated relationship remapping.
+  Add native comments, checklists/items, subtasks, dependencies, typed card fields,
+  manual/running time records and binary attachment upload/download. Verify
+  SQLite authorization/validation and Chromium menu/detail workflows. Watch
+  preferences do not yet send notifications. Thanks to xet7.
 - Give cards stable list identities, preserving legacy assignments before
   creating same-named lists. Keep duplicate-title lists separate in rendering,
   editing, copying destinations and touch/keyboard moves. Remove the duplicate

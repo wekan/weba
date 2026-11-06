@@ -2,16 +2,19 @@
 const assert = require('node:assert/strict');
 const puppeteer = require('puppeteer');
 const path = require('node:path');
+const fs = require('node:fs');
 (async () => {
   const browser = await puppeteer.connect({browserURL:process.env.WEBA_BROWSER_URL});
+  let attachmentFile;
   const context = await browser.createBrowserContext();
   const page = await context.newPage();
   const selector = name => `[id$=".${name}"]`;
-  const entry = name => `[id$=".${name}:entry"]`;
+  const entry = name => `[id$=".${name}:entry"],textarea[id$=".${name}"]`;
   const settle = () => page.waitForFunction(() => window.gw && gw.commands.length === 0);
   const click = async name => {await settle(); await page.locator(selector(name)).click(); await settle();};
   const visible = async name => page.waitForSelector(selector(name),{visible:true});
   const fill = async (name,value) => {await settle(); await page.locator(entry(name)).fill(value);};
+  const addStructure = async (trigger,title) => {await settle();await page.click(trigger);await settle();await visible('ActionPanel');await fill('ActionText',title);await click('ActionConfirm');};
   const shot = async name => {if(process.env.WEBA_SCREENSHOT_DIR) await page.screenshot({path:path.join(process.env.WEBA_SCREENSHOT_DIR,name+'.png')});};
   page.on('pageerror', error => {throw error;});
   try {
@@ -99,6 +102,65 @@ const path = require('node:path');
     assert.equal(await page.$$eval('[id$=".Boards"] img',els=>els.filter(e=>e.getBoundingClientRect().width>0).length),0,'tree uses Font Awesome instead of visible bitmap icons');
     assert.equal(await page.$$eval('.weba-add-list .fa-plus-square-o',els=>els.length),3,'list-add uses the same regular Font Awesome icon as WeKan');
     assert.equal(await page.$$eval('.weba-column',els=>els.length),3,'empty board shows its initial lists');
+    if(process.env.WEBA_DETAILS_ONLY) {
+      async function make(title){await page.click('.weba-add-card-top');await settle();await fill('CardTitle',title);await click('SaveCard');await click('CloseEditor');}
+      async function choose(name,value){await settle();await page.select(`[id$=".${name}:select"]`,value);await settle();}
+      async function treeRow(text){const point=await page.$eval('[id$=".DetailTree"]',(tree,text)=>{const row=[...tree.querySelectorAll('tr[id]')].find(e=>e.textContent.replace(/\u00a0/g,' ').includes(text));if(!row)throw Error('Missing detail row '+text);const r=row.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2};},text);await page.mouse.click(point.x,point.y);await settle();}
+      await make('Rich card');await make('Other card');
+      const other=await page.$$eval('.weba-data .weba-card',els=>els.find(e=>e.querySelector('strong').textContent==='Other card').dataset.cardId);
+      await page.click('.weba-card-menu');await settle();await click('ContextComments');await visible('DetailsPanel');
+      await fill('DetailBody','Comment body <script>plain</script>');await click('DetailSave');
+      assert.ok(await page.$eval('[id$=".DetailTree"]',e=>e.textContent.includes('Comment')));
+      assert.equal(await page.$$eval('[id$=".DetailsPanel"] script',els=>els.length),0);
+      await choose('DetailKind','Checklists');await fill('DetailTitle','Checklist');await click('DetailSave');
+      await choose('DetailKind','Checklist items');await fill('DetailTitle','First item');await page.click(selector('DetailDone')+' input');await settle();await click('DetailSave');
+      assert.ok(await page.$eval('[id$=".DetailTree"]',e=>e.textContent.includes('[x]')));
+      await treeRow('First item');await page.click(selector('DetailDone')+' input');await settle();await click('DetailSave');
+      assert.equal(await page.$eval('[id$=".DetailTree"]',e=>(e.textContent.match(/First/g)||[]).length),1,'checklist editing updates the selected item');
+      await choose('DetailKind','Custom fields');await choose('DetailType','number');await fill('DetailTitle','Points');await fill('DetailBody','3.5');await click('DetailSave');
+      assert.ok(await page.$eval('[id$=".DetailTree"]',e=>e.textContent.includes('3.5')));
+      await choose('DetailKind','Dependencies');await fill('DetailNumber',other);await click('DetailSave');
+      assert.ok(await page.$eval('[id$=".DetailTree"]',e=>e.textContent.includes('Other')));
+      await choose('DetailKind','Subtasks');await fill('DetailTitle','Child card');await click('DetailSave');
+      await page.waitForFunction(()=>[...document.querySelectorAll('.weba-data .weba-card strong')].some(e=>e.textContent==='Child card'));
+      await choose('DetailKind','Time tracking');await click('DetailStart');await click('DetailStop');
+      assert.ok(await page.$eval('[id$=".DetailTree"]',e=>e.textContent.includes('Tracked')));
+      await choose('DetailKind','Attachments');
+      attachmentFile=path.join(process.env.TMPDIR,'weba-attachment-'+process.pid+'.txt');const contents='Attachment ä <script>plain bytes</script>';fs.writeFileSync(attachmentFile,contents);
+      const [chooser]=await Promise.all([page.waitForFileChooser(),click('DetailUpload')]);await chooser.accept([attachmentFile]);
+      await page.waitForFunction(()=>document.querySelector('[id$=".DetailTree"]').textContent.includes('weba-attachment-'));
+      await treeRow('weba-attachment-');
+      await page.evaluate(()=>{HTMLAnchorElement.prototype.click=function(){if(this.download)fetch(this.href).then(r=>r.text()).then(text=>window.__attachmentText=text);};});
+      await click('DetailDownload');await page.waitForFunction(()=>window.__attachmentText!==undefined);assert.equal(await page.evaluate(()=>window.__attachmentText),contents);
+      await click('CloseDetails');await page.click('.weba-card-menu');await settle();await click('ContextCopy');await fill('ActionText','Rich copy');await click('ActionConfirm');
+      await page.waitForFunction(()=>[...document.querySelectorAll('.weba-data .weba-card strong')].some(e=>e.textContent==='Rich copy'));
+      console.log('Browser native card details: comments, checklist create/edit, typed fields, dependencies, real subtasks, timers, native file upload/download and rich copy passed');return;
+    }
+    if(process.env.WEBA_MENUS_ONLY) {
+      async function listMenu(name){await page.click(`.weba-column[data-list="${name}"] .weba-list-menu`);await settle();await visible('ContextMenu');}
+      await listMenu('Todo');await click('ContextRename');await visible('ActionPanel');await fill('ActionText','Ready');await click('ActionConfirm');await page.waitForSelector('.weba-column[data-list="Ready"]');
+      await page.click('.weba-column[data-list="Ready"] .weba-add-card-top');await settle();await visible('Editor');await fill('CardTitle','Menu card');await click('SaveCard');await click('CloseEditor');
+      await page.click('.weba-card-menu');await settle();await visible('ContextMenu');await click('ContextCopy');await fill('ActionText','Copied card');await click('ActionConfirm');
+      await page.waitForFunction(()=>[...document.querySelectorAll('.weba-data .weba-card strong')].some(e=>e.textContent==='Copied card'));
+      await listMenu('Ready');await click('ContextCopy');await fill('ActionText','Ready copy');await click('ActionConfirm');await page.waitForSelector('.weba-column[data-list="Ready copy"]');
+      assert.equal(await page.$$eval('.weba-column[data-list="Ready copy"] .weba-card',els=>els.length),2,'native list copy includes its own cards');
+      await listMenu('Ready copy');await click('ContextColor');await fill('ActionText','#aaccee');await click('ActionConfirm');
+      assert.equal(await page.$eval('.weba-column[data-list="Ready copy"]',e=>getComputedStyle(e).backgroundColor),'rgb(170, 204, 238)');
+      await listMenu('Ready copy');await click('ContextArchive');await page.waitForSelector('.weba-column[data-list="Ready copy"]',{hidden:true});
+      await click('SidebarToggle');await click('ArchivedItems');await visible('ItemBrowser');
+      const archivePoint=await page.evaluate(()=>{
+        const tree=document.querySelector('[id$=".BrowserTree"]');
+        const item=[...tree.querySelectorAll('*')].find(e=>!e.children.length&&e.textContent.replace(/\u00a0/g,' ')==='List: Ready copy');
+        if(!item)throw Error('Archived list missing from native tree');const r=item.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2};
+      });
+      await page.mouse.click(archivePoint.x,archivePoint.y);
+      await settle();await visible('ContextMenu');await click('ContextRestore');await page.waitForSelector('.weba-column[data-list="Ready copy"]');await click('CloseBrowser');
+      await click('BoardSettings');await click('ContextColor');await fill('ActionText','#225588');await click('ActionConfirm');
+      assert.equal(await page.$eval('[id$=".Header"]',e=>getComputedStyle(e).backgroundColor),'rgb(34, 85, 136)');
+      await click('BoardSettings');await click('ContextStar');await click('CloseSidebar');await click('Starred');
+      await page.waitForSelector('.weba-board-tile');assert.equal(await page.$$eval('.weba-board-tile',els=>els.length),1);
+      console.log('Browser native menus: list rename/copy/color/archive/restore, card copy, archive tree, board color and starred navigation passed');return;
+    }
     if(process.env.WEBA_DRAG_ONLY) {
       await page.setViewport({width:1000,height:850,hasTouch:true});
       await click('Home');
@@ -106,8 +168,8 @@ const path = require('node:path');
       const column=(lane,list)=>`.weba-column[data-lane="${lane}"][data-list="${list}"]`;
       async function addCard(title){await page.click('.weba-add-card-top');await settle();await visible('Editor');await fill('CardTitle',title);await click('SaveCard');await click('CloseEditor');await settle();}
       await addCard('Drag one');await addCard('Drag two');
-      await page.click('.weba-add-lane');await page.locator('.weba-structure-composer input').fill('Second ä');await page.click('.weba-structure-composer button:not(.weba-popup-close)');await settle();
-      await page.click('.weba-add-list');await page.locator('.weba-structure-composer input').fill('Review');await page.click('.weba-structure-composer button:not(.weba-popup-close)');await settle();
+      await addStructure('.weba-add-lane','Second ä');
+      await addStructure('.weba-add-list','Review');
       const ids=await page.$$eval('.weba-data .weba-card',els=>Object.fromEntries(els.map(e=>[e.querySelector('strong').textContent,e.dataset.cardId])));
       const card=id=>`.weba-report .weba-card[data-card-id="${id}"]`;
       const location=id=>page.$eval(`.weba-data .weba-card[data-card-id="${id}"]`,e=>[e.dataset.lane,e.dataset.status]);
@@ -193,11 +255,8 @@ const path = require('node:path');
       await page.waitForFunction(()=>document.activeElement?.matches('.weba-add-card-top')&&document.getElementById('gw-focus').style.display==='none');
       await click('ViewMenu');await visible('Views');await contained('[id$=".Views"]');await click('CloseViews');
       await click('AccountToggle');await visible('AccountMenu');await contained('[id$=".AccountMenu"]');await click('CloseAccount');
-      await page.click('.weba-list-menu');await contained('.weba-structure-menu');await page.click('.weba-structure-menu .weba-popup-close');
-      assert.equal(await page.$('.weba-structure-menu'),null);
-      await page.click('.weba-add-list');
-      const inlineClose=await page.$eval('.weba-structure-composer',e=>{const a=e.getBoundingClientRect(),b=e.querySelector('.weba-popup-close').getBoundingClientRect();return a.right-b.right<15&&b.top-a.top<15;});
-      assert.ok(inlineClose,'list composer X is at top right');await page.click('.weba-structure-composer .weba-popup-close');
+      await page.click('.weba-list-menu');await settle();await visible('ContextMenu');await contained('[id$=".ContextMenu"]');await click('CloseContext');
+      await page.click('.weba-add-list');await settle();await visible('ActionPanel');await contained('[id$=".ActionPanel"]');await click('CloseAction');
       for(const viewport of [{width:390,height:844},{width:844,height:390}]){
         await page.setViewport(viewport);
         await page.click('.weba-add-card-bottom');await settle();await visible('Editor');await contained('[id$=".Editor"]');
@@ -218,14 +277,10 @@ const path = require('node:path');
       assert.ok(positions.caret.right<positions.top.left,'list caret at the start');
       assert.ok(positions.top.right<=positions.menu.left && positions.menu.right<=positions.list.left,'card/menu/list buttons in WeKan order');
       assert.ok(positions.bottom.top>positions.top.bottom,'second card button is below the cards');
-      await page.click('.weba-add-lane');
-      await page.locator('.weba-structure-composer input').fill('Tyhjä rata');
-      await page.click('.weba-structure-composer button:not(.weba-popup-close)'); await settle();
+      await addStructure('.weba-add-lane','Tyhjä rata');
       await page.waitForFunction(()=>[...document.querySelectorAll('.weba-swimlane h3')].some(e=>e.textContent==='Tyhjä rata'));
       const lane='.weba-swimlane:nth-child(2)';
-      await page.click(lane+' .weba-add-list');
-      await page.locator(lane+' .weba-structure-composer input').fill('Katselmointi');
-      await page.click(lane+' .weba-structure-composer button:not(.weba-popup-close)'); await settle();
+      await addStructure(lane+' .weba-add-list','Katselmointi');
       await page.waitForFunction(()=>[...document.querySelectorAll('.weba-column h4')].some(e=>e.textContent==='Katselmointi'));
       const custom=lane+' .weba-column:nth-child(2)';
       await page.click(custom+' .weba-add-card-bottom'); await settle(); await visible('Editor');
@@ -286,5 +341,5 @@ const path = require('node:path');
     await click('AccountToggle');
     await Promise.all([page.waitForNavigation({waitUntil:'networkidle2'}), page.locator(selector('Logout')).click()]);
     await settle();
-  } catch(error) {await shot('weba-failure'); throw error;} finally {await context.close(); await browser.disconnect();}
+  } catch(error) {await shot('weba-failure'); throw error;} finally {if(attachmentFile&&fs.existsSync(attachmentFile))fs.unlinkSync(attachmentFile);await context.close(); await browser.disconnect();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

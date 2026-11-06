@@ -1,0 +1,262 @@
+' Card detail records are scoped by both board and card at every entry point.
+Export
+Private $db As Connection
+
+Public Sub OpenStore()
+  Dim t As Table
+  If $db Then Return
+  WorkspaceStore.OpenStore()
+  $db = WebDatabase.OpenConnection()
+  If Not $db.Tables.Exist("kb_entries") Then
+    t = $db.Tables.Add("kb_entries")
+    t.Fields.Add("id", db.Serial)
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("card_id", db.Integer)
+    t.Fields.Add("kind", db.String, 32)
+    t.Fields.Add("parent_id", db.Integer)
+    t.Fields.Add("title", db.String, 255)
+    t.Fields.Add("body", db.String)
+    t.Fields.Add("value_type", db.String, 16)
+    t.Fields.Add("done", db.Boolean)
+    t.Fields.Add("amount", db.Float)
+    t.Fields.Add("author", db.String, 255)
+    t.Fields.Add("created_at", db.Date)
+    t.PrimaryKey = ["id"]
+    t.Update()
+  Endif
+  If Not $db.Tables.Exist("kb_files") Then
+    t = $db.Tables.Add("kb_files")
+    t.Fields.Add("id", db.Serial)
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("card_id", db.Integer)
+    t.Fields.Add("filename", db.String, 255)
+    t.Fields.Add("content", db.Blob)
+    t.Fields.Add("author", db.String, 255)
+    t.Fields.Add("created_at", db.Date)
+    t.PrimaryKey = ["id"]
+    t.Update()
+  Endif
+End
+
+Private Sub RequireCard(boardId As Integer, cardId As Integer)
+  OpenStore()
+  WorkspaceStore.Record(boardId, "card", cardId)
+End
+
+Public Function Entries(boardId As Integer, cardId As Integer, kind As String) As Result
+  RequireCard(boardId, cardId)
+  Return $db.Find("kb_entries", "board_id = &1 AND card_id = &2 AND kind = &3 ORDER BY id", boardId, cardId, kind)
+End
+
+Public Function Entry(boardId As Integer, cardId As Integer, entryId As Integer) As Result
+  Dim r As Result
+  RequireCard(boardId, cardId)
+  r = $db.Find("kb_entries", "board_id = &1 AND card_id = &2 AND id = &3", boardId, cardId, entryId)
+  If Not r.Available Then Error.Raise("Card entry not accessible")
+  Return r
+End
+
+Private Function Reaches(boardId As Integer, startId As Integer, targetId As Integer, kind As String, skipId As Integer) As Boolean
+  Dim pending As New Integer[]
+  Dim seen As New Collection
+  Dim id As Integer
+  Dim r As Result
+  pending.Add(startId)
+  While pending.Count
+    id = pending[0]
+    pending.Remove(0)
+    If id = targetId Then Return True
+    If seen.Exist(CStr(id)) Then Continue
+    seen[CStr(id)] = True
+    r = $db.Find("kb_entries", "board_id = &1 AND card_id = &2 AND kind = &3", boardId, id, kind)
+    For Each r
+      If r!id = skipId Then Continue
+      pending.Add(CInt(r!amount))
+    Next
+  Wend
+  Return False
+End
+
+Public Function Save(boardId As Integer, cardId As Integer, entryId As Integer, kind As String, title As String, body As String, parentId As Integer, done As Boolean, amount As Float, Optional valueType As String = "text") As Integer
+  Dim r As Result
+  Dim target As Result
+  Dim id As Integer = entryId
+  RequireCard(boardId, cardId)
+  If entryId Then
+    r = Entry(boardId, cardId, entryId)
+    If r!kind <> kind Then Error.Raise("Entry type cannot be changed")
+  Endif
+  Select kind
+    Case "comment"
+      If Not Trim(body) Then Error.Raise("Enter a comment")
+    Case "checklist", "checkitem", "custom"
+      If Not Trim(title) Then Error.Raise("Enter a title")
+    Case "subtask", "dependency"
+      If amount <> CInt(amount) Then Error.Raise("Choose a whole card ID")
+      target = WorkspaceStore.Record(boardId, "card", CInt(amount))
+      If Reaches(boardId, CInt(amount), cardId, kind, entryId) Then Error.Raise("Circular card relationship")
+      title = target!title
+    Case "time"
+      If amount < 0 Or amount > 525600 Then Error.Raise("Enter minutes between 0 and 525600")
+      done = True
+    Case Else
+      Error.Raise("Unknown card detail type")
+  End Select
+  If String.Len(title) > 255 Then Error.Raise("Title is too long")
+  If kind = "checkitem" Then
+    r = Entry(boardId, cardId, parentId)
+    If r!kind <> "checklist" Then Error.Raise("Choose a checklist")
+  Endif
+  If kind = "custom" Then
+    Select valueType
+      Case "text"
+      Case "number"
+        body = CStr(CFloat(body))
+      Case "date"
+        If Len(body) <> 10 Or Mid(body, 5, 1) <> "-" Or Mid(body, 8, 1) <> "-" Then Error.Raise("Use YYYY-MM-DD")
+        If Format(Date(CInt(Left(body, 4)), CInt(Mid(body, 6, 2)), CInt(Right(body, 2))), "yyyy-mm-dd") <> body Then Error.Raise("Invalid date")
+      Case "checkbox"
+        body = If(done, "true", "false")
+      Case Else
+        Error.Raise("Unknown field type")
+    End Select
+  Endif
+  If entryId Then
+    r = $db.Edit("kb_entries", "id = &1 AND board_id = &2 AND card_id = &3", entryId, boardId, cardId)
+  Else
+    r = $db.Create("kb_entries")
+    r["board_id"] = boardId
+    r["card_id"] = cardId
+    r["author"] = Session["username"]
+    r["created_at"] = Now
+  Endif
+  r["kind"] = kind
+  r["title"] = Trim(title)
+  r["body"] = body
+  r["parent_id"] = parentId
+  r["done"] = done
+  r["amount"] = amount
+  r["value_type"] = valueType
+  r.Update()
+  If Not entryId Then id = $db.LastInsertId
+  KanbanStore.Activity(boardId, "Saved " & kind & " on card " & CStr(cardId), "card", cardId)
+  Return id
+End
+
+Public Sub DeleteEntry(boardId As Integer, cardId As Integer, entryId As Integer)
+  Dim r As Result = Entry(boardId, cardId, entryId)
+  If r!kind = "checklist" Then $db.Exec("DELETE FROM kb_entries WHERE board_id = &1 AND card_id = &2 AND parent_id = &3", boardId, cardId, entryId)
+  $db.Exec("DELETE FROM kb_entries WHERE board_id = &1 AND card_id = &2 AND id = &3", boardId, cardId, entryId)
+  KanbanStore.Activity(boardId, "Deleted card detail", "card", cardId)
+End
+
+Public Function NewSubtask(boardId As Integer, cardId As Integer, title As String) As Integer
+  Dim parent As Result
+  Dim child As Integer
+  Dim failure As String
+  RequireCard(boardId, cardId)
+  parent = WorkspaceStore.Record(boardId, "card", cardId)
+  $db.Begin()
+  child = KanbanStore.SaveCard(boardId, 0, title, "", parent!lane, parent!status, Session["username"], "", "", KanbanStore.CardListId(boardId, cardId))
+  Save(boardId, cardId, 0, "subtask", title, "", 0, False, child)
+  $db.Commit()
+  Return child
+Catch
+  failure = Error.Text
+  Try $db.Rollback()
+  Error.Raise(failure)
+End
+
+Public Sub StartTimer(boardId As Integer, cardId As Integer)
+  Dim r As Result
+  RequireCard(boardId, cardId)
+  r = $db.Find("kb_entries", "board_id = &1 AND card_id = &2 AND kind = &3 AND author = &4 AND done = &5", boardId, cardId, "time", Session["username"], False)
+  If r.Available Then Error.Raise("Timer already running")
+  r = $db.Create("kb_entries")
+  r["board_id"] = boardId
+  r["card_id"] = cardId
+  r["kind"] = "time"
+  r["title"] = "Running timer"
+  r["author"] = Session["username"]
+  r["created_at"] = Now
+  r["amount"] = 0
+  r["done"] = False
+  r.Update()
+End
+
+Public Sub StopTimer(boardId As Integer, cardId As Integer)
+  Dim r As Result
+  RequireCard(boardId, cardId)
+  r = $db.Edit("kb_entries", "board_id = &1 AND card_id = &2 AND kind = &3 AND author = &4 AND done = &5", boardId, cardId, "time", Session["username"], False)
+  If Not r.Available Then Error.Raise("No running timer")
+  r["amount"] = Max(0, DateDiff(r!created_at, Now, gb.Second)) / 60
+  r["done"] = True
+  r["title"] = "Tracked time"
+  r.Update()
+  KanbanStore.Activity(boardId, "Stopped card timer", "card", cardId)
+End
+
+Public Function Files(boardId As Integer, cardId As Integer) As Result
+  RequireCard(boardId, cardId)
+  Return $db.Find("kb_files", "board_id = &1 AND card_id = &2 ORDER BY id", boardId, cardId)
+End
+
+Public Function AddFile(boardId As Integer, cardId As Integer, filename As String, data As String) As Integer
+  Dim r As Result
+  Dim id As Integer
+  RequireCard(boardId, cardId)
+  filename = File.Name(Replace(filename, "\\", "/"))
+  If Not filename Or String.Len(filename) > 255 Or Len(data) > 10485760 Then Error.Raise("Choose a file up to 10 MiB with a valid name")
+  r = $db.Create("kb_files")
+  r["board_id"] = boardId
+  r["card_id"] = cardId
+  r["filename"] = filename
+  r["content"] = data
+  r["author"] = Session["username"]
+  r["created_at"] = Now
+  r.Update()
+  id = $db.LastInsertId
+  KanbanStore.Activity(boardId, "Attached file: " & filename, "card", cardId)
+  Return id
+End
+
+Public Function FileRecord(boardId As Integer, cardId As Integer, fileId As Integer) As Result
+  Dim r As Result
+  RequireCard(boardId, cardId)
+  r = $db.Find("kb_files", "board_id = &1 AND card_id = &2 AND id = &3", boardId, cardId, fileId)
+  If Not r.Available Then Error.Raise("Attachment not accessible")
+  Return r
+End
+
+Public Sub DeleteFile(boardId As Integer, cardId As Integer, fileId As Integer)
+  FileRecord(boardId, cardId, fileId)
+  $db.Exec("DELETE FROM kb_files WHERE board_id = &1 AND card_id = &2 AND id = &3", boardId, cardId, fileId)
+  KanbanStore.Activity(boardId, "Deleted attachment", "card", cardId)
+End
+
+Public Sub CopyRecords(sourceBoard As Integer, sourceCard As Integer, targetBoard As Integer, targetCard As Integer)
+  Dim r As Result
+  Dim kind As String
+  Dim parents As New Collection
+  Dim parentId As Integer
+  Dim id As Integer
+  RequireCard(sourceBoard, sourceCard)
+  RequireCard(targetBoard, targetCard)
+  For Each kind In ["checklist", "checkitem", "comment", "custom", "time"]
+    r = Entries(sourceBoard, sourceCard, kind)
+    For Each r
+      If kind = "time" And Not r!done Then Continue
+      parentId = 0
+      If kind = "checkitem" Then
+        If Not parents.Exist(CStr(r!parent_id)) Then Continue
+        parentId = parents[CStr(r!parent_id)]
+      Endif
+      id = Save(targetBoard, targetCard, 0, kind, r!title, r!body, parentId, r!done, r!amount, r!value_type)
+      If kind = "checklist" Then parents[CStr(r!id)] = id
+    Next
+  Next
+  r = Files(sourceBoard, sourceCard)
+  For Each r
+    AddFile(targetBoard, targetCard, r!filename, r!content.Data)
+  Next
+End

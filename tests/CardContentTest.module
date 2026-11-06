@@ -1,0 +1,78 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim one As Integer
+  Dim two As Integer
+  Dim listId As Integer
+  Dim checklist As Integer
+  Dim item As Integer
+  Dim comment As Integer
+  Dim fileId As Integer
+  Dim child As Integer
+  Dim copied As Integer
+  Dim r As Result
+  Dim denied As Boolean
+  Dim bytes As String = "a" & Chr(0) & "b"
+  WebDatabase.Register("content-owner", "x")
+  Session["username"] = "content-owner"
+  boardId = KanbanStore.AddBoard("Content")
+  r = KanbanStore.Lanes(boardId)
+  r = KanbanStore.Lists(boardId, "Default")
+  listId = r!id
+  one = KanbanStore.SaveCard(boardId, 0, "One", "", "Default", "Todo", "", "", "", listId)
+  two = KanbanStore.SaveCard(boardId, 0, "Two", "", "Default", "Todo", "", "", "", listId)
+  comment = CardContent.Save(boardId, one, 0, "comment", "", "<script>plain comment</script>", 0, False, 0)
+  checklist = CardContent.Save(boardId, one, 0, "checklist", "Checklist", "", 0, False, 0)
+  item = CardContent.Save(boardId, one, 0, "checkitem", "Task", "", checklist, True, 0)
+  r = CardContent.Entry(boardId, one, item)
+  If Not r!done Or r!parent_id <> checklist Then Error.Raise("Checklist state missing")
+  CardContent.Save(boardId, one, 0, "custom", "Estimate", "1.5", 0, False, 0, "number")
+  Try CardContent.Save(boardId, one, 0, "custom", "Bad date", "2026-02-30", 0, False, 0, "date")
+  denied = Error
+  If Not denied Then Error.Raise("Invalid custom date accepted")
+  CardContent.Save(boardId, one, 0, "dependency", "", "", 0, False, two)
+  Try CardContent.Save(boardId, two, 0, "dependency", "", "", 0, False, one)
+  denied = Error
+  If Not denied Then Error.Raise("Dependency cycle accepted")
+  child = CardContent.NewSubtask(boardId, one, "Child")
+  r = CardContent.Entries(boardId, one, "subtask")
+  If r.Count <> 1 Or r!amount <> child Then Error.Raise("Subtask card link missing")
+  CardContent.StartTimer(boardId, one)
+  Try CardContent.StartTimer(boardId, one)
+  denied = Error
+  If Not denied Then Error.Raise("Duplicate running timer accepted")
+  CardContent.StopTimer(boardId, one)
+  r = CardContent.Entries(boardId, one, "time")
+  If Not r!done Or r!amount < 0 Then Error.Raise("Timer did not stop")
+  fileId = CardContent.AddFile(boardId, one, "../binary.txt", bytes)
+  r = CardContent.FileRecord(boardId, one, fileId)
+  If r!content.Data <> bytes Or r!filename <> "binary.txt" Then Error.Raise("Attachment roundtrip failed")
+  copied = WorkspaceStore.Copy(boardId, "card", one, "Copy with details")
+  r = CardContent.Entries(boardId, copied, "checkitem")
+  If r.Count <> 1 Or Not r!done Or r!parent_id = checklist Then Error.Raise("Copy lost checklist hierarchy")
+  r = CardContent.Files(boardId, copied)
+  If r.Count <> 1 Or r!content.Data <> bytes Then Error.Raise("Copy lost attachment bytes")
+  r = CardContent.Entries(boardId, copied, "dependency")
+  If r.Count <> 1 Or r!amount <> two Then Error.Raise("Copy lost card relationships")
+  Try CardContent.Entry(boardId, two, comment)
+  denied = Error
+  If Not denied Then Error.Raise("Cross-card entry accepted")
+  Try CardContent.Save(boardId, two, 0, "checkitem", "Bad parent", "", checklist, False, 0)
+  denied = Error
+  If Not denied Then Error.Raise("Cross-card checklist parent accepted")
+  WebDatabase.Register("content-other", "x")
+  Session["username"] = "content-other"
+  Try CardContent.Files(boardId, one)
+  denied = Error
+  If Not denied Then Error.Raise("Other owner read attachments")
+  Try CardContent.Save(boardId, one, 0, "comment", "", "Forbidden", 0, False, 0)
+  denied = Error
+  If Not denied Then Error.Raise("Other owner changed comments")
+  Session["username"] = "content-owner"
+  CardContent.DeleteEntry(boardId, one, checklist)
+  r = CardContent.Entries(boardId, one, "checkitem")
+  If r.Count Then Error.Raise("Deleting checklist orphaned items")
+  CardContent.DeleteFile(boardId, one, fileId)
+  r = CardContent.Files(boardId, one)
+  If r.Count Then Error.Raise("Attachment deletion failed")
+  Print "Card details: comments/checklists/fields/dependencies/subtasks/timers/binary attachments and authorization passed"
+End
