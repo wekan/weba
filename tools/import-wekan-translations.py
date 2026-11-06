@@ -57,7 +57,7 @@ for text in sorted(texts):
     if key:
         lookup[text] = key
 # Never translate identities, user content, stored status values or editor inputs.
-controls -= {'AccountToggle', 'PageTitle', 'PaneTitle', 'Status', 'Boards', 'WebLabelVersion'}
+controls -= {'AccountToggle', 'PageTitle', 'PaneTitle', 'Status', 'Boards', 'WebLabelVersion', 'ContextTitle', 'ActionTitle', 'DetailsTitle'}
 metadata = []
 for line in (source / 'languages.js').read_text().splitlines():
     match = re.match(r'\s*(\[".*\]),?\s*$', line)

@@ -5,7 +5,7 @@ const {JSDOM} = require('jsdom');
 const publicDir=path.join(__dirname,'../WeKan/.public');
 const dom = new JSDOM(`<div id="@1.LanguageSelector"><select data-weba-language></select></div>
 <div id="@1.WebLabelUser">Username</div><button id="@1.WebButtonLogin">Login</button>
-<div id="@1.PageTitle">Boards</div><input id="@1.WebTextName" value="Username">
+<div id="@1.PageTitle">Boards</div><div id="@1.ContextTitle">Boards</div><div id="@1.ActionTitle">Boards</div><div id="@1.DetailsTitle">Boards</div><input id="@1.WebTextName" value="Username">
 <article class="weba-card"><strong>Username</strong></article>`,{url:'http://localhost',runScripts:'outside-only'});
 const {window}=dom;
 window.fetch=async url=>({ok:true,json:async()=>JSON.parse(fs.readFileSync(path.join(publicDir,url),'utf8'))});
@@ -25,6 +25,7 @@ window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
   assert.equal(doc.querySelector('input').value,'Username','user input remains unchanged');
   assert.equal(doc.querySelector('.weba-card strong').textContent,'Username','card content remains unchanged');
   assert.equal(doc.getElementById('@1.PageTitle').textContent,'Boards','board title remains unchanged');
+  for(const name of ['ContextTitle','ActionTitle','DetailsTitle'])assert.equal(doc.getElementById('@1.'+name).textContent,'Boards','popup titles preserve user content');
   doc.getElementById('@1.WebButtonLogin').textContent='Register';
   await new Promise(resolve=>setTimeout(resolve,0));
   assert.equal(doc.getElementById('@1.WebButtonLogin').textContent,api.t('Register'),'AJAX updates translated');

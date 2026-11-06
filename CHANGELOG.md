@@ -2,6 +2,9 @@
 
 This work adds the following features and fixes:
 
+- Extend imported WeKan translations to 91 interface keys across 237 languages
+  for the new native menus and card controls. Preserve user-provided context,
+  action and detail titles during localization. Thanks to xet7.
 - Add versioned weba JSON export/import through native file controls. Preserve
   empty/duplicate containers, order, archived cards, metadata, checklists,
   relationships and binary attachments; remap IDs into a new owned board and

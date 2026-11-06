@@ -1,4 +1,6 @@
 * Sat Nov 07 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Translations: Import 91 matching keys for 237 languages, covering new native
+  menus and card controls while preserving user-provided popup titles.
 - JSON exchange: Export/import weba-2 boards and scoped containers with empty
   layouts, ordering, archive state, rich content and attachments. Remap IDs in
   a transaction into a new board; validate malformed input and native file UI.
