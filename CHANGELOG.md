@@ -1,4 +1,6 @@
 # Upcoming WeKan ® for Gambas release
+- Use local Font Awesome eye/eye-slash icons for both password visibility
+  buttons, retaining descriptive tooltips. Thanks to xet7.
 
 - Place independent Show/Hide password buttons beside both password fields and
   give the confirmation field the same white input styling. Thanks to xet7.

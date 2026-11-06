@@ -158,7 +158,8 @@ Public Sub ShowRegistration_Click()
   WebForm.Title = "Register"
   ConfirmPassword.Text = ""
   ConfirmPassword.Password = True
-  ShowConfirmPassword.Text = "Show password"
+  ShowConfirmPassword.Class = "weba-password-toggle fa-eye"
+  ShowConfirmPassword.Tooltip = "Show password"
 End
 
 Public Sub ShowLogin_Click()
@@ -172,12 +173,14 @@ End
 
 Public Sub ShowPassword_Click()
   WebTextPass.Password = Not WebTextPass.Password
-  ShowPassword.Text = If(WebTextPass.Password, "Show password", "Hide password")
+  ShowPassword.Class = "weba-password-toggle " & If(WebTextPass.Password, "fa-eye", "fa-eye-slash")
+  ShowPassword.Tooltip = If(WebTextPass.Password, "Show password", "Hide password")
 End
 
 Public Sub ShowConfirmPassword_Click()
   ConfirmPassword.Password = Not ConfirmPassword.Password
-  ShowConfirmPassword.Text = If(ConfirmPassword.Password, "Show password", "Hide password")
+  ShowConfirmPassword.Class = "weba-password-toggle " & If(ConfirmPassword.Password, "fa-eye", "fa-eye-slash")
+  ShowConfirmPassword.Tooltip = If(ConfirmPassword.Password, "Show password", "Hide password")
 End
 
 Public Sub ConfirmPassword_Activate()

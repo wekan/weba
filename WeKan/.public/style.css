@@ -11982,3 +11982,20 @@ ul, #myUL {
   margin-left: 1px;
 }
 
+
+/* Font Awesome Free: same eye icons as the WeKan password input. */
+@font-face {
+  font-family: "WeBa Font Awesome";
+  src: url("fonts/fa-solid-900.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: block;
+}
+.weba-password-toggle { min-width: 36px; }
+.weba-password-toggle::before {
+  font-family: "WeBa Font Awesome";
+  font-weight: 900;
+  font-size: 16px;
+  content: "\f06e";
+}
+.weba-password-toggle.fa-eye-slash::before { content: "\f070"; }

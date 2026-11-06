@@ -18,6 +18,12 @@ const path = require('node:path');
     await page.setViewport({width:1440,height:1000});
     await page.goto(process.env.WEBA_TEST_URL,{waitUntil:'networkidle2'});
     await click('ShowRegistration');
+    await page.evaluate(() => document.fonts.ready);
+    for (const button of ['ShowPassword','ShowConfirmPassword']) {
+      const icon = await page.$eval(selector(button), e => ({text:e.textContent.trim(),icon:getComputedStyle(e,'::before').content}));
+      assert.equal(icon.text,'','visibility toggle has no visible text');
+      assert.ok(icon.icon.includes('\uf06e'),'hidden password uses the Font Awesome eye');
+    }
     const passwords = await page.evaluate(() => {
       const box = name => document.querySelector(`[id$=".${name}"]`).getBoundingClientRect();
       return [['WebTextPass','ShowPassword'],['ConfirmPassword','ShowConfirmPassword']].map(([field,button]) => {

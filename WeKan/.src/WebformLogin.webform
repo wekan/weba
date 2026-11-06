@@ -121,7 +121,8 @@
           Password = True
         }
         { ShowPassword WebButton
-          Text = ("Show password")
+          Class = "weba-password-toggle fa-eye"
+          Width = "36px"
           Tooltip = ("Show or hide the password")
         }
       }
@@ -160,7 +161,8 @@
             Password = True
           }
           { ShowConfirmPassword WebButton
-            Text = ("Show password")
+            Class = "weba-password-toggle fa-eye"
+          Width = "36px"
             Tooltip = ("Show or hide the repeated password")
           }
         }

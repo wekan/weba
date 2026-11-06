@@ -1,4 +1,6 @@
 * Fri Nov 06 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Login/register: Replace password visibility text with Font Awesome eye icons
+  matching WeKan, keeping independent toggles and descriptive tooltips.
 - Login/register: Place independent visibility buttons to the right of both
   password inputs and match their white backgrounds and input styling.
 - Layout: Match the current WeKan component ordering with native Gambas header,

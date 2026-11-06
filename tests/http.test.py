@@ -6,9 +6,9 @@ def get(path='/'): return client.open(BASE+path,timeout=15).read().decode()
 def command(c): return get('/x?c='+urllib.parse.quote(json.dumps(c)))
 page=get(); command(['raise',None,'open',[],False]); prefix=re.search(r'id="(@\d+)\.WebTextName"',page)[1]
 answer=command(['raise',prefix+'.ShowPassword','click',[],False])
-assert 'Hide' in answer and 'text' in answer, 'Login password reveal failed'
+assert 'fa-eye-slash' in answer and 'Hide' in answer and 'text' in answer, 'Login password reveal failed'
 answer=command(['raise',prefix+'.ShowPassword','click',[],False])
-assert 'Show' in answer and 'password' in answer, 'Login password hide failed'
+assert 'fa-eye' in answer and 'Show' in answer and 'password' in answer, 'Login password hide failed'
 command(['raise',prefix+'.ShowRegistration','click',[],False])
 for name,value in [('WebTextName',username),('WebTextPass','x'),('ConfirmPassword','different')]:
  answer=command(['update',prefix+'.'+name,'text',value,True])

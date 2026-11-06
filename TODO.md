@@ -12,6 +12,7 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Implemented and checked
 
+- Login/register: local Font Awesome eye/eye-slash visibility icons.
 - Login/register: matching white password inputs with independent visibility
   buttons on the right; verified with HTTP sessions and Chromium geometry checks.
 
