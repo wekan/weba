@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Add login/register navigation, Show/Hide password buttons and password
+  confirmation when registering. Explain mismatched passwords, duplicate usernames
+  and configured minimum lengths separately instead of one misleading error.
+  Verify the controls through source and packaged-archive HTTP sessions.
+  Thanks to xet7.
 - Make minimum password length optional and disabled by default. Add persisted
   Admin Panel / Password Length settings shared by registration, user creation,
   password changes and resets. Test short passwords, enabled/disabled policy,

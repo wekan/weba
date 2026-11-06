@@ -29,6 +29,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   Short passwords work unless enforcement is enabled. Tests cover all new-password
   entry points, administrator-only updates, Unicode length and saved-policy reads.
 
+- Added login/register modes, Show/Hide password controls and a repeated-password
+  field. HTTP tests cover both visibility toggles, mismatch rejection and specific
+  duplicate/length messages on source and packaged-archive sessions.
+
 ## Current status and next work
 
 - Changes are organized into separate local commits for accounts, Kanban,

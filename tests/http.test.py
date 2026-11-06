@@ -5,8 +5,21 @@ jar=http.cookiejar.CookieJar(); client=urllib.request.build_opener(urllib.reques
 def get(path='/'): return client.open(BASE+path,timeout=15).read().decode()
 def command(c): return get('/x?c='+urllib.parse.quote(json.dumps(c)))
 page=get(); command(['raise',None,'open',[],False]); prefix=re.search(r'id="(@\d+)\.WebTextName"',page)[1]
-for name,value in [('WebTextName',username),('WebTextPass','http test password')]:
+answer=command(['raise',prefix+'.ShowPassword','click',[],False])
+assert 'Hide' in answer and 'text' in answer, 'Login password reveal failed'
+answer=command(['raise',prefix+'.ShowPassword','click',[],False])
+assert 'Show' in answer and 'password' in answer, 'Login password hide failed'
+command(['raise',prefix+'.ShowRegistration','click',[],False])
+for name,value in [('WebTextName',username),('WebTextPass','x'),('ConfirmPassword','different')]:
  answer=command(['update',prefix+'.'+name,'text',value,True])
+answer=command(['raise',prefix+'.Register','click',[],False])
+assert 'Passwords&nbsp;do&nbsp;not&nbsp;match' in answer
+assert 'location.reload' not in answer
+answer=command(['raise',prefix+'.ShowPassword','click',[],False])
+assert 'ConfirmPassword' in answer and 'WebTextPass' in answer and 'text' in answer
+answer=command(['raise',prefix+'.ShowPassword','click',[],False])
+assert 'ConfirmPassword' in answer and 'password' in answer
+command(['update',prefix+'.ConfirmPassword','text','x',True])
 assert 'location.reload' in command(['raise',prefix+'.Register','click',[],False])
 page=get(); command(['raise',None,'open',[],False])
 assert 'root.webaRender' in page, 'Custom reports must be included in the rendered page'
@@ -30,7 +43,26 @@ for control,view in [('Calendar','Calendar'),('Charts','Charts'),('TableView','T
 answer=command(['raise',prefix+'.Admin','click',[],False])
 assert username in answer, 'Admin user listing did not contain the registered user'
 assert '<td>Admin</td>' in answer, 'First registered user role was not Admin'
+answer=command(['raise',prefix+'.PasswordLength','click',[],False])
+assert 'PolicyEnforce' in answer and 'PolicyMinimum' in answer
+command(['update',prefix+'.PolicyEnforce','value',True,True])
+command(['update',prefix+'.PolicyMinimum','text','12',True])
+answer=command(['raise',prefix+'.SavePasswordPolicy','click',[],False])
+assert 'saved' in answer
 assert 'Fullname' in command(['raise',prefix+'.Profile','click',[],False])
 assert 'location.reload' in command(['raise',prefix+'.Logout','click',[],False])
-assert 'WebTextName' in get()
+page=get()
+assert 'WebTextName' in page
+command(['raise',None,'open',[],False])
+prefix=re.search(r'id="(@\d+)\.WebTextName"',page)[1]
+command(['raise',prefix+'.ShowRegistration','click',[],False])
+for name,value in [('WebTextName',username+'-short'),('WebTextPass','x'),('ConfirmPassword','x')]:
+ command(['update',prefix+'.'+name,'text',value,True])
+answer=command(['raise',prefix+'.Register','click',[],False])
+assert '12' in answer and 'least' in answer, 'Saved admin policy must apply to a new session'
+assert 'unique' not in answer, 'Length errors must not accuse a duplicate username'
+for name,value in [('WebTextName',username),('WebTextPass','long enough password'),('ConfirmPassword','long enough password')]:
+ command(['update',prefix+'.'+name,'text',value,True])
+answer=command(['raise',prefix+'.Register','click',[],False])
+assert 'Username&nbsp;already&nbsp;exists' in answer, 'Duplicate username must have a specific explanation'
 print('HTTP registration/login, board/card creation, report resources, views, profile, admin and logout passed')

@@ -1,4 +1,6 @@
 * Fri Nov 06 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Login/register UI: Add password visibility controls, repeated-password validation
+  and specific registration errors, with source/archive HTTP regression tests.
 - Password policy: Accept short passwords by default and enforce a persisted
   minimum only when Admin Panel / Password Length enables it, with regression tests.
 - Accounts: Register the first user as Admin and later users as Normal; remove

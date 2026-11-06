@@ -2,6 +2,8 @@
 
 Export
 
+Private $registerMode As Boolean
+
 Public Sub _new()
 
   Dim Path As String
@@ -44,13 +46,17 @@ End
 
 Public Sub WebTextName_Activate()
 
-  Login()
+  WebTextPass.SetFocus()
 
 End
 
 Public Sub WebTextPass_Activate()
 
-  Login()
+  If $registerMode Then
+    Register_Click()
+  Else
+    Login()
+  Endif
 
 End
 
@@ -124,12 +130,51 @@ Public Sub WebTimer1_Timer()
 End
 
 Public Sub Register_Click()
+  If Not $registerMode Then
+    ShowRegistration_Click()
+    Return
+  Endif
+  If WebTextPass.Text <> ConfirmPassword.Text Then
+    WebNoticeText.Text = "Passwords do not match"
+    WebInfo.Show()
+    WebTimer1.Start()
+    Return
+  Endif
   Try WebDatabase.Register(Trim(WebTextName.Text), WebTextPass.Text)
   If Error Then
-    WebNoticeText.Text = "Registration failed. Use a unique username and a password of at least 8 characters."
+    WebNoticeText.Text = WebDatabase.RegistrationError
     WebInfo.Show()
     WebTimer1.Start()
     Return
   Endif
   Login()
+End
+
+Public Sub ShowRegistration_Click()
+  $registerMode = True
+  RegistrationPanel.Show()
+  ShowRegistration.Hide()
+  WebButtonLogin.Hide()
+  WebForm.Title = "Register"
+  ConfirmPassword.Text = ""
+  ConfirmPassword.Password = WebTextPass.Password
+End
+
+Public Sub ShowLogin_Click()
+  $registerMode = False
+  RegistrationPanel.Hide()
+  ShowRegistration.Show()
+  WebButtonLogin.Show()
+  WebForm.Title = "Login"
+  ConfirmPassword.Text = ""
+End
+
+Public Sub ShowPassword_Click()
+  WebTextPass.Password = Not WebTextPass.Password
+  ConfirmPassword.Password = WebTextPass.Password
+  ShowPassword.Text = If(WebTextPass.Password, "Show password", "Hide password")
+End
+
+Public Sub ConfirmPassword_Activate()
+  Register_Click()
 End

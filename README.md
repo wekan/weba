@@ -67,8 +67,9 @@ https://devblogs.microsoft.com/commandline/systemd-support-is-now-available-in-w
 1. Run `./install-deps.sh`
 2. In Gambas, click Open Project, and select directory WeKan.
 3. Click play button that looks like triangle to right. This starts webserver and opens webbrowser.
-4. Enter a username and a nonempty password, then click
-   **Register**. The first successfully registered account is **Admin**; subsequent
+4. Click **Register**, enter a username and a nonempty password, repeat the
+   password, then click **Create account**. **Show password / Hide password**
+   toggles visibility on both login and registration forms. The first successfully registered account is **Admin**; subsequent
    registrations are **Normal**. Registration also signs the user in. For later
    visits use **Login**. No default accounts or passwords are shipped.
 5. The app creates `WeKan/database.db` and its schema on first use. Keep a backup

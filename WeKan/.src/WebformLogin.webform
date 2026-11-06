@@ -129,10 +129,30 @@
           Text = ("Login")
         }
       }
-      { Register WebButton
-        #MoveScaled(1,24,24,4)
+      { ShowPassword WebButton
+        Text = ("Show password")
+        Tooltip = ("Show or hide the password fields")
+      }
+      { ShowRegistration WebButton
         Text = ("Register")
-        Tooltip = ("First registered user is Admin; subsequent users are Normal")
+      }
+      { RegistrationPanel WebContainer
+        Visible = False
+        Arrangement = Arrange.Vertical
+        Spacing = True
+        { ConfirmCaption WebLabel
+          Text = ("Repeat password")
+        }
+        { ConfirmPassword WebTextBox
+          Password = True
+        }
+        { Register WebButton
+          Text = ("Create account")
+          Tooltip = ("First registered user is Admin; subsequent users are Normal")
+        }
+        { ShowLogin WebButton
+          Text = ("Back to login")
+        }
       }
       { WebContainer5 WebContainer
         #MoveScaled(1,24.4286,52.8571,2.5714)
