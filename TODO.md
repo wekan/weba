@@ -37,13 +37,21 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   Real socket tests verify fallback, serving on the selected port, explicit-port
   behavior and propagation of unrelated bind errors. Test servers are closed.
 
+- Compared the running WeKan UI and reordered native Gambas controls into a
+  single header, left navigation, central board/report content, optional right
+  page sidebar and closable card details. Added clickable board tiles and menus.
+- Added isolated real-browser checks with optional screenshots; source-project
+  and packaged-archive UI paths are covered without seeded application accounts.
+
 ## Current status and next work
 
 - Changes are organized into separate local commits for accounts, Kanban,
   build/release tools and documentation, updating both changelogs per category.
   Full current WeKan parity is not complete.
-- Real browser visual/interaction testing remains to be done. The HTTP/session
-  and jsdom tests pass but are not a browser rendering/keyboard/accessibility run.
+- Chromium layout/interaction checks now pass at 1440×1000 and 390×844, including
+  header/navigation/sidebar geometry, view menus, board/card creation, calendar,
+  admin forms and keyboard-focus placement. Other browsers and a comprehensive
+  accessibility audit remain to be done.
 - Weba now has its own project-only AGENTS.md and CLAUDE.md. Its information is
   removed from the parent instruction files as requested.
 - The user-provided legacy `.tools/bin/gambas3` contains the IDE, components, metadata
@@ -101,4 +109,4 @@ an exhaustive list. Reference areas: `client/components/boards`, `cards`,
 - Commit locally on `main` as Lauri Ojansivu; never push. Report each commit hash
   and the exact human-run push command. Do not commit the test database or tools.
 - Before human publishing: run the GitHub CPU matrix, test real Debian package
-  installation and the WSL/macOS launchers, and perform real-browser checks.
+  installation and the WSL/macOS launchers, and repeat browser checks on the release targets.

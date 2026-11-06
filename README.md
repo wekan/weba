@@ -195,3 +195,32 @@ The local CLI requires a clean checkout, an existing remote tag and a working
 `GITHUB_TOKEN` with `contents: write` to create releases and attach assets. They
 share a per-version concurrency group and never cancel an in-progress release.
 No workflow has been dispatched as part of preparing this implementation.
+
+## Native component layout
+
+The signed-in shell follows the current WeKan control order using Gambas controls:
+Home, navigation collapse, page title/logo, available page actions, view menu,
+account menu and page-sidebar toggle. Board/archive navigation is on the left,
+board tiles or the selected report occupy the center, and page actions open in
+an optional right sidebar. Card fields appear in a closable panel only when
+creating/selecting a card. Profile and password-policy forms occupy the content
+area; the administrator's available sections use the left navigation.
+
+Only implemented functions are offered; matching the component placement does
+not imply all WeKan features have been ported. The current layout was compared
+against the running WeKan UI and checked in Chromium at 1440×1000 and 390×844.
+The browser test checks geometry, native menus, board/card creation, calendar,
+admin navigation, panel toggles and the native keyboard-focus outline.
+
+For an isolated real-browser test, provide a Chromium CDP endpoint and Puppeteer
+available to Node (for example the enclosing development checkout's dependencies):
+
+```sh
+WEBA_BROWSER_URL=http://127.0.0.1:9231 python3 tests/run-http.py --browser --archive
+```
+
+The runner copies sources into a temporary project, creates a fresh test database
+and closes its test server afterward. `WEBA_SCREENSHOT_DIR` optionally saves
+screenshots to an existing task-owned temporary directory. It does not use your
+normal browser profile or application database. Chromium must be started with
+its own disposable profile and remote-debugging port before running this check.

@@ -2,6 +2,12 @@
 
 This work adds the following features and fixes:
 
+- Arrange native Gambas controls in the current WeKan order: one header with
+  page/view/account actions, left navigation, central board tiles/reports,
+  optional right sidebar and closable card details. Move admin navigation and
+  profile/password settings into their page areas. Keep keyboard focus aligned
+  with CSS-positioned panels. Verify desktop/mobile geometry and interactions
+  in Chromium using source and packaged-archive sessions. Thanks to xet7.
 - Select a free local port when the default 8080 is occupied and print the actual
   URL. Preserve explicitly requested ports. Add occupied-port and bind-error
   regression tests. Thanks to xet7.

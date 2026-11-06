@@ -8,6 +8,11 @@
       const data = section.querySelector('.weba-data'), report = section.querySelector('.weba-report');
       if (!data || !report) return;
       report.replaceChildren(); data.hidden = false;
+      data.querySelectorAll('[data-board-key]').forEach(tile => {
+        tile.onclick = () => {
+          if (root.gw && section.dataset.tree) root.gw.update(section.dataset.tree, '$' + btoa(tile.dataset.boardKey), null);
+        };
+      });
       const cards = [...data.querySelectorAll('.weba-card')], view = section.dataset.view;
       function add(parent, tag, text, cls) {
         const el = document.createElement(tag);
@@ -67,12 +72,33 @@
         });
         if (view === 'Gantt') add(report,'p','Due-date milestones. Durations and dependencies are not recorded yet.');
       } else {
-        if (!cards.length) add(report,'p','No cards. Create a board, select it in the tree and add a card.');
+        if (!cards.length && !['Boards','Archive'].includes(view) && !data.querySelector('[data-board-key]')) add(report,'p','No cards. Open the page menu to create a board, then select it and add a card.');
         return;
       }
       data.hidden = true;
     });
   }
+  // Gambas calculates its focus outline from offsets; CSS-positioned panels
+  // need the visible rectangle instead. Keep its native keyboard focus marker.
+  function alignFocus() {
+    if (!root.requestAnimationFrame) return;
+    root.requestAnimationFrame(() => {
+      let active = document.activeElement;
+      while (active && (!active.id || active.id.includes(':'))) active = active.parentElement;
+      const outline = document.getElementById('gw-focus');
+      if (!active || !active.closest('.weba-shell') || !outline) return;
+      const rect = active.getBoundingClientRect();
+      if (!rect.width || !rect.height) { outline.style.display = 'none'; return; }
+      Object.assign(outline.style, {left:(rect.left + root.scrollX)+'px', top:(rect.top + root.scrollY)+'px', width:rect.width+'px', height:rect.height+'px'});
+    });
+  }
+  if (root.addEventListener && !root.webaFocusInstalled) {
+    root.webaFocusInstalled = true;
+    ['focusin','click'].forEach(event => document.addEventListener(event, alignFocus));
+    root.addEventListener('resize', alignFocus);
+    root.addEventListener('scroll', alignFocus, true);
+  }
+  root.webaAlignFocus = alignFocus;
   root.webaRender = render;
   if (typeof module !== 'undefined') module.exports = {summary, monthDays};
 })(typeof window === 'undefined' ? globalThis : window);

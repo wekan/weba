@@ -4,7 +4,8 @@ Export
 
 Private $board As Integer
 Private $card As Integer
-Private $view As String = "Lists"
+Private $view As String = "Boards"
+Private $boardTitle As String
 Private $archive As Boolean
 
 Public Sub WebForm_Open()
@@ -13,6 +14,8 @@ Public Sub WebForm_Open()
     Return
   Endif
   Status.Text = "Todo"
+  AccountToggle.Text = Session["username"] & " ▾"
+  Admin.Visible = WebDatabase.GetIsAdmin(Session["username"])
   RefreshTree()
 Catch
   Notice.Text = Error.Text
@@ -24,12 +27,14 @@ Private Sub RefreshTree()
   Boards.Clear()
   b = KanbanStore.Boards($archive)
   For Each b
+    If b!id = $board Then $boardTitle = b!title
     Boards.Add("b" & b!id, b!title, "Icons/16x16/folder.png")
     c = KanbanStore.Cards(b!id, $archive)
     For Each c
       Boards.Add("c" & c!id & ":" & b!id, c!title, "Icons/16x16/doc.png", "b" & b!id)
     Next
   Next
+  UpdateHeader()
   Visual.Refresh()
 End
 
@@ -40,6 +45,7 @@ Public Sub Boards_Select()
   $card = 0
   If Left(Boards.Key, 1) = "b" Then
     $board = CInt(Mid(Boards.Key, 2))
+    Editor.Hide()
   Else
     parts = Split(Mid(Boards.Key, 2), ":")
     $card = CInt(parts[0])
@@ -55,8 +61,15 @@ Public Sub Boards_Select()
       Labels.Text = c!labels
       DueDay.Text = c!due_day
     Next
+    Editor.Show()
   Endif
-  Visual.Refresh()
+  $view = "Lists"
+  ContentRow.Show()
+  AccountPanel.Hide()
+  PasswordPolicyPanel.Hide()
+  AdminPanel.Hide()
+  PageActions.Show()
+  RefreshTree()
 Catch
   Notice.Text = Error.Text
 End
@@ -70,6 +83,11 @@ Catch
 End
 
 Public Sub NewCard_Click()
+  If Not $board Then
+    Notice.Text = "Select a board first"
+    Return
+  Endif
+  Editor.Show()
   $card = 0
   CardTitle.Text = ""
   Description.Text = ""
@@ -120,10 +138,21 @@ Private Sub ShowView(view As String)
   If view = "Admin panel" Then AdminPanel.Visible = WebDatabase.GetIsAdmin(Session["username"])
   If view = "Profile" Then Fullname.Text = WebDatabase.GetFullname(Session["username"])
   $view = view
+  ContentRow.Visible = view <> "Profile"
+  PageActions.Visible = view <> "Profile" And view <> "Admin panel"
+  Editor.Hide()
+  Views.Hide()
+  AccountMenu.Hide()
+  UpdateHeader()
   Visual.Refresh()
 End
 
 Public Sub Home_Click()
+  Editor.Hide()
+  ContentRow.Show()
+  PageActions.Show()
+  Views.Hide()
+  AccountMenu.Hide()
   AccountPanel.Hide()
   AdminPanel.Hide()
   PasswordPolicyPanel.Hide()
@@ -134,6 +163,11 @@ Public Sub Home_Click()
 End
 
 Public Sub Archive_Click()
+  Editor.Hide()
+  ContentRow.Show()
+  PageActions.Show()
+  Views.Hide()
+  AccountMenu.Hide()
   AccountPanel.Hide()
   AdminPanel.Hide()
   PasswordPolicyPanel.Hide()
@@ -148,11 +182,10 @@ Public Sub Visual_Render()
   Dim c As Result
   Dim a As Result
   Dim text As String
-  Dim mine As Boolean
   If Not Session["username"] Then Return
   Print "<script>" & File.Load(".public/kanban.js") & "</script>"
   Print "<link rel=\"stylesheet\" href=\"kanban.css\">"
-  Print "<section class=\"weba-content\" data-view=\"" & Html($view) & "\"><h2>" & Html($view) & "</h2>"
+  Print "<section class=\"weba-content\" data-tree=\"" & Html(Boards.Name) & "\" data-view=\"" & Html($view) & "\">"
   If $view = "Profile" Then
     Print "<p>Signed in as " & Html(Session["username"]) & "</p>"
   Else If $view = "Admin panel" Then
@@ -173,6 +206,10 @@ Public Sub Visual_Render()
     Print "<div class=\"weba-data\">"
     For Each b
       If $board And b!id <> $board Then Continue
+      If Not $board And ($view = "Boards" Or $view = "Archive") Then
+        Print "<button type=\"button\" class=\"weba-board-tile\" data-board-key=\"b" & Str(b!id) & "\"><strong>" & Html(b!title) & "</strong></button>"
+        Continue
+      Endif
       Print "<h3>" & Html(b!title) & "</h3>"
       c = KanbanStore.Cards(b!id, $archive)
       For Each c
@@ -190,7 +227,7 @@ Public Sub Visual_Render()
     Print "</div><div class=\"weba-report\"></div>"
   Endif
   Print "</section>"
-  WebForm.Exec("window.webaRender && window.webaRender();")
+  WebForm.Exec("window.webaRender && window.webaRender();gw.onFocus();window.webaAlignFocus && window.webaAlignFocus();")
 Catch
   Print "<p role=\"alert\">" & Html(Error.Text) & "</p>"
 End
@@ -305,6 +342,8 @@ Public Sub PasswordLength_Click()
   If Not WebDatabase.GetIsAdmin(Session["username"]) Then Error.Raise("Administrator required")
   PolicyEnforce.Value = WebDatabase.PasswordLengthEnforced()
   PolicyMinimum.Text = Str(WebDatabase.PasswordMinLength())
+  ContentRow.Hide()
+  PaneTitle.Text = "Password Length"
   PasswordPolicyPanel.Show()
 Catch
   Notice.Text = Error.Text
@@ -316,4 +355,76 @@ Public Sub SavePasswordPolicy_Click()
   Notice.Text = "Password length settings saved"
 Catch
   Notice.Text = Error.Text
+End
+
+Private Sub UpdateHeader()
+  Dim b As Result
+  Dim overview As Boolean = Not $board And ($view = "Boards" Or $view = "Archive")
+  ViewMenu.Visible = $view <> "Profile" And $view <> "Admin panel"
+  AddBoard.Visible = ViewMenu.Visible
+  HeaderSearch.Visible = ViewMenu.Visible
+  Remaining.Class = If($view = "Boards", "weba-active", "")
+  Archive.Class = If($view = "Archive", "weba-active", "")
+  BoardNavigation.Visible = $view <> "Admin panel"
+  AdminNavigation.Visible = $view = "Admin panel"
+  OverviewActions.Visible = overview And Not $archive
+  ContentRow.Expand = Not overview
+  PaneTitle.Text = If($view = "Boards", "Remaining", $view)
+  PageTitle.Text = If($view = "Boards", "All Boards", $view)
+  If $board And $view <> "Profile" And $view <> "Admin panel" Then
+    b = KanbanStore.Boards($archive)
+    For Each b
+      If b!id = $board Then PageTitle.Text = b!title
+    Next
+  Endif
+  PageTitle.Tooltip = PageTitle.Text
+  ViewMenu.Text = If($view = "Boards", "View ▾", $view & " ▾")
+End
+
+Public Sub Remaining_Click()
+  Home_Click()
+End
+
+Public Sub ToggleNavigation_Click()
+  LeftNavigation.Visible = Not LeftNavigation.Visible
+End
+
+Public Sub ViewMenu_Click()
+  Views.Visible = Not Views.Visible
+  AccountMenu.Hide()
+End
+
+Public Sub AccountToggle_Click()
+  AccountMenu.Visible = Not AccountMenu.Visible
+  Views.Hide()
+End
+
+Public Sub SidebarToggle_Click()
+  PageSidebar.Visible = Not PageSidebar.Visible
+End
+
+Public Sub CloseSidebar_Click()
+  PageSidebar.Hide()
+End
+
+Public Sub CloseEditor_Click()
+  Editor.Hide()
+End
+
+Public Sub AddBoard_Click()
+  PageSidebar.Show()
+  BoardTitle.SetFocus()
+End
+
+Public Sub AddBoardTile_Click()
+  AddBoard_Click()
+End
+
+Public Sub HeaderSearch_Click()
+  PageSidebar.Show()
+  Filter.SetFocus()
+End
+
+Public Sub AdminUsers_Click()
+  ShowView("Admin panel")
 End

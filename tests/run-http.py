@@ -28,7 +28,10 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
     try:
         env = base_env.copy()
         env['WEBA_TEST_URL'] = 'http://127.0.0.1:' + str(server.server_port)
-        subprocess.run([sys.executable, str(root / 'tests/http.test.py')], check=True, env=env)
+        if '--browser' in sys.argv:
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/layout.browser.cjs')], check=True, env=env)
+        else:
+            subprocess.run([sys.executable, str(root / 'tests/http.test.py')], check=True, env=env)
     finally:
         server.shutdown()
         server.server_close()

@@ -1,265 +1,336 @@
 # Gambas Form File 3.0
 
 { WebForm WebForm
-  #MoveScaled(0,0,180,110)
   Title = ("WeKan")
-  Height = "100%"
+  Class = "weba-shell"
+  Height = "100vh"
   Arrangement = Arrange.Vertical
-  Margin = True
-  Spacing = True
   { Header WebContainer
+    Class = "weba-topbar"
     Arrangement = Arrange.Horizontal
-    Spacing = True
-  { Home WebButton
-    #MoveScaled(0,0,30,5)
-    Text = ("Boards")
+    { Home WebButton
+      Text = "⌂"
+      Tooltip = ("All Boards")
+    }
+    { ToggleNavigation WebButton
+      Text = ("☰")
+      Tooltip = ("Show or hide navigation")
+    }
+    { PageTitle WebLabel
+      Text = ("All Boards")
+    }
+    { Brand WebLabel
+      Text = ("WeKan ®")
+    }
+    { HeaderSpace WebContainer
+      Class = "weba-header-space"
+      Arrangement = Arrange.Vertical
+      Expand = True
+    }
+    { AddBoard WebButton
+      Text = ("＋")
+      Tooltip = ("Add Board")
+    }
+    { HeaderSearch WebButton
+      Text = ("⌕")
+      Tooltip = ("Search")
+    }
+    { ViewMenu WebButton
+      Text = ("View ▾")
+    }
+    { AccountToggle WebButton
+      Text = ("Account ▾")
+    }
+    { SidebarToggle WebButton
+      Text = ("☰")
+      Tooltip = ("Show or hide page sidebar")
+    }
   }
-  { MyCards WebButton
-    #MoveScaled(0,0,30,5)
-    Text = ("My cards")
+  { Views WebContainer
+    Class = "weba-view-options"
+    Arrangement = Arrange.Vertical
+    Visible = False
+    Ignore = True
+    { Swimlanes WebButton
+      Text = ("Swimlanes")
+    }
+    { Kanban WebButton
+      Text = ("Lists")
+    }
+    { Calendar WebButton
+      Text = ("Calendar")
+    }
+    { Gantt WebButton
+      Text = ("Gantt")
+    }
+    { TableView WebButton
+      Text = ("Table")
+    }
+    { Charts WebButton
+      Text = ("Charts")
+    }
   }
-  { DueCards WebButton
-    #MoveScaled(0,0,30,5)
-    Text = ("Due cards")
-  }
-  { Archive WebButton
-    #MoveScaled(0,0,30,5)
-    Text = ("Archive")
-  }
-  { Profile WebButton
-    #MoveScaled(0,0,30,5)
-    Text = ("Profile")
-  }
-  { Admin WebButton
-    #MoveScaled(0,0,30,5)
-    Text = ("Admin panel")
-  }
-  { Logout WebButton
-    #MoveScaled(0,0,30,5)
-    Text = ("Logout")
-  }
-  }
-  { Toolbar WebContainer
-    Arrangement = Arrange.Horizontal
-    Spacing = True
-  { BoardTitle WebTextBox
-    #MoveScaled(0,0,30,5)
-    Tooltip = ("Board title")
-  }
-  { Filter WebTextBox
-    #MoveScaled(0,0,30,5)
-    Tooltip = ("Search cards")
-  }
-  { NewBoard WebButton
-    #MoveScaled(0,0,30,5)
-    Text = ("Create board")
-  }
-  { ArchiveBoard WebButton
-    #MoveScaled(0,0,30,5)
-    Text = ("Archive board")
-  }
-  { Search WebButton
-    #MoveScaled(0,0,30,5)
-    Text = ("Search")
-  }
+  { AccountMenu WebContainer
+    Class = "weba-account-menu"
+    Arrangement = Arrange.Vertical
+    Visible = False
+    Ignore = True
+    { MyCards WebButton
+      Text = ("My cards")
+    }
+    { DueCards WebButton
+      Text = ("Due cards")
+    }
+    { Profile WebButton
+      Text = ("Profile")
+    }
+    { Admin WebButton
+      Text = ("Admin panel")
+    }
+    { Logout WebButton
+      Text = ("Logout")
+    }
   }
   { Body WebContainer
+    Class = "weba-body"
+    Arrangement = Arrange.Horizontal
     Expand = True
-    Arrangement = Arrange.Horizontal
-    Spacing = True
-  { Boards WebTree
-    #MoveScaled(0,0,30,5)
-    Width = "220px"
-    Expand = True
-  }
-  { Workspace WebContainer
-    Expand = True
-    Arrangement = Arrange.Vertical
-    Spacing = True
-  { Views WebContainer
-    Arrangement = Arrange.Horizontal
-    Spacing = True
-  { Kanban WebButton
-    #MoveScaled(0,0,30,5)
-    Text = ("Lists")
-  }
-  { Swimlanes WebButton
-    #MoveScaled(0,0,30,5)
-    Text = ("Swimlanes")
-  }
-  { TableView WebButton
-    #MoveScaled(0,0,30,5)
-    Text = ("Table")
-  }
-  { Calendar WebButton
-    #MoveScaled(0,0,30,5)
-    Text = ("Calendar")
-  }
-  { Gantt WebButton
-    #MoveScaled(0,0,30,5)
-    Text = ("Gantt")
-  }
-  { Charts WebButton
-    #MoveScaled(0,0,30,5)
-    Text = ("Charts")
-  }
-  { Activities WebButton
-    #MoveScaled(0,0,30,5)
-    Text = ("Activities")
-  }
-  }
-  { Visual WebContainer
-    #MoveScaled(0,0,30,5)
-    Expand = True
-    Class = "weba-visual"
-  }
-  }
-  { Editor WebContainer
-    Width = "300px"
-    Arrangement = Arrange.Vertical
-    Spacing = True
-  { CardHeading WebLabel
-    #MoveScaled(0,0,30,5)
-    Text = ("Card details")
-  }
-  { Help WebLabel
-    #MoveScaled(0,0,30,5)
-    Text = ("Select a card in the tree, or create a new card.")
-  }
-  { CardTitleCaption WebLabel
-    #MoveScaled(0,0,30,5)
-    Text = ("Title")
-  }
-  { CardTitle WebTextBox
-    #MoveScaled(0,0,30,5)
-  }
-  { DescriptionCaption WebLabel
-    #MoveScaled(0,0,30,5)
-    Text = ("Description")
-  }
-  { Description WebTextBox
-    #MoveScaled(0,0,30,5)
-  }
-  { LaneCaption WebLabel
-    #MoveScaled(0,0,30,5)
-    Text = ("Swimlane")
-  }
-  { Lane WebTextBox
-    #MoveScaled(0,0,30,5)
-  }
-  { StatusCaption WebLabel
-    #MoveScaled(0,0,30,5)
-    Text = ("Status: Todo, Doing or Done")
-  }
-  { Status WebTextBox
-    #MoveScaled(0,0,30,5)
-  }
-  { AssigneeCaption WebLabel
-    #MoveScaled(0,0,30,5)
-    Text = ("Assignee")
-  }
-  { Assignee WebTextBox
-    #MoveScaled(0,0,30,5)
-  }
-  { LabelsCaption WebLabel
-    #MoveScaled(0,0,30,5)
-    Text = ("Labels")
-  }
-  { Labels WebTextBox
-    #MoveScaled(0,0,30,5)
-  }
-  { DueDayCaption WebLabel
-    #MoveScaled(0,0,30,5)
-    Text = ("Due date: YYYY-MM-DD")
-  }
-  { DueDay WebTextBox
-    #MoveScaled(0,0,30,5)
-  }
-  { NewCard WebButton
-    #MoveScaled(0,0,30,5)
-    Text = ("New card")
-  }
-  { SaveCard WebButton
-    #MoveScaled(0,0,30,5)
-    Text = ("Save card")
-  }
-  { ArchiveCard WebButton
-    #MoveScaled(0,0,30,5)
-    Text = ("Archive / restore card")
-  }
-  }
-  }
-  { AccountPanel WebContainer
-    Visible = False
-    Arrangement = Arrange.Horizontal
-    Spacing = True
-    { Fullname WebTextBox
-      Tooltip = ("Full name")
+    { LeftNavigation WebContainer
+      Class = "weba-navigation"
+      Arrangement = Arrange.Vertical
+      Width = "210px"
+      { BoardNavigation WebContainer
+        Class = "weba-board-navigation"
+        Arrangement = Arrange.Vertical
+        Expand = True
+        { Remaining WebButton
+          Text = ("Remaining")
+        }
+        { Archive WebButton
+          Text = ("Archive")
+        }
+        { TreeHeading WebLabel
+          Text = ("Boards")
+        }
+        { Boards WebTree
+          Expand = True
+          Width = "100%"
+        }
+      }
+      { AdminNavigation WebContainer
+        Class = "weba-admin-navigation"
+        Arrangement = Arrange.Vertical
+        Visible = False
+        { AdminPeopleTitle WebLabel
+          Text = ("People")
+        }
+        { AdminUsers WebButton
+          Text = ("People")
+        }
+        { AdminProblemsTitle WebLabel
+          Text = ("Problems")
+        }
+        { PasswordLength WebButton
+          Text = ("Password Length")
+        }
+      }
     }
-    { OldPassword WebTextBox
-      Tooltip = ("Current password")
-      Password = True
+    { Workspace WebContainer
+      Class = "weba-workspace"
+      Arrangement = Arrange.Vertical
+      Expand = True
+      { PaneTitle WebLabel
+        Text = ("Remaining")
+      }
+      { ContentRow WebContainer
+        Class = "weba-content-row"
+        Arrangement = Arrange.Horizontal
+        Expand = True
+        { Visual WebContainer
+          Expand = True
+          Class = "weba-visual"
+        }
+        { Editor WebContainer
+          Class = "weba-editor"
+          Visible = False
+          Ignore = True
+          Arrangement = Arrange.Vertical
+          Spacing = True
+          Width = "340px"
+          { CloseEditor WebButton
+            Text = ("×")
+            Tooltip = ("Close card details")
+          }
+          { CardHeading WebLabel
+            Text = ("Card details")
+          }
+          { Help WebLabel
+            Text = ("Select a card in the tree, or create a new card.")
+          }
+          { CardTitleCaption WebLabel
+            Text = ("Title")
+          }
+          { CardTitle WebTextBox
+          }
+          { LabelsCaption WebLabel
+            Text = ("Labels")
+          }
+          { Labels WebTextBox
+          }
+          { AssigneeCaption WebLabel
+            Text = ("Assignee")
+          }
+          { Assignee WebTextBox
+          }
+          { DescriptionCaption WebLabel
+            Text = ("Description")
+          }
+          { Description WebTextBox
+          }
+          { LaneCaption WebLabel
+            Text = ("Swimlane")
+          }
+          { Lane WebTextBox
+          }
+          { StatusCaption WebLabel
+            Text = ("Status: Todo, Doing or Done")
+          }
+          { Status WebTextBox
+          }
+          { DueDayCaption WebLabel
+            Text = ("Due date: YYYY-MM-DD")
+          }
+          { DueDay WebTextBox
+          }
+          { SaveCard WebButton
+            Text = ("Save card")
+          }
+          { ArchiveCard WebButton
+            Text = ("Archive / restore card")
+          }
+        }
+      }
+      { OverviewActions WebContainer
+        Class = "weba-overview-actions"
+        Arrangement = Arrange.Vertical
+        { AddBoardTile WebButton
+          Text = ("＋ Add Board")
+        }
+      }
+      { AccountPanel WebContainer
+        Visible = False
+        Spacing = True
+        Arrangement = Arrange.Vertical
+        Class = "weba-settings-panel"
+        { Fullname WebTextBox
+          Tooltip = ("Full name")
+        }
+        { OldPassword WebTextBox
+          Tooltip = ("Current password")
+          Password = True
+        }
+        { NewPassword WebTextBox
+          Tooltip = ("New password")
+          Password = True
+        }
+        { SaveProfile WebButton
+          Text = ("Save profile")
+        }
+        { ChangePassword WebButton
+          Text = ("Change password")
+        }
+      }
+      { PasswordPolicyPanel WebContainer
+        Visible = False
+        Spacing = True
+        Arrangement = Arrange.Vertical
+        Class = "weba-settings-panel"
+        { PolicyTitle WebLabel
+          Text = ("Admin Panel / Password Length")
+        }
+        { PolicyEnforce WebCheckBox
+          Text = ("Enforce minimum password length")
+        }
+        { PolicyMinimum WebTextBox
+          Text = "8"
+          Tooltip = ("Minimum length, 1 to 256; only required when enforcement is enabled")
+        }
+        { SavePasswordPolicy WebButton
+          Text = ("Save password length settings")
+        }
+      }
     }
-    { NewPassword WebTextBox
-      Tooltip = ("New password")
-      Password = True
-    }
-    { SaveProfile WebButton
-      Text = ("Save profile")
-    }
-    { ChangePassword WebButton
-      Text = ("Change password")
-    }
-  }
-  { AdminPanel WebContainer
-    Visible = False
-    Arrangement = Arrange.Horizontal
-    Spacing = True
-    { PasswordLength WebButton
-      Text = ("Password Length")
-    }
-    { Username WebTextBox
-      Tooltip = ("Username")
-    }
-    { UserPassword WebTextBox
-      Tooltip = ("User password")
-      Password = True
-    }
-    { CreateUser WebButton
-      Text = ("Create Normal user")
-    }
-    { ResetPassword WebButton
-      Text = ("Reset password")
-    }
-    { Promote WebButton
-      Text = ("Set Admin")
-    }
-    { Demote WebButton
-      Text = ("Set Normal")
-    }
-    { DeleteUser WebButton
-      Text = ("Delete user")
-    }
-  }
-  { PasswordPolicyPanel WebContainer
-    Visible = False
-    Arrangement = Arrange.Horizontal
-    Spacing = True
-    { PolicyTitle WebLabel
-      Text = ("Admin Panel / Password Length")
-    }
-    { PolicyEnforce WebCheckBox
-      Text = ("Enforce minimum password length")
-    }
-    { PolicyMinimum WebTextBox
-      Text = "8"
-      Tooltip = ("Minimum length, 1 to 256; only required when enforcement is enabled")
-    }
-    { SavePasswordPolicy WebButton
-      Text = ("Save password length settings")
+    { PageSidebar WebContainer
+      Class = "weba-page-sidebar"
+      Arrangement = Arrange.Vertical
+      Width = "300px"
+      Visible = False
+      { CloseSidebar WebButton
+        Text = ("×")
+        Tooltip = ("Close page sidebar")
+      }
+      { PageActions WebContainer
+        Class = "weba-page-actions"
+        Arrangement = Arrange.Vertical
+        Spacing = True
+        { ActionsTitle WebLabel
+          Text = ("Board menu")
+        }
+        { BoardTitle WebTextBox
+          Tooltip = ("Board title")
+        }
+        { NewBoard WebButton
+          Text = ("Create board")
+        }
+        { ArchiveBoard WebButton
+          Text = ("Archive board")
+        }
+        { NewCard WebButton
+          Text = ("New card")
+        }
+        { SearchTitle WebLabel
+          Text = ("Search")
+        }
+        { Filter WebTextBox
+          Tooltip = ("Search cards")
+        }
+        { Search WebButton
+          Text = ("Search")
+        }
+        { Activities WebButton
+          Text = ("Activities")
+        }
+      }
+      { AdminPanel WebContainer
+        Visible = False
+        Class = "weba-admin-actions"
+        Arrangement = Arrange.Vertical
+        Spacing = True
+        { Username WebTextBox
+          Tooltip = ("Username")
+        }
+        { UserPassword WebTextBox
+          Tooltip = ("User password")
+          Password = True
+        }
+        { CreateUser WebButton
+          Text = ("Create Normal user")
+        }
+        { ResetPassword WebButton
+          Text = ("Reset password")
+        }
+        { Promote WebButton
+          Text = ("Set Admin")
+        }
+        { Demote WebButton
+          Text = ("Set Normal")
+        }
+        { DeleteUser WebButton
+          Text = ("Delete user")
+        }
+      }
     }
   }
   { Notice WebLabel
-    #MoveScaled(0,0,30,5)
   }
 }
