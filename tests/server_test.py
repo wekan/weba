@@ -1,4 +1,7 @@
 import errno
+import io
+from types import SimpleNamespace
+from unittest.mock import Mock
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import sys
@@ -51,6 +54,39 @@ class ServerPortTest(unittest.TestCase):
             with self.assertRaises(PermissionError):
                 server.bind_server('127.0.0.1', None, PortHandler)
             constructor.assert_called_once()
+
+
+class DisconnectedClientTest(unittest.TestCase):
+    def request(self, write_error, cgi_failure=False):
+        cls = server.handler(Path('/unused.gambas'), 'unused-runner', {})
+        request = object.__new__(cls)
+        request.path = '/'
+        request.command = 'GET'
+        request.headers = {}
+        request.server = SimpleNamespace(server_address=('127.0.0.1', 8080), server_port=8080)
+        request.client_address = ('127.0.0.1', 12345)
+        request.rfile = io.BytesIO()
+        request.wfile = Mock()
+        request.wfile.write.side_effect = write_error
+        request.send_response = Mock()
+        request.send_header = Mock()
+        request.end_headers = Mock()
+        request.send_error = Mock(side_effect=write_error if cgi_failure else None)
+        result = SimpleNamespace(returncode=1 if cgi_failure else 0,
+                                 stdout=b'Content-Type: text/plain\r\n\r\nOK')
+        with patch.object(server.subprocess, 'run', return_value=result):
+            request.run_cgi()
+        self.assertTrue(request.close_connection)
+        return request
+
+    def test_disconnected_response_does_not_attempt_a_second_response(self):
+        for error in [BrokenPipeError(), ConnectionResetError(), ConnectionAbortedError()]:
+            with self.subTest(error=type(error).__name__):
+                self.request(error).send_error.assert_not_called()
+
+    def test_disconnect_while_reporting_cgi_failure_is_silent(self):
+        request = self.request(BrokenPipeError(), cgi_failure=True)
+        request.send_error.assert_called_once_with(500, 'Gambas request failed')
 
 
 if __name__ == '__main__': unittest.main()

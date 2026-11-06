@@ -1,4 +1,6 @@
 # Upcoming WeKan ® for Gambas release
+- Handle browser disconnects without a traceback or a second response attempt.
+  Test normal-response and error-response disconnects. Thanks to xet7.
 - Use local Font Awesome eye/eye-slash icons for both password visibility
   buttons, retaining descriptive tooltips. Thanks to xet7.
 

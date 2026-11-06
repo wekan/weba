@@ -15,6 +15,12 @@ def handler(application, runner, environment):
         def do_POST(self): self.run_cgi()
         def log_message(self, *args): pass  # Gambas update URLs can contain passwords.
         def run_cgi(self):
+            try:
+                self._run_cgi()
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+                self.close_connection = True
+
+        def _run_cgi(self):
             url = urllib.parse.urlsplit(self.path)
             env = environment.copy()
             env.update(REQUEST_METHOD=self.command, SCRIPT_NAME='/', PATH_INFO=url.path,
@@ -46,6 +52,8 @@ def handler(application, runner, environment):
                 self.send_header('Content-Length', str(len(body)))
                 self.end_headers()
                 self.wfile.write(body)
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+                raise
             except (ValueError, OSError, RuntimeError, subprocess.TimeoutExpired):
                 self.send_error(500, 'Gambas request failed')
     return GambasHandler
