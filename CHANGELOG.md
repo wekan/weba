@@ -21,6 +21,19 @@ This work adds the following features and fixes:
   and DOM/report tests. Full current WeKan parity remains in TODO.md.
   Thanks to xet7.
 
+- Added build.sh with local build/run/test/package actions, Release All,
+  Release All Missing, target listing, toolchain checks and Copy Gambas to
+  Flatpak Sandbox. Added a local CGI host preserving runtime/database settings,
+  plus real source-project and packaged-archive HTTP/session tests.
+  Thanks to xet7.
+- Added independently uploaded Linux deb/tar targets for eight Debian CPU
+  architectures, Windows WSL and macOS Docker launcher zips, source archives
+  and per-file SHA-256 sums. Missing mode preserves completed pairs and repairs
+  incomplete assets; workflows require existing tags and never push refs.
+  Added copy/packaging/release-plan tests. Local ARM64 packages and workflow
+  syntax are checked; remote jobs and other OS/CPU installers remain unverified.
+  Thanks to xet7.
+
 Thanks to above GitHub users for their contributions and translators for their translations.
 
 # v1.0 2021-12-08 WeKan ® for Gambas release

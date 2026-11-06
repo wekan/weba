@@ -1,0 +1,20 @@
+name: Release All Missing
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Existing vMAJOR.MINOR.PATCH tag whose release needs completing
+        required: true
+        type: string
+permissions:
+  contents: write
+concurrency:
+  group: weba-release-${{ inputs.version }}
+  cancel-in-progress: false
+jobs:
+  release:
+    uses: ./.github/workflows/release-build.yml
+    with:
+      version: ${{ inputs.version }}
+      missing: true
+    secrets: inherit

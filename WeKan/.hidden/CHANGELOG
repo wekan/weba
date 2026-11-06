@@ -3,6 +3,10 @@
   seeded accounts, enforce permissions, hash passwords and test concurrent signups.
 - Kanban: Add persistent boards/cards, archives, activities, profile/admin controls
   and embedded list, swimlane, table, calendar, milestone and chart views with tests.
+- Build/release: Add the build/test/package menu, Flatpak Gambas copy helper,
+  local CGI runtime, isolated HTTP tests and incremental all/missing release CI.
+- Packaging: Add eight Linux CPU targets, WSL/Docker launchers and source archives
+  with checksums; verify local ARM64 packaging and document unverified targets.
 
 * Fri Nov 11 2022 Lauri Ojansivu <support@wekan.team> 1.0.0
 - Initial release

@@ -1,0 +1,11 @@
+[
+  {"id":"linux-amd64","arch":"amd64","platform":"linux/amd64","desktop":true},
+  {"id":"linux-arm64","arch":"arm64","platform":"linux/arm64","desktop":true},
+  {"id":"linux-armhf","arch":"armhf","platform":"linux/arm/v7"},
+  {"id":"linux-armel","arch":"armel","platform":"linux/arm/v5"},
+  {"id":"linux-i386","arch":"i386","platform":"linux/386"},
+  {"id":"linux-ppc64el","arch":"ppc64el","platform":"linux/ppc64le"},
+  {"id":"linux-riscv64","arch":"riscv64","platform":"linux/riscv64"},
+  {"id":"linux-s390x","arch":"s390x","platform":"linux/s390x"},
+  {"id":"source","arch":"all","platform":"source"}
+]

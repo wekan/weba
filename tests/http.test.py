@@ -1,0 +1,36 @@
+import urllib.request,urllib.parse,http.cookiejar,json,re,os,uuid
+BASE=os.environ.get('WEBA_TEST_URL','http://127.0.0.1:8100')
+username='http-'+uuid.uuid4().hex[:12]
+jar=http.cookiejar.CookieJar(); client=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
+def get(path='/'): return client.open(BASE+path,timeout=15).read().decode()
+def command(c): return get('/x?c='+urllib.parse.quote(json.dumps(c)))
+page=get(); command(['raise',None,'open',[],False]); prefix=re.search(r'id="(@\d+)\.WebTextName"',page)[1]
+for name,value in [('WebTextName',username),('WebTextPass','http test password')]:
+ answer=command(['update',prefix+'.'+name,'text',value,True])
+assert 'location.reload' in command(['raise',prefix+'.Register','click',[],False])
+page=get(); command(['raise',None,'open',[],False])
+assert 'root.webaRender' in page, 'Custom reports must be included in the rendered page'
+assert 'BoardTitle' in page
+prefix=re.search(r'id="(@\d+)\.BoardTitle"',page)[1]
+command(['update',prefix+'.BoardTitle','text','HTTP board',True])
+answer=command(['raise',prefix+'.NewBoard','click',[],False])
+key=next(k for k in re.findall(r'Boards:([A-Za-z0-9+/=]+)',answer) if k.startswith('Yj') and k.endswith('='))
+
+answer=command(['update',prefix+'.Boards','$'+key,None,True])
+assert 'Board&nbsp;not&nbsp;accessible' not in answer
+command(['raise',prefix+'.NewCard','click',[],False])
+for name,value in [('CardTitle','HTTP card'),('Description','<script>user text</script>'),('DueDay','2026-11-06')]:
+ command(['update',prefix+'.'+name,'text',value,True])
+answer=command(['raise',prefix+'.SaveCard','click',[],False])
+assert 'Card&nbsp;saved' in answer, answer
+for control,view in [('Calendar','Calendar'),('Charts','Charts'),('TableView','Table'),('Swimlanes','Swimlanes')]:
+ answer=command(['raise',prefix+'.'+control,'click',[],False])
+ assert 'HTTP card' in answer and view in answer, answer
+ assert '&lt;script&gt;' in answer
+answer=command(['raise',prefix+'.Admin','click',[],False])
+assert username in answer, 'Admin user listing did not contain the registered user'
+assert '<td>Admin</td>' in answer, 'First registered user role was not Admin'
+assert 'Fullname' in command(['raise',prefix+'.Profile','click',[],False])
+assert 'location.reload' in command(['raise',prefix+'.Logout','click',[],False])
+assert 'WebTextName' in get()
+print('HTTP registration/login, board/card creation, report resources, views, profile, admin and logout passed')

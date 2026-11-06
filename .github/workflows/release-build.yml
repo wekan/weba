@@ -1,0 +1,94 @@
+name: Build release targets
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      missing:
+        required: true
+        type: boolean
+permissions:
+  contents: write
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      count: ${{ steps.plan.outputs.count }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.version }}
+          persist-credentials: false
+      - name: Validate and create release for an existing tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ inputs.version }}
+        run: python3 releases/release.py ensure "$VERSION"
+      - name: Plan all or only incomplete targets
+        id: plan
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ inputs.version }}
+          MISSING: ${{ inputs.missing }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=()
+          if [[ "$MISSING" == true ]]; then args+=(--missing); fi
+          matrix=$(python3 releases/release.py plan "$VERSION" "${args[@]}")
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "count=$(python3 -c 'import json,sys; print(len(json.loads(sys.argv[1])["include"]))' "$matrix")" >> "$GITHUB_OUTPUT"
+  package:
+    needs: prepare
+    if: needs.prepare.outputs.count != '0'
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+        id: checkout
+        with:
+          ref: ${{ inputs.version }}
+          persist-credentials: false
+      - uses: docker/setup-qemu-action@v3
+        if: matrix.id != 'source'
+        with:
+          platforms: all
+      - name: Build and test target CPU
+        if: matrix.id != 'source'
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          ARCH: ${{ matrix.arch }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          docker run --rm --platform "$PLATFORM" -v "$PWD:/src" -w /src debian:trixie-slim \
+            bash releases/build-linux.sh --version "$VERSION" --arch "$ARCH"
+      - name: Build source archive
+        if: matrix.id == 'source'
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          mkdir -p "$PWD/.tools/tmp"
+          TMPDIR="$PWD/.tools/tmp" python3 releases/package.py --source --version "$VERSION"
+      # Each matrix job publishes immediately; it does not wait for other CPUs.
+      - name: Attach this completed target and checksums
+        if: ${{ always() && steps.checkout.outcome == 'success' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ inputs.version }}
+          TARGET: ${{ matrix.id }}
+          MISSING: ${{ inputs.missing }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=()
+          if [[ "$MISSING" == true ]]; then args+=(--missing); fi
+          for attempt in 1 2 3; do
+            if python3 releases/release.py publish "$VERSION" "$TARGET" --finished "${args[@]}"; then exit 0; fi
+            sleep "$((attempt * 5))"
+          done
+          exit 1
