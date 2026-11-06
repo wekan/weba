@@ -1,79 +1,302 @@
-' Gambas class file
+ ' Gambas class file
 
 Export
 
-Public Sub _new()
-
-  Boards.Clear()
-  ModVar.IndexTree = 1
-
-  Boards.Add(ModVar.IndexTree, "Menu", "Icons/16x16/folder.png")
-  Boards[1].Expanded = True
-  Inc ModVar.IndexTree
-
-  Boards.Add(ModVar.IndexTree, "Item1", "Icons/16x16/aide.png", "1")
-  Inc ModVar.IndexTree
-
-
-End
+Private $board As Integer
+Private $card As Integer
+Private $view As String = "Lists"
+Private $archive As Boolean
 
 Public Sub WebForm_Open()
-
-  WebformMain.Debug = False
-
-End
-
-Public Sub WebButton1_Click()
-
-  ModLogs.AddLogs("WebformMain - WebButton1_Click()")
-
-End
-
-Public Sub WebMenuImportFromMongodumpJSON_Click()
-
-  Dim SomeResponse As Integer
-
-  SomeResponse = Message.Info("Importing from Mongodump JSON", "Ok")
-
-End
-
-Public Sub WebMenuAbout_Click()
-
-  Dim SomeResponse As Integer
-
-  SomeResponse = Message.Info("WeKan ®", "Ok")
-
-End
-
-Public Sub WebMenuLogout_Click()
-
-  ' Button Logout
-
-  Dim Reponse As Integer
-
-  Reponse = Message.Question("Do you really want to logout ?", "Yes", "No")
-
-  Select Case Reponse
-    Case 0
-      ' No
-      ModLogs.AddLogs("Logout - Reponse No")
-      Return
-    Case 1
-      ' Yes
-      ModLogs.AddLogs("Logout - Reponse Yes")
-
-      Session.Abandon()
-      WebForm.Goto(WebformLogin)
-  End Select
-
+  If Not Session["username"] Then
+    WebForm.Goto(WebformLogin)
+    Return
+  Endif
+  Status.Text = "Todo"
+  RefreshTree()
 Catch
-  ModLogs.AddLogs("Error at WebButtonLogout_Click()")
-  ModLogs.AddLogs("Error: " & Error.Text & "   " & "Where: " & Error.Where)
-
+  Notice.Text = Error.Text
 End
 
-Public Sub WebLabel1_Render()
+Private Sub RefreshTree()
+  Dim b As Result
+  Dim c As Result
+  Boards.Clear()
+  b = KanbanStore.Boards($archive)
+  For Each b
+    Boards.Add("b" & b!id, b!title, "Icons/16x16/folder.png")
+    c = KanbanStore.Cards(b!id, $archive)
+    For Each c
+      Boards.Add("c" & c!id & ":" & b!id, c!title, "Icons/16x16/doc.png", "b" & b!id)
+    Next
+  Next
+  Visual.Refresh()
+End
 
-  
+Public Sub Boards_Select()
+  Dim parts As String[]
+  Dim c As Result
+  If Not Boards.Key Then Return
+  $card = 0
+  If Left(Boards.Key, 1) = "b" Then
+    $board = CInt(Mid(Boards.Key, 2))
+  Else
+    parts = Split(Mid(Boards.Key, 2), ":")
+    $card = CInt(parts[0])
+    $board = CInt(parts[1])
+    c = KanbanStore.Cards($board, $archive)
+    For Each c
+      If c!id <> $card Then Continue
+      CardTitle.Text = c!title
+      Description.Text = c!description
+      Lane.Text = c!lane
+      Status.Text = c!status
+      Assignee.Text = c!assignee
+      Labels.Text = c!labels
+      DueDay.Text = c!due_day
+    Next
+  Endif
+  Visual.Refresh()
+Catch
+  Notice.Text = Error.Text
+End
 
+Public Sub NewBoard_Click()
+  KanbanStore.AddBoard(BoardTitle.Text)
+  BoardTitle.Text = ""
+  RefreshTree()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub NewCard_Click()
+  $card = 0
+  CardTitle.Text = ""
+  Description.Text = ""
+  Lane.Text = "Default"
+  Status.Text = "Todo"
+  Assignee.Text = Session["username"]
+  Labels.Text = ""
+  DueDay.Text = ""
+End
+
+Public Sub SaveCard_Click()
+  $card = KanbanStore.SaveCard($board, $card, CardTitle.Text, Description.Text, Lane.Text, Status.Text, Assignee.Text, Labels.Text, DueDay.Text)
+  Notice.Text = "Card saved"
+  RefreshTree()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub ArchiveCard_Click()
+  KanbanStore.ArchiveCard($board, $card, Not $archive)
+  $card = 0
+  RefreshTree()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub ArchiveBoard_Click()
+  KanbanStore.ArchiveBoard($board, Not $archive)
+  $board = 0
+  RefreshTree()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub Logout_Click()
+  Session.Abandon()
+  WebForm.Goto(WebformLogin)
+End
+
+Public Sub Search_Click()
+  Visual.Refresh()
+End
+
+Private Sub ShowView(view As String)
+  AccountPanel.Visible = view = "Profile"
+  AdminPanel.Visible = False
+  If view = "Admin panel" Then AdminPanel.Visible = WebDatabase.GetIsAdmin(Session["username"])
+  If view = "Profile" Then Fullname.Text = WebDatabase.GetFullname(Session["username"])
+  $view = view
+  Visual.Refresh()
+End
+
+Public Sub Home_Click()
+  AccountPanel.Hide()
+  AdminPanel.Hide()
+  $archive = False
+  $board = 0
+  $view = "Boards"
+  RefreshTree()
+End
+
+Public Sub Archive_Click()
+  AccountPanel.Hide()
+  AdminPanel.Hide()
+  $archive = True
+  $board = 0
+  $view = "Archive"
+  RefreshTree()
+End
+
+Public Sub Visual_Render()
+  Dim b As Result
+  Dim c As Result
+  Dim a As Result
+  Dim text As String
+  Dim mine As Boolean
+  If Not Session["username"] Then Return
+  Print "<script>" & File.Load(".public/kanban.js") & "</script>"
+  Print "<link rel=\"stylesheet\" href=\"kanban.css\">"
+  Print "<section class=\"weba-content\" data-view=\"" & Html($view) & "\"><h2>" & Html($view) & "</h2>"
+  If $view = "Profile" Then
+    Print "<p>Signed in as " & Html(Session["username"]) & "</p>"
+  Else If $view = "Admin panel" Then
+    If Not WebDatabase.GetIsAdmin(Session["username"]) Then Error.Raise("Administrator required")
+    a = WebDatabase.GetUsers()
+    Print "<table><tr><th>Username</th><th>Full name</th><th>Administrator</th></tr>"
+    For Each a
+      Print "<tr><td>" & Html(a!username) & "</td><td>" & Html(a!fullname) & "</td><td>" & Html(If(a!admin, "Admin", "Normal")) & "</td></tr>"
+    Next
+    Print "</table>"
+  Else If $view = "Activities" And $board Then
+    a = KanbanStore.Activities($board)
+    For Each a
+      Print "<p>" & Html(Str(a!created_at)) & " · " & Html(a!actor) & " · " & Html(a!message) & "</p>"
+    Next
+  Else
+    b = KanbanStore.Boards($archive)
+    Print "<div class=\"weba-data\">"
+    For Each b
+      If $board And b!id <> $board Then Continue
+      Print "<h3>" & Html(b!title) & "</h3>"
+      c = KanbanStore.Cards(b!id, $archive)
+      For Each c
+        If $view = "My cards" And c!assignee <> Session["username"] Then Continue
+        If $view = "Due cards" Then
+          If Not c!due_day Then Continue
+          If c!due_day > Format(Now, "yyyy-mm-dd") Then Continue
+        Endif
+        text = c!title & " " & c!description & " " & c!labels & " " & c!assignee
+        If Filter.Text And InStr(LCase(text), LCase(Filter.Text)) = 0 Then Continue
+        Print "<article class=\"weba-card\" data-status=\"" & Html(c!status) & "\" data-lane=\"" & Html(c!lane) & "\" data-due=\"" & Html(c!due_day) & "\">"
+        Print "<strong>" & Html(c!title) & "</strong><p>" & Html(c!description) & "</p><small>" & Html(c!status) & " · " & Html(c!assignee) & " · " & Html(c!labels) & " · " & Html(c!due_day) & "</small></article>"
+      Next
+    Next
+    Print "</div><div class=\"weba-report\"></div>"
+  Endif
+  Print "</section>"
+  WebForm.Exec("window.webaRender && window.webaRender();")
+Catch
+  Print "<p role=\"alert\">" & Html(Error.Text) & "</p>"
+End
+
+Private Function Html(value As String) As String
+  value = Replace(value, "&", "&amp;")
+  value = Replace(value, "<", "&lt;")
+  value = Replace(value, ">", "&gt;")
+  value = Replace(value, "\"", "&quot;")
+  Return Replace(value, "'", "&#39;")
+End
+
+Public Sub Kanban_Click()
+  ShowView("Lists")
+End
+
+Public Sub Swimlanes_Click()
+  ShowView("Swimlanes")
+End
+
+Public Sub TableView_Click()
+  ShowView("Table")
+End
+
+Public Sub Calendar_Click()
+  ShowView("Calendar")
+End
+
+Public Sub Gantt_Click()
+  ShowView("Gantt")
+End
+
+Public Sub Charts_Click()
+  ShowView("Charts")
+End
+
+Public Sub Activities_Click()
+  ShowView("Activities")
+End
+
+Public Sub MyCards_Click()
+  ShowView("My cards")
+End
+
+Public Sub DueCards_Click()
+  ShowView("Due cards")
+End
+
+Public Sub Profile_Click()
+  ShowView("Profile")
+End
+
+Public Sub Admin_Click()
+  ShowView("Admin panel")
+End
+
+Public Sub SaveProfile_Click()
+  WebDatabase.SetFullname(Session["username"], Fullname.Text)
+  Notice.Text = "Profile saved"
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub ChangePassword_Click()
+  If Len(NewPassword.Text) < 8 Then Error.Raise("Use a password of at least 8 characters")
+  If Not WebDatabase.SetPassword(Session["username"], OldPassword.Text, NewPassword.Text) Then Error.Raise("Current password incorrect")
+  OldPassword.Text = ""
+  NewPassword.Text = ""
+  Notice.Text = "Password changed"
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub CreateUser_Click()
+  If Len(UserPassword.Text) < 8 Then Error.Raise("Use a password of at least 8 characters")
+  WebDatabase.NewUser(Username.Text, UserPassword.Text, False)
+  UserPassword.Text = ""
+  Visual.Refresh()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub ResetPassword_Click()
+  If Len(UserPassword.Text) < 8 Then Error.Raise("Use a password of at least 8 characters")
+  If Not WebDatabase.ForceResetPassword(Session["username"], Username.Text, UserPassword.Text) Then Error.Raise("Unknown user")
+  UserPassword.Text = ""
+  Notice.Text = "Password reset"
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub Promote_Click()
+  WebDatabase.SetIsAdmin(Username.Text, True)
+  Visual.Refresh()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub Demote_Click()
+  WebDatabase.SetIsAdmin(Username.Text, False)
+  Visual.Refresh()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub DeleteUser_Click()
+  If Message.Question("Delete this user?", "Delete", "Cancel") <> 1 Then Return
+  WebDatabase.DeleteUser(Username.Text)
+  Visual.Refresh()
+Catch
+  Notice.Text = Error.Text
 End

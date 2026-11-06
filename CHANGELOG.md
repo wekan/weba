@@ -11,6 +11,16 @@ This work adds the following features and fixes:
   logging password hashes. Added isolated authentication, permission and
   concurrent-registration regression tests. Thanks to xet7.
 
+- Added native Gambas board/card navigation and editing, persistent owner-scoped
+  boards/cards, search, labels, assignees, swimlanes, due dates, archives and
+  activity records, with portable Gambas driver operations. SQLite is verified;
+  other drivers still require conformance testing. Thanks to xet7.
+- Added local HTML/JavaScript/CSS lists, swimlanes, tables, monthly calendars,
+  due-date milestones and current-status charts inside Gambas. Added profile/
+  password and administrator user-management controls, SQLite CRUD/negative tests
+  and DOM/report tests. Full current WeKan parity remains in TODO.md.
+  Thanks to xet7.
+
 Thanks to above GitHub users for their contributions and translators for their translations.
 
 # v1.0 2021-12-08 WeKan ® for Gambas release

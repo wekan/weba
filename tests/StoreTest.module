@@ -1,0 +1,59 @@
+' Run only against a disposable copy of the project and database.
+Public Sub Main()
+  Dim r As Result
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim denied As Boolean
+  WebDatabase.Register("first-user", "first user password")
+  Session["username"] = "first-user"
+  KanbanStore.AddBoard("Test board")
+  r = KanbanStore.Boards()
+  If r.Count <> 1 Then Error.Raise("Board creation failed")
+  boardId = r!id
+  cardId = KanbanStore.SaveCard(boardId, 0, "Test card", "<script>text</script>", "Lane", "Todo", "first-user", "test", "2026-11-06")
+  KanbanStore.SaveCard(boardId, cardId, "Edited", "Body", "Lane", "Done", "first-user", "test", "2026-12-01")
+  r = KanbanStore.Cards(boardId)
+  If r.Count <> 1 Or r!title <> "Edited" Or r!status <> "Done" Then Error.Raise("Card update failed")
+  Try KanbanStore.SaveCard(boardId, cardId, "Bad", "", "", "Invalid", "", "", "")
+  denied = Error
+  If Not denied Then Error.Raise("Invalid status accepted")
+  Try KanbanStore.SaveCard(boardId, cardId, "Bad", "", "", "Todo", "", "", "2026-02-30")
+  denied = Error
+  If Not denied Then Error.Raise("Invalid date accepted")
+  Try KanbanStore.SaveCard(boardId, cardId, "", "", "", "Todo", "", "", "")
+  denied = Error
+  If Not denied Then Error.Raise("Empty title accepted")
+  Try KanbanStore.RequireBoard(boardId + 999)
+  denied = Error
+  If Not denied Then Error.Raise("Missing board accepted")
+  WebDatabase.Register("other-user", "other user password")
+  Session["username"] = "other-user"
+  Try KanbanStore.Cards(boardId)
+  denied = Error
+  If Not denied Then Error.Raise("Another user's board was accessible")
+  Session["username"] = "missing-user"
+  Try KanbanStore.Cards(boardId)
+  denied = Error
+  If Not denied Then Error.Raise("Unknown user accepted")
+  Session["username"] = "first-user"
+  KanbanStore.ArchiveCard(boardId, cardId, True)
+  r = KanbanStore.Cards(boardId)
+  If r.Count <> 0 Then Error.Raise("Card archive failed")
+  r = KanbanStore.Cards(boardId, True)
+  If r.Count <> 1 Then Error.Raise("Card archive read failed")
+  KanbanStore.ArchiveCard(boardId, cardId, False)
+  r = KanbanStore.Cards(boardId)
+  If r.Count <> 1 Then Error.Raise("Card restore failed")
+  KanbanStore.ArchiveBoard(boardId, True)
+  r = KanbanStore.Boards()
+  If r.Count Then Error.Raise("Board archive failed")
+  r = KanbanStore.Boards(True)
+  If r.Count <> 1 Then Error.Raise("Archived board missing")
+  r = KanbanStore.Activities(boardId)
+  If r.Count <> 5 Then Error.Raise("Activity recording failed")
+  Session["username"] = Null
+  Try KanbanStore.Boards()
+  denied = Error
+  If Not denied Then Error.Raise("Anonymous access accepted")
+  Print "Store CRUD, archives, activities and negative validation tests passed"
+End

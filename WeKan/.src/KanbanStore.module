@@ -1,0 +1,146 @@
+ ' Gambas module file
+
+Export
+
+Private $db As Connection
+
+Public Sub OpenDatabase()
+  Dim t As Table
+  If $db Then Return
+  $db = WebDatabase.OpenConnection()
+  ' The driver maps Gambas field types and primary keys to its SQL dialect.
+  If Not $db.Tables.Exist("kb_boards") Then
+    t = $db.Tables.Add("kb_boards")
+    t.Fields.Add("id", db.Serial)
+    t.Fields.Add("owner", db.String, 255)
+    t.Fields.Add("title", db.String, 255)
+    t.Fields.Add("archived", db.Boolean)
+    t.PrimaryKey = ["id"]
+    t.Update()
+  Endif
+  If Not $db.Tables.Exist("kb_cards") Then
+    t = $db.Tables.Add("kb_cards")
+    t.Fields.Add("id", db.Serial)
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("title", db.String, 255)
+    t.Fields.Add("description", db.String)
+    t.Fields.Add("lane", db.String, 255)
+    t.Fields.Add("status", db.String, 32)
+    t.Fields.Add("assignee", db.String, 255)
+    t.Fields.Add("labels", db.String, 255)
+    t.Fields.Add("due_day", db.String, 10)
+    t.Fields.Add("archived", db.Boolean)
+    t.PrimaryKey = ["id"]
+    t.Update()
+  Endif
+  If Not $db.Tables.Exist("kb_activity") Then
+    t = $db.Tables.Add("kb_activity")
+    t.Fields.Add("id", db.Serial)
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("actor", db.String, 255)
+    t.Fields.Add("message", db.String)
+    t.Fields.Add("created_at", db.Date)
+    t.PrimaryKey = ["id"]
+    t.Update()
+  Endif
+End
+
+Private Sub RequireUser()
+  If Not Session["username"] Then Error.Raise("Please sign in")
+  If Not WebDatabase.UserExists(Session["username"]) Then Error.Raise("Unknown user")
+  OpenDatabase()
+End
+
+Public Function Boards(Optional archived As Boolean = False) As Result
+  RequireUser()
+  Return $db.Find("kb_boards", "owner = &1 AND archived = &2 ORDER BY title", Session["username"], archived)
+End
+
+Public Sub RequireBoard(boardId As Integer)
+  Dim r As Result
+  RequireUser()
+  r = $db.Find("kb_boards", "id = &1 AND owner = &2", boardId, Session["username"])
+  If Not r.Available Then Error.Raise("Board not accessible")
+End
+
+Public Sub AddBoard(title As String)
+  Dim r As Result
+  RequireUser()
+  If Not Trim(title) Then Error.Raise("Enter a board title")
+  r = $db.Create("kb_boards")
+  r["owner"] = Session["username"]
+  r["title"] = Trim(title)
+  r["archived"] = False
+  r.Update()
+End
+
+Public Sub ArchiveBoard(boardId As Integer, archived As Boolean)
+  Dim r As Result
+  RequireBoard(boardId)
+  r = $db.Edit("kb_boards", "id = &1", boardId)
+  r["archived"] = archived
+  r.Update()
+  Activity(boardId, "Board archive state changed")
+End
+
+Public Function Cards(boardId As Integer, Optional archived As Boolean = False) As Result
+  RequireBoard(boardId)
+  Return $db.Find("kb_cards", "board_id = &1 AND archived = &2 ORDER BY id", boardId, archived)
+End
+
+Public Function SaveCard(boardId As Integer, cardId As Integer, title As String, description As String, lane As String, status As String, assignee As String, labels As String, dueDay As String) As Integer
+  Dim r As Result
+  RequireBoard(boardId)
+  If Not Trim(title) Then Error.Raise("Enter a card title")
+  If InStr("|Todo|Doing|Done|", "|" & status & "|") = 0 Then Error.Raise("Invalid status")
+  If dueDay Then
+    If Len(dueDay) <> 10 Then Error.Raise("Use YYYY-MM-DD")
+    If Mid(dueDay, 5, 1) <> "-" Or Mid(dueDay, 8, 1) <> "-" Then Error.Raise("Use YYYY-MM-DD")
+    If Format(Date(CInt(Left(dueDay, 4)), CInt(Mid(dueDay, 6, 2)), CInt(Right(dueDay, 2))), "yyyy-mm-dd") <> dueDay Then Error.Raise("Invalid due date")
+  Endif
+  If cardId Then
+    r = $db.Edit("kb_cards", "id = &1 AND board_id = &2", cardId, boardId)
+    If Not r.Available Then Error.Raise("Card not accessible")
+  Else
+    r = $db.Create("kb_cards")
+    r["board_id"] = boardId
+    r["archived"] = False
+  Endif
+  r["title"] = Trim(title)
+  r["description"] = description
+  r["lane"] = lane
+  r["status"] = status
+  r["assignee"] = assignee
+  r["labels"] = labels
+  r["due_day"] = dueDay
+  r.Update()
+  If Not cardId Then cardId = $db.LastInsertId
+  Activity(boardId, "Saved card: " & title)
+  Return cardId
+End
+
+Public Sub ArchiveCard(boardId As Integer, cardId As Integer, archived As Boolean)
+  Dim r As Result
+  RequireBoard(boardId)
+  r = $db.Edit("kb_cards", "id = &1 AND board_id = &2", cardId, boardId)
+  If Not r.Available Then Error.Raise("Card not accessible")
+  r["archived"] = archived
+  r.Update()
+  Activity(boardId, "Card archive state changed")
+End
+
+Public Sub Activity(boardId As Integer, message As String)
+  Dim r As Result
+  RequireBoard(boardId)
+  r = $db.Create("kb_activity")
+  r["board_id"] = boardId
+  r["actor"] = Session["username"]
+  r["message"] = message
+  r["created_at"] = Now
+  r.Update()
+End
+
+Public Function Activities(boardId As Integer) As Result
+  RequireBoard(boardId)
+  Return $db.Find("kb_activity", "board_id = &1 ORDER BY id DESC", boardId)
+End
