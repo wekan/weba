@@ -1,6 +1,6 @@
 # Work in progress
 
-Updated 2026-11-06. Target: the signed-in pages of the current `wekan/wekan`
+Updated 2026-11-07. Target: the signed-in pages of the current `wekan/wekan`
 checkout, implemented with Gambas Web UI, SQLite persistence and portable Gambas
 DB operations. This is an initial implementation, not complete WeKan parity.
 
@@ -103,6 +103,15 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Added isolated real-browser checks with optional screenshots; source-project
   and packaged-archive UI paths are covered without seeded application accounts.
 
+## Active work: remaining WeKan menus
+
+- Priority confirmed: boards, lists and cards first; then administrator,
+  automation and integration groups. Native Gambas menus must invoke working
+  authorized database operations, not placeholder actions.
+- Stable list identities are implemented and checked, including duplicate-name
+  touch moves and retention of legacy card assignments. Structural action menus
+  and richer card details are the next implementation steps.
+
 ## Current status and next work
 
 - Changes are organized into separate local commits for accounts, Kanban,
@@ -144,8 +153,7 @@ Use the actual parent source rather than treating the prototype's old menus as
 an exhaustive list. Reference areas: `client/components/boards`, `cards`,
 `sidebar`, `rules`, `settings`, `users`, `activities` and `gantt`.
 
-- Renaming/archiving lists and swimlanes, cross-board drag/drop, duplicate-titled
-  lists in one swimlane, multi-selection,
+- Renaming/archiving lists and swimlanes, cross-board drag/drop, multi-selection,
   board rename, stars, colors, visibility and board membership/roles.
 - Card comments, checklists, subtasks, dependencies, attachments, rich text,
   custom fields, time tracking, history and notifications.

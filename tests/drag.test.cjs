@@ -29,4 +29,7 @@ for(const cancel of ['pointercancel','multitouch','outside']){
 }
 root.dataset.editable='false';assert.equal(w.webaDrag.identify(handle,'touch'),null,'archive/read-only view cannot drag');
 root.dataset.editable='true';const key=new w.KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true,cancelable:true});handle.dispatchEvent(key);assert.equal(calls.length,2,'keyboard handle can move a card');
+columns[0].dataset.listId='11';columns[1].dataset.listId='22';
+handle.dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true,cancelable:true}));
+assert.equal(Buffer.from(calls.at(-1)[2].split('|')[3],'base64').toString(),'#22','keyboard targets stable list identity');
 w.close();console.log('Drag gestures: touch-vs-scroll, mouse surface, threshold, UTF-8 targets, cancel/multitouch, invalid/read-only drops, cleanup and keyboard passed');

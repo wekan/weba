@@ -2,6 +2,10 @@
 
 This work adds the following features and fixes:
 
+- Give cards stable list identities, preserving legacy assignments before
+  creating same-named lists. Keep duplicate-title lists separate in rendering,
+  editing, copying destinations and touch/keyboard moves. Remove the duplicate
+  title restriction without merging cards. Thanks to xet7.
 - Add WeKan-style touch drag handles for cards, lists and swimlanes with a
   seven-pixel movement threshold, drop feedback, edge scrolling, cancellation
   and mouse/keyboard support. Persist order and cross-list/lane moves through

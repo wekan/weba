@@ -90,30 +90,33 @@
             }
           }
           const laneLayout=layout.filter(l=>view==='Lists'||l.dataset.lane===lane);
-          const statuses=[...new Set(laneLayout.flatMap(l=>[...l.querySelectorAll('[data-list]')].map(e=>e.dataset.list)))];
-          if(!statuses.length&&!laneLayout.length) statuses.push('Todo','Doing','Done');
-          if(!statuses.length&&editable)button(columns,'⊞','Add list',()=>composer(columns,'list',lane),'weba-empty-add-list');
-          cards.filter(c=>view==='Lists'||(c.dataset.lane||'Default')===lane).forEach(c=>{if(!statuses.includes(c.dataset.status))statuses.push(c.dataset.status);});
-          statuses.forEach(status=>{
+          const listItems=laneLayout.flatMap(l=>[...l.querySelectorAll('[data-list]')].map(e=>({title:e.dataset.list,id:e.dataset.listId||'',lane:l.dataset.lane})));
+          if(!listItems.length&&!laneLayout.length)['Todo','Doing','Done'].forEach(title=>listItems.push({title,id:'',lane:lane==='All cards'?'Default':lane}));
+          if(!listItems.length&&editable)button(columns,'⊞','Add list',()=>composer(columns,'list',lane),'weba-empty-add-list');
+          cards.filter(c=>view==='Lists'||(c.dataset.lane||'Default')===lane).forEach(c=>{
+            if(!listItems.some(item=>item.id?item.id===c.dataset.listId:item.title===c.dataset.status))listItems.push({title:c.dataset.status,id:c.dataset.listId||'',lane:c.dataset.lane||'Default'});
+          });
+          listItems.forEach(item=>{
+            const status=item.title,reference=item.id?'#'+item.id:status;
             const column=add(columns,'section',undefined,'weba-column');
-            column.dataset.list=status; column.dataset.lane=lane;
+            column.dataset.list=status;column.dataset.listId=item.id;column.dataset.lane=item.lane;
             const listHeader=add(column,'header',undefined,'weba-list-header');
             const controls=add(listHeader,'div',undefined,'weba-list-controls');
             const body=add(column,'div',undefined,'weba-list-body');
-            const listKey=laneKey+'|'+status;body.hidden=collapsed.has(listKey);
+            const listKey=laneKey+'|'+reference;body.hidden=collapsed.has(listKey);
             const caret=button(controls,body.hidden?'▸':'▾','Collapse',el=>toggle(listKey,body,el),'weba-collapse-list');
             caret.setAttribute('aria-expanded',String(!body.hidden));
             add(controls,'span',undefined,'weba-control-space');
-            const actualLane=view==='Lists' ? (laneLayout.find(l=>[...l.querySelectorAll('[data-list]')].some(item=>item.dataset.list===status))||laneLayout[0])?.dataset.lane||'Default' : lane;
+            const actualLane=item.lane;
             column.dataset.lane=actualLane;
             if(editable) {
               handle(controls,'list');
-              button(controls,'+','Add card',()=>send('card',actualLane,status),'weba-add-card-top');
-              button(controls,'☰','List',trigger=>menu(listHeader,[['Add card',()=>{if(root.webaPopup)root.webaPopup.rememberEditor(trigger);send('card',actualLane,status);}],['Add list',()=>composer(columns,'list',actualLane,status,column)],['Collapse',()=>toggle(listKey,body,caret)]],trigger),'weba-list-menu');
-              button(controls,'⊞','Add list',()=>composer(columns,'list',actualLane,status,column),'weba-add-list');
+              button(controls,'+','Add card',()=>send('card',actualLane,reference),'weba-add-card-top');
+              button(controls,'☰','List',trigger=>menu(listHeader,[['Add card',()=>{if(root.webaPopup)root.webaPopup.rememberEditor(trigger);send('card',actualLane,reference);}],['Add list',()=>composer(columns,'list',actualLane,reference,column)],['Collapse',()=>toggle(listKey,body,caret)]],trigger),'weba-list-menu');
+              button(controls,'⊞','Add list',()=>composer(columns,'list',actualLane,reference,column),'weba-add-list');
             }
             add(listHeader,'h4',status,undefined,['Todo','Doing','Done'].includes(status));
-            cards.filter(c=>c.dataset.status===status && (view!=='Swimlanes'||(c.dataset.lane||'Default')===lane)).forEach(c=>{
+            cards.filter(c=>item.id?c.dataset.listId===item.id:c.dataset.status===status && (view!=='Swimlanes'||(c.dataset.lane||'Default')===lane)).forEach(c=>{
               const clone=c.cloneNode(true);body.append(clone);
               if(editable&&c.dataset.cardId){clone.classList.add('weba-draggable-card');handle(clone,'card');}
               if(c.dataset.cardKey) {
@@ -122,7 +125,7 @@
                 clone.onclick=open;clone.onkeydown=event=>{if(['Enter',' '].includes(event.key)){event.preventDefault();open();}};
               }
             });
-            if(editable)button(body,'+ '+t('Add card'),'Add card',()=>send('card',actualLane,status),'weba-add-card-bottom');
+            if(editable)button(body,'+ '+t('Add card'),'Add card',()=>send('card',actualLane,reference),'weba-add-card-bottom');
           });
         });
       } else if (view === 'Calendar') {

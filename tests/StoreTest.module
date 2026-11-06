@@ -80,9 +80,9 @@ Public Sub Main()
   Try KanbanStore.AddLane(boardId, " ")
   denied = Error
   If Not denied Then Error.Raise("Empty lane accepted")
-  Try KanbanStore.AddList(boardId, "Empty lane", "Review", "Todo")
-  denied = Error
-  If Not denied Then Error.Raise("Duplicate list accepted")
+  KanbanStore.AddList(boardId, "Empty lane", "Review", "Todo")
+  r = KanbanStore.Lists(boardId, "Empty lane")
+  If r.Count <> 6 Then Error.Raise("Same-named list did not keep its identity")
   Try KanbanStore.AddList(boardId, "Empty lane", "New list", "Missing")
   denied = Error
   If Not denied Then Error.Raise("Invalid insertion target accepted")

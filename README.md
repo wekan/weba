@@ -301,9 +301,10 @@ touch/small-screen moves ask for confirmation. Swimlanes can be reordered. Moves
 are owner-checked, rejected for archived boards/cards, saved transactionally and
 retained when reopening the board. Existing data receives a separate `kb_order`
 metadata table; card descriptions, labels, dates and ownership are preserved.
-Because the current list model uses names, a destination that already has a list
-with the same name rejects that list move instead of merging data. Cross-board
-moves and full WeKan list-ID semantics are still future work.
+Cards retain a stable list ID, so moving a list into a swimlane that already has
+a list with the same title keeps the two lists and their cards separate. Existing
+name-based assignments are retained when identity metadata is initialized.
+Cross-board drag moves remain future work.
 
 `node tests/drag.test.cjs` checks gesture selection, threshold, cancellation,
 UTF-8 transport and keyboard input. `tests/DragStoreTest.module` runs in the

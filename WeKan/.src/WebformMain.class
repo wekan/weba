@@ -3,6 +3,7 @@
 Export
 
 Private $board As Integer
+Private $listId As Integer
 Private $card As Integer
 Private $view As String = "Boards"
 Private $boardTitle As String
@@ -53,6 +54,7 @@ Public Sub Boards_Select()
     c = KanbanStore.Cards($board, $archive)
     For Each c
       If c!id <> $card Then Continue
+      $listId = KanbanStore.CardListId($board, $card)
       CardTitle.Text = c!title
       Description.Text = c!description
       Lane.Text = c!lane
@@ -96,6 +98,7 @@ Public Sub NewCard_Click()
     If Not listRows.Available Then Continue
     Lane.Text = laneRows!title
     Status.Text = listRows!title
+    $listId = listRows!id
     found = True
     Break
   Next
@@ -113,7 +116,7 @@ Public Sub NewCard_Click()
 End
 
 Public Sub SaveCard_Click()
-  $card = KanbanStore.SaveCard($board, $card, CardTitle.Text, Description.Text, Lane.Text, Status.Text, Assignee.Text, Labels.Text, DueDay.Text)
+  $card = KanbanStore.SaveCard($board, $card, CardTitle.Text, Description.Text, Lane.Text, Status.Text, Assignee.Text, Labels.Text, DueDay.Text, $listId)
   Notice.Text = "Card saved"
   RefreshTree()
 Catch
@@ -226,7 +229,7 @@ Public Sub Visual_Render()
         Print "<section data-order=\"" & Str(KanbanStore.ItemOrder($board, "lane", lane!title, lane!id)) & "\" data-lane=\"" & Html(lane!title) & "\">"
         list = KanbanStore.Lists($board, lane!title)
         For Each list
-          Print "<span data-list=\"" & Html(list!title) & "\"></span>"
+          Print "<span data-list-id=\"" & Str(list!id) & "\" data-list=\"" & Html(list!title) & "\"></span>"
         Next
         Print "</section>"
       Next
@@ -249,7 +252,7 @@ Public Sub Visual_Render()
         Endif
         text = c!title & " " & c!description & " " & c!labels & " " & c!assignee
         If Filter.Text And InStr(LCase(text), LCase(Filter.Text)) = 0 Then Continue
-        Print "<article data-order=\"" & Str(KanbanStore.ItemOrder(b!id, "card", CStr(c!id), c!id)) & "\" data-card-id=\"" & Str(c!id) & "\" class=\"weba-card\" data-card-key=\"c" & Str(c!id) & ":" & Str(b!id) & "\" data-status=\"" & Html(c!status) & "\" data-lane=\"" & Html(c!lane) & "\" data-due=\"" & Html(c!due_day) & "\">"
+        Print "<article data-list-id=\"" & Str(KanbanStore.CardListId(b!id, c!id)) & "\" data-order=\"" & Str(KanbanStore.ItemOrder(b!id, "card", CStr(c!id), c!id)) & "\" data-card-id=\"" & Str(c!id) & "\" class=\"weba-card\" data-card-key=\"c" & Str(c!id) & ":" & Str(b!id) & "\" data-status=\"" & Html(c!status) & "\" data-lane=\"" & Html(c!lane) & "\" data-due=\"" & Html(c!due_day) & "\">"
         Print "<strong>" & Html(c!title) & "</strong><p>" & Html(c!description) & "</p><small>" & Html(c!status) & " · " & Html(c!assignee) & " · " & Html(c!labels) & " · " & Html(c!due_day) & "</small></article>"
       Next
     Next
@@ -470,6 +473,7 @@ Public Sub BoardAction_Change()
   Dim laneTitle As String
   Dim list As String
   Dim title As String
+  Dim listRow As Result
   If Not BoardAction.Text Then Return
   action = BoardAction.Text
   BoardAction.Text = ""
@@ -484,7 +488,9 @@ Public Sub BoardAction_Change()
     Case "card"
       NewCard_Click()
       Lane.Text = laneTitle
-      Status.Text = list
+      listRow = KanbanStore.GetList($board, list, laneTitle)
+      Status.Text = listRow!title
+      $listId = listRow!id
       CardTitle.SetFocus()
     Case "lane"
       KanbanStore.AddLane($board, title)

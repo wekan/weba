@@ -51,7 +51,16 @@ Public Sub OpenDatabase()
     t.Fields.Add("sort_order", db.Integer)
     t.PrimaryKey = ["id"]
     t.Update()
-    t.Indexes.Add("kb_list_title", ["board_id", "lane", "title"], True)
+  Endif
+  t = $db.Tables["kb_lists"]
+  If t.Indexes.Exist("kb_list_title") Then t.Indexes.Remove("kb_list_title")
+  If Not $db.Tables.Exist("kb_card_lists") Then
+    t = $db.Tables.Add("kb_card_lists")
+    t.Fields.Add("card_id", db.Integer)
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("list_id", db.Integer)
+    t.PrimaryKey = ["card_id"]
+    t.Update()
   Endif
   If Not $db.Tables.Exist("kb_order") Then
     t = $db.Tables.Add("kb_order")
@@ -117,7 +126,7 @@ Public Function Cards(boardId As Integer, Optional archived As Boolean = False) 
   Return $db.Find("kb_cards", "board_id = &1 AND archived = &2 ORDER BY id", boardId, archived)
 End
 
-Public Function SaveCard(boardId As Integer, cardId As Integer, title As String, description As String, lane As String, status As String, assignee As String, labels As String, dueDay As String) As Integer
+Public Function SaveCard(boardId As Integer, cardId As Integer, title As String, description As String, lane As String, status As String, assignee As String, labels As String, dueDay As String, Optional listId As Integer) As Integer
   Dim r As Result
   Dim list As Result
   RequireBoard(boardId)
@@ -133,8 +142,13 @@ Public Function SaveCard(boardId As Integer, cardId As Integer, title As String,
     If Format(Date(CInt(Left(dueDay, 4)), CInt(Mid(dueDay, 6, 2)), CInt(Right(dueDay, 2))), "yyyy-mm-dd") <> dueDay Then Error.Raise("Invalid due date")
   Endif
   EnsureLane(boardId, lane)
-  list = $db.Find("kb_lists", "board_id = &1 AND lane = &2 AND title = &3", boardId, lane, status)
+  If listId Then
+    list = $db.Find("kb_lists", "board_id = &1 AND id = &2 AND lane = &3 AND title = &4", boardId, listId, lane, status)
+    If Not list.Available Then listId = 0
+  Endif
+  If Not listId Then list = $db.Find("kb_lists", "board_id = &1 AND lane = &2 AND title = &3 ORDER BY sort_order, id", boardId, lane, status)
   If Not list.Available Then Error.Raise("Invalid status")
+  listId = list!id
   If cardId Then
     r = $db.Edit("kb_cards", "id = &1 AND board_id = &2", cardId, boardId)
     If Not r.Available Then Error.Raise("Card not accessible")
@@ -152,6 +166,7 @@ Public Function SaveCard(boardId As Integer, cardId As Integer, title As String,
   r["due_day"] = dueDay
   r.Update()
   If Not cardId Then cardId = $db.LastInsertId
+  PutCardList(boardId, cardId, listId)
   Activity(boardId, "Saved card: " & title)
   Return cardId
 End
@@ -244,15 +259,13 @@ Public Sub AddList(boardId As Integer, lane As String, title As String, afterTit
   Dim position As Integer
   Dim failure As String
   RequireBoard(boardId)
+  EnsureCardLinks(boardId)
   title = Trim(title)
   If Not title Or String.Len(title) > 32 Then Error.Raise("Enter a list title (1-32 characters)")
   r = $db.Find("kb_lanes", "board_id = &1 AND title = &2", boardId, lane)
   If Not r.Available Then Error.Raise("Swimlane not accessible")
-  r = $db.Find("kb_lists", "board_id = &1 AND lane = &2 AND title = &3", boardId, lane, title)
-  If r.Available Then Error.Raise("List already exists")
   If afterTitle Then
-    r = $db.Find("kb_lists", "board_id = &1 AND lane = &2 AND title = &3", boardId, lane, afterTitle)
-    If Not r.Available Then Error.Raise("List not accessible")
+    r = GetList(boardId, afterTitle, lane)
     position = r!sort_order + 1
   Else
     r = $db.Find("kb_lists", "board_id = &1 AND lane = &2 ORDER BY sort_order DESC", boardId, lane)
@@ -313,13 +326,14 @@ Public Function CardOrder(boardId As Integer, laneTitle As String, listTitle As 
   Dim sorted As New String[]
   Dim ids As New String[]
   Dim value As String
+  Dim list As Result
+  Dim listId As Integer
   RequireBoard(boardId)
-  If laneTitle = "Default" Then
-    r = $db.Find("kb_cards", "board_id = &1 AND (lane = &2 OR lane = &3 OR lane IS NULL) AND status = &4 AND archived = &5", boardId, laneTitle, "", listTitle, False)
-  Else
-    r = $db.Find("kb_cards", "board_id = &1 AND lane = &2 AND status = &3 AND archived = &4", boardId, laneTitle, listTitle, False)
-  Endif
+  list = GetList(boardId, listTitle, laneTitle)
+  listId = list!id
+  r = $db.Find("kb_cards", "board_id = &1 AND archived = &2", boardId, False)
   For Each r
+    If CardListId(boardId, r!id) <> listId Then Continue
     sorted.Add(Format(ItemOrder(boardId, "card", CStr(r!id), r!id), "0000000000") & ":" & Format(r!id, "0000000000"))
   Next
   sorted.Sort()
@@ -334,14 +348,16 @@ Public Sub MoveCard(boardId As Integer, cardId As Integer, laneTitle As String, 
   Dim ids As String[]
   Dim index As Integer
   Dim failure As String
+  Dim listId As Integer
   RequireActiveBoard(boardId)
   r = $db.Find("kb_cards", "id = &1 AND board_id = &2 AND archived = &3", cardId, boardId, False)
   If Not r.Available Then Error.Raise("Card not accessible")
-  r = $db.Find("kb_lists", "board_id = &1 AND lane = &2 AND title = &3", boardId, laneTitle, listTitle)
-  If Not r.Available Then Error.Raise("Destination list not accessible")
+  r = GetList(boardId, listTitle, laneTitle)
+  listId = r!id
+  listTitle = r!title
   If beforeId = cardId Then Return
   $db.Begin()
-  ids = CardOrder(boardId, laneTitle, listTitle)
+  ids = CardOrder(boardId, laneTitle, "#" & CStr(listId))
   index = ids.Find(CStr(cardId))
   If index >= 0 Then ids.Remove(index)
   index = ids.Count
@@ -354,6 +370,7 @@ Public Sub MoveCard(boardId As Integer, cardId As Integer, laneTitle As String, 
   r["lane"] = laneTitle
   r["status"] = listTitle
   r.Update()
+  PutCardList(boardId, cardId, listId)
   For index = 0 To ids.Max
     PutOrder(boardId, "card", ids[index], index)
   Next
@@ -406,48 +423,49 @@ End
 
 Public Sub MoveList(boardId As Integer, sourceLane As String, listTitle As String, targetLane As String, beforeTitle As String)
   Dim r As Result
-  Dim names As New String[]
+  Dim links As Result
+  Dim ids As New Integer[]
   Dim index As Integer
   Dim listId As Integer
+  Dim beforeId As Integer
   Dim failure As String
   RequireActiveBoard(boardId)
-  r = $db.Find("kb_lists", "board_id = &1 AND lane = &2 AND title = &3", boardId, sourceLane, listTitle)
-  If Not r.Available Then Error.Raise("List not accessible")
+  EnsureCardLinks(boardId)
+  r = GetList(boardId, listTitle, sourceLane)
   listId = r!id
+  listTitle = r!title
   r = $db.Find("kb_lanes", "board_id = &1 AND title = &2", boardId, targetLane)
   If Not r.Available Then Error.Raise("Destination swimlane not accessible")
-  If sourceLane = targetLane And listTitle = beforeTitle Then Return
-  If sourceLane <> targetLane Then
-    r = $db.Find("kb_lists", "board_id = &1 AND lane = &2 AND title = &3", boardId, targetLane, listTitle)
-    If r.Available Then Error.Raise("Destination already has a list with this name")
+  If beforeTitle Then
+    r = GetList(boardId, beforeTitle, targetLane)
+    beforeId = r!id
+    If listId = beforeId Then Return
   Endif
   r = Lists(boardId, targetLane)
   For Each r
-    If r!id <> listId Then names.Add(r!title)
+    If r!id <> listId Then ids.Add(r!id)
   Next
-  index = names.Count
-  If beforeTitle Then
-    index = names.Find(beforeTitle)
+  index = ids.Count
+  If beforeId Then
+    index = ids.Find(beforeId)
     If index < 0 Then Error.Raise("Destination list not accessible")
   Endif
-  names.Add(listTitle, index)
+  ids.Add(listId, index)
   $db.Begin()
   r = $db.Edit("kb_lists", "id = &1 AND board_id = &2", listId, boardId)
   r["lane"] = targetLane
   r.Update()
   If sourceLane <> targetLane Then
-    If sourceLane = "Default" Then
-      r = $db.Edit("kb_cards", "board_id = &1 AND (lane = &2 OR lane = &3 OR lane IS NULL) AND status = &4", boardId, sourceLane, "", listTitle)
-    Else
-      r = $db.Edit("kb_cards", "board_id = &1 AND lane = &2 AND status = &3", boardId, sourceLane, listTitle)
-    Endif
-    For Each r
+    links = $db.Find("kb_card_lists", "board_id = &1 AND list_id = &2", boardId, listId)
+    For Each links
+      r = $db.Edit("kb_cards", "board_id = &1 AND id = &2", boardId, links!card_id)
+      If Not r.Available Then Continue
       r["lane"] = targetLane
       r.Update()
     Next
   Endif
-  For index = 0 To names.Max
-    r = $db.Edit("kb_lists", "board_id = &1 AND lane = &2 AND title = &3", boardId, targetLane, names[index])
+  For index = 0 To ids.Max
+    r = $db.Edit("kb_lists", "board_id = &1 AND id = &2", boardId, ids[index])
     r["sort_order"] = index
     r.Update()
   Next
@@ -457,4 +475,52 @@ Catch
   failure = Error.Text
   Try $db.Rollback()
   Error.Raise(failure)
+End
+
+Public Function GetList(boardId As Integer, reference As String, laneTitle As String) As Result
+  Dim r As Result
+  RequireBoard(boardId)
+  If Left(reference, 1) = "#" Then
+    r = $db.Find("kb_lists", "board_id = &1 AND id = &2 AND lane = &3", boardId, CInt(Mid(reference, 2)), laneTitle)
+  Else
+    r = $db.Find("kb_lists", "board_id = &1 AND title = &2 AND lane = &3 ORDER BY sort_order, id", boardId, reference, laneTitle)
+  Endif
+  If Not r.Available Then Error.Raise("List not accessible")
+  Return r
+End
+
+Private Sub PutCardList(boardId As Integer, cardId As Integer, listId As Integer)
+  Dim r As Result
+  r = $db.Edit("kb_card_lists", "card_id = &1", cardId)
+  If Not r.Available Then
+    r = $db.Create("kb_card_lists")
+    r["card_id"] = cardId
+  Endif
+  r["board_id"] = boardId
+  r["list_id"] = listId
+  r.Update()
+End
+
+Public Function CardListId(boardId As Integer, cardId As Integer) As Integer
+  Dim r As Result
+  Dim c As Result
+  Dim laneTitle As String
+  RequireBoard(boardId)
+  c = $db.Find("kb_cards", "board_id = &1 AND id = &2", boardId, cardId)
+  If Not c.Available Then Error.Raise("Card not accessible")
+  r = $db.Find("kb_card_lists", "card_id = &1 AND board_id = &2", cardId, boardId)
+  If r.Available Then Return r!list_id
+  laneTitle = If(Trim(c!lane), c!lane, "Default")
+  r = $db.Find("kb_lists", "board_id = &1 AND lane = &2 AND title = &3 ORDER BY sort_order, id", boardId, laneTitle, c!status)
+  If Not r.Available Then Return 0
+  PutCardList(boardId, cardId, r!id)
+  Return r!id
+End
+
+Private Sub EnsureCardLinks(boardId As Integer)
+  Dim r As Result
+  r = $db.Find("kb_cards", "board_id = &1", boardId)
+  For Each r
+    CardListId(boardId, r!id)
+  Next
 End

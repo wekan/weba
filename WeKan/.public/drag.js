@@ -52,7 +52,7 @@
       items=[...parent.querySelectorAll(':scope>.weba-card')].filter(e=>e!==drag.element);
       before=items.find(e=>y<e.getBoundingClientRect().top+e.getBoundingClientRect().height/2);
       lane=column.dataset.lane;
-      drag.target={lane,list:column.dataset.list,before:before?.dataset.cardId||'0'};
+      drag.target={lane,list:column.dataset.listId?'#'+column.dataset.listId:column.dataset.list,before:before?.dataset.cardId||'0'};
       insert(parent,before||parent.querySelector('.weba-add-card-bottom'));
     }else if(drag.kind==='list'){
       parent=hit.closest('.weba-columns')||hit.closest('.weba-swimlane')?.querySelector('.weba-columns');
@@ -60,10 +60,9 @@
       lane=parent.closest('.weba-swimlane').dataset.lane;
       if(!lane||drag.section.dataset.view!=='Swimlanes')lane=drag.element.dataset.lane;
       items=[...parent.querySelectorAll(':scope>.weba-column')].filter(e=>e!==drag.element);
-      if(lane!==drag.element.dataset.lane&&items.some(e=>e.dataset.list===drag.element.dataset.list)){drag.target=null;drag.placeholder.remove();return;}
       const rtl=getComputedStyle(parent).direction==='rtl';
       before=items.find(e=>{const r=e.getBoundingClientRect();return rtl?x>r.left+r.width/2:x<r.left+r.width/2;});
-      drag.target={lane,before:before?.dataset.list||''};insert(parent,before||null);
+      drag.target={lane,before:before?(before.dataset.listId?'#'+before.dataset.listId:before.dataset.list):''};insert(parent,before||null);
     }else{
       parent=drag.section.querySelector('.weba-report');
       if(!parent.contains(hit)){drag.target=null;drag.placeholder.remove();return;}
@@ -100,7 +99,7 @@
     else{
       const sourceLane=state.element.dataset.lane;
       if(sourceLane!==target.lane&&(state.pointerType==='touch'||root.matchMedia('(pointer:coarse)').matches||root.innerWidth<760)&&!root.confirm(t('Move this list and all its cards to the other swimlane?')))return;
-      send(state.section,'list',[sourceLane,state.element.dataset.list,target.lane,target.before]);
+      send(state.section,'list',[sourceLane,state.element.dataset.listId?'#'+state.element.dataset.listId:state.element.dataset.list,target.lane,target.before]);
     }
   }
   function down(event){
@@ -125,18 +124,18 @@
       if(['ArrowLeft','ArrowRight'].includes(event.key)){
         const columns=[...column.parentElement.querySelectorAll(':scope>.weba-column')],index=columns.indexOf(column),rtl=getComputedStyle(column).direction==='rtl';
         const delta=(event.key==='ArrowRight'?1:-1)*(rtl?-1:1),target=columns[index+delta];
-        if(target)send(state.section,'card',[state.element.dataset.cardId,target.dataset.lane,target.dataset.list,'0']);
+        if(target)send(state.section,'card',[state.element.dataset.cardId,target.dataset.lane,target.dataset.listId?'#'+target.dataset.listId:target.dataset.list,'0']);
       }else{
         const cards=[...state.element.parentElement.querySelectorAll(':scope>.weba-card')],index=cards.indexOf(state.element);
         const before=event.key==='ArrowUp'?cards[index-1]:cards[index+2];
         if(event.key==='ArrowUp'&&index===0)return;
-        send(state.section,'card',[state.element.dataset.cardId,column.dataset.lane,column.dataset.list,before?.dataset.cardId||'0']);
+        send(state.section,'card',[state.element.dataset.cardId,column.dataset.lane,column.dataset.listId?'#'+column.dataset.listId:column.dataset.list,before?.dataset.cardId||'0']);
       }
     }else if(state.kind==='list'){
       const columns=[...state.element.parentElement.querySelectorAll(':scope>.weba-column')],index=columns.indexOf(state.element),rtl=getComputedStyle(state.element).direction==='rtl';
       const backward=(event.key==='ArrowLeft')!==rtl;
       if(!['ArrowLeft','ArrowRight'].includes(event.key)||backward&&index===0)return;
-      send(state.section,'list',[state.element.dataset.lane,state.element.dataset.list,state.element.dataset.lane,columns[index+(backward?-1:2)]?.dataset.list||'']);
+      send(state.section,'list',[state.element.dataset.lane,state.element.dataset.listId?'#'+state.element.dataset.listId:state.element.dataset.list,state.element.dataset.lane,(()=>{const e=columns[index+(backward?-1:2)];return e?(e.dataset.listId?'#'+e.dataset.listId:e.dataset.list):'';})()]);
     }else{
       const rows=[...state.element.parentElement.querySelectorAll(':scope>.weba-swimlane')],index=rows.indexOf(state.element);
       if(!['ArrowUp','ArrowDown'].includes(event.key)||event.key==='ArrowUp'&&index===0)return;

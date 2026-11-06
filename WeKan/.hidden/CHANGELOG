@@ -1,3 +1,7 @@
+* Sat Nov 07 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Lists: Persist stable card/list identities, retain legacy assignments and
+  allow duplicate titles without merging cards during display or movement.
+
 * Fri Nov 06 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
 - Touch drag/drop: Add card/list/swimlane handles, ordering, cross-list/lane
   movement, edge auto-scroll, cancellation and mouse/keyboard input. Persist

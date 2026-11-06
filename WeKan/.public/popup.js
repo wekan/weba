@@ -14,13 +14,13 @@
     const r=trigger.getBoundingClientRect();
     const column=trigger.closest('.weba-column');
     const kind=['weba-add-card-top','weba-add-card-bottom','weba-list-menu'].find(name=>trigger.classList.contains(name));
-    const lane=column?.dataset.lane,list=column?.dataset.list,board=column?.closest('.weba-content')?.dataset.board;
+    const lane=column?.dataset.lane,list=column?.dataset.list,listId=column?.dataset.listId,board=column?.closest('.weba-content')?.dataset.board;
     const id=trigger.id,card=trigger.dataset.cardKey;
     const resolve=()=>{
       if(trigger.isConnected)return trigger;
       if(id)return document.getElementById(id);
       if(column&&kind){
-        const match=[...document.querySelectorAll('.weba-column')].find(e=>e.dataset.lane===lane&&e.dataset.list===list&&e.closest('.weba-content')?.dataset.board===board);
+        const match=[...document.querySelectorAll('.weba-column')].find(e=>e.dataset.lane===lane&&e.dataset.list===list&&(!listId||e.dataset.listId===listId)&&e.closest('.weba-content')?.dataset.board===board);
         return match?.querySelector('.'+kind);
       }
       if(card)return [...document.querySelectorAll('.weba-card')].find(e=>e.dataset.cardKey===card&&visible(e));
