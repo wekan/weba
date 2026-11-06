@@ -2,6 +2,9 @@
 
 This work adds the following features and fixes:
 
+- Refresh native detail-editor controls when selecting a checklist through the
+  checklist-item tree, retaining selection and showing the appropriate fields.
+  Verify the packaged card-detail browser workflow. Thanks to xet7.
 - Release registration result cursors before writes/rollback and calculate the
   password hash before opening the transaction. Reduce SQLite first-signup lock
   contention while retaining the unique first-Admin claim. Three consecutive

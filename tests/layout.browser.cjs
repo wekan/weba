@@ -150,6 +150,7 @@ const fs = require('node:fs');
       assert.ok(await page.$eval('[id$=".DetailTree"]',e=>e.textContent.includes('[x]')));
       await treeRow('First item');await page.click(selector('DetailDone')+' input');await settle();await click('DetailSave');
       assert.equal(await page.$eval('[id$=".DetailTree"]',e=>(e.textContent.match(/First/g)||[]).length),1,'checklist editing updates the selected item');
+      await treeRow('Checklist');assert.equal(await page.$eval('[id$=".DetailDone"]',e=>e.getBoundingClientRect().width),0,'selecting a checklist updates its visible controls');
       await choose('DetailKind','Custom fields');await choose('DetailType','number');await fill('DetailTitle','Points');await fill('DetailBody','3.5');await click('DetailSave');
       assert.ok(await page.$eval('[id$=".DetailTree"]',e=>e.textContent.includes('3.5')));
       await choose('DetailKind','Dependencies');await fill('DetailNumber',other);await click('DetailSave');

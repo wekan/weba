@@ -1021,18 +1021,7 @@ Private Sub LoadDetails()
   DetailBody.Text = ""
   DetailNumber.Text = "0"
   DetailDone.Value = False
-  DetailTitle.Visible = kind <> "file"
-  DetailBody.Visible = kind = "comment" Or kind = "custom" Or kind = "time"
-  DetailNumber.Visible = kind = "subtask" Or kind = "dependency" Or kind = "time"
-  DetailDone.Visible = kind = "checkitem" Or kind = "custom"
-  DetailType.Visible = kind = "custom"
-  DetailParent.Visible = kind = "checkitem"
-  DetailSave.Visible = kind <> "file"
-  DetailNew.Visible = kind <> "file"
-  DetailStart.Visible = kind = "time"
-  DetailStop.Visible = kind = "time"
-  DetailUpload.Visible = kind = "file"
-  DetailDownload.Visible = kind = "file"
+  UpdateDetailControls()
   r = CardContent.Entries($detailsBoard, $detailsCard, "checklist")
   For Each r
     checklists.Add(CStr(r!id) & " | " & r!title)
@@ -1065,6 +1054,22 @@ Private Sub LoadDetails()
   Endif
 End
 
+Private Sub UpdateDetailControls()
+  Dim kind As String = DetailCode()
+  DetailTitle.Visible = kind <> "file"
+  DetailBody.Visible = kind = "comment" Or kind = "custom" Or kind = "time"
+  DetailNumber.Visible = kind = "subtask" Or kind = "dependency" Or kind = "time"
+  DetailDone.Visible = kind = "checkitem" Or kind = "custom"
+  DetailType.Visible = kind = "custom"
+  DetailParent.Visible = kind = "checkitem"
+  DetailSave.Visible = kind <> "file"
+  DetailNew.Visible = kind <> "file"
+  DetailStart.Visible = kind = "time"
+  DetailStop.Visible = kind = "time"
+  DetailUpload.Visible = kind = "file"
+  DetailDownload.Visible = kind = "file"
+End
+
 Public Sub DetailKind_Click()
   If $loadingDetails Then Return
   LoadDetails()
@@ -1084,6 +1089,7 @@ Public Sub DetailTree_Select()
   $loadingDetails = True
   r = CardContent.Entry($detailsBoard, $detailsCard, $entryId)
   DetailKind.Index = ["comment", "checklist", "checkitem", "subtask", "dependency", "custom", "time"].Find(r!kind)
+  UpdateDetailControls()
   DetailTitle.Text = r!title
   DetailBody.Text = r!body
   DetailNumber.Text = Str(r!amount)
