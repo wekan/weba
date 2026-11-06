@@ -102,6 +102,26 @@ const fs = require('node:fs');
     assert.equal(await page.$$eval('[id$=".Boards"] img',els=>els.filter(e=>e.getBoundingClientRect().width>0).length),0,'tree uses Font Awesome instead of visible bitmap icons');
     assert.equal(await page.$$eval('.weba-add-list .fa-plus-square-o',els=>els.length),3,'list-add uses the same regular Font Awesome icon as WeKan');
     assert.equal(await page.$$eval('.weba-column',els=>els.length),3,'empty board shows its initial lists');
+    if(process.env.WEBA_TRANSFER_ONLY) {
+      await page.click('.weba-add-card-top');await settle();await fill('CardTitle','Moved card');await click('SaveCard');await click('CloseEditor');
+      await click('Home');await click('AddBoardTile');await fill('BoardTitle','Destination');await click('NewBoard');await click('CloseSidebar');
+      const boardId=await page.$$eval('.weba-board-tile',els=>els.find(e=>e.textContent.includes('Destination')).dataset.boardId);
+      await page.evaluate(()=>[...document.querySelectorAll('.weba-board-tile')].find(e=>e.textContent.includes('Layout board')).click());await settle();
+      await page.click('.weba-card-menu');await settle();await click('ContextMove');
+      const destination=await page.$$eval('[id$=".DestinationBoard:select"] option',els=>els.find(e=>e.textContent.includes('Destination')).value);
+      await page.select('[id$=".DestinationBoard:select"]',destination);await settle();await click('ActionConfirm');
+      assert.equal(await page.$$eval('.weba-data .weba-card strong',els=>els.filter(e=>e.textContent==='Moved card').length),0);
+      await click('Home');await page.evaluate(()=>[...document.querySelectorAll('.weba-board-tile')].find(e=>e.textContent.includes('Destination')).click());await settle();
+      await page.waitForFunction(()=>[...document.querySelectorAll('.weba-data .weba-card strong')].some(e=>e.textContent==='Moved card'));
+      await page.click('.weba-card-menu');await settle();await click('ContextArchive');
+      await click('SidebarToggle');await click('ArchivedItems');await settle();
+      const p=await page.$eval('[id$=".BrowserTree"]',tree=>{const row=[...tree.querySelectorAll('tr[id]')].find(e=>e.textContent.includes('Moved'));const r=row.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2};});
+      await page.mouse.click(p.x,p.y);await settle();await click('ContextDelete');await fill('ActionText','wrong');await click('ActionConfirm');
+      assert.ok(await page.$eval('[id$=".Notice"]',e=>e.textContent.replace(/\u00a0/g,' ').includes('exact title')));
+      await fill('ActionText','Moved card');await click('ActionConfirm');
+      assert.equal(await page.$eval('[id$=".ActionPanel"]',e=>e.getBoundingClientRect().width),0);
+      console.log('Browser cross-board move and archived permanent deletion with explicit confirmation passed');return;
+    }
     if(process.env.WEBA_DETAILS_ONLY) {
       async function make(title){await page.click('.weba-add-card-top');await settle();await fill('CardTitle',title);await click('SaveCard');await click('CloseEditor');}
       async function choose(name,value){await settle();await page.select(`[id$=".${name}:select"]`,value);await settle();}

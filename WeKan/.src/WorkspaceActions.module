@@ -1,0 +1,195 @@
+' Transactional moves and permanent removal of archived workspace items.
+Export
+Private $db As Connection
+
+Private Sub Prepare(boardId As Integer)
+  WorkspaceStore.Record(boardId, "board", boardId)
+  CardContent.OpenStore()
+  $db = WebDatabase.OpenConnection()
+  KanbanStore.PrimeCardLinks(boardId)
+End
+
+Private Function Selection(boardId As Integer, kind As String, itemId As Integer) As Integer[]
+  Dim ids As New Integer[]
+  Dim r As Result
+  Dim source As Result = WorkspaceStore.Record(boardId, kind, itemId)
+  r = $db.Find("kb_cards", "board_id = &1", boardId)
+  For Each r
+    Select kind
+      Case "board"
+      Case "lane"
+        If r!lane <> source!title And Not (source!title = "Default" And Not r!lane) Then Continue
+      Case "list"
+        If KanbanStore.CardListId(boardId, r!id) <> itemId Then Continue
+      Case "card"
+        If r!id <> itemId Then Continue
+      Case Else
+        Error.Raise("Unknown selection")
+    End Select
+    ids.Add(r!id)
+  Next
+  Return ids
+End
+
+Private Sub TransferRows(tableName As String, boardId As Integer, targetBoard As Integer, cardId As Integer, field As String)
+  Dim r As Result = $db.Edit(tableName, "board_id = &1 AND " & field & " = &2", boardId, cardId)
+  For Each r
+    r["board_id"] = targetBoard
+    r.Update()
+  Next
+End
+
+Private Sub TransferMeta(boardId As Integer, targetBoard As Integer, kind As String, itemId As Integer)
+  Dim r As Result = $db.Edit("kb_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, kind, itemId)
+  For Each r
+    r["board_id"] = targetBoard
+    r.Update()
+  Next
+End
+
+Public Sub Move(boardId As Integer, kind As String, itemId As Integer, targetBoard As Integer, targetLane As String, Optional targetList As Integer)
+  Dim source As Result
+  Dim target As Result
+  Dim r As Result
+  Dim ids As Integer[]
+  Dim lists As New Integer[]
+  Dim cardId As Integer
+  Dim listId As Integer
+  Dim failure As String
+  Prepare(boardId)
+  Prepare(targetBoard)
+  source = WorkspaceStore.Record(boardId, kind, itemId)
+  If WorkspaceStore.Archived(boardId, "board", boardId) Or WorkspaceStore.Archived(targetBoard, "board", targetBoard) Then Error.Raise("Restore the board first")
+  If WorkspaceStore.Archived(boardId, kind, itemId) Then Error.Raise("Restore the item first")
+  If boardId = targetBoard Then Error.Raise("Choose another board")
+  If kind <> "card" And kind <> "list" And kind <> "lane" Then Error.Raise("This item cannot move between boards")
+  If kind <> "lane" Then
+    target = $db.Find("kb_lanes", "board_id = &1 AND title = &2", targetBoard, targetLane)
+    If Not target.Available Then Error.Raise("Destination swimlane not accessible")
+    If WorkspaceStore.Archived(targetBoard, "lane", target!id) Then Error.Raise("Restore the swimlane first")
+  Else
+    targetLane = source!title
+    target = $db.Find("kb_lanes", "board_id = &1 AND title = &2", targetBoard, targetLane)
+    If target.Available Then Error.Raise("Destination already contains this swimlane name")
+  Endif
+  If kind = "card" Then
+    target = KanbanStore.GetList(targetBoard, "#" & CStr(targetList), targetLane)
+    If WorkspaceStore.ListHidden(targetBoard, targetList) Then Error.Raise("Restore the list first")
+    WorkspaceStore.RequireCapacity(targetBoard, targetList, 0)
+  Else If kind = "list" Then
+    lists.Add(itemId)
+  Else
+    r = $db.Find("kb_lists", "board_id = &1 AND lane = &2", boardId, source!title)
+    For Each r
+      lists.Add(r!id)
+    Next
+  Endif
+  ids = Selection(boardId, kind, itemId)
+  ' Moving only half a relationship would leave a link to another board.
+  r = $db.Find("kb_entries", "board_id = &1 AND (kind = &2 OR kind = &3)", boardId, "dependency", "subtask")
+  For Each r
+    If (ids.Find(r!card_id) >= 0) Xor (ids.Find(CInt(r!amount)) >= 0) Then Error.Raise("Move linked cards together or remove their relationship first")
+  Next
+  $db.Begin()
+  For Each cardId In ids
+    listId = KanbanStore.CardListId(boardId, cardId)
+    If kind = "card" Then listId = targetList
+    r = $db.Edit("kb_cards", "id = &1 AND board_id = &2", cardId, boardId)
+    r["board_id"] = targetBoard
+    r["lane"] = targetLane
+    If kind = "card" Then r["status"] = target!title
+    r.Update()
+    r = $db.Edit("kb_card_lists", "card_id = &1 AND board_id = &2", cardId, boardId)
+    r["board_id"] = targetBoard
+    r["list_id"] = listId
+    r.Update()
+    TransferRows("kb_entries", boardId, targetBoard, cardId, "card_id")
+    TransferRows("kb_files", boardId, targetBoard, cardId, "card_id")
+    TransferMeta(boardId, targetBoard, "card", cardId)
+    r = $db.Edit("kb_history", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "card", cardId)
+    For Each r
+      r["board_id"] = targetBoard
+      r.Update()
+    Next
+    $db.Delete("kb_order", "board_id = &1 AND kind = &2 AND item = &3", boardId, "card", CStr(cardId))
+  Next
+  For Each listId In lists
+    r = $db.Edit("kb_lists", "board_id = &1 AND id = &2", boardId, listId)
+    r["board_id"] = targetBoard
+    r["lane"] = targetLane
+    r.Update()
+    TransferMeta(boardId, targetBoard, "list", listId)
+  Next
+  If kind = "lane" Then
+    r = $db.Edit("kb_lanes", "board_id = &1 AND id = &2", boardId, itemId)
+    r["board_id"] = targetBoard
+    r.Update()
+    TransferMeta(boardId, targetBoard, "lane", itemId)
+    $db.Delete("kb_order", "board_id = &1 AND kind = &2 AND item = &3", boardId, "lane", source!title)
+  Endif
+  KanbanStore.Activity(boardId, "Moved " & kind & " to another board: " & source!title)
+  KanbanStore.Activity(targetBoard, "Received " & kind & ": " & source!title, kind, itemId)
+  $db.Commit()
+Catch
+  failure = Error.Text
+  If $db Then Try $db.Rollback()
+  Error.Raise(failure)
+End
+
+Public Sub DeleteArchived(boardId As Integer, kind As String, itemId As Integer, confirmation As String)
+  Dim source As Result
+  Dim ids As Integer[]
+  Dim cardId As Integer
+  Dim r As Result
+  Dim listIds As New Integer[]
+  Dim listId As Integer
+  Dim tableName As String
+  Dim failure As String
+  Prepare(boardId)
+  source = WorkspaceStore.Record(boardId, kind, itemId)
+  If Not WorkspaceStore.Archived(boardId, kind, itemId) Then Error.Raise("Archive the item before deleting it")
+  If confirmation <> source!title Then Error.Raise("Type the exact title to confirm permanent deletion")
+  ids = Selection(boardId, kind, itemId)
+  If kind = "lane" Then
+    r = $db.Find("kb_lists", "board_id = &1 AND lane = &2", boardId, source!title)
+    For Each r
+      listIds.Add(r!id)
+    Next
+  Else If kind = "list" Then
+    listIds.Add(itemId)
+  Endif
+  $db.Begin()
+  If kind = "board" Then
+    For Each tableName In ["kb_entries", "kb_files", "kb_card_lists", "kb_cards", "kb_lists", "kb_lanes", "kb_meta", "kb_history", "kb_order", "kb_activity"]
+      $db.Delete(tableName, "board_id = &1", boardId)
+    Next
+    $db.Delete("kb_boards", "id = &1", boardId)
+  Else
+    For Each cardId In ids
+      $db.Delete("kb_entries", "board_id = &1 AND (card_id = &2 OR ((kind = &3 OR kind = &4) AND amount = &2))", boardId, cardId, "dependency", "subtask")
+      $db.Delete("kb_files", "board_id = &1 AND card_id = &2", boardId, cardId)
+      $db.Delete("kb_card_lists", "board_id = &1 AND card_id = &2", boardId, cardId)
+      $db.Delete("kb_cards", "board_id = &1 AND id = &2", boardId, cardId)
+      $db.Delete("kb_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "card", cardId)
+      $db.Delete("kb_history", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "card", cardId)
+      $db.Delete("kb_order", "board_id = &1 AND kind = &2 AND item = &3", boardId, "card", CStr(cardId))
+    Next
+    For Each listId In listIds
+      $db.Delete("kb_lists", "board_id = &1 AND id = &2", boardId, listId)
+      $db.Delete("kb_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "list", listId)
+      $db.Delete("kb_history", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "list", listId)
+    Next
+    If kind = "lane" Then
+      $db.Delete("kb_lanes", "board_id = &1 AND id = &2", boardId, itemId)
+      $db.Delete("kb_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "lane", itemId)
+      $db.Delete("kb_history", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "lane", itemId)
+      $db.Delete("kb_order", "board_id = &1 AND kind = &2 AND item = &3", boardId, "lane", source!title)
+    Endif
+    KanbanStore.Activity(boardId, "Permanently deleted " & kind & ": " & source!title)
+  Endif
+  $db.Commit()
+Catch
+  failure = Error.Text
+  If $db Then Try $db.Rollback()
+  Error.Raise(failure)
+End

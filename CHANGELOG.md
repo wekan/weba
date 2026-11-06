@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Move cards, lists and swimlanes between owned active boards while retaining
+  IDs, rich content, files and internal card relationships. Reject partial
+  relationship moves and inaccessible destinations. Permanently delete archived
+  boards/containers/cards with exact-title confirmation and cascading cleanup.
+  Verify store guards and packaged Chromium workflows. Thanks to xet7.
 - Add native Gambas context menus for boards, swimlanes, lists and cards: rename,
   copy, same-board movement, colors, stars, saved watch preferences, WIP limits,
   archives/restoration, scoped activity and JSON card export. Preserve list

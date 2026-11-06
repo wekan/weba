@@ -4,6 +4,7 @@ Export
 
 Private $board As Integer
 Private $loadingDetails As Boolean
+Private $loadingDestinations As Boolean
 Private $detailsBoard As Integer
 Private $detailsCard As Integer
 Private $entryId As Integer
@@ -586,6 +587,7 @@ Private Sub OpenContext(kind As String, itemId As Integer, boardId As Integer)
   ContextMenu.Show()
   ContextArchive.Visible = Not archived
   ContextRestore.Visible = archived
+  ContextDelete.Visible = archived
   ContextRename.Visible = Not archived
   ContextCopy.Visible = True
   ContextAddCard.Visible = Not archived And kind <> "card"
@@ -626,6 +628,10 @@ End
 Private Sub BeginAction(action As String)
   Dim r As Result = WorkspaceStore.Record($contextBoard, $contextKind, $contextId)
   $action = action
+  $loadingDestinations = True
+  LoadDestinationBoards()
+  DestinationBoard.Visible = action = "Move"
+  DestinationBoardLabel.Visible = DestinationBoard.Visible
   ActionTitle.Text = action & ": " & r!title
   ActionText.Text = r!title
   ActionFlag.Visible = action = "WIP"
@@ -644,6 +650,13 @@ Private Sub BeginAction(action As String)
     DestinationLane.Index = DestinationLane.List.Find(r!title)
   Endif
   LoadDestinationLists()
+  $loadingDestinations = False
+  If action = "Delete" Then
+    ActionText.Text = ""
+    ActionTitle.Text = "Delete permanently — type the exact title: " & r!title
+    DestinationLane.Visible = False
+    DestinationLaneLabel.Visible = False
+  Endif
   If action = "Copy" Then ActionText.Text = r!title & " copy"
   If action = "Color" Then ActionText.Text = WorkspaceStore.Setting($contextBoard, $contextKind, $contextId, "color", "#2980b9")
   If action = "WIP" Then ActionText.Text = WorkspaceStore.Setting($contextBoard, $contextKind, $contextId, "wip", "0")
@@ -652,10 +665,35 @@ Private Sub BeginAction(action As String)
   ActionPanel.Show()
 End
 
+Private Sub LoadDestinationBoards()
+  Dim r As Result
+  Dim values As New String[]
+  Dim current As Integer
+  r = KanbanStore.Boards(False)
+  For Each r
+    If r!id = $contextBoard Then current = values.Count
+    values.Add(CStr(r!id) & " | " & r!title)
+  Next
+  DestinationBoard.List = values
+  If values.Count Then DestinationBoard.Index = current
+End
+
+Private Function TargetBoard() As Integer
+  If $action = "Move" And DestinationBoard.Text Then Return CInt(Split(DestinationBoard.Text, " | ")[0])
+  Return $contextBoard
+End
+
+Public Sub DestinationBoard_Click()
+  If $loadingDestinations Then Return
+  LoadDestinationLanes()
+Catch
+  Notice.Text = Error.Text
+End
+
 Private Sub LoadDestinationLanes()
   Dim r As Result
   Dim values As New String[]
-  r = KanbanStore.Lanes($contextBoard)
+  r = KanbanStore.Lanes(TargetBoard())
   For Each r
     values.Add(r!title)
   Next
@@ -668,7 +706,7 @@ Private Sub LoadDestinationLists()
   Dim r As Result
   Dim values As New String[]
   If DestinationLane.Text Then
-    r = KanbanStore.Lists($contextBoard, DestinationLane.Text)
+    r = KanbanStore.Lists(TargetBoard(), DestinationLane.Text)
     For Each r
       values.Add(CStr(r!id) & " | " & r!title)
     Next
@@ -679,6 +717,12 @@ End
 
 Public Sub DestinationLane_Click()
   LoadDestinationLists()
+End
+
+Public Sub ContextDelete_Click()
+  BeginAction("Delete")
+Catch
+  Notice.Text = Error.Text
 End
 
 Public Sub ContextRename_Click()
@@ -718,6 +762,12 @@ Public Sub ActionConfirm_Click()
   Dim afterRef As String
   Dim oldTitle As String
   Select $action
+    Case "Delete"
+      WorkspaceActions.DeleteArchived($contextBoard, $contextKind, $contextId, ActionText.Text)
+      If $contextKind = "board" And $board = $contextBoard Then $board = 0
+      ItemBrowser.Hide()
+      Editor.Hide()
+      DetailsPanel.Hide()
     Case "Add list"
       If $contextKind = "list" Then
         r = WorkspaceStore.Record($contextBoard, "list", $contextId)
@@ -744,6 +794,12 @@ Public Sub ActionConfirm_Click()
       WorkspaceStore.SetSetting($contextBoard, $contextKind, $contextId, "description", ActionText.Text)
     Case "Move"
       r = WorkspaceStore.Record($contextBoard, $contextKind, $contextId)
+      If TargetBoard() <> $contextBoard Then
+        If $contextKind = "card" Then destination = CInt(Split(DestinationList.Text, " | ")[0])
+        WorkspaceActions.Move($contextBoard, $contextKind, $contextId, TargetBoard(), DestinationLane.Text, destination)
+        Editor.Hide()
+        DetailsPanel.Hide()
+      Else
       Select $contextKind
         Case "card"
           destination = CInt(Split(DestinationList.Text, " | ")[0])
@@ -760,6 +816,7 @@ Public Sub ActionConfirm_Click()
         Case "lane"
           KanbanStore.MoveLane($contextBoard, r!title, DestinationLane.Text)
       End Select
+      Endif
     Case Else
       Error.Raise("Unknown menu action")
   End Select

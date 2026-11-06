@@ -1,0 +1,74 @@
+Public Sub Main()
+  Dim source As Integer
+  Dim target As Integer
+  Dim listId As Integer
+  Dim laneId As Integer
+  Dim cardId As Integer
+  Dim child As Integer
+  Dim r As Result
+  Dim denied As Boolean
+  Dim commentId As Integer
+  Dim db As Connection
+  WebDatabase.Register("move-owner", "x")
+  Session["username"] = "move-owner"
+  source = KanbanStore.AddBoard("Source")
+  target = KanbanStore.AddBoard("Target")
+  r = KanbanStore.Lanes(source)
+  laneId = r!id
+  r = KanbanStore.Lists(source, "Default")
+  listId = r!id
+  cardId = KanbanStore.SaveCard(source, 0, "Card", "Body", "Default", "Todo", "", "", "", listId)
+  commentId = CardContent.Save(source, cardId, 0, "comment", "", "Comment", 0, False, 0)
+  CardContent.AddFile(source, cardId, "bytes.txt", "content")
+  WorkspaceStore.SetSetting(source, "card", cardId, "color", "#aaccee")
+  child = CardContent.NewSubtask(source, cardId, "Child")
+  r = KanbanStore.Lists(target, "Default")
+  Try WorkspaceActions.Move(source, "card", cardId, target, "Default", r!id)
+  denied = Error
+  If Not denied Then Error.Raise("Partial relationship move accepted")
+  r = KanbanStore.Cards(source)
+  If r.Count <> 2 Then Error.Raise("Rejected move changed source")
+  WorkspaceActions.Move(source, "list", listId, target, "Default")
+  r = KanbanStore.Cards(target)
+  If r.Count <> 2 Then Error.Raise("Whole list move lost cards")
+  If KanbanStore.CardListId(target, cardId) <> listId Then Error.Raise("Move changed card/list identity")
+  r = CardContent.Entry(target, cardId, commentId)
+  If r!body <> "Comment" Then Error.Raise("Move lost content")
+  r = CardContent.Files(target, cardId)
+  If r.Count <> 1 Then Error.Raise("Move lost file")
+  If WorkspaceStore.Setting(target, "card", cardId, "color") <> "#aaccee" Then Error.Raise("Move lost metadata")
+  Try WorkspaceStore.Record(source, "card", cardId)
+  denied = Error
+  If Not denied Then Error.Raise("Moved card still belongs to source")
+  Try WorkspaceActions.DeleteArchived(target, "list", listId, "Todo")
+  denied = Error
+  If Not denied Then Error.Raise("Active deletion accepted")
+  WorkspaceStore.SetArchived(target, "list", listId, True)
+  Try WorkspaceActions.DeleteArchived(target, "list", listId, "wrong")
+  denied = Error
+  If Not denied Then Error.Raise("Wrong confirmation accepted")
+  WebDatabase.Register("move-other", "x")
+  Session["username"] = "move-other"
+  Try WorkspaceActions.DeleteArchived(target, "list", listId, "Todo")
+  denied = Error
+  If Not denied Then Error.Raise("Other owner deleted list")
+  Session["username"] = "move-owner"
+  WorkspaceActions.DeleteArchived(target, "list", listId, "Todo")
+  db = WebDatabase.OpenConnection()
+  r = db.Find("kb_files", "card_id = &1", cardId)
+  If r.Count Then Error.Raise("Deleted card left file bytes")
+  r = db.Find("kb_entries", "card_id = &1 OR card_id = &2", cardId, child)
+  If r.Count Then Error.Raise("Deleted list left card content")
+  WorkspaceStore.Rename(source, "lane", laneId, "Moved lane")
+  WorkspaceActions.Move(source, "lane", laneId, target, "")
+  r = WorkspaceStore.Record(target, "lane", laneId)
+  If r!title <> "Moved lane" Then Error.Raise("Lane move lost title")
+  WorkspaceStore.SetArchived(target, "lane", laneId, True)
+  WorkspaceActions.DeleteArchived(target, "lane", laneId, "Moved lane")
+  WorkspaceStore.SetArchived(target, "board", target, True)
+  WorkspaceActions.DeleteArchived(target, "board", target, "Target")
+  Try KanbanStore.RequireBoard(target)
+  denied = Error
+  If Not denied Then Error.Raise("Deleted board remains")
+  Print "Cross-board moves preserve identities/content/relations; archived deletion cascades and requires owner/title confirmation"
+End

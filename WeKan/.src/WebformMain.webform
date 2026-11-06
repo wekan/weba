@@ -247,6 +247,9 @@
     { ContextArchive WebButton
       Text = ("Archive")
     }
+    { ContextDelete WebButton
+      Text = ("Delete permanently")
+    }
     { ContextRestore WebButton
       Text = ("Restore")
     }
@@ -267,6 +270,11 @@
     }
     { ActionText WebTextBox
       Tooltip = ("Title or value")
+    }
+    { DestinationBoardLabel WebLabel
+      Text = ("Destination board")
+    }
+    { DestinationBoard WebComboBox
     }
     { DestinationLaneLabel WebLabel
       Text = ("Destination swimlane")
