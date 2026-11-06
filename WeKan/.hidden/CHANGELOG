@@ -7,6 +7,8 @@
   local CGI runtime, isolated HTTP tests and incremental all/missing release CI.
 - Packaging: Add eight Linux CPU targets, WSL/Docker launchers and source archives
   with checksums; verify local ARM64 packaging and document unverified targets.
+- Documentation: Add project-only instruction files, README build/release guidance
+  and TODO tracking; record verified work separately from remaining feature parity.
 
 * Fri Nov 11 2022 Lauri Ojansivu <support@wekan.team> 1.0.0
 - Initial release

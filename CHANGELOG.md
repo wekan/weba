@@ -34,6 +34,12 @@ This work adds the following features and fixes:
   syntax are checked; remote jobs and other OS/CPU installers remain unverified.
   Thanks to xet7.
 
+- Added weba-only AGENTS.md and CLAUDE.md, moving its working instructions out
+  of the parent repository. Documented toolchains, registration, local builds,
+  human-only publishing, installer/runtime dependencies and test limitations.
+  Added TODO.md tracking completed work and remaining page/component parity.
+  Thanks to xet7.
+
 Thanks to above GitHub users for their contributions and translators for their translations.
 
 # v1.0 2021-12-08 WeKan ® for Gambas release
