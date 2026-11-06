@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Local Gambas CGI host preserving runtime and database environment settings."""
 import argparse
+import errno
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import os
@@ -50,18 +51,32 @@ def handler(application, runner, environment):
     return GambasHandler
 
 
+def bind_server(host, port, request_handler, preferred_port=8080):
+    """Prefer 8080 by default; let the OS atomically choose a free fallback.
+
+    Explicit ports (including Docker's mapped port) must not silently change.
+    """
+    try:
+        return ThreadingHTTPServer((host, preferred_port if port is None else port), request_handler)
+    except OSError as error:
+        if port is not None or error.errno != errno.EADDRINUSE:
+            raise
+        return ThreadingHTTPServer((host, 0), request_handler)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--app', required=True, type=Path)
     parser.add_argument('--runner', default='gbr3')
     parser.add_argument('--host', default='127.0.0.1')
-    parser.add_argument('--port', type=int, default=8080)
+    parser.add_argument('--port', type=int, default=None,
+                        help='Explicit port (0 selects a free port); default prefers 8080 and falls back to a free port')
     parser.add_argument('--data', type=Path, default=Path(os.environ.get('XDG_DATA_HOME', str(Path.home() / '.local/share'))) / 'weba')
     args = parser.parse_args()
     args.data.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy()
     env.setdefault('WEBA_DB_HOST', str(args.data.resolve()))
-    server = ThreadingHTTPServer((args.host, args.port), handler(args.app.resolve(), args.runner, env))
+    server = bind_server(args.host, args.port, handler(args.app.resolve(), args.runner, env))
     print(f'WeBa: http://{args.host}:{server.server_port} — data: {args.data}', flush=True)
     try: server.serve_forever()
     except KeyboardInterrupt: pass

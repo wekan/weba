@@ -2,6 +2,9 @@
 
 This work adds the following features and fixes:
 
+- Select a free local port when the default 8080 is occupied and print the actual
+  URL. Preserve explicitly requested ports. Add occupied-port and bind-error
+  regression tests. Thanks to xet7.
 - Add login/register navigation, Show/Hide password buttons and password
   confirmation when registering. Explain mismatched passwords, duplicate usernames
   and configured minimum lengths separately instead of one misleading error.

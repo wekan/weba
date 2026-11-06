@@ -1,4 +1,6 @@
 * Fri Nov 06 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Local server: Fall back to a free port when 8080 is occupied, retain explicit
+  port requests and verify binding/serving behavior with isolated socket tests.
 - Login/register UI: Add password visibility controls, repeated-password validation
   and specific registration errors, with source/archive HTTP regression tests.
 - Password policy: Accept short passwords by default and enforce a persisted

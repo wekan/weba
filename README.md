@@ -136,7 +136,10 @@ replace a real browser visual/accessibility test or cross-driver conformance run
 Run `./build.sh` for the menu, or use `build`, `run`, `test`, `package`,
 `release-all`, `release-all-missing`, `copy-gambas`, `targets` and `doctor`.
 `run` builds a single `.gambas` archive and serves it on localhost:8080 with
-`runtime/server.py`. Runtime data defaults to `$XDG_DATA_HOME/weba` (or
+`runtime/server.py`. If 8080 is occupied, the OS assigns a free port; use the
+URL printed at startup. `./build.sh run --port 0` always chooses a free port.
+An explicit nonzero `--port` remains fixed (useful for container port mappings).
+Runtime data defaults to `$XDG_DATA_HOME/weba` (or
 `~/.local/share/weba`) outside the installed program directory. Python 3 and
 the Gambas runtime/components are required. Development tests also need Node.js
 and jsdom (`nodejs` and `node-jsdom` on Debian).

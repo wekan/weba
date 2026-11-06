@@ -33,6 +33,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   field. HTTP tests cover both visibility toggles, mismatch rejection and specific
   duplicate/length messages on source and packaged-archive sessions.
 
+- Local startup prefers port 8080 and selects a free port if it is occupied.
+  Real socket tests verify fallback, serving on the selected port, explicit-port
+  behavior and propagation of unrelated bind errors. Test servers are closed.
+
 ## Current status and next work
 
 - Changes are organized into separate local commits for accounts, Kanban,
