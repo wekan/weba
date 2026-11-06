@@ -15,7 +15,7 @@
           if (root.gw && section.dataset.tree) root.gw.update(section.dataset.tree, '$' + btoa(tile.dataset.boardKey), null);
         };
       });
-      const cards = [...data.querySelectorAll('.weba-card')], view = section.dataset.view;
+      const cards = [...data.querySelectorAll('.weba-card')].sort((a,b)=>Number(a.dataset.order||0)-Number(b.dataset.order||0)), view = section.dataset.view;
       function add(parent, tag, text, cls, localize = true) {
         const el = document.createElement(tag);
         if (text !== undefined) el.textContent = localize ? t(text) : text;
@@ -23,7 +23,7 @@
         parent.append(el); return el;
       }
       if (view === 'Lists' || view === 'Swimlanes') {
-        const layout = [...section.querySelectorAll('.weba-layout section[data-lane]')];
+        const layout = [...section.querySelectorAll('.weba-layout section[data-lane]')].sort((a,b)=>Number(a.dataset.order||0)-Number(b.dataset.order||0));
         const editable = section.dataset.editable === 'true';
         const lanes = view === 'Swimlanes' ? [...new Set([...layout.map(l=>l.dataset.lane), ...cards.map(c=>c.dataset.lane || 'Default')])] : ['All cards'];
         if (!lanes.length) lanes.push('Default');
@@ -40,6 +40,10 @@
           else el.textContent=glyph;
           el.type='button'; el.title=t(title); el.setAttribute('aria-label',t(title));
           el.onclick=event=>{event.stopPropagation();action(el);}; return el;
+        }
+        function handle(parent,kind){
+          const el=button(parent,'',kind==='lane'?'Move swimlane':'Move '+kind,()=>{},'weba-drag-handle');el.dataset.dragKind=kind;
+          add(el,'i',undefined,'fa fa-arrows').setAttribute('aria-hidden','true');return el;
         }
         function composer(parent, action, lane, after = '', anchor = null) {
           parent.querySelectorAll('.weba-structure-composer').forEach(e=>e.remove());
@@ -69,6 +73,7 @@
         }
         lanes.forEach(lane => {
           const row=add(report,'section',undefined,'weba-swimlane');
+          row.dataset.lane=lane;
           const laneKey=section.dataset.board+'|'+lane;
           const laneHeader=add(row,'header',undefined,'weba-swimlane-header');
           if(view==='Swimlanes') add(laneHeader,'h3',lane,undefined,false);
@@ -81,11 +86,13 @@
             if(editable) {
               button(controls,'☰','Swimlane',trigger=>menu(laneHeader,[['Add swimlane',()=>composer(row,'lane',lane)],['Collapse',()=>toggle(laneKey,columns,caret)]],trigger),'weba-lane-menu');
               button(controls,'+','Add swimlane',()=>composer(row,'lane',lane),'weba-add-lane');
+              handle(controls,'lane');
             }
           }
           const laneLayout=layout.filter(l=>view==='Lists'||l.dataset.lane===lane);
           const statuses=[...new Set(laneLayout.flatMap(l=>[...l.querySelectorAll('[data-list]')].map(e=>e.dataset.list)))];
-          if(!statuses.length) statuses.push('Todo','Doing','Done');
+          if(!statuses.length&&!laneLayout.length) statuses.push('Todo','Doing','Done');
+          if(!statuses.length&&editable)button(columns,'⊞','Add list',()=>composer(columns,'list',lane),'weba-empty-add-list');
           cards.filter(c=>view==='Lists'||(c.dataset.lane||'Default')===lane).forEach(c=>{if(!statuses.includes(c.dataset.status))statuses.push(c.dataset.status);});
           statuses.forEach(status=>{
             const column=add(columns,'section',undefined,'weba-column');
@@ -98,7 +105,9 @@
             caret.setAttribute('aria-expanded',String(!body.hidden));
             add(controls,'span',undefined,'weba-control-space');
             const actualLane=view==='Lists' ? (laneLayout.find(l=>[...l.querySelectorAll('[data-list]')].some(item=>item.dataset.list===status))||laneLayout[0])?.dataset.lane||'Default' : lane;
+            column.dataset.lane=actualLane;
             if(editable) {
+              handle(controls,'list');
               button(controls,'+','Add card',()=>send('card',actualLane,status),'weba-add-card-top');
               button(controls,'☰','List',trigger=>menu(listHeader,[['Add card',()=>{if(root.webaPopup)root.webaPopup.rememberEditor(trigger);send('card',actualLane,status);}],['Add list',()=>composer(columns,'list',actualLane,status,column)],['Collapse',()=>toggle(listKey,body,caret)]],trigger),'weba-list-menu');
               button(controls,'⊞','Add list',()=>composer(columns,'list',actualLane,status,column),'weba-add-list');
@@ -106,6 +115,7 @@
             add(listHeader,'h4',status,undefined,['Todo','Doing','Done'].includes(status));
             cards.filter(c=>c.dataset.status===status && (view!=='Swimlanes'||(c.dataset.lane||'Default')===lane)).forEach(c=>{
               const clone=c.cloneNode(true);body.append(clone);
+              if(editable&&c.dataset.cardId){clone.classList.add('weba-draggable-card');handle(clone,'card');}
               if(c.dataset.cardKey) {
                 clone.tabIndex=0;clone.setAttribute('role','button');
                 const open=()=>{if(root.webaPopup)root.webaPopup.rememberEditor(clone);if(root.gw&&section.dataset.tree)root.gw.update(section.dataset.tree,'$'+btoa(c.dataset.cardKey),null);};

@@ -11,7 +11,6 @@
   "api-import-username": "Ҡулланыусы исеме",
   "archive-board": "Тактаны архивға күсереү",
   "archived-items": "Архив",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Таҡта исеме",
   "board-view-cal": "Календарь",
   "board-view-collapse": "Йыйырға",
@@ -29,6 +28,7 @@
   "cards-count-one": "Карточка",
   "change-password": "Серһүҙҙе үҙгәртеү",
   "close": "Ябыу",
+  "confirm-move-list-to-swimlane": "Был исемлекте һәм уның бөтә карточкаларын икенсе йөҙөү юлына күсерергәме?",
   "create-account": "Иҫәп булдырырға",
   "createBoardPopup-title": "Такта булдырыу",
   "description": "Тасуирлама",
@@ -43,6 +43,9 @@
   "log-out": "Сығыу",
   "login": "Инеү",
   "monday": "Дүшәмбе",
+  "move-swimlane": "Йөҙөү юлын күсерергә",
+  "moveCardPopup-title": "Карточканы күсереү",
+  "moveListPopup-title": "Исемлекте күсерергә",
   "my-cards": "Минең карточкаларым",
   "notification-delivery-part-list": "Исемлек",
   "notification-delivery-part-swimlane": "Юл",
@@ -67,5 +70,6 @@
   "text-note-title": "Исем",
   "thursday": "Кесаҙна",
   "tuesday": "Шишәмбе",
+  "view": "Ҡарарға",
   "wednesday": "Шаршамбы"
 }

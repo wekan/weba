@@ -11,7 +11,6 @@
   "api-import-username": "Nomen usoris",
   "archive-board": "Tabulam in tabularium move",
   "archived-items": "Archivum",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Titulus tabulae",
   "board-view-cal": "Calendarium",
   "board-view-collapse": "Contrahe",
@@ -29,6 +28,7 @@
   "cards-count-one": "Charta",
   "change-password": "Tesseram muta",
   "close": "Claude",
+  "confirm-move-list-to-swimlane": "Movere hunc indicem et omnes eius chartas in aliam semitam?",
   "create-account": "Crea rationem",
   "createBoardPopup-title": "Tabulam crea",
   "description": "Descriptio",
@@ -43,6 +43,9 @@
   "log-out": "Exi",
   "login": "Introitus",
   "monday": "Dies Lunae",
+  "move-swimlane": "Move semitam",
+  "moveCardPopup-title": "Chartam move",
+  "moveListPopup-title": "Move indicem",
   "my-cards": "Chartae meae",
   "notification-delivery-part-list": "Index",
   "notification-delivery-part-swimlane": "Semita",
@@ -67,5 +70,6 @@
   "text-note-title": "Titulus",
   "thursday": "Dies Iovis",
   "tuesday": "Dies Martis",
+  "view": "Prospectus",
   "wednesday": "Dies Mercurii"
 }

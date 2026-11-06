@@ -11,7 +11,6 @@
   "api-import-username": "Innde kuutorɗo",
   "archive-board": "Eggin alluwal e mooftirde",
   "archived-items": "Mooftirde",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Hoore alluwal",
   "board-view-cal": "Haatumeere",
   "board-view-collapse": "Taggu",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kartal",
   "change-password": "Waylu finnde suuraande",
   "close": "Uddu",
+  "confirm-move-list-to-swimlane": "Eggin doggol ngol e karte mum fof to laawol goɗngol?",
   "create-account": "Sos konte",
   "createBoardPopup-title": "Sos alluwal",
   "description": "Sifaa",
@@ -43,6 +43,9 @@
   "log-out": "Yaltu",
   "login": "Ceŋagol",
   "monday": "Altine",
+  "move-swimlane": "Dirtin laawol",
+  "moveCardPopup-title": "Eggin kartal",
+  "moveListPopup-title": "Dirtin doggol",
   "my-cards": "Karte am",
   "notification-delivery-part-list": "Doggol",
   "notification-delivery-part-swimlane": "Laawol",
@@ -67,5 +70,6 @@
   "text-note-title": "Tiitoonde",
   "thursday": "Alkamiisa",
   "tuesday": "Talaata",
+  "view": "Yiy",
   "wednesday": "Alarba"
 }

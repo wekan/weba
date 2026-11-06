@@ -11,7 +11,6 @@
   "api-import-username": "Номи корбар",
   "archive-board": "Тахтаро ба бойгонӣ кӯчонидан",
   "archived-items": "Бойгонӣ",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Унвони тахта",
   "board-view-cal": "Тақвим",
   "board-view-collapse": "Ҷамъ кардан",
@@ -29,6 +28,7 @@
   "cards-count-one": "Корт",
   "change-password": "Рамзро иваз кардан",
   "close": "Пӯшидан",
+  "confirm-move-list-to-swimlane": "Ин рӯйхат ва ҳамаи кортҳои онро ба хати дигар кӯчонед?",
   "create-account": "Сохтани ҳисоб",
   "createBoardPopup-title": "Тахта эҷод кардан",
   "description": "Тавсиф",
@@ -43,6 +43,9 @@
   "log-out": "Баромадан",
   "login": "Воридшавӣ",
   "monday": "Душанбе",
+  "move-swimlane": "Кӯчонидани хат",
+  "moveCardPopup-title": "Кортро кӯчонидан",
+  "moveListPopup-title": "Кӯчонидани рӯйхат",
   "my-cards": "Кортҳои ман",
   "notification-delivery-part-list": "Рӯйхат",
   "notification-delivery-part-swimlane": "Хат",
@@ -67,5 +70,6 @@
   "text-note-title": "Сарлавҳа",
   "thursday": "Панҷшанбе",
   "tuesday": "Сешанбе",
+  "view": "Намоиш",
   "wednesday": "Чоршанбе"
 }

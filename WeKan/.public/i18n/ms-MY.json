@@ -11,7 +11,6 @@
   "api-import-username": "Nama Pengguna",
   "archive-board": "Pindah Papan ke arkib",
   "archived-items": "Arkib",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Tajuk Papan",
   "board-view-cal": "Kalendar",
   "board-view-collapse": "Buka",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kad",
   "change-password": "Tukar Kata Laluan",
   "close": "Tutup",
+  "confirm-move-list-to-swimlane": "Alihkan senarai ini dan semua kadnya ke swimlane yang lain?",
   "create-account": "Cipta Akaun",
   "createBoardPopup-title": "Cipta Papan",
   "description": "Penerangan",
@@ -43,6 +43,9 @@
   "log-out": "Log Keluar",
   "login": "Log Masuk",
   "monday": "Isnin",
+  "move-swimlane": "Pindah aliranrenang",
+  "moveCardPopup-title": "Pindah Kad",
+  "moveListPopup-title": "Pindah Senarai",
   "my-cards": "Kad Saya",
   "notification-delivery-part-list": "Senarai",
   "notification-delivery-part-swimlane": "Aliran renang",
@@ -67,5 +70,6 @@
   "text-note-title": "Tajuk",
   "thursday": "Khamis",
   "tuesday": "Selasa",
+  "view": "Lihat",
   "wednesday": "Rabu"
 }

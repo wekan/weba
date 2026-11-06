@@ -11,7 +11,6 @@
   "api-import-username": "Uživatelské jméno",
   "archive-board": "Přesunout tablo do archivu",
   "archived-items": "Archiv",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Název tabla",
   "board-view-cal": "Kalendář",
   "board-view-collapse": "Sbalit",
@@ -29,6 +28,7 @@
   "cards-count-one": "Karta",
   "change-password": "Změnit heslo",
   "close": "Zavřít",
+  "confirm-move-list-to-swimlane": "Přesunout tento seznam a všechny jeho karty do druhé dráhy?",
   "create-account": "Vytvořit účet",
   "createBoardPopup-title": "Vytvořit tablo",
   "description": "Popis",
@@ -43,6 +43,9 @@
   "log-out": "Odhlásit",
   "login": "Přihlásit se",
   "monday": "Pondělí",
+  "move-swimlane": "Přesunout dráhu",
+  "moveCardPopup-title": "Přesunout kartu",
+  "moveListPopup-title": "Přesunout seznam",
   "my-cards": "Moje karty",
   "notification-delivery-part-list": "Seznam",
   "notification-delivery-part-swimlane": "Dráha",
@@ -67,5 +70,6 @@
   "text-note-title": "Název",
   "thursday": "Čtvrtek",
   "tuesday": "Úterý",
+  "view": "Zobrazit",
   "wednesday": "Středa"
 }

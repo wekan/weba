@@ -11,7 +11,6 @@
   "api-import-username": "Korisničko ime",
   "archive-board": "Premjesti tablu u arhivu",
   "archived-items": "Arhiva",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Naslov table",
   "board-view-cal": "Kalendar",
   "board-view-collapse": "Skupi",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kartica",
   "change-password": "Promijeni lozinku",
   "close": "Zatvori",
+  "confirm-move-list-to-swimlane": "Premjestiti ovu listu i sve njezine kartice u drugu traku?",
   "create-account": "Izradi račun",
   "createBoardPopup-title": "Kreiraj tablu",
   "description": "Opis",
@@ -43,6 +43,9 @@
   "log-out": "Odjava",
   "login": "Prijava",
   "monday": "Ponedjeljak",
+  "move-swimlane": "Premjesti traku",
+  "moveCardPopup-title": "Premjesti karticu",
+  "moveListPopup-title": "Premjesti listu",
   "my-cards": "Moje kartice",
   "notification-delivery-part-list": "Lista",
   "notification-delivery-part-swimlane": "Traka",
@@ -67,5 +70,6 @@
   "text-note-title": "Naslov",
   "thursday": "Četvrtak",
   "tuesday": "Utorak",
+  "view": "Prikaz",
   "wednesday": "Srijeda"
 }

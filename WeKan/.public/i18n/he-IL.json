@@ -11,7 +11,6 @@
   "api-import-username": "שם משתמש",
   "archive-board": "העברת הלוח לארכיון",
   "archived-items": "להעביר לארכיון",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "כותרת לוח",
   "board-view-cal": "לוח שנה",
   "board-view-collapse": "צמצום",
@@ -29,6 +28,7 @@
   "cards-count-one": "כרטיס",
   "change-password": "החלפת ססמה",
   "close": "סגירה",
+  "confirm-move-list-to-swimlane": "להעביר את הרשימה הזו ואת כל הכרטיסים שבה למסלול האחר?",
   "create-account": "יצירת חשבון",
   "createBoardPopup-title": "יצירת לוח",
   "description": "תיאור",
@@ -43,6 +43,9 @@
   "log-out": "יציאה",
   "login": "כניסה",
   "monday": "יום שני",
+  "move-swimlane": "העברת מסלול",
+  "moveCardPopup-title": "העברת כרטיס",
+  "moveListPopup-title": "העברת רשימה",
   "my-cards": "הכרטיסים שלי",
   "notification-delivery-part-list": "רשימה",
   "notification-delivery-part-swimlane": "מסלול",
@@ -67,5 +70,6 @@
   "text-note-title": "כותרת",
   "thursday": "יום חמישי",
   "tuesday": "יום שלישי",
+  "view": "תצוגה",
   "wednesday": "יום רביעי"
 }

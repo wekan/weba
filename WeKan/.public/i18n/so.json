@@ -11,7 +11,6 @@
   "api-import-username": "Magaca isticmaalaha",
   "archive-board": "U gudbi sabuuradda kaydka",
   "archived-items": "Kayd",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Cinwaanka Sabuuradda",
   "board-view-cal": "Kalandar",
   "board-view-collapse": "Isku Laab",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kaarka",
   "change-password": "Beddel furaha sirta",
   "close": "Xir",
+  "confirm-move-list-to-swimlane": "Liiskan iyo dhammaan kaararkiisa u rar waddada kale?",
   "create-account": "Abuur Akoon",
   "createBoardPopup-title": "Abuur sabuurad",
   "description": "Sharaxaad",
@@ -43,6 +43,9 @@
   "log-out": "Ka bax",
   "login": "Gelitaan",
   "monday": "Isniin",
+  "move-swimlane": "Dhaqaaji Waddada",
+  "moveCardPopup-title": "U wareeji kaarka",
+  "moveListPopup-title": "Rar Liiska",
   "my-cards": "Kaararkayga",
   "notification-delivery-part-list": "Liis",
   "notification-delivery-part-swimlane": "Waddo",
@@ -67,5 +70,6 @@
   "text-note-title": "Cinwaan",
   "thursday": "Khamiis",
   "tuesday": "Talaado",
+  "view": "Muuqaal",
   "wednesday": "Arbaco"
 }

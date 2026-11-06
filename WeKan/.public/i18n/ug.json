@@ -11,7 +11,6 @@
   "api-import-username": "ئىشلەتكۈچى ئىسمى",
   "archive-board": "تاختىنى ئارخىپقا يۆتكەڭ",
   "archived-items": "ئارخىپ",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "تاختا ماۋزۇسى",
   "board-view-cal": "كالېندار",
   "board-view-collapse": "يىمىرىلىش",
@@ -29,6 +28,7 @@
   "cards-count-one": "كارتا",
   "change-password": "پارولنى ئۆزگەرتىش",
   "close": "تاقاش",
+  "confirm-move-list-to-swimlane": "بۇ تىزىملىك ۋە ئۇنىڭ بارلىق كارتىلىرىنى باشقا Swimlane غا يۆتكەمسىز؟",
   "create-account": "ھېسابات قۇر",
   "createBoardPopup-title": "مۇدىرىيەت قۇرۇش",
   "description": "چۈشەندۈرۈش",
@@ -43,6 +43,9 @@
   "log-out": "چېكىنىش",
   "login": "كىرىش",
   "monday": "دۈشەنبە",
+  "move-swimlane": "Swimlane نى يۆتكەڭ",
+  "moveCardPopup-title": "كارتا يۆتكەش",
+  "moveListPopup-title": "يۆتكەش تىزىملىكى",
   "my-cards": "مېنىڭ كارتام",
   "notification-delivery-part-list": "تىزىملىك",
   "notification-delivery-part-swimlane": "يول",
@@ -67,5 +70,6 @@
   "text-note-title": "ماۋزۇ",
   "thursday": "پەيشەنبە",
   "tuesday": "سەيشەنبە",
+  "view": "كۆرۈش",
   "wednesday": "چارشەنبە"
 }

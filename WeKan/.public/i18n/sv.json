@@ -11,7 +11,6 @@
   "api-import-username": "Användarnamn",
   "archive-board": "Flytta Tavla till Arkiv",
   "archived-items": "Arkiv",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Tavlans titel",
   "board-view-cal": "Kalender",
   "board-view-collapse": "Fäll ihop",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kort",
   "change-password": "Ändra lösenord",
   "close": "Stäng",
+  "confirm-move-list-to-swimlane": "Flytta den här listan och alla dess kort till den andra simbanan?",
   "create-account": "Skapa konto",
   "createBoardPopup-title": "Skapa tavla",
   "description": "Beskrivning",
@@ -43,6 +43,9 @@
   "log-out": "Logga ut",
   "login": "Inloggning",
   "monday": "Måndag",
+  "move-swimlane": "Flytta simbana",
+  "moveCardPopup-title": "Flytta kort",
+  "moveListPopup-title": "Flytta lista",
   "my-cards": "Mina kort",
   "notification-delivery-part-list": "Lista",
   "notification-delivery-part-swimlane": "Simbana",
@@ -67,5 +70,6 @@
   "text-note-title": "Titel",
   "thursday": "Torsdag",
   "tuesday": "Tisdag",
+  "view": "Visa",
   "wednesday": "Onsdag"
 }

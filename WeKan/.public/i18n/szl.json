@@ -11,7 +11,6 @@
   "api-import-username": "Miano używŏcza",
   "archive-board": "Przeniyś tabula do archiwum",
   "archived-items": "Archiwum",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Tytuł tabule",
   "board-view-cal": "Kalendarz",
   "board-view-collapse": "Zwiń",
@@ -29,6 +28,7 @@
   "cards-count-one": "Karta",
   "change-password": "Zmiynić hasło",
   "close": "Zawrzić",
+  "confirm-move-list-to-swimlane": "Przenieść tę listę i wszyskie jej karty na inną ścieżkę?",
   "create-account": "Zrychtuj konto",
   "createBoardPopup-title": "Zrychtować tabula",
   "description": "Ôpis",
@@ -43,6 +43,9 @@
   "log-out": "Wyloguj sie",
   "login": "Logowanie",
   "monday": "Poniedziałek",
+  "move-swimlane": "Przeniyś ścieżkę",
+  "moveCardPopup-title": "Przeniyś karta",
+  "moveListPopup-title": "Przeniyś listę",
   "my-cards": "Moje karty",
   "notification-delivery-part-list": "Lista",
   "notification-delivery-part-swimlane": "Ślak",
@@ -67,5 +70,6 @@
   "text-note-title": "Tytuł",
   "thursday": "Czwartek",
   "tuesday": "Wtorek",
+  "view": "Widok",
   "wednesday": "Środa"
 }

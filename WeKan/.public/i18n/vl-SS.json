@@ -11,7 +11,6 @@
   "api-import-username": "Gebruikersnaam",
   "archive-board": "Verplaats Bord naar Archief",
   "archived-items": "Archief",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Bord Titel",
   "board-view-cal": "Kalender",
   "board-view-collapse": "Inklappen",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kaart",
   "change-password": "Wijzig wachtwoord",
   "close": "Sluiten",
+  "confirm-move-list-to-swimlane": "Deze lijst en al zijn kaarten naar de andere swimlane verplaatsen?",
   "create-account": "Account Aanmaken",
   "createBoardPopup-title": "Bord aanmaken",
   "description": "Beschrijving",
@@ -43,6 +43,9 @@
   "log-out": "Uitloggen",
   "login": "Aanmelden",
   "monday": "Maandag",
+  "move-swimlane": "Verplaats Swimlane",
+  "moveCardPopup-title": "Verplaats kaart",
+  "moveListPopup-title": "Verplaats Lijst",
   "my-cards": "Mijn kaarten",
   "notification-delivery-part-list": "Lijst",
   "notification-delivery-part-swimlane": "Werkbaan",
@@ -67,5 +70,6 @@
   "text-note-title": "Titel",
   "thursday": "Donderdag",
   "tuesday": "Dinsdag",
+  "view": "Toon",
   "wednesday": "Woensdag"
 }

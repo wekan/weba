@@ -11,7 +11,6 @@
   "api-import-username": "Dzina logwiritsa ntchito",
   "archive-board": "Sunthirani bolodi ku malo osungira",
   "archived-items": "Zosungidwa",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Mutu wa bolodi",
   "board-view-cal": "Kalendala",
   "board-view-collapse": "Pindani",
@@ -29,6 +28,7 @@
   "cards-count-one": "Khadi",
   "change-password": "Sinthani mawu achinsinsi",
   "close": "Tsekani",
+  "confirm-move-list-to-swimlane": "Samutsani mndandanda uwu ndi makhadi ake onse ku mzere wosambira wina?",
   "create-account": "Pangani akaunti",
   "createBoardPopup-title": "Pangani bolodi",
   "description": "Kufotokoza",
@@ -43,6 +43,9 @@
   "log-out": "Tulukani",
   "login": "Kulowa",
   "monday": "Lolemba",
+  "move-swimlane": "Sunthani mzere wosambira",
+  "moveCardPopup-title": "Sunthirani khadi",
+  "moveListPopup-title": "Sunthani mndandanda",
   "my-cards": "Makhadi anga",
   "notification-delivery-part-list": "Mndandanda",
   "notification-delivery-part-swimlane": "Njira",
@@ -67,5 +70,6 @@
   "text-note-title": "Mutu",
   "thursday": "Lachinayi",
   "tuesday": "Lachiwiri",
+  "view": "Onani",
   "wednesday": "Lachitatu"
 }

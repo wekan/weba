@@ -11,7 +11,6 @@
   "api-import-username": "באַניצער־נאָמען",
   "archive-board": "מאַך ברעט צו אַרטשיווע",
   "archived-items": "אַרטשיווע",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "ברעט טיטל",
   "board-view-cal": "קאַלענדאַר",
   "board-view-collapse": "ייַנבראָך",
@@ -29,6 +28,7 @@
   "cards-count-one": "קאָרט",
   "change-password": "טוישן שפּריכוואָרט",
   "close": "נאָענט",
+  "confirm-move-list-to-swimlane": "רוק די רשימה און אַלע אירע קאַרדס צו דער אַנדערער סווימלאַנע?",
   "create-account": "שאַפֿן אַ חשבון",
   "createBoardPopup-title": "שאַפֿן באָרד",
   "description": "באַשרייַבונג",
@@ -43,6 +43,9 @@
   "log-out": "קלאָץ אויס",
   "login": "לאָגין",
   "monday": "מאנטאג",
+  "move-swimlane": "מאַך סווימלאַנע",
+  "moveCardPopup-title": "מאַך קאַרד",
+  "moveListPopup-title": "מאַך רשימה",
   "my-cards": "מייַן קאַרדס",
   "notification-delivery-part-list": "רשימה",
   "notification-delivery-part-swimlane": "סווימלאַנע",
@@ -67,5 +70,6 @@
   "text-note-title": "טיטל",
   "thursday": "דאנערשטאג",
   "tuesday": "דינסטיק",
+  "view": "מבט",
   "wednesday": "מיטוואך"
 }

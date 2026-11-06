@@ -11,7 +11,6 @@
   "api-import-username": "Wužiwarske mjeno",
   "archive-board": "Taflu do archiwa přesunyć",
   "archived-items": "Archiw",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Mjeno tabla",
   "board-view-cal": "Protyka",
   "board-view-collapse": "Zezběrać",
@@ -29,6 +28,7 @@
   "cards-count-one": "Karta",
   "change-password": "Hesło změnić",
   "close": "Začinić",
+  "confirm-move-list-to-swimlane": "Tutu lisćinu a wšě jeje karty do druheje dróhi přesunyć?",
   "create-account": "Konto wutworić",
   "createBoardPopup-title": "Taflu wutworić",
   "description": "Wopisanje",
@@ -43,6 +43,9 @@
   "log-out": "Wotzjewić",
   "login": "Přizjewjenje",
   "monday": "Póndźela",
+  "move-swimlane": "Dróhu přesunyć",
+  "moveCardPopup-title": "Kartu přesunyć",
+  "moveListPopup-title": "Lisćinu přesunyć",
   "my-cards": "Moje karty",
   "notification-delivery-part-list": "Lisćina",
   "notification-delivery-part-swimlane": "Dróha",
@@ -67,5 +70,6 @@
   "text-note-title": "Titul",
   "thursday": "Štwórtk",
   "tuesday": "Wutora",
+  "view": "Pokazać",
   "wednesday": "Srjeda"
 }

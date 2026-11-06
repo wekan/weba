@@ -11,7 +11,6 @@
   "api-import-username": "ስም ተጠቃማይ",
   "archive-board": "ምዱድ ናብ መዕቀቢ ውስድ",
   "archived-items": "መዕቀቢ",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "ኣርእስቲ ምዱድ",
   "board-view-cal": "አምዕል ለልተዐለብ እቱ ወድና አወርሕት",
   "board-view-collapse": "ኣክብ",
@@ -29,6 +28,7 @@
   "cards-count-one": "ወረቀት ካርድ",
   "change-password": "ሚስጥር ቃል ቀይር",
   "close": "ድባእ",
+  "confirm-move-list-to-swimlane": "እዚ ዝርዝርን ኩሎም ወረቀት ካርድታቱን ናብቲ ካልእ መገዲ ይንቀሳቐሱ?",
   "create-account": "ሕሳብ ፍትሕ",
   "createBoardPopup-title": "ምዱድ ኽለቅ",
   "description": "ዋስፎ",
@@ -43,6 +43,9 @@
   "log-out": "ፈጊር",
   "login": "መእተዪ",
   "monday": "አትኒን",
+  "move-swimlane": "መገዲ ኣዛውር",
+  "moveCardPopup-title": "ወረቀት ካርድ ኣንቀሳቕስ",
+  "moveListPopup-title": "ዝርዝር ኣንቀሳቕስ",
   "my-cards": "ወረቀት ካርድታተይ",
   "notification-delivery-part-list": "ዝርዝር",
   "notification-delivery-part-swimlane": "መገዲ",
@@ -67,5 +70,6 @@
   "text-note-title": "አርእስ",
   "thursday": "ከሚሽ",
   "tuesday": "አተሉት",
+  "view": "ርአ",
   "wednesday": "አረቡዕ"
 }

@@ -11,7 +11,6 @@
   "api-import-username": "Erabiltzaile-izena",
   "archive-board": "Mugitu arbela biltegira",
   "archived-items": "Biltegia",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Arbelaren titulua",
   "board-view-cal": "Egutegia",
   "board-view-collapse": "Tolestu",
@@ -29,6 +28,7 @@
   "cards-count-one": "Txartela",
   "change-password": "Aldatu pasahitza",
   "close": "Itxi",
+  "confirm-move-list-to-swimlane": "Zerrenda hau eta bere txartel guztiak beste errailera eraman?",
   "create-account": "Sortu kontua",
   "createBoardPopup-title": "Sortu arbela",
   "description": "Deskripzioa",
@@ -43,6 +43,9 @@
   "log-out": "Itxi saioa",
   "login": "Hasi saioa",
   "monday": "Astelehena",
+  "move-swimlane": "Mou el carril",
+  "moveCardPopup-title": "Lekuz aldatu txartela",
+  "moveListPopup-title": "Eraman zerrenda",
   "my-cards": "Nire txartelak",
   "notification-delivery-part-list": "Zerrenda",
   "notification-delivery-part-swimlane": "Erraila",
@@ -67,5 +70,6 @@
   "text-note-title": "Izenburua",
   "thursday": "Osteguna",
   "tuesday": "Asteartea",
+  "view": "Ikuspegia",
   "wednesday": "Asteazkena"
 }

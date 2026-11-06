@@ -11,7 +11,6 @@
   "api-import-username": "Nom d’utilizaire",
   "archive-board": "Archivar lo tablèu",
   "archived-items": "Archius",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Títol del tablèu",
   "board-view-cal": "Calendièr",
   "board-view-collapse": "Colapsar",
@@ -29,6 +28,7 @@
   "cards-count-one": "Carta",
   "change-password": "Cambiar lo senhal",
   "close": "Tampar",
+  "confirm-move-list-to-swimlane": "Desplaçar aquesta tièra e totas sas cartas cap a l'autre corredor ?",
   "create-account": "Crear un compte",
   "createBoardPopup-title": "Crear un tablèu",
   "description": "Descripcion",
@@ -43,6 +43,9 @@
   "log-out": "Desconnexion",
   "login": "Connexion",
   "monday": "Diluns",
+  "move-swimlane": "Desplaçar la linha de natacion",
+  "moveCardPopup-title": "Bolegar la carta",
+  "moveListPopup-title": "Desplaçar la lista",
   "my-cards": "Mès cartas",
   "notification-delivery-part-list": "Lista",
   "notification-delivery-part-swimlane": "Linha de natacion",
@@ -67,5 +70,6 @@
   "text-note-title": "Títol",
   "thursday": "Dijòus",
   "tuesday": "Dimars",
+  "view": "Vèire",
   "wednesday": "Dimècres"
 }

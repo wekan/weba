@@ -11,7 +11,6 @@
   "api-import-username": "Nem blong yusa",
   "archive-board": "Muvum bod i go long stoa",
   "archived-items": "Akaev",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Taetol blong Bod",
   "board-view-cal": "Kalenda",
   "board-view-collapse": "Foldem",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kad",
   "change-password": "Jenisim paswod",
   "close": "Satem",
+  "confirm-move-list-to-swimlane": "Movem lis ia mo evri kad blong hem i go long narafala swimlane?",
   "create-account": "Mekem Akaon",
   "createBoardPopup-title": "Mekem wan bod",
   "description": "Stori",
@@ -43,6 +43,9 @@
   "log-out": "Aot",
   "login": "Go insaed",
   "monday": "Mande",
+  "move-swimlane": "Movem Swimlane",
+  "moveCardPopup-title": "Muvum kad",
+  "moveListPopup-title": "Movem Lis",
   "my-cards": "Ol kad blong mi",
   "notification-delivery-part-list": "Lis",
   "notification-delivery-part-swimlane": "Rod",
@@ -67,5 +70,6 @@
   "text-note-title": "Taetol",
   "thursday": "Tasde",
   "tuesday": "Tusde",
+  "view": "Lukluk",
   "wednesday": "Wenesde"
 }

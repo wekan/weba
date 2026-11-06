@@ -11,7 +11,6 @@
   "api-import-username": "Isem tal-utent",
   "archive-board": "Mexxi l-bord fl-arkivju",
   "archived-items": "Arkivju",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Bord Titlu",
   "board-view-cal": "Kalendarju",
   "board-view-collapse": "Ikkollassa",
@@ -29,6 +28,7 @@
   "cards-count-one": "Karta",
   "change-password": "Ibdel il-password",
   "close": "Agħlaq",
+  "confirm-move-list-to-swimlane": "Mexxi dan lista u all its kards għal il- other korsija?",
   "create-account": "Oħloq Account",
   "createBoardPopup-title": "Oħloq bord",
   "description": "Deskrizzjoni",
@@ -43,6 +43,9 @@
   "log-out": "Oħroġ",
   "login": "Idħol",
   "monday": "It-Tnejn",
+  "move-swimlane": "Mexxi Korsija",
+  "moveCardPopup-title": "Mexxi l-karta",
+  "moveListPopup-title": "Mexxi Lista",
   "my-cards": "Il-karti tiegħi",
   "notification-delivery-part-list": "Lista",
   "notification-delivery-part-swimlane": "Korsija",
@@ -67,5 +70,6 @@
   "text-note-title": "Titlu",
   "thursday": "Il-Ħamis",
   "tuesday": "It-Tlieta",
+  "view": "Ara",
   "wednesday": "L-Erbgħa"
 }

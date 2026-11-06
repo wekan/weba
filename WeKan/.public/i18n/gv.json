@@ -11,7 +11,6 @@
   "api-import-username": "Ennym ymmydeyr",
   "archive-board": "Gleashagh y boayrd gys y tashtey",
   "archived-items": "Tashtey",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Ennym boayrd",
   "board-view-cal": "Feaillere",
   "board-view-collapse": "Co-chur",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kaart",
   "change-password": "Caghlaa yn fockle-arrey",
   "close": "Dooney",
+  "confirm-move-list-to-swimlane": "Gleash y rolley shoh as ooilley ny kaartyn echey gys y chassan elley?",
   "create-account": "Croo coontys",
   "createBoardPopup-title": "Croo boayrd",
   "description": "Coontey",
@@ -43,6 +43,9 @@
   "log-out": "Log magh",
   "login": "Çheet stiagh",
   "monday": "Jelune",
+  "move-swimlane": "Gleash cassan",
+  "moveCardPopup-title": "Gleashagh y kaart",
+  "moveListPopup-title": "Gleash rolley",
   "my-cards": "My chaartyn",
   "notification-delivery-part-list": "Rolley",
   "notification-delivery-part-swimlane": "Cassan",
@@ -67,5 +70,6 @@
   "text-note-title": "Tidal",
   "thursday": "Jerdein",
   "tuesday": "Jemayrt",
+  "view": "Reayrt",
   "wednesday": "Jecrean"
 }

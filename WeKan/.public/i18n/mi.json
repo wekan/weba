@@ -11,7 +11,6 @@
   "api-import-username": "Ingoa kaiwhakamahi",
   "archive-board": "Nekehia te papa ki te pūranga",
   "archived-items": "Pūranga",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Taitara Papa",
   "board-view-cal": "Maramataka",
   "board-view-collapse": "Tiango",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kāri",
   "change-password": "Panonihia te kupuhipa",
   "close": "Kati",
+  "confirm-move-list-to-swimlane": "Nekehia tēnei rārangi me ōna kāri katoa ki tērā atu kauhanga?",
   "create-account": "Waihanga Pūkete",
   "createBoardPopup-title": "Hanga papa",
   "description": "Whakaahuatanga",
@@ -43,6 +43,9 @@
   "log-out": "Takiputa",
   "login": "Takiuru",
   "monday": "Mane",
+  "move-swimlane": "Neke Kauhanga",
+  "moveCardPopup-title": "Nekehia te kāri",
+  "moveListPopup-title": "Neke Rārangi",
   "my-cards": "Aku kāri",
   "notification-delivery-part-list": "Rārangi",
   "notification-delivery-part-swimlane": "Ara",
@@ -67,5 +70,6 @@
   "text-note-title": "Taitara",
   "thursday": "Tāite",
   "tuesday": "Tūrei",
+  "view": "Tirohanga",
   "wednesday": "Wenerei"
 }

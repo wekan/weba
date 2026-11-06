@@ -11,7 +11,6 @@
   "api-import-username": "Turu jëfandikukat bi",
   "archive-board": "Yóbbu Tablo bi ci Àrsiw bi",
   "archived-items": "Àrsiw",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Turu tablo bi",
   "board-view-cal": "Kaleende",
   "board-view-collapse": "Goon",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kaart",
   "change-password": "Soppi Password",
   "close": "Tëj",
+  "confirm-move-list-to-swimlane": "Toxal liis bii ak kart yépp yi mu am ci beneen kanal?",
   "create-account": "Sos kont",
   "createBoardPopup-title": "Sos tabale",
   "description": "Melokaan",
@@ -43,6 +43,9 @@
   "log-out": "Faye ci jëfandikukat bi",
   "login": "Dugg",
   "monday": "Dilu",
+  "move-swimlane": "Yóbbu yoon bi",
+  "moveCardPopup-title": "Yóbbu karta",
+  "moveListPopup-title": "Yóbbu limu",
   "my-cards": "Sama kart yi",
   "notification-delivery-part-list": "Limu",
   "notification-delivery-part-swimlane": "Yoon",
@@ -67,5 +70,6 @@
   "text-note-title": "Tëtítre",
   "thursday": "Diyaatu",
   "tuesday": "Dilii",
+  "view": "Xool",
   "wednesday": "Dilo"
 }

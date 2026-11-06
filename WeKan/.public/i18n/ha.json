@@ -11,7 +11,6 @@
   "api-import-username": "Sunan mai amfani",
   "archive-board": "Matsar da allo zuwa ma'ajiya",
   "archived-items": "Taska",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Taken allo",
   "board-view-cal": "Kalanda",
   "board-view-collapse": "Naɗe",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kati",
   "change-password": "Sauya kalmar sirri",
   "close": "Rufe",
+  "confirm-move-list-to-swimlane": "A matsar da wannan jeri da duk katunansa zuwa ɗayan layin iyo?",
   "create-account": "Ƙirƙiri asusu",
   "createBoardPopup-title": "Ƙirƙiri allo",
   "description": "Bayani",
@@ -43,6 +43,9 @@
   "log-out": "Fita",
   "login": "Shiga",
   "monday": "Litinin",
+  "move-swimlane": "Matsar da layin iyo",
+  "moveCardPopup-title": "Matsar da kati",
+  "moveListPopup-title": "Matsar da jeri",
   "my-cards": "Katunana",
   "notification-delivery-part-list": "Jerin",
   "notification-delivery-part-swimlane": "Layi",
@@ -67,5 +70,6 @@
   "text-note-title": "Take",
   "thursday": "Alhamis",
   "tuesday": "Talata",
+  "view": "Duba",
   "wednesday": "Laraba"
 }

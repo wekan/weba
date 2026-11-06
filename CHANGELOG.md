@@ -2,6 +2,12 @@
 
 This work adds the following features and fixes:
 
+- Add WeKan-style touch drag handles for cards, lists and swimlanes with a
+  seven-pixel movement threshold, drop feedback, edge scrolling, cancellation
+  and mouse/keyboard support. Persist order and cross-list/lane moves through
+  validated transactional Gambas database operations, preserving card content
+  and legacy default lanes. Keep ordinary touch swipes scrollable. Verify actual
+  Chromium touch events, negative cases and SQLite persistence. Thanks to xet7.
 - Anchor the native card popup beside its opening button and keep it fully
   within the visible viewport, including mobile/landscape and keyboard resizing.
   Add reachable top-right X controls to view/account/structure popups, preserve

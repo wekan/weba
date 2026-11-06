@@ -11,7 +11,6 @@
   "api-import-username": "Корисничко име",
   "archive-board": "Спакуј у архиву",
   "archived-items": "Одвојена архива",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Деловодни број",
   "board-view-cal": "Календар",
   "board-view-collapse": "Скупи",
@@ -29,6 +28,7 @@
   "cards-count-one": "Предмет",
   "change-password": "Промени лозинку",
   "close": "Заклопи",
+  "confirm-move-list-to-swimlane": "Преместити ову листу и све њене картице на другу траку?",
   "create-account": "Направи налог",
   "createBoardPopup-title": "Увод нових списа",
   "description": "Опис",
@@ -43,6 +43,9 @@
   "log-out": "Одјави се",
   "login": "Пријава",
   "monday": "Понедељак",
+  "move-swimlane": "Премести ток поступка",
+  "moveCardPopup-title": "Премести предмет",
+  "moveListPopup-title": "Премести део поступка",
   "my-cards": "Предмети где имам надлежност",
   "notification-delivery-part-list": "Део поступка",
   "notification-delivery-part-swimlane": "Поступак",
@@ -67,5 +70,6 @@
   "text-note-title": "Наслов",
   "thursday": "Четвртак",
   "tuesday": "Уторак",
+  "view": "Поглед",
   "wednesday": "Среда"
 }

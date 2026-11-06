@@ -11,7 +11,6 @@
   "api-import-username": "ᎤᏬᏢᏗ ᏚᏙᎥ",
   "archive-board": "ᏗᏟᎶᏍᏙᏗ ᎠᏍᏆᏂᎪᏙᏗᏱ ᎯᏘᏅᏍᏓ",
   "archived-items": "ᎠᏍᏆᏂᎪᏙᏗ",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "ᎦᏍᎩᎸ ᎤᏙᎥ",
   "board-view-cal": "ᎢᎦ ᏗᎪᏪᎵ",
   "board-view-collapse": "ᎤᏍᏗ ᏂᎬᏁᏗ",
@@ -29,6 +28,7 @@
   "cards-count-one": "ᎪᏪᎵ",
   "change-password": "ᎦᎵᏍᎦᏂ ᎧᏁᏬᏍᏗ ᎯᏁᏟᏴᏓ",
   "close": "ᎯᏍᏚᎦ",
+  "confirm-move-list-to-swimlane": "ᎯᎠ ᏗᎪᏪᎵ ᎠᎴ ᏂᎦᏛ ᎤᏤᎵ ᏗᎪᏪᎵ ᏗᏍᏗ ᏅᏩᏓᎴ ᏍᏫᎻᎴᏅ ᎢᏗᏢ ᏗᎧᏅᏗ?",
   "create-account": "ᎠᏎᎸ ᎪᏢᏗ",
   "createBoardPopup-title": "ᏗᏟᎶᏍᏙᏗ ᎯᏬᏢᎾ",
   "description": "ᎧᏃᎮᏗ",
@@ -43,6 +43,9 @@
   "log-out": "ᎯᏄᎪᎢ",
   "login": "ᎠᏴᎯᎲ",
   "monday": "ᏔᎵᏁᎢᎦ",
+  "move-swimlane": "ᏍᏫᎻᎴᏅ ᎠᏖᏙᎲᏍᏗ",
+  "moveCardPopup-title": "ᎪᏪᎵ ᎯᏘᏅᏍᏓ",
+  "moveListPopup-title": "ᏗᎪᏪᎵ ᎦᏅᏗ",
   "my-cards": "ᎠᏆᏤᎵ ᏗᎪᏪᎵ",
   "notification-delivery-part-list": "ᎠᏎᏊᎢ",
   "notification-delivery-part-swimlane": "ᏅᏃᎯ",
@@ -67,5 +70,6 @@
   "text-note-title": "ᏗᎬᏙᏗ",
   "thursday": "ᎯᏍᎩᏁᎢᎦ",
   "tuesday": "ᏦᎢᏁᎢᎦ",
+  "view": "ᎠᎪᏩᏛᏗ",
   "wednesday": "ᏅᎩᏁᎢᎦ"
 }

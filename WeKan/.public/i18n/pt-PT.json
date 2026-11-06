@@ -11,7 +11,6 @@
   "api-import-username": "Nome de utilizador",
   "archive-board": "Mover o Quadro para o Arquivo",
   "archived-items": "Arquivo",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Título do Quadro",
   "board-view-cal": "Calendário",
   "board-view-collapse": "Colapsar",
@@ -29,6 +28,7 @@
   "cards-count-one": "Cartão",
   "change-password": "Alterar a Senha",
   "close": "Fechar",
+  "confirm-move-list-to-swimlane": "Mover esta lista e todos os seus cartões para a outra pista?",
   "create-account": "Criar uma conta",
   "createBoardPopup-title": "Criar Quadro",
   "description": "Descrição",
@@ -43,6 +43,9 @@
   "log-out": "Terminar a Sessão",
   "login": "Conecte-se",
   "monday": "Segunda-feira",
+  "move-swimlane": "Mover Pista",
+  "moveCardPopup-title": "Mover o Cartão",
+  "moveListPopup-title": "Mover Lista",
   "my-cards": "Meus Cartões",
   "notification-delivery-part-list": "Lista",
   "notification-delivery-part-swimlane": "Pista",
@@ -67,5 +70,6 @@
   "text-note-title": "Título",
   "thursday": "Quinta-feira",
   "tuesday": "Terça-feira",
+  "view": "Visão",
   "wednesday": "Quarta-feira"
 }

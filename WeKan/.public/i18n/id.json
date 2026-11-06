@@ -11,7 +11,6 @@
   "api-import-username": "Nama pengguna",
   "archive-board": "Pindahkan Papan ke Arsip",
   "archived-items": "Arsip",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Judul Papan",
   "board-view-cal": "Kalender",
   "board-view-collapse": "Ciutkan",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kartu",
   "change-password": "Ubah Kata Sandi",
   "close": "Tutup",
+  "confirm-move-list-to-swimlane": "Pindahkan daftar ini dan semua kartunya ke swimlane lain?",
   "create-account": "Buat Akun",
   "createBoardPopup-title": "Buat Panel",
   "description": "Deskripsi",
@@ -43,6 +43,9 @@
   "log-out": "Keluar",
   "login": "Masuk",
   "monday": "Senin",
+  "move-swimlane": "Pindahkan Jalur",
+  "moveCardPopup-title": "Pindahkan kartu",
+  "moveListPopup-title": "Pindahkan Daftar",
   "my-cards": "Kartu Saya",
   "notification-delivery-part-list": "Daftar",
   "notification-delivery-part-swimlane": "Jalur",
@@ -67,5 +70,6 @@
   "text-note-title": "Judul",
   "thursday": "Kamis",
   "tuesday": "Selasa",
+  "view": "Tampilan",
   "wednesday": "Rabu"
 }

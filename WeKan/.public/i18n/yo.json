@@ -11,7 +11,6 @@
   "api-import-username": "Orukọ olumulo",
   "archive-board": "Gbe Board to Archive",
   "archived-items": "Ifipamọ",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Akọle Igbimọ",
   "board-view-cal": "Kalẹnda",
   "board-view-collapse": "Kọlulẹ",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kaadi",
   "change-password": "Tun oruko akowole re se",
   "close": "Sunmọ",
+  "confirm-move-list-to-swimlane": "Gbe atokọ yii ati gbogbo awọn kaadi rẹ si swimlane miiran?",
   "create-account": "Se akanti fun ra re",
   "createBoardPopup-title": "Ṣẹda Board",
   "description": "Apejuwe",
@@ -43,6 +43,9 @@
   "log-out": "Jade jade",
   "login": "Wo ile",
   "monday": "Ọjọ Aje",
+  "move-swimlane": "Gbe Swimlane",
+  "moveCardPopup-title": "Gbe Kaadi",
+  "moveListPopup-title": "Gbe Akojọ",
   "my-cards": "Awọn kaadi Mi",
   "notification-delivery-part-list": "Akojọ",
   "notification-delivery-part-swimlane": "Oko odo",
@@ -67,5 +70,6 @@
   "text-note-title": "Akọle",
   "thursday": "Ojobo",
   "tuesday": "Ọjọbọ",
+  "view": "Wo",
   "wednesday": "Ọjọru"
 }

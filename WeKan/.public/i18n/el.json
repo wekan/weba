@@ -11,7 +11,6 @@
   "api-import-username": "Όνομα Χρήστη",
   "archive-board": "Μετακίνηση Πίνακα στο Αρχείο",
   "archived-items": "Αρχείο",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Τίτλος πίνακα",
   "board-view-cal": "Ημερολόγιο",
   "board-view-collapse": "Σύμπτυξη",
@@ -29,6 +28,7 @@
   "cards-count-one": "Κάρτα",
   "change-password": "Αλλαγή Κωδικού",
   "close": "Κλείσιμο",
+  "confirm-move-list-to-swimlane": "Μετακίνηση αυτής της λίστας και όλων των καρτών της στην άλλη λωρίδα;",
   "create-account": "Δημιουργία λογαριασμού",
   "createBoardPopup-title": "Δημιουργία Πίνακα",
   "description": "Περιγραφή",
@@ -43,6 +43,9 @@
   "log-out": "Αποσύνδεση",
   "login": "Σύνδεση",
   "monday": "Δευτέρα",
+  "move-swimlane": "Μετακίνηση διαδρόμου",
+  "moveCardPopup-title": "Μετακίνηση Κάρτας",
+  "moveListPopup-title": "Μετακίνηση λίστας",
   "my-cards": "Οι κάρτες μου",
   "notification-delivery-part-list": "Λίστα",
   "notification-delivery-part-swimlane": "Διάδρομος",
@@ -67,5 +70,6 @@
   "text-note-title": "Τίτλος",
   "thursday": "Πέμπτη",
   "tuesday": "Τρίτη",
+  "view": "Vue",
   "wednesday": "Τετάρτη"
 }

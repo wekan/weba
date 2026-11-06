@@ -11,7 +11,6 @@
   "api-import-username": "ಬಳಕೆದಾರ ಹೆಸರು",
   "archive-board": "ಫಲಕವನ್ನು ಸಂಗ್ರಹಕ್ಕೆ ಸರಿಸಿ",
   "archived-items": "ಸಂಗ್ರಹ",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "ಫಲಕದ ಶೀರ್ಷಿಕೆ",
   "board-view-cal": "ಕ್ಯಾಲೆಂಡರ್",
   "board-view-collapse": "ಕುಗ್ಗಿಸಿ",
@@ -29,6 +28,7 @@
   "cards-count-one": "ಕಾರ್ಡ್",
   "change-password": "ಪಾಸ್‌ವರ್ಡ್ ಬದಲಾಯಿಸಿ",
   "close": "ಮುಚ್ಚಿ",
+  "confirm-move-list-to-swimlane": "ಈ ಪಟ್ಟಿಯನ್ನೂ ಅದರ ಎಲ್ಲ ಕಾರ್ಡ್‌ಗಳನ್ನೂ ಇನ್ನೊಂದು ಪಥಕ್ಕೆ ಸರಿಸುವುದೇ?",
   "create-account": "ಖಾತೆ ರಚಿಸಿ",
   "createBoardPopup-title": "ಫಲಕ ರಚಿಸಿ",
   "description": "ವಿವರಣೆ",
@@ -43,6 +43,9 @@
   "log-out": "ಲಾಗ್ ಔಟ್",
   "login": "ಲಾಗಿನ್",
   "monday": "ಸೋಮವಾರ",
+  "move-swimlane": "ಪಥವನ್ನು ಸರಿಸಿ",
+  "moveCardPopup-title": "ಕಾರ್ಡ್ ಸರಿಸಿ",
+  "moveListPopup-title": "ಪಟ್ಟಿಯನ್ನು ಸರಿಸಿ",
   "my-cards": "ನನ್ನ ಕಾರ್ಡ್‌ಗಳು",
   "notification-delivery-part-list": "ಪಟ್ಟಿ",
   "notification-delivery-part-swimlane": "ಪಥ",
@@ -67,5 +70,6 @@
   "text-note-title": "ಶೀರ್ಷಿಕೆ",
   "thursday": "ಗುರುವಾರ",
   "tuesday": "ಮಂಗಳವಾರ",
+  "view": "ವೀಕ್ಷಿಸಿ",
   "wednesday": "ಬುಧವಾರ"
 }

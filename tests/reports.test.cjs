@@ -60,7 +60,7 @@ assert.ok(empty,'empty swimlane stays visible');
 assert.equal(empty.querySelectorAll('.weba-column').length,2);
 assert.equal(empty.querySelectorAll('h4')[1].textContent,'Username','custom list title stays unchanged');
 const header=empty.querySelector('.weba-list-controls');
-assert.deepEqual([...header.querySelectorAll('button')].map(e=>e.className.split(' ').pop()),['weba-collapse-list','weba-add-card-top','weba-list-menu','weba-add-list']);
+assert.deepEqual([...header.querySelectorAll('button')].map(e=>e.className.split(' ').pop()),['weba-collapse-list','weba-drag-handle','weba-add-card-top','weba-list-menu','weba-add-list']);
 const calls=[];global.gw={update:(...args)=>calls.push(args)};
 empty.querySelector('.weba-add-card-bottom').click();
 assert.equal(calls[0][0],'@1.BoardAction');

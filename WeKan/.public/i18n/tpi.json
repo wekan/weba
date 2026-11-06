@@ -11,7 +11,6 @@
   "api-import-username": "Nem bilong yusa",
   "archive-board": "Muvim bot i go long stua",
   "archived-items": "Akaiv",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Bot nem",
   "board-view-cal": "Kalenda",
   "board-view-collapse": "Pasim liklik",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kat",
   "change-password": "Senisim paswot",
   "close": "Pasim",
+  "confirm-move-list-to-swimlane": "Movim dispela lis na olgeta kat bilong en i go long narapela rot?",
   "create-account": "Wokim akaun",
   "createBoardPopup-title": "Wokim wanpela bot",
   "description": "Stori",
@@ -43,6 +43,9 @@
   "log-out": "Go aut",
   "login": "Go insait",
   "monday": "Mande",
+  "move-swimlane": "Movim rot",
+  "moveCardPopup-title": "Muvim kat",
+  "moveListPopup-title": "Movim lis",
   "my-cards": "Ol kat bilong mi",
   "notification-delivery-part-list": "Lis",
   "notification-delivery-part-swimlane": "Rot",
@@ -67,5 +70,6 @@
   "text-note-title": "Taitol",
   "thursday": "Fonde",
   "tuesday": "Tunde",
+  "view": "Lukim",
   "wednesday": "Trinde"
 }

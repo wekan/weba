@@ -11,7 +11,6 @@
   "api-import-username": "वापरपी नांव",
   "archive-board": "फळो संग्रहांत व्हरचो",
   "archived-items": "संग्रह",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "फळो माथाळें",
   "board-view-cal": "दिनदर्शिका",
   "board-view-collapse": "आंकसात",
@@ -29,6 +28,7 @@
   "cards-count-one": "कार्ड",
   "change-password": "पासवर्ड बदलचो",
   "close": "बंद करचें",
+  "confirm-move-list-to-swimlane": "ही वळेरी आनी तिचीं सगळीं कार्डां दुसऱ्या मार्गांत व्हरचीं?",
   "create-account": "खातें तयार करात",
   "createBoardPopup-title": "फळो तयार करचो",
   "description": "विवरण",
@@ -43,6 +43,9 @@
   "log-out": "भायर सर",
   "login": "प्रवेश",
   "monday": "सोमार",
+  "move-swimlane": "मार्ग व्हरात",
+  "moveCardPopup-title": "कार्ड हालोवचें",
+  "moveListPopup-title": "वळेरी व्हरात",
   "my-cards": "म्हजीं कार्डां",
   "notification-delivery-part-list": "वळेरी",
   "notification-delivery-part-swimlane": "वाट",
@@ -67,5 +70,6 @@
   "text-note-title": "मथळो",
   "thursday": "बिरेस्तार",
   "tuesday": "मंगळार",
+  "view": "पळयात",
   "wednesday": "बुधवार"
 }

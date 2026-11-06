@@ -11,7 +11,6 @@
   "api-import-username": "Nan Ureueng Ngui",
   "archive-board": "Pinah Papan u Arsip",
   "archived-items": "Arsip",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Judul Papan",
   "board-view-cal": "Almanak",
   "board-view-collapse": "Peuubit",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kad",
   "change-password": "Ubah Kata Sandi",
   "close": "Tôp",
+  "confirm-move-list-to-swimlane": "Pinah dapeuta nyoe ngön mandum kad jih u swimlane laén?",
   "create-account": "Peugot Akun",
   "createBoardPopup-title": "Peugöt Papan",
   "description": "Deskripsi",
@@ -43,6 +43,9 @@
   "log-out": "Teubiet",
   "login": "Tamong",
   "monday": "Seunanyan",
+  "move-swimlane": "Pinah Swimlane",
+  "moveCardPopup-title": "Pinah Kad",
+  "moveListPopup-title": "Pinah Dapeuta",
   "my-cards": "Kad Lôn",
   "notification-delivery-part-list": "Dapeuta",
   "notification-delivery-part-swimlane": "Jalur",
@@ -67,5 +70,6 @@
   "text-note-title": "Judul",
   "thursday": "Hamèh",
   "tuesday": "Seulasa",
+  "view": "Kalon",
   "wednesday": "Rabu"
 }

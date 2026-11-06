@@ -11,7 +11,6 @@
   "api-import-username": "Käyttäjätunnus",
   "archive-board": "Siirrä taulu Arkistoon",
   "archived-items": "Arkisto",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "⋅",
   "board-title": "Taulun otsikko",
   "board-view-cal": "Kalenteri",
   "board-view-collapse": "Pienennä",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kortti",
   "change-password": "Vaihda salasana",
   "close": "Sulje",
+  "confirm-move-list-to-swimlane": "Siirretäänkö tämä lista ja kaikki sen kortit toiseen uimarataan?",
   "create-account": "Luo tili",
   "createBoardPopup-title": "Luo taulu",
   "description": "Kuvaus",
@@ -43,6 +43,9 @@
   "log-out": "Kirjaudu ulos",
   "login": "Kirjaudu sisään",
   "monday": "Maanantai",
+  "move-swimlane": "Siirrä uimarata",
+  "moveCardPopup-title": "Siirrä kortti",
+  "moveListPopup-title": "Siirrä lista",
   "my-cards": "Korttini",
   "notification-delivery-part-list": "Lista",
   "notification-delivery-part-swimlane": "Uimarata",
@@ -67,5 +70,6 @@
   "text-note-title": "Otsikko",
   "thursday": "Torstai",
   "tuesday": "Tiistai",
+  "view": "Näkymä",
   "wednesday": "Keskiviikko"
 }

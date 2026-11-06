@@ -11,7 +11,6 @@
   "api-import-username": "Enw defnyddiwr",
   "archive-board": "Symud y Bwrdd i'r Archif",
   "archived-items": "Archif",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Teitl y Bwrdd",
   "board-view-cal": "Calendr",
   "board-view-collapse": "Cwymp",
@@ -29,6 +28,7 @@
   "cards-count-one": "Cerdyn",
   "change-password": "Newid Cyfrinair",
   "close": "Cau",
+  "confirm-move-list-to-swimlane": "Symud y rhestr hon a'i holl gardiau i'r lôn nofio arall?",
   "create-account": "Creu Cyfrif",
   "createBoardPopup-title": "Creu Bwrdd",
   "description": "Disgrifiad",
@@ -43,6 +43,9 @@
   "log-out": "Allgofnodi",
   "login": "Mewngofnodi",
   "monday": "Dydd Llun",
+  "move-swimlane": "Symud Swimlane",
+  "moveCardPopup-title": "Cerdyn Symud",
+  "moveListPopup-title": "Symud Rhestr",
   "my-cards": "Fy Nghardiau",
   "notification-delivery-part-list": "Rhestr",
   "notification-delivery-part-swimlane": "Lôn nofio",
@@ -67,5 +70,6 @@
   "text-note-title": "Teitl",
   "thursday": "dydd Iau",
   "tuesday": "Dydd Mawrth",
+  "view": "Golwg",
   "wednesday": "Mercher"
 }

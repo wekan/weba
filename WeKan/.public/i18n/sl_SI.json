@@ -11,7 +11,6 @@
   "api-import-username": "Up. ime",
   "archive-board": "Arhiviraj tablo",
   "archived-items": "Arhiv",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Naslov table",
   "board-view-cal": "Koledar",
   "board-view-collapse": "Skrči",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kartica",
   "change-password": "Spremeni geslo",
   "close": "Zapri",
+  "confirm-move-list-to-swimlane": "Premaknem ta seznam in vse njegove kartice na drugo plavalno stezo?",
   "create-account": "Ustvari račun",
   "createBoardPopup-title": "Ustvari tablo",
   "description": "Opis",
@@ -43,6 +43,9 @@
   "log-out": "Odjava",
   "login": "Prijava",
   "monday": "Ponedeljek",
+  "move-swimlane": "Premakni plavalno stezo",
+  "moveCardPopup-title": "Premakni kartico",
+  "moveListPopup-title": "Premakni seznam",
   "my-cards": "Moje kartice",
   "notification-delivery-part-list": "Seznam",
   "notification-delivery-part-swimlane": "Plavalna steza",
@@ -67,5 +70,6 @@
   "text-note-title": "Naslov",
   "thursday": "Četrtek",
   "tuesday": "Torek",
+  "view": "Pogled",
   "wednesday": "Sreda"
 }

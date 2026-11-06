@@ -11,7 +11,6 @@
   "api-import-username": "Maqaa fayyadamaa",
   "archive-board": "Gabatee gara kuusaa jijjiiri",
   "archived-items": "Kuusaa",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Mata Duree Gabatee",
   "board-view-cal": "Kaalaandarii",
   "board-view-collapse": "Dachaasi",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kaardii",
   "change-password": "Jecha darbii jijjiiri",
   "close": "Cufi",
+  "confirm-move-list-to-swimlane": "Tarree kanaa fi kaardiiwwan isaa hunda gara karaa biraatti siqsuu?",
   "create-account": "Herrega Uumi",
   "createBoardPopup-title": "Gabatee uumi",
   "description": "Ibsa",
@@ -43,6 +43,9 @@
   "log-out": "Ba'i",
   "login": "Seensa",
   "monday": "Wiixata",
+  "move-swimlane": "Karaa siqsi",
+  "moveCardPopup-title": "Kaardii jijjiiri",
+  "moveListPopup-title": "Tarree Siqsi",
   "my-cards": "Kaardiiwwan koo",
   "notification-delivery-part-list": "Tarree",
   "notification-delivery-part-swimlane": "Karaa",
@@ -67,5 +70,6 @@
   "text-note-title": "Mata duree",
   "thursday": "Kamisa",
   "tuesday": "Kibxata",
+  "view": "Mul’annoo",
   "wednesday": "Roobii"
 }

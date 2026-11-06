@@ -11,7 +11,6 @@
   "api-import-username": "उपयोगकर्ता नाम",
   "archive-board": "संग्रह करने के लिए बोर्ड ले जाएँ",
   "archived-items": "संग्रह",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "बोर्ड का शीर्षक",
   "board-view-cal": "तिथि-पत्र",
   "board-view-collapse": "संक्षिप्त करें",
@@ -29,6 +28,7 @@
   "cards-count-one": "कार्ड",
   "change-password": "गोपनीयता परिवर्तन करें",
   "close": "बंद करे",
+  "confirm-move-list-to-swimlane": "इस सूची और इसके सभी कार्ड को दूसरे स्विमलेन में ले जाएं?",
   "create-account": "खाता बनाएँ",
   "createBoardPopup-title": "बोर्ड निर्माण करना",
   "description": "विवरण",
@@ -43,6 +43,9 @@
   "log-out": "लॉग आउट",
   "login": "लॉगिन",
   "monday": "सोमवार",
+  "move-swimlane": "स्विमलेन ले जाएँ",
+  "moveCardPopup-title": "स्थानांतरित कार्ड",
+  "moveListPopup-title": "सूची ले जाएँ",
   "my-cards": "मेरे कार्ड",
   "notification-delivery-part-list": "सूची",
   "notification-delivery-part-swimlane": "स्विमलेन",
@@ -67,5 +70,6 @@
   "text-note-title": "शीर्षक",
   "thursday": "गुरुवार",
   "tuesday": "मंगलवार",
+  "view": "देखें",
   "wednesday": "बुधवार"
 }

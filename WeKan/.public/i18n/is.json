@@ -11,7 +11,6 @@
   "api-import-username": "Notandanafn",
   "archive-board": "Færa töflu í safn",
   "archived-items": "Safn",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Heiti töflu",
   "board-view-cal": "Dagatal",
   "board-view-collapse": "Fella saman",
@@ -29,6 +28,7 @@
   "cards-count-one": "Spjald",
   "change-password": "Breyta lykilorði",
   "close": "Loka",
+  "confirm-move-list-to-swimlane": "Færa þennan lista og öll spjöld hans á hina sundbrautina?",
   "create-account": "Stofna aðgang",
   "createBoardPopup-title": "Búa til töflu",
   "description": "Lýsing",
@@ -43,6 +43,9 @@
   "log-out": "Útskrá",
   "login": "Innskráning",
   "monday": "Mánudagur",
+  "move-swimlane": "Færa sundbraut",
+  "moveCardPopup-title": "Færa spjald",
+  "moveListPopup-title": "Færa lista",
   "my-cards": "Spjöldin mín",
   "notification-delivery-part-list": "Listi",
   "notification-delivery-part-swimlane": "Sundbraut",
@@ -67,5 +70,6 @@
   "text-note-title": "Titill",
   "thursday": "Fimmtudagur",
   "tuesday": "Þriðjudagur",
+  "view": "Skoða",
   "wednesday": "Miðvikudagur"
 }

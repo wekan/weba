@@ -229,7 +229,7 @@ its own disposable profile and remote-debugging port before running this check.
 
 The login page and signed-in account menu have a language selector. The selected
 language is saved in this browser; a new browser starts with its preferred language
-when available. The imported WeKan catalog currently provides 69 matching interface
+when available. The imported WeKan catalog currently provides 73 matching interface
 keys for 237 languages, including their native language names and RTL metadata.
 Only the selected catalog is fetched, from local application assets. No external
 translation service is used. Labels and report/calendar headings are translated;
@@ -266,8 +266,8 @@ legacy card swimlanes are retained when the layout tables are initialized.
 Card buttons open the native Gambas editor with the correct swimlane/list, and
 card tiles open their existing details. Custom list names are limited to 32
 characters to fit the existing portable card schema. This does not yet implement
-all WeKan list/swimlane menu actions, drag reordering or insertion at the top of a
-list. `WEBA_SWIMLANES_ONLY=1` selects the dedicated Chromium layout/action test
+all WeKan list/swimlane menu actions or creating a new card at the top through
+the header button. Existing cards can be reordered by dragging. `WEBA_SWIMLANES_ONLY=1` selects the dedicated Chromium layout/action test
 with `tests/run-http.py --browser` (also supports `--archive`).
 
 ## Icons and popups
@@ -284,3 +284,29 @@ details returns focus to the initiating control when that control still exists.
 viewports. `WEBA_POPUPS_ONLY=1` selects browser checks for anchored card editing,
 reachable close buttons, view/account/structure menus and portrait/landscape
 behavior in the isolated `tests/run-http.py --browser` harness.
+
+## Touch drag and drop
+
+Use the Font Awesome arrow handle on a card, list or swimlane to drag it, as in
+WeKan's touch mode. Touch targets expand to at least 44 pixels; card handles sit
+on the trailing edge below the title area. Movement starts after 7 pixels. Touching elsewhere keeps
+normal browser scrolling and tapping a card still opens its details. On a mouse,
+a card can also be dragged from its surface. Focus a handle and use arrow keys
+for keyboard moves. Drag near a scrollable edge to auto-scroll; Escape, touch
+cancellation or a second finger cancels without saving.
+
+Cards can be reordered and moved between lists/swimlanes within the current
+board. Lists can be reordered or moved to another swimlane with their cards;
+touch/small-screen moves ask for confirmation. Swimlanes can be reordered. Moves
+are owner-checked, rejected for archived boards/cards, saved transactionally and
+retained when reopening the board. Existing data receives a separate `kb_order`
+metadata table; card descriptions, labels, dates and ownership are preserved.
+Because the current list model uses names, a destination that already has a list
+with the same name rejects that list move instead of merging data. Cross-board
+moves and full WeKan list-ID semantics are still future work.
+
+`node tests/drag.test.cjs` checks gesture selection, threshold, cancellation,
+UTF-8 transport and keyboard input. `tests/DragStoreTest.module` runs in the
+isolated store harness. `WEBA_DRAG_ONLY=1` selects the Chromium CDP touch/mouse
+checks in `tests/run-http.py --browser` (also `--archive`). Actual physical touch
+hardware and non-Chromium browsers have not been tested.

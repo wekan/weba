@@ -1,4 +1,8 @@
 * Fri Nov 06 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Touch drag/drop: Add card/list/swimlane handles, ordering, cross-list/lane
+  movement, edge auto-scroll, cancellation and mouse/keyboard input. Persist
+  validated moves transactionally and retain native touch scrolling; add store,
+  gesture, HTTP and real Chromium touch-event regression tests.
 - Popups: Place card details beside the initiating action, clamp windows to the
   visual viewport and add top-right close controls with Escape support; verify
   portrait/landscape positioning, scrolling, menu/composer dismissal and native

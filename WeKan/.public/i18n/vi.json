@@ -11,7 +11,6 @@
   "api-import-username": "Tên tài khoản",
   "archive-board": "Di chuyển Bảng sang Lưu trữ",
   "archived-items": "Lưu Trữ",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Judul Papan",
   "board-view-cal": "Lịch",
   "board-view-collapse": "Thu gọn",
@@ -29,6 +28,7 @@
   "cards-count-one": "Thẻ",
   "change-password": "Đổi mật khẩu",
   "close": "Đóng",
+  "confirm-move-list-to-swimlane": "Di chuyển danh sách này và tất cả thẻ của nó sang làn ngang khác?",
   "create-account": "Tạo tài khoản",
   "createBoardPopup-title": "Tạo Bảng",
   "description": "Mô tả",
@@ -43,6 +43,9 @@
   "log-out": "Đăng Xuất",
   "login": "Đăng nhập",
   "monday": "Thứ hai",
+  "move-swimlane": "Di chuyển Làn ngang",
+  "moveCardPopup-title": "Di chuyển Thẻ",
+  "moveListPopup-title": "Di chuyển danh sách",
   "my-cards": "Thẻ của tôi",
   "notification-delivery-part-list": "Danh sách",
   "notification-delivery-part-swimlane": "Làn ngang",
@@ -67,5 +70,6 @@
   "text-note-title": "Tiêu đề",
   "thursday": "Thứ năm",
   "tuesday": "Thứ ba",
+  "view": "Xem",
   "wednesday": "Thứ tư"
 }

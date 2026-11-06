@@ -11,7 +11,6 @@
   "api-import-username": "Emri i përdoruesit",
   "archive-board": "Zhvendos tabelën në arkiv",
   "archived-items": "Arkivi",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "x",
   "board-title": "Titulli i tabelës",
   "board-view-cal": "Kalendari",
   "board-view-collapse": "Palos",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kartë",
   "change-password": "Ndrysho fjalëkalimin",
   "close": "Mbyll",
+  "confirm-move-list-to-swimlane": "Të zhvendoset kjo listë dhe të gjitha kartat e saj në korsinë tjetër?",
   "create-account": "Krijo llogari",
   "createBoardPopup-title": "Krijo tabelë",
   "description": "Përshkrimi",
@@ -43,6 +43,9 @@
   "log-out": "Dil",
   "login": "Hyrja",
   "monday": "E hënë",
+  "move-swimlane": "Zhvendos korsinë",
+  "moveCardPopup-title": "Zhvendos kartën",
+  "moveListPopup-title": "Zhvendos listën",
   "my-cards": "Kartat e mia",
   "notification-delivery-part-list": "Listë",
   "notification-delivery-part-swimlane": "Korsi",
@@ -67,5 +70,6 @@
   "text-note-title": "Titulli",
   "thursday": "E enjte",
   "tuesday": "E martë",
+  "view": "Shfaq",
   "wednesday": "E mërkurë"
 }

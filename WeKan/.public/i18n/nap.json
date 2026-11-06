@@ -11,7 +11,6 @@
   "api-import-username": "Nomme d'utente",
   "archive-board": "Sposta 'a tavula int'a ll'archivio",
   "archived-items": "Archivio",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Tìtulo tavula",
   "board-view-cal": "Calendario",
   "board-view-collapse": "Comprimi",
@@ -29,6 +28,7 @@
   "cards-count-one": "Carta",
   "change-password": "Cagna 'a parola d'ordine",
   "close": "Chiure",
+  "confirm-move-list-to-swimlane": "Spostare chesta lista e tutte le sue carte nell'altra swimlane?",
   "create-account": "Crea account",
   "createBoardPopup-title": "Crea 'na tavula",
   "description": "Descrizzione",
@@ -43,6 +43,9 @@
   "log-out": "Jesce",
   "login": "Accesso",
   "monday": "Lunedì",
+  "move-swimlane": "Spòsta swimlane",
+  "moveCardPopup-title": "Sposta 'a carta",
+  "moveListPopup-title": "Spòsta lista",
   "my-cards": "'E carte meje",
   "notification-delivery-part-list": "Lista",
   "notification-delivery-part-swimlane": "Corsia",
@@ -67,5 +70,6 @@
   "text-note-title": "Titolo",
   "thursday": "Giovedì",
   "tuesday": "Martedì",
+  "view": "Vista",
   "wednesday": "Mercoledì"
 }

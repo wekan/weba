@@ -11,7 +11,6 @@
   "api-import-username": "Kasutajanimi",
   "archive-board": "Liiguta tahvel arhiivi",
   "archived-items": "Arhiiv",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Tahvli pealkiri",
   "board-view-cal": "Kalender",
   "board-view-collapse": "Kokkupõrge",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kaart",
   "change-password": "Muuda salasõna",
   "close": "Sulge",
+  "confirm-move-list-to-swimlane": "Liigutada see nimekiri ja kõik selle kaardid teisele ujumisrajale?",
   "create-account": "Loo konto",
   "createBoardPopup-title": "Loo juhatus",
   "description": "Kirjeldus",
@@ -43,6 +43,9 @@
   "log-out": "Logi välja",
   "login": "Logi sisse",
   "monday": "Esmaspäev",
+  "move-swimlane": "Liiguta ujula",
+  "moveCardPopup-title": "Liikumiskaart",
+  "moveListPopup-title": "Liiguta nimekiri",
   "my-cards": "Minu kaardid",
   "notification-delivery-part-list": "Loetelu",
   "notification-delivery-part-swimlane": "Ujumisrada",
@@ -67,5 +70,6 @@
   "text-note-title": "Pealkiri",
   "thursday": "Neljapäev",
   "tuesday": "Teisipäev",
+  "view": "Vaade",
   "wednesday": "Kolmapäev"
 }

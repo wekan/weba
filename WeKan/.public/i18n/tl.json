@@ -11,7 +11,6 @@
   "api-import-username": "Pangalan ng gumagamit",
   "archive-board": "Ilipat ang pisara sa archive",
   "archived-items": "Arkibo",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "pisara Pamagat",
   "board-view-cal": "Kalendaryo",
   "board-view-collapse": "Itiklop",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kard",
   "change-password": "Palitan ang password",
   "close": "Isara",
+  "confirm-move-list-to-swimlane": "Ilipat ito listahan at lahat its kards sa the iba daan?",
   "create-account": "Gumawa Account",
   "createBoardPopup-title": "Gumawa ng pisara",
   "description": "Paglalarawan",
@@ -43,6 +43,9 @@
   "log-out": "Mag-log out",
   "login": "Mag-login",
   "monday": "Lunes",
+  "move-swimlane": "Ilipat daan",
+  "moveCardPopup-title": "Ilipat ang kard",
+  "moveListPopup-title": "Ilipat listahan",
   "my-cards": "Aking mga kard",
   "notification-delivery-part-list": "Listahan",
   "notification-delivery-part-swimlane": "Daanan",
@@ -67,5 +70,6 @@
   "text-note-title": "Pamagat",
   "thursday": "Huwebes",
   "tuesday": "Martes",
+  "view": "Tingnan",
   "wednesday": "Miyerkules"
 }

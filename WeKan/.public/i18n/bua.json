@@ -11,7 +11,6 @@
   "api-import-username": "Хэрэглэгшын нэрэ",
   "archive-board": "Самбар архивта зөөхэ",
   "archived-items": "Архив",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Самбарай нэрэ",
   "board-view-cal": "Хуанли",
   "board-view-collapse": "Хуряаха",
@@ -29,6 +28,7 @@
   "cards-count-one": "Карточко",
   "change-password": "Нюуса үгэ һэлгэхэ",
   "close": "Хааха",
+  "confirm-move-list-to-swimlane": "Энэ жагсаалта ба тэрэнэй бүхы картануудые ондоо мүртэ зөөхэ гү?",
   "create-account": "Бүридхэл байгуулха",
   "createBoardPopup-title": "Самбар бүтээхэ",
   "description": "Тайлбари",
@@ -43,6 +43,9 @@
   "log-out": "Гараха",
   "login": "Нэбтэрэлгэ",
   "monday": "Дабаа гараг",
+  "move-swimlane": "Мүр зөөхэ",
+  "moveCardPopup-title": "Карточко зөөхэ",
+  "moveListPopup-title": "Жагсаалта зөөхэ",
   "my-cards": "Минии карточконууд",
   "notification-delivery-part-list": "Жагсаалта",
   "notification-delivery-part-swimlane": "Зам",
@@ -67,5 +70,6 @@
   "text-note-title": "Гарчаг",
   "thursday": "Пүрбэ гараг",
   "tuesday": "Мягмар гараг",
+  "view": "Хараха",
   "wednesday": "Лхагба гараг"
 }

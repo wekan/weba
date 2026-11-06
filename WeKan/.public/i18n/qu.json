@@ -11,7 +11,6 @@
   "api-import-username": "Llamkaqpa sutin",
   "archive-board": "Pirqata waqaychanaman apay",
   "archived-items": "Waqaychana",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Pirqapa uma sutin",
   "board-view-cal": "Watanqillqa",
   "board-view-collapse": "Huñuy",
@@ -29,6 +28,7 @@
   "cards-count-one": "Karta",
   "change-password": "Pakasqa rimayta tikray",
   "close": "Wichqay",
+  "confirm-move-list-to-swimlane": "¿Kay sutisuyuta llapa kartankunawan huk ñanman astanki?",
   "create-account": "Yupayta kamay",
   "createBoardPopup-title": "Pirqata kamay",
   "description": "Willakuy",
@@ -43,6 +43,9 @@
   "log-out": "Lluqsiy",
   "login": "Yaykuy",
   "monday": "Killachaw",
+  "move-swimlane": "Ñanta astay",
+  "moveCardPopup-title": "Kartata astay",
+  "moveListPopup-title": "Sutisuyuta astay",
   "my-cards": "Kartaykuna",
   "notification-delivery-part-list": "Sutisuyu",
   "notification-delivery-part-swimlane": "Ñan",
@@ -67,5 +70,6 @@
   "text-note-title": "Sutichay",
   "thursday": "Illapachaw",
   "tuesday": "Atipachaw",
+  "view": "Qhaway",
   "wednesday": "Quyllurchaw"
 }

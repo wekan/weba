@@ -11,7 +11,6 @@
   "api-import-username": "Igoa o le tagata faaaoga",
   "archive-board": "Sii le laupapa i le teuina",
   "archived-items": "Teuina",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Ulutala o le Laupapa",
   "board-view-cal": "Kalena",
   "board-view-collapse": "Faapupuu",
@@ -29,6 +28,7 @@
   "cards-count-one": "Pepa",
   "change-password": "Sui le upu faataga",
   "close": "Tapuni",
+  "confirm-move-list-to-swimlane": "Sii lenei lisi ma ona pepa uma i le isi ala?",
   "create-account": "Fausia Teugatupe",
   "createBoardPopup-title": "Fatu se laupapa",
   "description": "Faamatalaga",
@@ -43,6 +43,9 @@
   "log-out": "Alu ese",
   "login": "Ulufale",
   "monday": "Aso Gafua",
+  "move-swimlane": "Siitia le Ala",
+  "moveCardPopup-title": "Sii le pepa",
+  "moveListPopup-title": "Sii le Lisi",
   "my-cards": "A'u pepa",
   "notification-delivery-part-list": "Lisi",
   "notification-delivery-part-swimlane": "Ala",
@@ -67,5 +70,6 @@
   "text-note-title": "Ulutala",
   "thursday": "Aso Tofi",
   "tuesday": "Aso Lua",
+  "view": "Vaaiga",
   "wednesday": "Aso Lulu"
 }

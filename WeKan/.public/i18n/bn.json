@@ -11,7 +11,6 @@
   "api-import-username": "ব্যবহারকারীর নাম",
   "archive-board": "বোর্ড সংরক্ষণাগারে সরান",
   "archived-items": "সংরক্ষণাগার",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "বোর্ডের শিরোনাম",
   "board-view-cal": "পঞ্জিকা",
   "board-view-collapse": "সংকুচিত",
@@ -29,6 +28,7 @@
   "cards-count-one": "কার্ড",
   "change-password": "পাসওয়ার্ড পরিবর্তন",
   "close": "বন্ধ",
+  "confirm-move-list-to-swimlane": "এই তালিকা ও এর সব কার্ড অন্য সাঁতারপথে সরাবেন?",
   "create-account": "অ্যাকাউন্ট তৈরি করুন",
   "createBoardPopup-title": "বোর্ড তৈরি করুন",
   "description": "বিবরণ",
@@ -43,6 +43,9 @@
   "log-out": "লগ আউট",
   "login": "লগইন",
   "monday": "সোমবার",
+  "move-swimlane": "সাঁতারপথ সরান",
+  "moveCardPopup-title": "কার্ড সরান",
+  "moveListPopup-title": "তালিকা সরান",
   "my-cards": "আমার কার্ড",
   "notification-delivery-part-list": "তালিকা",
   "notification-delivery-part-swimlane": "সাঁতারপথ",
@@ -67,5 +70,6 @@
   "text-note-title": "শিরোনাম",
   "thursday": "বৃহস্পতিবার",
   "tuesday": "মঙ্গলবার",
+  "view": "দেখুন",
   "wednesday": "বুধবার"
 }

@@ -46,7 +46,9 @@ report = (root / 'WeKan/.public/kanban.js').read_text()
 texts.update(re.findall(r"add\([^,]+,\s*'[^']+',\s*'([^']+)'", report))
 texts.update(['Todo', 'Doing', 'Done', 'Card', 'Status', 'Swimlane', 'Due date',
               'No due date', 'Previous month', 'Next month', 'Default', 'All cards',
-              'Add card', 'Add list', 'Add swimlane', 'Collapse', 'Close', 'Save', 'Cards'])
+              'Add card', 'Add list', 'Add swimlane', 'Collapse', 'Close', 'Save', 'Cards',
+              'Move card', 'Move list', 'Move swimlane',
+              'Move this list and all its cards to the other swimlane?'])
 lookup = {}
 for text in sorted(texts):
     key = aliases.get(text)

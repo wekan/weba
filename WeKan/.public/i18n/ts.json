@@ -11,7 +11,6 @@
   "api-import-username": "Vito ro tirhisa",
   "archive-board": "Yisa bodo eka vuhlayiselo bya swa khale",
   "archived-items": "Vuhlayiselo bya swa khale",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "bodo nhlokomhaka",
   "board-view-cal": "khalendara",
   "board-view-collapse": "Pfala",
@@ -29,6 +28,7 @@
   "cards-count-one": "Khadi",
   "change-password": "Cinca xiletelo xa xihundla",
   "close": "Pfala",
+  "confirm-move-list-to-swimlane": "Rhurhisa nxaxamelo lowu na tikhadi ta wona hinkwato eka ndlela yin'wana?",
   "create-account": "endla akhawunti",
   "createBoardPopup-title": "Tumbuluxa bodo",
   "description": "Nhlamuselo",
@@ -43,6 +43,9 @@
   "log-out": "Huma",
   "login": "nghena",
   "monday": "Musumbhunuku",
+  "move-swimlane": "susa mhaka yisa ndlela",
+  "moveCardPopup-title": "Rhurhisa khadi",
+  "moveListPopup-title": "susa mhaka yisa nxaxamelo",
   "my-cards": "Tikhadi ta mina",
   "notification-delivery-part-list": "Nxaxamelo",
   "notification-delivery-part-swimlane": "Ndlela",
@@ -67,5 +70,6 @@
   "text-note-title": "Nhloko-mhaka",
   "thursday": "Ravumune",
   "tuesday": "Ravumbirhi",
+  "view": "Langutelo",
   "wednesday": "Ravunharhu"
 }

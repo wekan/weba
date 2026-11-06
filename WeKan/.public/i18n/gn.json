@@ -11,7 +11,6 @@
   "api-import-username": "Puruhára réra",
   "archive-board": "Emyanda peteĩcha ñongatuhápe",
   "archived-items": "Ñongatupyre",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Peteĩcha réra",
   "board-view-cal": "Arapapaha",
   "board-view-collapse": "Emboty mbyky",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kuatia'i",
   "change-password": "Emoambue ñe'ẽñemi",
   "close": "Mboty",
+  "confirm-move-list-to-swimlane": "Emongu'épa ko ysaja ha opa ikuatia'i ambue tapépe?",
   "create-account": "Ejapo mba'ete",
   "createBoardPopup-title": "Ejapo peteĩcha",
   "description": "Ñemombe'u",
@@ -43,6 +43,9 @@
   "log-out": "Esẽ",
   "login": "Jeike",
   "monday": "Arakõi",
+  "move-swimlane": "Emongu'e tape",
+  "moveCardPopup-title": "Emyanda kuatia'i",
+  "moveListPopup-title": "Emongu'e ysaja",
   "my-cards": "Che kuatia'ikuéra",
   "notification-delivery-part-list": "Ysaja",
   "notification-delivery-part-swimlane": "Tape",
@@ -67,5 +70,6 @@
   "text-note-title": "Téra",
   "thursday": "Arapo",
   "tuesday": "Araapy",
+  "view": "Ehecha",
   "wednesday": "Ararundy"
 }

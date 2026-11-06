@@ -11,7 +11,6 @@
   "api-import-username": "lo'wI' pong",
   "archive-board": "raS polmeH DaqDaq vIHmoH",
   "archived-items": "polmeH Daq",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "raS pong",
   "board-view-cal": "'ISjaH",
   "board-view-collapse": "So'",
@@ -29,6 +28,7 @@
   "cards-count-one": "'echletHom",
   "change-password": "pegh mu' yIchoH",
   "close": "yISoQmoH",
+  "confirm-move-list-to-swimlane": "tetlhvam navmeyDaj Hoch je latlh HevaD vIHmoH'a'?",
   "create-account": "account yIchenmoH",
   "createBoardPopup-title": "raS chenmoH",
   "description": "QIjmeH De'",
@@ -43,6 +43,9 @@
   "log-out": "mej",
   "login": "'elmeH Qu'",
   "monday": "DaSjaj",
+  "move-swimlane": "He vIHmoH",
+  "moveCardPopup-title": "'echletHom vIHmoH",
+  "moveListPopup-title": "Déplacer la liste",
   "my-cards": "'echletHommeywIj",
   "notification-delivery-part-list": "tetlh",
   "notification-delivery-part-swimlane": "He",
@@ -67,5 +70,6 @@
   "text-note-title": "pong",
   "thursday": "loghjaj",
   "tuesday": "povjaj",
+  "view": "'ang",
   "wednesday": "ghItlhjaj"
 }

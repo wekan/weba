@@ -11,7 +11,6 @@
   "api-import-username": "Nome d'utilizatore",
   "archive-board": "Spustà a tavula versu l'archiviu",
   "archived-items": "Archiviu",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Titulu tavula",
   "board-view-cal": "Calendariu",
   "board-view-collapse": "Ripiegà",
@@ -29,6 +28,7 @@
   "cards-count-one": "Carta",
   "change-password": "Cambià a parolla d'intrata",
   "close": "Chjode",
+  "confirm-move-list-to-swimlane": "Spustà sta lista è tutte e so carte in l’altra corsia?",
   "create-account": "Creà un contu",
   "createBoardPopup-title": "Creà una tavula",
   "description": "Descrizzione",
@@ -43,6 +43,9 @@
   "log-out": "Esce",
   "login": "Cunnessione",
   "monday": "Luni",
+  "move-swimlane": "Move a corsia",
+  "moveCardPopup-title": "Spustà a carta",
+  "moveListPopup-title": "Spustà a lista",
   "my-cards": "E mo carte",
   "notification-delivery-part-list": "Lista",
   "notification-delivery-part-swimlane": "Corsia",
@@ -67,5 +70,6 @@
   "text-note-title": "Titulu",
   "thursday": "Ghjovi",
   "tuesday": "Marti",
+  "view": "Vista",
   "wednesday": "Mercuri"
 }

@@ -11,7 +11,6 @@
   "api-import-username": "Nome utente",
   "archive-board": "Sposta el quadro inte el archivio",
   "archived-items": "Archivio",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Tìtolo de la bacheca",
   "board-view-cal": "Calendario",
   "board-view-collapse": "Strenzi",
@@ -29,6 +28,7 @@
   "cards-count-one": "Scheda",
   "change-password": "Canbia ła password",
   "close": "Chiudi",
+  "confirm-move-list-to-swimlane": "Spostar sta lista e tute łe so schede inte l'altra corsia?",
   "create-account": "Crea un account",
   "createBoardPopup-title": "Crea un quadro",
   "description": "Descrision",
@@ -43,6 +43,9 @@
   "log-out": "Va fora",
   "login": "Ngena ngemvume",
   "monday": "Lunedì",
+  "move-swimlane": "Sposta swimlane",
+  "moveCardPopup-title": "Sposta ła scheda",
+  "moveListPopup-title": "Sposta ła lista",
   "my-cards": "Łe me schede",
   "notification-delivery-part-list": "Lista",
   "notification-delivery-part-swimlane": "Corsia",
@@ -67,5 +70,6 @@
   "text-note-title": "Titolo",
   "thursday": "Giovedì",
   "tuesday": "Martedì",
+  "view": "Vista",
   "wednesday": "Mercoledì"
 }

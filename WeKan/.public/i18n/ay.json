@@ -11,7 +11,6 @@
   "api-import-username": "Apnaqirin sutipa",
   "archive-board": "Pirqa imañaru apaña",
   "archived-items": "Imaña",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "pirqa pʼiqiñcha",
   "board-view-cal": "Aymar aruna: Calendar",
   "board-view-collapse": "Aymar aruna: Collapse",
@@ -29,6 +28,7 @@
   "cards-count-one": "Karta",
   "change-password": "Imantata aru mayjt'ayaña",
   "close": "Jist'antaña",
+  "confirm-move-list-to-swimlane": "unxtayaña aka lista ukat taqi its tarjetanaka ukaru the other thakhi?",
   "create-account": "uñstayaña Account",
   "createBoardPopup-title": "Pirqa luraña",
   "description": "Qhananchawi",
@@ -43,6 +43,9 @@
   "log-out": "Mistuña",
   "login": "Mantaña",
   "monday": "Aymar aruna: Monday",
+  "move-swimlane": "unxtayaña thakhi",
+  "moveCardPopup-title": "Karta apaña",
+  "moveListPopup-title": "unxtayaña lista",
   "my-cards": "Nayan kartanakaxa",
   "notification-delivery-part-list": "Sutinaka",
   "notification-delivery-part-swimlane": "Thakhi",
@@ -67,5 +70,6 @@
   "text-note-title": "Sutipa",
   "thursday": "Aymar aruna: Thursday",
   "tuesday": "Aymar aruna: Tuesday",
+  "view": "uñjaña",
   "wednesday": "Aymar aruna: Wednesday"
 }

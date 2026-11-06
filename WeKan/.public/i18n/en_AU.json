@@ -11,7 +11,6 @@
   "api-import-username": "Username",
   "archive-board": "Move Board to Archive",
   "archived-items": "Archive",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Board Title",
   "board-view-cal": "Calendar",
   "board-view-collapse": "Collapse",
@@ -29,6 +28,7 @@
   "cards-count-one": "Card",
   "change-password": "Change Password",
   "close": "Close",
+  "confirm-move-list-to-swimlane": "Move this list and all its cards to the other swimlane?",
   "create-account": "Create Account",
   "createBoardPopup-title": "Create Board",
   "description": "Description",
@@ -43,6 +43,9 @@
   "log-out": "Log Out",
   "login": "Login",
   "monday": "Monday",
+  "move-swimlane": "Move Swimlane",
+  "moveCardPopup-title": "Move Card",
+  "moveListPopup-title": "Move List",
   "my-cards": "My Cards",
   "notification-delivery-part-list": "List",
   "notification-delivery-part-swimlane": "Swimlane",
@@ -67,5 +70,6 @@
   "text-note-title": "Title",
   "thursday": "Thursday",
   "tuesday": "Tuesday",
+  "view": "View",
   "wednesday": "Wednesday"
 }

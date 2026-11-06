@@ -11,7 +11,6 @@
   "api-import-username": "Felhasználónév",
   "archive-board": "Archiváld a Táblát",
   "archived-items": "Archívum",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Tábla címe",
   "board-view-cal": "Naptár",
   "board-view-collapse": "Összecsukás",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kártya",
   "change-password": "Jelszó megváltoztatása",
   "close": "Bezárás",
+  "confirm-move-list-to-swimlane": "Áthelyezed ezt a listát és az összes kártyáját a másik úszósávra?",
   "create-account": "Fiók létrehozása",
   "createBoardPopup-title": "Tábla létrehozása",
   "description": "Leírás",
@@ -43,6 +43,9 @@
   "log-out": "Kijelentkezés",
   "login": "Bejelentkezés",
   "monday": "hétfő",
+  "move-swimlane": "Úszósáv mozhatása",
+  "moveCardPopup-title": "Kártya áthelyezése",
+  "moveListPopup-title": "Lista áthelyezése",
   "my-cards": "Kártyáim",
   "notification-delivery-part-list": "Lista",
   "notification-delivery-part-swimlane": "Úszósáv",
@@ -67,5 +70,6 @@
   "text-note-title": "Cím",
   "thursday": "csütörtök",
   "tuesday": "kedd",
+  "view": "Nézet",
   "wednesday": "szerda"
 }

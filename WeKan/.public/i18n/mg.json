@@ -11,7 +11,6 @@
   "api-import-username": "Anaram-pikambana",
   "archive-board": "Alefaso any amin'ny arisiva ny solaitra",
   "archived-items": "Arisiva",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Lohatenin'ny solaitra",
   "board-view-cal": "Kalandrie",
   "board-view-collapse": "Aforeto",
@@ -29,6 +28,7 @@
   "cards-count-one": "Karatra",
   "change-password": "Hanova teny miafina",
   "close": "Hidio",
+  "confirm-move-list-to-swimlane": "Afindra amin'ny lalana hafa ve ity lisitra ity sy ny karatra rehetra ao aminy?",
   "create-account": "Mamorona kaonty",
   "createBoardPopup-title": "Hamorona solaitra",
   "description": "Famaritana",
@@ -43,6 +43,9 @@
   "log-out": "Hivoaka",
   "login": "Fidirana",
   "monday": "Alatsinainy",
+  "move-swimlane": "Afindrao ny lalana",
+  "moveCardPopup-title": "Hamindra ny karatra",
+  "moveListPopup-title": "Afindrao ny lisitra",
   "my-cards": "Ny karatro",
   "notification-delivery-part-list": "Lisitra",
   "notification-delivery-part-swimlane": "Lalana",
@@ -67,5 +70,6 @@
   "text-note-title": "Lohateny",
   "thursday": "Alakamisy",
   "tuesday": "Talata",
+  "view": "Jereo",
   "wednesday": "Alarobia"
 }

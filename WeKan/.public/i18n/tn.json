@@ -11,7 +11,6 @@
   "api-import-username": "Leina la modirisi",
   "archive-board": "Isa boto kwa polokelong",
   "archived-items": "Polokelo",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Boto Setlhogo",
   "board-view-cal": "Khalendara",
   "board-view-collapse": "Mena",
@@ -29,6 +28,7 @@
   "cards-count-one": "Karata",
   "change-password": "Fetola lefoko la sephiri",
   "close": "Tswala",
+  "confirm-move-list-to-swimlane": "Sutisetsa lenaane leno le dikarata tsotlhe tsa lone kwa tseleng e nngwe?",
   "create-account": "Dira Akhaonto",
   "createBoardPopup-title": "Tlhama boto",
   "description": "Tlhaloso",
@@ -43,6 +43,9 @@
   "log-out": "Tswa",
   "login": "Go tsena",
   "monday": "Tshedimosetso: Monday",
+  "move-swimlane": "Sutisa Tsela",
+  "moveCardPopup-title": "Suthisa karata",
+  "moveListPopup-title": "Sutisa Lenaane",
   "my-cards": "Dikarata tsa me",
   "notification-delivery-part-list": "Lenaane",
   "notification-delivery-part-swimlane": "Tsela",
@@ -67,5 +70,6 @@
   "text-note-title": "Setlhogo",
   "thursday": "Tshedimosetso: Thursday",
   "tuesday": "Tshedimosetso: Tuesday",
+  "view": "Leba",
   "wednesday": "Tshedimosetso: Wednesday"
 }

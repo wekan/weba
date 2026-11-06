@@ -11,7 +11,6 @@
   "api-import-username": "Ulanyjy ady",
   "archive-board": "Tagtany arhiwine geçiriň",
   "archived-items": "Arhiw",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Geňeşiň ady",
   "board-view-cal": "Senenama",
   "board-view-collapse": "Apseykylmak",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kart",
   "change-password": "Paroly üýtgetmek",
   "close": ".Akyn",
+  "confirm-move-list-to-swimlane": "Bu sanawy we onuň ähli kartoçkalaryny beýleki ýüzmege göçürmelimi?",
   "create-account": "Hasap dörediň",
   "createBoardPopup-title": "Tagtany dörediň",
   "description": "Düşündiriş",
@@ -43,6 +43,9 @@
   "log-out": "Çykyň",
   "login": "Giriş",
   "monday": "Duşenbe",
+  "move-swimlane": "Swimüzmek",
+  "moveCardPopup-title": "Kart göçüriň",
+  "moveListPopup-title": "Göçürmek sanawy",
   "my-cards": "Kartalarym",
   "notification-delivery-part-list": "Sanaw",
   "notification-delivery-part-swimlane": "Swimüzmek",
@@ -67,5 +70,6 @@
   "text-note-title": "Ady",
   "thursday": "Penşenbe",
   "tuesday": "Sişenbe",
+  "view": "Gör",
   "wednesday": "Çarşenbe"
 }

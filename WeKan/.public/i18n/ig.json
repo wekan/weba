@@ -11,7 +11,6 @@
   "api-import-username": "Aha njirimara",
   "archive-board": "Bugharịa bọọdụ gaa na ebe nchekwa",
   "archived-items": "Ebe nchekwa",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Aha osisi",
   "board-view-cal": "Kalenda",
   "board-view-collapse": "daa",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kaadị",
   "change-password": "Gbanwee okwuntughe",
   "close": "Mechie",
+  "confirm-move-list-to-swimlane": "Bugharịa ndepụta a na kaadị ya niile na ụgbọ mmiri ọzọ?",
   "create-account": "Mebe akaụntụ",
   "createBoardPopup-title": "Mepụta bọọdụ",
   "description": "Nkọwa",
@@ -43,6 +43,9 @@
   "log-out": "Wepụ",
   "login": "Banye",
   "monday": "Mọnde",
+  "move-swimlane": "Bugharịa Swimlane",
+  "moveCardPopup-title": "Bugharịa Kaadị",
+  "moveListPopup-title": "Ndepụta mbughari",
   "my-cards": "Kaadị m",
   "notification-delivery-part-list": "Ndepụta",
   "notification-delivery-part-swimlane": "Ụgbọ mmiri",
@@ -67,5 +70,6 @@
   "text-note-title": "Aha",
   "thursday": "Tọzdee",
   "tuesday": "Tuzdee",
+  "view": "Lelee",
   "wednesday": "Wenezde"
 }

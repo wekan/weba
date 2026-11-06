@@ -11,7 +11,6 @@
   "api-import-username": "Vartotojo vardas",
   "archive-board": "Perkelti lentą į archyvą",
   "archived-items": "Archyvas",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Valdybos pavadinimas",
   "board-view-cal": "Kalendorius",
   "board-view-collapse": "Sutraukti",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kortelė",
   "change-password": "Keisti slaptažodį",
   "close": "Uždaryti",
+  "confirm-move-list-to-swimlane": "Perkelti šį sąrašą ir visas jo korteles į kitą plaukimo juostą?",
   "create-account": "Sukurti paskyrą",
   "createBoardPopup-title": "Sukurti lentą",
   "description": "Aprašymas",
@@ -43,6 +43,9 @@
   "log-out": "Atsijungti",
   "login": "Prisijungti",
   "monday": "Pirmadienis",
+  "move-swimlane": "Perkelti Swimlane",
+  "moveCardPopup-title": "Perkelti kortelę",
+  "moveListPopup-title": "Perkelti sąrašą",
   "my-cards": "Mano kortelės",
   "notification-delivery-part-list": "Sąrašą",
   "notification-delivery-part-swimlane": "Plaukimo juostą",
@@ -67,5 +70,6 @@
   "text-note-title": "Pavadinimas",
   "thursday": "ketvirtadienis",
   "tuesday": "antradienis",
+  "view": "Žiūrėti",
   "wednesday": "trečiadienį"
 }

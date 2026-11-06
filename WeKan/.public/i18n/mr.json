@@ -11,7 +11,6 @@
   "api-import-username": "वापरकर्तानाव",
   "archive-board": "फलक संग्रहात हलवा",
   "archived-items": "संग्रह",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "फलक शीर्षक",
   "board-view-cal": "दिनदर्शिका",
   "board-view-collapse": "संक्षिप्त करा",
@@ -29,6 +28,7 @@
   "cards-count-one": "कार्ड",
   "change-password": "पासवर्ड बदला",
   "close": "बंद करा",
+  "confirm-move-list-to-swimlane": "ही यादी आणि तिची सर्व कार्डे दुसऱ्या स्विमलेनमध्ये हलवायची?",
   "create-account": "खाते तयार करा",
   "createBoardPopup-title": "फलक तयार करा",
   "description": "वर्णन",
@@ -43,6 +43,9 @@
   "log-out": "बाहेर पडा",
   "login": "लॉगिन",
   "monday": "सोमवार",
+  "move-swimlane": "स्विमलेन हलवा",
+  "moveCardPopup-title": "कार्ड हलवा",
+  "moveListPopup-title": "यादी हलवा",
   "my-cards": "माझी कार्डे",
   "notification-delivery-part-list": "यादी",
   "notification-delivery-part-swimlane": "मार्गिका",
@@ -67,5 +70,6 @@
   "text-note-title": "शीर्षक",
   "thursday": "गुरुवार",
   "tuesday": "मंगळवार",
+  "view": "पहा",
   "wednesday": "बुधवार"
 }

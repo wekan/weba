@@ -11,7 +11,6 @@
   "api-import-username": "نام کاربری",
   "archive-board": "انتقال برد به آرشیو",
   "archived-items": "آرشیو",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "عنوان اللوح",
   "board-view-cal": "تقویم",
   "board-view-collapse": "جمع کردن",
@@ -29,6 +28,7 @@
   "cards-count-one": "کارت",
   "change-password": "تغییر کلمه عبور",
   "close": "بستن",
+  "confirm-move-list-to-swimlane": "این لیست و همه کارت‌های آن به مسیر دیگر منتقل شود؟",
   "create-account": "ایجاد حساب",
   "createBoardPopup-title": "ایجاد برد",
   "description": "توضیحات",
@@ -43,6 +43,9 @@
   "log-out": "خروج",
   "login": "ورود",
   "monday": "دوشنبه",
+  "move-swimlane": "انتقال مسیر",
+  "moveCardPopup-title": "حرکت کارت",
+  "moveListPopup-title": "انتقال لیست",
   "my-cards": "کارت های من",
   "notification-delivery-part-list": "لیست",
   "notification-delivery-part-swimlane": "مسیر",
@@ -67,5 +70,6 @@
   "text-note-title": "عنوان",
   "thursday": "پنجشنبه",
   "tuesday": "سه شنبه",
+  "view": "نما",
   "wednesday": "چهارشنبه"
 }

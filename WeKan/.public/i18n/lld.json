@@ -11,7 +11,6 @@
   "api-import-username": "Inom utënt",
   "archive-board": "Sposté la tofl tl archif",
   "archived-items": "Archif",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Titul dla tofl",
   "board-view-cal": "Calendario",
   "board-view-collapse": "Stlù adum",
@@ -29,6 +28,7 @@
   "cards-count-one": "Ciarta",
   "change-password": "Mudé la parola de acess",
   "close": "Stlù",
+  "confirm-move-list-to-swimlane": "Sposté chësta lista y dutes si ciartes tl’autra swimlane?",
   "create-account": "Crië n cont",
   "createBoardPopup-title": "Crië na tofl",
   "description": "Descrizion",
@@ -43,6 +43,9 @@
   "log-out": "Jì ora",
   "login": "Azes",
   "monday": "Lunedì",
+  "move-swimlane": "Sposta swimlane",
+  "moveCardPopup-title": "Sposté la ciarta",
+  "moveListPopup-title": "Sposté la lista",
   "my-cards": "Mi ciartes",
   "notification-delivery-part-list": "Lista",
   "notification-delivery-part-swimlane": "Streda",
@@ -67,5 +70,6 @@
   "text-note-title": "Titul",
   "thursday": "Giovedì",
   "tuesday": "Martedì",
+  "view": "Vijion",
   "wednesday": "Mercoledì"
 }

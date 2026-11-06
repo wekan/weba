@@ -11,7 +11,6 @@
   "api-import-username": "Uzantnomo",
   "archive-board": "Movi tabulon al Arkivo",
   "archived-items": "Arkivi",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Tabula titolo",
   "board-view-cal": "Kalendaro",
   "board-view-collapse": "Faldi",
@@ -29,6 +28,7 @@
   "cards-count-one": "Karto",
   "change-password": "Ŝangi pasvorton",
   "close": "Fermi",
+  "confirm-move-list-to-swimlane": "Ĉu movi ĉi tiun liston kaj ĉiujn ĝiajn kartojn al la alia naĝlinio?",
   "create-account": "Krei konton",
   "createBoardPopup-title": "Krei tavolon",
   "description": "Priskribo",
@@ -43,6 +43,9 @@
   "log-out": "Elsaluti",
   "login": "Ensaluti",
   "monday": "Lundo",
+  "move-swimlane": "Movi naĝlinion",
+  "moveCardPopup-title": "Movi karton",
+  "moveListPopup-title": "Movi liston",
   "my-cards": "Miaj kartoj",
   "notification-delivery-part-list": "Listo",
   "notification-delivery-part-swimlane": "Naĝlinio",
@@ -67,5 +70,6 @@
   "text-note-title": "Titolo",
   "thursday": "Ĵaŭdo",
   "tuesday": "Mardo",
+  "view": "Vue",
   "wednesday": "Merkredo"
 }

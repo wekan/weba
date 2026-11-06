@@ -11,7 +11,6 @@
   "api-import-username": "Dzina ḽa mushumisi",
   "archive-board": "Isa bodo ya Kanban fhethu ha u vhulunga",
   "archived-items": "Fhethu ha u vhulunga",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Ṱhoho ya bodo",
   "board-view-cal": "Khalenda",
   "board-view-collapse": "Peta",
@@ -29,6 +28,7 @@
   "cards-count-one": "Khadi",
   "change-password": "Shandula phasiwede",
   "close": "Vala",
+  "confirm-move-list-to-swimlane": "Pfukisela mutevhe uyu na makhaḓi awo oṱhe kha iṅwe swimlane?",
   "create-account": "Sika akhaunthu",
   "createBoardPopup-title": "Sika bodo",
   "description": "Ṱhaluso",
@@ -43,6 +43,9 @@
   "log-out": "Bva",
   "login": "U dzhena",
   "monday": "Musumbuluwo",
+  "move-swimlane": "Pfulusa ḽaini",
+  "moveCardPopup-title": "Pfulusa khadi",
+  "moveListPopup-title": "Pfulusa mutevhe",
   "my-cards": "Makhadi anga",
   "notification-delivery-part-list": "Mutevhe",
   "notification-delivery-part-swimlane": "Nḓila ya mushumo",
@@ -67,5 +70,6 @@
   "text-note-title": "Isihloko",
   "thursday": "Ḽavhuṋa",
   "tuesday": "Ḽavhuvhili",
+  "view": "Vhona",
   "wednesday": "Ḽavhuraru"
 }

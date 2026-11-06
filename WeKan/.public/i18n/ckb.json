@@ -11,7 +11,6 @@
   "api-import-username": "ناوی بەکارهێنەر",
   "archive-board": "گواستنەوەی تەختە بۆ ئەرشیف",
   "archived-items": "ئەرشیف",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "ناونیشانی تەختە",
   "board-view-cal": "ڕۆژژمێر",
   "board-view-collapse": "کۆکردنەوە",
@@ -29,6 +28,7 @@
   "cards-count-one": "کارت",
   "change-password": "گۆڕینی وشەی نهێنی",
   "close": "داخستن",
+  "confirm-move-list-to-swimlane": "ئەم لیستە و هەموو کارتەکانی بگوازرێنەوە بۆ ڕێڕەوی تر؟",
   "create-account": "هەژمار دروست بکە",
   "createBoardPopup-title": "دروستکردنی تەختە",
   "description": "وەسف",
@@ -43,6 +43,9 @@
   "log-out": "دەرچوون",
   "login": "چوونەژوورەوە",
   "monday": "دووشەممە",
+  "move-swimlane": "ڕێڕەو بگوازەوە",
+  "moveCardPopup-title": "گواستنەوەی کارت",
+  "moveListPopup-title": "لیست بگوازەوە",
   "my-cards": "کارتەکانم",
   "notification-delivery-part-list": "لیست",
   "notification-delivery-part-swimlane": "ڕێڕەو",
@@ -67,5 +70,6 @@
   "text-note-title": "ناونیشان",
   "thursday": "پێنجشەممە",
   "tuesday": "سێشەممە",
+  "view": "دیمەن",
   "wednesday": "چوارشەممە"
 }

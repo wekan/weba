@@ -11,7 +11,6 @@
   "api-import-username": "用户名",
   "archive-board": "将看板归档",
   "archived-items": "归档",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "面板标题",
   "board-view-cal": "日历",
   "board-view-collapse": "崩溃",
@@ -29,6 +28,7 @@
   "cards-count-one": "卡片",
   "change-password": "更改密码",
   "close": "关闭",
+  "confirm-move-list-to-swimlane": "将此列表及其所有卡片移动到另一个泳道？",
   "create-account": "创建账户",
   "createBoardPopup-title": "创建看板",
   "description": "描述",
@@ -43,6 +43,9 @@
   "log-out": "退出",
   "login": "登录",
   "monday": "周一",
+  "move-swimlane": "移动泳道",
+  "moveCardPopup-title": "移动卡片",
+  "moveListPopup-title": "移动列表",
   "my-cards": "我的卡片",
   "notification-delivery-part-list": "列表",
   "notification-delivery-part-swimlane": "泳道",
@@ -67,5 +70,6 @@
   "text-note-title": "标题",
   "thursday": "周四",
   "tuesday": "周二",
+  "view": "视图",
   "wednesday": "周三"
 }

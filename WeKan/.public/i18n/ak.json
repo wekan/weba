@@ -11,7 +11,6 @@
   "api-import-username": "Dwumadini din",
   "archive-board": "Fa bɔɔd no kɔ adekorabea",
   "archived-items": "Adekorabea",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Bɔɔd Ti asɛm",
   "board-view-cal": "Kalenda",
   "board-view-collapse": "Kyerɛ ade yi",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kaad",
   "change-password": "Sesa ahintasɛm",
   "close": "To mu",
+  "confirm-move-list-to-swimlane": "Fa din a wɔahyehyɛ yi ne emu kaad nyinaa kɔ adwuma kwan foforo no so?",
   "create-account": "Yɛ akontaabu",
   "createBoardPopup-title": "Yɛ bɔɔd",
   "description": "Nkyerɛkyerɛmu",
@@ -43,6 +43,9 @@
   "log-out": "Fi mu",
   "login": "Kɔ mu",
   "monday": "Dwoda",
+  "move-swimlane": "Fa adwuma kwan kɔ baabi foforo",
+  "moveCardPopup-title": "Fa kaad no kɔ baabi",
+  "moveListPopup-title": "Tu Nhyehyɛe",
   "my-cards": "Me kaad ahodoɔ",
   "notification-delivery-part-list": "Din a wɔahyehyɛ",
   "notification-delivery-part-swimlane": "Kwan",
@@ -67,5 +70,6 @@
   "text-note-title": "Asɛmti",
   "thursday": "Yawda",
   "tuesday": "Benada",
+  "view": "Kyerɛ ade yi",
   "wednesday": "Wukuda"
 }

@@ -11,7 +11,6 @@
   "api-import-username": "Erinnya ly'omukozesa",
   "archive-board": "Twala olubaawo mu tterekero",
   "archived-items": "Tterekero",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Lubaawo Mutwe",
   "board-view-cal": "Kalenda",
   "board-view-collapse": "Funza",
@@ -29,6 +28,7 @@
   "cards-count-one": "Ekaadi",
   "change-password": "Kyusa ekigambo ekyekusifu",
   "close": "Ggalawo",
+  "confirm-move-list-to-swimlane": "Tambusa kino lukalala ne byonna kyakyo kaadi eri kirala akakubo?",
   "create-account": "Tonda Akaawunti",
   "createBoardPopup-title": "Kola olubaawo",
   "description": "Ennyonyola",
@@ -43,6 +43,9 @@
   "log-out": "Fuluma",
   "login": "Okuyingira",
   "monday": "Bbalaza",
+  "move-swimlane": "Tambusa Akakubo",
+  "moveCardPopup-title": "Simbula ekaadi",
+  "moveListPopup-title": "Tambusa Lukalala",
   "my-cards": "Amakaadi gange",
   "notification-delivery-part-list": "Olukalala",
   "notification-delivery-part-swimlane": "Akakubo",
@@ -67,5 +70,6 @@
   "text-note-title": "Omutwe",
   "thursday": "Lwakuna",
   "tuesday": "Lwakubiri",
+  "view": "Laba",
   "wednesday": "Lwakusatu"
 }

@@ -11,7 +11,6 @@
   "api-import-username": "Gebananem",
   "archive-board": "Topätükön tabi lü ragiv",
   "archived-items": "Ragiv",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Tiäd taba",
   "board-view-cal": "Kaled",
   "board-view-collapse": "Nürölön",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kad",
   "change-password": "Votükön letavödi",
   "close": "Färmükön",
+  "confirm-move-list-to-swimlane": "Mövön ati lisedi e valik kadis onsik al svimavög votik?",
   "create-account": "Jafön kali",
   "createBoardPopup-title": "Jafön tabi",
   "description": "Bepenam",
@@ -43,6 +43,9 @@
   "log-out": "Senunädön oki",
   "login": "Nunädön oki",
   "monday": "Mudel",
+  "move-swimlane": "Mövön Dil Horitätik",
+  "moveCardPopup-title": "Topätükön kadi",
+  "moveListPopup-title": "Topätükön lisedi",
   "my-cards": "Kads obik",
   "notification-delivery-part-list": "Lised",
   "notification-delivery-part-swimlane": "Dil horitätik",
@@ -67,5 +70,6 @@
   "text-note-title": "Titolo",
   "thursday": "Dödel",
   "tuesday": "Tudel",
+  "view": "Logön",
   "wednesday": "Vedel"
 }

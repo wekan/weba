@@ -11,7 +11,6 @@
   "api-import-username": "Kullanıcı adı",
   "archive-board": "Panoyu Arşive Taşı",
   "archived-items": "Arşivle",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "x",
   "board-title": "Pano Başlığı",
   "board-view-cal": "Takvim",
   "board-view-collapse": "Katla",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kart",
   "change-password": "Parola Değiştir",
   "close": "Kapat",
+  "confirm-move-list-to-swimlane": "Bu liste ve tüm kartları diğer kulvara taşınsın mı?",
   "create-account": "Hesap Oluştur",
   "createBoardPopup-title": "Pano Oluşturma",
   "description": "Açıklama",
@@ -43,6 +43,9 @@
   "log-out": "Oturum Kapat",
   "login": "Giriş",
   "monday": "Pazartesi",
+  "move-swimlane": "Kulvarı Taşı",
+  "moveCardPopup-title": "Kartı taşı",
+  "moveListPopup-title": "Listeyi Taşı",
   "my-cards": "Kartlarım",
   "notification-delivery-part-list": "Liste",
   "notification-delivery-part-swimlane": "Kulvar",
@@ -67,5 +70,6 @@
   "text-note-title": "Başlık",
   "thursday": "Perşembe",
   "tuesday": "Salı",
+  "view": "Görünüm",
   "wednesday": "Çarşamba"
 }

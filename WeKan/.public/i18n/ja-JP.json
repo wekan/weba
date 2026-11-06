@@ -11,7 +11,6 @@
   "api-import-username": "ユーザー名",
   "archive-board": "ボードをアーカイブする",
   "archived-items": "アーカイブ",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "ボードのタイトル",
   "board-view-cal": "カレンダー",
   "board-view-collapse": "折りたたむ",
@@ -29,6 +28,7 @@
   "cards-count-one": "カード",
   "change-password": "パスワードの変更",
   "close": "閉じる",
+  "confirm-move-list-to-swimlane": "このリストとそのすべてのカードを別のスイムレーンに移動しますか?",
   "create-account": "アカウントを作成",
   "createBoardPopup-title": "ボードの作成",
   "description": "詳細",
@@ -43,6 +43,9 @@
   "log-out": "ログアウト",
   "login": "ログイン",
   "monday": "月曜",
+  "move-swimlane": "スイムレーンを移動する",
+  "moveCardPopup-title": "カードの移動",
+  "moveListPopup-title": "リストを移動",
   "my-cards": "自分のカード",
   "notification-delivery-part-list": "リスト",
   "notification-delivery-part-swimlane": "スイムレーン",
@@ -67,5 +70,6 @@
   "text-note-title": "タイトル",
   "thursday": "木曜",
   "tuesday": "火曜",
+  "view": "ビュー",
   "wednesday": "水曜"
 }

@@ -11,7 +11,6 @@
   "api-import-username": "Non utent",
   "archive-board": "Sposte la taule tal archivi",
   "archived-items": "Archivi",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Titul taule",
   "board-view-cal": "Calendari",
   "board-view-collapse": "Strenç",
@@ -29,6 +28,7 @@
   "cards-count-one": "Cjarte",
   "change-password": "Cambie peraule di ordin",
   "close": "Siere",
+  "confirm-move-list-to-swimlane": "Spostere cheste lista e dutis le sue cjartis nell'altra swimlane?",
   "create-account": "Cree account",
   "createBoardPopup-title": "Cree une taule",
   "description": "Descrizion",
@@ -43,6 +43,9 @@
   "log-out": "Jes",
   "login": "Jentrade",
   "monday": "Lunis",
+  "move-swimlane": "Sposte swimlane",
+  "moveCardPopup-title": "Sposte la cjarte",
+  "moveListPopup-title": "Sposte lista",
   "my-cards": "Lis mês cjartis",
   "notification-delivery-part-list": "Liste",
   "notification-delivery-part-swimlane": "Corsie",
@@ -67,5 +70,6 @@
   "text-note-title": "Titul",
   "thursday": "Joibe",
   "tuesday": "Martars",
+  "view": "Viôt",
   "wednesday": "Miercus"
 }

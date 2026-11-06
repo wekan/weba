@@ -11,7 +11,6 @@
   "api-import-username": "பயனர்பெயர்",
   "archive-board": "பலகையைக் காப்பகத்திற்கு நகர்த்து",
   "archived-items": "காப்பகம்",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "பலகையின் தலைப்பு",
   "board-view-cal": "நாள்காட்டி",
   "board-view-collapse": "சுருக்கு",
@@ -29,6 +28,7 @@
   "cards-count-one": "அட்டை",
   "change-password": "கடவுச்சொல்லை மாற்று",
   "close": "மூடு",
+  "confirm-move-list-to-swimlane": "இந்தப் பட்டியலையும் அதன் அனைத்து அட்டைகளையும் மற்ற நீச்சல்வரிசைக்கு நகர்த்தவா?",
   "create-account": "கணக்கை உருவாக்கு",
   "createBoardPopup-title": "பலகையை உருவாக்கு",
   "description": "விவரம்",
@@ -43,6 +43,9 @@
   "log-out": "வெளியேறு",
   "login": "உள்நுழைவு",
   "monday": "திங்கள்",
+  "move-swimlane": "நீச்சல்பாதையை நகர்த்து",
+  "moveCardPopup-title": "அட்டையை நகர்த்து",
+  "moveListPopup-title": "பட்டியலை நகர்த்து",
   "my-cards": "என் அட்டைகள்",
   "notification-delivery-part-list": "பட்டியல்",
   "notification-delivery-part-swimlane": "நீச்சல்பாதை",
@@ -67,5 +70,6 @@
   "text-note-title": "தலைப்பு",
   "thursday": "வியாழன்",
   "tuesday": "செவ்வாய்",
+  "view": "பார்",
   "wednesday": "புதன்"
 }

@@ -2,8 +2,10 @@
   "source": "wekan/wekan imports/i18n",
   "englishSha256": "eb47c53670bc2c35568f08564b56d900a95236d33b4d9bf8ac26c33e72b9dfe8",
   "languages": 237,
-  "keys": 69,
+  "keys": 73,
   "unmapped": [
+    "Account",
+    "Add a list first",
     "Admin Panel / Password Length",
     "Archive / restore card",
     "Board menu",

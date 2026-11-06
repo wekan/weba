@@ -11,7 +11,6 @@
   "api-import-username": "Колдонуучунун аты",
   "archive-board": "Тактаны архивге жылдыруу",
   "archived-items": "Архив",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Тактанын аталышы",
   "board-view-cal": "Жылнаама",
   "board-view-collapse": "Жыйноо",
@@ -29,6 +28,7 @@
   "cards-count-one": "Карточка",
   "change-password": "Сырсөздү өзгөртүү",
   "close": "Жабуу",
+  "confirm-move-list-to-swimlane": "Бул тизмени жана анын бардык карточкаларын башка жолго жылдырасызбы?",
   "create-account": "Каттоо эсебин түзүү",
   "createBoardPopup-title": "Такта түзүү",
   "description": "Сүрөттөмө",
@@ -43,6 +43,9 @@
   "log-out": "Чыгуу",
   "login": "Кирүү",
   "monday": "Дүйшөмбү",
+  "move-swimlane": "Жолду жылдыруу",
+  "moveCardPopup-title": "Карточканы жылдыруу",
+  "moveListPopup-title": "Тизмени жылдыруу",
   "my-cards": "Менин карточкаларым",
   "notification-delivery-part-list": "Тизме",
   "notification-delivery-part-swimlane": "Жол",
@@ -67,5 +70,6 @@
   "text-note-title": "Аталышы",
   "thursday": "Бейшемби",
   "tuesday": "Шейшемби",
+  "view": "Көрүү",
   "wednesday": "Шаршемби"
 }

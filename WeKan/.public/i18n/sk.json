@@ -11,7 +11,6 @@
   "api-import-username": "Používateľské meno",
   "archive-board": "Presunúť nástenku do archívu",
   "archived-items": "Archív",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Názov nástenky",
   "board-view-cal": "Kalendár",
   "board-view-collapse": "Zbaliť",
@@ -29,6 +28,7 @@
   "cards-count-one": "Karta",
   "change-password": "Zmeniť heslo",
   "close": "Zavrieť",
+  "confirm-move-list-to-swimlane": "Presunúť tento zoznam a všetky jeho karty do iného swimlane?",
   "create-account": "Vytvoriť účet",
   "createBoardPopup-title": "Vytvoriť nástenku",
   "description": "Popis",
@@ -43,6 +43,9 @@
   "log-out": "Odhlásiť sa",
   "login": "Prihlásenie",
   "monday": "pondelok",
+  "move-swimlane": "Presunúť dráhu",
+  "moveCardPopup-title": "Presunúť kartu",
+  "moveListPopup-title": "Presunúť zoznam",
   "my-cards": "Moje karty",
   "notification-delivery-part-list": "Zoznam",
   "notification-delivery-part-swimlane": "Dráha",
@@ -67,5 +70,6 @@
   "text-note-title": "Názov",
   "thursday": "štvrtok",
   "tuesday": "utorok",
+  "view": "Zobraziť",
   "wednesday": "streda"
 }

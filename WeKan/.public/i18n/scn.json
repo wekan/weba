@@ -11,7 +11,6 @@
   "api-import-username": "Nomu di l'utenti",
   "archive-board": "Spusta la tavula nta l'archiviu",
   "archived-items": "Archiviu",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Tìtulu tàvula",
   "board-view-cal": "Calendario",
   "board-view-collapse": "Comprimi",
@@ -29,6 +28,7 @@
   "cards-count-one": "Carta",
   "change-password": "Canciari la palora d'ordini",
   "close": "Chiuiri",
+  "confirm-move-list-to-swimlane": "Spostare chista lista e tutte li sue schede nell'altra swimlane?",
   "create-account": "Crea account",
   "createBoardPopup-title": "Crea na tavula",
   "description": "Discrizzioni",
@@ -43,6 +43,9 @@
   "log-out": "Nesci",
   "login": "Accesso",
   "monday": "Lunedì",
+  "move-swimlane": "Sposta swimlane",
+  "moveCardPopup-title": "Spusta la carta",
+  "moveListPopup-title": "Sposta lista",
   "my-cards": "I me carti",
   "notification-delivery-part-list": "Lista",
   "notification-delivery-part-swimlane": "Curseva",
@@ -67,5 +70,6 @@
   "text-note-title": "Tìtulu",
   "thursday": "Giovedì",
   "tuesday": "Martedì",
+  "view": "Vista",
   "wednesday": "Mercoledì"
 }

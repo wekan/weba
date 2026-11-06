@@ -11,7 +11,6 @@
   "api-import-username": "Brukernavn",
   "archive-board": "Flytt Tavle til Arkiv",
   "archived-items": "Arkiv",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "x",
   "board-title": "Tavletittel",
   "board-view-cal": "Kalender",
   "board-view-collapse": "Slå sammen",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kort",
   "change-password": "Endre passord",
   "close": "Lukk",
+  "confirm-move-list-to-swimlane": "Vil du flytte denne listen og alle kortene i den til den andre svømmebanen?",
   "create-account": "Opprett konto",
   "createBoardPopup-title": "Opprett Tavle",
   "description": "Beskrivelse",
@@ -43,6 +43,9 @@
   "log-out": "Logg ut",
   "login": "Logg inn",
   "monday": "Mandag",
+  "move-swimlane": "Flytt Svømmebane",
+  "moveCardPopup-title": "Flytt Kort",
+  "moveListPopup-title": "Flytt liste",
   "my-cards": "Mine Kort",
   "notification-delivery-part-list": "Liste",
   "notification-delivery-part-swimlane": "Svømmebane",
@@ -67,5 +70,6 @@
   "text-note-title": "Tittel",
   "thursday": "Torsdag",
   "tuesday": "Tirsdag",
+  "view": "Vis",
   "wednesday": "Onsdag"
 }

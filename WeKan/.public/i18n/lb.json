@@ -11,7 +11,6 @@
   "api-import-username": "Benotzernumm",
   "archive-board": "Tafel an d'Archiv réckelen",
   "archived-items": "Archiv",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Board-Titel",
   "board-view-cal": "Kalender",
   "board-view-collapse": "Einklappen",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kaart",
   "change-password": "Passwuert änneren",
   "close": "Zoumaachen",
+  "confirm-move-list-to-swimlane": "Dës Lëscht un all ihre Kaarten in déi andere Swimlane verréckelen?",
   "create-account": "Kont erstellen",
   "createBoardPopup-title": "Tafel erstellen",
   "description": "Beschreiwung",
@@ -43,6 +43,9 @@
   "log-out": "Ofmellen",
   "login": "Umeldung",
   "monday": "Montag",
+  "move-swimlane": "Swimlane verréckelen",
+  "moveCardPopup-title": "Kaart réckelen",
+  "moveListPopup-title": "Lëscht verréckelen",
   "my-cards": "Meng Kaarten",
   "notification-delivery-part-list": "Lëscht",
   "notification-delivery-part-swimlane": "Bunn",
@@ -67,5 +70,6 @@
   "text-note-title": "Titel",
   "thursday": "Donnerstag",
   "tuesday": "Dienstag",
+  "view": "Ansicht",
   "wednesday": "Mittwoch"
 }

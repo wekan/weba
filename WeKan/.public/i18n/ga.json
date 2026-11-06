@@ -11,7 +11,6 @@
   "api-import-username": "Ainm úsáideora",
   "archive-board": "Bog an clár go dtí an chartlann",
   "archived-items": "Cartlann",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Teideal Cláir",
   "board-view-cal": "Féilire",
   "board-view-collapse": "Laghdaigh",
@@ -29,6 +28,7 @@
   "cards-count-one": "Cárta",
   "change-password": "Athraigh an pasfhocal",
   "close": "Dún",
+  "confirm-move-list-to-swimlane": "Bog an liosta seo agus a chártaí uile chuig an lána snámha eile?",
   "create-account": "Cruthaigh Cuntas",
   "createBoardPopup-title": "Cruthaigh clár",
   "description": "Cur síos",
@@ -43,6 +43,9 @@
   "log-out": "Logáil amach",
   "login": "Logáil isteach",
   "monday": "Dé Luain",
+  "move-swimlane": "Bog Lána Snámha",
+  "moveCardPopup-title": "Bog an cárta",
+  "moveListPopup-title": "Bog Liosta",
   "my-cards": "Mo chártaí",
   "notification-delivery-part-list": "Liosta",
   "notification-delivery-part-swimlane": "Lána",
@@ -67,5 +70,6 @@
   "text-note-title": "Teideal",
   "thursday": "Déardaoin",
   "tuesday": "Dé Máirt",
+  "view": "Amharc",
   "wednesday": "Dé Céadaoin"
 }

@@ -11,7 +11,6 @@
   "api-import-username": "Izina ry'ukoresha",
   "archive-board": "Jana icapa mu bubiko",
   "archived-items": "Ububiko",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Umutwe w'Icapa",
   "board-view-cal": "Ikirangamisi",
   "board-view-collapse": "Kwegeranya",
@@ -29,6 +28,7 @@
   "cards-count-one": "Ikarata",
   "change-password": "Hindura ijambo ry'ibanga",
   "close": "Ugara",
+  "confirm-move-list-to-swimlane": "Imurira uru rutonde n'amakarata yarwo yose ku wundi murongo?",
   "create-account": "Rema Konti",
   "createBoardPopup-title": "Kurema icapa",
   "description": "Insiguro",
@@ -43,6 +43,9 @@
   "log-out": "Sohoka",
   "login": "Kwinjira",
   "monday": "Kuwa mbere",
+  "move-swimlane": "Himura Umurongo",
+  "moveCardPopup-title": "Kwimura ikarata",
+  "moveListPopup-title": "Imura urutonde",
   "my-cards": "Amakarata yanje",
   "notification-delivery-part-list": "Urutonde",
   "notification-delivery-part-swimlane": "Umurongo",
@@ -67,5 +70,6 @@
   "text-note-title": "Umutwe",
   "thursday": "Kuwa kane",
   "tuesday": "Kuwa kabiri",
+  "view": "Raba",
   "wednesday": "Kuwa gatatu"
 }

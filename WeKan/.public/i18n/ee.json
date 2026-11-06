@@ -11,7 +11,6 @@
   "api-import-username": "Zãla ŋkɔ",
   "archive-board": "Ʋu ŋɔŋlɔkpe la yi dzraɖoƒe",
   "archived-items": "Nudzraɖoƒe",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Kpekpeɖeŋu ƒe ŋkɔ",
   "board-view-cal": "Kalenda",
   "board-view-collapse": "Fa ƒu",
@@ -29,6 +28,7 @@
   "cards-count-one": "Agbalẽvi",
   "change-password": "Trɔ ɣaɣlanya",
   "close": "Tu",
+  "confirm-move-list-to-swimlane": "Tsɔ xexlẽdzesi sia kple eƒe kaɖiwo katã yi tsiƒuƒu bubu la mea?",
   "create-account": "Wɔ akɔnta",
   "createBoardPopup-title": "Wɔ ŋɔŋlɔkpe",
   "description": "Numeɖeɖe",
@@ -43,6 +43,9 @@
   "log-out": "Do go",
   "login": "Ge ɖe eme",
   "monday": "Dzoɖa",
+  "move-swimlane": "Tsɔ tsiƒuƒu yi teƒe bubu",
+  "moveCardPopup-title": "Ʋu agbalẽvi la",
+  "moveListPopup-title": "Tsɔ xexlẽdzesi yi teƒe bubu",
   "my-cards": "Nye agbalẽviwo",
   "notification-delivery-part-list": "Xexlẽdzesi",
   "notification-delivery-part-swimlane": "Mɔ",
@@ -67,5 +70,6 @@
   "text-note-title": "Tanya",
   "thursday": "Yawoɖa",
   "tuesday": "Blaɖa",
+  "view": "Kpɔ",
   "wednesday": "Kuɖa"
 }

@@ -112,3 +112,20 @@
 .weba-popup-close:hover,.weba-popup-close:focus-visible{background:#e2e7ed;outline:2px solid #2980b9}
 .weba-editor .weba-popup-close,.weba-view-options .weba-popup-close,.weba-account-menu .weba-popup-close,.weba-page-sidebar .weba-popup-close{position:sticky!important;top:0;align-self:flex-end;margin-left:auto;flex-shrink:0!important;z-index:3}
 .weba-structure-composer>.weba-popup-close,.weba-structure-menu>.weba-popup-close{position:absolute;right:5px;top:5px;z-index:3;text-align:center}
+
+/* Touch drags start only at a handle, leaving card/background swipes scrollable. */
+.weba-drag-handle{touch-action:none;user-select:none;cursor:grab;flex-shrink:0}
+.weba-draggable-card{position:relative;padding-inline-end:40px;min-height:72px;box-sizing:border-box}
+.weba-card>.weba-drag-handle{position:absolute;inset-inline-end:1px;top:28px;margin:0;width:28px;height:28px;padding:0}
+@media(any-pointer:coarse),(max-width:760px){
+  .weba-drag-handle{min-width:44px;min-height:44px}
+  .weba-draggable-card{padding-inline-end:56px;min-height:88px}
+  .weba-card>.weba-drag-handle{inset-inline-end:0;top:32px;bottom:0;width:44px;height:auto;min-height:36px;display:flex;align-items:center;justify-content:center;background:inherit}
+}
+.weba-is-dragging,.weba-is-dragging *{cursor:grabbing!important;user-select:none!important}
+.weba-drag-origin{opacity:.3}
+.weba-drag-ghost{position:fixed!important;z-index:100000!important;pointer-events:none!important;overflow:hidden;opacity:.85;box-shadow:0 8px 22px #0005;box-sizing:border-box;transform:rotate(1deg)}
+.weba-drop-placeholder{box-sizing:border-box;border:2px dashed #2980b9;background:#2980b922;border-radius:4px;min-height:50px;flex-shrink:0;pointer-events:none}
+.weba-columns>.weba-drop-placeholder{flex:0 0 272px}
+.weba-list-body>.weba-drop-placeholder{width:100%!important;margin:8px 0}
+.weba-list-body{min-height:50px}

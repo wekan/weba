@@ -11,7 +11,6 @@
   "api-import-username": "Navê bikarhêner",
   "archive-board": "Depoyê bibe arşîvê",
   "archived-items": "Arşîv",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Sernavê depoyê",
   "board-view-cal": "Salname",
   "board-view-collapse": "Bitewîne",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kart",
   "change-password": "Şîfreyê biguherîne",
   "close": "Bigire",
+  "confirm-move-list-to-swimlane": "Vê lîsteyê û hemû kartên wê bibî rêça din?",
   "create-account": "Hesab biafirîne",
   "createBoardPopup-title": "Depo biafirîne",
   "description": "Danasîn",
@@ -43,6 +43,9 @@
   "log-out": "Derkeve",
   "login": "Têketin",
   "monday": "Duşem",
+  "move-swimlane": "Rêçê bar bike",
+  "moveCardPopup-title": "Kartê bar bike",
+  "moveListPopup-title": "Lîsteyê bar bike",
   "my-cards": "Kartên min",
   "notification-delivery-part-list": "Lîste",
   "notification-delivery-part-swimlane": "Rêç",
@@ -67,5 +70,6 @@
   "text-note-title": "Sernav",
   "thursday": "Pêncşem",
   "tuesday": "Sêşem",
+  "view": "Dîtin",
   "wednesday": "Çarşem"
 }

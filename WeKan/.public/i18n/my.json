@@ -11,7 +11,6 @@
   "api-import-username": "အသုံးပြုသူအမည်",
   "archive-board": "ဘုတ်ကို မှတ်တမ်းသို့ ရွှေ့ရန်",
   "archived-items": "မှတ်တမ်း",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "ဘုတ်ခေါင်းစဉ်",
   "board-view-cal": "ပြက္ခဒိန်",
   "board-view-collapse": "ခေါက်ရန်",
@@ -29,6 +28,7 @@
   "cards-count-one": "ကတ်",
   "change-password": "စကားဝှက်ပြောင်းရန်",
   "close": "ပိတ်ရန်",
+  "confirm-move-list-to-swimlane": "ဤစာရင်းနှင့် ကတ်အားလုံးကို အခြားရေကူးလမ်းသို့ ရွှေ့မလား။",
   "create-account": "အကောင့် ဖန်တီးရန်",
   "createBoardPopup-title": "ဘုတ်ဖန်တီးရန်",
   "description": "ဖော်ပြချက်",
@@ -43,6 +43,9 @@
   "log-out": "ထွက်ရန်",
   "login": "ဝင်ရောက်ရန်",
   "monday": "တနင်္လာ",
+  "move-swimlane": "ရေကူးလမ်းကြောင်း ရွှေ့ရန်",
+  "moveCardPopup-title": "ကတ်ကို ရွှေ့ရန်",
+  "moveListPopup-title": "စာရင်း ရွှေ့ရန်",
   "my-cards": "ကျွန်ုပ်၏ကတ်များ",
   "notification-delivery-part-list": "စာရင်း",
   "notification-delivery-part-swimlane": "လမ်းကြောင်း",
@@ -67,5 +70,6 @@
   "text-note-title": "ခေါင်းစဉ်",
   "thursday": "ကြာသပတေး",
   "tuesday": "အင်္ဂါ",
+  "view": "ကြည့်ရန်",
   "wednesday": "ဗုဒ္ဓဟူး"
 }

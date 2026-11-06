@@ -11,7 +11,6 @@
   "api-import-username": "Jeneng panganggo",
   "archive-board": "Pindhah papan menyang arsip",
   "archived-items": "Arsip",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Judhul Papan",
   "board-view-cal": "Tanggalan",
   "board-view-collapse": "Ciutake",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kertu",
   "change-password": "Ganti tembung sandi",
   "close": "Tutup",
+  "confirm-move-list-to-swimlane": "Pindhah dhaptar iki lan kabeh kertune menyang swimlane liyane?",
   "create-account": "Gawe Akun",
   "createBoardPopup-title": "Gawe papan",
   "description": "Katrangan",
@@ -43,6 +43,9 @@
   "log-out": "Metu",
   "login": "Mlebu",
   "monday": "Senin",
+  "move-swimlane": "Pindhah Swimlane",
+  "moveCardPopup-title": "Pindhah kertu",
+  "moveListPopup-title": "Pindhah Dhaptar",
   "my-cards": "Kertuku",
   "notification-delivery-part-list": "Dhaptar",
   "notification-delivery-part-swimlane": "Lajur",
@@ -67,5 +70,6 @@
   "text-note-title": "Judhul",
   "thursday": "Kemis",
   "tuesday": "Selasa",
+  "view": "Deleng",
   "wednesday": "Rebo"
 }

@@ -11,7 +11,6 @@
   "api-import-username": "Benutzername",
   "archive-board": "Board ins Archiv verschieben",
   "archived-items": "Archiv",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Board-Titel",
   "board-view-cal": "Kalender",
   "board-view-collapse": "Einklappen",
@@ -29,6 +28,7 @@
   "cards-count-one": "Karte",
   "change-password": "Passwort ändern",
   "close": "Schliessen",
+  "confirm-move-list-to-swimlane": "Diese Liste und alle ihre Karten in die andere Swimlane verschieben?",
   "create-account": "Konto erstellen",
   "createBoardPopup-title": "Board erstellen",
   "description": "Beschreibung",
@@ -43,6 +43,9 @@
   "log-out": "Ausloggen",
   "login": "Anmeldung",
   "monday": "Montag",
+  "move-swimlane": "Swimlane verschieben",
+  "moveCardPopup-title": "Karte verschieben",
+  "moveListPopup-title": "Liste verschieben",
   "my-cards": "Meine Karten",
   "notification-delivery-part-list": "Liste",
   "notification-delivery-part-swimlane": "Arbeitsbahn",
@@ -67,5 +70,6 @@
   "text-note-title": "Titel",
   "thursday": "Donnerstag",
   "tuesday": "Dienstag",
+  "view": "Ansicht",
   "wednesday": "Mittwoch"
 }

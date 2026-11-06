@@ -99,6 +99,67 @@ const path = require('node:path');
     assert.equal(await page.$$eval('[id$=".Boards"] img',els=>els.filter(e=>e.getBoundingClientRect().width>0).length),0,'tree uses Font Awesome instead of visible bitmap icons');
     assert.equal(await page.$$eval('.weba-add-list .fa-plus-square-o',els=>els.length),3,'list-add uses the same regular Font Awesome icon as WeKan');
     assert.equal(await page.$$eval('.weba-column',els=>els.length),3,'empty board shows its initial lists');
+    if(process.env.WEBA_DRAG_ONLY) {
+      await page.setViewport({width:1000,height:850,hasTouch:true});
+      await click('Home');
+      await page.waitForSelector('.weba-board-tile');await page.click('.weba-board-tile');await settle();
+      const column=(lane,list)=>`.weba-column[data-lane="${lane}"][data-list="${list}"]`;
+      async function addCard(title){await page.click('.weba-add-card-top');await settle();await visible('Editor');await fill('CardTitle',title);await click('SaveCard');await click('CloseEditor');await settle();}
+      await addCard('Drag one');await addCard('Drag two');
+      await page.click('.weba-add-lane');await page.locator('.weba-structure-composer input').fill('Second ä');await page.click('.weba-structure-composer button:not(.weba-popup-close)');await settle();
+      await page.click('.weba-add-list');await page.locator('.weba-structure-composer input').fill('Review');await page.click('.weba-structure-composer button:not(.weba-popup-close)');await settle();
+      const ids=await page.$$eval('.weba-data .weba-card',els=>Object.fromEntries(els.map(e=>[e.querySelector('strong').textContent,e.dataset.cardId])));
+      const card=id=>`.weba-report .weba-card[data-card-id="${id}"]`;
+      const location=id=>page.$eval(`.weba-data .weba-card[data-card-id="${id}"]`,e=>[e.dataset.lane,e.dataset.status]);
+      const point=async(selector,edge=false)=>page.$eval(selector,(e,edge)=>{const r=e.getBoundingClientRect();return {x:r.left+(edge?8:r.width/2),y:r.top+(edge?8:r.height/2)};},edge);
+      const session=await page.createCDPSession();
+      async function touch(type,p){await session.send('Input.dispatchTouchEvent',{type,touchPoints:p?[{...p,id:1,radiusX:2,radiusY:2,force:1}]:[]});}
+      async function gesture(from,to,end='touchEnd'){
+        await touch('touchStart',from);
+        for(let i=1;i<=10;i++){await touch('touchMove',{x:from.x+(to.x-from.x)*i/10,y:from.y+(to.y-from.y)*i/10});await page.evaluate(()=>new Promise(requestAnimationFrame));}
+        await touch(end,null);await settle();
+      }
+      await page.touchscreen.tap(...Object.values(await point(card(ids['Drag one']))));await settle();await visible('Editor');await click('CloseEditor');
+      // Reorder cards by real touch events, not synthetic PointerEvent dispatch.
+      await gesture(await point(card(ids['Drag two'])+' .weba-drag-handle'),await point(card(ids['Drag one']),true));
+      await page.waitForFunction((id)=>document.querySelector('.weba-report .weba-list-body .weba-card')?.dataset.cardId===id,{},ids['Drag two']);
+      assert.equal(await page.$eval(selector('Editor'),e=>getComputedStyle(e).display),'none','drag does not open card details');
+      await gesture(await point(card(ids['Drag one'])+' .weba-drag-handle'),await point(column('Default','Review')+' .weba-list-body'));
+      await page.waitForFunction(id=>document.querySelector(`.weba-data .weba-card[data-card-id="${id}"]`)?.dataset.status==='Review',{},ids['Drag one']);
+      page.once('dialog',dialog=>dialog.accept());
+      await gesture(await point(column('Default','Review')+' [data-drag-kind="list"]'),await point(column('Second ä','Doing'),true));
+      await page.waitForSelector(column('Second ä','Review'));
+      assert.deepEqual(await location(ids['Drag one']),['Second ä','Review'],'list drag carries its cards');
+      page.once('dialog',dialog=>dialog.dismiss());
+      await gesture(await point(column('Second ä','Review')+' [data-drag-kind="list"]'),await point(column('Default','Doing'),true));
+      assert.equal(await page.$(column('Default','Review')),null,'declining list move leaves its source intact');
+      assert.deepEqual(await location(ids['Drag one']),['Second ä','Review']);
+      await gesture(await point(card(ids['Drag one'])+' .weba-drag-handle'),await point(column('Second ä','Todo')+' .weba-list-body'));
+      await page.waitForFunction(id=>document.querySelector(`.weba-data .weba-card[data-card-id="${id}"]`)?.dataset.status==='Todo',{},ids['Drag one']);
+      const laneHandle=await page.$eval('.weba-swimlane:nth-child(2) [data-drag-kind="lane"]',e=>{const r=e.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2};});
+      await gesture(laneHandle,await point('.weba-swimlane:first-child .weba-swimlane-header',true));
+      await page.waitForFunction(()=>document.querySelector('.weba-swimlane')?.dataset.lane==='Second ä');
+      // Mouse dragging the card surface remains supported on touch-capable devices.
+      const from=await point(card(ids['Drag two'])),to=await point(column('Default','Doing')+' .weba-list-body');
+      await page.mouse.move(from.x,from.y);await page.mouse.down();await page.mouse.move(to.x,to.y,{steps:12});await page.mouse.up();await settle();
+      await page.waitForFunction(id=>document.querySelector(`.weba-data .weba-card[data-card-id="${id}"]`)?.dataset.status==='Doing',{},ids['Drag two']);
+      const viewport=await page.$eval(column('Default','Doing')+' .weba-list-body',e=>{const r=e.closest('.weba-columns').getBoundingClientRect(),b=e.getBoundingClientRect();return {x:r.right-5,y:b.top+20};});
+      await touch('touchStart',await point(card(ids['Drag two'])+' .weba-drag-handle'));await touch('touchMove',viewport);
+      await page.waitForFunction(()=>[...document.querySelectorAll('.weba-columns')].some(e=>e.closest('.weba-swimlane').dataset.lane==='Default'&&e.scrollLeft>0));
+      await touch('touchCancel',null);assert.equal(await page.$('.weba-drag-ghost'),null);
+      assert.deepEqual(await location(ids['Drag two']),['Default','Doing'],'cancel leaves data unchanged');
+      const scroll=await page.$eval('.weba-swimlane:first-child .weba-columns',e=>{e.scrollLeft=0;const r=e.getBoundingClientRect();return {x:r.right-30,y:r.bottom-5};});
+      await gesture(scroll,{x:scroll.x-300,y:scroll.y});
+      await page.waitForFunction(()=>document.querySelector('.weba-swimlane:first-child .weba-columns').scrollLeft>0);
+      assert.equal(await page.evaluate(()=>webaDrag.active),false,'ordinary swipe scrolls without starting a drag');
+      await new Promise(resolve=>setTimeout(resolve,750));
+      await click('Home');await page.click('.weba-board-tile');await settle();
+      await page.waitForFunction(()=>document.querySelector('.weba-swimlane')?.dataset.lane==='Second ä');
+      assert.deepEqual(await location(ids['Drag two']),['Default','Doing']);assert.deepEqual(await location(ids['Drag one']),['Second ä','Todo']);
+      await shot('weba-touch-drag');
+      console.log('Browser touch drag: card reorder/list and lane moves, carried cards, persistence, mouse surface, auto-scroll, touch scrolling and cancel passed');
+      return;
+    }
     if(process.env.WEBA_POPUPS_ONLY) {
       async function contained(selector) {
         await page.waitForFunction(selector=>{

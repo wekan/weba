@@ -11,7 +11,6 @@
   "api-import-username": "Geavaheaddjinamma",
   "archive-board": "Sirdde távvala vuorkái",
   "archived-items": "Vuorká",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Távvala namahus",
   "board-view-cal": "Kaleanddar",
   "board-view-collapse": "Geahpedahte",
@@ -29,6 +28,7 @@
   "cards-count-one": "Goartta",
   "change-password": "Rievdat beassansáni",
   "close": "Gidde",
+  "confirm-move-list-to-swimlane": "Sirditgo dán listtu ja buot dan goarttaid nubbái bálgái?",
   "create-account": "Ráhkat konto",
   "createBoardPopup-title": "Ráhkat távvala",
   "description": "Válddahus",
@@ -43,6 +43,9 @@
   "log-out": "Olggosčálihit",
   "login": "Sisaloggema",
   "monday": "Vuossárga",
+  "move-swimlane": "Sirdde bálgá",
+  "moveCardPopup-title": "Sirdde goartta",
+  "moveListPopup-title": "Sirdde listtu",
   "my-cards": "Mu goarttat",
   "notification-delivery-part-list": "Listu",
   "notification-delivery-part-swimlane": "Bálggis",
@@ -67,5 +70,6 @@
   "text-note-title": "Namahus",
   "thursday": "Duorastat",
   "tuesday": "Maŋŋebárga",
+  "view": "Čájeheapmi",
   "wednesday": "Gaskavahkku"
 }

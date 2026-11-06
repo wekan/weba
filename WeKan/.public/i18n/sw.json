@@ -11,7 +11,6 @@
   "api-import-username": "Jina la mtumiaji",
   "archive-board": "Hamisha Ubao hadi kwenye Kumbukumbu",
   "archived-items": "Hifadhi",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Kichwa cha Bodi",
   "board-view-cal": "Kalenda",
   "board-view-collapse": "Kunja",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kadi",
   "change-password": "Badilisha Nenosiri",
   "close": "Funga",
+  "confirm-move-list-to-swimlane": "Sogeza orodha hii na kadi zake zote kwenye swimlane nyingine?",
   "create-account": "Fungua Akaunti",
   "createBoardPopup-title": "Unda Bodi",
   "description": "Maelezo",
@@ -43,6 +43,9 @@
   "log-out": "Toka nje",
   "login": "Ingia",
   "monday": "Jumatatu",
+  "move-swimlane": "Sogeza Swimlane",
+  "moveCardPopup-title": "Hamisha Kadi",
+  "moveListPopup-title": "Hamisha Orodha",
   "my-cards": "Kadi Zangu",
   "notification-delivery-part-list": "Orodha",
   "notification-delivery-part-swimlane": "Njia",
@@ -67,5 +70,6 @@
   "text-note-title": "Kichwa",
   "thursday": "Alhamisi",
   "tuesday": "Jumanne",
+  "view": "Tazama",
   "wednesday": "Jumatano"
 }

@@ -6,13 +6,13 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Verification follow-up
 
-- The existing concurrent-registration test exhausted its retry loop once during
-  this change; the complete suite passed on rerun. Investigate that intermittent
+- The existing concurrent-registration test can exhaust its retry loop; the
+  complete suite passed on rerun. Investigate that intermittent
   test before treating repeated full-suite runs as deterministic.
 
 ## Translation coverage
 
-- Imported 69 matching WeKan keys for 237 registered languages. Language selection
+- Imported 73 matching WeKan keys for 237 registered languages. Language selection
   on login and in the account menu persists locally; browser language is the initial
   default, with English fallback and RTL metadata from WeKan.
 - Native interface labels and selected report headings/calendar dates are localized.
@@ -22,6 +22,22 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   claiming full translation coverage. No human translation is overwritten.
 
 ## Implemented and checked
+
+- Touch drag handles for cards/lists/swimlanes, 7px threshold, ghost/placeholder,
+  card ordering and movement across lists/lanes, list ordering and moving unique
+  lists with their cards, lane ordering, auto-scroll, pointer cancel/multitouch
+  and Escape. Ordinary touch swipes stay native scrolling; mouse card surfaces
+  and keyboard handle arrows also work.
+- New portable `kb_order` metadata retains manual order without altering existing
+  card/lane schema. Moves validate ownership, active state and destinations and
+  use transactions. Blank legacy lanes remain part of Default. Rejected moves
+  reload canonical data; duplicate destination list titles are rejected safely.
+- Store/gesture/protocol tests pass. Chromium CDP touch events cover ordering,
+  cross-lane/list moves with UTF-8 names, list confirmation/decline, carried cards,
+  persistence, mouse surface dragging, edge scrolling and ordinary swipes. These
+  are browser-emulated touch tests; physical devices and other browser engines
+  remain unverified.
+
 
 - Card popups open beside their initiating button and stay inside the visual
   viewport on desktop, portrait/landscape and resize. View/account/list/swimlane
@@ -43,8 +59,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   with the correct swimlane/list; clicking a card opens that editor. Owner checks
   and archived-board action guards are covered. Chromium checks desktop/mobile
   positions, Unicode action values and reopen persistence.
-- Full WeKan structural menus, drag handles/reordering and inserting cards at
-  a chosen position remain unimplemented; the header card action opens the editor.
+- Full WeKan structural menus and creating new cards at the top via the header
+  action remain unimplemented; existing cards can be reordered by dragging.
 
 - Login/register: local Font Awesome eye/eye-slash visibility icons.
 - Login/register: matching white password inputs with independent visibility
@@ -128,7 +144,8 @@ Use the actual parent source rather than treating the prototype's old menus as
 an exhaustive list. Reference areas: `client/components/boards`, `cards`,
 `sidebar`, `rules`, `settings`, `users`, `activities` and `gantt`.
 
-- Renaming/archiving lists and swimlanes, ordering/drag-and-drop, multi-selection,
+- Renaming/archiving lists and swimlanes, cross-board drag/drop, duplicate-titled
+  lists in one swimlane, multi-selection,
   board rename, stars, colors, visibility and board membership/roles.
 - Card comments, checklists, subtasks, dependencies, attachments, rich text,
   custom fields, time tracking, history and notifications.

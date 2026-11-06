@@ -11,7 +11,6 @@
   "api-import-username": "استعمال ڪندڙ جو نالو",
   "archive-board": "بورڊ آرڪائيو ڏانهن موڪليو",
   "archived-items": "آرڪائيو",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "بورڊ جو عنوان",
   "board-view-cal": "ڪئلينڊر",
   "board-view-collapse": "ويڙهيو",
@@ -29,6 +28,7 @@
   "cards-count-one": "ڪارڊ",
   "change-password": "ڳجهو لفظ مٽايو",
   "close": "بند ڪريو",
+  "confirm-move-list-to-swimlane": "هي فهرست ۽ ان جا سڀ ڪارڊ ٻي سوئم لين ۾ منتقل ڪجن؟",
   "create-account": "اڪائونٽ ٺاهيو",
   "createBoardPopup-title": "بورڊ ٺاهيو",
   "description": "تفصيل",
@@ -43,6 +43,9 @@
   "log-out": "لاگ آئوٽ",
   "login": "لاگ ان",
   "monday": "سومر",
+  "move-swimlane": "سوئم لين منتقل ڪريو",
+  "moveCardPopup-title": "ڪارڊ منتقل ڪريو",
+  "moveListPopup-title": "فهرست منتقل ڪريو",
   "my-cards": "منهنجا ڪارڊ",
   "notification-delivery-part-list": "فهرست",
   "notification-delivery-part-swimlane": "لڪير",
@@ -67,5 +70,6 @@
   "text-note-title": "عنوان",
   "thursday": "خميس",
   "tuesday": "اڱارو",
+  "view": "ڏسو",
   "wednesday": "اربع"
 }

@@ -11,7 +11,6 @@
   "api-import-username": "Nombre d'usuario",
   "archive-board": "Mover o tablero a l'archivo",
   "archived-items": "Fichero",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Título d'o Tablero",
   "board-view-cal": "Calendario",
   "board-view-collapse": "Contraer",
@@ -29,6 +28,7 @@
   "cards-count-one": "Tarcheta",
   "change-password": "Cambiar la clau de paso",
   "close": "Zarrar",
+  "confirm-move-list-to-swimlane": "¿Mover ista lista y todas sus tarchetas t'o otro carril?",
   "create-account": "Crear cuenta",
   "createBoardPopup-title": "Creyar un tablero",
   "description": "Descripción",
@@ -43,6 +43,9 @@
   "log-out": "Zarrar sesión",
   "login": "Iniciar sesión",
   "monday": "Lunes",
+  "move-swimlane": "Mover carril",
+  "moveCardPopup-title": "Mover a tarcheta",
+  "moveListPopup-title": "Mover lista",
   "my-cards": "As mias tarchetas",
   "notification-delivery-part-list": "Lista",
   "notification-delivery-part-swimlane": "Carril",
@@ -67,5 +70,6 @@
   "text-note-title": "Titol",
   "thursday": "Jueves",
   "tuesday": "Martes",
+  "view": "Veyer",
   "wednesday": "Miércoles"
 }

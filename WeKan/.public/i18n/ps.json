@@ -11,7 +11,6 @@
   "api-import-username": "کارن نوم",
   "archive-board": "تخته ارشيف ته لېږدول",
   "archived-items": "ارشيف",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "د تختې سرليک",
   "board-view-cal": "جنتري",
   "board-view-collapse": "راټول کړئ",
@@ -29,6 +28,7 @@
   "cards-count-one": "کارت",
   "change-password": "پټنوم بدلول",
   "close": "بندول",
+  "confirm-move-list-to-swimlane": "دا لړليک او ټول کارتونه يې بلې کرښې ته ولېږدوئ؟",
   "create-account": "ګڼون جوړ کړئ",
   "createBoardPopup-title": "تخته جوړول",
   "description": "تشريح",
@@ -43,6 +43,9 @@
   "log-out": "وتل",
   "login": "ننوتل",
   "monday": "دوشنبه",
+  "move-swimlane": "کرښه ولېږدوئ",
+  "moveCardPopup-title": "کارت لېږدول",
+  "moveListPopup-title": "لړليک ولېږدوئ",
   "my-cards": "زما کارتونه",
   "notification-delivery-part-list": "لړليک",
   "notification-delivery-part-swimlane": "کرښه",
@@ -67,5 +70,6 @@
   "text-note-title": "سرلیک",
   "thursday": "پنجشنبه",
   "tuesday": "سې‌شنبه",
+  "view": "ليد",
   "wednesday": "چهارشنبه"
 }

@@ -11,7 +11,6 @@
   "api-import-username": "Num d'utilisader",
   "archive-board": "Spustar la tabella en l'archiv",
   "archived-items": "Archiv",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Titel da la tabella",
   "board-view-cal": "Chalender",
   "board-view-collapse": "Reducir",
@@ -29,6 +28,7 @@
   "cards-count-one": "Carta",
   "change-password": "Midar il pled-clav",
   "close": "Serrar",
+  "confirm-move-list-to-swimlane": "Spustar questa glista e tut sias cartas en l’autra swimlane?",
   "create-account": "Crear in cont",
   "createBoardPopup-title": "Crear ina tabella",
   "description": "Descripziun",
@@ -43,6 +43,9 @@
   "log-out": "Sortir",
   "login": "S'annunziar",
   "monday": "Lunedì",
+  "move-swimlane": "Sposta swimlane",
+  "moveCardPopup-title": "Spustar la carta",
+  "moveListPopup-title": "Spustar la glista",
   "my-cards": "Mias cartas",
   "notification-delivery-part-list": "Glista",
   "notification-delivery-part-swimlane": "Via",
@@ -67,5 +70,6 @@
   "text-note-title": "Titel",
   "thursday": "Giovedì",
   "tuesday": "Martedì",
+  "view": "Vista",
   "wednesday": "Mercoledì"
 }

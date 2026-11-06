@@ -11,7 +11,6 @@
   "api-import-username": "Izina ry'ukoresha",
   "archive-board": "Jyana ikibaho mu bubiko",
   "archived-items": "Ububiko",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Umutwe w'ikibaho",
   "board-view-cal": "Kalendari",
   "board-view-collapse": "Zinga",
@@ -29,6 +28,7 @@
   "cards-count-one": "Ikarita",
   "change-password": "Hindura ijambobanga",
   "close": "Funga",
+  "confirm-move-list-to-swimlane": "Imurira uru rutonde n'amakarita yarwo yose ku wundi murongo?",
   "create-account": "Kora konti",
   "createBoardPopup-title": "Kurema ikibaho",
   "description": "Ibisobanuro",
@@ -43,6 +43,9 @@
   "log-out": "Sohoka",
   "login": "Kwinjira",
   "monday": "Ku wa Mbere",
+  "move-swimlane": "Hindura aho umurongo uri",
+  "moveCardPopup-title": "Kwimura ikarita",
+  "moveListPopup-title": "Imura Urutonde",
   "my-cards": "Amakarita yanjye",
   "notification-delivery-part-list": "Urutonde",
   "notification-delivery-part-swimlane": "Umurongo",
@@ -67,5 +70,6 @@
   "text-note-title": "Umutwe",
   "thursday": "Ku wa Kane",
   "tuesday": "Ku wa Kabiri",
+  "view": "Reba",
   "wednesday": "Ku wa Gatatu"
 }

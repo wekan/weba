@@ -11,7 +11,6 @@
   "api-import-username": "Kävutajan nimi",
   "archive-board": "Sirdä laud arhivaha",
   "archived-items": "Arhiv",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Laudan nimi",
   "board-view-cal": "Kalendar'",
   "board-view-collapse": "Penenda",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kart",
   "change-password": "Vajehta peitsana",
   "close": "Saubata",
+  "confirm-move-list-to-swimlane": "Sirdä nece list i kaik sen kartad toižele uindradale?",
   "create-account": "Tege akkaunt",
   "createBoardPopup-title": "Tege laud",
   "description": "Kirjutuz",
@@ -43,6 +43,9 @@
   "log-out": "Lähte",
   "login": "Tule",
   "monday": "Ezmärg",
+  "move-swimlane": "Sirdä ujundšoid",
+  "moveCardPopup-title": "Sirdä kart",
+  "moveListPopup-title": "Sirdä lugetiž",
   "my-cards": "Minun kartad",
   "notification-delivery-part-list": "Lugetiž",
   "notification-delivery-part-swimlane": "Ujundšoid",
@@ -67,5 +70,6 @@
   "text-note-title": "Nimi",
   "thursday": "Nellänzʹpäiv",
   "tuesday": "Tožnarg",
+  "view": "Kacu",
   "wednesday": "Koumanzʹpäiv"
 }

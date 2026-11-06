@@ -11,7 +11,6 @@
   "api-import-username": "ชื่อผู้ใช้งาน",
   "archive-board": "ย้ายบอร์ดไปยังคลังเก็บ",
   "archived-items": "เอกสารที่เก็บไว้",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "ชื่อบอร์ด",
   "board-view-cal": "ปฏิทิน",
   "board-view-collapse": "ยุบ",
@@ -29,6 +28,7 @@
   "cards-count-one": "การ์ด",
   "change-password": "เปลี่ยนรหัสผ่าน",
   "close": "ปิด",
+  "confirm-move-list-to-swimlane": "ย้ายรายการนี้และการ์ดทั้งหมดไปยังสวิมเลนอื่น?",
   "create-account": "สร้างบัญชี",
   "createBoardPopup-title": "สร้างบอร์ด",
   "description": "คำอธิบาย",
@@ -43,6 +43,9 @@
   "log-out": "ออกจากระบบ",
   "login": "เข้าสู่ระบบ",
   "monday": "วันจันทร์",
+  "move-swimlane": "ย้ายสวิมเลน",
+  "moveCardPopup-title": "ย้ายการ์ด",
+  "moveListPopup-title": "ย้ายรายการ",
   "my-cards": "การ์ดของฉัน",
   "notification-delivery-part-list": "รายการ",
   "notification-delivery-part-swimlane": "สวิมเลน",
@@ -67,5 +70,6 @@
   "text-note-title": "หัวข้อ",
   "thursday": "วันพฤหัสบดี",
   "tuesday": "วันอังคาร",
+  "view": "มุมมอง",
   "wednesday": "วันพุธ"
 }

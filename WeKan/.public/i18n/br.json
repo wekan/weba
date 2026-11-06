@@ -11,7 +11,6 @@
   "api-import-username": "Anv implijer",
   "archive-board": "Diellañ an daolenn",
   "archived-items": "Traoù kaset d'an dielloù",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Titl an daolenn",
   "board-view-cal": "Deiziadur",
   "board-view-collapse": "Plegañ",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kartenn",
   "change-password": "Kemmañ ger-tremen",
   "close": "Serriñ",
+  "confirm-move-list-to-swimlane": "Dilec'hiañ ar roll-mañ hag e holl gartennoù d'ar c'houloar all?",
   "create-account": "Krouiñ ur gont",
   "createBoardPopup-title": "Krouiñ un daolenn",
   "description": "Deskrivadur",
@@ -43,6 +43,9 @@
   "log-out": "Digasket",
   "login": "Kevreañ",
   "monday": "Lun",
+  "move-swimlane": "Dilec’hiañ ar vandenn",
+  "moveCardPopup-title": "Dilec’hiañ ar gartenn",
+  "moveListPopup-title": "Dilec’hiañ ar roll",
   "my-cards": "Ma c’hartennoù",
   "notification-delivery-part-list": "Roll",
   "notification-delivery-part-swimlane": "Bandenn",
@@ -67,5 +70,6 @@
   "text-note-title": "Titl",
   "thursday": "Yaou",
   "tuesday": "Meurzh",
+  "view": "Gwelout",
   "wednesday": "Mercrezh"
 }

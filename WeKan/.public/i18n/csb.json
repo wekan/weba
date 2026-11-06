@@ -11,7 +11,6 @@
   "api-import-username": "Miono brëkòwnika",
   "archive-board": "Przeniesc tôflã do archiwù",
   "archived-items": "Archiwùm",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Tytuł tôblëcë",
   "board-view-cal": "Kalãdôrz",
   "board-view-collapse": "Zwiń widok",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kôrta",
   "change-password": "Zmienic parolã",
   "close": "Zamknąc",
+  "confirm-move-list-to-swimlane": "Przeniéść tę lëstã i wszystkie jej kôrtë na inną ścieżkę?",
   "create-account": "Utwòrz konto",
   "createBoardPopup-title": "Ùsôdzëc tôflã",
   "description": "Òpisënk",
@@ -43,6 +43,9 @@
   "log-out": "Wëlogùjë sã",
   "login": "Logowanié",
   "monday": "Pòniedzôłk",
+  "move-swimlane": "Przeniesë ścieżkę",
+  "moveCardPopup-title": "Przeniesc kôrtã",
+  "moveListPopup-title": "Przeniesë lëstã",
   "my-cards": "Moje kôrtë",
   "notification-delivery-part-list": "Lësta",
   "notification-delivery-part-swimlane": "Stegna",
@@ -67,5 +70,6 @@
   "text-note-title": "Titel",
   "thursday": "Czwiôrtk",
   "tuesday": "Wtórk",
+  "view": "Wëzdrzatk",
   "wednesday": "Strzoda"
 }

@@ -11,7 +11,6 @@
   "api-import-username": "Nòmber di usuario",
   "archive-board": "Move e tabla pa archivo",
   "archived-items": "Archibo",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Título di e Tabla",
   "board-view-cal": "Calendario",
   "board-view-collapse": "Contraer",
@@ -29,6 +28,7 @@
   "cards-count-one": "Karchi",
   "change-password": "Kambia kontraseña",
   "close": "Sera",
+  "confirm-move-list-to-swimlane": "¿Mobe e lista i todas su karchinan na e otro kaminda?",
   "create-account": "Krea kuenta",
   "createBoardPopup-title": "Krea un tabla",
   "description": "Deskripshon",
@@ -43,6 +43,9 @@
   "log-out": "Sali",
   "login": "Drenta",
   "monday": "Lunes",
+  "move-swimlane": "Mobe kaminda",
+  "moveCardPopup-title": "Move e karchi",
+  "moveListPopup-title": "Mobe lista",
   "my-cards": "Mi karchinan",
   "notification-delivery-part-list": "Lista",
   "notification-delivery-part-swimlane": "Kaminda",
@@ -67,5 +70,6 @@
   "text-note-title": "Titulo",
   "thursday": "Huebes",
   "tuesday": "Martes",
+  "view": "Mira",
   "wednesday": "Miércoles"
 }

@@ -11,7 +11,6 @@
   "api-import-username": "Усӑҫӑ ячӗ",
   "archive-board": "Хӑмана архива куҫарас",
   "archived-items": "Архив",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Хӑма ячӗ",
   "board-view-cal": "Календарь",
   "board-view-collapse": "Пӗчӗклетес",
@@ -29,6 +28,7 @@
   "cards-count-one": "Карточка",
   "change-password": "Вӑрттӑн сӑмаха улӑштарас",
   "close": "Хупас",
+  "confirm-move-list-to-swimlane": "Ҫак списока тата унӑн пур карточкине тепӗр ҫула куҫарас-и?",
   "create-account": "Аккаунт тӑвас",
   "createBoardPopup-title": "Хӑма тӑвас",
   "description": "Ӑнлантару",
@@ -43,6 +43,9 @@
   "log-out": "Тухас",
   "login": "Системӑна кӗрес",
   "monday": "Тунти кун",
+  "move-swimlane": "Ҫула куҫарас",
+  "moveCardPopup-title": "Карточкӑна куҫарас",
+  "moveListPopup-title": "Списока куҫарас",
   "my-cards": "Манӑн карточкӑсем",
   "notification-delivery-part-list": "Список",
   "notification-delivery-part-swimlane": "Ҫул",
@@ -67,5 +70,6 @@
   "text-note-title": "Ят",
   "thursday": "Кӗҫнерни кун",
   "tuesday": "Ытлари кун",
+  "view": "Курӑм",
   "wednesday": "Юнкун"
 }

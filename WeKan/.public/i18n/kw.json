@@ -11,7 +11,6 @@
   "api-import-username": "Hanow devnydhyer",
   "archive-board": "Gwaya an estyllen dhe'n kovskrifva",
   "archived-items": "Kovskrifva",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Titel estyllen",
   "board-view-cal": "Kalender",
   "board-view-collapse": "Plega",
@@ -29,6 +28,7 @@
   "cards-count-one": "Karten",
   "change-password": "Chanjya an ger-tremena",
   "close": "Degea",
+  "confirm-move-list-to-swimlane": "Gwaya an rol ma ha pub karten dhodho dhe'n hyns aral?",
   "create-account": "Gwruthyl akont",
   "createBoardPopup-title": "Gwruthyl estyllen",
   "description": "Deskrifans",
@@ -43,6 +43,9 @@
   "log-out": "Omdenna",
   "login": "Omgelmi",
   "monday": "Dy'Lun",
+  "move-swimlane": "Gwaya hyns",
+  "moveCardPopup-title": "Gwaya an garten",
+  "moveListPopup-title": "Gwaya rol",
   "my-cards": "Ow hartennow",
   "notification-delivery-part-list": "Rol",
   "notification-delivery-part-swimlane": "Hyns",
@@ -67,5 +70,6 @@
   "text-note-title": "Tyle",
   "thursday": "Dy'Yow",
   "tuesday": "Dy'Meurth",
+  "view": "Gwel",
   "wednesday": "Dy'Merher"
 }

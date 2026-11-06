@@ -11,7 +11,6 @@
   "api-import-username": "Nùmene de s'utente",
   "archive-board": "Move sa tàula a s'archìviu",
   "archived-items": "Archìviu",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Tìtulu tàula",
   "board-view-cal": "Calendàriu",
   "board-view-collapse": "Cumprimi",
@@ -29,6 +28,7 @@
   "cards-count-one": "Carta",
   "change-password": "Càmbia sa crae",
   "close": "Serra",
+  "confirm-move-list-to-swimlane": "Mòvere custa lista e totu sas cartas suas a s'àtera corsia?",
   "create-account": "Crea account",
   "createBoardPopup-title": "Crea una tàula",
   "description": "Descritzione",
@@ -43,6 +43,9 @@
   "log-out": "Essi",
   "login": "Accesso",
   "monday": "Lunedì",
+  "move-swimlane": "Sposta swimlane",
+  "moveCardPopup-title": "Move sa carta",
+  "moveListPopup-title": "Sposta lista",
   "my-cards": "Sas cartas meas",
   "notification-delivery-part-list": "Lista",
   "notification-delivery-part-swimlane": "Caminu",
@@ -67,5 +70,6 @@
   "text-note-title": "Tìtulu",
   "thursday": "Giovedì",
   "tuesday": "Martedì",
+  "view": "Vista",
   "wednesday": "Mercoledì"
 }

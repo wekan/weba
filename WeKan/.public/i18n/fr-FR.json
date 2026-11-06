@@ -11,7 +11,6 @@
   "api-import-username": "Nom d'utilisateur",
   "archive-board": "Archiver le tableau",
   "archived-items": "Archives",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Titre du tableau",
   "board-view-cal": "Calendrier",
   "board-view-collapse": "Réduire",
@@ -29,6 +28,7 @@
   "cards-count-one": "Carte",
   "change-password": "Modifier le mot de passe",
   "close": "Fermer",
+  "confirm-move-list-to-swimlane": "Déplacer cette liste et toutes ses cartes vers l'autre couloir ?",
   "create-account": "Créer un compte",
   "createBoardPopup-title": "Créer un tableau",
   "description": "Texte descriptif",
@@ -43,6 +43,9 @@
   "log-out": "Déconnexion",
   "login": "Connexion",
   "monday": "Lundi",
+  "move-swimlane": "Déplacer le couloir",
+  "moveCardPopup-title": "Déplacer la carte",
+  "moveListPopup-title": "Déplacer la liste",
   "my-cards": "Mes Cartes",
   "notification-delivery-part-list": "Liste",
   "notification-delivery-part-swimlane": "Couloir",
@@ -67,5 +70,6 @@
   "text-note-title": "Titre",
   "thursday": "Jeudi",
   "tuesday": "Mardi",
+  "view": "Vue",
   "wednesday": "Mercredi"
 }

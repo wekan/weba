@@ -29,8 +29,10 @@ page=get(); command(['raise',None,'open',[],False])
 assert 'root.webaRender' in page, 'Custom reports must be included in the rendered page'
 assert 'BoardTitle' in page
 prefix=re.search(r'id="(@\d+)\.BoardTitle"',page)[1]
+answer=command(['update',prefix+'.DragAction','text','card||||',True])
+assert 'Select&nbsp;an&nbsp;active&nbsp;board&nbsp;first' in answer or 'Select&nbsp;an&nbsp;active&nbsp;board&nbsp;first' in get()
 answer=command(['update',prefix+'.BoardAction','text','lane|||',True])
-assert 'Select&nbsp;an&nbsp;active&nbsp;board&nbsp;first' in answer
+assert 'Select&nbsp;an&nbsp;active&nbsp;board&nbsp;first' in answer or 'Select&nbsp;an&nbsp;active&nbsp;board&nbsp;first' in get()
 command(['update',prefix+'.BoardTitle','text','HTTP board',True])
 answer=command(['raise',prefix+'.NewBoard','click',[],False])
 key=next(k for k in re.findall(r'Boards:([A-Za-z0-9+/=]+)',answer) if k.startswith('Yj') and k.endswith('='))
@@ -50,8 +52,10 @@ for control,view in [('Calendar','Calendar'),('Charts','Charts'),('TableView','T
 command(['raise',prefix+'.ArchiveBoard','click',[],False])
 command(['raise',prefix+'.Archive','click',[],False])
 command(['update',prefix+'.Boards','$'+key,None,True])
+answer=command(['update',prefix+'.DragAction','text','card||||',True])
+assert 'Select&nbsp;an&nbsp;active&nbsp;board&nbsp;first' in answer or 'Select&nbsp;an&nbsp;active&nbsp;board&nbsp;first' in get()
 answer=command(['update',prefix+'.BoardAction','text','lane|||',True])
-assert 'Select&nbsp;an&nbsp;active&nbsp;board&nbsp;first' in answer, 'Archived-board actions must be rejected server-side'
+assert 'Select&nbsp;an&nbsp;active&nbsp;board&nbsp;first' in answer or 'Select&nbsp;an&nbsp;active&nbsp;board&nbsp;first' in get(), 'Archived-board actions must be rejected server-side'
 answer=command(['raise',prefix+'.Admin','click',[],False])
 assert username in answer, 'Admin user listing did not contain the registered user'
 assert '<td>Admin</td>' in answer, 'First registered user role was not Admin'

@@ -11,7 +11,6 @@
   "api-import-username": "Atuisup aqqa",
   "archive-board": "Ilisarnaat toqqorsivimmut nuuguk",
   "archived-items": "Toqqorsivik",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Ilisarnaatip qulequtaa",
   "board-view-cal": "Ullorsiut",
   "board-view-collapse": "Katiguk",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kortsi",
   "change-password": "Isissutissaq allanngortiguk",
   "close": "Matuguk",
+  "confirm-move-list-to-swimlane": "Allattorsimaffik una kortsiilu tamarmik aqqutinut allanut nuunneqassappat?",
   "create-account": "Konto pilersiguk",
   "createBoardPopup-title": "Ilisarnaat pilersiguk",
   "description": "Nassuiaat",
@@ -43,6 +43,9 @@
   "log-out": "Anigit",
   "login": "Iserneq",
   "monday": "Ataasinngorneq",
+  "move-swimlane": "Aqqut nuuguk",
+  "moveCardPopup-title": "Kortsi nuuguk",
+  "moveListPopup-title": "Allattorsimaffik nuuguk",
   "my-cards": "Kortsikka",
   "notification-delivery-part-list": "Allattorsimaffik",
   "notification-delivery-part-swimlane": "Aqqut",
@@ -67,5 +70,6 @@
   "text-note-title": "Qulequtaq",
   "thursday": "Sisamanngorneq",
   "tuesday": "Marlunngorneq",
+  "view": "Takujuk",
   "wednesday": "Pingasunngorneq"
 }

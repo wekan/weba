@@ -11,7 +11,6 @@
   "api-import-username": "اسم المستخدم",
   "archive-board": "نقل اللوح الى الارشيف",
   "archived-items": "أرشيف",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "عنوان اللوح",
   "board-view-cal": "التقويم",
   "board-view-collapse": "انهيار",
@@ -29,6 +28,7 @@
   "cards-count-one": "بطاقة",
   "change-password": "تغيير كلمة المرور",
   "close": "غلق",
+  "confirm-move-list-to-swimlane": "هل تريد نقل هذه القائمة وجميع بطاقاتها إلى المسار الآخر؟",
   "create-account": "إنشاء حساب",
   "createBoardPopup-title": "إنشاء لوحة",
   "description": "وصف",
@@ -43,6 +43,9 @@
   "log-out": "تسجيل الخروج",
   "login": "تسجيل الدخول",
   "monday": "الاثنين",
+  "move-swimlane": "نقل المسار",
+  "moveCardPopup-title": "نقل البطاقة",
+  "moveListPopup-title": "نقل القائمة",
   "my-cards": "بطاقاتي",
   "notification-delivery-part-list": "قائمة",
   "notification-delivery-part-swimlane": "مسار",
@@ -67,5 +70,6 @@
   "text-note-title": "عنوان",
   "thursday": "الخميس",
   "tuesday": "الثلاثاء",
+  "view": "عرض",
   "wednesday": "الأربعاء"
 }

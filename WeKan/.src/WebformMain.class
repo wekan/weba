@@ -83,16 +83,30 @@ Catch
 End
 
 Public Sub NewCard_Click()
+  Dim laneRows As Result
+  Dim listRows As Result
+  Dim found As Boolean
   If Not $board Then
     Notice.Text = "Select a board first"
+    Return
+  Endif
+  laneRows = KanbanStore.Lanes($board)
+  For Each laneRows
+    listRows = KanbanStore.Lists($board, laneRows!title)
+    If Not listRows.Available Then Continue
+    Lane.Text = laneRows!title
+    Status.Text = listRows!title
+    found = True
+    Break
+  Next
+  If Not found Then
+    Notice.Text = "Add a list first"
     Return
   Endif
   Editor.Show()
   $card = 0
   CardTitle.Text = ""
   Description.Text = ""
-  Lane.Text = "Default"
-  Status.Text = "Todo"
   Assignee.Text = Session["username"]
   Labels.Text = ""
   DueDay.Text = ""
@@ -187,7 +201,7 @@ Public Sub Visual_Render()
   If Not Session["username"] Then Return
   Print "<script>" & File.Load(".public/kanban.js") & "</script>"
   Print "<link rel=\"stylesheet\" href=\"kanban.css\">"
-  Print "<section data-board=\"" & Str($board) & "\" data-action=\"" & Html(BoardAction.Name) & "\" data-editable=\"" & If($board And Not $archive, "true", "false") & "\" class=\"weba-content\" data-tree=\"" & Html(Boards.Name) & "\" data-view=\"" & Html($view) & "\">"
+  Print "<section data-drag=\"" & Html(DragAction.Name) & "\" data-board=\"" & Str($board) & "\" data-action=\"" & Html(BoardAction.Name) & "\" data-editable=\"" & If($board And Not $archive, "true", "false") & "\" class=\"weba-content\" data-tree=\"" & Html(Boards.Name) & "\" data-view=\"" & Html($view) & "\">"
   If $view = "Profile" Then
     Print "<p>Signed in as " & Html(Session["username"]) & "</p>"
   Else If $view = "Admin panel" Then
@@ -209,7 +223,7 @@ Public Sub Visual_Render()
       Print "<div class=\"weba-layout\" hidden>"
       lane = KanbanStore.Lanes($board)
       For Each lane
-        Print "<section data-lane=\"" & Html(lane!title) & "\">"
+        Print "<section data-order=\"" & Str(KanbanStore.ItemOrder($board, "lane", lane!title, lane!id)) & "\" data-lane=\"" & Html(lane!title) & "\">"
         list = KanbanStore.Lists($board, lane!title)
         For Each list
           Print "<span data-list=\"" & Html(list!title) & "\"></span>"
@@ -235,7 +249,7 @@ Public Sub Visual_Render()
         Endif
         text = c!title & " " & c!description & " " & c!labels & " " & c!assignee
         If Filter.Text And InStr(LCase(text), LCase(Filter.Text)) = 0 Then Continue
-        Print "<article class=\"weba-card\" data-card-key=\"c" & Str(c!id) & ":" & Str(b!id) & "\" data-status=\"" & Html(c!status) & "\" data-lane=\"" & Html(c!lane) & "\" data-due=\"" & Html(c!due_day) & "\">"
+        Print "<article data-order=\"" & Str(KanbanStore.ItemOrder(b!id, "card", CStr(c!id), c!id)) & "\" data-card-id=\"" & Str(c!id) & "\" class=\"weba-card\" data-card-key=\"c" & Str(c!id) & ":" & Str(b!id) & "\" data-status=\"" & Html(c!status) & "\" data-lane=\"" & Html(c!lane) & "\" data-due=\"" & Html(c!due_day) & "\">"
         Print "<strong>" & Html(c!title) & "</strong><p>" & Html(c!description) & "</p><small>" & Html(c!status) & " · " & Html(c!assignee) & " · " & Html(c!labels) & " · " & Html(c!due_day) & "</small></article>"
       Next
     Next
@@ -446,7 +460,7 @@ End
 
 Public Sub LanguageSelector_Render()
   Print "<link rel=\"stylesheet\" href=\"fontawesome.css\">"
-  Print "<script>" & File.Load(".public/i18n-catalog.js") & File.Load(".public/i18n.js") & File.Load(".public/ui.js") & File.Load(".public/popup.js") & "</script>"
+  Print "<script>" & File.Load(".public/i18n-catalog.js") & File.Load(".public/i18n.js") & File.Load(".public/ui.js") & File.Load(".public/popup.js") & File.Load(".public/drag.js") & "</script>"
   Print "<select data-weba-language aria-label=\"Language\" style=\"width:100%;height:32px;background:white;color:black\"></select>"
 End
 
@@ -491,4 +505,29 @@ End
 
 Public Sub CloseAccount_Click()
   AccountMenu.Hide()
+End
+
+Public Sub DragAction_Change()
+  Dim wire As String
+  Dim fields As String[]
+  If Not DragAction.Text Then Return
+  wire = DragAction.Text
+  DragAction.Text = ""
+  If $board = 0 Or $archive Then Error.Raise("Select an active board first")
+  fields = Split(wire, "|")
+  If fields.Count <> 5 Then Error.Raise("Invalid drag action")
+  Select fields[0]
+    Case "card"
+      KanbanStore.MoveCard($board, CInt(UnBase64(fields[1])), UnBase64(fields[2]), UnBase64(fields[3]), CInt(UnBase64(fields[4])))
+    Case "lane"
+      KanbanStore.MoveLane($board, UnBase64(fields[1]), UnBase64(fields[4]))
+    Case "list"
+      KanbanStore.MoveList($board, UnBase64(fields[1]), UnBase64(fields[2]), UnBase64(fields[3]), UnBase64(fields[4]))
+    Case Else
+      Error.Raise("Invalid drag action")
+  End Select
+  RefreshTree()
+Catch
+  Notice.Text = Error.Text
+  Visual.Refresh()
 End

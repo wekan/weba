@@ -11,7 +11,6 @@
   "api-import-username": "İstifadəçi adı",
   "archive-board": "Lövhəni Arxivə köçürün",
   "archived-items": "Arxiv",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "İdarə Heyətinin Başlığı",
   "board-view-cal": "Təqvim",
   "board-view-collapse": "Yıxılma",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kart",
   "change-password": "Parolun dəyişdirilməsi",
   "close": "Bağlayın",
+  "confirm-move-list-to-swimlane": "Bu siyahını və onun bütün kartlarını digər üzgüçülük zolağına köçürmək istəyirsiniz?",
   "create-account": "Hesab yaradın",
   "createBoardPopup-title": "Lövhə yaradın",
   "description": "Təsvir",
@@ -43,6 +43,9 @@
   "log-out": "Çıxış",
   "login": "Daxil ol",
   "monday": "bazar ertəsi",
+  "move-swimlane": "Swimlane-i hərəkət etdirin",
+  "moveCardPopup-title": "Kartı köçürün",
+  "moveListPopup-title": "Siyahını köçürün",
   "my-cards": "Mənim Kartlarım",
   "notification-delivery-part-list": "Siyahı",
   "notification-delivery-part-swimlane": "Üzgüçülük zolağı",
@@ -67,5 +70,6 @@
   "text-note-title": "Başlıq",
   "thursday": "cümə axşamı",
   "tuesday": "çərşənbə axşamı",
+  "view": "Baxın",
   "wednesday": "çərşənbə"
 }

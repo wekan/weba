@@ -11,7 +11,6 @@
   "api-import-username": "Ibizo lomsebenzisi",
   "archive-board": "Yisa ibhodi esiphaleni",
   "archived-items": "Ingobo yomlando",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Isihloko sebhodi",
   "board-view-cal": "Ikhalenda",
   "board-view-collapse": "Goqa",
@@ -29,6 +28,7 @@
   "cards-count-one": "Ikhadi",
   "change-password": "Guqula iphasiwedi",
   "close": "Vala",
+  "confirm-move-list-to-swimlane": "Hambisa lolu luhlu lawo wonke amakhadi alo komunye umzila?",
   "create-account": "Dala i-akhawunti",
   "createBoardPopup-title": "Dala ibhodi",
   "description": "Incazelo",
@@ -43,6 +43,9 @@
   "log-out": "Phuma",
   "login": "Ukungena",
   "monday": "UMvulo",
+  "move-swimlane": "Hambisa umzila",
+  "moveCardPopup-title": "Thuthela ikhadi",
+  "moveListPopup-title": "Hambisa uluhlu",
   "my-cards": "Amakhadi ami",
   "notification-delivery-part-list": "Uluhlu",
   "notification-delivery-part-swimlane": "Umzila",
@@ -67,5 +70,6 @@
   "text-note-title": "Isihloko",
   "thursday": "ULwesine",
   "tuesday": "ULwesibili",
+  "view": "Buka",
   "wednesday": "ULwesithathu"
 }

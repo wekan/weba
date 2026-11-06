@@ -11,7 +11,6 @@
   "api-import-username": "Ім'я користувача",
   "archive-board": "Перенести дошку до архіву",
   "archived-items": "Архів",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Назва дошки",
   "board-view-cal": "Календар",
   "board-view-collapse": "Згорнути",
@@ -29,6 +28,7 @@
   "cards-count-one": "Картка",
   "change-password": "Змінити пароль",
   "close": "Закрити",
+  "confirm-move-list-to-swimlane": "Перемістити цей список і всі його картки на іншу доріжку?",
   "create-account": "Створити обліковий запис",
   "createBoardPopup-title": "Створити дошку",
   "description": "Опис",
@@ -43,6 +43,9 @@
   "log-out": "Вийти",
   "login": "Увійти",
   "monday": "Понеділок",
+  "move-swimlane": "Перемістити лінію плавання",
+  "moveCardPopup-title": "Перемістити картку",
+  "moveListPopup-title": "Перемістити список",
   "my-cards": "Мої картки",
   "notification-delivery-part-list": "Список",
   "notification-delivery-part-swimlane": "Лінія",
@@ -67,5 +70,6 @@
   "text-note-title": "Назва",
   "thursday": "Четвер",
   "tuesday": "Вівторок",
+  "view": "Переглянути",
   "wednesday": "Середа"
 }

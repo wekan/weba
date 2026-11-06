@@ -104,6 +104,9 @@
       Text = ("Logout")
     }
   }
+  { DragAction WebTextBox
+    Visible = False
+  }
   { BoardAction WebTextBox
     Visible = False
   }

@@ -11,7 +11,6 @@
   "api-import-username": "Tequitini itoca",
   "archive-board": "Xicuica huapalli pixcalco",
   "archived-items": "Pixcalli",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Huapalli itoca",
   "board-view-cal": "Tonalamatl",
   "board-view-collapse": "Xictzicuiltia",
@@ -29,6 +28,7 @@
   "cards-count-one": "Amatlapalli",
   "change-password": "Xicpatla ichtaca tlahtolli",
   "close": "Xictzacua",
+  "confirm-move-list-to-swimlane": "¿Xicuica inin tocatlahtolli ihuan mochi iamatlapalhuan ipan occe ohtli?",
   "create-account": "Xicchihua tlapohualiztli",
   "createBoardPopup-title": "Xicchihua huapalli",
   "description": "Tlahtolli",
@@ -43,6 +43,9 @@
   "log-out": "Xiquiza",
   "login": "Calaquiliztli",
   "monday": "Lunes",
+  "move-swimlane": "Xicmijcueni ohtli",
+  "moveCardPopup-title": "Xicolini amatlapalli",
+  "moveListPopup-title": "Xicuica tocatlahtolli",
   "my-cards": "Noamatlapaltin",
   "notification-delivery-part-list": "Tocatlahtolli",
   "notification-delivery-part-swimlane": "Ohtli",
@@ -67,5 +70,6 @@
   "text-note-title": "Tocaitl",
   "thursday": "Jueves",
   "tuesday": "Martes",
+  "view": "Xiquitta",
   "wednesday": "Miércoles"
 }

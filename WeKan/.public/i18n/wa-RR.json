@@ -11,7 +11,6 @@
   "api-import-username": "Ngaran han gumaramit",
   "archive-board": "Ibalhin an Board ngadto ha Arkibo",
   "archived-items": "Arkibo",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Titulo han Board",
   "board-view-cal": "Kalendaryo",
   "board-view-collapse": "I-collapse",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kard",
   "change-password": "Igliwat an Password",
   "close": "Isira",
+  "confirm-move-list-to-swimlane": "Ibalhin ini nga lista ngan an ngatanan nga card hini ngadto ha iba nga swimlane?",
   "create-account": "Maghimo hin Account",
   "createBoardPopup-title": "Maghimo hin Board",
   "description": "Deskripsyon",
@@ -43,6 +43,9 @@
   "log-out": "Gumawas",
   "login": "Sum_od",
   "monday": "Lunes",
+  "move-swimlane": "Ibalhin an Swimlane",
+  "moveCardPopup-title": "Ibalhin an Card",
+  "moveListPopup-title": "Ibalhin an Lista",
   "my-cards": "Akon mga Card",
   "notification-delivery-part-list": "Lista",
   "notification-delivery-part-swimlane": "Agianan",
@@ -67,5 +70,6 @@
   "text-note-title": "Titulo",
   "thursday": "Huwebes",
   "tuesday": "Martes",
+  "view": "Kitaa",
   "wednesday": "Miyerkoles"
 }

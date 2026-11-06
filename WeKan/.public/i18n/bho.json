@@ -11,7 +11,6 @@
   "api-import-username": "उपयोगकर्ता नाम",
   "archive-board": "बोर्ड संग्रह में ले जाईं",
   "archived-items": "संग्रह",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "बोर्ड शीर्षक",
   "board-view-cal": "कैलेंडर",
   "board-view-collapse": "समेटीं",
@@ -29,6 +28,7 @@
   "cards-count-one": "कार्ड",
   "change-password": "पासवर्ड बदलीं",
   "close": "बंद करीं",
+  "confirm-move-list-to-swimlane": "ई सूची आ एकर सभ कार्ड दोसरा स्विमलेन में सरकाईं?",
   "create-account": "खाता बनाईं",
   "createBoardPopup-title": "बोर्ड बनाईं",
   "description": "विवरण",
@@ -43,6 +43,9 @@
   "log-out": "बाहर निकलीं",
   "login": "लॉग इन",
   "monday": "सोमार",
+  "move-swimlane": "स्विमलेन सरकाईं",
+  "moveCardPopup-title": "कार्ड ले जाईं",
+  "moveListPopup-title": "सूची सरकाईं",
   "my-cards": "हमार कार्ड",
   "notification-delivery-part-list": "सूची",
   "notification-delivery-part-swimlane": "रस्ता",
@@ -67,5 +70,6 @@
   "text-note-title": "शीर्षक",
   "thursday": "बिफे",
   "tuesday": "मंगर",
+  "view": "देखीं",
   "wednesday": "बुध"
 }

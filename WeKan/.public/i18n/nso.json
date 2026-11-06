@@ -11,7 +11,6 @@
   "api-import-username": "Leina la mošomiši",
   "archive-board": "Iša poto polokelong",
   "archived-items": "Bobolokelo",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Sehlogo sa Boto",
   "board-view-cal": "Khalentara",
   "board-view-collapse": "Phutha",
@@ -29,6 +28,7 @@
   "cards-count-one": "Karata",
   "change-password": "Fetoša lentšu la sephiri",
   "close": "Tswalela",
+  "confirm-move-list-to-swimlane": "Iša lenaneo le le dikarata tša lona ka moka tseleng ye nngwe ya go sesa?",
   "create-account": "Hlama Akhaonto",
   "createBoardPopup-title": "Hlama poto",
   "description": "Tlhalošo",
@@ -43,6 +43,9 @@
   "log-out": "Tšwa",
   "login": "Tsena",
   "monday": "Mošupologo",
+  "move-swimlane": "Šuthiša Mothalo wa go Rutha",
+  "moveCardPopup-title": "Šuthiša karata",
+  "moveListPopup-title": "Iša lenaneo",
   "my-cards": "Dikarata tša ka",
   "notification-delivery-part-list": "Lelokelelo",
   "notification-delivery-part-swimlane": "Tsela",
@@ -67,5 +70,6 @@
   "text-note-title": "Sehlogo",
   "thursday": "Labone",
   "tuesday": "Labobedi",
+  "view": "Lebelela",
   "wednesday": "Laboraro"
 }

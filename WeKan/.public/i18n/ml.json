@@ -11,7 +11,6 @@
   "api-import-username": "ഉപയോക്തൃനാമം",
   "archive-board": "ബോർഡ് ശേഖരത്തിലേക്ക് മാറ്റുക",
   "archived-items": "ആർക്കൈവ്",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "ബോർഡ് ശീർഷകം",
   "board-view-cal": "കലണ്ടർ",
   "board-view-collapse": "ചുരുക്കുക",
@@ -29,6 +28,7 @@
   "cards-count-one": "കാർഡ്",
   "change-password": "പാസ്‌വേഡ് മാറ്റുക",
   "close": "അടയ്ക്കുക",
+  "confirm-move-list-to-swimlane": "ഈ പട്ടികയും അതിലെ എല്ലാ കാർഡുകളും മറ്റൊരു സ്വിംലെയിനിലേക്ക് മാറ്റണോ?",
   "create-account": "അക്കൗണ്ട് സൃഷ്ടിക്കുക",
   "createBoardPopup-title": "ബോർഡ് സൃഷ്ടിക്കുക",
   "description": "വിവരണം",
@@ -43,6 +43,9 @@
   "log-out": "ലോഗ് ഔട്ട്",
   "login": "ലോഗിൻ",
   "monday": "തിങ്കളാഴ്ച",
+  "move-swimlane": "സ്വിംലെയിൻ മാറ്റുക",
+  "moveCardPopup-title": "കാർഡ് നീക്കുക",
+  "moveListPopup-title": "പട്ടിക മാറ്റുക",
   "my-cards": "എന്റെ കാർഡുകൾ",
   "notification-delivery-part-list": "പട്ടിക",
   "notification-delivery-part-swimlane": "പാത",
@@ -67,5 +70,6 @@
   "text-note-title": "ശീർഷകം",
   "thursday": "വ്യാഴാഴ്ച",
   "tuesday": "ചൊവ്വാഴ്ച",
+  "view": "കാണുക",
   "wednesday": "ബുധനാഴ്ച"
 }

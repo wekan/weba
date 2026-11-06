@@ -11,7 +11,6 @@
   "api-import-username": "የተጠቃሚ ስም",
   "archive-board": "ሰሌዳውን ወደ መዝገብ አንቀሳቅስ",
   "archived-items": "የማህደር ንጥሎች",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "የቦርድ ርዕስ",
   "board-view-cal": "የቀን መቁጠሪያ",
   "board-view-collapse": "ሰብስብ",
@@ -29,6 +28,7 @@
   "cards-count-one": "ካርድ",
   "change-password": "የይለፍ ቃል ቀይር",
   "close": "ዝጋ",
+  "confirm-move-list-to-swimlane": "ይህን ዝርዝርና ሁሉንም ካርዶቹን ወደ ሌላው የመዋኛ መስመር ይውሰዱ?",
   "create-account": "መለያ ፍጠር",
   "createBoardPopup-title": "ሰሌዳ ፍጠር",
   "description": "መግለጫ",
@@ -43,6 +43,9 @@
   "log-out": "ውጣ",
   "login": "መግቢያ",
   "monday": "ሰኞ",
+  "move-swimlane": "የመዋኛ መስመር አንቀሳቅስ",
+  "moveCardPopup-title": "ካርድ አንቀሳቅስ",
+  "moveListPopup-title": "ዝርዝር አንቀሳቅስ",
   "my-cards": "የእኔ ካርዶች",
   "notification-delivery-part-list": "ዝርዝር",
   "notification-delivery-part-swimlane": "መስመር",
@@ -67,5 +70,6 @@
   "text-note-title": "ርዕስ",
   "thursday": "ሐሙስ",
   "tuesday": "ማክሰኞ",
+  "view": "እይታ",
   "wednesday": "ረቡዕ"
 }

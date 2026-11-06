@@ -11,7 +11,6 @@
   "api-import-username": "Inoa mea hoʻohana",
   "archive-board": "Hoʻoneʻe i ka papa i ka waihona",
   "archived-items": "waihona",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "papa inoa",
   "board-view-cal": "ʻalemanaka",
   "board-view-collapse": "kolalapake",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kāleka",
   "change-password": "Hoʻololi i ka ʻōlelo huna",
   "close": "Pani",
+  "confirm-move-list-to-swimlane": "neʻe kēia papa inoa a a pau ikaka nā kāleka i ka ʻē aʻe ala ʻauʻau?",
   "create-account": "hana moʻokāki",
   "createBoardPopup-title": "Hana i papa",
   "description": "Wehewehe",
@@ -43,6 +43,9 @@
   "log-out": "Puka aku",
   "login": "ʻeʻe",
   "monday": "monakawa",
+  "move-swimlane": "neʻe ala ʻauʻau",
+  "moveCardPopup-title": "Hoʻoneʻe i ke kāleka",
+  "moveListPopup-title": "neʻe papa inoa",
   "my-cards": "Kaʻu mau kāleka",
   "notification-delivery-part-list": "Papa inoa",
   "notification-delivery-part-swimlane": "Ala",
@@ -67,5 +70,6 @@
   "text-note-title": "Poʻomanaʻo",
   "thursday": "kulakakawa",
   "tuesday": "kuekakawa",
+  "view": "nānā",
   "wednesday": "wekanekakawa"
 }

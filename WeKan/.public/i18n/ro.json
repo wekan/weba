@@ -11,7 +11,6 @@
   "api-import-username": "Nume de utilizator",
   "archive-board": "Mută panoul în arhivă",
   "archived-items": "Arhivă",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Titlul panoului",
   "board-view-cal": "Calendar",
   "board-view-collapse": "Restrânge",
@@ -29,6 +28,7 @@
   "cards-count-one": "Card",
   "change-password": "Schimbă parola",
   "close": "Închide",
+  "confirm-move-list-to-swimlane": "Muți această listă și toate cardurile sale în celălalt culoar?",
   "create-account": "Creează un cont",
   "createBoardPopup-title": "Creează panou",
   "description": "Descriere",
@@ -43,6 +43,9 @@
   "log-out": "Deconectare",
   "login": "Autentificare",
   "monday": "Luni",
+  "move-swimlane": "Mută culoarul",
+  "moveCardPopup-title": "Mută cardul",
+  "moveListPopup-title": "Mută lista",
   "my-cards": "Cardurile mele",
   "notification-delivery-part-list": "Listă",
   "notification-delivery-part-swimlane": "Culoar",
@@ -67,5 +70,6 @@
   "text-note-title": "Titlu",
   "thursday": "Joi",
   "tuesday": "Marți",
+  "view": "Vizualizare",
   "wednesday": "Miercuri"
 }

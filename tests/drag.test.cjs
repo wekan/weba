@@ -1,0 +1,32 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');const path=require('node:path');const {JSDOM}=require('jsdom');
+const dom=new JSDOM(`<section class="weba-content" data-board="1" data-view="Swimlanes" data-editable="true" data-drag="@1.DragAction"><div class="weba-report"><section class="weba-swimlane" data-lane="Default"><div class="weba-columns"><section class="weba-column" data-lane="Default" data-list="Todo"><div class="weba-list-body"><article class="weba-card" data-card-id="1"><button class="weba-drag-handle" data-drag-kind="card">Move</button>One</article><article class="weba-card" data-card-id="2">Two</article></div></section><section class="weba-column" data-lane="Toinen äärata" data-list="Doing"><div class="weba-list-body"></div></section></div></section></div></section>`,{runScripts:'outside-only',pretendToBeVisual:true});
+const w=dom.window,d=w.document,calls=[];w.TextEncoder=TextEncoder;w.gw={update:(...args)=>calls.push(args)};
+w.matchMedia=()=>({matches:true});w.confirm=()=>true;
+const root=d.querySelector('.weba-content'),cards=[...d.querySelectorAll('.weba-card')],handle=d.querySelector('button'),columns=[...d.querySelectorAll('.weba-column')];
+const rect=(left,top,width=250,height=80)=>({left,top,right:left+width,bottom:top+height,width,height});
+root.getBoundingClientRect=()=>rect(0,0,600,400);
+columns[0].getBoundingClientRect=()=>rect(0,0,250,400);columns[1].getBoundingClientRect=()=>rect(300,0,250,400);
+columns.forEach(e=>e.querySelector('.weba-list-body').getBoundingClientRect=e.getBoundingClientRect);
+cards.forEach((e,i)=>e.getBoundingClientRect=()=>rect(0,20+i*100));handle.getBoundingClientRect=()=>rect(0,20,28,28);
+d.elementFromPoint=(x,y)=>x<0?d.body:x>280?columns[1].firstElementChild:columns[0].firstElementChild;
+w.eval(fs.readFileSync(path.join(__dirname,'../WeKan/.public/drag.js'),'utf8'));d.dispatchEvent(new w.Event('DOMContentLoaded'));
+function event(type,target,x,y,extra={}){const e=new w.Event(type,{bubbles:true,cancelable:true});Object.assign(e,{clientX:x,clientY:y,pointerId:1,pointerType:'touch',isPrimary:true,button:0,...extra});target.dispatchEvent(e);}
+assert.equal(w.webaDrag.identify(cards[0],'touch'),null,'ordinary card touch remains native scroll');
+assert.equal(w.webaDrag.identify(cards[0],'mouse').kind,'card','mouse can drag the card surface');
+assert.equal(w.webaDrag.identify(handle,'touch').kind,'card');
+event('pointerdown',cards[0],10,30);event('pointermove',d,330,80);event('pointerup',d,330,80);assert.equal(calls.length,0);
+event('pointerdown',handle,10,30);event('pointermove',d,14,32);event('pointerup',d,14,32);assert.equal(calls.length,0,'small movement is not a drag');
+event('pointerdown',handle,10,30);event('pointermove',d,330,80);assert.equal(w.webaDrag.active,true);event('pointerup',d,330,80);
+assert.equal(calls.length,1);const wire=calls[0][2].split('|');assert.equal(wire[0],'card');assert.deepEqual(wire.slice(1).map(s=>Buffer.from(s,'base64').toString()),['1','Toinen äärata','Doing','0']);
+assert.equal(d.querySelector('.weba-drag-ghost'),null);assert.equal(d.querySelector('.weba-drop-placeholder'),null);assert.equal(cards[0].classList.contains('weba-drag-origin'),false);
+for(const cancel of ['pointercancel','multitouch','outside']){
+  event('pointerdown',handle,10,30);event('pointermove',d,330,80);
+  if(cancel==='pointercancel')event('pointercancel',d,330,80);
+  if(cancel==='multitouch')event('pointerdown',d,330,80,{pointerId:2,isPrimary:false});
+  if(cancel==='outside')event('pointerup',d,-20,80);
+  assert.equal(w.webaDrag.active,false);assert.equal(calls.length,1,'canceled/invalid drops do not write');
+}
+root.dataset.editable='false';assert.equal(w.webaDrag.identify(handle,'touch'),null,'archive/read-only view cannot drag');
+root.dataset.editable='true';const key=new w.KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true,cancelable:true});handle.dispatchEvent(key);assert.equal(calls.length,2,'keyboard handle can move a card');
+w.close();console.log('Drag gestures: touch-vs-scroll, mouse surface, threshold, UTF-8 targets, cancel/multitouch, invalid/read-only drops, cleanup and keyboard passed');

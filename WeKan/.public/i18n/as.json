@@ -11,7 +11,6 @@
   "api-import-username": "ব্যৱহাৰকাৰীৰ নাম",
   "archive-board": "ফলক আৰ্কাইভলৈ নিয়ক",
   "archived-items": "সংৰক্ষণাগাৰ",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "বৰ্ডৰ শিৰোনাম",
   "board-view-cal": "দিনপঞ্জী",
   "board-view-collapse": "সংকুচিত কৰক",
@@ -29,6 +28,7 @@
   "cards-count-one": "কাৰ্ড",
   "change-password": "পাছৱৰ্ড সলনি কৰক",
   "close": "বন্ধ কৰক",
+  "confirm-move-list-to-swimlane": "এই তালিকা আৰু ইয়াৰ সকলো কাৰ্ড আন স্বীমলেনলৈ নিবনে?",
   "create-account": "একাউণ্ট সৃষ্টি কৰক",
   "createBoardPopup-title": "ফলক সৃষ্টি কৰক",
   "description": "বিৱৰণ",
@@ -43,6 +43,9 @@
   "log-out": "লগ আউট",
   "login": "লগইন",
   "monday": "সোমবাৰ",
+  "move-swimlane": "ছুইমলেন স্থানান্তৰ কৰক",
+  "moveCardPopup-title": "কাৰ্ড স্থানান্তৰ কৰক",
+  "moveListPopup-title": "তালিকা স্থানান্তৰ কৰক",
   "my-cards": "মোৰ কাৰ্ডসমূহ",
   "notification-delivery-part-list": "তালিকা",
   "notification-delivery-part-swimlane": "পথ",
@@ -67,5 +70,6 @@
   "text-note-title": "শিৰোনাম",
   "thursday": "বৃহস্পতিবাৰ",
   "tuesday": "মঙলবাৰ",
+  "view": "দৃশ্য",
   "wednesday": "বুধবাৰ"
 }

@@ -11,7 +11,6 @@
   "api-import-username": "Baarakɛla tɔgɔ",
   "archive-board": "Walan bila marayɔrɔ la",
   "archived-items": "Marayɔrɔ",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Tabali tɔgɔ",
   "board-view-cal": "Donw kalandiriye",
   "board-view-collapse": "A dun",
@@ -29,6 +28,7 @@
   "cards-count-one": "Karti",
   "change-password": "Gundo daɲɛ yɛlɛma",
   "close": "A datugu",
+  "confirm-move-list-to-swimlane": "Lisiti in ni a karataw bɛɛ bila swimlane wɛrɛ la?",
   "create-account": "Jatebɔsɛbɛn dabɔ",
   "createBoardPopup-title": "Walan da",
   "description": "Ɲɛfɔli",
@@ -43,6 +43,9 @@
   "log-out": "Bɔ kɔnɔ",
   "login": "Donni",
   "monday": "Ntɛnɛn",
+  "move-swimlane": "Swimlane yɛlɛma",
+  "moveCardPopup-title": "Karti bila yɔrɔ wɛrɛ",
+  "moveListPopup-title": "Lisiti yɛlɛma",
   "my-cards": "Ne ka kartiw",
   "notification-delivery-part-list": "Sɛbɛn",
   "notification-delivery-part-swimlane": "Sira",
@@ -67,5 +70,6 @@
   "text-note-title": "Tolo",
   "thursday": "Alamisa",
   "tuesday": "Tarata",
+  "view": "Jira",
   "wednesday": "Araba"
 }

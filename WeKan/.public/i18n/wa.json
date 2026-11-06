@@ -11,7 +11,6 @@
   "api-import-username": "Nume uzeu",
   "archive-board": "Mete li tåvlea el årtchive",
   "archived-items": "Årtchive",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Tite du dåvle",
   "board-view-cal": "Calindrî",
   "board-view-collapse": "Totafwait catchî",
@@ -29,6 +28,7 @@
   "cards-count-one": "Cåte",
   "change-password": "Candjî l' sicret",
   "close": "Clôre",
+  "confirm-move-list-to-swimlane": "Bodjî cisse djîveye ci et totes ses cåtes viè l' ôte coridôr?",
   "create-account": "Crèye un cont compte",
   "createBoardPopup-title": "Crear la tåvlea",
   "description": "Discrijhaedje",
@@ -43,6 +43,9 @@
   "log-out": "Si dislodjî",
   "login": "T'inde",
   "monday": "Londi",
+  "move-swimlane": "Déplacer Coridôr",
+  "moveCardPopup-title": "Mintrepond la căte",
+  "moveListPopup-title": "Djoiveye t'pèrer",
   "my-cards": "Môi cardes",
   "notification-delivery-part-list": "Djivêye",
   "notification-delivery-part-swimlane": "Coridôr",
@@ -67,5 +70,6 @@
   "text-note-title": "Tite",
   "thursday": "Jedi",
   "tuesday": "Mårdi",
+  "view": "Veye",
   "wednesday": "Mecredi"
 }

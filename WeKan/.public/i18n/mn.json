@@ -11,7 +11,6 @@
   "api-import-username": "Хэрэглэгчийн нэр",
   "archive-board": "Самбарыг архивлах",
   "archived-items": "Архивласан зүйлс",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Самбарын гарчиг",
   "board-view-cal": "Хуанли",
   "board-view-collapse": "Хураах",
@@ -29,6 +28,7 @@
   "cards-count-one": "Карт",
   "change-password": "Нууц үг солих",
   "close": "Хаах",
+  "confirm-move-list-to-swimlane": "Энэ жагсаалт болон түүний бүх картыг өөр усан зам руу зөөх үү?",
   "create-account": "Бүртгэл үүсгэх",
   "createBoardPopup-title": "Самбар үүсгэх",
   "description": "Тайлбар",
@@ -43,6 +43,9 @@
   "log-out": "Гарах",
   "login": "Нэвтрэх",
   "monday": "Даваа гараг",
+  "move-swimlane": "Усан замыг зөөх",
+  "moveCardPopup-title": "Карт зөөх",
+  "moveListPopup-title": "Жагсаалт зөөх",
   "my-cards": "Миний картууд",
   "notification-delivery-part-list": "Жагсаалт",
   "notification-delivery-part-swimlane": "Усан зам",
@@ -67,5 +70,6 @@
   "text-note-title": "Гарчиг",
   "thursday": "Пүрэв гараг",
   "tuesday": "Мягмар гараг",
+  "view": "Харах",
   "wednesday": "Лхагва гараг"
 }

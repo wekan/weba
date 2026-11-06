@@ -11,7 +11,6 @@
   "api-import-username": "صارف نام",
   "archive-board": "بورڈ کو محفوظ خانے میں منتقل کریں",
   "archived-items": "محفوظ خانہ",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "بورڈ کا عنوان",
   "board-view-cal": "تقویم",
   "board-view-collapse": "سمیٹیں",
@@ -29,6 +28,7 @@
   "cards-count-one": "کارڈ",
   "change-password": "پاس ورڈ تبدیل کریں",
   "close": "بند کریں",
+  "confirm-move-list-to-swimlane": "کیا یہ فہرست اور اس کے تمام کارڈز دوسری سویم لین میں منتقل کریں؟",
   "create-account": "اکاؤنٹ بنائیں",
   "createBoardPopup-title": "بورڈ بنائیں",
   "description": "تفصیل",
@@ -43,6 +43,9 @@
   "log-out": "لاگ آؤٹ",
   "login": "لاگ ان",
   "monday": "پیر",
+  "move-swimlane": "سویم لین منتقل کریں",
+  "moveCardPopup-title": "کارڈ منتقل کریں",
+  "moveListPopup-title": "فہرست منتقل کریں",
   "my-cards": "میرے کارڈز",
   "notification-delivery-part-list": "فہرست",
   "notification-delivery-part-swimlane": "سویم لین",
@@ -67,5 +70,6 @@
   "text-note-title": "عنوان",
   "thursday": "جمعرات",
   "tuesday": "منگل",
+  "view": "منظر",
   "wednesday": "بدھ"
 }

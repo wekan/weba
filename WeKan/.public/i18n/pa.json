@@ -11,7 +11,6 @@
   "api-import-username": "ਯੂਜ਼ਰਨੇਮ",
   "archive-board": "ਬੋਰਡ ਨੂੰ ਪੁਰਾਲੇਖ ਵਿੱਚ ਭੇਜੋ",
   "archived-items": "ਪੁਰਾਲੇਖ",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "ਬੋਰਡ ਦਾ ਸਿਰਲੇਖ",
   "board-view-cal": "ਕੈਲੰਡਰ",
   "board-view-collapse": "ਸਮੇਟਣਾ",
@@ -29,6 +28,7 @@
   "cards-count-one": "ਕਾਰਡ",
   "change-password": "ਪਾਸਵਰਡ ਬਦਲੋ",
   "close": "ਬੰਦ ਕਰੋ",
+  "confirm-move-list-to-swimlane": "ਕੀ ਇਸ ਸੂਚੀ ਅਤੇ ਇਸ ਦੇ ਸਾਰੇ ਕਾਰਡਾਂ ਨੂੰ ਦੂਜੇ ਸਵਿਮਲੇਨ ਵਿੱਚ ਲਿਜਾਣਾ ਹੈ?",
   "create-account": "ਖਾਤਾ ਬਣਾਉ",
   "createBoardPopup-title": "ਬੋਰਡ ਬਣਾਓ",
   "description": "ਵਰਣਨ",
@@ -43,6 +43,9 @@
   "log-out": "ਲੌਗ ਆਉਟ ਕਰੋ",
   "login": "ਲਾਗਿਨ",
   "monday": "ਸੋਮਵਾਰ",
+  "move-swimlane": "ਸਵੀਮਲੇਨ ਨੂੰ ਮੂਵ ਕਰੋ",
+  "moveCardPopup-title": "ਮੂਵ ਕਾਰਡ",
+  "moveListPopup-title": "ਮੂਵ ਲਿਸਟ",
   "my-cards": "ਮੇਰੇ ਕਾਰਡ",
   "notification-delivery-part-list": "ਸੂਚੀ",
   "notification-delivery-part-swimlane": "ਤੈਰਾਕੀ",
@@ -67,5 +70,6 @@
   "text-note-title": "ਸਿਰਲੇਖ",
   "thursday": "ਵੀਰਵਾਰ",
   "tuesday": "ਮੰਗਲਵਾਰ",
+  "view": "ਦੇਖੋ",
   "wednesday": "ਬੁੱਧਵਾਰ"
 }

@@ -11,7 +11,6 @@
   "api-import-username": "Nome utente",
   "archive-board": "Sposta la bacheca nell'archivio",
   "archived-items": "Archivio",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Titolo bacheca",
   "board-view-cal": "Calendario",
   "board-view-collapse": "Comprimi",
@@ -29,6 +28,7 @@
   "cards-count-one": "Scheda",
   "change-password": "Modifica password",
   "close": "Chiudi",
+  "confirm-move-list-to-swimlane": "Spostare questa lista e tutte le sue schede nell'altra swimlane?",
   "create-account": "Crea account",
   "createBoardPopup-title": "Crea bacheca",
   "description": "Descrizione",
@@ -43,6 +43,9 @@
   "log-out": "Esci",
   "login": "Accesso",
   "monday": "Lunedì",
+  "move-swimlane": "Sposta swimlane",
+  "moveCardPopup-title": "Sposta scheda",
+  "moveListPopup-title": "Sposta lista",
   "my-cards": "Le mie schede",
   "notification-delivery-part-list": "Lista",
   "notification-delivery-part-swimlane": "Corsia",
@@ -67,5 +70,6 @@
   "text-note-title": "Titolo",
   "thursday": "Giovedì",
   "tuesday": "Martedì",
+  "view": "Vista",
   "wednesday": "Mercoledì"
 }

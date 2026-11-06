@@ -1,0 +1,91 @@
+' Only the test harness calls this module against a disposable database.
+Public Sub Main()
+  Dim r As Result
+  Dim boardId As Integer
+  Dim one As Integer
+  Dim two As Integer
+  Dim three As Integer
+  Dim denied As Boolean
+  Dim ids As String[]
+  Dim connection As Connection
+  WebDatabase.Register("drag-owner", "x")
+  Session["username"] = "drag-owner"
+  KanbanStore.AddBoard("Drag board")
+  r = KanbanStore.Boards()
+  boardId = r!id
+  KanbanStore.Lanes(boardId)
+  KanbanStore.AddLane(boardId, "Toinen äärata")
+  KanbanStore.AddList(boardId, "Default", "Review", "Todo")
+  one = KanbanStore.SaveCard(boardId, 0, "One", "Retained", "Default", "Todo", "drag-owner", "label", "2026-11-06")
+  two = KanbanStore.SaveCard(boardId, 0, "Two", "", "Default", "Todo", "", "", "")
+  three = KanbanStore.SaveCard(boardId, 0, "Three", "", "Default", "Doing", "", "", "")
+  connection = WebDatabase.OpenConnection()
+  r = connection.Edit("kb_cards", "id = &1", one)
+  r["lane"] = ""
+  r.Update()
+  KanbanStore.MoveCard(boardId, two, "Default", "Todo", one)
+  ids = KanbanStore.CardOrder(boardId, "Default", "Todo")
+  If ids.Join(",") <> CStr(two) & "," & CStr(one) Then Error.Raise("Card ordering failed")
+  KanbanStore.MoveCard(boardId, one, "Toinen äärata", "Done", 0)
+  r = KanbanStore.Cards(boardId)
+  For Each r
+    If r!id <> one Then Continue
+    If r!lane <> "Toinen äärata" Or r!status <> "Done" Or r!description <> "Retained" Or r!labels <> "label" Then Error.Raise("Card move lost data")
+  Next
+  KanbanStore.MoveCard(boardId, three, "Default", "Todo", two)
+  ids = KanbanStore.CardOrder(boardId, "Default", "Todo")
+  If ids.Join(",") <> CStr(three) & "," & CStr(two) Then Error.Raise("Cross-list ordering failed")
+  Try KanbanStore.MoveCard(boardId, two, "Default", "Todo", one)
+  denied = Error
+  If Not denied Then Error.Raise("Foreign destination card accepted")
+  ids = KanbanStore.CardOrder(boardId, "Default", "Todo")
+  If ids.Join(",") <> CStr(three) & "," & CStr(two) Then Error.Raise("Rejected move changed order")
+  Try KanbanStore.MoveCard(boardId, one, "Missing", "Todo", 0)
+  denied = Error
+  If Not denied Then Error.Raise("Missing target accepted")
+  KanbanStore.MoveLane(boardId, "Toinen äärata", "Default")
+  If KanbanStore.ItemOrder(boardId, "lane", "Toinen äärata", 999) >= KanbanStore.ItemOrder(boardId, "lane", "Default", 999) Then Error.Raise("Lane order failed")
+  KanbanStore.MoveList(boardId, "Default", "Review", "Toinen äärata", "Done")
+  KanbanStore.MoveCard(boardId, three, "Toinen äärata", "Review", 0)
+  KanbanStore.MoveList(boardId, "Toinen äärata", "Review", "Default", "Doing")
+  ids = KanbanStore.CardOrder(boardId, "Default", "Review")
+  If ids.Count <> 1 Or ids[0] <> CStr(three) Then Error.Raise("Moving list did not move cards")
+  KanbanStore.MoveList(boardId, "Default", "Doing", "Default", "Todo")
+  r = KanbanStore.Lists(boardId, "Default")
+  If r!title <> "Doing" Then Error.Raise("List reorder failed")
+  Try KanbanStore.MoveList(boardId, "Default", "Todo", "Toinen äärata", "")
+  denied = Error
+  If Not denied Then Error.Raise("Conflicting list titles were merged")
+  KanbanStore.ArchiveCard(boardId, one, True)
+  Try KanbanStore.MoveCard(boardId, one, "Default", "Todo", 0)
+  denied = Error
+  If Not denied Then Error.Raise("Archived card moved")
+  KanbanStore.ArchiveBoard(boardId, True)
+  Try KanbanStore.MoveLane(boardId, "Default", "")
+  denied = Error
+  If Not denied Then Error.Raise("Archived board reordered")
+  KanbanStore.ArchiveBoard(boardId, False)
+  WebDatabase.Register("drag-other", "x")
+  Session["username"] = "drag-other"
+  Try KanbanStore.MoveCard(boardId, two, "Default", "Todo", 0)
+  denied = Error
+  If Not denied Then Error.Raise("Other owner's card moved")
+  Try KanbanStore.MoveList(boardId, "Default", "Todo", "Default", "")
+  denied = Error
+  If Not denied Then Error.Raise("Other owner's list moved")
+  Try KanbanStore.MoveLane(boardId, "Default", "")
+  denied = Error
+  If Not denied Then Error.Raise("Other owner's lane moved")
+  Session["username"] = Null
+  Try KanbanStore.MoveCard(boardId, two, "Default", "Todo", 0)
+  denied = Error
+  If Not denied Then Error.Raise("Anonymous move accepted")
+  Session["username"] = "drag-owner"
+  ' A layout with no lists must support adding its first list again.
+  connection = WebDatabase.OpenConnection()
+  connection.Exec("DELETE FROM kb_lists WHERE board_id = &1 AND lane = &2", boardId, "Toinen äärata")
+  KanbanStore.AddList(boardId, "Toinen äärata", "New first list", "")
+  r = KanbanStore.Lists(boardId, "Toinen äärata")
+  If r.Count <> 1 Or r!title <> "New first list" Then Error.Raise("Empty-lane list creation failed")
+  Print "Drag persistence: card/list/lane ordering, preserved data, atomic rejection and owner/archive guards passed"
+End

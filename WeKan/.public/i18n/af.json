@@ -11,7 +11,6 @@
   "api-import-username": "Gebruikersnaam",
   "archive-board": "Skuif bord na argief",
   "archived-items": "Argief",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Raadstitel",
   "board-view-cal": "Kalender",
   "board-view-collapse": "Ineenstort",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kaart",
   "change-password": "Verander wagwoord",
   "close": "Maak toe",
+  "confirm-move-list-to-swimlane": "Skuif hierdie lys en al sy kaarte na die ander swembaan?",
   "create-account": "Skep rekening",
   "createBoardPopup-title": "Skep bord",
   "description": "Beskrywing",
@@ -43,6 +43,9 @@
   "log-out": "Teken uit",
   "login": "Teken in",
   "monday": "Maandag",
+  "move-swimlane": "Beweeg Swimlane",
+  "moveCardPopup-title": "Beweeg kaart",
+  "moveListPopup-title": "Skuif Lys",
   "my-cards": "My kaarte",
   "notification-delivery-part-list": "Lys",
   "notification-delivery-part-swimlane": "Swembaan",
@@ -67,5 +70,6 @@
   "text-note-title": "Titel",
   "thursday": "Donderdag",
   "tuesday": "Dinsdag",
+  "view": "Uitsig",
   "wednesday": "Woensdag"
 }

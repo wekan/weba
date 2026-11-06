@@ -11,7 +11,6 @@
   "api-import-username": "Hingoa ʻo e tokotaha ngāue",
   "archive-board": "Hiki ʻa e papa ki he tukuʻanga",
   "archived-items": "Tauhiʻanga",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Kaveinga ʻo e papa",
   "board-view-cal": "Kalena",
   "board-view-collapse": "Fakafōkisi",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kaati",
   "change-password": "Liliu ʻa e lea fufū",
   "close": "Tāpuni",
+  "confirm-move-list-to-swimlane": "Hiki ʻa e lisi ko ʻení mo hono ngaahi kaati kotoa ki he hala ʻe taha?",
   "create-account": "Faʻu ha ʻakauni",
   "createBoardPopup-title": "Fakatupu ha papa",
   "description": "Fakamatala",
@@ -43,6 +43,9 @@
   "log-out": "Mavahe",
   "login": "Hū ki loto",
   "monday": "Mōnite",
+  "move-swimlane": "Hiki ʻa e hala",
+  "moveCardPopup-title": "Hiki ʻa e kaati",
+  "moveListPopup-title": "Hiki ʻa e lisi",
   "my-cards": "ʻEku ngaahi kaati",
   "notification-delivery-part-list": "Lisi",
   "notification-delivery-part-swimlane": "Hala",
@@ -67,5 +70,6 @@
   "text-note-title": "Kaveinga",
   "thursday": "Tuʻapulelulu",
   "tuesday": "Tūsite",
+  "view": "Vīsone",
   "wednesday": "Pulelulu"
 }

@@ -11,7 +11,6 @@
   "api-import-username": "Numa di ufilisitor",
   "archive-board": "Mutã tabela tu arhivã",
   "archived-items": "Arhivã",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Titlul a tabelãljei",
   "board-view-cal": "Calindar",
   "board-view-collapse": "Adunã",
@@ -29,6 +28,7 @@
   "cards-count-one": "Cartã",
   "change-password": "Alãxea zborlu di intrari",
   "close": "Ncljidi",
+  "confirm-move-list-to-swimlane": "S-mutã aestã listã cu tuti cãrtsãli a ljei tu alantã cali?",
   "create-account": "Adarã cont",
   "createBoardPopup-title": "Adarã tabelã",
   "description": "Discriiri",
@@ -43,6 +43,9 @@
   "log-out": "Ishiri",
   "login": "Intrari",
   "monday": "Lunedì",
+  "move-swimlane": "Mutã calea",
+  "moveCardPopup-title": "Mutã cartea",
+  "moveListPopup-title": "Mutã lista",
   "my-cards": "Cãrtsãli meali",
   "notification-delivery-part-list": "Listã",
   "notification-delivery-part-swimlane": "Cali",
@@ -67,5 +70,6 @@
   "text-note-title": "Titlu",
   "thursday": "Giovedì",
   "tuesday": "Martedì",
+  "view": "Videari",
   "wednesday": "Mercoledì"
 }

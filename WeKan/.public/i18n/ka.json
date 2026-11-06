@@ -11,7 +11,6 @@
   "api-import-username": "მომხმარებლის სახელი",
   "archive-board": "დაფის არქივში გადატანა",
   "archived-items": "არქივი",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "დაფის სათაური",
   "board-view-cal": "კალენდარი",
   "board-view-collapse": "ჩაკეცვა",
@@ -29,6 +28,7 @@
   "cards-count-one": "ბარათი",
   "change-password": "პაროლის შეცვლა",
   "close": "დახურვა",
+  "confirm-move-list-to-swimlane": "გადავიდეს ეს სია და მისი ყველა ბარათი სხვა ზოლში?",
   "create-account": "ანგარიშის შექმნა",
   "createBoardPopup-title": "დაფის შექმნა",
   "description": "აღწერა",
@@ -43,6 +43,9 @@
   "log-out": "გამოსვლა",
   "login": "შესვლა",
   "monday": "ორშაბათი",
+  "move-swimlane": "ბილიკის გადატანა",
+  "moveCardPopup-title": "ბარათის გადატანა",
+  "moveListPopup-title": "სიის გადატანა",
   "my-cards": "ჩემი ბარათები",
   "notification-delivery-part-list": "სია",
   "notification-delivery-part-swimlane": "ბილიკი",
@@ -67,5 +70,6 @@
   "text-note-title": "სათაური",
   "thursday": "ხუთშაბათი",
   "tuesday": "სამშაბათი",
+  "view": "ხედი",
   "wednesday": "ოთხშაბათი"
 }

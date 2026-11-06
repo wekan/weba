@@ -11,7 +11,6 @@
   "api-import-username": "Oosanchchaa sunttaa",
   "archive-board": "Bookkiya naago sohuwaa efa",
   "archived-items": "Naago sohuwaa",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Bookkiyaa huuphe sunttaa",
   "board-view-cal": "Wodiyaa qoodaa",
   "board-view-collapse": "Shiishsha",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kaardiya",
   "change-password": "Geeman qaalaa laamma",
   "close": "Gorddana",
+  "confirm-move-list-to-swimlane": "Ha mazgabaanne a kaardiyata ubbaa hara ogiya sirssane?",
   "create-account": "Akkawuntiyaa medha",
   "createBoardPopup-title": "Bookkiya medha",
   "description": "Qonccissuwaa",
@@ -43,6 +43,9 @@
   "log-out": "Kiya",
   "login": "Geliyoogaa",
   "monday": "Sanuwaa",
+  "move-swimlane": "Ogiya sirssa",
+  "moveCardPopup-title": "Kaardiyaa laammissa",
+  "moveListPopup-title": "Mazgabaa sirssa",
   "my-cards": "Ta kaardiyatuwaa",
   "notification-delivery-part-list": "Mazgabaa",
   "notification-delivery-part-swimlane": "Ogiya",
@@ -67,5 +70,6 @@
   "text-note-title": "Huucco",
   "thursday": "Hamuussiyaa",
   "tuesday": "Maayiyaa",
+  "view": "Xeella",
   "wednesday": "Woruwaa"
 }

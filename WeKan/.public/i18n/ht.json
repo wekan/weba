@@ -11,7 +11,6 @@
   "api-import-username": "Non itilizatè",
   "archive-board": "Deplase tablo a nan achiv",
   "archived-items": "Achiv",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Tit tablo",
   "board-view-cal": "Kalandriye",
   "board-view-collapse": "Redui",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kat",
   "change-password": "Chanje modpas",
   "close": "Fèmen",
+  "confirm-move-list-to-swimlane": "Deplase lis sa a ak tout kat li yo nan lòt kouloir la?",
   "create-account": "Kreye kont",
   "createBoardPopup-title": "Kreye yon tablo",
   "description": "Deskripsyon",
@@ -43,6 +43,9 @@
   "log-out": "Dekonekte",
   "login": "Koneksyon",
   "monday": "Lendi",
+  "move-swimlane": "Deplase kouloir",
+  "moveCardPopup-title": "Deplase kat la",
+  "moveListPopup-title": "Deplase lis",
   "my-cards": "Kat mwen yo",
   "notification-delivery-part-list": "Lis",
   "notification-delivery-part-swimlane": "Kouloir",
@@ -67,5 +70,6 @@
   "text-note-title": "Tit",
   "thursday": "Jedi",
   "tuesday": "Madi",
+  "view": "Gade",
   "wednesday": "Mèkredi"
 }

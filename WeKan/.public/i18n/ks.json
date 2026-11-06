@@ -11,7 +11,6 @@
   "api-import-username": "استعمال کرن والٕک ناو",
   "archive-board": "بورڈ محفوظ خانس منز نیو",
   "archived-items": "محفوظ خانہٕ",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "بورڈ ناو",
   "board-view-cal": "کیلنڈر",
   "board-view-collapse": "سکیوٗڑیو",
@@ -29,6 +28,7 @@
   "cards-count-one": "کارڈ",
   "change-password": "پاس ورڈ بدلاو",
   "close": "بند کریو",
+  "confirm-move-list-to-swimlane": "یِہ فہرست تہٕ امہِ منٛز سٲری کارڈ دۄیمِس وَتھ کُن پکنٲوِن؟",
   "create-account": "کھاتہٕ بناویو",
   "createBoardPopup-title": "بورڈ بنایو",
   "description": "تفصیل",
@@ -43,6 +43,9 @@
   "log-out": "نیرِو",
   "login": "لاگ اِن",
   "monday": "سوموار",
+  "move-swimlane": "وَتھ پکنٲویو",
+  "moveCardPopup-title": "کارڈ منتقل کریو",
+  "moveListPopup-title": "فہرست پکنٲویو",
   "my-cards": "میٚنؠ کارڈ",
   "notification-delivery-part-list": "فہرست",
   "notification-delivery-part-swimlane": "وَتھ",
@@ -67,5 +70,6 @@
   "text-note-title": "عنوان",
   "thursday": "جمعرات",
   "tuesday": "منگل",
+  "view": "وُچھِو",
   "wednesday": "بُدھ"
 }

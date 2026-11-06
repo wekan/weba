@@ -11,7 +11,6 @@
   "api-import-username": "Zita rekushandisa",
   "archive-board": "Endesa bhodhi kudura",
   "archived-items": "dura",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "bhodhi musoro",
   "board-view-cal": "Karenda",
   "board-view-collapse": "Peta",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kadhi",
   "change-password": "Chinja password",
   "close": "Vhara",
+  "confirm-move-list-to-swimlane": "fambisa this rondedzero uye zvose its makadhi ku the zvimwe mukoto?",
   "create-account": "gadzira akaundi",
   "createBoardPopup-title": "Gadzira bhodhi",
   "description": "Tsanangudzo",
@@ -43,6 +43,9 @@
   "log-out": "Buda",
   "login": "Pinda",
   "monday": "Muvhuro",
+  "move-swimlane": "fambisa mukoto",
+  "moveCardPopup-title": "Fambisa kadhi",
+  "moveListPopup-title": "fambisa rondedzero",
   "my-cards": "Makadhi angu",
   "notification-delivery-part-list": "Rondedzero",
   "notification-delivery-part-swimlane": "Mugwagwa",
@@ -67,5 +70,6 @@
   "text-note-title": "Musoro",
   "thursday": "China",
   "tuesday": "Chipiri",
+  "view": "Ona",
   "wednesday": "Chitatu"
 }

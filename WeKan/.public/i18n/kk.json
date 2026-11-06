@@ -11,7 +11,6 @@
   "api-import-username": "Пайдаланушы аты",
   "archive-board": "Тақтаны мұрағатқа жылжыту",
   "archived-items": "Мұрағат",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Тақта атауы",
   "board-view-cal": "Күнтізбе",
   "board-view-collapse": "Жию",
@@ -29,6 +28,7 @@
   "cards-count-one": "Карточка",
   "change-password": "Құпия сөзді өзгерту",
   "close": "Жабу",
+  "confirm-move-list-to-swimlane": "Бұл тізімді және оның барлық карточкаларын басқа swimlane-ге жылжыту керек пе?",
   "create-account": "Тіркелгі жасау",
   "createBoardPopup-title": "Тақта жасау",
   "description": "Сипаттама",
@@ -43,6 +43,9 @@
   "log-out": "Шығу",
   "login": "Кіру",
   "monday": "Дүйсенбі",
+  "move-swimlane": "Swimlane-ді жылжыту",
+  "moveCardPopup-title": "Карточканы жылжыту",
+  "moveListPopup-title": "Тізімді жылжыту",
   "my-cards": "Менің карточкаларым",
   "notification-delivery-part-list": "Тізім",
   "notification-delivery-part-swimlane": "Жолақ",
@@ -67,5 +70,6 @@
   "text-note-title": "Тақырып",
   "thursday": "Бейсенбі",
   "tuesday": "Сейсенбі",
+  "view": "Көру",
   "wednesday": "Сәрсенбі"
 }

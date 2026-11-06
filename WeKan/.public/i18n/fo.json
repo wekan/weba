@@ -11,7 +11,6 @@
   "api-import-username": "Brúkaranavn",
   "archive-board": "Flyt tavluna í goymslu",
   "archived-items": "Goymsla",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Talvuheiti",
   "board-view-cal": "Kalendari",
   "board-view-collapse": "Leggja saman",
@@ -29,6 +28,7 @@
   "cards-count-one": "Kort",
   "change-password": "Broyt loyniorð",
   "close": "Lat aftur",
+  "confirm-move-list-to-swimlane": "Flyta henda listan og øll kortini á honum á hitt beinið?",
   "create-account": "Stovna kontu",
   "createBoardPopup-title": "Stovna talvu",
   "description": "Lýsing",
@@ -43,6 +43,9 @@
   "log-out": "Rita út",
   "login": "Innritan",
   "monday": "Mánadagur",
+  "move-swimlane": "Flyt bein",
+  "moveCardPopup-title": "Flyt kortið",
+  "moveListPopup-title": "Flyt lista",
   "my-cards": "Míni kort",
   "notification-delivery-part-list": "Listi",
   "notification-delivery-part-swimlane": "Bein",
@@ -67,5 +70,6 @@
   "text-note-title": "Yvirskrift",
   "thursday": "Hósdagur",
   "tuesday": "Týsdagur",
+  "view": "Vís",
   "wednesday": "Mikudagur"
 }

@@ -11,7 +11,6 @@
   "api-import-username": "Foydalanuvchi nomi",
   "archive-board": "Taxtani arxivga o'tkazing",
   "archived-items": "Arxiv",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Taxta nomi",
   "board-view-cal": "Kalendar",
   "board-view-collapse": "Yiqilish",
@@ -29,6 +28,7 @@
   "cards-count-one": "Karta",
   "change-password": "Parolni o'zgartirish",
   "close": "Yopish",
+  "confirm-move-list-to-swimlane": "Ushbu roʻyxat va uning barcha kartalari boshqa suzish yoʻliga koʻchirilsinmi?",
   "create-account": "Hisob yaratish",
   "createBoardPopup-title": "Taxta yaratish",
   "description": "Tavsif",
@@ -43,6 +43,9 @@
   "log-out": "Chiqish",
   "login": "Tizimga kirish",
   "monday": "dushanba",
+  "move-swimlane": "Swimlane-ni harakatlantiring",
+  "moveCardPopup-title": "Kartani ko'chirish",
+  "moveListPopup-title": "Roʻyxatni koʻchirish",
   "my-cards": "Mening kartalarim",
   "notification-delivery-part-list": "Roʻyxat",
   "notification-delivery-part-swimlane": "Suzish chizig'i",
@@ -67,5 +70,6 @@
   "text-note-title": "Sarlavha",
   "thursday": "Payshanba",
   "tuesday": "seshanba",
+  "view": "Ko'rish",
   "wednesday": "chorshanba"
 }

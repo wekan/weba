@@ -11,7 +11,6 @@
   "api-import-username": "Օգտվողի անունը",
   "archive-board": "Տախտակը տեղափոխեք արխիվ",
   "archived-items": "Արխիվ",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Վարչության անվանումը",
   "board-view-cal": "Օրացույց",
   "board-view-collapse": "Փլուզվել",
@@ -29,6 +28,7 @@
   "cards-count-one": "Քարտ",
   "change-password": "Փոխել գաղտնաբառը",
   "close": "Փակել",
+  "confirm-move-list-to-swimlane": "Տեղափոխե՞լ այս ցուցակը և նրա բոլոր քարտերը մյուս լողավազան:",
   "create-account": "Ստեղծել հաշիվ",
   "createBoardPopup-title": "Ստեղծել խորհուրդ",
   "description": "Նկարագրություն",
@@ -43,6 +43,9 @@
   "log-out": "Դուրս գալ",
   "login": "Մուտք գործել",
   "monday": "Երկուշաբթի",
+  "move-swimlane": "Տեղափոխել Swimlane",
+  "moveCardPopup-title": "Տեղափոխել քարտը",
+  "moveListPopup-title": "Տեղափոխել ցուցակը",
   "my-cards": "Իմ քարտերը",
   "notification-delivery-part-list": "Ցուցակ",
   "notification-delivery-part-swimlane": "Լողավազան",
@@ -67,5 +70,6 @@
   "text-note-title": "Վերնագիր",
   "thursday": "հինգշաբթի",
   "tuesday": "Երեքշաբթի",
+  "view": "Դիտել",
   "wednesday": "չորեքշաբթի"
 }

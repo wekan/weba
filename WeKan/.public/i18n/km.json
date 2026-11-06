@@ -11,7 +11,6 @@
   "api-import-username": "ឈ្មោះអ្នកប្រើប្រាស់",
   "archive-board": "ផ្លាស់ទីក្តារទៅប័ណ្ណសារ",
   "archived-items": "បណ្ណសារ",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "ចំណងជើងក្តារ",
   "board-view-cal": "ប្រតិទិន",
   "board-view-collapse": "ដួលរលំ",
@@ -29,6 +28,7 @@
   "cards-count-one": "កាត",
   "change-password": "ផ្លាស់ប្តូរពាក្យសម្ងាត់",
   "close": "បិទ",
+  "confirm-move-list-to-swimlane": "ផ្លាស់ទីបញ្ជីនេះ និងកាតទាំងអស់របស់វាទៅផ្លូវហែលទឹកផ្សេងទៀត?",
   "create-account": "បង្កើតគណនី",
   "createBoardPopup-title": "បង្កើតក្តារ",
   "description": "ការពិពណ៌នា",
@@ -43,6 +43,9 @@
   "log-out": "ចេញ",
   "login": "ចូល",
   "monday": "ថ្ងៃច័ន្ទ",
+  "move-swimlane": "ផ្លាស់ទី Swimlane",
+  "moveCardPopup-title": "ផ្លាស់ទីកាត",
+  "moveListPopup-title": "ផ្លាស់ទីបញ្ជី",
   "my-cards": "កាតរបស់ខ្ញុំ",
   "notification-delivery-part-list": "បញ្ជី",
   "notification-delivery-part-swimlane": "ផ្លូវហែលទឹក",
@@ -67,5 +70,6 @@
   "text-note-title": "ចំណងជើង",
   "thursday": "ថ្ងៃព្រហស្បតិ៍",
   "tuesday": "ថ្ងៃអង្គារ",
+  "view": "មើល",
   "wednesday": "ថ្ងៃពុធ"
 }

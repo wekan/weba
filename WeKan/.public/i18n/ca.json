@@ -11,7 +11,6 @@
   "api-import-username": "Nom d'usuari",
   "archive-board": "Moure Tauler al Arxiu",
   "archived-items": "Desa",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Títol del tauler",
   "board-view-cal": "Calendari",
   "board-view-collapse": "Contraure",
@@ -29,6 +28,7 @@
   "cards-count-one": "Fitxa",
   "change-password": "Canvia la contrasenya",
   "close": "Tanca",
+  "confirm-move-list-to-swimlane": "Voleu moure aquesta llista i totes les seves fitxes a l'altre carril?",
   "create-account": "Crea un compte",
   "createBoardPopup-title": "Crea tauler",
   "description": "Descripció",
@@ -43,6 +43,9 @@
   "log-out": "Finalitza la sessió",
   "login": "Inici de sessió",
   "monday": "dilluns",
+  "move-swimlane": "Mou el carril",
+  "moveCardPopup-title": "Moure fitxa",
+  "moveListPopup-title": "Mou la llista",
   "my-cards": "Les meves fitxes",
   "notification-delivery-part-list": "Llista",
   "notification-delivery-part-swimlane": "Carril",
@@ -67,5 +70,6 @@
   "text-note-title": "Títol",
   "thursday": "dijous",
   "tuesday": "dimarts",
+  "view": "Vista",
   "wednesday": "dimecres"
 }

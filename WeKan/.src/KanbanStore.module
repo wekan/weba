@@ -53,6 +53,15 @@ Public Sub OpenDatabase()
     t.Update()
     t.Indexes.Add("kb_list_title", ["board_id", "lane", "title"], True)
   Endif
+  If Not $db.Tables.Exist("kb_order") Then
+    t = $db.Tables.Add("kb_order")
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("kind", db.String, 16)
+    t.Fields.Add("item", db.String, 255)
+    t.Fields.Add("sort_order", db.Integer)
+    t.PrimaryKey = ["board_id", "kind", "item"]
+    t.Update()
+  Endif
   If Not $db.Tables.Exist("kb_activity") Then
     t = $db.Tables.Add("kb_activity")
     t.Fields.Add("id", db.Serial)
@@ -124,6 +133,8 @@ Public Function SaveCard(boardId As Integer, cardId As Integer, title As String,
     If Format(Date(CInt(Left(dueDay, 4)), CInt(Mid(dueDay, 6, 2)), CInt(Right(dueDay, 2))), "yyyy-mm-dd") <> dueDay Then Error.Raise("Invalid due date")
   Endif
   EnsureLane(boardId, lane)
+  list = $db.Find("kb_lists", "board_id = &1 AND lane = &2 AND title = &3", boardId, lane, status)
+  If Not list.Available Then Error.Raise("Invalid status")
   If cardId Then
     r = $db.Edit("kb_cards", "id = &1 AND board_id = &2", cardId, boardId)
     If Not r.Available Then Error.Raise("Card not accessible")
@@ -239,9 +250,15 @@ Public Sub AddList(boardId As Integer, lane As String, title As String, afterTit
   If Not r.Available Then Error.Raise("Swimlane not accessible")
   r = $db.Find("kb_lists", "board_id = &1 AND lane = &2 AND title = &3", boardId, lane, title)
   If r.Available Then Error.Raise("List already exists")
-  r = $db.Find("kb_lists", "board_id = &1 AND lane = &2 AND title = &3", boardId, lane, afterTitle)
-  If Not r.Available Then Error.Raise("List not accessible")
-  position = r!sort_order + 1
+  If afterTitle Then
+    r = $db.Find("kb_lists", "board_id = &1 AND lane = &2 AND title = &3", boardId, lane, afterTitle)
+    If Not r.Available Then Error.Raise("List not accessible")
+    position = r!sort_order + 1
+  Else
+    r = $db.Find("kb_lists", "board_id = &1 AND lane = &2 ORDER BY sort_order DESC", boardId, lane)
+    position = 0
+    If r.Available Then position = r!sort_order + 1
+  Endif
   $db.Begin()
   r = $db.Edit("kb_lists", "board_id = &1 AND lane = &2 AND sort_order >= &3", boardId, lane, position)
   For Each r
@@ -259,5 +276,185 @@ Public Sub AddList(boardId As Integer, lane As String, title As String, afterTit
 Catch
   failure = Error.Text
   If $db Then Try $db.Rollback()
+  Error.Raise(failure)
+End
+
+Public Function ItemOrder(boardId As Integer, kind As String, item As String, fallback As Integer) As Integer
+  Dim r As Result
+  RequireBoard(boardId)
+  r = $db.Find("kb_order", "board_id = &1 AND kind = &2 AND item = &3", boardId, kind, item)
+  If r.Available Then Return r!sort_order
+  Return fallback
+End
+
+Private Sub PutOrder(boardId As Integer, kind As String, item As String, rank As Integer)
+  Dim r As Result
+  r = $db.Edit("kb_order", "board_id = &1 AND kind = &2 AND item = &3", boardId, kind, item)
+  If Not r.Available Then
+    r = $db.Create("kb_order")
+    r["board_id"] = boardId
+    r["kind"] = kind
+    r["item"] = item
+  Endif
+  r["sort_order"] = rank
+  r.Update()
+End
+
+Private Sub RequireActiveBoard(boardId As Integer)
+  Dim r As Result
+  RequireBoard(boardId)
+  r = $db.Find("kb_boards", "id = &1", boardId)
+  If r!archived Then Error.Raise("Archived board cannot be reordered")
+End
+
+' The same deterministic order is used by the browser and the mutation methods.
+Public Function CardOrder(boardId As Integer, laneTitle As String, listTitle As String) As String[]
+  Dim r As Result
+  Dim sorted As New String[]
+  Dim ids As New String[]
+  Dim value As String
+  RequireBoard(boardId)
+  If laneTitle = "Default" Then
+    r = $db.Find("kb_cards", "board_id = &1 AND (lane = &2 OR lane = &3 OR lane IS NULL) AND status = &4 AND archived = &5", boardId, laneTitle, "", listTitle, False)
+  Else
+    r = $db.Find("kb_cards", "board_id = &1 AND lane = &2 AND status = &3 AND archived = &4", boardId, laneTitle, listTitle, False)
+  Endif
+  For Each r
+    sorted.Add(Format(ItemOrder(boardId, "card", CStr(r!id), r!id), "0000000000") & ":" & Format(r!id, "0000000000"))
+  Next
+  sorted.Sort()
+  For Each value In sorted
+    ids.Add(CStr(CInt(Split(value, ":")[1])))
+  Next
+  Return ids
+End
+
+Public Sub MoveCard(boardId As Integer, cardId As Integer, laneTitle As String, listTitle As String, beforeId As Integer)
+  Dim r As Result
+  Dim ids As String[]
+  Dim index As Integer
+  Dim failure As String
+  RequireActiveBoard(boardId)
+  r = $db.Find("kb_cards", "id = &1 AND board_id = &2 AND archived = &3", cardId, boardId, False)
+  If Not r.Available Then Error.Raise("Card not accessible")
+  r = $db.Find("kb_lists", "board_id = &1 AND lane = &2 AND title = &3", boardId, laneTitle, listTitle)
+  If Not r.Available Then Error.Raise("Destination list not accessible")
+  If beforeId = cardId Then Return
+  $db.Begin()
+  ids = CardOrder(boardId, laneTitle, listTitle)
+  index = ids.Find(CStr(cardId))
+  If index >= 0 Then ids.Remove(index)
+  index = ids.Count
+  If beforeId Then
+    index = ids.Find(CStr(beforeId))
+    If index < 0 Then Error.Raise("Destination card not accessible")
+  Endif
+  ids.Add(CStr(cardId), index)
+  r = $db.Edit("kb_cards", "id = &1 AND board_id = &2", cardId, boardId)
+  r["lane"] = laneTitle
+  r["status"] = listTitle
+  r.Update()
+  For index = 0 To ids.Max
+    PutOrder(boardId, "card", ids[index], index)
+  Next
+  Activity(boardId, "Moved card: " & CStr(cardId))
+  $db.Commit()
+Catch
+  failure = Error.Text
+  Try $db.Rollback()
+  Error.Raise(failure)
+End
+
+Public Sub MoveLane(boardId As Integer, laneTitle As String, beforeTitle As String)
+  Dim r As Result
+  Dim sorted As New String[]
+  Dim names As New String[]
+  Dim value As String
+  Dim index As Integer
+  Dim failure As String
+  RequireActiveBoard(boardId)
+  r = Lanes(boardId)
+  For Each r
+    sorted.Add(Format(ItemOrder(boardId, "lane", r!title, r!id), "0000000000") & ":" & CStr(r!id))
+  Next
+  sorted.Sort()
+  For Each value In sorted
+    r = $db.Find("kb_lanes", "id = &1 AND board_id = &2", CInt(Split(value, ":")[1]), boardId)
+    names.Add(r!title)
+  Next
+  index = names.Find(laneTitle)
+  If index < 0 Then Error.Raise("Swimlane not accessible")
+  If laneTitle = beforeTitle Then Return
+  names.Remove(index)
+  index = names.Count
+  If beforeTitle Then
+    index = names.Find(beforeTitle)
+    If index < 0 Then Error.Raise("Destination swimlane not accessible")
+  Endif
+  names.Add(laneTitle, index)
+  $db.Begin()
+  For index = 0 To names.Max
+    PutOrder(boardId, "lane", names[index], index)
+  Next
+  Activity(boardId, "Moved swimlane: " & laneTitle)
+  $db.Commit()
+Catch
+  failure = Error.Text
+  Try $db.Rollback()
+  Error.Raise(failure)
+End
+
+Public Sub MoveList(boardId As Integer, sourceLane As String, listTitle As String, targetLane As String, beforeTitle As String)
+  Dim r As Result
+  Dim names As New String[]
+  Dim index As Integer
+  Dim listId As Integer
+  Dim failure As String
+  RequireActiveBoard(boardId)
+  r = $db.Find("kb_lists", "board_id = &1 AND lane = &2 AND title = &3", boardId, sourceLane, listTitle)
+  If Not r.Available Then Error.Raise("List not accessible")
+  listId = r!id
+  r = $db.Find("kb_lanes", "board_id = &1 AND title = &2", boardId, targetLane)
+  If Not r.Available Then Error.Raise("Destination swimlane not accessible")
+  If sourceLane = targetLane And listTitle = beforeTitle Then Return
+  If sourceLane <> targetLane Then
+    r = $db.Find("kb_lists", "board_id = &1 AND lane = &2 AND title = &3", boardId, targetLane, listTitle)
+    If r.Available Then Error.Raise("Destination already has a list with this name")
+  Endif
+  r = Lists(boardId, targetLane)
+  For Each r
+    If r!id <> listId Then names.Add(r!title)
+  Next
+  index = names.Count
+  If beforeTitle Then
+    index = names.Find(beforeTitle)
+    If index < 0 Then Error.Raise("Destination list not accessible")
+  Endif
+  names.Add(listTitle, index)
+  $db.Begin()
+  r = $db.Edit("kb_lists", "id = &1 AND board_id = &2", listId, boardId)
+  r["lane"] = targetLane
+  r.Update()
+  If sourceLane <> targetLane Then
+    If sourceLane = "Default" Then
+      r = $db.Edit("kb_cards", "board_id = &1 AND (lane = &2 OR lane = &3 OR lane IS NULL) AND status = &4", boardId, sourceLane, "", listTitle)
+    Else
+      r = $db.Edit("kb_cards", "board_id = &1 AND lane = &2 AND status = &3", boardId, sourceLane, listTitle)
+    Endif
+    For Each r
+      r["lane"] = targetLane
+      r.Update()
+    Next
+  Endif
+  For index = 0 To names.Max
+    r = $db.Edit("kb_lists", "board_id = &1 AND lane = &2 AND title = &3", boardId, targetLane, names[index])
+    r["sort_order"] = index
+    r.Update()
+  Next
+  Activity(boardId, "Moved list: " & listTitle)
+  $db.Commit()
+Catch
+  failure = Error.Text
+  Try $db.Rollback()
   Error.Raise(failure)
 End

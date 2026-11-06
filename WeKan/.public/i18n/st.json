@@ -11,7 +11,6 @@
   "api-import-username": "Lebitso la mosebedisi",
   "archive-board": "Isa boto polokelong",
   "archived-items": "Polokelo",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "Sehlooho sa boto",
   "board-view-cal": "Khalendara",
   "board-view-collapse": "Mena",
@@ -29,6 +28,7 @@
   "cards-count-one": "Karete",
   "change-password": "Fetola phasewete",
   "close": "Koala",
+  "confirm-move-list-to-swimlane": "Fallisetsa lenane lena le dikarete tsohle tsa lona tseleng e nngwe?",
   "create-account": "Theha akhaonto",
   "createBoardPopup-title": "Theha boto",
   "description": "Tlhaloso",
@@ -43,6 +43,9 @@
   "log-out": "Tswa",
   "login": "Ho kena",
   "monday": "Mantaha",
+  "move-swimlane": "Tsamaisa tsela",
+  "moveCardPopup-title": "Falatsa karete",
+  "moveListPopup-title": "Fallisa lenane",
   "my-cards": "Dikarete tsa ka",
   "notification-delivery-part-list": "Lenane",
   "notification-delivery-part-swimlane": "Tsela",
@@ -67,5 +70,6 @@
   "text-note-title": "Sehlooho",
   "thursday": "Labone",
   "tuesday": "Labobedi",
+  "view": "Sheba",
   "wednesday": "Laboraro"
 }

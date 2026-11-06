@@ -11,7 +11,6 @@
   "api-import-username": "පරිශීලක නාමය",
   "archive-board": "පුවරුව සංරක්ෂිතයට ගෙනයන්න",
   "archived-items": "සංරක්ෂිතය",
-  "blockly-MATH_MULTIPLICATION_SYMBOL": "×",
   "board-title": "පුවරු මාතෘකාව",
   "board-view-cal": "දින දර්ශනය",
   "board-view-collapse": "හකුළන්න",
@@ -29,6 +28,7 @@
   "cards-count-one": "කාඩ්පත",
   "change-password": "මුරපදය වෙනස් කරන්න",
   "close": "වසන්න",
+  "confirm-move-list-to-swimlane": "මෙම ලැයිස්තුව සහ එහි සියලු කාඩ්පත් අනෙක් පිහිනුම් මංතීරුවට ගෙන යන්නද?",
   "create-account": "ගිණුමක් සාදන්න",
   "createBoardPopup-title": "පුවරුව සාදන්න",
   "description": "විස්තරය",
@@ -43,6 +43,9 @@
   "log-out": "පිටවන්න",
   "login": "පිවිසීම",
   "monday": "සඳුදා",
+  "move-swimlane": "පිහිනුම් මංතීරුව ගෙන යන්න",
+  "moveCardPopup-title": "කාඩ්පත ගෙනයන්න",
+  "moveListPopup-title": "ලැයිස්තුව ගෙන යන්න",
   "my-cards": "මගේ කාඩ්පත්",
   "notification-delivery-part-list": "ලැයිස්තුව",
   "notification-delivery-part-swimlane": "පථය",
@@ -67,5 +70,6 @@
   "text-note-title": "මාතෘකාව",
   "thursday": "බ්‍රහස්පතින්දා",
   "tuesday": "අඟහරුවාදා",
+  "view": "දසුන",
   "wednesday": "බදාදා"
 }
