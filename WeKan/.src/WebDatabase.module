@@ -63,6 +63,7 @@ Public Sub Register(username As String, password As String)
   Dim r As Result
   Dim first As Boolean
   Dim transaction As Boolean
+  Dim passwordHash As String
   RegistrationError = "Registration could not be completed. Please retry."
   username = Trim(username)
   If Not username Or Len(username) > 255 Then
@@ -78,21 +79,25 @@ Public Sub Register(username As String, password As String)
     RegistrationError = "Username already exists. Choose another username or log in."
     Error.Raise(RegistrationError)
   Endif
+  passwordHash = Crypt.Sha256(password)
   $hConn.Begin()
   transaction = True
   r = $hConn.Find("users")
   first = Not r.Available
+  r = Null
   If first Then
     ' A unique claim inside the same transaction prevents two first admins.
     ' A concurrent losing registration can retry and becomes a normal user.
     r = $hConn.Create("account_bootstrap")
     r["id"] = 1
     r.Update()
+    r = Null
   Endif
-  $hConn.Exec("INSERT INTO users (username, password, fullname, admin) VALUES (&1, &2, &3, &4)", username, Crypt.Sha256(password), "", first)
+  $hConn.Exec("INSERT INTO users (username, password, fullname, admin) VALUES (&1, &2, &3, &4)", username, passwordHash, "", first)
   $hConn.Commit()
   transaction = False
 Catch
+  r = Null
   If transaction Then Try $hConn.Rollback()
   Error.Raise(RegistrationError)
 End

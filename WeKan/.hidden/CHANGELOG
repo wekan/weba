@@ -1,4 +1,7 @@
 * Sat Nov 07 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Registration: Release result cursors before transactional writes/rollback and
+  hash before taking the transaction; retain atomic first-Admin claiming. Verify
+  three consecutive store/concurrent-signup runs after reproducing contention.
 - Translations: Import 91 matching keys for 237 languages, covering new native
   menus and card controls while preserving user-provided popup titles.
 - JSON exchange: Export/import weba-2 boards and scoped containers with empty

@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Release registration result cursors before writes/rollback and calculate the
+  password hash before opening the transaction. Reduce SQLite first-signup lock
+  contention while retaining the unique first-Admin claim. Three consecutive
+  complete store/race runs pass after reproducing the previous retry failures.
+  Thanks to xet7.
 - Extend imported WeKan translations to 91 interface keys across 237 languages
   for the new native menus and card controls. Preserve user-provided context,
   action and detail titles during localization. Thanks to xet7.
