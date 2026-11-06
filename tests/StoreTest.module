@@ -55,5 +55,47 @@ Public Sub Main()
   Try KanbanStore.Boards()
   denied = Error
   If Not denied Then Error.Raise("Anonymous access accepted")
+  Session["username"] = "first-user"
+  r = KanbanStore.Lanes(boardId)
+  If r.Count <> 2 Then Error.Raise("Legacy lanes were not retained")
+  KanbanStore.AddLane(boardId, "Empty lane")
+  r = KanbanStore.Lanes(boardId)
+  If r.Count <> 3 Then Error.Raise("Empty lane did not persist")
+  KanbanStore.AddList(boardId, "Empty lane", "Review", "Todo")
+  KanbanStore.AddList(boardId, "Empty lane", "Next", "Todo")
+  r = KanbanStore.Lists(boardId, "Empty lane")
+  If r.Count <> 5 Then Error.Raise("Lists did not persist")
+  r.MoveFirst()
+  If r!title <> "Todo" Then Error.Raise("Wrong first list")
+  r.MoveNext()
+  If r!title <> "Next" Then Error.Raise("New list not placed after selected list")
+  r.MoveNext()
+  If r!title <> "Review" Then Error.Raise("Existing list order was lost")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Review card", "", "Empty lane", "Review", "", "", "")
+  r = KanbanStore.Cards(boardId)
+  If r.Count <> 2 Then Error.Raise("Custom list rejected card")
+  Try KanbanStore.AddLane(boardId, "Empty lane")
+  denied = Error
+  If Not denied Then Error.Raise("Duplicate lane accepted")
+  Try KanbanStore.AddLane(boardId, " ")
+  denied = Error
+  If Not denied Then Error.Raise("Empty lane accepted")
+  Try KanbanStore.AddList(boardId, "Empty lane", "Review", "Todo")
+  denied = Error
+  If Not denied Then Error.Raise("Duplicate list accepted")
+  Try KanbanStore.AddList(boardId, "Empty lane", "New list", "Missing")
+  denied = Error
+  If Not denied Then Error.Raise("Invalid insertion target accepted")
+  Try KanbanStore.AddList(boardId, "Missing", "New list", "Todo")
+  denied = Error
+  If Not denied Then Error.Raise("Missing lane accepted")
+  Session["username"] = "other-user"
+  Try KanbanStore.AddLane(boardId, "Forbidden")
+  denied = Error
+  If Not denied Then Error.Raise("Another user's swimlane changed")
+  Try KanbanStore.AddList(boardId, "Empty lane", "Forbidden", "Todo")
+  denied = Error
+  If Not denied Then Error.Raise("Another user's lists changed")
+  Print "Persistent empty lanes, ordered custom lists and owner checks passed"
   Print "Store CRUD, archives, activities and negative validation tests passed"
 End

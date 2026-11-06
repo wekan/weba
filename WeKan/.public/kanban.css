@@ -69,3 +69,28 @@
 .weba-navigation .weba-active{background:#2878a8;color:#fff}
 .weba-navigation .weba-active:hover{background:#226890}
 .weba-topbar [id$=".Home"]{font-size:24px}
+
+/* Board controls occupy the same edges as WeKan swimlane/list headers. */
+.weba-swimlane{position:relative;margin-bottom:20px}
+.weba-swimlane-header{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:42px;background:#e8e8e8;border-bottom:1px solid #ccc;padding:0 8px}
+.weba-swimlane-header h3{font-size:16px;margin:0;overflow-wrap:anywhere}
+.weba-swimlane-controls,.weba-list-controls{display:flex;align-items:center;gap:3px}
+.weba-list-controls{min-height:30px}
+.weba-control-space{flex:1}
+.weba-content .weba-columns{display:flex;align-items:flex-start;gap:10px;overflow:auto;padding:10px 0;min-height:190px}
+.weba-content .weba-column{position:relative;flex:0 0 272px;box-sizing:border-box;padding:8px;background:#dedede;border-radius:4px;min-height:130px}
+.weba-list-header{position:relative}
+.weba-list-header h4{font-size:16px;margin:7px 4px 12px;overflow-wrap:anywhere}
+.weba-board-button{border:0;border-radius:3px;background:transparent;color:#4d4d4d;min-width:28px;min-height:28px;cursor:pointer;font:16px system-ui}
+.weba-board-button:hover,.weba-board-button:focus-visible{background:#c9c9c9;outline:2px solid #2980b9}
+.weba-add-card-bottom{display:block;width:100%;text-align:start;color:#555;padding:8px;margin-top:8px;font-size:14px}
+.weba-structure-menu{position:absolute;inset-inline-end:0;top:30px;display:flex;flex-direction:column;min-width:150px;z-index:15;background:white;padding:8px;box-shadow:0 2px 8px #0003}
+.weba-structure-menu button{text-align:start;font-size:14px}
+.weba-structure-composer{box-sizing:border-box;flex:0 0 272px;padding:12px;background:#eee;min-width:220px}
+.weba-structure-composer input{display:block;box-sizing:border-box;width:100%;margin:8px 0;background:white;border:1px solid #aaa;border-radius:3px;padding:8px;color:#253247;font:14px system-ui}
+.weba-structure-composer label{display:block}
+.weba-card[role=button]{cursor:pointer}
+.weba-columns[hidden],.weba-list-body[hidden]{display:none!important}
+
+.weba-add-list{font-size:0}
+.weba-add-list::before{font-family:"WeBa Font Awesome";font-weight:900;font-size:14px;content:"\f0fe"}

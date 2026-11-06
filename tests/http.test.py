@@ -29,12 +29,15 @@ page=get(); command(['raise',None,'open',[],False])
 assert 'root.webaRender' in page, 'Custom reports must be included in the rendered page'
 assert 'BoardTitle' in page
 prefix=re.search(r'id="(@\d+)\.BoardTitle"',page)[1]
+answer=command(['update',prefix+'.BoardAction','text','lane|||',True])
+assert 'Select&nbsp;an&nbsp;active&nbsp;board&nbsp;first' in answer
 command(['update',prefix+'.BoardTitle','text','HTTP board',True])
 answer=command(['raise',prefix+'.NewBoard','click',[],False])
 key=next(k for k in re.findall(r'Boards:([A-Za-z0-9+/=]+)',answer) if k.startswith('Yj') and k.endswith('='))
 
 answer=command(['update',prefix+'.Boards','$'+key,None,True])
 assert 'Board&nbsp;not&nbsp;accessible' not in answer
+assert re.search(r'data-view=.{0,2}Swimlanes', answer), 'Board must open in Swimlanes'
 command(['raise',prefix+'.NewCard','click',[],False])
 for name,value in [('CardTitle','HTTP card'),('Description','<script>user text</script>'),('DueDay','2026-11-06')]:
  command(['update',prefix+'.'+name,'text',value,True])
@@ -44,6 +47,11 @@ for control,view in [('Calendar','Calendar'),('Charts','Charts'),('TableView','T
  answer=command(['raise',prefix+'.'+control,'click',[],False])
  assert 'HTTP card' in answer and view in answer, answer
  assert '&lt;script&gt;' in answer
+command(['raise',prefix+'.ArchiveBoard','click',[],False])
+command(['raise',prefix+'.Archive','click',[],False])
+command(['update',prefix+'.Boards','$'+key,None,True])
+answer=command(['update',prefix+'.BoardAction','text','lane|||',True])
+assert 'Select&nbsp;an&nbsp;active&nbsp;board&nbsp;first' in answer, 'Archived-board actions must be rejected server-side'
 answer=command(['raise',prefix+'.Admin','click',[],False])
 assert username in answer, 'Admin user listing did not contain the registered user'
 assert '<td>Admin</td>' in answer, 'First registered user role was not Admin'

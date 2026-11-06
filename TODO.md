@@ -6,13 +6,17 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Verification follow-up
 
+- The existing concurrent-registration test exhausted its retry loop once during
+  this change; the complete suite passed on rerun. Investigate that intermittent
+  test before treating repeated full-suite runs as deterministic.
+
 - The full Chromium layout run timed out checking the card-editor focus outline
   after saving a card. Login/register geometry and independent visibility checks
   passed separately; investigate the unrelated card-focus check.
 
 ## Translation coverage
 
-- Imported 63 matching WeKan keys for 237 registered languages. Language selection
+- Imported 69 matching WeKan keys for 237 registered languages. Language selection
   on login and in the account menu persists locally; browser language is the initial
   default, with English fallback and RTL metadata from WeKan.
 - Native interface labels and selected report headings/calendar dates are localized.
@@ -22,6 +26,17 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   claiming full translation coverage. No human translation is overwritten.
 
 ## Implemented and checked
+
+- Opening a board defaults to Swimlanes, including an empty board. Swimlane
+  controls sit at the right edge of its header; list collapse is at the left,
+  with add-card/menu/add-list at the right and another add-card at the bottom.
+- Empty swimlanes and custom lists persist in portable Gambas tables. List
+  composers open after the selected list. Card actions prefill the native editor
+  with the correct swimlane/list; clicking a card opens that editor. Owner checks
+  and archived-board action guards are covered. Chromium checks desktop/mobile
+  positions, Unicode action values and reopen persistence.
+- Full WeKan structural menus, drag handles/reordering and inserting cards at
+  a chosen position remain unimplemented; the header card action opens the editor.
 
 - Login/register: local Font Awesome eye/eye-slash visibility icons.
 - Login/register: matching white password inputs with independent visibility
@@ -105,7 +120,7 @@ Use the actual parent source rather than treating the prototype's old menus as
 an exhaustive list. Reference areas: `client/components/boards`, `cards`,
 `sidebar`, `rules`, `settings`, `users`, `activities` and `gantt`.
 
-- Configurable lists and swimlanes, ordering/drag-and-drop, multi-selection,
+- Renaming/archiving lists and swimlanes, ordering/drag-and-drop, multi-selection,
   board rename, stars, colors, visibility and board membership/roles.
 - Card comments, checklists, subtasks, dependencies, attachments, rich text,
   custom fields, time tracking, history and notifications.

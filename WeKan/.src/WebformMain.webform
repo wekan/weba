@@ -94,6 +94,9 @@
       Text = ("Logout")
     }
   }
+  { BoardAction WebTextBox
+    Visible = False
+  }
   { Body WebContainer
     Class = "weba-body"
     Arrangement = Arrange.Horizontal
@@ -196,7 +199,7 @@
           { Lane WebTextBox
           }
           { StatusCaption WebLabel
-            Text = ("Status: Todo, Doing or Done")
+            Text = ("List")
           }
           { Status WebTextBox
           }

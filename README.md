@@ -80,7 +80,7 @@ https://devblogs.microsoft.com/commandline/systemd-support-is-now-available-in-w
    minimum applies to registration and newly chosen passwords (creation/change/
    reset) only while enforcement is enabled; existing credentials remain valid.
 6. Create a board, select it in the tree and click **New card**. Edit a card by
-   selecting it in the tree. Status is `Todo`, `Doing` or `Done`; dates use
+   selecting it in the tree. Lists start with `Todo`, `Doing` and `Done`; custom lists are supported. Dates use
    `YYYY-MM-DD`. The reports support all owned boards or the selected board.
 
 ## Database portability
@@ -229,7 +229,7 @@ its own disposable profile and remote-debugging port before running this check.
 
 The login page and signed-in account menu have a language selector. The selected
 language is saved in this browser; a new browser starts with its preferred language
-when available. The imported WeKan catalog currently provides 63 matching interface
+when available. The imported WeKan catalog currently provides 69 matching interface
 keys for 237 languages, including their native language names and RTL metadata.
 Only the selected catalog is fetched, from local application assets. No external
 translation service is used. Labels and report/calendar headings are translated;
@@ -253,3 +253,19 @@ English fallback and protection of user content. The isolated browser translatio
 check can also run with `WEBA_I18N_ONLY=1 WEBA_BROWSER_URL=http://127.0.0.1:9231`
 and `python3 tests/run-http.py --browser --archive` against a local Chromium CDP
 instance, using the same Gambas environment as the other HTTP tests.
+
+## Swimlane controls
+
+Opening a board selects Swimlanes. Each swimlane has collapse/menu/add-swimlane
+controls at the right of its header. Each list has collapse at its top-left and
+add-card/menu/add-list at its top-right, plus an Add card action below its cards,
+following the current WeKan component templates. The list composer opens directly
+after the chosen list. Empty swimlanes and custom lists are saved in the database;
+legacy card swimlanes are retained when the layout tables are initialized.
+
+Card buttons open the native Gambas editor with the correct swimlane/list, and
+card tiles open their existing details. Custom list names are limited to 32
+characters to fit the existing portable card schema. This does not yet implement
+all WeKan list/swimlane menu actions, drag reordering or insertion at the top of a
+list. `WEBA_SWIMLANES_ONLY=1` selects the dedicated Chromium layout/action test
+with `tests/run-http.py --browser` (also supports `--archive`).

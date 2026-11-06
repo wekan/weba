@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Open boards in Swimlanes by default and place swimlane/list controls at the
+  same header/footer edges as WeKan. Add functional inline list/swimlane composers,
+  persistent empty layouts, correctly targeted native card editing and card-tile
+  navigation. Preserve legacy cards and verify owner checks, ordering, desktop
+  and mobile behavior using SQLite and Chromium. Thanks to xet7.
 - Import matching WeKan interface translations for 237 languages, with a local
   language picker on login and in the account menu, persisted selection, RTL
   direction and localized report headings/calendar dates. Preserve user content

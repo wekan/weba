@@ -33,6 +33,26 @@ Public Sub OpenDatabase()
     t.PrimaryKey = ["id"]
     t.Update()
   Endif
+  If Not $db.Tables.Exist("kb_lanes") Then
+    t = $db.Tables.Add("kb_lanes")
+    t.Fields.Add("id", db.Serial)
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("title", db.String, 255)
+    t.PrimaryKey = ["id"]
+    t.Update()
+    t.Indexes.Add("kb_lane_title", ["board_id", "title"], True)
+  Endif
+  If Not $db.Tables.Exist("kb_lists") Then
+    t = $db.Tables.Add("kb_lists")
+    t.Fields.Add("id", db.Serial)
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("lane", db.String, 255)
+    t.Fields.Add("title", db.String, 32)
+    t.Fields.Add("sort_order", db.Integer)
+    t.PrimaryKey = ["id"]
+    t.Update()
+    t.Indexes.Add("kb_list_title", ["board_id", "lane", "title"], True)
+  Endif
   If Not $db.Tables.Exist("kb_activity") Then
     t = $db.Tables.Add("kb_activity")
     t.Fields.Add("id", db.Serial)
@@ -90,14 +110,20 @@ End
 
 Public Function SaveCard(boardId As Integer, cardId As Integer, title As String, description As String, lane As String, status As String, assignee As String, labels As String, dueDay As String) As Integer
   Dim r As Result
+  Dim list As Result
   RequireBoard(boardId)
+  If Not Trim(lane) Then lane = "Default"
   If Not Trim(title) Then Error.Raise("Enter a card title")
-  If InStr("|Todo|Doing|Done|", "|" & status & "|") = 0 Then Error.Raise("Invalid status")
+  If status <> "Todo" And status <> "Doing" And status <> "Done" Then
+    list = $db.Find("kb_lists", "board_id = &1 AND lane = &2 AND title = &3", boardId, lane, status)
+    If Not list.Available Then Error.Raise("Invalid status")
+  Endif
   If dueDay Then
     If Len(dueDay) <> 10 Then Error.Raise("Use YYYY-MM-DD")
     If Mid(dueDay, 5, 1) <> "-" Or Mid(dueDay, 8, 1) <> "-" Then Error.Raise("Use YYYY-MM-DD")
     If Format(Date(CInt(Left(dueDay, 4)), CInt(Mid(dueDay, 6, 2)), CInt(Right(dueDay, 2))), "yyyy-mm-dd") <> dueDay Then Error.Raise("Invalid due date")
   Endif
+  EnsureLane(boardId, lane)
   If cardId Then
     r = $db.Edit("kb_cards", "id = &1 AND board_id = &2", cardId, boardId)
     If Not r.Available Then Error.Raise("Card not accessible")
@@ -143,4 +169,95 @@ End
 Public Function Activities(boardId As Integer) As Result
   RequireBoard(boardId)
   Return $db.Find("kb_activity", "board_id = &1 ORDER BY id DESC", boardId)
+End
+
+' Preserve legacy card lanes while giving empty lanes/lists their own records.
+Private Sub EnsureLane(boardId As Integer, title As String)
+  Dim r As Result
+  Dim name As String
+  Dim index As Integer
+  Dim failure As String
+  r = $db.Find("kb_lanes", "board_id = &1 AND title = &2", boardId, title)
+  If r.Available Then Return
+  $db.Begin()
+  r = $db.Create("kb_lanes")
+  r["board_id"] = boardId
+  r["title"] = title
+  r.Update()
+  For Each name In ["Todo", "Doing", "Done"]
+    r = $db.Create("kb_lists")
+    r["board_id"] = boardId
+    r["lane"] = title
+    r["title"] = name
+    r["sort_order"] = index * 10
+    r.Update()
+    Inc index
+  Next
+  $db.Commit()
+Catch
+  failure = Error.Text
+  Try $db.Rollback()
+  r = $db.Find("kb_lanes", "board_id = &1 AND title = &2", boardId, title)
+  If Not r.Available Then Error.Raise(failure)
+End
+
+Public Function Lanes(boardId As Integer) As Result
+  Dim c As Result
+  RequireBoard(boardId)
+  EnsureLane(boardId, "Default")
+  c = $db.Find("kb_cards", "board_id = &1", boardId)
+  For Each c
+    EnsureLane(boardId, If(Trim(c!lane), c!lane, "Default"))
+  Next
+  Return $db.Find("kb_lanes", "board_id = &1 ORDER BY id", boardId)
+End
+
+Public Function Lists(boardId As Integer, lane As String) As Result
+  RequireBoard(boardId)
+  Return $db.Find("kb_lists", "board_id = &1 AND lane = &2 ORDER BY sort_order, id", boardId, lane)
+End
+
+Public Sub AddLane(boardId As Integer, title As String)
+  Dim r As Result
+  RequireBoard(boardId)
+  title = Trim(title)
+  If Not title Or String.Len(title) > 255 Then Error.Raise("Enter a swimlane title (1-255 characters)")
+  r = $db.Find("kb_lanes", "board_id = &1 AND title = &2", boardId, title)
+  If r.Available Then Error.Raise("Swimlane already exists")
+  EnsureLane(boardId, title)
+  Activity(boardId, "Added swimlane: " & title)
+End
+
+Public Sub AddList(boardId As Integer, lane As String, title As String, afterTitle As String)
+  Dim r As Result
+  Dim position As Integer
+  Dim failure As String
+  RequireBoard(boardId)
+  title = Trim(title)
+  If Not title Or String.Len(title) > 32 Then Error.Raise("Enter a list title (1-32 characters)")
+  r = $db.Find("kb_lanes", "board_id = &1 AND title = &2", boardId, lane)
+  If Not r.Available Then Error.Raise("Swimlane not accessible")
+  r = $db.Find("kb_lists", "board_id = &1 AND lane = &2 AND title = &3", boardId, lane, title)
+  If r.Available Then Error.Raise("List already exists")
+  r = $db.Find("kb_lists", "board_id = &1 AND lane = &2 AND title = &3", boardId, lane, afterTitle)
+  If Not r.Available Then Error.Raise("List not accessible")
+  position = r!sort_order + 1
+  $db.Begin()
+  r = $db.Edit("kb_lists", "board_id = &1 AND lane = &2 AND sort_order >= &3", boardId, lane, position)
+  For Each r
+    r["sort_order"] = r!sort_order + 1
+    r.Update()
+  Next
+  r = $db.Create("kb_lists")
+  r["board_id"] = boardId
+  r["lane"] = lane
+  r["title"] = title
+  r["sort_order"] = position
+  r.Update()
+  $db.Commit()
+  Activity(boardId, "Added list: " & title)
+Catch
+  failure = Error.Text
+  If $db Then Try $db.Rollback()
+  Error.Raise(failure)
 End

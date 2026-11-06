@@ -63,7 +63,7 @@ Public Sub Boards_Select()
     Next
     Editor.Show()
   Endif
-  $view = "Lists"
+  If Left(Boards.Key, 1) = "b" Or $view = "Boards" Or $view = "Archive" Then $view = "Swimlanes"
   ContentRow.Show()
   AccountPanel.Hide()
   PasswordPolicyPanel.Hide()
@@ -182,10 +182,12 @@ Public Sub Visual_Render()
   Dim c As Result
   Dim a As Result
   Dim text As String
+  Dim lane As Result
+  Dim list As Result
   If Not Session["username"] Then Return
   Print "<script>" & File.Load(".public/kanban.js") & "</script>"
   Print "<link rel=\"stylesheet\" href=\"kanban.css\">"
-  Print "<section class=\"weba-content\" data-tree=\"" & Html(Boards.Name) & "\" data-view=\"" & Html($view) & "\">"
+  Print "<section data-board=\"" & Str($board) & "\" data-action=\"" & Html(BoardAction.Name) & "\" data-editable=\"" & If($board And Not $archive, "true", "false") & "\" class=\"weba-content\" data-tree=\"" & Html(Boards.Name) & "\" data-view=\"" & Html($view) & "\">"
   If $view = "Profile" Then
     Print "<p>Signed in as " & Html(Session["username"]) & "</p>"
   Else If $view = "Admin panel" Then
@@ -203,6 +205,19 @@ Public Sub Visual_Render()
     Next
   Else
     b = KanbanStore.Boards($archive)
+    If $board Then
+      Print "<div class=\"weba-layout\" hidden>"
+      lane = KanbanStore.Lanes($board)
+      For Each lane
+        Print "<section data-lane=\"" & Html(lane!title) & "\">"
+        list = KanbanStore.Lists($board, lane!title)
+        For Each list
+          Print "<span data-list=\"" & Html(list!title) & "\"></span>"
+        Next
+        Print "</section>"
+      Next
+      Print "</div>"
+    Endif
     Print "<div class=\"weba-data\">"
     For Each b
       If $board And b!id <> $board Then Continue
@@ -220,7 +235,7 @@ Public Sub Visual_Render()
         Endif
         text = c!title & " " & c!description & " " & c!labels & " " & c!assignee
         If Filter.Text And InStr(LCase(text), LCase(Filter.Text)) = 0 Then Continue
-        Print "<article class=\"weba-card\" data-status=\"" & Html(c!status) & "\" data-lane=\"" & Html(c!lane) & "\" data-due=\"" & Html(c!due_day) & "\">"
+        Print "<article class=\"weba-card\" data-card-key=\"c" & Str(c!id) & ":" & Str(b!id) & "\" data-status=\"" & Html(c!status) & "\" data-lane=\"" & Html(c!lane) & "\" data-due=\"" & Html(c!due_day) & "\">"
         Print "<strong>" & Html(c!title) & "</strong><p>" & Html(c!description) & "</p><small>" & Html(c!status) & " · " & Html(c!assignee) & " · " & Html(c!labels) & " · " & Html(c!due_day) & "</small></article>"
       Next
     Next
@@ -432,4 +447,39 @@ End
 Public Sub LanguageSelector_Render()
   Print "<script>" & File.Load(".public/i18n-catalog.js") & File.Load(".public/i18n.js") & "</script>"
   Print "<select data-weba-language aria-label=\"Language\" style=\"width:100%;height:32px;background:white;color:black\"></select>"
+End
+
+Public Sub BoardAction_Change()
+  Dim fields As String[]
+  Dim action As String
+  Dim laneTitle As String
+  Dim list As String
+  Dim title As String
+  If Not BoardAction.Text Then Return
+  action = BoardAction.Text
+  BoardAction.Text = ""
+  If $board = 0 Or $archive Then Error.Raise("Select an active board first")
+  KanbanStore.RequireBoard($board)
+  fields = Split(action, "|")
+  If fields.Count <> 4 Then Error.Raise("Invalid board action")
+  laneTitle = UnBase64(fields[1])
+  list = UnBase64(fields[2])
+  title = UnBase64(fields[3])
+  Select fields[0]
+    Case "card"
+      NewCard_Click()
+      Lane.Text = laneTitle
+      Status.Text = list
+      CardTitle.SetFocus()
+    Case "lane"
+      KanbanStore.AddLane($board, title)
+      RefreshTree()
+    Case "list"
+      KanbanStore.AddList($board, laneTitle, title, list)
+      RefreshTree()
+    Case Else
+      Error.Raise("Invalid board action")
+  End Select
+Catch
+  Notice.Text = Error.Text
 End
