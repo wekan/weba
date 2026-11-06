@@ -224,3 +224,32 @@ and closes its test server afterward. `WEBA_SCREENSHOT_DIR` optionally saves
 screenshots to an existing task-owned temporary directory. It does not use your
 normal browser profile or application database. Chromium must be started with
 its own disposable profile and remote-debugging port before running this check.
+
+## Interface translations
+
+The login page and signed-in account menu have a language selector. The selected
+language is saved in this browser; a new browser starts with its preferred language
+when available. The imported WeKan catalog currently provides 63 matching interface
+keys for 237 languages, including their native language names and RTL metadata.
+Only the selected catalog is fetched, from local application assets. No external
+translation service is used. Labels and report/calendar headings are translated;
+user data and stored workflow statuses are preserved. Weba-specific messages with
+no matching WeKan key remain English (`WeKan/.public/i18n/manifest.json`).
+
+Refresh the imported subset from an actual WeKan source checkout:
+
+```sh
+python3 tools/import-wekan-translations.py /path/to/wekan
+```
+
+The importer copies existing translation values verbatim without changing WeKan
+files. It writes the language metadata, selected catalogs and a source fingerprint.
+Review alias mappings when adding interface text. Translation data originates in
+[WeKan](https://github.com/wekan/wekan), copyright Lauri Ojansivu, under the MIT
+license included with this repository.
+
+`node tests/i18n.test.cjs` checks catalogs, persistent selection, RTL, AJAX updates,
+English fallback and protection of user content. The isolated browser translation
+check can also run with `WEBA_I18N_ONLY=1 WEBA_BROWSER_URL=http://127.0.0.1:9231`
+and `python3 tests/run-http.py --browser --archive` against a local Chromium CDP
+instance, using the same Gambas environment as the other HTTP tests.

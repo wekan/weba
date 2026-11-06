@@ -10,6 +10,17 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   after saving a card. Login/register geometry and independent visibility checks
   passed separately; investigate the unrelated card-focus check.
 
+## Translation coverage
+
+- Imported 63 matching WeKan keys for 237 registered languages. Language selection
+  on login and in the account menu persists locally; browser language is the initial
+  default, with English fallback and RTL metadata from WeKan.
+- Native interface labels and selected report headings/calendar dates are localized.
+  User identities, input, board/card titles and custom swimlane names stay unchanged.
+- Weba-specific status/error/help text without a WeKan equivalent remains English;
+  see `WeKan/.public/i18n/manifest.json` for unmapped strings. Complete these before
+  claiming full translation coverage. No human translation is overwritten.
+
 ## Implemented and checked
 
 - Login/register: local Font Awesome eye/eye-slash visibility icons.

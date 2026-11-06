@@ -93,6 +93,9 @@
       Height = "100%"
       Arrangement = Arrange.Vertical
       Spacing = True
+      { LanguageSelector WebContainer
+        Height = "36px"
+      }
       { WebLabelUser WebLabel
         #MoveScaled(1,1,52.8571,3.5714)
         Class = "control-label"

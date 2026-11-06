@@ -75,6 +75,9 @@
     Arrangement = Arrange.Vertical
     Visible = False
     Ignore = True
+    { LanguageSelector WebContainer
+      Height = "36px"
+    }
     { MyCards WebButton
       Text = ("My cards")
     }

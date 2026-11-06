@@ -32,3 +32,18 @@ for (const view of ['Lists','Swimlanes','Table','Calendar','Gantt','Charts','Boa
  const count=report.children.length; global.webaRender(); assert.equal(report.children.length,count);
 }
 console.log('Report calculations, DOM views, month navigation, repeated renders and HTML injection tests passed');
+
+// Translation must never change a card title or a custom swimlane name.
+global.webaI18n = {t:text=>'translated:'+text, language:'fi'};
+const protectedCard = data.querySelector('.weba-card');
+protectedCard.querySelector('strong').textContent='Todo';
+protectedCard.dataset.lane='Doing';
+section.dataset.view='Table'; global.webaRender();
+const cells=[...section.querySelectorAll('.weba-report tbody tr:first-child td')].map(e=>e.textContent);
+assert.equal(cells[0],'Todo');
+assert.equal(cells[1],'translated:Todo');
+assert.equal(cells[2],'Doing');
+section.dataset.view='Swimlanes'; global.webaRender();
+assert.equal(section.querySelector('.weba-report h3').textContent,'Doing');
+delete global.webaI18n;
+console.log('Translated reports preserve card titles and custom swimlane names');

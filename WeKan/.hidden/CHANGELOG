@@ -1,4 +1,7 @@
 * Fri Nov 06 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Translations: Import matching WeKan texts for 237 languages, add persistent
+  login/account language selection, RTL and localized report/calendar labels;
+  protect user content, retain English fallbacks and test catalogs/browser UI.
 - Local server: Quietly handle broken pipes and reset/aborted client connections,
   including disconnects while reporting CGI errors; add regression coverage.
 - Login/register: Replace password visibility text with Font Awesome eye icons

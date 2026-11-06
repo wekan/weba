@@ -1,4 +1,12 @@
 # Upcoming WeKan ® for Gambas release
+
+This work adds the following features and fixes:
+
+- Import matching WeKan interface translations for 237 languages, with a local
+  language picker on login and in the account menu, persisted selection, RTL
+  direction and localized report headings/calendar dates. Preserve user content
+  and fall back to English for weba-specific unmapped text. Add an import tool
+  and catalog, DOM and browser regression coverage. Thanks to xet7.
 - Handle browser disconnects without a traceback or a second response attempt.
   Test normal-response and error-response disconnects. Thanks to xet7.
 - Use local Font Awesome eye/eye-slash icons for both password visibility
@@ -6,7 +14,6 @@
 
 - Place independent Show/Hide password buttons beside both password fields and
   give the confirmation field the same white input styling. Thanks to xet7.
-This work adds the following features and fixes:
 
 - Arrange native Gambas controls in the current WeKan order: one header with
   page/view/account actions, left navigation, central board tiles/reports,

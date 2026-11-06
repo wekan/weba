@@ -35,6 +35,7 @@ tests() {
   python3 tests/run-http.py --archive
   python3 -m unittest discover -s tests -p '*_test.py'
   "${NODE:-node}" tests/reports.test.cjs
+  "${NODE:-node}" tests/i18n.test.cjs
 }
 release() {
   local workflow="$1" version="${2:-v$(sed -n 's/^Version=//p' WeKan/.project)}"

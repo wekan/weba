@@ -1,6 +1,7 @@
 /* MIT License. Reports embedded in a Gambas WebContainer. */
 (function (root) {
   'use strict';
+  const t = text => root.webaI18n ? root.webaI18n.t(text) : text;
   const summary = cards => ['Todo', 'Doing', 'Done'].map(status => ({status, count: cards.filter(c => c.status === status).length}));
   const monthDays = (year, month) => new Date(year, month + 1, 0).getDate();
   function render() {
@@ -14,16 +15,16 @@
         };
       });
       const cards = [...data.querySelectorAll('.weba-card')], view = section.dataset.view;
-      function add(parent, tag, text, cls) {
+      function add(parent, tag, text, cls, localize = true) {
         const el = document.createElement(tag);
-        if (text !== undefined) el.textContent = text;
+        if (text !== undefined) el.textContent = localize ? t(text) : text;
         if (cls) el.className = cls;
         parent.append(el); return el;
       }
       if (view === 'Lists' || view === 'Swimlanes') {
         const lanes = view === 'Swimlanes' ? [...new Set(cards.map(c => c.dataset.lane || 'Default'))] : ['All cards'];
         lanes.forEach(lane => {
-          add(report, 'h3', lane);
+          add(report, 'h3', lane, undefined, view !== 'Swimlanes');
           const columns = add(report, 'div', undefined, 'weba-columns');
           ['Todo', 'Doing', 'Done'].forEach(status => {
             const column = add(columns, 'section', undefined, 'weba-column');
@@ -39,7 +40,7 @@
         let year = now.getFullYear(), month = now.getMonth();
         function draw() {
           grid.replaceChildren();
-          label.textContent = new Date(year, month, 1).toLocaleDateString(undefined, {year:'numeric', month:'long'});
+          label.textContent = new Date(year, month, 1).toLocaleDateString(root.webaI18n?.language.replace(/_/g,'-'), {year:'numeric', month:'long'});
           ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach(d => add(grid, 'strong', d));
           for (let i = 0; i < (new Date(year, month, 1).getDay() + 6) % 7; i++) add(grid, 'div');
           for (let d = 1; d <= monthDays(year, month); d++) {
@@ -55,9 +56,9 @@
       } else if (view === 'Charts') {
         add(report, 'h3', 'Cards by status');
         summary(cards.map(c => c.dataset)).forEach(({status,count}) => {
-          const row = add(report, 'div', undefined, 'weba-chart-row'); add(row, 'span', `${status}: ${count}`);
+          const row = add(report, 'div', undefined, 'weba-chart-row'); add(row, 'span', `${t(status)}: ${count}`);
           const meter = add(row, 'meter'); meter.min = 0; meter.max = Math.max(cards.length,1); meter.value = count;
-          meter.setAttribute('aria-label', `${status}: ${count} cards`);
+          meter.setAttribute('aria-label', `${t(status)}: ${count} ${t('Cards')}`);
         });
         add(report, 'p', `Total: ${cards.length} cards. Current counts, without inferred history.`);
       } else if (view === 'Table' || view === 'Gantt') {
@@ -67,7 +68,10 @@
         const body = add(table, 'tbody');
         cards.slice().sort((a,b) => view === 'Gantt' ? a.dataset.due.localeCompare(b.dataset.due) : 0).forEach(card => {
           const row = add(body, 'tr');
-          [card.querySelector('strong').textContent,card.dataset.status,card.dataset.lane,card.dataset.due || 'No due date'].forEach(t => add(row,'td',t));
+          add(row,'td',card.querySelector('strong').textContent,undefined,false);
+          add(row,'td',card.dataset.status);
+          add(row,'td',card.dataset.lane,undefined,false);
+          add(row,'td',card.dataset.due || 'No due date');
           if (view === 'Gantt') add(add(row,'td'),'span',card.dataset.due ? '◆ '+card.dataset.due : 'Unscheduled','weba-milestone');
         });
         if (view === 'Gantt') add(report,'p','Due-date milestones. Durations and dependencies are not recorded yet.');

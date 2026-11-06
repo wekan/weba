@@ -17,6 +17,14 @@ const path = require('node:path');
   try {
     await page.setViewport({width:1440,height:1000});
     await page.goto(process.env.WEBA_TEST_URL,{waitUntil:'networkidle2'});
+    await page.waitForFunction(() => window.webaI18n && document.querySelector('[data-weba-language]')?.options.length > 200);
+    await page.evaluate(() => webaI18n.setLanguage('fi'));
+    assert.equal(await page.$eval(selector('WebLabelUser'),e=>e.textContent),'Käyttäjätunnus');
+    await page.reload({waitUntil:'networkidle2'});
+    await page.waitForFunction(() => document.documentElement.lang === 'fi');
+    await page.evaluate(() => webaI18n.setLanguage('ar'));
+    assert.equal(await page.$eval('html',e=>e.dir),'rtl');
+    await page.evaluate(() => webaI18n.setLanguage('en'));
     await click('ShowRegistration');
     await page.evaluate(() => document.fonts.ready);
     for (const button of ['ShowPassword','ShowConfirmPassword']) {
@@ -53,6 +61,17 @@ const path = require('node:path');
     await click('Register');
     await visible('Header');
     await page.waitForFunction(() => document.querySelector('.weba-content'));
+    await page.evaluate(() => webaI18n.setLanguage('fi'));
+    assert.equal(await page.$eval(selector('Remaining'),e=>e.textContent.trim()),'Jäljellä');
+    await click('AccountToggle');
+    await page.waitForSelector('[data-weba-language]',{visible:true});
+    await page.select('[data-weba-language]','en');
+    await page.waitForFunction(() => document.documentElement.lang === 'en');
+    await click('AccountToggle');
+    if(process.env.WEBA_I18N_ONLY) {
+      console.log('Browser translations: Finnish login, persisted selection, Arabic RTL and signed-in language picker passed');
+      return;
+    }
     await shot('weba-overview');
     const geometry = await page.evaluate(() => {
       const box = name => {const r=document.querySelector(`[id$=".${name}"]`).getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height};};
