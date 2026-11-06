@@ -53,6 +53,10 @@
     Arrangement = Arrange.Vertical
     Visible = False
     Ignore = True
+    { CloseViews WebButton
+      Class = "weba-icon-only weba-popup-close fa fa-times-thin"
+      Tooltip = ("Close")
+    }
     { Swimlanes WebButton
       Text = ("Swimlanes")
     }
@@ -77,6 +81,10 @@
     Arrangement = Arrange.Vertical
     Visible = False
     Ignore = True
+    { CloseAccount WebButton
+      Class = "weba-icon-only weba-popup-close fa fa-times-thin"
+      Tooltip = ("Close")
+    }
     { LanguageSelector WebContainer
       Height = "36px"
     }
@@ -166,7 +174,7 @@
           Spacing = True
           Width = "340px"
           { CloseEditor WebButton
-      Class = "weba-icon-only fa fa-times-thin"
+      Class = "weba-icon-only weba-popup-close fa fa-times-thin"
             Tooltip = ("Close card details")
           }
           { CardHeading WebLabel
@@ -275,7 +283,7 @@
       Width = "300px"
       Visible = False
       { CloseSidebar WebButton
-      Class = "weba-icon-only fa fa-times-thin"
+      Class = "weba-icon-only weba-popup-close fa fa-times-thin"
         Tooltip = ("Close page sidebar")
       }
       { PageActions WebContainer

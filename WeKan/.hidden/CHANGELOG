@@ -1,4 +1,8 @@
 * Fri Nov 06 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Popups: Place card details beside the initiating action, clamp windows to the
+  visual viewport and add top-right close controls with Escape support; verify
+  portrait/landscape positioning, scrolling, menu/composer dismissal and native
+  keyboard focus alignment/restoration.
 - Icons: Use WeKan’s Font Awesome assets and compatibility aliases throughout
   native navigation, tree items, reports and board controls.
 - Boards: Default to Swimlanes; align header/footer controls with WeKan, persist

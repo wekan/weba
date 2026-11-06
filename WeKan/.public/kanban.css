@@ -102,3 +102,13 @@
 .weba-native-caret::after{content:"\f0d7";margin-inline-start:7px}
 .weba-with-plus::before{content:"\2b";margin-inline-end:7px}
 .weba-milestone::before{font-family:"Font Awesome 6 Free";font-weight:900;content:"\f219";margin-inline-end:5px}
+
+/* Keep the full popup visible, including its close control, on small screens. */
+.weba-editor{z-index:60;scroll-padding-top:36px}
+.weba-view-options,.weba-account-menu{max-height:calc(100dvh - 16px);overflow:auto;box-sizing:border-box}
+.weba-structure-menu{z-index:65;padding-top:38px;border:1px solid #ccd5de;border-radius:4px}
+.weba-structure-composer{position:relative;padding-top:40px}
+.weba-popup-close{color:#4d4d4d;background:#fff;border:0;border-radius:3px;min-width:28px!important;width:28px!important;height:28px!important;min-height:28px!important;cursor:pointer;font-size:18px}
+.weba-popup-close:hover,.weba-popup-close:focus-visible{background:#e2e7ed;outline:2px solid #2980b9}
+.weba-editor .weba-popup-close,.weba-view-options .weba-popup-close,.weba-account-menu .weba-popup-close,.weba-page-sidebar .weba-popup-close{position:sticky!important;top:0;align-self:flex-end;margin-left:auto;flex-shrink:0!important;z-index:3}
+.weba-structure-composer>.weba-popup-close,.weba-structure-menu>.weba-popup-close{position:absolute;right:5px;top:5px;z-index:3;text-align:center}

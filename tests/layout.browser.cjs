@@ -96,8 +96,51 @@ const path = require('node:path');
     await page.click('.weba-board-tile');
     await page.waitForFunction(()=>document.querySelector('[id$=".PageTitle"]').textContent.replace(/\u00a0/g,' ')==='Layout board');
     await page.waitForFunction(()=>document.querySelector('.weba-content')?.dataset.view==='Swimlanes');
+    assert.equal(await page.$$eval('[id$=".Boards"] img',els=>els.filter(e=>e.getBoundingClientRect().width>0).length),0,'tree uses Font Awesome instead of visible bitmap icons');
     assert.equal(await page.$$eval('.weba-add-list .fa-plus-square-o',els=>els.length),3,'list-add uses the same regular Font Awesome icon as WeKan');
     assert.equal(await page.$$eval('.weba-column',els=>els.length),3,'empty board shows its initial lists');
+    if(process.env.WEBA_POPUPS_ONLY) {
+      async function contained(selector) {
+        await page.waitForFunction(selector=>{
+          const e=document.querySelector(selector);if(!e)return false;
+          const r=e.getBoundingClientRect();return r.width>0&&r.height>0&&r.left>=7&&r.top>=7&&r.right<=innerWidth-7&&r.bottom<=innerHeight-7;
+        },{},selector);
+        const close=await page.$eval(selector,e=>{
+          const x=e.querySelector('.weba-popup-close'),a=e.getBoundingClientRect(),b=x.getBoundingClientRect();
+          return {right:a.right-b.right,top:b.top-a.top,visible:b.width>0&&b.height>0,clickable:x.contains(document.elementFromPoint(b.left+b.width/2,b.top+b.height/2))};
+        });
+        assert.ok(close.visible&&close.clickable,'X is visible and reachable');
+        assert.ok(close.right<30&&close.top<32,'X is at the top right');
+      }
+      await page.click('.weba-add-card-top');await settle();await visible('Editor');
+      await contained('[id$=".Editor"]');
+      await page.waitForFunction(()=>{
+        const a=document.querySelector('[id$=".CardTitle"]').getBoundingClientRect(),b=document.getElementById('gw-focus').getBoundingClientRect();
+        return Math.abs(a.left-b.left)<2&&Math.abs(a.top-b.top)<2;
+      });
+      await shot('weba-anchored-card-popup');
+      const distance=await page.evaluate(()=>{const a=document.querySelector('.weba-add-card-top').getBoundingClientRect(),b=document.querySelector('[id$=".Editor"]').getBoundingClientRect();return Math.abs(b.top-a.bottom);});
+      assert.ok(distance<12,'card popup opens beside the add button when space permits');
+      await click('CloseEditor');
+      await page.waitForFunction(()=>document.activeElement?.matches('.weba-add-card-top')&&document.getElementById('gw-focus').style.display==='none');
+      await click('ViewMenu');await visible('Views');await contained('[id$=".Views"]');await click('CloseViews');
+      await click('AccountToggle');await visible('AccountMenu');await contained('[id$=".AccountMenu"]');await click('CloseAccount');
+      await page.click('.weba-list-menu');await contained('.weba-structure-menu');await page.click('.weba-structure-menu .weba-popup-close');
+      assert.equal(await page.$('.weba-structure-menu'),null);
+      await page.click('.weba-add-list');
+      const inlineClose=await page.$eval('.weba-structure-composer',e=>{const a=e.getBoundingClientRect(),b=e.querySelector('.weba-popup-close').getBoundingClientRect();return a.right-b.right<15&&b.top-a.top<15;});
+      assert.ok(inlineClose,'list composer X is at top right');await page.click('.weba-structure-composer .weba-popup-close');
+      for(const viewport of [{width:390,height:844},{width:844,height:390}]){
+        await page.setViewport(viewport);
+        await page.click('.weba-add-card-bottom');await settle();await visible('Editor');await contained('[id$=".Editor"]');
+        await page.$eval('[id$=".Editor"]',e=>{e.scrollTop=e.scrollHeight;});
+        await contained('[id$=".Editor"]');
+        await page.keyboard.press('Escape');await settle();
+        await page.waitForSelector('[id$=".Editor"]',{hidden:true});
+      }
+      console.log('Browser popups: anchored add-card, viewport containment, top-right X, menus/composers and portrait/landscape Escape checks passed');
+      return;
+    }
     if(process.env.WEBA_SWIMLANES_ONLY) {
       const positions=await page.evaluate(()=>{
         const box=selector=>{const r=document.querySelector(selector).getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom};};
@@ -109,12 +152,12 @@ const path = require('node:path');
       assert.ok(positions.bottom.top>positions.top.bottom,'second card button is below the cards');
       await page.click('.weba-add-lane');
       await page.locator('.weba-structure-composer input').fill('Tyhjä rata');
-      await page.click('.weba-structure-composer button'); await settle();
+      await page.click('.weba-structure-composer button:not(.weba-popup-close)'); await settle();
       await page.waitForFunction(()=>[...document.querySelectorAll('.weba-swimlane h3')].some(e=>e.textContent==='Tyhjä rata'));
       const lane='.weba-swimlane:nth-child(2)';
       await page.click(lane+' .weba-add-list');
       await page.locator(lane+' .weba-structure-composer input').fill('Katselmointi');
-      await page.click(lane+' .weba-structure-composer button'); await settle();
+      await page.click(lane+' .weba-structure-composer button:not(.weba-popup-close)'); await settle();
       await page.waitForFunction(()=>[...document.querySelectorAll('.weba-column h4')].some(e=>e.textContent==='Katselmointi'));
       const custom=lane+' .weba-column:nth-child(2)';
       await page.click(custom+' .weba-add-card-bottom'); await settle(); await visible('Editor');
@@ -138,7 +181,7 @@ const path = require('node:path');
       return;
     }
     await click('ViewMenu');
-    const views = await page.$eval('[id$=".Views"]', e => [...e.querySelectorAll('button')].map(b=>b.textContent.trim()));
+    const views = await page.$eval('[id$=".Views"]', e => [...e.querySelectorAll('button:not(.weba-popup-close)')].map(b=>b.textContent.trim()));
     assert.deepEqual(views,['Swimlanes','Lists','Calendar','Gantt','Table','Charts']);
     await click('Calendar');
     await page.waitForSelector('.weba-calendar');

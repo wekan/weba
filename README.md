@@ -269,3 +269,18 @@ characters to fit the existing portable card schema. This does not yet implement
 all WeKan list/swimlane menu actions, drag reordering or insertion at the top of a
 list. `WEBA_SWIMLANES_ONLY=1` selects the dedicated Chromium layout/action test
 with `tests/run-http.py --browser` (also supports `--archive`).
+
+## Icons and popups
+
+Interface icons use the same locally bundled Font Awesome 6 assets and legacy
+aliases as WeKan (including regular/brand icons and its `fa-times-thin` close
+alias). No icon CDN is required. Card details open near their initiating action;
+position and maximum size track the visible viewport, including mobile landscape
+and viewport changes when the on-screen keyboard opens. Long content scrolls
+inside the window. Popups have a top-right X and Escape dismissal; closing card
+details returns focus to the initiating control when that control still exists.
+
+`node tests/popup.test.cjs` checks placement at viewport edges and reduced visual
+viewports. `WEBA_POPUPS_ONLY=1` selects browser checks for anchored card editing,
+reachable close buttons, view/account/structure menus and portrait/landscape
+behavior in the isolated `tests/run-http.py --browser` harness.

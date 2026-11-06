@@ -10,10 +10,6 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   this change; the complete suite passed on rerun. Investigate that intermittent
   test before treating repeated full-suite runs as deterministic.
 
-- The full Chromium layout run timed out checking the card-editor focus outline
-  after saving a card. Login/register geometry and independent visibility checks
-  passed separately; investigate the unrelated card-focus check.
-
 ## Translation coverage
 
 - Imported 69 matching WeKan keys for 237 registered languages. Language selection
@@ -26,6 +22,15 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   claiming full translation coverage. No human translation is overwritten.
 
 ## Implemented and checked
+
+- Card popups open beside their initiating button and stay inside the visual
+  viewport on desktop, portrait/landscape and resize. View/account/list/swimlane
+  popups/composers have top-right X controls; native popup X stays visible when
+  scrolling. Escape dismisses open popups. Geometry, clickability and dismissal
+  are covered with jsdom and Chromium checks. Gambas focus outlines follow the
+  anchored editor, closing restores focus even after native control re-rendering,
+  and the complete Chromium layout check (including card-save focus) passes.
+
 
 - WeKan Font Awesome solid/regular/brand fonts and v4 aliases replace native
   Unicode/bitmap interface icons, including header, tree and board controls.

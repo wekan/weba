@@ -446,7 +446,7 @@ End
 
 Public Sub LanguageSelector_Render()
   Print "<link rel=\"stylesheet\" href=\"fontawesome.css\">"
-  Print "<script>" & File.Load(".public/i18n-catalog.js") & File.Load(".public/i18n.js") & File.Load(".public/ui.js") & "</script>"
+  Print "<script>" & File.Load(".public/i18n-catalog.js") & File.Load(".public/i18n.js") & File.Load(".public/ui.js") & File.Load(".public/popup.js") & "</script>"
   Print "<select data-weba-language aria-label=\"Language\" style=\"width:100%;height:32px;background:white;color:black\"></select>"
 End
 
@@ -483,4 +483,12 @@ Public Sub BoardAction_Change()
   End Select
 Catch
   Notice.Text = Error.Text
+End
+
+Public Sub CloseViews_Click()
+  Views.Hide()
+End
+
+Public Sub CloseAccount_Click()
+  AccountMenu.Hide()
 End

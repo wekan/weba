@@ -48,19 +48,24 @@
           const label=add(form,'label',action==='lane' ? 'Add swimlane' : 'Add list');
           const input=add(label,'input'); input.required=true;input.maxLength=action==='lane'?255:32;
           button(form,'✓','Save',()=>form.requestSubmit());
-          button(form,'×','Close',()=>form.remove());
+          if(root.webaPopup)root.webaPopup.closeButton(form,()=>form.remove());
+          else button(form,'×','Close',()=>form.remove(),'weba-popup-close');
           form.onsubmit=event=>{event.preventDefault();if(input.value.trim())send(action,lane,after,input.value.trim());};
-          input.focus();
+          form.scrollIntoView?.({block:"nearest",inline:"nearest"});
+          input.focus({preventScroll:true});
         }
         function toggle(key, target, trigger) {
           if (collapsed.has(key)) collapsed.delete(key); else collapsed.add(key);
           target.hidden=collapsed.has(key); trigger.querySelector('i').className='fa fa-'+(target.hidden?'caret-right':'caret-down');
           trigger.setAttribute('aria-expanded',String(!target.hidden));
         }
-        function menu(parent, actions) {
+        function menu(parent, actions, trigger) {
           parent.querySelector('.weba-structure-menu')?.remove();
           const popup=add(parent,'div',undefined,'weba-structure-menu');
+          if(root.webaPopup)root.webaPopup.closeButton(popup,()=>popup.remove());
+          else button(popup,'×','Close',()=>popup.remove(),'weba-popup-close');
           for (const [label,action] of actions) button(popup,t(label),label,()=>{popup.remove();action();});
+          if(root.webaPopup && trigger)root.webaPopup.near(popup,trigger);
         }
         lanes.forEach(lane => {
           const row=add(report,'section',undefined,'weba-swimlane');
@@ -74,7 +79,7 @@
             const caret=button(controls,columns.hidden?'▸':'▾','Collapse',el=>toggle(laneKey,columns,el),'weba-collapse-lane');
             caret.setAttribute('aria-expanded',String(!columns.hidden));
             if(editable) {
-              button(controls,'☰','Swimlane',()=>menu(laneHeader,[['Add swimlane',()=>composer(row,'lane',lane)],['Collapse',()=>toggle(laneKey,columns,caret)]]),'weba-lane-menu');
+              button(controls,'☰','Swimlane',trigger=>menu(laneHeader,[['Add swimlane',()=>composer(row,'lane',lane)],['Collapse',()=>toggle(laneKey,columns,caret)]],trigger),'weba-lane-menu');
               button(controls,'+','Add swimlane',()=>composer(row,'lane',lane),'weba-add-lane');
             }
           }
@@ -95,7 +100,7 @@
             const actualLane=view==='Lists' ? (laneLayout.find(l=>[...l.querySelectorAll('[data-list]')].some(item=>item.dataset.list===status))||laneLayout[0])?.dataset.lane||'Default' : lane;
             if(editable) {
               button(controls,'+','Add card',()=>send('card',actualLane,status),'weba-add-card-top');
-              button(controls,'☰','List',()=>menu(listHeader,[['Add card',()=>send('card',actualLane,status)],['Add list',()=>composer(columns,'list',actualLane,status,column)],['Collapse',()=>toggle(listKey,body,caret)]]),'weba-list-menu');
+              button(controls,'☰','List',trigger=>menu(listHeader,[['Add card',()=>{if(root.webaPopup)root.webaPopup.rememberEditor(trigger);send('card',actualLane,status);}],['Add list',()=>composer(columns,'list',actualLane,status,column)],['Collapse',()=>toggle(listKey,body,caret)]],trigger),'weba-list-menu');
               button(controls,'⊞','Add list',()=>composer(columns,'list',actualLane,status,column),'weba-add-list');
             }
             add(listHeader,'h4',status,undefined,['Todo','Doing','Done'].includes(status));
@@ -103,7 +108,7 @@
               const clone=c.cloneNode(true);body.append(clone);
               if(c.dataset.cardKey) {
                 clone.tabIndex=0;clone.setAttribute('role','button');
-                const open=()=>{if(root.gw&&section.dataset.tree)root.gw.update(section.dataset.tree,'$'+btoa(c.dataset.cardKey),null);};
+                const open=()=>{if(root.webaPopup)root.webaPopup.rememberEditor(clone);if(root.gw&&section.dataset.tree)root.gw.update(section.dataset.tree,'$'+btoa(c.dataset.cardKey),null);};
                 clone.onclick=open;clone.onkeydown=event=>{if(['Enter',' '].includes(event.key)){event.preventDefault();open();}};
               }
             });
@@ -169,6 +174,10 @@
     if (!root.requestAnimationFrame) return;
     root.requestAnimationFrame(() => {
       let active = document.activeElement;
+      // Embedded buttons/inputs have their own browser focus outline.
+      if(active?.closest('.weba-content') && !active.id){
+        const outline=document.getElementById('gw-focus');if(outline)outline.style.display='none';return;
+      }
       while (active && (!active.id || active.id.includes(':'))) active = active.parentElement;
       const outline = document.getElementById('gw-focus');
       if (!active || !active.closest('.weba-shell') || !outline) return;

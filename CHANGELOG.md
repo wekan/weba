@@ -2,6 +2,12 @@
 
 This work adds the following features and fixes:
 
+- Anchor the native card popup beside its opening button and keep it fully
+  within the visible viewport, including mobile/landscape and keyboard resizing.
+  Add reachable top-right X controls to view/account/structure popups, preserve
+  close controls while scrolling, support Escape, align keyboard focus and restore
+  it after closing. Verify popup and full-layout behavior in Chromium.
+  Thanks to xet7.
 - Replace Unicode and bitmap interface symbols with WeKan’s local Font Awesome
   fonts, compatibility aliases and matching icon classes. Cover native headers,
   view menus, trees, board controls, calendar navigation and close actions.
