@@ -23,8 +23,22 @@
       const icon=document.createElement('i');icon.className='fa fa-'+name+' weba-tree-icon';icon.setAttribute('aria-hidden','true');img.before(icon);img.hidden=true;
     });
   }
-  root.webaUI={decorate};
+  function syncColor(){
+    const wheel=document.querySelector('.weba-custom-color');
+    if(!wheel)return;
+    const input=document.getElementById(wheel.dataset.target+':entry');
+    if(input&&/^#[0-9a-f]{6}$/i.test(input.value))wheel.value=input.value;
+  }
+  root.webaUI={decorate,syncColor};
   function start(){
+    document.addEventListener('input',event=>{
+      const wheel=document.querySelector('.weba-custom-color');
+      if(!wheel)return;
+      if(event.target===wheel){
+        const input=document.getElementById(wheel.dataset.target+':entry');
+        if(input){input.value=wheel.value;gw.update(wheel.dataset.target,'text',wheel.value);}
+      }else if(event.target.id===wheel.dataset.target+':entry')syncColor();
+    });
     decorate();new MutationObserver(decorate).observe(document.body,{childList:true,subtree:true});
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();

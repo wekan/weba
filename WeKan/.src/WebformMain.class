@@ -13,6 +13,7 @@ Private $contextBoard As Integer
 Private $contextKind As String
 Private $contextId As Integer
 Private $importText As String
+Private $colorButtons As New WebButton[]
 Private $action As String
 Private $browsingArchive As Boolean
 Private $listId As Integer
@@ -637,6 +638,7 @@ Public Sub ImportBoard_Finish()
   If Stat(ImportBoard.Path).Size > 20 * 1024 * 1024 Then Error.Raise("Import JSON exceeds 20 MiB")
   $importText = File.Load(ImportBoard.Path)
   data = BoardTransfer.ReadData($importText)
+  ColorChooser.Hide()
   $action = "Import"
   ActionTitle.Text = "Import as a new board: " & CStr(data["title"])
   ActionText.Text = CStr(data["title"])
@@ -657,6 +659,7 @@ End
 Private Sub BeginAction(action As String)
   Dim r As Result = WorkspaceStore.Record($contextBoard, $contextKind, $contextId)
   $action = action
+  ColorChooser.Visible = action = "Color"
   $loadingDestinations = True
   LoadDestinationBoards()
   DestinationBoard.Visible = action = "Move"
@@ -687,11 +690,75 @@ Private Sub BeginAction(action As String)
     DestinationLaneLabel.Visible = False
   Endif
   If action = "Copy" Then ActionText.Text = r!title & " copy"
-  If action = "Color" Then ActionText.Text = WorkspaceStore.Setting($contextBoard, $contextKind, $contextId, "color", "#2980b9")
+  If action = "Color" Then
+    ActionText.Text = WorkspaceStore.Setting($contextBoard, $contextKind, $contextId, "color", "#2980b9")
+    LoadColorPresets()
+    ColorWheel.Refresh()
+  Endif
   If action = "WIP" Then ActionText.Text = WorkspaceStore.Setting($contextBoard, $contextKind, $contextId, "wip", "0")
   If action = "Description" Then ActionText.Text = WorkspaceStore.Setting($contextBoard, $contextKind, $contextId, "description")
   ContextMenu.Hide()
   ActionPanel.Show()
+End
+
+Private Sub LoadColorPresets()
+  Dim data As Collection = JSON.Decode(File.Load(".public/color-presets.json"))
+  Dim preset As Collection
+  Dim button As WebButton
+  Dim value As Integer
+  For Each button In $colorButtons
+    button.Delete()
+  Next
+  $colorButtons.Clear()
+  For Each preset In data[If($contextKind = "board", "boards", "items")]
+    If $contextKind = "card" And preset["name"] = "white" Then Continue
+    button = New WebButton(ColorPresets) As "PresetColor"
+    button.Tag = preset["hex"]
+    button.Tooltip = preset["name"] & " " & preset["hex"]
+    button.Class = "weba-color-swatch weba-icon-only"
+    value = Val("&H" & Mid(preset["hex"], 2))
+    button.Background = value
+    If (Shr(value, 16) * 299 + (Shr(value, 8) And 255) * 587 + (value And 255) * 114) > 128000 Then
+      button.Foreground = Color.Black
+    Else
+      button.Foreground = Color.White
+    Endif
+    $colorButtons.Add(button)
+  Next
+  UpdateColorSelection()
+End
+
+Private Sub UpdateColorSelection()
+  Dim button As WebButton
+  For Each button In $colorButtons
+    button.Class = "weba-color-swatch weba-icon-only" & If(LCase(ActionText.Text) = button.Tag, " fa fa-check", "")
+  Next
+End
+
+Public Sub PresetColor_Click()
+  ActionText.Text = Last.Tag
+  UpdateColorSelection()
+  WebForm.Exec("window.webaUI?.syncColor()")
+End
+
+Public Sub ActionText_Change()
+  If $action <> "Color" Then Return
+  UpdateColorSelection()
+End
+
+Public Sub ColorWheel_Render()
+  Dim value As String = ActionText.Text
+  If Not IsHexColor(value) Then value = "#2980b9"
+  Print "<input type=\"color\" class=\"weba-custom-color\" aria-labelledby=\"" & Html(CustomColorLabel.Name) & "\" value=\"" & Html(value) & "\" data-target=\"" & Html(ActionText.Name) & "\">"
+End
+
+Private Function IsHexColor(value As String) As Boolean
+  Dim index As Integer
+  If Len(value) <> 7 Or Left(value) <> "#" Then Return False
+  For index = 2 To 7
+    If InStr("0123456789abcdef", LCase(Mid(value, index, 1))) = 0 Then Return False
+  Next
+  Return True
 End
 
 Private Sub LoadDestinationBoards()

@@ -1,4 +1,8 @@
 * Sat Nov 07 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Colors: Add native preset swatches from WeKan and a custom browser color
+  wheel, synchronized with the hex field. Keep context palettes, validation
+  and persisted values; verify packaged Chromium and mobile positioning.
+  Board theme choices use solid color samples; import the custom-color label.
 - Documentation: Update native-menu/card/exchange instructions and TODO with
   verified coverage, format/file limits and remaining feature parity.
 - Card detail editor: Refresh visible controls when tree selection changes the

@@ -102,6 +102,37 @@ const fs = require('node:fs');
     assert.equal(await page.$$eval('[id$=".Boards"] img',els=>els.filter(e=>e.getBoundingClientRect().width>0).length),0,'tree uses Font Awesome instead of visible bitmap icons');
     assert.equal(await page.$$eval('.weba-add-list .fa-plus-square-o',els=>els.length),3,'list-add uses the same regular Font Awesome icon as WeKan');
     assert.equal(await page.$$eval('.weba-column',els=>els.length),3,'empty board shows its initial lists');
+    if(process.env.WEBA_COLORS_ONLY) {
+      async function colorMenu(kind){
+        if(kind==='board'){await click('SidebarToggle');await click('BoardSettings');}
+        else await page.click(kind==='lane'?'.weba-lane-menu':kind==='card'?'.weba-card-menu':'.weba-list-menu');
+        await settle();await click('ContextColor');await visible('ColorChooser');
+      }
+      await colorMenu('list');
+      assert.equal(await page.$$eval('.weba-color-swatch',els=>els.length),25);
+      await page.click('.weba-color-swatch[title="red #eb4646"]');await settle();
+      assert.equal(await page.$eval(entry('ActionText'),e=>e.value),'#eb4646');
+      assert.equal(await page.$eval('.weba-custom-color',e=>e.value),'#eb4646');
+      await click('ActionConfirm');
+      assert.equal(await page.$eval('.weba-column',e=>getComputedStyle(e).backgroundColor),'rgb(235, 70, 70)');
+      await colorMenu('list');assert.equal(await page.$eval('.weba-custom-color',e=>e.value),'#eb4646');
+      await page.$eval('.weba-custom-color',e=>{e.value='#123456';e.dispatchEvent(new Event('input',{bubbles:true}));});await settle();
+      assert.equal(await page.$eval(entry('ActionText'),e=>e.value),'#123456');await click('ActionConfirm');
+      assert.equal(await page.$eval('.weba-column',e=>getComputedStyle(e).backgroundColor),'rgb(18, 52, 86)');
+      await colorMenu('list');await fill('ActionText','invalid');await click('ActionConfirm');
+      assert.ok(await page.$eval('[id$=".Notice"]',e=>e.textContent.includes('#RRGGBB')));
+      await fill('ActionText','#223344');await settle();
+      assert.equal(await page.$eval('.weba-custom-color',e=>e.value),'#223344');await click('ActionConfirm');
+      await colorMenu('lane');assert.equal(await page.$$eval('.weba-color-swatch',els=>els.length),25);await click('CloseAction');
+      await page.click('.weba-add-card-top');await settle();await fill('CardTitle','Color card');await click('SaveCard');await click('CloseEditor');
+      await colorMenu('card');assert.equal(await page.$$eval('.weba-color-swatch',els=>els.length),24);await click('CloseAction');
+      await colorMenu('board');assert.equal(await page.$$eval('.weba-color-swatch',els=>els.length),25);
+      assert.ok(await page.$('.weba-color-swatch[title="belize #2573a7"]'));await click('CloseAction');
+      await click('CloseSidebar');await page.setViewport({width:390,height:844});await click('ToggleNavigation');await colorMenu('list');await shot('weba-color-picker-mobile');
+      const box=await page.$eval('[id$=".ActionPanel"]',e=>{const r=e.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom};});
+      assert.ok(box.left>=0&&box.right<=390&&box.top>=0&&box.bottom<=844,'mobile color dialog remains visible');
+      console.log('Colors: native WeKan presets, custom wheel/hex synchronization, persistence, context palettes and mobile placement passed');return;
+    }
     if(process.env.WEBA_EXCHANGE_ONLY) {
       await page.click('.weba-add-card-top');await settle();await fill('CardTitle','Exchange card');await click('SaveCard');await click('CloseEditor');
       await page.evaluate(()=>{HTMLAnchorElement.prototype.click=function(){if(this.download)fetch(this.href).then(r=>r.text()).then(text=>window.__exportText=text);};});

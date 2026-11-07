@@ -152,3 +152,9 @@
 .weba-details-panel .weba-popup-close{position:sticky!important;top:0;align-self:flex-end;margin-left:auto;z-index:3}
 .weba-details-panel .gw-textbox input,.weba-details-panel textarea{background:white;border:1px solid #bbb;box-sizing:border-box;width:100%;padding:7px;color:#253247}
 .weba-details-panel [id$=".DetailsTitle"]{font-weight:bold}
+
+/* Native preset buttons with the browser color wheel, inside the Gambas dialog. */
+.weba-color-presets{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px!important}
+.weba-color-presets .weba-color-swatch{width:100%!important;height:34px!important;min-height:34px;border:1px solid #777!important;border-radius:4px;cursor:pointer}
+.weba-color-swatch:focus-visible{outline:3px solid #111;outline-offset:2px}
+.weba-color-wheel input{width:100%;height:42px;cursor:pointer}

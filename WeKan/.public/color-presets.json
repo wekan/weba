@@ -1,0 +1,207 @@
+{
+  "source": "wekan/wekan config/const.js and client/components/{cards/cardDetails,boards/boardColors}.css",
+  "items": [
+    {
+      "name": "white",
+      "hex": "#ffffff"
+    },
+    {
+      "name": "green",
+      "hex": "#3cb500"
+    },
+    {
+      "name": "yellow",
+      "hex": "#fad900"
+    },
+    {
+      "name": "orange",
+      "hex": "#ff9f19"
+    },
+    {
+      "name": "red",
+      "hex": "#eb4646"
+    },
+    {
+      "name": "purple",
+      "hex": "#a632db"
+    },
+    {
+      "name": "blue",
+      "hex": "#0079bf"
+    },
+    {
+      "name": "sky",
+      "hex": "#00c2e0"
+    },
+    {
+      "name": "lime",
+      "hex": "#51e898"
+    },
+    {
+      "name": "pink",
+      "hex": "#ff78cb"
+    },
+    {
+      "name": "black",
+      "hex": "#4d4d4d"
+    },
+    {
+      "name": "silver",
+      "hex": "#c0c0c0"
+    },
+    {
+      "name": "peachpuff",
+      "hex": "#ffdab9"
+    },
+    {
+      "name": "crimson",
+      "hex": "#dc143c"
+    },
+    {
+      "name": "plum",
+      "hex": "#dda0dd"
+    },
+    {
+      "name": "darkgreen",
+      "hex": "#006400"
+    },
+    {
+      "name": "slateblue",
+      "hex": "#6a5acd"
+    },
+    {
+      "name": "magenta",
+      "hex": "#ff00ff"
+    },
+    {
+      "name": "gold",
+      "hex": "#ffd700"
+    },
+    {
+      "name": "navy",
+      "hex": "#000080"
+    },
+    {
+      "name": "gray",
+      "hex": "#808080"
+    },
+    {
+      "name": "saddlebrown",
+      "hex": "#8b4513"
+    },
+    {
+      "name": "paleturquoise",
+      "hex": "#afeeee"
+    },
+    {
+      "name": "mistyrose",
+      "hex": "#ffe4e1"
+    },
+    {
+      "name": "indigo",
+      "hex": "#4b0082"
+    }
+  ],
+  "boards": [
+    {
+      "name": "belize",
+      "hex": "#2573a7"
+    },
+    {
+      "name": "nephritis",
+      "hex": "#217d49"
+    },
+    {
+      "name": "pomegranate",
+      "hex": "#c0392b"
+    },
+    {
+      "name": "pumpkin",
+      "hex": "#a75919"
+    },
+    {
+      "name": "wisteria",
+      "hex": "#8e44ad"
+    },
+    {
+      "name": "moderatepink",
+      "hex": "#bd3a79"
+    },
+    {
+      "name": "strongcyan",
+      "hex": "#00798d"
+    },
+    {
+      "name": "limegreen",
+      "hex": "#277c48"
+    },
+    {
+      "name": "midnight",
+      "hex": "#2c3e50"
+    },
+    {
+      "name": "dark",
+      "hex": "#2c3e51"
+    },
+    {
+      "name": "relax",
+      "hex": "#217d4a"
+    },
+    {
+      "name": "corteza",
+      "hex": "#4a738a"
+    },
+    {
+      "name": "appleglasspastel",
+      "hex": "#f6f7fb"
+    },
+    {
+      "name": "clearblue",
+      "hex": "#499bea"
+    },
+    {
+      "name": "cleargreen",
+      "hex": "#8ad59f"
+    },
+    {
+      "name": "clearorange",
+      "hex": "#efab6f"
+    },
+    {
+      "name": "clearpink",
+      "hex": "#df94b8"
+    },
+    {
+      "name": "clearpurple",
+      "hex": "#b685ca"
+    },
+    {
+      "name": "clearred",
+      "hex": "#d67e75"
+    },
+    {
+      "name": "natural",
+      "hex": "#596557"
+    },
+    {
+      "name": "modern",
+      "hex": "#2372a4"
+    },
+    {
+      "name": "moderndark",
+      "hex": "#2a2a2a"
+    },
+    {
+      "name": "exodark",
+      "hex": "#222222"
+    },
+    {
+      "name": "cleandark",
+      "hex": "#23232b"
+    },
+    {
+      "name": "cleanlight",
+      "hex": "#e0e0e0"
+    }
+  ]
+}

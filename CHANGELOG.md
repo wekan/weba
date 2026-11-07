@@ -2,6 +2,13 @@
 
 This work adds the following features and fixes:
 
+- Add WeKan color presets as native Gambas swatch buttons beside a browser
+  custom color wheel and the existing hex field. Synchronize all three inputs,
+  preserve server validation and saved colors, and use context-specific card,
+  list/swimlane and board palettes. Import source color values with a refresh
+  tool; board theme presets use solid base/first-stop samples, not full themes.
+  Add the translated custom-color caption and packaged Chromium persistence,
+  invalid-input and mobile-dialog tests. Thanks to xet7.
 - Document implemented native workspace/card actions, JSON exchange limits,
   isolated browser checks and remaining WeKan parity work in README/TODO.
   Record verified SQLite ARM64/Chromium coverage and pending database/browser
