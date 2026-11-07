@@ -262,11 +262,20 @@ notification delivery, full administrator menus, automation and integrations
 remain tracked in `TODO.md`. SQLite on Linux ARM64 and Chromium are tested;
 other Gambas database drivers and browsers still require conformance checks.
 
+Color dialogs offer WeKan's preset colors as native Gambas buttons, a browser
+color-wheel picker and a synchronized `#RRGGBB` field. Lists/swimlanes use the
+25-color item palette; cards omit white as WeKan does. Boards offer 25 theme
+color samples. Gradient/special board themes currently apply a solid base/first
+color stop; their complete theme styling remains future work. Refresh the
+source snapshot with `python3 tools/import-wekan-colors.py /path/to/wekan`.
+The isolated color workflow is checked with `WEBA_COLORS_ONLY=1` and the browser
+runner above, covering persisted values, invalid hex input and mobile placement.
+
 ## Interface translations
 
 The login page and signed-in account menu have a language selector. The selected
 language is saved in this browser; a new browser starts with its preferred language
-when available. The imported WeKan catalog currently provides 91 matching interface
+when available. The imported WeKan catalog currently provides 92 matching interface
 keys for 237 languages, including their native language names and RTL metadata.
 Only the selected catalog is fetched, from local application assets. No external
 translation service is used. Labels and report/calendar headings are translated;

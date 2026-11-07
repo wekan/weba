@@ -1,4 +1,6 @@
 * Sat Nov 07 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Describe preset/color-wheel use and refresh, verification
+  coverage and pending full board gradient/special-theme styling.
 - Colors: Add native preset swatches from WeKan and a custom browser color
   wheel, synchronized with the hex field. Keep context palettes, validation
   and persisted values; verify packaged Chromium and mobile positioning.

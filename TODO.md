@@ -13,7 +13,7 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Translation coverage
 
-- Imported 91 matching WeKan keys for 237 registered languages. Language selection
+- Imported 92 matching WeKan keys for 237 registered languages. Language selection
   on login and in the account menu persists locally; browser language is the initial
   default, with English fallback and RTL metadata from WeKan.
 - Native interface labels and selected report headings/calendar dates are localized.
@@ -125,6 +125,11 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - SQLite store tests and real Chromium native-menu, rich-card, cross-board,
   deletion and packaged JSON exchange tests pass. Desktop/mobile full-layout
   regression passed after adding the new controls.
+- Color dialogs now have WeKan preset swatches, a browser color wheel and a
+  synchronized hex field. Packaged Chromium tests verify all context palettes,
+  invalid hex rejection, persistence and mobile placement; `build.sh test` passes.
+  Board presets currently use solid theme base/first-stop samples; full gradient
+  and special-theme styling remains pending.
 - Next priorities within boards/lists/cards: shared membership/permissions,
   board-defined labels/custom fields, rich text, notifications and remaining
   card actions. Administrator, automation and integrations remain later groups.

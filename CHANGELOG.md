@@ -2,6 +2,9 @@
 
 This work adds the following features and fixes:
 
+- Document color palette refresh, custom-wheel/hex controls, tested coverage
+  and the remaining board gradient/theme limitation in README/TODO.
+  Thanks to xet7.
 - Add WeKan color presets as native Gambas swatch buttons beside a browser
   custom color wheel and the existing hex field. Synchronize all three inputs,
   preserve server validation and saved colors, and use context-specific card,
