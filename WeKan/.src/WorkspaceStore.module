@@ -99,6 +99,8 @@ Public Sub SetSetting(boardId As Integer, kind As String, itemId As Integer, nam
   Dim r As Result
   Dim index As Integer
   Dim tableName As String = "kb_meta"
+  Dim transaction As Boolean
+  Dim failure As String
   Record(boardId, kind, itemId)
   BoardAccess.OpenStore()
   If name = "star" Or name = "watch" Then
@@ -124,6 +126,14 @@ Public Sub SetSetting(boardId As Integer, kind As String, itemId As Integer, nam
   If name = "wip" Then
     If CFloat(value) <> CInt(value) Or CInt(value) < 0 Or CInt(value) > 100000 Then Error.Raise("Invalid WIP limit")
   Endif
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+  If kind = "card" Then $db.Exec("UPDATE kb_cards SET title=title WHERE board_id=&1 AND id=&2", boardId, itemId)
+  Record(boardId, kind, itemId)
+  If tableName <> "kb_user_meta" Then
+    BoardAccess.Require(boardId, If(kind = "board", "manageBoard", "write"))
+  Endif
   If tableName = "kb_user_meta" Then
     r = $db.Edit(tableName, "board_id = &1 AND kind = &2 AND item_id = &3 AND setting = &4 AND username = &5", boardId, kind, itemId, name, WebIdentity.Username)
   Else
@@ -139,6 +149,13 @@ Public Sub SetSetting(boardId As Integer, kind As String, itemId As Integer, nam
   Endif
   r["value"] = value
   r.Update()
+  If tableName <> "kb_user_meta" And (kind = "list" Or kind = "card") Then ItemChanges.Mark(boardId, kind, itemId)
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
 End
 
 Public Sub Toggle(boardId As Integer, kind As String, itemId As Integer, name As String)
@@ -326,7 +343,7 @@ Public Function Copy(boardId As Integer, kind As String, itemId As Integer, titl
     Next
   Next
   CopySettings(boardId, kind, itemId, targetBoard, newId)
-  If BoardAccess.Can(boardId, "write") Or BoardAccess.Can(boardId, "comment") Then KanbanStore.Activity(boardId, "Copied " & kind & ": " & title, kind, itemId)
+  If BoardAccess.Can(boardId, "write") Or BoardAccess.Can(boardId, "comment") Then KanbanStore.Activity(boardId, "Copied " & kind & ": " & title, kind, itemId, False)
   DatabaseTransactions.Commit($db)
   Return newId
 Catch
@@ -381,6 +398,7 @@ Private Function CloneList(sourceBoard As Integer, listId As Integer, targetBoar
   r["sort_order"] = rank
   r.Update()
   id = $db.LastInsertId
+  ItemChanges.Mark(targetBoard, "list", id)
   cards = $db.Find("kb_cards", "board_id = &1 AND archived = &2", sourceBoard, False)
   For Each cards
     If KanbanStore.CardListId(sourceBoard, cards!id) <> listId Then Continue

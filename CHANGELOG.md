@@ -2,6 +2,17 @@
 
 This work adds the following features and fixes:
 
+- Track independent list/card UTC modification times for #5251 using portable
+  Long fields. Return list modifiedAt and newest cardsModifiedAt, including
+  archived cards; preserve null for empty/untimed legacy data. Cover creation,
+  edits, ordering, settings, archive, copy/import/move, user cleanup and relation
+  cascades. Keep personal preferences/source-copy clocks separate. Make card
+  detail/file/timer and metadata writes transactional with locked permission
+  rechecks. Verify the actual source reducer against HTTP/SQL, four time zones,
+  eight native clock-write rollback paths, timestamp-aware COMMIT snapshots and
+  packaged Chromium editor/content workflows. Full suites remain open.
+  Thanks to xet7.
+
 - Document whole-board REST routes, source role/combined-flag checks, independent
   global-administrator reads, native scope isolation and exact text/order/date
   results. Record ten-of-thirty original callbacks and SQL/browser verification;

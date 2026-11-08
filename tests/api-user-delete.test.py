@@ -41,7 +41,7 @@ other = login('rest-other')
 victim = login(target)
 path = '/api/users/'+target
 with sqlite3.connect(Path(os.environ['WEBA_DB_HOST']) / os.environ['WEBA_DB_NAME']) as db:
-    tables = ('users', 'account_sessions', 'api_tokens', 'kb_boards', 'kb_cards', 'kb_members',
+    tables = ('kb_item_changes', 'users', 'account_sessions', 'api_tokens', 'kb_boards', 'kb_cards', 'kb_members',
               'kb_removed_members', 'kb_member_flags', 'kb_card_assignees', 'kb_card_members', 'kb_card_people_order', 'kb_card_people_sequence', 'kb_user_meta',
               'kb_entries', 'kb_files', 'kb_history', 'kb_activity', 'kb_retired_authors')
     def rows(table):

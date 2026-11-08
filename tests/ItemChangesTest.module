@@ -1,0 +1,110 @@
+' Disposable list/card document clocks and lifecycle, not activity-log guesses.
+Public Sub Main()
+  Dim boardId As Integer
+  Dim target As Integer
+  Dim listId As Integer
+  Dim nextList As Integer
+  Dim cardId As Integer
+  Dim clone As Integer
+  Dim discarded As Integer
+  Dim survivor As Integer
+  Dim stamp As Long
+  Dim r As Result
+  Dim db As Connection
+  Dim lists As Collection
+  Dim times As Collection
+  Dim denied As Boolean
+  WebDatabase.Register("changes-owner", "x")
+  WebDatabase.Register("changes-member", "x")
+  SignIn("changes-owner")
+  boardId = KanbanStore.AddBoard("List clocks")
+  r = KanbanStore.Lanes(boardId)
+  r = KanbanStore.Lists(boardId, "Default")
+  listId = r!id
+  r.MoveNext()
+  nextList = r!id
+  db = WebDatabase.OpenConnection()
+  lists = ItemChanges.Lists(boardId)
+  times = lists[CStr(listId)]
+  If TypeOf(times["modifiedAt"]) = gb.Pointer Or TypeOf(times["cardsModifiedAt"]) <> gb.Pointer Then Error.Raise("New empty list clocks are wrong")
+  db.Exec("UPDATE kb_item_changes SET modified_ms=&1 WHERE board_id=&2 AND kind=&3 AND item_id=&4", 1000, boardId, "list", listId)
+  cardId = KanbanStore.SaveCard(boardId, 0, "Clock card", "Body", "Default", "Todo", "changes-owner", "", "", listId)
+  times = ItemChanges.Lists(boardId)[CStr(listId)]
+  If times["modifiedAt"] <> CardDates.Iso(1000) Or TypeOf(times["cardsModifiedAt"]) = gb.Pointer Then Error.Raise("Card creation touched list document or lost card clock")
+  db.Exec("UPDATE kb_item_changes SET modified_ms=&1 WHERE board_id=&2 AND kind=&3 AND item_id=&4", 2000, boardId, "card", cardId)
+  clone = WorkspaceStore.Copy(boardId, "list", listId, "Copied clocks")
+  r = db.Find("kb_item_changes", "board_id=&1 AND kind=&2 AND item_id=&3", boardId, "list", listId)
+  If r!modified_ms <> 1000 Then Error.Raise("Copy changed source list clock")
+  r = db.Find("kb_item_changes", "board_id=&1 AND kind=&2 AND item_id=&3", boardId, "card", cardId)
+  If r!modified_ms <> 2000 Then Error.Raise("Copy changed source card clock")
+  times = ItemChanges.Lists(boardId)[CStr(clone)]
+  If TypeOf(times["modifiedAt"]) = gb.Pointer Or TypeOf(times["cardsModifiedAt"]) = gb.Pointer Then Error.Raise("Copied list/card clocks missing")
+  WorkspaceStore.Rename(boardId, "list", listId, "Renamed")
+  r = db.Find("kb_item_changes", "board_id=&1 AND kind=&2 AND item_id=&3", boardId, "card", cardId)
+  If r!modified_ms <> 2000 Then Error.Raise("List rename touched card clock")
+  times = ItemChanges.Lists(boardId)[CStr(listId)]
+  If times["modifiedAt"] = CardDates.Iso(1000) Then Error.Raise("Rename did not change list clock")
+  db.Exec("UPDATE kb_item_changes SET modified_ms=&1 WHERE board_id=&2 AND kind=&3 AND item_id=&4", 1000, boardId, "list", listId)
+  KanbanStore.ArchiveCard(boardId, cardId, True)
+  times = ItemChanges.Lists(boardId)[CStr(listId)]
+  If times["cardsModifiedAt"] = CardDates.Iso(2000) Or TypeOf(times["cardsModifiedAt"]) = gb.Pointer Then Error.Raise("Archived card missing from newest-change reduction")
+  If times["modifiedAt"] <> CardDates.Iso(1000) Then Error.Raise("Archive touched list clock")
+  KanbanStore.ArchiveCard(boardId, cardId, False)
+  KanbanStore.MoveCard(boardId, cardId, "Default", "#" & CStr(nextList), 0)
+  times = ItemChanges.Lists(boardId)[CStr(listId)]
+  If TypeOf(times["cardsModifiedAt"]) <> gb.Pointer Then Error.Raise("Moved-out last card left a fabricated change time")
+  WorkspaceStore.SetSetting(boardId, "list", listId, "watch", "1")
+  times = ItemChanges.Lists(boardId)[CStr(listId)]
+  If times["modifiedAt"] <> CardDates.Iso(1000) Then Error.Raise("Personal watch changed list clock")
+  WorkspaceStore.SetSetting(boardId, "list", listId, "color", "#223344")
+  times = ItemChanges.Lists(boardId)[CStr(listId)]
+  If times["modifiedAt"] = CardDates.Iso(1000) Then Error.Raise("List document setting did not change clock")
+  r = db.Find("kb_item_changes", "board_id=&1 AND kind=&2 AND item_id=&3", boardId, "card", cardId)
+  stamp = r!modified_ms
+  DatabaseTransactions.Begin(db)
+  KanbanStore.SaveCard(boardId, cardId, "Rolled back", "", "Default", "Doing", "changes-owner", "", "", nextList)
+  discarded = KanbanStore.SaveCard(boardId, 0, "Discarded", "", "Default", "Doing", "", "", "", nextList)
+  DatabaseTransactions.Rollback(db)
+  r = db.Find("kb_cards", "id=&1", cardId)
+  If r!title <> "Clock card" Then Error.Raise("Card rollback failed")
+  r = db.Find("kb_item_changes", "board_id=&1 AND kind=&2 AND item_id=&3", boardId, "card", cardId)
+  If r!modified_ms <> stamp Then Error.Raise("Rollback committed a change clock")
+  r = db.Find("kb_item_changes", "board_id=&1 AND kind=&2 AND item_id=&3", boardId, "card", discarded)
+  If r.Available Then Error.Raise("Rollback retained discarded card clock")
+  BoardAccess.SetMember(boardId, "changes-member", "normal-assigned-only")
+  SignIn("changes-member")
+  Try ItemChanges.Lists(boardId)
+  denied = Error
+  If Not denied Then Error.Raise("Assigned-only reader observed whole-board change clocks")
+  SignIn("changes-owner")
+  BoardAccess.ChangeCardAssignee(boardId, cardId, "changes-member", True)
+  db.Exec("UPDATE kb_item_changes SET modified_ms=&1 WHERE board_id=&2 AND kind=&3 AND item_id=&4", 2000, boardId, "card", cardId)
+  WebDatabase.DeleteUser("changes-member")
+  r = db.Find("kb_item_changes", "board_id=&1 AND kind=&2 AND item_id=&3", boardId, "card", cardId)
+  If r!modified_ms = 2000 Then Error.Raise("Account cleanup did not change the affected card clock")
+  target = KanbanStore.AddBoard("Clock destination")
+  r = KanbanStore.Lanes(target)
+  WorkspaceActions.Move(boardId, "list", nextList, target, "Default")
+  r = db.Find("kb_item_changes", "board_id=&1 AND ((kind=&2 AND item_id=&3) OR (kind=&4 AND item_id=&5))", boardId, "card", cardId, "list", nextList)
+  If r.Count Then Error.Raise("Move retained old-board clocks")
+  times = ItemChanges.Lists(target)[CStr(nextList)]
+  If TypeOf(times["modifiedAt"]) = gb.Pointer Or TypeOf(times["cardsModifiedAt"]) = gb.Pointer Then Error.Raise("Move lost list/card clocks")
+  survivor = KanbanStore.SaveCard(target, 0, "Surviving relation", "", "Default", "Todo", "changes-owner", "", "")
+  CardContent.Save(target, survivor, 0, "dependency", "", "", 0, False, cardId)
+  db.Exec("UPDATE kb_item_changes SET modified_ms=&1 WHERE board_id=&2 AND kind=&3 AND item_id=&4", 2000, target, "card", survivor)
+  WorkspaceStore.SetArchived(target, "list", nextList, True)
+  WorkspaceActions.DeleteArchived(target, "list", nextList, "Doing")
+  r = db.Find("kb_item_changes", "board_id=&1 AND ((kind=&2 AND item_id=&3) OR (kind=&4 AND item_id=&5))", target, "card", cardId, "list", nextList)
+  If r.Count Then Error.Raise("Deletion retained clocks")
+  r = db.Find("kb_item_changes", "board_id=&1 AND kind=&2 AND item_id=&3", target, "card", survivor)
+  If r!modified_ms = 2000 Then Error.Raise("Deleted relationship did not invalidate surviving card clock")
+  db.Delete("kb_item_changes", "board_id=&1 AND kind=&2 AND item_id=&3", boardId, "list", listId)
+  times = ItemChanges.Lists(boardId)[CStr(listId)]
+  If TypeOf(times["modifiedAt"]) <> gb.Pointer Or TypeOf(times["cardsModifiedAt"]) <> gb.Pointer Then Error.Raise("Legacy unknown dates were invented")
+  Print "Item changes: independent list/card clocks, archive reduction, copy/rename/move/settings, rollback, scoped reads, cleanup and legacy nulls passed"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

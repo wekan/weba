@@ -26,7 +26,7 @@ for field in ('members', 'assignees'):
     request('/api/boards/'+board+'/lists/'+list_id+'/cards/'+card+'/'+field+'/rest-member', 'DELETE', token=token)
 reader = sqlite3.connect(project / 'database.db', timeout=1)
 process = None
-tables = ('kb_cards', 'kb_card_dates', 'kb_card_members', 'kb_card_people_order', 'kb_card_people_sequence', 'kb_card_assignees', 'kb_card_lists', 'kb_history', 'kb_activity')
+tables = ('kb_item_changes', 'kb_cards', 'kb_card_dates', 'kb_card_members', 'kb_card_people_order', 'kb_card_people_sequence', 'kb_card_assignees', 'kb_card_lists', 'kb_history', 'kb_activity')
 def rows(table):
     return sorted(reader.execute('SELECT * FROM '+table).fetchall(), key=repr)
 try:

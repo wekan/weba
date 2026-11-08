@@ -169,7 +169,9 @@ Public Function ImportData(text As String, title As String) As Integer
     r["lane"] = item["lane"]
     r["sort_order"] = CInt(item["sort_order"])
     r.Update()
-    listMap[oldId] = $db.LastInsertId
+    id = $db.LastInsertId
+    listMap[oldId] = id
+    ItemChanges.Mark(boardId, "list", id)
   Next
   For Each item In data["cards"]
     oldId = CStr(item["id"])

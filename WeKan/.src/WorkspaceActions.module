@@ -40,7 +40,12 @@ Private Sub TransferRows(tableName As String, boardId As Integer, targetBoard As
 End
 
 Private Sub TransferMeta(boardId As Integer, targetBoard As Integer, kind As String, itemId As Integer)
-  Dim r As Result = $db.Edit("kb_user_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, kind, itemId)
+  Dim r As Result = $db.Edit("kb_item_changes", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, kind, itemId)
+  For Each r
+    r["board_id"] = targetBoard
+    r.Update()
+  Next
+  r = $db.Edit("kb_user_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, kind, itemId)
   For Each r
     r["board_id"] = targetBoard
     r.Update()
@@ -120,6 +125,7 @@ Public Sub Move(boardId As Integer, kind As String, itemId As Integer, targetBoa
     TransferRows("kb_entries", boardId, targetBoard, cardId, "card_id")
     TransferRows("kb_files", boardId, targetBoard, cardId, "card_id")
     TransferMeta(boardId, targetBoard, "card", cardId)
+    ItemChanges.Mark(targetBoard, "card", cardId)
     r = $db.Edit("kb_history", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "card", cardId)
     For Each r
       r["board_id"] = targetBoard
@@ -133,6 +139,7 @@ Public Sub Move(boardId As Integer, kind As String, itemId As Integer, targetBoa
     r["lane"] = targetLane
     r.Update()
     TransferMeta(boardId, targetBoard, "list", listId)
+    ItemChanges.Mark(targetBoard, "list", listId)
   Next
   If kind = "lane" Then
     r = $db.Edit("kb_lanes", "board_id = &1 AND id = &2", boardId, itemId)
@@ -155,6 +162,7 @@ Public Sub DeleteArchived(boardId As Integer, kind As String, itemId As Integer,
   Dim ids As Integer[]
   Dim cardId As Integer
   Dim r As Result
+  Dim affected As Result
   Dim listIds As New Integer[]
   Dim listId As Integer
   Dim tableName As String
@@ -176,18 +184,23 @@ Public Sub DeleteArchived(boardId As Integer, kind As String, itemId As Integer,
   Endif
   DatabaseTransactions.Begin($db)
   If kind = "board" Then
-    For Each tableName In ["kb_entries", "kb_files", "kb_card_lists", "kb_cards", "kb_lists", "kb_lanes", "kb_meta", "kb_history", "kb_order", "kb_activity", "kb_members", "kb_removed_members", "kb_member_flags", "kb_user_meta", "kb_card_assignees", "kb_card_members", "kb_card_people_order", "kb_card_people_sequence", "kb_card_dates", "kb_retired_authors"]
+    For Each tableName In ["kb_entries", "kb_files", "kb_card_lists", "kb_cards", "kb_lists", "kb_lanes", "kb_meta", "kb_history", "kb_order", "kb_activity", "kb_members", "kb_removed_members", "kb_member_flags", "kb_user_meta", "kb_card_assignees", "kb_card_members", "kb_card_people_order", "kb_card_people_sequence", "kb_card_dates", "kb_item_changes", "kb_retired_authors"]
       $db.Delete(tableName, "board_id = &1", boardId)
     Next
     $db.Delete("kb_boards", "id = &1", boardId)
   Else
     For Each cardId In ids
+      affected = $db.Exec("SELECT DISTINCT e.card_id FROM kb_entries e INNER JOIN kb_cards c ON c.board_id=e.board_id AND c.id=e.card_id WHERE e.board_id=&1 AND (e.kind=&2 OR e.kind=&3) AND e.amount=&4", boardId, "dependency", "subtask", cardId)
+      For Each affected
+        If ids.Find(affected!card_id) < 0 Then ItemChanges.Mark(boardId, "card", affected!card_id)
+      Next
       $db.Delete("kb_entries", "board_id = &1 AND (card_id = &2 OR ((kind = &3 OR kind = &4) AND amount = &2))", boardId, cardId, "dependency", "subtask")
       $db.Delete("kb_card_assignees", "board_id = &1 AND card_id = &2", boardId, cardId)
       $db.Delete("kb_card_members", "board_id = &1 AND card_id = &2", boardId, cardId)
       $db.Delete("kb_card_people_order", "board_id = &1 AND card_id = &2", boardId, cardId)
       $db.Delete("kb_card_people_sequence", "board_id = &1 AND card_id = &2", boardId, cardId)
       $db.Delete("kb_card_dates", "board_id = &1 AND card_id = &2", boardId, cardId)
+      $db.Delete("kb_item_changes", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "card", cardId)
       $db.Delete("kb_files", "board_id = &1 AND card_id = &2", boardId, cardId)
       $db.Delete("kb_card_lists", "board_id = &1 AND card_id = &2", boardId, cardId)
       $db.Delete("kb_cards", "board_id = &1 AND id = &2", boardId, cardId)
@@ -197,6 +210,7 @@ Public Sub DeleteArchived(boardId As Integer, kind As String, itemId As Integer,
       $db.Delete("kb_order", "board_id = &1 AND kind = &2 AND item = &3", boardId, "card", CStr(cardId))
     Next
     For Each listId In listIds
+      $db.Delete("kb_item_changes", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "list", listId)
       $db.Delete("kb_lists", "board_id = &1 AND id = &2", boardId, listId)
       $db.Delete("kb_user_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "list", listId)
       $db.Delete("kb_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "list", listId)

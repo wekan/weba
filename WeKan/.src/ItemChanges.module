@@ -1,0 +1,71 @@
+ ' Persisted UTC list/card document change times; legacy rows remain unknown.
+Export
+
+Public Function UtcNow() As Long
+  Dim parsed As Collection
+  Dim wire As String = JSON.Decode(JSON.Encode(Now))
+  ' gb.util.web serializes a Date as UTC. Gambas 3.20 uses MM/DD/YYYY;
+  ' newer releases use ISO. Normalize only that known legacy wire format.
+  If Len(wire) >= 19 And Mid(wire, 3, 1) = "/" And Mid(wire, 6, 1) = "/" Then
+    wire = Mid(wire, 7, 4) & "-" & Left(wire, 2) & "-" & Mid(wire, 4, 2) & "T" & Mid(wire, 12) & "Z"
+  Endif
+  parsed = CardDates.Parse(wire)
+  If Not parsed["valid"] Or parsed["clear"] Then Error.Raise("Invalid change clock")
+  Return parsed["epoch"]
+End
+
+' Internal storage hook: callers authorize the actual mutation before this call.
+Public Sub Mark(boardId As Integer, kind As String, itemId As Integer)
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim r As Result
+  Dim tableName As String
+  If kind = "list" Then
+    tableName = "kb_lists"
+  Else If kind = "card" Then
+    tableName = "kb_cards"
+  Else
+    Error.Raise("Invalid changed item")
+  Endif
+  r = db.Find(tableName, "board_id = &1 AND id = &2", boardId, itemId)
+  If Not r.Available Then Error.Raise("Changed item not found")
+  r = db.Edit("kb_item_changes", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, kind, itemId)
+  If Not r.Available Then
+    r = db.Create("kb_item_changes")
+    r["board_id"] = boardId
+    r["kind"] = kind
+    r["item_id"] = itemId
+  Endif
+  r["modified_ms"] = UtcNow()
+  r.Update()
+End
+
+Public Function Lists(boardId As Integer) As Collection
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim result As New Collection
+  Dim values As Collection
+  Dim r As Result
+  Dim key As String
+  BoardAccess.RequireRead(boardId)
+  If Not BoardAccess.Can(boardId, "seesAllCards") Then Error.Raise("Whole-board permission required")
+  r = db.Exec("SELECT id FROM kb_lists WHERE board_id = &1", boardId)
+  For Each r
+    values = New Collection
+    values["modifiedAt"] = JSON.Null
+    values["cardsModifiedAt"] = JSON.Null
+    result[CStr(r!id)] = values
+  Next
+  r = db.Exec("SELECT c.item_id,c.modified_ms FROM kb_item_changes c INNER JOIN kb_lists l ON l.board_id=c.board_id AND l.id=c.item_id WHERE c.board_id=&1 AND c.kind=&2", boardId, "list")
+  For Each r
+    values = result[CStr(r!item_id)]
+    values["modifiedAt"] = CardDates.Iso(r!modified_ms)
+  Next
+  ' Archived cards are included. Empty/legacy-only lists keep JSON null.
+  r = db.Exec("SELECT l.list_id,MAX(m.modified_ms) AS newest FROM kb_card_lists l INNER JOIN kb_cards c ON c.board_id=l.board_id AND c.id=l.card_id INNER JOIN kb_item_changes m ON m.board_id=c.board_id AND m.item_id=c.id AND m.kind=&2 WHERE l.board_id=&1 GROUP BY l.list_id", boardId, "card")
+  For Each r
+    key = CStr(r!list_id)
+    If Not result.Exist(key) Then Continue
+    values = result[key]
+    values["cardsModifiedAt"] = CardDates.Iso(r!newest)
+  Next
+  Return result
+End

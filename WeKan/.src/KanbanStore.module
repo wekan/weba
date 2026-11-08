@@ -71,6 +71,15 @@ Public Sub OpenDatabase()
     t.PrimaryKey = ["board_id", "kind", "item"]
     t.Update()
   Endif
+  If Not $db.Tables.Exist("kb_item_changes") Then
+    t = $db.Tables.Add("kb_item_changes")
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("kind", db.String, 16)
+    t.Fields.Add("item_id", db.Integer)
+    t.Fields.Add("modified_ms", db.Long)
+    t.PrimaryKey = ["board_id", "kind", "item_id"]
+    t.Update()
+  Endif
   If Not $db.Tables.Exist("kb_activity") Then
     t = $db.Tables.Add("kb_activity")
     t.Fields.Add("id", db.Serial)
@@ -204,6 +213,14 @@ End
 
 Public Sub ArchiveCard(boardId As Integer, cardId As Integer, archived As Boolean)
   Dim r As Result
+  Dim transaction As Boolean
+  Dim failure As String
+  BoardAccess.Require(boardId, "write")
+  BoardAccess.RequireCard(boardId, cardId)
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+  $db.Exec("UPDATE kb_cards SET title=title WHERE board_id=&1 AND id=&2", boardId, cardId)
   BoardAccess.Require(boardId, "write")
   BoardAccess.RequireCard(boardId, cardId)
   r = $db.Edit("kb_cards", "id = &1 AND board_id = &2", cardId, boardId)
@@ -211,9 +228,15 @@ Public Sub ArchiveCard(boardId As Integer, cardId As Integer, archived As Boolea
   r["archived"] = archived
   r.Update()
   Activity(boardId, "Card archive state changed", "card", cardId)
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
 End
 
-Public Sub Activity(boardId As Integer, message As String, Optional kind As String = "board", Optional itemId As Integer)
+Public Sub Activity(boardId As Integer, message As String, Optional kind As String = "board", Optional itemId As Integer, Optional changed As Boolean = True)
   Dim r As Result
   BoardAccess.RequireActivity(boardId)
   r = $db.Create("kb_activity")
@@ -223,6 +246,7 @@ Public Sub Activity(boardId As Integer, message As String, Optional kind As Stri
   r["created_at"] = Now
   r.Update()
   WorkspaceStore.Log(boardId, kind, itemId, message)
+  If changed And (kind = "card" Or kind = "list") And itemId > 0 Then ItemChanges.Mark(boardId, kind, itemId)
 End
 
 Public Function Activities(boardId As Integer) As Result
@@ -254,6 +278,7 @@ Private Sub EnsureLane(boardId As Integer, title As String)
     r["title"] = name
     r["sort_order"] = index * 10
     r.Update()
+    ItemChanges.Mark(boardId, "list", $db.LastInsertId)
     Inc index
   Next
   DatabaseTransactions.Commit($db)
@@ -311,10 +336,13 @@ Public Sub AddList(boardId As Integer, lane As String, title As String, afterTit
     If r.Available Then position = r!sort_order + 1
   Endif
   DatabaseTransactions.Begin($db)
+  $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+  BoardAccess.Require(boardId, "write")
   r = $db.Edit("kb_lists", "board_id = &1 AND lane = &2 AND sort_order >= &3", boardId, lane, position)
   For Each r
     r["sort_order"] = r!sort_order + 1
     r.Update()
+    ItemChanges.Mark(boardId, "list", r!id)
   Next
   r = $db.Create("kb_lists")
   r["board_id"] = boardId
@@ -322,8 +350,8 @@ Public Sub AddList(boardId As Integer, lane As String, title As String, afterTit
   r["title"] = title
   r["sort_order"] = position
   r.Update()
+  Activity(boardId, "Added list: " & title, "list", $db.LastInsertId)
   DatabaseTransactions.Commit($db)
-  Activity(boardId, "Added list: " & title)
 Catch
   failure = Error.Text
   If $db Then Try DatabaseTransactions.Rollback($db)
@@ -349,6 +377,7 @@ Private Sub PutOrder(boardId As Integer, kind As String, item As String, rank As
   Endif
   r["sort_order"] = rank
   r.Update()
+  If kind = "card" Then ItemChanges.Mark(boardId, kind, CInt(item))
 End
 
 Private Sub RequireActiveBoard(boardId As Integer, Optional capability As String = "write")
@@ -504,12 +533,16 @@ Public Sub MoveList(boardId As Integer, sourceLane As String, listTitle As Strin
       If Not r.Available Then Continue
       r["lane"] = targetLane
       r.Update()
+      ItemChanges.Mark(boardId, "card", r!id)
     Next
   Endif
   For index = 0 To ids.Max
     r = $db.Edit("kb_lists", "board_id = &1 AND id = &2", boardId, ids[index])
-    r["sort_order"] = index
-    r.Update()
+    If r!sort_order <> index Then
+      r["sort_order"] = index
+      r.Update()
+      ItemChanges.Mark(boardId, "list", r!id)
+    Endif
   Next
   Activity(boardId, "Moved list: " & listTitle, "list", listId)
   DatabaseTransactions.Commit($db)

@@ -1,0 +1,4 @@
+ ' UTC millisecond clock conformance, independent of native local timezone.
+Public Sub Main()
+  Print ItemChanges.UtcNow()
+End

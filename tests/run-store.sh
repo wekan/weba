@@ -4,7 +4,7 @@ set -eu
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 work=$(mktemp -d "$TMPDIR/weba-test.XXXXXX")
 trap 'rm -rf -- "$work"' EXIT HUP INT TERM
-for test in AuthTest UserDeletionTest SessionGenerationTest PasswordPolicyTest StoreTest DragStoreTest WorkspaceTest BoardAccessTest InactiveMembersTest AssignedAccessTest CardMembersTest NativeAssigneeTest CardDatesTest CardContentTest WorkspaceActionsTest BoardTransferTest; do
+for test in AuthTest UserDeletionTest SessionGenerationTest PasswordPolicyTest StoreTest DragStoreTest WorkspaceTest BoardAccessTest InactiveMembersTest AssignedAccessTest CardMembersTest NativeAssigneeTest CardDatesTest ItemChangesTest CardContentTest WorkspaceActionsTest BoardTransferTest; do
   [ -f "$root/tests/$test.module" ] || continue
   project="$work/$test"
   mkdir -p "$project"
@@ -15,6 +15,8 @@ for test in AuthTest UserDeletionTest SessionGenerationTest PasswordPolicyTest S
   "${GBC:-gbc3}" -j 1 -a "$project"
   "${GBX:-gbx3}" -s "$test" "$project"
 done
+
+python3 "$root/tests/change-clock.test.py"
 
 project="$work/registration-race"
 mkdir -p "$project"

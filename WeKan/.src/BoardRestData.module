@@ -12,6 +12,8 @@ Public Function Read(boardId As Integer, kind As String, Optional listId As Inte
   Dim data As Collection
   Dim index As Integer
   Dim prior As Collection
+  Dim changes As Collection
+  Dim times As Collection
   If Env["WEBA_API_REQUEST"] <> "1" Then Error.Raise("API context required")
   BoardAccess.RequireRead(boardId)
   r = db.Find("kb_boards", "id = &1", boardId)
@@ -23,6 +25,7 @@ Public Function Read(boardId As Integer, kind As String, Optional listId As Inte
     data["members"] = BoardAccess.ApiMembers(boardId)
   Else If kind = "lists" Or kind = "swimlanes" Then
     If kind = "lists" Then
+      changes = ItemChanges.Lists(boardId)
       r = db.Find("kb_lists", "board_id = &1 ORDER BY sort_order, id", boardId)
     Else
       r = KanbanStore.Lanes(boardId)
@@ -33,8 +36,9 @@ Public Function Read(boardId As Integer, kind As String, Optional listId As Inte
       item["_id"] = CStr(r!id)
       item["title"] = r!title
       If kind = "lists" Then
-        item["modifiedAt"] = JSON.Null
-        item["cardsModifiedAt"] = JSON.Null
+        times = changes[CStr(r!id)]
+        item["modifiedAt"] = times["modifiedAt"]
+        item["cardsModifiedAt"] = times["cardsModifiedAt"]
       Endif
       rows.Add(item)
     Next

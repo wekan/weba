@@ -207,9 +207,25 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   independent scope reset, empty text and archive/order/date behavior. Update
   current original callback coverage to 10/30 and retain full document/timestamp/
   fractional-sort and complete-suite gaps.
+- Completed list/card change tracking (#5251): portable Long UTC clocks in
+  kb_item_changes; list modifiedAt changes on list document writes, while
+  cardsModifiedAt is the newest known current-card time including archived cards.
+  Empty/legacy-only lists return null; no current time is invented on reads.
+  New lists/default lists, card edits/people/dates/details/files/timers, sort,
+  list settings/archive, copy/import/move and account reference cleanup update
+  clocks. Copies keep source clocks untouched and create fresh destination clocks;
+  moves transfer scope, permanent deletion removes clocks and invalidates surviving
+  cards whose relationships are removed. Personal star/watch metadata does not
+  mark the list document. Card content/attachments/timers/archive/settings now
+  commit with their clock/history changes and recheck permission under locks.
+  Verify independent SQL/HTTP against the actual original list reducer, UTC clock
+  bounds in UTC/Helsinki/New York/Kathmandu, native lifecycle/scope negatives,
+  eight injected native clock-write rollback paths, existing twelve real card
+  COMMIT rollback/retry phases with clock snapshots and packaged Chromium member/
+  assignee/content/timer/file flows. Original spec 17 coverage stays 10/30.
 - Pending read parity: complete board/card documents and single-card GET routes,
-  list modifiedAt/cardsModifiedAt tracking (#5251; currently null without stored
-  timestamps), full fractional sort support, custom roles, legacy lane mapping,
+  legacy timestamps absent from old rows remain null, full fractional sort
+  support, custom roles, legacy lane mapping,
   public/instance visibility and complete original UI/API/security suites.
 - Next card-person work: remaining card PUT fields, reads, creation/bulk routes
   and complete original UI/API/security suites.

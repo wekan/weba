@@ -340,6 +340,22 @@ Private Sub CleanupUserReferences(username As String)
   Dim remaining As Result
   Dim primary As String
   Dim minutes As Float
+  Dim changed As New Collection
+  Dim tableName As String
+  Dim key As String
+  If $hConn.Tables.Exist("kb_cards") And $hConn.Tables.Exist("kb_item_changes") Then
+    r = $hConn.Find("kb_cards", "assignee=&1", username)
+    For Each r
+      changed[CStr(r!id)] = r!board_id
+    Next
+    For Each tableName In ["kb_card_assignees", "kb_card_members", "kb_card_people_sequence"]
+      If Not $hConn.Tables.Exist(tableName) Then Continue
+      r = $hConn.Exec("SELECT c.id,c.board_id FROM kb_cards c INNER JOIN " & tableName & " p ON p.card_id=c.id AND p.board_id=c.board_id WHERE p.username=&1", username)
+      For Each r
+        changed[CStr(r!id)] = r!board_id
+      Next
+    Next
+  Endif
   If $hConn.Tables.Exist("kb_members") Then $hConn.Delete("kb_members", "username = &1", username)
   If $hConn.Tables.Exist("kb_member_flags") Then $hConn.Delete("kb_member_flags", "username = &1", username)
   If $hConn.Tables.Exist("kb_removed_members") Then $hConn.Delete("kb_removed_members", "username = &1", username)
@@ -389,6 +405,9 @@ Private Sub CleanupUserReferences(username As String)
       $hConn.Exec("UPDATE kb_files SET author = NULL WHERE id = &1", r!id)
     Next
   Endif
+  For Each key In changed.Keys
+    ItemChanges.Mark(changed[key], "card", CInt(key))
+  Next
 End
 
 Public Function GetFullname(username As String) As String

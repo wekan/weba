@@ -163,6 +163,64 @@ Public Sub Main()
     Print "Member commit rollback retained roles/flags/history and recovered without authority leakage"
     Return
   Endif
+  If Env["WEBA_TEST_MODE"] = "list-clock-failure" Then
+    data = JSON.Decode(Env["WEBA_TEST_BOARDS"])
+    boardId = data["otherBoardId"]
+    otherId = data["otherListId"]
+    cardId = data["otherCardId"]
+    Session["username"] = "rest-other"
+    Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
+    Select Env["WEBA_TEST_CLOCK_ACTION"]
+      Case "comment"
+        Try CardContent.Save(boardId, cardId, 0, "comment", "", "Discarded comment", 0, False, 0)
+      Case "delete-entry"
+        Try CardContent.DeleteEntry(boardId, cardId, CInt(Env["WEBA_TEST_CLOCK_ENTRY_ID"]))
+      Case "start"
+        Try CardContent.StartTimer(boardId, cardId)
+      Case "stop"
+        Try CardContent.StopTimer(boardId, cardId)
+      Case "file"
+        Try CardContent.AddFile(boardId, cardId, "clock.txt", "Discarded attachment")
+      Case "delete-file"
+        Try CardContent.DeleteFile(boardId, cardId, CInt(Env["WEBA_TEST_CLOCK_FILE_ID"]))
+      Case "archive"
+        Try KanbanStore.ArchiveCard(boardId, cardId, True)
+      Case "setting"
+        Try WorkspaceStore.SetSetting(boardId, "list", otherId, "color", "#112233")
+      Case Else
+        Error.Raise("Unknown clock fixture action")
+    End Select
+    If Not Error Then Error.Raise("Expected clock write failure")
+    ' Gambas 3.20's SQLite Result.Update reports the constraint category,
+    ' while newer drivers may retain the trigger message. No other failing
+    ' constraints/triggers are installed in this disposable phase.
+    If InStr(Error.Text, "private clock failure") = 0 And InStr(Error.Text, "Abort due to constraint violation") = 0 Then Error.Raise("Unexpected clock failure (" & Env["WEBA_TEST_CLOCK_ACTION"] & "): " & Error.Text)
+    Print "Native change rejected at clock write"
+    Return
+  Endif
+  If Env["WEBA_TEST_MODE"] = "list-clock-native" Then
+    data = JSON.Decode(Env["WEBA_TEST_BOARDS"])
+    boardId = data["otherBoardId"]
+    otherId = data["otherListId"]
+    cardId = data["otherCardId"]
+    Session["username"] = "rest-other"
+    Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
+    Select Env["WEBA_TEST_CLOCK_ACTION"]
+      Case "prepare"
+        CardContent.OpenStore()
+      Case "archive"
+        KanbanStore.ArchiveCard(boardId, cardId, True)
+      Case "restore"
+        KanbanStore.ArchiveCard(boardId, cardId, False)
+      Case "rename"
+        WorkspaceStore.Rename(boardId, "list", otherId, "Timed list")
+      Case "watch"
+        WorkspaceStore.SetSetting(boardId, "list", otherId, "watch", "1")
+      Case Else
+        Error.Raise("Unknown clock fixture action")
+    End Select
+    Return
+  Endif
   If Env["WEBA_TEST_MODE"] = "board-read-scope" Then
     data = JSON.Decode(Env["WEBA_TEST_BOARDS"])
     boardId = data["otherBoardId"]

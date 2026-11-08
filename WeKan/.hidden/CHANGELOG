@@ -1,4 +1,10 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- List change times (#5251): Persist independent UTC list/card clocks and
+  return newest archived-inclusive card time or null for empty/untimed data.
+  Cover lifecycle/user cleanup/relation cascades without copying source clocks
+  or marking personal preferences. Make detail/file/timer/settings writes atomic
+  with permission rechecks. Verify source reducer/HTTP/SQL, four time zones,
+  eight clock-failure rollback paths, COMMIT snapshots and packaged Chromium.
 - Documentation: Describe whole-board REST read routes/roles, global-admin
   independence and scope reset, data projections and ten original callbacks;
   keep full documents/list timestamps/fractional sorts and complete suites open.

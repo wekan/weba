@@ -28,7 +28,7 @@ post(path+'rest-member/add', {'action': 'add', 'role': 'normal'}, token)
 post(path+'rest-member', {'role': 'normal'}, token)
 reader = sqlite3.connect(project / 'database.db', timeout=1)
 process = None
-tables = ('kb_members', 'kb_removed_members', 'kb_member_flags', 'kb_history', 'kb_activity', 'kb_boards', 'kb_user_meta')
+tables = ('kb_item_changes', 'kb_members', 'kb_removed_members', 'kb_member_flags', 'kb_history', 'kb_activity', 'kb_boards', 'kb_user_meta')
 def rows(table):
     return sorted(reader.execute('SELECT * FROM '+table).fetchall(), key=repr)
 try:
