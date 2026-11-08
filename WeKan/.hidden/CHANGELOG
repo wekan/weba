@@ -1,4 +1,8 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Membership REST: Add named/legacy roles, idempotent add, role updates/removal,
+  minimal responses, scoped site-admin recovery and owner/preference migration.
+  Keep final administrators and transact flags/roles/history; verify rollback,
+  source/archive HTTP and three unchanged original spec 17 member callbacks.
 - Account deletion: Atomically remove current/historical username privilege
   references without erasing comments/files/history or other members. Keep
   display-only author provenance through copies/exchange/moves, prune it on

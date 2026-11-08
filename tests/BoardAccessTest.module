@@ -9,12 +9,15 @@ Public Sub Main()
   Dim r As Result
   Dim username As String
   Dim denied As Boolean
+  Dim apiResult As Collection
   For Each username In ["access-owner", "access-editor", "access-reader", "access-comment", "access-no-comment", "access-admin", "access-outside"]
     WebDatabase.Register(username, "x")
   Next
   Session["username"] = "access-owner"
   Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   boardId = KanbanStore.AddBoard("Shared")
+  apiResult = BoardAccess.MutateApiMember(boardId, "access-outside", "add", JSON.Decode("{\"action\":\"add\",\"role\":\"admin\"}"))
+  If apiResult["status"] <> 403 Then Error.Raise("Native session entered the API-only membership scope")
   r = KanbanStore.Lanes(boardId)
   laneId = r!id
   r = KanbanStore.Lists(boardId, "Default")
@@ -26,6 +29,12 @@ Public Sub Main()
   BoardAccess.SetMember(boardId, "access-comment", "comment-only")
   BoardAccess.SetMember(boardId, "access-no-comment", "no-comments")
   BoardAccess.SetMember(boardId, "access-admin", "board-admin")
+  BoardAccess.SetMember(boardId, "access-editor", "read-only")
+  ApiMemberRoles.Save(boardId, "access-editor", ApiMemberRoles.FlagsFor("read-only"))
+  BoardAccess.SetMember(boardId, "access-editor", "normal")
+  apiResult = ApiMemberRoles.MemberData(boardId, "access-editor", "normal")
+  If apiResult["isReadOnly"] Then Error.Raise("Native role changes retained old API flags")
+
   r = BoardAccess.Members(boardId)
   If r.Count <> 6 Then Error.Raise("Shared member list lost owner/members")
   WorkspaceStore.SetSetting(boardId, "board", boardId, "star", "1")
@@ -129,10 +138,13 @@ Public Sub Main()
   If Not denied Then Error.Raise("Outsider read private card")
   Session["username"] = "access-owner"
   Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
+  ApiMemberRoles.Save(boardId, "access-reader", ApiMemberRoles.FlagsFor("read-only"))
   WorkspaceStore.SetArchived(boardId, "board", boardId, True)
   WorkspaceActions.DeleteArchived(boardId, "board", boardId, "Shared")
   r = WebDatabase.OpenConnection().Find("kb_members", "board_id = &1", boardId)
   If r.Count Then Error.Raise("Deleted board left memberships")
+  r = WebDatabase.OpenConnection().Find("kb_member_flags", "board_id = &1", boardId)
+  If r.Count Then Error.Raise("Deleted board left API member flags")
   r = WebDatabase.OpenConnection().Find("kb_user_meta", "board_id = &1", boardId)
   If r.Count Then Error.Raise("Deleted board left personal metadata")
   Print "Shared boards: read/write/comment/admin boundaries, negative store actions, personal preferences and removal passed"

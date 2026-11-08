@@ -2,6 +2,7 @@
 Export
 Private $db As Connection
 Private $roles As Collection
+Private $apiMemberBoard As Integer
 
 Public Sub OpenStore()
   Dim t As Table
@@ -15,6 +16,14 @@ Public Sub OpenStore()
     t.Fields.Add("username", db.String, 255)
     t.Fields.Add("role", db.String, 64)
     t.PrimaryKey = ["board_id", "username"]
+    t.Update()
+  Endif
+  If Not $db.Tables.Exist("kb_member_flags") Then
+    t = $db.Tables.Add("kb_member_flags")
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("username", db.String, 255)
+    t.Fields.Add("flag", db.String, 32)
+    t.PrimaryKey = ["board_id", "username", "flag"]
     t.Update()
   Endif
   If Not $db.Tables.Exist("kb_card_assignees") Then
@@ -39,6 +48,11 @@ Public Sub OpenStore()
 End
 
 Public Function Role(boardId As Integer) As String
+  ' The scoped exception exists only inside an authenticated site-admin member
+  ' mutation. It does not grant unrelated API reads or native board access.
+  If $apiMemberBoard > 0 And boardId = $apiMemberBoard And Env["WEBA_API_REQUEST"] = "1" Then
+    If WebDatabase.GetIsAdmin(WebIdentity.Username) Then Return "board-admin"
+  Endif
   Return RoleOf(boardId, WebIdentity.Username)
 End
 
@@ -88,6 +102,7 @@ Public Sub SetMember(boardId As Integer, username As String, role As String)
   r = $db.Find("kb_boards", "id = &1", boardId)
   If r!owner = username Then
     If role <> "board-admin" Then Error.Raise("Transfer ownership before changing the owner's role")
+    $db.Delete("kb_member_flags", "board_id = &1 AND username = &2", boardId, username)
     Return
   Endif
   WorkspaceStore.OpenStore()
@@ -107,6 +122,7 @@ Public Sub SetMember(boardId As Integer, username As String, role As String)
   Endif
   r["role"] = role
   r.Update()
+  $db.Delete("kb_member_flags", "board_id = &1 AND username = &2", boardId, username)
   DatabaseTransactions.Commit($db)
   transaction = False
 Catch
@@ -130,6 +146,7 @@ Public Sub RemoveMember(boardId As Integer, username As String)
   CheckLastAdmin(boardId, username, "")
   KanbanStore.Activity(boardId, "Removed board member: " & username)
   $db.Delete("kb_members", "board_id = &1 AND username = &2", boardId, username)
+  $db.Delete("kb_member_flags", "board_id = &1 AND username = &2", boardId, username)
   DatabaseTransactions.Commit($db)
   transaction = False
 Catch
@@ -148,19 +165,188 @@ Public Function Members(boardId As Integer) As Result
 End
 
 Private Sub CheckLastAdmin(boardId As Integer, username As String, nextRole As String)
+  If nextRole = "board-admin" Then Return
+  If RoleOf(boardId, username) <> "board-admin" Then Return
+  If AdminCount(boardId) <= 1 Then Error.Raise("The board must keep an administrator")
+End
+
+Private Function AdminCount(boardId As Integer) As Integer
   Dim r As Result
   Dim owner As String
   Dim count As Integer
-  If nextRole = "board-admin" Then Return
-  If RoleOf(boardId, username) <> "board-admin" Then Return
   r = $db.Find("kb_boards", "id = &1", boardId)
   owner = r!owner
   If owner Then
     If WebDatabase.UserExists(owner) Then Inc count
   Endif
   r = $db.Exec("SELECT COUNT(*) AS total FROM kb_members m INNER JOIN users u ON u.username = m.username WHERE m.board_id = &1 AND m.role = &2 AND m.username <> &3", boardId, "board-admin", owner)
-  count += r!total
-  If count <= 1 Then Error.Raise("The board must keep an administrator")
+  Return count + r!total
+End
+
+Public Function ApiMembers(boardId As Integer) As Variant[]
+  Dim r As Result = Members(boardId)
+  Dim rows As New Variant[]
+  For Each r
+    If $roles.Exist(r!role) Then rows.Add(ApiMemberRoles.MemberData(boardId, r!username, r!role))
+  Next
+  Return rows
+End
+
+Private Sub MaterializeOwner(boardId As Integer, owner As String)
+  Dim r As Result
+  Dim meta As Result
+  If Not owner Then Return
+  ' Retain the legacy owner's personal flags when its implicit role is replaced
+  ' by an explicit member record, without assigning ownership to another user.
+  meta = $db.Find("kb_meta", "board_id = &1 AND (setting = &2 OR setting = &3)", boardId, "star", "watch")
+  For Each meta
+    r = $db.Find("kb_user_meta", "board_id = &1 AND kind = &2 AND item_id = &3 AND username = &4 AND setting = &5", boardId, meta!kind, meta!item_id, owner, meta!setting)
+    If r.Available Then Continue
+    r = $db.Create("kb_user_meta")
+    r["board_id"] = boardId
+    r["kind"] = meta!kind
+    r["item_id"] = meta!item_id
+    r["username"] = owner
+    r["setting"] = meta!setting
+    r["value"] = meta!value
+    r.Update()
+  Next
+  r = $db.Edit("kb_members", "board_id = &1 AND username = &2", boardId, owner)
+  If Not r.Available Then
+    r = $db.Create("kb_members")
+    r["board_id"] = boardId
+    r["username"] = owner
+  Endif
+  r["role"] = "board-admin"
+  r.Update()
+  $db.Exec("UPDATE kb_boards SET owner = NULL WHERE id = &1", boardId)
+End
+
+Private Function ApiAnswer(status As Integer, data As Variant, Optional empty As Boolean) As Collection
+  Dim result As New Collection
+  result["status"] = status
+  result["data"] = data
+  result["empty"] = empty
+  Return result
+End
+
+Private Function ApiFailure(status As Integer, message As String) As Collection
+  Dim data As New Collection
+  data["error"] = message
+  Return ApiAnswer(status, data)
+End
+
+Public Function MutateApiMember(boardId As Integer, username As String, action As String, payload As Collection) As Collection
+  Dim actor As String = WebIdentity.Username
+  Dim r As Result
+  Dim flags As Collection
+  Dim roleKey As String
+  Dim currentRole As String
+  Dim owner As String
+  Dim title As String
+  Dim siteAdmin As Boolean
+  Dim transaction As Boolean
+  Dim status As Integer = 500
+  Dim failure As String
+  Dim rows As New Variant[]
+  Dim row As New Collection
+  Dim empty As Boolean
+  $apiMemberBoard = 0
+  If Env["WEBA_API_REQUEST"] <> "1" Then Return ApiFailure(403, "API context required")
+  If Not actor Then Return ApiFailure(401, "Invalid credentials")
+  If Not WebDatabase.UserExists(actor) Then Return ApiFailure(401, "Invalid credentials")
+  OpenStore()
+  WorkspaceStore.OpenStore()
+  siteAdmin = WebDatabase.GetIsAdmin(actor)
+  If Not siteAdmin And Not Can(boardId, "manageBoard") Then Return ApiFailure(403, "Only a board admin can change members")
+  If Not username Or Len(username) > 255 Then Return ApiFailure(400, "Invalid member ID")
+  If action <> "add" And action <> "remove" And action <> "set" Then Return ApiFailure(404, "API route not found")
+  If action <> "set" Then
+    If TypeOf(payload["action"]) <> gb.String Then Return ApiFailure(400, "Expected member action")
+    If payload["action"] <> action Then Return ApiFailure(400, "Member action does not match route")
+  Endif
+  If action <> "remove" Then
+    Try flags = ApiMemberRoles.Parse(payload)
+    If Error Then Return ApiFailure(400, "Invalid member role or flags")
+  Endif
+  r = $db.Find("kb_boards", "id = &1", boardId)
+  If Not r.Available Then
+    If action = "set" Then Return ApiFailure(404, "Board not found")
+    Return ApiAnswer(200, rows)
+  Endif
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE users SET username = username WHERE username = &1", username)
+  $db.Exec("UPDATE kb_boards SET title = title WHERE id = &1", boardId)
+  siteAdmin = WebDatabase.GetIsAdmin(actor)
+  If Not siteAdmin And Not Can(boardId, "manageBoard") Then
+    status = 403
+    Error.Raise("Only a board admin can change members")
+  Endif
+  If siteAdmin Then $apiMemberBoard = boardId
+  r = $db.Find("kb_boards", "id = &1", boardId)
+  If Not r.Available Then
+    status = 404
+    Error.Raise("Board not found")
+  Endif
+  title = r!title
+  owner = r!owner
+  currentRole = RoleOf(boardId, username)
+  If Not WebDatabase.UserExists(username) Then
+    If action = "set" Then
+      status = 404
+      Error.Raise("Member not found")
+    Endif
+    empty = True
+    Goto FINISH
+  Endif
+  If action = "add" Then
+    If currentRole Then Goto FINISH
+    roleKey = ApiMemberRoles.RoleFor(flags)
+    SetMember(boardId, username, roleKey)
+    ApiMemberRoles.Save(boardId, username, flags)
+  Else If action = "set" Then
+    If Not currentRole Then
+      status = 404
+      Error.Raise("Member not found")
+    Endif
+    ' WeKan preserves the caller's own administrator bit on role changes.
+    If actor = username Then flags["isAdmin"] = currentRole = "board-admin"
+    roleKey = ApiMemberRoles.RoleFor(flags)
+    If currentRole = "board-admin" And roleKey <> "board-admin" Then
+      If AdminCount(boardId) <= 1 Then
+        status = 400
+        Error.Raise("The board must keep an administrator")
+      Endif
+    Endif
+    If username = owner And roleKey <> "board-admin" Then MaterializeOwner(boardId, owner)
+    SetMember(boardId, username, roleKey)
+    ApiMemberRoles.Save(boardId, username, flags)
+  Else
+    If Not currentRole Then Goto FINISH
+    ' Match WeKan's idempotent removal: the final admin remains active.
+    If currentRole = "board-admin" Then
+      If AdminCount(boardId) <= 1 Then Goto FINISH
+    Endif
+    If username = owner Then MaterializeOwner(boardId, owner)
+    RemoveMember(boardId, username)
+  Endif
+FINISH:
+  DatabaseTransactions.Commit($db)
+  transaction = False
+  $apiMemberBoard = 0
+  If empty Then Return ApiAnswer(200, Null, True)
+  If action = "set" Then Return ApiAnswer(200, 1)
+  row["_id"] = CStr(boardId)
+  row["title"] = title
+  rows.Add(row)
+  Return ApiAnswer(200, rows)
+Catch
+  failure = Error.Text
+  $apiMemberBoard = 0
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  If status = 500 Then failure = "Membership update failed"
+  Return ApiFailure(status, failure)
 End
 
 Public Function CardRows(boardId As Integer, Optional byArchive As Boolean, Optional archived As Boolean) As Result

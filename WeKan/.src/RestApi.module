@@ -8,6 +8,9 @@ Public Sub Main()
   Dim rows As New Variant[]
   Dim item As Collection
   Dim fields As String[]
+  Dim boardId As Integer
+  Dim action As String
+  Dim outcome As Collection
   If Env["WEBA_API_REQUEST"] <> "1" Then
     Reply(403, ErrorData("API host required"))
     Return
@@ -76,6 +79,36 @@ Public Sub Main()
     Return
   Endif
   fields = Split(Request.Path, "/", "", True)
+  If fields.Count = 5 Or fields.Count = 6 Then
+    If fields[0] = "api" And fields[1] = "boards" And fields[3] = "members" Then
+      If Request.Method <> "POST" Then
+        Reply(405, ErrorData("Method not allowed"))
+        Return
+      Endif
+      Try boardId = PositiveId(fields[2])
+      If Error Then
+        Reply(404, ErrorData("Board not found"))
+        Return
+      Endif
+      action = "set"
+      If fields.Count = 6 Then
+        action = fields[5]
+        If action <> "add" And action <> "remove" Then
+          Reply(404, ErrorData("API route not found"))
+          Return
+        Endif
+      Endif
+      payload = JsonBody()
+      If Not payload Then Return
+      outcome = BoardAccess.MutateApiMember(boardId, fields[4], action, payload)
+      If outcome["empty"] = True Then
+        ReplyEmpty(outcome["status"])
+      Else
+        Reply(outcome["status"], outcome["data"])
+      Endif
+      Return
+    Endif
+  Endif
   If fields.Count = 4 Then
     If fields[0] = "api" And fields[1] = "users" And fields[3] = "boards" And Request.Method = "GET" Then
       If fields[2] <> username Then
@@ -105,6 +138,7 @@ Public Sub Main()
       item["_id"] = CStr(r!id)
       item["title"] = r!title
       item["archived"] = r!archived
+      item["members"] = BoardAccess.ApiMembers(PositiveId(fields[2]))
       Reply(200, item)
       Return
     Endif
@@ -162,4 +196,10 @@ Private Sub Reply(status As Integer, data As Variant)
   Print "Cache-Control: no-store"
   Print
   Print text
+End
+
+Private Sub ReplyEmpty(status As Integer)
+  Print "Status: " & CStr(status)
+  Print "Cache-Control: no-store"
+  Print
 End

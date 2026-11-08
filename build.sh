@@ -43,6 +43,8 @@ tests() {
   python3 tests/run-http.py --archive
   python3 tests/run-http.py --api
   python3 tests/run-http.py --api --archive
+  python3 tests/run-http.py --members
+  python3 tests/run-http.py --members --archive
   python3 tests/run-http.py --sessions
   python3 tests/run-http.py --sessions --archive
   python3 -m unittest discover -s tests -p '*_test.py'

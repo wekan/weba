@@ -1,0 +1,88 @@
+' WeKan's ordered built-in flags and REST aliases are source snapshots.
+Export
+Private $definition As Collection
+
+Private Sub Load()
+  If Not $definition Then $definition = JSON.Decode(File.Load(".public/api-member-roles.json"))
+End
+
+Public Function FlagsFor(role As String) As Collection
+  Dim flags As New Collection
+  Dim item As Collection
+  Load()
+  For Each item In $definition["roles"]
+    If item["flag"] Then flags[item["flag"]] = item["role"] = role
+  Next
+  Return flags
+End
+
+Public Function Parse(payload As Collection) As Collection
+  Dim flags As Collection = FlagsFor("normal")
+  Dim aliases As Collection
+  Dim item As Collection
+  Dim value As Variant
+  Dim alias As String
+  Dim flag As String
+  Load()
+  If payload.Exist("role") Then
+    If TypeOf(payload["role"]) <> gb.String Then Error.Raise("Invalid role")
+    alias = LCase(Trim(payload["role"]))
+    aliases = $definition["aliases"]
+    If Not aliases.Exist(alias) Then Error.Raise("Invalid role")
+    Return FlagsFor(aliases[alias])
+  Endif
+  For Each item In $definition["roles"]
+    flag = item["flag"]
+    If Not flag Then Continue
+    If Not payload.Exist(flag) Then Continue
+    value = payload[flag]
+    If TypeOf(value) = gb.Boolean Then
+      flags[flag] = value
+    Else If TypeOf(value) = gb.String Then
+      flags[flag] = LCase(value) = "true"
+    Else
+      Error.Raise("Expected boolean member flags")
+    Endif
+  Next
+  Return flags
+End
+
+Public Function RoleFor(flags As Collection) As String
+  Dim item As Collection
+  Load()
+  For Each item In $definition["roles"]
+    If Not item["flag"] Then Continue
+    If flags[item["flag"]] = True Then Return item["role"]
+  Next
+  Return "normal"
+End
+
+Public Sub Save(boardId As Integer, username As String, flags As Collection)
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim item As Collection
+  Dim r As Result
+  Load()
+  db.Delete("kb_member_flags", "board_id = &1 AND username = &2", boardId, username)
+  For Each item In $definition["roles"]
+    If Not item["flag"] Then Continue
+    If flags[item["flag"]] <> True Then Continue
+    r = db.Create("kb_member_flags")
+    r["board_id"] = boardId
+    r["username"] = username
+    r["flag"] = item["flag"]
+    r.Update()
+  Next
+End
+
+Public Function MemberData(boardId As Integer, username As String, role As String) As Collection
+  Dim flags As Collection = FlagsFor(role)
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim r As Result
+  r = db.Find("kb_member_flags", "board_id = &1 AND username = &2", boardId, username)
+  For Each r
+    If flags.Exist(r!flag) Then flags[r!flag] = True
+  Next
+  flags["userId"] = username
+  flags["isActive"] = True
+  Return flags
+End

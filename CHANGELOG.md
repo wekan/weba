@@ -2,6 +2,17 @@
 
 This work adds the following features and fixes:
 
+- Add membership REST add/remove/role routes with WeKan named aliases, ordered
+  legacy flags, combined flag retention and active-member add idempotency.
+  Serialize roles/flags/history together, synchronize native role changes and
+  clean flags on account/board deletion. Return minimal board rows, preserve
+  self-admin bits and protect the final administrator. Scope site-admin member
+  changes explicitly, including orphan-board recovery; materialize legacy owners
+  without losing personal preferences. Verify source/archive contracts, authority
+  cleanup, real failed-commit rollback/retry and three unchanged original WeKan
+  spec 17 membership callbacks with a SQLite fixture adapter. Its other 27
+  callbacks and full UI/API/security parity remain pending. Thanks to xet7.
+
 - Prevent same-name accounts from reclaiming deleted users' board ownership,
   memberships, personal preferences, assignments or comment/timer privileges.
   Clean current and historical dangling references transactionally; keep other

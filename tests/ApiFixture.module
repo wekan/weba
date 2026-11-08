@@ -3,6 +3,8 @@ Public Sub Main()
   Dim boardId As Integer
   Dim otherId As Integer
   Dim r As Result
+  Dim db As Connection
+  Dim deadline As Float
   Dim data As New Collection
   If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
   If Env["WEBA_TEST_MODE"] = "reset" Then
@@ -18,6 +20,44 @@ Public Sub Main()
     WebDatabase.NewUser("rest-other", Env["WEBA_TEST_PASSWORD"], False)
     Return
   Endif
+  If Env["WEBA_TEST_MODE"] = "member-commit" Then
+    data = JSON.Decode(Env["WEBA_TEST_BOARDS"])
+    boardId = data["otherBoardId"]
+    db = WebDatabase.OpenConnection()
+    db.Timeout = 1
+    WebIdentity.AuthenticateApi("rest-owner")
+    data = BoardAccess.MutateApiMember(boardId, "rest-member", "set", JSON.Decode("{\"role\":\"readonly\"}"))
+    If data["status"] <> 500 Then Error.Raise("Expected rejected membership commit")
+    If data["data"]["error"] <> "Membership update failed" Then Error.Raise("Membership error was not sanitized")
+    If BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Member authority leaked after commit failure")
+    File.Save(Application.Path &/ "member-commit-failed", "ready")
+    deadline = Timer + 10
+    While Not Exist(Application.Path &/ "member-reader-released")
+      If Timer > deadline Then Error.Raise("Member commit reader release timed out")
+      Sleep 0.01
+    Wend
+    data = BoardAccess.MutateApiMember(boardId, "rest-member", "set", JSON.Decode("{\"role\":\"readonly\"}"))
+    If data["status"] <> 200 Then Error.Raise("Membership retry failed")
+    If BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Member authority leaked after retry")
+    Print "Member commit rollback retained roles/flags/history and recovered without authority leakage"
+    Return
+  Endif
+  If Env["WEBA_TEST_MODE"] = "member-scope" Then
+    data = JSON.Decode(Env["WEBA_TEST_BOARDS"])
+    WebIdentity.AuthenticateApi("rest-owner")
+    r = Null
+    data = BoardAccess.MutateApiMember(data["otherBoardId"], "rest-member", "set", JSON.Decode("{\"role\":\"normal\"}"))
+    If data["status"] <> 400 Then Error.Raise("Expected last-admin rejection")
+    data = JSON.Decode(Env["WEBA_TEST_BOARDS"])
+    If BoardAccess.Can(data["otherBoardId"], "manageBoard") Then Error.Raise("API member override leaked after rejection")
+    data = BoardAccess.MutateApiMember(data["otherBoardId"], "rest-member", "add", JSON.Decode("{\"action\":\"add\",\"role\":\"normal\"}"))
+    If data["status"] <> 200 Then Error.Raise("Expected idempotent member add")
+    data = JSON.Decode(Env["WEBA_TEST_BOARDS"])
+    If BoardAccess.Can(data["otherBoardId"], "manageBoard") Then Error.Raise("API member override leaked after success")
+    If BoardAccess.Can(0, "manageBoard") Then Error.Raise("API member override accepted its unset sentinel")
+    Print "API member authority remains scoped after failure and success"
+    Return
+  Endif
   WebDatabase.Register("rest-owner", Env["WEBA_TEST_PASSWORD"])
   WebDatabase.Register("rest-other", Env["WEBA_TEST_PASSWORD"])
   Session["username"] = "rest-owner"
@@ -31,5 +71,22 @@ Public Sub Main()
   otherId = KanbanStore.AddBoard("Other user's private board")
   data["boardId"] = boardId
   data["otherBoardId"] = otherId
+  If Env["WEBA_TEST_MEMBERS"] = "1" Then
+    r = WebDatabase.OpenConnection().Create("kb_meta")
+    r["board_id"] = otherId
+    r["kind"] = "board"
+    r["item_id"] = otherId
+    r["setting"] = "star"
+    r["value"] = "1"
+    r.Update()
+    WebDatabase.Register("rest-member", Env["WEBA_TEST_PASSWORD"])
+    WebDatabase.Register("rest-deleted", Env["WEBA_TEST_PASSWORD"])
+    Session["username"] = "rest-deleted"
+    Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
+    data["orphanBoardId"] = KanbanStore.AddBoard("Orphan API board")
+    Session["username"] = "rest-owner"
+    Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
+    WebDatabase.DeleteUser("rest-deleted")
+  Endif
   Print JSON.Encode(data)
 End

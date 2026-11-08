@@ -200,6 +200,7 @@ Private Sub CheckLegacyReferences(username As String, boardId As Integer, member
   r["username"] = username
   r["role"] = "normal"
   r.Update()
+  ApiMemberRoles.Save(memberBoard, username, ApiMemberRoles.FlagsFor("board-admin"))
   r = db.Create("kb_entries")
   r["board_id"] = memberBoard
   r["card_id"] = cardId
@@ -225,6 +226,8 @@ Private Sub CheckLegacyReferences(username As String, boardId As Integer, member
   BoardAccess.SetMember(memberBoard, username, "normal")
   SignIn(username)
   If BoardAccess.IsAssigned(memberBoard, cardId, username) Then Error.Raise("New account inherited historical dangling assignment")
+  r = db.Find("kb_member_flags", "username = &1", username)
+  If r.Count Then Error.Raise("New account inherited historical member flags")
   If CardContent.AuthorName(memberBoard, cardId, "entry", commentId) <> username Then Error.Raise("Historical author display was not retained")
   Try CardContent.Save(memberBoard, cardId, commentId, "comment", "", "Forged historical edit", 0, False, 0)
   denied = Error

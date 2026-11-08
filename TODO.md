@@ -7,9 +7,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 ## Current UI/API/security work
 
 - Full scope remains all items below and the current WeKan UI/API/security test
-  contracts. Existing WeKan fixtures directly seed MongoDB and use Meteor methods;
-  they have not passed against weba. Record their actual results before claiming
-  parity, and keep the original assertions when adapting execution to weba.
+  contracts. Complete original suites have not passed against weba. Three spec 17
+  membership callbacks now run unchanged with actual Playwright assertions and
+  an explicit SQLite fixture adapter; its other 27 callbacks remain unexecuted
+  by that adapter. Preserve original assertions as execution adapters expand.
 - Completed: remove login initializer request/query/user-agent logging and the
   unused shared temporary logfile sink. Guard sources against reintroducing
   request payload logging; validate registration through real CGI sessions.
@@ -48,9 +49,20 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   their anchor. Packaged two-session Chromium tests verify member changes,
   forged reader writes, Worker comments/moves, assigned-only scope and mobile
   placement. Static member/role captions use the existing WeKan translations.
-- In progress: REST membership/card/container contracts. Custom roles, list-level
-  exceptions, ownership
-  transfer and public/instance board visibility are still pending.
+- Completed initial membership REST routes: POST add/remove and role updates,
+  named aliases/boolean-string flags, source flag precedence and raw combined
+  flag retention. Return minimal board rows instead of user documents; add is
+  idempotent for active members. Preserve the caller's own admin bit, keep the
+  final admin on removal and reject demotion that strands a board. Site admins
+  can explicitly manage/recover foreign/orphan boards through a tightly scoped
+  API context; native sessions cannot enter it. Replace legacy implicit owners
+  with explicit memberships while preserving personal preferences. Verify
+  source/archive HTTP cases, unchanged spec 17 callbacks, scope reset after
+  success/failure, native role resets, deletion cleanup and real failed-COMMIT
+  rollback/retry of roles/flags/history.
+- In progress: REST cards/containers, complete inactive member roster/history
+  representation and full API identity/data parity. Custom roles, list-level
+  exceptions and public/instance board visibility remain pending.
 - Completed: native browser sessions bind to persistent nonreused account
   session versions. Password changes retain the changing browser but revoke
   other native sessions; administrator resets and same-name account recreation
@@ -77,8 +89,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   independent failed-COMMIT snapshots and packaged
   two-browser admin cancel/confirm/re-registration tests pass; no broad WeKan
   suite parity is implied by these focused checks.
-- Follow-up: explicit site-admin recovery/ownership transfer for boards left
-  without an administrator, and stable opaque account IDs for full WeKan API
+- Follow-up: native administration controls for explicit recovery/ownership
+  transfer (membership REST recovery exists), and stable opaque account IDs for full WeKan API
   identity/import parity. Current deletion cleanup does not reconstruct the
   original principals of accounts already reused before this update.
 - Follow-up security work: email/LDAP/2FA login, configurable token lifetime,

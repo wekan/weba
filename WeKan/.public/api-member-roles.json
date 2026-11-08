@@ -1,0 +1,53 @@
+{
+  "roles": [
+    {
+      "role": "board-admin",
+      "flag": "isAdmin"
+    },
+    {
+      "role": "normal",
+      "flag": ""
+    },
+    {
+      "role": "normal-assigned-only",
+      "flag": "isNormalAssignedOnly"
+    },
+    {
+      "role": "no-comments",
+      "flag": "isNoComments"
+    },
+    {
+      "role": "comment-only",
+      "flag": "isCommentOnly"
+    },
+    {
+      "role": "comment-assigned-only",
+      "flag": "isCommentAssignedOnly"
+    },
+    {
+      "role": "worker",
+      "flag": "isWorker"
+    },
+    {
+      "role": "read-only",
+      "flag": "isReadOnly"
+    },
+    {
+      "role": "read-assigned-only",
+      "flag": "isReadAssignedOnly"
+    }
+  ],
+  "aliases": {
+    "normal": "normal",
+    "member": "normal",
+    "admin": "board-admin",
+    "nocomments": "no-comments",
+    "comment": "comment-only",
+    "commentonly": "comment-only",
+    "worker": "worker",
+    "normalassignedonly": "normal-assigned-only",
+    "commentassignedonly": "comment-assigned-only",
+    "readonly": "read-only",
+    "readassignedonly": "read-assigned-only"
+  }
+}
