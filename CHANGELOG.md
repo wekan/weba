@@ -2,6 +2,12 @@
 
 This work adds the following features and fixes:
 
+- Document card people PUT normalization, ordered duplicates, partial field
+  support, legacy archived/no-op behavior, native row/self-unassignment rules,
+  eight card-person COMMIT phases and API-enabled Chromium verification. Keep
+  six-of-thirty original callback coverage and remaining API gaps explicit.
+  Thanks to xet7.
+
 - Add card PUT members/assignees replacement with explicit clear/coercion,
   active-member filtering, omitted-field preservation and exact ordered duplicate
   values. Preserve empty JSON keys on Gambas 3.20 without accepting undefined

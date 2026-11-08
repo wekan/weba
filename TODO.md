@@ -10,8 +10,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   contracts. Complete original suites have not passed against weba. Six spec 17
   callbacks (three board membership, one card membership, one people-array clear,
   one user deletion) run unchanged with actual Playwright assertions and explicit
-  SQLite fixture adapters; the other 24
-  callbacks remain unexecuted. Preserve original assertions as execution adapters expand.
+  SQLite fixture adapters; the other 24 callbacks remain unexecuted. Preserve
+  original assertions as execution adapters expand.
 - Completed: remove login initializer request/query/user-agent logging and the
   unused shared temporary logfile sink. Guard sources against reintroducing
   request payload logging; validate registration through real CGI sessions.
@@ -98,7 +98,7 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   rollback. Extend account-deletion rollback snapshots to the member table.
 - Documented card-person routes, independent ordered fields, active/stale
   targets, REST role restrictions, scoped administration, lifecycle/rollback
-  tests and exact five-of-thirty original callback coverage.
+  tests and exact original callback coverage.
 - Completed native Gambas card-member editor from the saved-card panel and
   card context menu. Show ordered current members and only unselected active
   board members as add candidates; let writers remove inactive/stale members.
@@ -111,7 +111,7 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   real COMMIT rollback/retry checks to native add/remove as well as REST.
 - Documented native member editor entry points, active candidates, stale
   removal, read/write/assigned/Worker boundaries, independent assignees,
-  popup behavior, six native/REST COMMIT test phases and 105 translated keys.
+  popup behavior, native/REST COMMIT test phases and 105 translated keys.
 - Completed members/assignees card PUT replacement: normalize explicit
   null/empty/non-array values to [], retain supplied string order/duplicates,
   filter inactive/unknown board members and leave omitted fields untouched.
@@ -127,6 +127,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   role/list/cookie boundaries, partial second-field rollback, eight card-person
   failed-COMMIT/retry phases, duplicate lifecycle and packaged Chromium PUT /
   native editor interaction. Full original suite parity remains pending.
+- Documented PUT replacement/coercion, filtered ordered duplicates, omitted
+  fields, legacy archive/empty responses, unsupported-field limits, eight
+  card-person COMMIT phases and API-enabled Chromium coverage. Original spec 17
+  coverage is now six of thirty callbacks, with full-suite gaps explicit.
 - Next card-person work: remaining card PUT fields, reads, creation/bulk routes
   and complete original UI/API/security suites.
 - In progress: REST cards/containers and full API identity/data parity, including

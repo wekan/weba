@@ -1,4 +1,7 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Describe people PUT replacement/coercion/duplicates, native
+  interactions, legacy responses, partial support, eight COMMIT phases and
+  six-of-thirty original callback coverage.
 - People PUT: Add replacement/clear/coercion with active filtering and exact
   ordered duplicates; preserve explicit JSON keys, legacy reads and unique
   permission relations. Carry/clean sequence rows across the lifecycle, remove

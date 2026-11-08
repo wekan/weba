@@ -228,6 +228,7 @@ The first implemented REST contracts use JSON request/response bodies:
 | `POST /api/boards/:id/members/:userId/remove` | Remove with `action: "remove"`; the final administrator remains active |
 | `POST` / `DELETE /api/boards/:id/lists/:listId/cards/:cardId/members/:userId` | Add/remove one card member, preserving other members and the separate assignees |
 | `POST` / `DELETE /api/boards/:id/lists/:listId/cards/:cardId/assignees/:userId` | Add/remove one assignee, preserving other assignees and the separate members |
+| `PUT /api/boards/:id/lists/:listId/cards/:cardId` | Replace provided `members`/`assignees` fields; other card fields are still pending |
 
 User deletion requires a site administrator; a board administrator alone is
 refused. It removes account/session/token and current/historical privilege
@@ -282,7 +283,25 @@ and Workers cannot use these general REST writes; their supported native card
 operations have separate checks. A foreign list/card combination or archived
 card returns 404. A site-admin mutation does not enable general private-board
 reads afterward. Changes, order and audit history commit together; failures
-return a sanitized 500 and roll back. Card PUT array/bulk contracts remain pending.
+return a sanitized 500 and roll back.
+
+Card PUT currently implements the `members` and `assignees` fields, returning
+`{_id}` after commit. Omitted fields remain unchanged. A string becomes one ID;
+arrays keep nonempty string IDs; explicit `null`, an empty string, non-array
+objects, numbers and booleans clear to `[]`. Unknown/inactive board members are
+filtered out. Order and existing duplicate IDs are preserved, as in WeKan's
+replacement API, while normalized relations continue to enforce permissions.
+Merge additions avoid introducing a new duplicate and removals clear every
+occurrence. Copies, moves, JSON exchange and account cleanup preserve or remove
+the sequence consistently; existing data retains its legacy read fallback.
+
+The legacy PUT accepts archived-card people payloads and returns the ID without
+changing them, matching the current WeKan route; merge routes instead return
+404 for archived cards. An empty PUT object returns 404 with `{message:"Error"}`.
+Unsupported card fields currently return an explicit 400, including when mixed
+with supported fields, so an unimplemented update cannot appear successful.
+Other card PUT fields, creation/bulk endpoints and full API data parity remain
+pending.
 
 To edit card members in the native UI, open a saved card and choose Members
 (before Assignee), or use Members in the card menu. The Gambas tree shows
@@ -291,8 +310,10 @@ not already on the card. Add applies immediately. Select a current member in
 the tree to remove it, including an inactive/stale member. Readers can inspect
 the tree but cannot modify it; direct forged events are also refused on the
 server. Assigned writers may modify members only on cards they can read.
-Workers retain their separate self-assignment controls. Card membership does
-not alter assignees. The dialog uses the shared anchored popup, Font Awesome
+Workers retain their separate self-assignment controls. Their unassign action
+removes every occurrence of their ID. The member tree offers one selectable row
+per person even when replacement data contains duplicates; removing that row
+clears every occurrence. Card membership does not alter assignees. The dialog uses the shared anchored popup, Font Awesome
 icons, X/Escape closing and viewport limits.
 
 Current API account IDs are usernames, including the `:userId` above. Stable
@@ -335,7 +356,11 @@ reactivation, checking roles, flags and audit history after each failure. Card
 people tests independently force COMMIT failure for add/remove in both fields,
 then retry on the same Gambas connection and verify that scoped authority did
 not survive. The same independent snapshots also force native editor add/remove
-COMMIT failures and successful same-process retries. Native store tests cover ordering, copy/move/JSON, invalid-import
+COMMIT failures and successful same-process retries. Two more phases force a
+combined PUT replacement and clear to fail COMMIT, then verify exact sequences,
+normalized relations and successful same-connection retries. A separate HTTP
+failure in the second field verifies that the first field and audit history also
+roll back. Native store tests cover ordering, copy/move/JSON, invalid-import
 rollback, assigned-only denial and deletion cleanup.
 
 User-deletion tests inspect independent SQLite snapshots after denied requests
@@ -344,13 +369,13 @@ cleanup, retained content and credential revocation. The native deletion UI is
 also checked with the packaged Chromium workflow (`WEBA_DELETION_ONLY=1`).
 
 When the parent WeKan checkout is available, `--members` executes four original
-`#5998` spec 17 callbacks unchanged (three board-member, one card-member), and
-`--api` executes its user-deletion callback
+`#5998` spec 17 callbacks unchanged (three board-member, one card-member), plus
+the original `#3697` people-clear callback. `--api` executes its user-deletion callback
 unchanged. Both use actual Playwright assertions and explicit SQLite fixture
 adapters. User fixtures are created through the real Gambas account store;
 post-delete checks read SQLite independently of the HTTP response. Each adapter
-reports which callbacks it did not execute. Together they cover five of the
-file's 30 callbacks; the other 25 and the complete original UI/API/security
+reports which callbacks it did not execute. Together they cover six of the
+file's 30 callbacks; the other 24 and the complete original UI/API/security
 suites have not passed against weba. The reference checkout's
 `tests/playwright/package.json` dependencies must be installed. A standalone
 weba checkout can select the reference with `WEKAN_SOURCE=/absolute/path/to/wekan`.
@@ -414,6 +439,7 @@ Focused isolated browser checks use the same runner as the layout test:
 ```sh
 WEBA_MENUS_ONLY=1 WEBA_BROWSER_URL=http://127.0.0.1:9231 python3 tests/run-http.py --browser
 WEBA_DETAILS_ONLY=1 WEBA_BROWSER_URL=http://127.0.0.1:9231 python3 tests/run-http.py --browser
+WITH_API=true WEBA_MEMBERS_ONLY=1 WEBA_BROWSER_URL=http://127.0.0.1:9231 python3 tests/run-http.py --browser --archive
 WEBA_TRANSFER_ONLY=1 WEBA_BROWSER_URL=http://127.0.0.1:9231 python3 tests/run-http.py --browser --archive
 WEBA_EXCHANGE_ONLY=1 WEBA_BROWSER_URL=http://127.0.0.1:9231 python3 tests/run-http.py --browser --archive
 ```
