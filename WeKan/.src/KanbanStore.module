@@ -92,7 +92,7 @@ End
 Public Function Boards(Optional archived As Boolean = False) As Result
   RequireUser()
   BoardAccess.OpenStore()
-  Return $db.Find("kb_boards", "archived = &1 AND (owner = &2 OR id IN (SELECT board_id FROM kb_members WHERE username = &2 AND role IN ('board-admin','normal','no-comments','comment-only','read-only','normal-assigned-only','comment-assigned-only','read-assigned-only','worker'))) ORDER BY title", archived, WebIdentity.Username)
+  Return $db.Find("kb_boards", "archived = &1 AND NOT EXISTS (SELECT 1 FROM kb_removed_members d WHERE d.board_id = kb_boards.id AND d.username = &2) AND (owner = &2 OR id IN (SELECT board_id FROM kb_members WHERE username = &2 AND role IN ('board-admin','normal','no-comments','comment-only','read-only','normal-assigned-only','comment-assigned-only','read-assigned-only','worker'))) ORDER BY title", archived, WebIdentity.Username)
 End
 
 Public Sub RequireBoard(boardId As Integer)

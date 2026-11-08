@@ -74,7 +74,7 @@ Public Sub Save(boardId As Integer, username As String, flags As Collection)
   Next
 End
 
-Public Function MemberData(boardId As Integer, username As String, role As String) As Collection
+Public Function MemberData(boardId As Integer, username As String, role As String, Optional active As Boolean = True) As Collection
   Dim flags As Collection = FlagsFor(role)
   Dim db As Connection = WebDatabase.OpenConnection()
   Dim r As Result
@@ -83,6 +83,6 @@ Public Function MemberData(boardId As Integer, username As String, role As Strin
     If flags.Exist(r!flag) Then flags[r!flag] = True
   Next
   flags["userId"] = username
-  flags["isActive"] = True
+  flags["isActive"] = active
   Return flags
 End

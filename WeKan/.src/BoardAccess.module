@@ -18,6 +18,14 @@ Public Sub OpenStore()
     t.PrimaryKey = ["board_id", "username"]
     t.Update()
   Endif
+  If Not $db.Tables.Exist("kb_removed_members") Then
+    t = $db.Tables.Add("kb_removed_members")
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("username", db.String, 255)
+    t.Fields.Add("role", db.String, 64)
+    t.PrimaryKey = ["board_id", "username"]
+    t.Update()
+  Endif
   If Not $db.Tables.Exist("kb_member_flags") Then
     t = $db.Tables.Add("kb_member_flags")
     t.Fields.Add("board_id", db.Integer)
@@ -63,11 +71,34 @@ Private Function RoleOf(boardId As Integer, username As String) As String
   OpenStore()
   r = $db.Find("kb_boards", "id = &1", boardId)
   If Not r.Available Then Return ""
+  If IsRemoved(boardId, username) Then Return ""
   If r!owner = username Then Return "board-admin"
   r = $db.Find("kb_members", "board_id = &1 AND username = &2", boardId, username)
   If Not r.Available Then Return ""
   If Not $roles.Exist(r!role) Then Return ""
   Return r!role
+End
+
+Private Function IsRemoved(boardId As Integer, username As String) As Boolean
+  Dim r As Result = $db.Find("kb_removed_members", "board_id = &1 AND username = &2", boardId, username)
+  Return r.Available
+End
+
+Private Function RemovedRole(boardId As Integer, username As String) As String
+  Dim r As Result = $db.Find("kb_removed_members", "board_id = &1 AND username = &2", boardId, username)
+  If r.Available Then Return r!role
+  Return ""
+End
+
+Private Sub RememberRemoval(boardId As Integer, username As String, flags As Collection)
+  Dim r As Result = $db.Edit("kb_removed_members", "board_id = &1 AND username = &2", boardId, username)
+  If Not r.Available Then
+    r = $db.Create("kb_removed_members")
+    r["board_id"] = boardId
+    r["username"] = username
+  Endif
+  r["role"] = ApiMemberRoles.RoleFor(flags)
+  r.Update()
 End
 
 Public Function Can(boardId As Integer, capability As String) As Boolean
@@ -103,6 +134,7 @@ Public Sub SetMember(boardId As Integer, username As String, role As String)
   If r!owner = username Then
     If role <> "board-admin" Then Error.Raise("Transfer ownership before changing the owner's role")
     $db.Delete("kb_member_flags", "board_id = &1 AND username = &2", boardId, username)
+    $db.Delete("kb_removed_members", "board_id = &1 AND username = &2", boardId, username)
     Return
   Endif
   WorkspaceStore.OpenStore()
@@ -122,6 +154,7 @@ Public Sub SetMember(boardId As Integer, username As String, role As String)
   Endif
   r["role"] = role
   r.Update()
+  $db.Delete("kb_removed_members", "board_id = &1 AND username = &2", boardId, username)
   $db.Delete("kb_member_flags", "board_id = &1 AND username = &2", boardId, username)
   DatabaseTransactions.Commit($db)
   transaction = False
@@ -133,6 +166,8 @@ End
 
 Public Sub RemoveMember(boardId As Integer, username As String)
   Dim r As Result
+  Dim flags As Collection
+  Dim roleKey As String
   Dim transaction As Boolean
   Dim failure As String
   Require(boardId, "manageBoard")
@@ -143,10 +178,22 @@ Public Sub RemoveMember(boardId As Integer, username As String)
   transaction = True
   $db.Exec("UPDATE kb_boards SET title = title WHERE id = &1", boardId)
   Require(boardId, "manageBoard")
-  CheckLastAdmin(boardId, username, "")
-  KanbanStore.Activity(boardId, "Removed board member: " & username)
-  $db.Delete("kb_members", "board_id = &1 AND username = &2", boardId, username)
-  $db.Delete("kb_member_flags", "board_id = &1 AND username = &2", boardId, username)
+  roleKey = RoleOf(boardId, username)
+  If roleKey Then
+    CheckLastAdmin(boardId, username, "")
+    flags = ApiMemberRoles.MemberData(boardId, username, roleKey)
+    flags["isAdmin"] = False
+    ' Log while the actor still has access, including self-removal.
+    KanbanStore.Activity(boardId, "Removed board member: " & username)
+    RememberRemoval(boardId, username, flags)
+    $db.Delete("kb_members", "board_id = &1 AND username = &2", boardId, username)
+    ApiMemberRoles.Save(boardId, username, flags)
+  Else If Not WebDatabase.UserExists(username) Then
+    ' Orphaned account entries are purged rather than retained as inactive.
+    $db.Delete("kb_members", "board_id = &1 AND username = &2", boardId, username)
+    $db.Delete("kb_removed_members", "board_id = &1 AND username = &2", boardId, username)
+    $db.Delete("kb_member_flags", "board_id = &1 AND username = &2", boardId, username)
+  Endif
   DatabaseTransactions.Commit($db)
   transaction = False
 Catch
@@ -161,7 +208,7 @@ Public Function Members(boardId As Integer) As Result
   RequireRead(boardId)
   r = $db.Find("kb_boards", "id = &1", boardId)
   owner = r!owner
-  Return $db.Exec("SELECT owner AS username, &1 AS role FROM kb_boards WHERE id = &2 AND owner IS NOT NULL AND owner <> &3 AND owner IN (SELECT username FROM users) UNION ALL SELECT m.username, m.role FROM kb_members m INNER JOIN users u ON u.username = m.username WHERE m.board_id = &2 AND m.username <> &4", "board-admin", boardId, "", owner)
+  Return $db.Exec("SELECT b.owner AS username, &1 AS role FROM kb_boards b INNER JOIN users u ON u.username = b.owner WHERE b.id = &2 AND b.owner <> &3 AND NOT EXISTS (SELECT 1 FROM kb_removed_members d WHERE d.board_id = b.id AND d.username = b.owner) UNION ALL SELECT m.username, m.role FROM kb_members m INNER JOIN users u ON u.username = m.username WHERE m.board_id = &2 AND m.username <> &4 AND NOT EXISTS (SELECT 1 FROM kb_removed_members d WHERE d.board_id = m.board_id AND d.username = m.username)", "board-admin", boardId, "", owner)
 End
 
 Private Sub CheckLastAdmin(boardId As Integer, username As String, nextRole As String)
@@ -177,9 +224,11 @@ Private Function AdminCount(boardId As Integer) As Integer
   r = $db.Find("kb_boards", "id = &1", boardId)
   owner = r!owner
   If owner Then
-    If WebDatabase.UserExists(owner) Then Inc count
+    If Not IsRemoved(boardId, owner) Then
+      If WebDatabase.UserExists(owner) Then Inc count
+    Endif
   Endif
-  r = $db.Exec("SELECT COUNT(*) AS total FROM kb_members m INNER JOIN users u ON u.username = m.username WHERE m.board_id = &1 AND m.role = &2 AND m.username <> &3", boardId, "board-admin", owner)
+  r = $db.Exec("SELECT COUNT(*) AS total FROM kb_members m INNER JOIN users u ON u.username = m.username WHERE m.board_id = &1 AND m.role = &2 AND m.username <> &3 AND NOT EXISTS (SELECT 1 FROM kb_removed_members d WHERE d.board_id = m.board_id AND d.username = m.username)", boardId, "board-admin", owner)
   Return count + r!total
 End
 
@@ -188,6 +237,10 @@ Public Function ApiMembers(boardId As Integer) As Variant[]
   Dim rows As New Variant[]
   For Each r
     If $roles.Exist(r!role) Then rows.Add(ApiMemberRoles.MemberData(boardId, r!username, r!role))
+  Next
+  r = $db.Exec("SELECT d.username, d.role FROM kb_removed_members d INNER JOIN users u ON u.username = d.username WHERE d.board_id = &1 ORDER BY d.username", boardId)
+  For Each r
+    If $roles.Exist(r!role) Then rows.Add(ApiMemberRoles.MemberData(boardId, r!username, r!role, False))
   Next
   Return rows
 End
@@ -242,6 +295,8 @@ Public Function MutateApiMember(boardId As Integer, username As String, action A
   Dim flags As Collection
   Dim roleKey As String
   Dim currentRole As String
+  Dim inactiveRole As String
+  Dim previous As Collection
   Dim owner As String
   Dim title As String
   Dim siteAdmin As Boolean
@@ -292,6 +347,7 @@ Public Function MutateApiMember(boardId As Integer, username As String, action A
   title = r!title
   owner = r!owner
   currentRole = RoleOf(boardId, username)
+  inactiveRole = RemovedRole(boardId, username)
   If Not WebDatabase.UserExists(username) Then
     If action = "set" Then
       status = 404
@@ -306,13 +362,27 @@ Public Function MutateApiMember(boardId As Integer, username As String, action A
     SetMember(boardId, username, roleKey)
     ApiMemberRoles.Save(boardId, username, flags)
   Else If action = "set" Then
-    If Not currentRole Then
+    If Not currentRole And Not inactiveRole Then
       status = 404
       Error.Raise("Member not found")
     Endif
-    ' WeKan preserves the caller's own administrator bit on role changes.
-    If actor = username Then flags["isAdmin"] = currentRole = "board-admin"
+    ' Self role changes preserve the stored admin bit, including inactive rows;
+    ' changing that bit never activates a removed membership.
+    If actor = username Then
+      If currentRole Then
+        previous = ApiMemberRoles.MemberData(boardId, username, currentRole)
+      Else
+        previous = ApiMemberRoles.MemberData(boardId, username, inactiveRole, False)
+      Endif
+      flags["isAdmin"] = previous["isAdmin"]
+    Endif
     roleKey = ApiMemberRoles.RoleFor(flags)
+    If Not currentRole Then
+      KanbanStore.Activity(boardId, "Changed inactive board membership: " & username)
+      RememberRemoval(boardId, username, flags)
+      ApiMemberRoles.Save(boardId, username, flags)
+      Goto FINISH
+    Endif
     If currentRole = "board-admin" And roleKey <> "board-admin" Then
       If AdminCount(boardId) <= 1 Then
         status = 400

@@ -187,10 +187,13 @@ const fs = require('node:fs');
       assert.equal(await memberPage.$$eval('.weba-data .weba-card',els=>els.length),1);assert.ok(await memberPage.$eval('.weba-data',e=>!e.textContent.includes('Hidden role card')));
       await members();await fill('MemberUsername',memberName);await click('RemoveMember');await click('CloseMembers');await clickP('Home');
       assert.equal(await memberPage.$$eval('.weba-board-tile',els=>els.length),0,'removed member loses the board');
+      await setRole('Read only');await memberBoard();
+      assert.equal(await memberPage.$$eval('.weba-data .weba-card',els=>els.length),2,'native reinvite replaces the old assigned-only scope');
+      assert.equal(await memberPage.$$eval('.weba-add-card-top,.weba-drag-handle',els=>els.length),0,'reactivated reader does not retain Worker writes');
       await click('CloseSidebar');await page.setViewport({width:390,height:844});await click('SidebarToggle');await members();
       const box=await page.$eval(selector('MembersPanel'),e=>{const r=e.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom};});
       assert.ok(box.left>=0&&box.right<=390&&box.top>=0&&box.bottom<=844,'member dialog fits mobile viewport');await click('CloseMembers');
-      console.log('Members browser: native add/role/remove, forged reader writes, Worker assignment/move/comment, assigned-only scope and mobile dialog passed');return;
+      console.log('Members browser: native add/role/remove, forged reader writes, Worker assignment/move/comment, assigned-only scope, explicit reactivation and mobile dialog passed');return;
     }
     if(process.env.WEBA_COLORS_ONLY) {
       async function colorMenu(kind){

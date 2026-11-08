@@ -1,4 +1,9 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Inactive membership: Retain removed member flags without authority, exclude
+  inactive administrators from last-admin counts, require explicit reactivation
+  and clear retained identities on deletion/recreation. Transact audit history;
+  verify native/API negatives, original callbacks, four forced-COMMIT rollback
+  phases and packaged browser re-invitation.
 - Documentation: Describe membership REST payloads, explicit recovery, roles,
   fixture adaptation/reference dependencies and remaining identity/UI/test gaps.
 - Membership REST: Add named/legacy roles, idempotent add, role updates/removal,

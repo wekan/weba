@@ -44,9 +44,11 @@ const secrets=[process.env.WEBA_TEST_PASSWORD];
   };
   for(const {title,callback} of selected){
    // Same per-test member graph as the original fixture: owner/admin + user2.
+   oracle('reset-board',boardId);
    await post('rest-other/add',{action:'add',role:'admin'});
    await post('rest-other',{role:'admin'});
    await post('rest-member/remove',{action:'remove'});
+   oracle('reset',boardId,'rest-member');
    const user=await login('rest-other'),user2=await login('rest-member');
    await callback({request,user,user2,board:{boardId}});
    console.log('Original spec 17 passed: '+title);

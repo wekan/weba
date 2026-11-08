@@ -1,0 +1,108 @@
+' Real native stores: a removed member record is provenance, never authority.
+Public Sub Main()
+  Dim db As Connection
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim r As Result
+  Dim data As Collection
+  Dim flags As Collection
+  Dim denied As Boolean
+  WebDatabase.Register("inactive-owner", "owner password")
+  WebDatabase.Register("inactive-member", "member password")
+  WebDatabase.Register("inactive-other", "other password")
+  SignIn("inactive-owner")
+  boardId = KanbanStore.AddBoard("Inactive membership board")
+  BoardAccess.SetMember(boardId, "inactive-member", "worker")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Assigned card", "Private body", "Default", "Todo", "inactive-member", "", "")
+  SignIn("inactive-member")
+  WorkspaceStore.SetSetting(boardId, "board", boardId, "star", "1")
+  SignIn("inactive-owner")
+  BoardAccess.RemoveMember(boardId, "inactive-member")
+  data = MemberData(boardId, "inactive-member")
+  If data["isActive"] Or data["isAdmin"] Or Not data["isWorker"] Then Error.Raise("Removal did not retain non-admin flags as inactive")
+  r = BoardAccess.Members(boardId)
+  If r.Count <> 1 Then Error.Raise("Native active member list included a removed account")
+  BoardAccess.RemoveMember(boardId, "inactive-member")
+  data = MemberData(boardId, "inactive-member")
+  If data["isActive"] Then Error.Raise("Repeated removal reactivated a member")
+  SignIn("inactive-member")
+  If BoardAccess.Role(boardId) Then Error.Raise("Inactive role retained authority")
+  r = KanbanStore.Boards()
+  If r.Count Then Error.Raise("Inactive member saw a board title")
+  Try KanbanStore.Cards(boardId)
+  denied = Error
+  If Not denied Then Error.Raise("Inactive member read assigned cards")
+  Try BoardAccess.ApiMembers(boardId)
+  denied = Error
+  If Not denied Then Error.Raise("Inactive member read its former roster")
+  Try BoardAccess.SetMember(boardId, "inactive-member", "board-admin")
+  denied = Error
+  If Not denied Then Error.Raise("Inactive member promoted itself")
+  SignIn("inactive-owner")
+  db = WebDatabase.OpenConnection()
+  ' Simulate conflicting legacy data: inactive wins over both owner and active
+  ' member pointers, including a stored administrator flag.
+  r = db.Edit("kb_removed_members", "board_id = &1 AND username = &2", boardId, "inactive-member")
+  r["role"] = "board-admin"
+  r.Update()
+  ApiMemberRoles.Save(boardId, "inactive-member", ApiMemberRoles.FlagsFor("board-admin"))
+  r = db.Create("kb_members")
+  r["board_id"] = boardId
+  r["username"] = "inactive-member"
+  r["role"] = "board-admin"
+  r.Update()
+  r = db.Create("kb_members")
+  r["board_id"] = boardId
+  r["username"] = "inactive-owner"
+  r["role"] = "board-admin"
+  r.Update()
+  db.Exec("UPDATE kb_boards SET owner = &1 WHERE id = &2", "inactive-member", boardId)
+  Try BoardAccess.SetMember(boardId, "inactive-owner", "normal")
+  denied = Error
+  If Not denied Then Error.Raise("Inactive owner was counted as an active administrator")
+  SignIn("inactive-member")
+  If BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Inactive admin flag granted authority")
+  r = KanbanStore.Boards()
+  If r.Count Then Error.Raise("Inactive legacy owner pointer leaked board metadata")
+  Try KanbanStore.SaveCard(boardId, cardId, "Forged", "Body", "Default", "Todo", "", "", "")
+  denied = Error
+  If Not denied Then Error.Raise("Inactive legacy owner wrote a card")
+  SignIn("inactive-owner")
+  db.Exec("UPDATE kb_boards SET owner = &1 WHERE id = &2", "inactive-owner", boardId)
+  BoardAccess.SetMember(boardId, "inactive-member", "normal")
+  data = MemberData(boardId, "inactive-member")
+  If Not data["isActive"] Or data["isAdmin"] Or data["isWorker"] Then Error.Raise("Native reactivation retained old roles")
+  r = db.Find("kb_removed_members", "board_id = &1 AND username = &2", boardId, "inactive-member")
+  If r.Count Then Error.Raise("Reactivated member retained its removal marker")
+  SignIn("inactive-member")
+  If BoardAccess.Role(boardId) <> "normal" Then Error.Raise("Explicit native reactivation did not restore access")
+  If WorkspaceStore.Setting(boardId, "board", boardId, "star") <> "1" Then Error.Raise("Removal lost personal preferences")
+  SignIn("inactive-owner")
+  BoardAccess.SetMember(boardId, "inactive-member", "read-only")
+  BoardAccess.RemoveMember(boardId, "inactive-member")
+  WebDatabase.DeleteUser("inactive-member")
+  r = db.Find("kb_removed_members", "username = &1", "inactive-member")
+  If r.Count Then Error.Raise("Account deletion left inactive identities")
+  r = db.Find("kb_member_flags", "username = &1", "inactive-member")
+  If r.Count Then Error.Raise("Account deletion left inactive flags")
+  BoardAccess.SetMember(boardId, "inactive-other", "read-only")
+  BoardAccess.RemoveMember(boardId, "inactive-other")
+  WorkspaceStore.SetArchived(boardId, "board", boardId, True)
+  WorkspaceActions.DeleteArchived(boardId, "board", boardId, "Inactive membership board")
+  r = db.Find("kb_removed_members", "board_id = &1", boardId)
+  If r.Count Then Error.Raise("Board deletion left inactive identities")
+  Print "Inactive members: retained flags, denied stale owner/admin pointers, last-admin counts, reactivation/preferences and deletion cleanup passed"
+End
+
+Private Function MemberData(boardId As Integer, username As String) As Collection
+  Dim item As Collection
+  For Each item In BoardAccess.ApiMembers(boardId)
+    If item["userId"] = username Then Return item
+  Next
+  Error.Raise("Missing inactive member record")
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

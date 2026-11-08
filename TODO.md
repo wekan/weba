@@ -62,8 +62,16 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   rollback/retry of roles/flags/history.
 - Documented membership REST payloads, explicit recovery and source/archive
   original-callback execution, including reference dependencies and honest gaps.
-- In progress: REST cards/containers, complete inactive member roster/history
-  representation and full API identity/data parity. Custom roles, list-level
+- Completed inactive membership persistence: removal retains API flags with
+  isActive false and clears the administrator flag. Inactive rows never grant
+  access or count as final administrators, even with stale owner/member pointers.
+  Role updates stay inactive; explicit add replaces old flags and reactivates.
+  Preserve personal preferences, transact audit history and clear retained rows
+  on account/board deletion and historical username cleanup. Verify native
+  negatives, source/archive API contracts, three unchanged original callbacks,
+  four forced-COMMIT rollback/retry phases and packaged browser re-invitation.
+- In progress: REST cards/containers and full API identity/data parity, including
+  stable IDs and complete source roster metadata. Custom roles, list-level
   exceptions and public/instance board visibility remain pending.
 - Completed: native browser sessions bind to persistent nonreused account
   session versions. Password changes retain the changing browser but revoke

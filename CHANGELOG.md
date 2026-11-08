@@ -2,6 +2,15 @@
 
 This work adds the following features and fixes:
 
+- Retain removed board memberships as inactive API rows with non-admin flags.
+  Deny access and administrator counts despite stale owner/member pointers;
+  keep inactive role updates inactive and require explicit add to reactivate
+  with replacement flags. Preserve preferences and transact audit history;
+  clean retained identities on account/board deletion and username recreation.
+  Verify native negatives, source/archive API contracts, three unchanged
+  original callbacks, four real failed-COMMIT rollback/retry phases and packaged
+  browser re-invitation. Full original suite parity remains pending. Thanks to xet7.
+
 - Document membership REST routes, named/legacy roles, scoped administration,
   explicit REST recovery, role/preference migration and test commands. Explain
   the original-callback fixture adapter, reference dependencies and remaining

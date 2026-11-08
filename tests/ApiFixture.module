@@ -5,6 +5,9 @@ Public Sub Main()
   Dim r As Result
   Dim db As Connection
   Dim deadline As Float
+  Dim memberAction As String
+  Dim memberPayload As Collection
+  Dim memberOperation As String
   Dim data As New Collection
   If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
   If Env["WEBA_TEST_MODE"] = "reset" Then
@@ -25,18 +28,31 @@ Public Sub Main()
     boardId = data["otherBoardId"]
     db = WebDatabase.OpenConnection()
     db.Timeout = 1
+    memberAction = Env["WEBA_TEST_MEMBER_ACTION"]
+    If Not memberAction Then memberAction = "set"
+    memberOperation = memberAction
+    memberPayload = New Collection
+    If memberAction = "inactive-set" Then
+      memberOperation = "set"
+      memberPayload["role"] = "admin"
+    Else If memberAction = "set" Then
+      memberPayload["role"] = "readonly"
+    Else
+      memberPayload["action"] = memberAction
+      memberPayload["role"] = "normal"
+    Endif
     WebIdentity.AuthenticateApi("rest-owner")
-    data = BoardAccess.MutateApiMember(boardId, "rest-member", "set", JSON.Decode("{\"role\":\"readonly\"}"))
+    data = BoardAccess.MutateApiMember(boardId, "rest-member", memberOperation, memberPayload)
     If data["status"] <> 500 Then Error.Raise("Expected rejected membership commit")
     If data["data"]["error"] <> "Membership update failed" Then Error.Raise("Membership error was not sanitized")
     If BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Member authority leaked after commit failure")
-    File.Save(Application.Path &/ "member-commit-failed", "ready")
+    File.Save(Application.Path &/ ("member-commit-failed-" & memberAction), "ready")
     deadline = Timer + 10
-    While Not Exist(Application.Path &/ "member-reader-released")
+    While Not Exist(Application.Path &/ ("member-reader-released-" & memberAction))
       If Timer > deadline Then Error.Raise("Member commit reader release timed out")
       Sleep 0.01
     Wend
-    data = BoardAccess.MutateApiMember(boardId, "rest-member", "set", JSON.Decode("{\"role\":\"readonly\"}"))
+    data = BoardAccess.MutateApiMember(boardId, "rest-member", memberOperation, memberPayload)
     If data["status"] <> 200 Then Error.Raise("Membership retry failed")
     If BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Member authority leaked after retry")
     Print "Member commit rollback retained roles/flags/history and recovered without authority leakage"

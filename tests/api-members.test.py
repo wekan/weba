@@ -101,6 +101,21 @@ for action in ['read', 'remove', '']:
     status, data = call(path+'/add', 'POST', {'action': action, 'role': 'normal'}, board_owner)
     assert status == 400 and set(data) == {'error'}, 'Invalid action must never return a user document'
 assert call(base+'/members/no-such-user/add', 'POST', {'action': 'add'}, board_owner) == (200, None)
+assert change({'isNoComments': True, 'isWorker': True}) == (200, 1)
+assert call(path+'/remove', 'POST', {'action': 'remove'}, board_owner)[0] == 200
+assert role(board, 'rest-member') is None
+inactive = member_data(board_owner)
+assert inactive['isActive'] is False and inactive['isAdmin'] is False
+assert inactive['isNoComments'] is True and inactive['isWorker'] is True, 'Removal lost non-admin flags'
+assert call('/api/users/rest-member/boards', token=member) == (200, [])
+assert call(base, token=member)[0] == 404
+assert change({'role': 'admin', 'isActive': True}) == (200, 1)
+assert member_data(board_owner)['isActive'] is False and member_data(board_owner)['isAdmin'] is True
+assert call(base, token=member)[0] == 404, 'Inactive admin flags granted board access'
+assert call(path+'/add', 'POST', {'action': 'add', 'role': 'readonly'}, board_owner)[0] == 200
+assert member_data(board_owner)['isActive'] is True
+assert member_data(board_owner)['isReadOnly'] is True and member_data(board_owner)['isAdmin'] is False
+assert member_data(board_owner)['isWorker'] is False, 'Reactivation retained old flags'
 assert call(path+'/remove', 'POST', {'action': 'remove'}, board_owner)[0] == 200
 assert role(board, 'rest-member') is None
 assert call(base, token=member)[0] == 404
@@ -142,6 +157,17 @@ assert call(base+'/members/rest-owner', 'POST', {'role': 'admin'}, site_admin) =
 assert role(board, 'rest-owner') == 'normal'
 assert call(base+'/members/rest-owner/remove', 'POST', {'action': 'remove'}, site_admin)[0] == 200
 assert role(board, 'rest-owner') is None
+assert call(base+'/members/rest-owner', 'POST', {'role': 'admin'}, site_admin) == (200, 1)
+assert member_data(member, 'rest-owner')['isAdmin'] is False, 'Inactive self-update promoted its admin bit'
+assert call(base+'/members/rest-owner', 'POST', {'role': 'admin'}, member) == (200, 1)
+assert member_data(member, 'rest-owner')['isActive'] is False
+assert member_data(member, 'rest-owner')['isAdmin'] is True
+assert call(base+'/members/rest-owner', 'POST', {'role': 'worker'}, site_admin) == (200, 1)
+assert member_data(member, 'rest-owner')['isAdmin'] is True
+assert call(base, token=site_admin)[0] == 404, 'Removed site admin silently regained ordinary board access'
+assert change({'role': 'normal'}, site_admin)[0] == 400, 'Inactive administrators were counted as active'
+assert call(path+'/remove', 'POST', {'action': 'remove'}, member)[0] == 200
+assert role(board, 'rest-member') == 'board-admin'
 subprocess.run([os.environ['GBX'], '-s', 'ApiFixture', os.environ['WEBA_TEST_PROJECT']],
     env={**os.environ, 'WEBA_TEST_MODE': 'member-scope', 'WEBA_API_REQUEST': '1'}, check=True)
 print('Membership REST: roles/combined flags, add idempotency, denied writes, minimal responses, owner changes, last admin and explicit recovery passed')
