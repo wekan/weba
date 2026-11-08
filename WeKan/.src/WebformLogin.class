@@ -49,6 +49,7 @@ Private Sub Login()
 
   Dim sUsername As String
   Dim sPassword As String
+  Dim generation As Long
 
   'Loading of the * .ini file if present
   'ModFunction.Load_File_Init()
@@ -78,9 +79,11 @@ Private Sub Login()
     Return
   Endif
 
-  If WebDatabase.Login(sUsername, sPassword) Then
+  generation = WebDatabase.LoginGeneration(sUsername, sPassword)
+  If generation Then
 
     ' Create a new Session
+    Session["auth_generation"] = generation
     Session["username"] = sUsername
     Session.Timeout = ModVar.SessionTimeout
 

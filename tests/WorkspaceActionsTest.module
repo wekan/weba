@@ -11,6 +11,7 @@ Public Sub Main()
   Dim db As Connection
   WebDatabase.Register("move-owner", "x")
   Session["username"] = "move-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   source = KanbanStore.AddBoard("Source")
   target = KanbanStore.AddBoard("Target")
   r = KanbanStore.Lanes(source)
@@ -49,10 +50,12 @@ Public Sub Main()
   If Not denied Then Error.Raise("Wrong confirmation accepted")
   WebDatabase.Register("move-other", "x")
   Session["username"] = "move-other"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   Try WorkspaceActions.DeleteArchived(target, "list", listId, "Todo")
   denied = Error
   If Not denied Then Error.Raise("Other owner deleted list")
   Session["username"] = "move-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   WorkspaceActions.DeleteArchived(target, "list", listId, "Todo")
   db = WebDatabase.OpenConnection()
   r = db.Find("kb_files", "card_id = &1", cardId)

@@ -13,6 +13,7 @@ Public Sub Main()
   Dim count As Integer
   WebDatabase.Register("transfer-owner", "x")
   Session["username"] = "transfer-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   source = KanbanStore.AddBoard("Export source")
   r = KanbanStore.Lanes(source)
   r = KanbanStore.Lists(source, "Default")
@@ -30,6 +31,7 @@ Public Sub Main()
   text = BoardTransfer.ExportData(source, "board", source)
   WebDatabase.Register("transfer-reader", "x")
   Session["username"] = "transfer-reader"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   target = BoardTransfer.ImportData(text, "Imported")
   r = KanbanStore.Lanes(target)
   If r.Count <> 2 Then Error.Raise("Empty lane lost in exchange")

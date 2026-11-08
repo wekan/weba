@@ -14,6 +14,7 @@ Public Sub Main()
   Dim bytes As String = "a" & Chr(0) & "b"
   WebDatabase.Register("content-owner", "x")
   Session["username"] = "content-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   boardId = KanbanStore.AddBoard("Content")
   r = KanbanStore.Lanes(boardId)
   r = KanbanStore.Lists(boardId, "Default")
@@ -61,6 +62,7 @@ Public Sub Main()
   If Not denied Then Error.Raise("Cross-card checklist parent accepted")
   WebDatabase.Register("content-other", "x")
   Session["username"] = "content-other"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   Try CardContent.Files(boardId, one)
   denied = Error
   If Not denied Then Error.Raise("Other owner read attachments")
@@ -68,6 +70,7 @@ Public Sub Main()
   denied = Error
   If Not denied Then Error.Raise("Other owner changed comments")
   Session["username"] = "content-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   CardContent.DeleteEntry(boardId, one, checklist)
   r = CardContent.Entries(boardId, one, "checkitem")
   If r.Count Then Error.Raise("Deleting checklist orphaned items")

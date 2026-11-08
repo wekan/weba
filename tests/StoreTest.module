@@ -6,6 +6,7 @@ Public Sub Main()
   Dim denied As Boolean
   WebDatabase.Register("first-user", "first user password")
   Session["username"] = "first-user"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   KanbanStore.AddBoard("Test board")
   r = KanbanStore.Boards()
   If r.Count <> 1 Then Error.Raise("Board creation failed")
@@ -28,14 +29,17 @@ Public Sub Main()
   If Not denied Then Error.Raise("Missing board accepted")
   WebDatabase.Register("other-user", "other user password")
   Session["username"] = "other-user"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   Try KanbanStore.Cards(boardId)
   denied = Error
   If Not denied Then Error.Raise("Another user's board was accessible")
   Session["username"] = "missing-user"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   Try KanbanStore.Cards(boardId)
   denied = Error
   If Not denied Then Error.Raise("Unknown user accepted")
   Session["username"] = "first-user"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   KanbanStore.ArchiveCard(boardId, cardId, True)
   r = KanbanStore.Cards(boardId)
   If r.Count <> 0 Then Error.Raise("Card archive failed")
@@ -52,10 +56,12 @@ Public Sub Main()
   r = KanbanStore.Activities(boardId)
   If r.Count <> 5 Then Error.Raise("Activity recording failed")
   Session["username"] = Null
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   Try KanbanStore.Boards()
   denied = Error
   If Not denied Then Error.Raise("Anonymous access accepted")
   Session["username"] = "first-user"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   r = KanbanStore.Lanes(boardId)
   If r.Count <> 1 Then Error.Raise("Legacy lanes were not retained")
   KanbanStore.AddLane(boardId, "Empty lane")
@@ -90,6 +96,7 @@ Public Sub Main()
   denied = Error
   If Not denied Then Error.Raise("Missing lane accepted")
   Session["username"] = "other-user"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   Try KanbanStore.AddLane(boardId, "Forbidden")
   denied = Error
   If Not denied Then Error.Raise("Another user's swimlane changed")

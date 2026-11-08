@@ -4,8 +4,14 @@ Property Read Username As String
 Private $apiUsername As String
 
 Private Function Username_Read() As String
+  Dim username As String
+  Dim generation As Long
   If Env["WEBA_API_REQUEST"] = "1" Then Return $apiUsername
-  Return Session["username"]
+  username = Session["username"]
+  If Not username Then Return ""
+  generation = WebDatabase.SessionGeneration(username)
+  If generation <= 0 Or Session["auth_generation"] <> generation Then Return ""
+  Return username
 End
 
 Public Sub AuthenticateApi(username As String)

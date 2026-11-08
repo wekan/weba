@@ -57,6 +57,73 @@ Private Sub EnsureAccountSchema()
     t.PrimaryKey = ["id"]
     t.Update()
   Endif
+  If Not $hConn.Tables.Exist("account_generation_ids") Then
+    t = $hConn.Tables.Add("account_generation_ids")
+    t.Fields.Add("id", db.Serial)
+    t.Fields.Add("allocated", db.Boolean)
+    t.PrimaryKey = ["id"]
+    t.Update()
+  Endif
+  If Not $hConn.Tables.Exist("account_sessions") Then
+    t = $hConn.Tables.Add("account_sessions")
+    t.Fields.Add("username", db.String, 255)
+    t.Fields.Add("generation", db.Long)
+    t.PrimaryKey = ["username"]
+    t.Update()
+  Endif
+End
+
+Public Function SessionGeneration(username As String) As Long
+  Dim r As Result
+  Init()
+  If Not username Or Not UserExists(username) Then Return 0
+  r = $hConn.Find("account_sessions", "username = &1", username)
+  If r.Available Then Return r!generation
+  Return 0
+End
+
+Public Function LoginGeneration(username As String, password As String) As Long
+  Dim generation As Long
+  Dim transaction As Boolean
+  Dim failure As String
+  Init()
+  DatabaseTransactions.Begin($hConn)
+  transaction = True
+  ' Verify credentials and choose their session version under the same lock.
+  $hConn.Exec("UPDATE users SET username = username WHERE username = &1", username)
+  If Not Login(username, password) Then
+    DatabaseTransactions.Rollback($hConn)
+    transaction = False
+    Return 0
+  Endif
+  generation = SessionGeneration(username)
+  If Not generation Then generation = RotateSessionGeneration(username)
+  DatabaseTransactions.Commit($hConn)
+  transaction = False
+  Return generation
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($hConn)
+  Error.Raise(failure)
+End
+
+Private Function RotateSessionGeneration(username As String) As Long
+  Dim r As Result
+  Dim generation As Long
+  ' Retain these anonymous allocation rows so deleted/re-created names never
+  ' reuse a generation, even on drivers that recycle the highest serial value.
+  r = $hConn.Create("account_generation_ids")
+  r["allocated"] = True
+  r.Update()
+  generation = $hConn.LastInsertId
+  r = $hConn.Edit("account_sessions", "username = &1", username)
+  If Not r.Available Then
+    r = $hConn.Create("account_sessions")
+    r["username"] = username
+  Endif
+  r["generation"] = generation
+  r.Update()
+  Return generation
 End
 
 Public Sub Register(username As String, password As String)
@@ -94,6 +161,7 @@ Public Sub Register(username As String, password As String)
     r = Null
   Endif
   $hConn.Exec("INSERT INTO users (username, password, fullname, admin) VALUES (&1, &2, &3, &4)", username, passwordHash, "", first)
+  RotateSessionGeneration(username)
   DatabaseTransactions.Commit($hConn)
   transaction = False
 Catch
@@ -197,21 +265,50 @@ Public Function GetUsers() As Result
 End
 
 Public Sub NewUser(username As String, password As String, is_admin As Boolean)
+  Dim transaction As Boolean
+  Dim failure As String
+  Dim passwordHash As String
   Init()
   AdminRequired()
-  If Not Trim(username) Then Error.Raise("Enter a username")
+  username = Trim(username)
+  If Not username Or Len(username) > 255 Then Error.Raise("Enter a username")
   RequirePassword(password)
-  $hConn.Exec("INSERT INTO users (username, password, fullname, admin) VALUES (&1, &2, &3, &4)", Trim(username), Crypt.Sha256(password), "", is_admin)
+  passwordHash = Crypt.Sha256(password)
+  DatabaseTransactions.Begin($hConn)
+  transaction = True
+  AdminRequired()
+  $hConn.Exec("INSERT INTO users (username, password, fullname, admin) VALUES (&1, &2, &3, &4)", username, passwordHash, "", is_admin)
+  RotateSessionGeneration(username)
+  DatabaseTransactions.Commit($hConn)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($hConn)
+  Error.Raise(failure)
 End
 
 Public Sub DeleteUser(username As String)
+  Dim transaction As Boolean
+  Dim failure As String
   Init()
   AdminRequired()
   If username = WebIdentity.Username Then Error.Raise("Cannot delete your own account")
-  $hConn.Exec("DELETE FROM users WHERE username = &1", username)
+  ApiTokens.PrepareStore()
+  DatabaseTransactions.Begin($hConn)
+  transaction = True
+  $hConn.Exec("UPDATE users SET username = username WHERE username = &1", username)
+  AdminRequired()
+  $hConn.Delete("users", "username = &1", username)
   ApiTokens.RevokeUser(username)
+  $hConn.Delete("account_sessions", "username = &1", username)
   If $hConn.Tables.Exist("kb_members") Then $hConn.Delete("kb_members", "username = &1", username)
   If $hConn.Tables.Exist("kb_user_meta") Then $hConn.Delete("kb_user_meta", "username = &1", username)
+  DatabaseTransactions.Commit($hConn)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($hConn)
+  Error.Raise(failure)
 End
 
 Public Function GetFullname(username As String) As String
@@ -232,22 +329,57 @@ End
 Public Function SetPassword(username As String, oldpass As String, newpass As String) As Boolean
   Init()
   AdminOrOwnRequired(username)
-  RequirePassword(newpass)
-  If Not Login(username, oldpass) Then Return False
-  $hConn.Exec("UPDATE users SET password = &1 WHERE username = &2", Crypt.Sha256(newpass), username)
-  ApiTokens.RevokeUser(username)
-  Return True
+  Return ChangeCredential(username, newpass, oldpass, False)
 End
 
 Public Function ForceResetPassword(adminuser As String, username As String, newpass As String) As Boolean
   Init()
   ' Always authorize the session, never a caller-supplied administrator name.
   AdminRequired()
+  Return ChangeCredential(username, newpass, "", True)
+End
+
+Private Function ChangeCredential(username As String, newpass As String, oldpass As String, reset As Boolean) As Boolean
+  Dim transaction As Boolean
+  Dim failure As String
+  Dim passwordHash As String
+  Dim generation As Long
+  Dim keepCurrent As Boolean
   RequirePassword(newpass)
-  If Not UserExists(username) Then Return False
-  $hConn.Exec("UPDATE users SET password = &1 WHERE username = &2", Crypt.Sha256(newpass), username)
+  passwordHash = Crypt.Sha256(newpass)
+  keepCurrent = Not reset And Env["WEBA_API_REQUEST"] <> "1" And WebIdentity.Username = username
+  ApiTokens.PrepareStore()
+  DatabaseTransactions.Begin($hConn)
+  transaction = True
+  $hConn.Exec("UPDATE users SET username = username WHERE username = &1", username)
+  If reset Then
+    AdminRequired()
+  Else
+    AdminOrOwnRequired(username)
+  Endif
+  If Not UserExists(username) Then
+    DatabaseTransactions.Rollback($hConn)
+    transaction = False
+    Return False
+  Endif
+  If Not reset Then
+    If Not Login(username, oldpass) Then
+      DatabaseTransactions.Rollback($hConn)
+      transaction = False
+      Return False
+    Endif
+  Endif
+  $hConn.Exec("UPDATE users SET password = &1 WHERE username = &2", passwordHash, username)
+  generation = RotateSessionGeneration(username)
   ApiTokens.RevokeUser(username)
+  DatabaseTransactions.Commit($hConn)
+  transaction = False
+  If keepCurrent Then Session["auth_generation"] = generation
   Return True
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($hConn)
+  Error.Raise(failure)
 End
 
 Public Sub SetIsAdmin(username As String, is_admin As Boolean)

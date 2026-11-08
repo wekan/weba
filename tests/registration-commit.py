@@ -39,12 +39,28 @@ try:
     reader.rollback()
     assert reader.execute('SELECT COUNT(*) FROM kb_history').fetchone()[0] == history_before, 'Failed commit leaked an activity'
     (project / 'card-reader-released').write_text('ready')
+    wait_for('credential-ready')
+    reader.execute('BEGIN')
+    credentials = reader.execute('SELECT password FROM users WHERE username=?', ('credential-target',)).fetchone()
+    version = reader.execute('SELECT generation FROM account_sessions WHERE username=?', ('credential-target',)).fetchone()[0]
+    assert reader.execute('SELECT COUNT(*) FROM api_tokens').fetchone()[0] == 1
+    (project / 'credential-reader-held').write_text('ready')
+    wait_for('credential-commit-failed')
+    reader.rollback()
+    assert reader.execute('SELECT password FROM users WHERE username=?', ('credential-target',)).fetchone() == credentials, 'Failed reset leaked its password update'
+    assert reader.execute('SELECT generation FROM account_sessions WHERE username=?', ('credential-target',)).fetchone()[0] == version, 'Failed reset revoked native sessions'
+    assert reader.execute('SELECT COUNT(*) FROM api_tokens').fetchone()[0] == 1, 'Failed reset revoked API tokens'
+    (project / 'credential-reader-released').write_text('ready')
     output, _ = process.communicate(timeout=15)
     assert process.returncode == 0, output
     print(output.strip())
-    accounts = reader.execute('SELECT username, admin FROM users').fetchall()
+    accounts = reader.execute('SELECT username, admin FROM users WHERE username=?', ('commit-retry',)).fetchall()
     assert len(accounts) == 1 and accounts[0][0] == 'commit-retry' and accounts[0][1] in (1, -1), 'Recovery must create exactly one Admin'
     assert reader.execute('SELECT COUNT(*) FROM account_bootstrap').fetchone()[0] == 1
+    assert reader.execute('SELECT generation FROM account_sessions WHERE username=?', ('credential-target',)).fetchone()[0] > version
+    assert reader.execute('SELECT COUNT(*) FROM api_tokens').fetchone()[0] == 0
+    assert reader.execute('SELECT COUNT(*) FROM account_generation_ids').fetchone()[0] == 3, 'Rolled-back allocations persisted'
+
     assert reader.execute('SELECT title, description FROM kb_cards').fetchall() == [('Recovered card', 'Unchanged body')]
     assert reader.execute('SELECT COUNT(*) FROM kb_history').fetchone()[0] == history_before + 1
 finally:

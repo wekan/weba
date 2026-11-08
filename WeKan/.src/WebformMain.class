@@ -25,6 +25,10 @@ Private $boardTitle As String
 Private $archive As Boolean
 
 Public Sub WebForm_Event()
+  If Not WebIdentity.Username Then
+    WebForm.Goto(WebformLogin)
+    Error.Raise("Please sign in")
+  Endif
   NativeCommands.ApplyLarge(Me)
 End
 

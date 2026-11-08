@@ -50,10 +50,22 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   placement. Static member/role captions use the existing WeKan translations.
 - In progress: REST membership/card/container contracts. Custom roles, list-level exceptions, ownership
   transfer and public/instance board visibility are still pending.
+- Completed: native browser sessions bind to persistent nonreused account
+  session versions. Password changes retain the changing browser but revoke
+  other native sessions; administrator resets and same-name account recreation
+  invalidate old sessions. Missing/legacy stamps fail closed, and legacy accounts
+  get a version only after verified credentials. Password/version/token changes
+  and account deletion now transact together; native credential verification and
+  REST token issuance serialize with password resets. Source/archive HTTP tests,
+  legacy/negative store checks, forced reset-commit rollback and the complete
+  local suite pass. Existing unversioned browser sessions must sign in again.
 - Follow-up security work: account deletion must not allow a re-registered
-  username to inherit old ownership, author privileges or assignee links.
+  username to inherit old ownership, author privileges or assignee links. Old
+  browser-session reuse is fixed, but these stored content references still need
+  immutable identities or transactional cleanup and independent regression tests.
   Email/LDAP/2FA login, configurable token lifetime, native-login throttling,
-  registration policy, parallel first-API schema initialization, and the original
+  registration policy, concurrent site-admin deletion/demotion, parallel first-API
+  schema initialization, and the original
   WeKan fixture/browser suites remain pending.
 - Completed: native large-text updates bypass environment/dispatcher limits
   through private per-request files and a short native event. Independent SQLite

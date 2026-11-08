@@ -19,6 +19,7 @@ Public Sub Main()
     WebDatabase.Register(username, "x")
   Next
   Session["username"] = "assigned-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   boardId = KanbanStore.AddBoard("Scoped")
   r = KanbanStore.Lanes(boardId)
   r = KanbanStore.Lists(boardId, "Default")
@@ -40,6 +41,7 @@ Public Sub Main()
   stage = "assigned reads"
   For Each username In ["assigned-normal", "assigned-comment", "assigned-read"]
     Session["username"] = username
+    Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
     r = KanbanStore.Cards(boardId)
     If r.Count <> 1 Or r!id <> one Then Error.Raise("Assigned-only list leaked hidden cards")
     Try WorkspaceStore.Record(boardId, "card", two)
@@ -71,6 +73,7 @@ Public Sub Main()
   Next
   stage = "assigned normal mutations"
   Session["username"] = "assigned-normal"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   Try KanbanStore.SaveCard(boardId, two, "Denied", "", "Default", "Todo", "assigned-owner", "", "", listId)
   denied = Error
   If Not denied Then Error.Raise("Assigned normal edited hidden card")
@@ -92,16 +95,19 @@ Public Sub Main()
   If r.Count Then Error.Raise("Copied relationship leaked hidden target")
   stage = "assigned comments"
   Session["username"] = "assigned-comment"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   CardContent.Save(boardId, one, 0, "comment", "", "Assigned comment", 0, False, 0)
   Try KanbanStore.MoveCard(boardId, one, "Default", "#" & CStr(otherList), 0)
   denied = Error
   If Not denied Then Error.Raise("Comment-assigned moved a card")
   Session["username"] = "assigned-read"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   Try CardContent.Save(boardId, one, 0, "comment", "", "Denied", 0, False, 0)
   denied = Error
   If Not denied Then Error.Raise("Read-assigned commented")
   stage = "worker"
   Session["username"] = "assigned-worker"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   KanbanStore.MoveCard(boardId, two, "Default", "#" & CStr(otherList), 0)
   BoardAccess.SetAssignees(boardId, two, ["assigned-owner", "assigned-worker"])
   assignees = BoardAccess.Assignees(boardId, two)

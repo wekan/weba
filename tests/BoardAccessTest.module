@@ -13,6 +13,7 @@ Public Sub Main()
     WebDatabase.Register(username, "x")
   Next
   Session["username"] = "access-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   boardId = KanbanStore.AddBoard("Shared")
   r = KanbanStore.Lanes(boardId)
   laneId = r!id
@@ -29,6 +30,7 @@ Public Sub Main()
   If r.Count <> 6 Then Error.Raise("Shared member list lost owner/members")
   WorkspaceStore.SetSetting(boardId, "board", boardId, "star", "1")
   Session["username"] = "access-reader"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   r = KanbanStore.Boards()
   If r.Count <> 1 Then Error.Raise("Shared board not listed")
   r = KanbanStore.Cards(boardId)
@@ -75,6 +77,7 @@ Public Sub Main()
   r = KanbanStore.Cards(copied)
   If r.Count <> 1 Then Error.Raise("Copy into own board lost readable content")
   Session["username"] = "access-editor"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   KanbanStore.SaveCard(boardId, cardId, "Edited", "Body", "Default", "Todo", "access-owner", "", "", listId)
   Try WorkspaceStore.Rename(boardId, "board", boardId, "Denied")
   denied = Error
@@ -83,12 +86,14 @@ Public Sub Main()
   denied = Error
   If Not denied Then Error.Raise("Normal member edited another author's comment")
   Session["username"] = "access-comment"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   copied = CardContent.Save(boardId, cardId, 0, "comment", "", "Comment-only reply", 0, False, 0)
   CardContent.DeleteEntry(boardId, cardId, copied)
   Try KanbanStore.SaveCard(boardId, cardId, "Denied", "", "Default", "Todo", "", "", "", listId)
   denied = Error
   If Not denied Then Error.Raise("Comment-only card edit accepted")
   Session["username"] = "access-no-comment"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   KanbanStore.SaveCard(boardId, cardId, "No comments editor", "Body", "Default", "Todo", "access-owner", "", "", listId)
   Try CardContent.Save(boardId, cardId, 0, "comment", "", "Denied", 0, False, 0)
   denied = Error
@@ -97,10 +102,12 @@ Public Sub Main()
   r = CardContent.Entries(boardId, copied, "comment")
   If r.Count <> 1 Then Error.Raise("No-comments copy lost existing comments")
   Session["username"] = "access-admin"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   BoardAccess.SetMember(boardId, "access-reader", "normal")
   BoardAccess.RemoveMember(boardId, "access-admin")
   If BoardAccess.Role(boardId) Then Error.Raise("Removed administrator retained access")
   Session["username"] = "access-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   If WorkspaceStore.Setting(boardId, "board", boardId, "star") <> "1" Then Error.Raise("Member changed owner's star")
   Try BoardAccess.SetMember(boardId, "access-owner", "read-only")
   denied = Error
@@ -114,12 +121,14 @@ Public Sub Main()
   r["role"] = "unknown"
   r.Update()
   Session["username"] = "access-outside"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   r = KanbanStore.Boards()
   If r.Count Then Error.Raise("Private shared board listed to outsider")
   Try WorkspaceStore.Record(boardId, "card", cardId)
   denied = Error
   If Not denied Then Error.Raise("Outsider read private card")
   Session["username"] = "access-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   WorkspaceStore.SetArchived(boardId, "board", boardId, True)
   WorkspaceActions.DeleteArchived(boardId, "board", boardId, "Shared")
   r = WebDatabase.OpenConnection().Find("kb_members", "board_id = &1", boardId)

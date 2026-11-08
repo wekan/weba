@@ -2,6 +2,10 @@
 Export
 Private $db As Connection
 
+Public Sub PrepareStore()
+  OpenStore()
+End
+
 Private Sub OpenStore()
   Dim t As Table
   Dim r As Result
@@ -31,7 +35,31 @@ Private Sub OpenStore()
   Endif
 End
 
-Public Function CheckPassword(username As String, password As String) As Boolean
+Public Function Login(username As String, password As String) As Collection
+  Dim transaction As Boolean
+  Dim failure As String
+  Dim data As Collection
+  OpenStore()
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  ' Credential verification/token issuance serialize with resets and deletion.
+  $db.Exec("UPDATE users SET username = username WHERE username = &1", username)
+  If Not CheckPassword(username, password) Then
+    DatabaseTransactions.Rollback($db)
+    transaction = False
+    Return Null
+  Endif
+  data = Issue(username)
+  DatabaseTransactions.Commit($db)
+  transaction = False
+  Return data
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+Private Function CheckPassword(username As String, password As String) As Boolean
   Dim r As Result
   Dim found As Boolean
   Dim hash As String
@@ -46,7 +74,7 @@ Public Function CheckPassword(username As String, password As String) As Boolean
   Return found And Not mismatch
 End
 
-Public Function Issue(username As String) As Collection
+Private Function Issue(username As String) As Collection
   Dim r As Result
   Dim data As New Collection
   Dim token As String = Env["WEBA_API_NEW_TOKEN"]

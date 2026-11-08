@@ -10,6 +10,7 @@ Public Sub Main()
   Dim connection As Connection
   WebDatabase.Register("drag-owner", "x")
   Session["username"] = "drag-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   KanbanStore.AddBoard("Drag board")
   r = KanbanStore.Boards()
   boardId = r!id
@@ -69,6 +70,7 @@ Public Sub Main()
   KanbanStore.ArchiveBoard(boardId, False)
   WebDatabase.Register("drag-other", "x")
   Session["username"] = "drag-other"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   Try KanbanStore.MoveCard(boardId, two, "Default", "Todo", 0)
   denied = Error
   If Not denied Then Error.Raise("Other owner's card moved")
@@ -79,10 +81,12 @@ Public Sub Main()
   denied = Error
   If Not denied Then Error.Raise("Other owner's lane moved")
   Session["username"] = Null
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   Try KanbanStore.MoveCard(boardId, two, "Default", "Todo", 0)
   denied = Error
   If Not denied Then Error.Raise("Anonymous move accepted")
   Session["username"] = "drag-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   ' A layout with no lists must support adding its first list again.
   connection = WebDatabase.OpenConnection()
   connection.Exec("DELETE FROM kb_lists WHERE board_id = &1 AND lane = &2", boardId, "Toinen äärata")

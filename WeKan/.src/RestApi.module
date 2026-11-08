@@ -34,11 +34,12 @@ Public Sub Main()
       Return
     Endif
     username = payload["username"]
-    If Not ApiTokens.CheckPassword(username, payload["password"]) Then
+    item = ApiTokens.Login(username, payload["password"])
+    If Not item Then
       Reply(401, ErrorData("Invalid credentials"))
       Return
     Endif
-    Reply(200, ApiTokens.Issue(username))
+    Reply(200, item)
     Return
   Endif
   username = ApiTokens.Authenticate()

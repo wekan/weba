@@ -2,6 +2,16 @@
 
 This work adds the following features and fixes:
 
+- Bind native browser sessions to persistent account session versions. Revoke
+  other browsers after password changes, all native sessions after administrator
+  resets, and predecessor sessions after same-name account recreation. Keep the
+  changing browser signed in, reject missing/stale stamps and initialize legacy
+  versions only after verified credentials. Transact password/version/token
+  changes and deletion together, and serialize native verification/REST token
+  issuance with credential mutations. Add real source/archive session lifecycle
+  tests, legacy/negative store cases and forced reset-commit rollback checks.
+  Existing unversioned browser sessions must sign in again. Thanks to xet7.
+
 - Recover database connections after failed transaction commands. Gambas 3.20
   can decrement its nesting counter before a driver rejects COMMIT, leaving
   pending writes that a subsequent Rollback cannot discard. Use shared portable

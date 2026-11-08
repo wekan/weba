@@ -7,17 +7,27 @@ Public Sub Main()
   If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
   If Env["WEBA_TEST_MODE"] = "reset" Then
     Session["username"] = "rest-owner"
+    Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
     WebDatabase.ForceResetPassword("rest-owner", "rest-owner", Env["WEBA_TEST_PASSWORD"] & "-changed")
+    Return
+  Endif
+  If Env["WEBA_TEST_MODE"] = "recreate-other" Then
+    Session["username"] = "rest-owner"
+    Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
+    WebDatabase.DeleteUser("rest-other")
+    WebDatabase.NewUser("rest-other", Env["WEBA_TEST_PASSWORD"], False)
     Return
   Endif
   WebDatabase.Register("rest-owner", Env["WEBA_TEST_PASSWORD"])
   WebDatabase.Register("rest-other", Env["WEBA_TEST_PASSWORD"])
   Session["username"] = "rest-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   boardId = KanbanStore.AddBoard("Private owner board")
   r = KanbanStore.Lanes(boardId)
   r = KanbanStore.Lists(boardId, "Default")
   KanbanStore.SaveCard(boardId, 0, "Private card", "Private body", "Default", "Todo", "rest-owner", "", "", r!id)
   Session["username"] = "rest-other"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   otherId = KanbanStore.AddBoard("Other user's private board")
   data["boardId"] = boardId
   data["otherBoardId"] = otherId

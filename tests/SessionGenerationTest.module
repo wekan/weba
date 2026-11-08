@@ -1,0 +1,44 @@
+' Disposable database: missing/stale stamps and legacy account initialization.
+Public Sub Main()
+  Dim db As Connection
+  Dim generation As Long
+  Dim renewed As Long
+  Dim denied As Boolean
+  WebDatabase.Register("session-admin", "admin password")
+  Session["username"] = "session-admin"
+  If WebIdentity.Username Then Error.Raise("Unversioned session was trusted")
+  Session["auth_generation"] = -1
+  If WebIdentity.Username Then Error.Raise("Invalid generation was trusted")
+  Try WebDatabase.GetUsers()
+  denied = Error
+  If Not denied Then Error.Raise("Unversioned session retained administrator rights")
+  Session["auth_generation"] = WebDatabase.LoginGeneration("session-admin", "admin password")
+  If WebIdentity.Username <> "session-admin" Then Error.Raise("Versioned login failed")
+  WebDatabase.NewUser("session-worker", "worker password", False)
+  generation = WebDatabase.SessionGeneration("session-worker")
+  If generation <= 0 Then Error.Raise("New account has no session generation")
+  If WebDatabase.LoginGeneration("session-worker", "wrong") Then Error.Raise("Wrong credentials yielded a session generation")
+  If WebDatabase.SessionGeneration("session-worker") <> generation Then Error.Raise("Failed login changed the session version")
+  WebDatabase.DeleteUser("session-worker")
+  If WebDatabase.SessionGeneration("session-worker") Then Error.Raise("Deleted user retained a session version")
+  WebDatabase.NewUser("session-worker", "worker password", False)
+  renewed = WebDatabase.SessionGeneration("session-worker")
+  If renewed <= generation Then Error.Raise("Recreated account reused its predecessor's generation")
+  Session["username"] = "session-worker"
+  Session["auth_generation"] = generation
+  If WebIdentity.Username Then Error.Raise("Recreated account inherited the old session")
+  Session["auth_generation"] = renewed
+  If WebIdentity.Username <> "session-worker" Then Error.Raise("New account session was rejected")
+  db = WebDatabase.OpenConnection()
+  ' Accounts created before the version table was introduced have no row.
+  db.Delete("account_sessions", "username = &1", "session-worker")
+  If WebIdentity.Username Then Error.Raise("Missing legacy version was accepted as a wildcard")
+  If WebDatabase.LoginGeneration("session-worker", "wrong") Then Error.Raise("Wrong legacy password initialized a session")
+  If WebDatabase.SessionGeneration("session-worker") Then Error.Raise("Failed legacy login allocated a session version")
+  generation = WebDatabase.LoginGeneration("session-worker", "worker password")
+  If generation <= renewed Then Error.Raise("Legacy account did not receive a fresh generation")
+  If WebIdentity.Username Then Error.Raise("Lazy legacy initialization revived an older session")
+  Session["auth_generation"] = generation
+  If WebIdentity.Username <> "session-worker" Then Error.Raise("Legacy account cannot sign in")
+  Print "Native session generations: missing/stale versions, rejected credentials, recreated accounts and legacy initialization passed"
+End

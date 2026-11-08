@@ -1,4 +1,9 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Native session lifecycle: Persist nonreused account versions, revoke stale
+  browsers after password changes/resets/recreation, keep the changing browser
+  signed in and require old unversioned sessions to sign in again. Transact
+  credentials/versions/token revocation and serialize login with mutations;
+  verify source/archive sessions, legacy negatives and reset-commit rollback.
 - Database transactions: Recover shared connections after failed driver
   Begin/Commit/Rollback commands; discard pending writes despite Gambas nesting
   counter drift. Force real SQLite commit failures for accounts/cards, verify

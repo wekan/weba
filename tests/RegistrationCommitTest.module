@@ -14,6 +14,7 @@ Public Sub Main()
   If Error Then Error.Raise("Registration connection remained unusable after a failed commit")
   If Not WebDatabase.Login("commit-retry", "commit test password") Then Error.Raise("Recovered registration could not authenticate")
   Session["username"] = "commit-retry"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   boardId = KanbanStore.AddBoard("Commit probe board")
   cardId = KanbanStore.SaveCard(boardId, 0, "Before commit failure", "Unchanged body", "Default", "Todo", "", "", "")
   WorkspaceStore.OpenStore()
@@ -30,7 +31,25 @@ Public Sub Main()
   WorkspaceStore.Rename(boardId, "card", cardId, "Recovered card")
   r = WorkspaceStore.Record(boardId, "card", cardId)
   If r!title <> "Recovered card" Or r!description <> "Unchanged body" Then Error.Raise("Recovered card mutation lost content")
-  Print "Failed registration/card commits discarded pending writes and recovered on the shared connection"
+  WebDatabase.NewUser("credential-target", "old target password", False)
+  ApiTokens.PrepareStore()
+  r = db.Create("api_tokens")
+  r["digest"] = String$(64, "a")
+  r["username"] = "credential-target"
+  r["created_at"] = Now
+  r["expires_at"] = DateAdd(Now, gb.Day, 1)
+  r.Update()
+  r = Null
+  File.Save(Application.Path &/ "credential-ready", "ready")
+  WaitFor("credential-reader-held")
+  Try WebDatabase.ForceResetPassword("commit-retry", "credential-target", "new target password")
+  If Not Error Then Error.Raise("Reader lock did not reject the credential commit")
+  If Not WebDatabase.Login("credential-target", "old target password") Then Error.Raise("Failed reset changed the password")
+  File.Save(Application.Path &/ "credential-commit-failed", "ready")
+  WaitFor("credential-reader-released")
+  If Not WebDatabase.ForceResetPassword("commit-retry", "credential-target", "new target password") Then Error.Raise("Credential reset did not recover")
+  If Not WebDatabase.Login("credential-target", "new target password") Then Error.Raise("Recovered reset password failed")
+  Print "Failed account/card/credential commits discarded pending writes and recovered on the shared connection"
 End
 
 Private Sub WaitFor(name As String)

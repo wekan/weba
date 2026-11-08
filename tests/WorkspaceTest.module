@@ -10,6 +10,7 @@ Public Sub Main()
   Dim decoded As Variant
   WebDatabase.Register("workspace-owner", "x")
   Session["username"] = "workspace-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   boardId = KanbanStore.AddBoard("Workspace")
   r = KanbanStore.Lanes(boardId)
   laneId = r!id
@@ -52,6 +53,7 @@ Public Sub Main()
   If Not denied Then Error.Raise("Invalid color accepted")
   WebDatabase.Register("workspace-other", "x")
   Session["username"] = "workspace-other"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   Try WorkspaceStore.Rename(boardId, "board", boardId, "Forbidden")
   denied = Error
   If Not denied Then Error.Raise("Other owner renamed a board")
