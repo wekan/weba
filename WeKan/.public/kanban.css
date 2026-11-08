@@ -161,3 +161,6 @@
 
 .weba-members-panel{position:fixed!important;z-index:100;background:#fff!important;padding:16px!important;box-shadow:0 8px 30px #0003;border-radius:4px;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);overflow:auto}
 .weba-members-panel .weba-popup-close{position:sticky;top:0;align-self:flex-end;z-index:2}
+
+/* Leave room for the action dialog top offset on short/mobile viewports. */
+.weba-action-panel{max-height:calc(100dvh - 80px)}

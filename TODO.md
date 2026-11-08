@@ -6,6 +6,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Current UI/API/security work
 
+- Verified existing WeKan color presets and custom color picker alongside hex
+  entry. Fixed mobile action dialog height after reproducing viewport overflow.
+  Packaged browser color tests pass, including saved colors and all four contexts.
+
 - Completed current native dependency/subtask labels: reproduce stale cached
   names after target rename, then derive pane rows and selected field values from
   the current authorized target. Generated relationship titles are read-only;

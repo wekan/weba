@@ -2,6 +2,10 @@
 
 This work adds the following features and fixes:
 
+- Keep the color action dialog within mobile viewport height. Verify existing
+  WeKan preset palettes, custom picker/hex synchronization and persistence with
+  the packaged-app browser test. Thanks to xet7.
+
 - Document current relationship display titles, generated read-only fields and
   editable new-subtask creation, read-side stability and guarded row/selection
   paths. Record native/two-user rename/scope evidence and remaining full source
