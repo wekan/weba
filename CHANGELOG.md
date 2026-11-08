@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Document native assignee roster checks, unchanged historical values and
+  authorized copy/import restoration, with store/browser evidence and remaining
+  picker UI gaps. Correct the leading TODO coverage summary to seven original
+  callbacks, leaving the other 23 explicitly unexecuted. Thanks to xet7.
+
 - Reject new native card assignees outside the active board roster inside the
   card-save transaction, rechecking after user/board/card locks. Preserve an
   unchanged retired assignee, allow clearing and retain historical assignments

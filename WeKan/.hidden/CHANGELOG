@@ -1,4 +1,7 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Describe native assignee validation and historical restore
+  behavior, verification and picker gaps; correct leading original coverage
+  counts to seven executed callbacks and 23 unexecuted callbacks.
 - Native assignees: Check active board membership for new assignments under
   transaction locks. Preserve unchanged stale values, clearing and historical
   copy/import through guarded restore paths. Verify store atomic denial,

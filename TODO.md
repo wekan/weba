@@ -7,10 +7,11 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 ## Current UI/API/security work
 
 - Full scope remains all items below and the current WeKan UI/API/security test
-  contracts. Complete original suites have not passed against weba. Six spec 17
+  contracts. Complete original suites have not passed against weba. Seven spec 17
   callbacks (three board membership, one card membership, one people-array clear,
-  one user deletion) run unchanged with actual Playwright assertions and explicit
-  SQLite fixture adapters; the other 24 callbacks remain unexecuted. Preserve
+  one due-date clear, one user deletion) run unchanged with actual Playwright
+  assertions and explicit SQLite fixture adapters; the other 23 callbacks remain
+  unexecuted. Preserve
   original assertions as execution adapters expand.
 - Completed: remove login initializer request/query/user-agent logging and the
   unused shared temporary logfile sink. Guard sources against reintroducing
@@ -169,6 +170,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   import; full local tests and final extended store checks pass. Packaged
   Chromium verifies forged edits are rejected and the persisted assignee survives.
   A native active-roster picker and complete multiple-assignee editing remain open.
+- Documented native assignee roster validation, transaction checks, unchanged
+  stale values, copy/import restoration, test evidence and remaining picker UI.
 - Next card-person work: remaining card PUT fields, reads, creation/bulk routes
   and complete original UI/API/security suites.
 - In progress: REST cards/containers and full API identity/data parity, including

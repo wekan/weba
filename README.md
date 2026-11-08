@@ -326,6 +326,17 @@ freeform V8 date parsing, complete native date/time/time-zone controls and
 expanded-year day editing remain pending; the current day field is a UTC
 projection, not a complete WeKan date editor.
 
+Native card creation or changing the scalar Assignee field requires an active
+member of that board. The server rechecks this inside the save transaction after
+locking the target user, board and card. Unknown users, unrelated accounts and
+removed members are rejected without creating a card/lane or changing history.
+An unchanged historical assignee can remain when editing other fields, and the
+field can be cleared. Authorized copy/import paths restore historical values,
+including legacy exports with only the scalar assignee. Active-roster picker UI
+and complete multiple-assignee editing remain pending. Store tests cover denial,
+reactivation and stale copy/import; packaged Chromium checks a forged native edit
+and confirms the saved assignment remains unchanged.
+
 To edit card members in the native UI, open a saved card and choose Members
 (before Assignee), or use Members in the card menu. The Gambas tree shows
 current members in stored order; the picker offers only active board members
