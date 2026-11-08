@@ -228,7 +228,7 @@ The first implemented REST contracts use JSON request/response bodies:
 | `POST /api/boards/:id/members/:userId/remove` | Remove with `action: "remove"`; the final administrator remains active |
 | `POST` / `DELETE /api/boards/:id/lists/:listId/cards/:cardId/members/:userId` | Add/remove one card member, preserving other members and the separate assignees |
 | `POST` / `DELETE /api/boards/:id/lists/:listId/cards/:cardId/assignees/:userId` | Add/remove one assignee, preserving other assignees and the separate members |
-| `PUT /api/boards/:id/lists/:listId/cards/:cardId` | Replace provided people fields and four UTC dates; other card fields are pending |
+| `PUT /api/boards/:id/lists/:listId/cards/:cardId` | Replace provided people, description and four UTC date fields; other card fields are pending |
 
 User deletion requires a site administrator; a board administrator alone is
 refused. It removes account/session/token and current/historical privilege
@@ -285,7 +285,7 @@ card returns 404. A site-admin mutation does not enable general private-board
 reads afterward. Changes, order and audit history commit together; failures
 return a sanitized 500 and roll back.
 
-Card PUT implements `members`, `assignees` and the four date fields below, returning
+Card PUT implements `members`, `assignees`, `description` and the four date fields below, returning
 `{_id}` after commit. Omitted fields remain unchanged. A string becomes one ID;
 arrays keep nonempty string IDs; explicit `null`, an empty string, non-array
 objects, numbers and booleans clear to `[]`. Unknown/inactive board members are
@@ -302,6 +302,13 @@ Unsupported card fields currently return an explicit 400, including when mixed
 with supported fields, so an unimplemented update cannot appear successful.
 Other card PUT fields, creation/bulk endpoints and full API data parity remain
 pending.
+
+`description` accepts any string, including empty text; JSON null clears it.
+Other types return 400 before any people/date changes. An omitted description
+stays unchanged. Text retains whitespace, Unicode and literal HTML. Valid
+JSON-escaped UTF-16 pairs are forwarded as UTF-8 before Gambas 3.20 decoding,
+which otherwise loses supplementary characters such as emoji. The native editor
+reopens the API description as text. Lone-surrogate behavior remains unverified.
 
 Date fields `receivedAt`, `startAt`, `dueAt` and `endAt` store integer UTC
 milliseconds independently of the legacy day editor. Supported inputs include
@@ -375,7 +382,7 @@ not survive. The same independent snapshots also force native editor add/remove
 COMMIT failures and successful same-process retries. Two more phases force a
 combined PUT replacement and clear to fail COMMIT, then verify exact sequences,
 normalized relations and successful same-connection retries. Two additional
-combined people/date replacement and clear phases bring card-update COMMIT
+combined people/date/description replacement and clear phases bring card-update COMMIT
 coverage to ten phases. A separate HTTP
 failure in the second field verifies that the first field and audit history also
 roll back. Native store tests cover ordering, copy/move/JSON, invalid-import
@@ -401,8 +408,10 @@ Without a reference checkout, the original-callback check reports an explicit
 skip; weba's independent contract/rollback checks still run.
 
 Date conformance executes 44 supported UTC/offset/epoch cases against the actual
-reference date helpers. Packaged Chromium tests (`WITH_API=true` and
-`WEBA_MEMBERS_ONLY=1`) verify actual PUT, native unchanged/change/clear and
+reference date helpers. Description HTTP tests cover both escaped JSON and
+direct UTF-8, null/empty clears, invalid types, omitted fields, role/list/archive
+boundaries and combined rollback/retry. Packaged Chromium tests (`WITH_API=true` and
+`WEBA_MEMBERS_ONLY=1`) verify actual PUT, native Unicode description reopening, unchanged/change/clear and
 exported millisecond precision without clearing the other dates.
 
 ## Native component layout

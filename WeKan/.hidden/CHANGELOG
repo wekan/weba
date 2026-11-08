@@ -1,4 +1,6 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Describe description PUT, strict types/clears/omitted values,
+  atomic writes, emoji forwarding, native reopening and verification limits.
 - Card description PUT: Support strings and empty/null clears, reject invalid
   types atomically and preserve omitted data. Keep Unicode/whitespace/HTML;
   fix escaped emoji loss in Gambas 3.20 transport. Verify permissions, archived

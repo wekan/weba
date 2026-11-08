@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Document description PUT values, strict errors, atomic updates, native text
+  reopening and the escaped emoji transport fix. Record direct/escaped Unicode
+  HTTP and combined COMMIT verification while keeping remaining API/scalar and
+  lone-surrogate gaps explicit. Thanks to xet7.
+
 - Add card PUT description strings, empty/null clears, omitted preservation
   and strict type errors inside atomic people/date updates. Preserve Unicode,
   whitespace and literal HTML; forward valid escaped supplementary characters

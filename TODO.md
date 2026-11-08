@@ -158,6 +158,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   Packaged Chromium confirms API Unicode descriptions reopen in the native editor.
   Full local tests pass (28 Python tests); original callback coverage stays 7/30.
   Lone-surrogate behavior and remaining scalar fields still need source parity.
+- Documented description PUT values/errors, atomic writes, escaped/direct
+  Unicode transport, native reopening and remaining scalar/lone-surrogate gaps.
 - Next card-person work: remaining card PUT fields, reads, creation/bulk routes
   and complete original UI/API/security suites.
 - In progress: REST cards/containers and full API identity/data parity, including
