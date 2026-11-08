@@ -6,6 +6,16 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Current UI/API/security work
 
+- Completed live native card member/assignee and board roster panes. Preserve
+  valid row/candidate selections and invitation drafts, clear vanished choices
+  without retargeting, update clean selected roles and reapply capabilities.
+  Home-page rosters refresh too. Scope loss closes and clears card people fields;
+  native mutations still guard forged events. New snapshot tests and two-user
+  source/packaged browser tests pass, including duplicate display, readonly
+  forgery/no-write, assignment loss, member removal and administrator demotion.
+  Full local tests (28 Python tests, 20 card-update COMMIT phases) and existing
+  member/details browser regressions pass. Full original suites remain pending.
+
 - Verified existing WeKan color presets and custom color picker alongside hex
   entry. Fixed mobile action dialog height after reproducing viewport overflow.
   Packaged browser color tests pass, including saved colors and all four contexts.
@@ -68,13 +78,13 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   original spec 17 remains 10/30 independently. Verify native stable/read-only
   state, empty lanes/metadata, draft/DOM behavior, direct revocation and packaged
   details/membership/account-deletion regressions. Full local tests pass, including
-  28 Python tests. The timer checks DB state only for an open board; it still
-  emits native heartbeat requests on other signed-in views.
+  28 Python tests. The timer still emits native heartbeat requests on other
+  signed-in views; visible detail/people panes now also refresh there.
 - Documented the native heartbeat/private state, capture-before-render rule,
   draft/DOM preservation and revoked-panel cleanup; add the test-live command,
   actual original callback/browser evidence and polling/deep-pane limits.
-- In progress: live people/roster panels and full
-  source inline-edit/unsaved-draft UX, all-boards navigation and efficient idle/background
+- In progress: full source inline-edit/unsaved-draft UX, all-boards navigation
+  and efficient idle/background
   polling and complete original UI/API/security suites. Custom roles/list
   exceptions and full source hierarchy remain open.
 - Completed native combined administrator/assigned-only card scope: reproduce

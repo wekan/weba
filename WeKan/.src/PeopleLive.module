@@ -1,0 +1,49 @@
+' Private identity/role snapshots for authorized native people panes.
+Export
+
+Public Function Roster(boardId As Integer) As Collection
+  Dim data As New Collection
+  Dim rows As New Variant[]
+  Dim names As New String[]
+  Dim roles As New Collection
+  Dim row As Collection
+  Dim r As Result
+  Dim username As String
+  BoardAccess.RequireRead(boardId)
+  r = WorkspaceStore.Record(boardId, "board", boardId)
+  data.Add(CStr(r!title), "title")
+  data.Add(CStr(r!owner), "owner")
+  data["manager"] = BoardAccess.Can(boardId, "manageBoard")
+  r = BoardAccess.Members(boardId)
+  For Each r
+    username = r!username
+    If Not roles.Exist(username) Then names.Add(username)
+    If roles.Exist(username) Then roles.Remove(username)
+    roles.Add(CStr(r!role), username)
+  Next
+  names.Sort()
+  For Each username In names
+    row = New Collection
+    row.Add(username, "username")
+    row.Add(roles[username], "role")
+    rows.Add(row)
+  Next
+  data["rows"] = rows
+  Return data
+End
+
+Public Function Card(boardId As Integer, cardId As Integer, assignees As Boolean) As Collection
+  Dim data As New Collection
+  Dim r As Result
+  BoardAccess.RequireCard(boardId, cardId)
+  r = WorkspaceStore.Record(boardId, "card", cardId)
+  data.Add(CStr(r!title), "title")
+  data["write"] = BoardAccess.Can(boardId, "write")
+  If assignees Then
+    data["names"] = BoardAccess.Assignees(boardId, cardId)
+  Else
+    data["names"] = BoardAccess.CardMembers(boardId, cardId)
+  Endif
+  data["roster"] = Roster(boardId)
+  Return data
+End

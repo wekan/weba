@@ -1,0 +1,86 @@
+' Read-only native people snapshots expose only authorized identities and roles.
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim foreignBoard As Integer
+  Dim foreignCard As Integer
+  Dim data As Collection
+  Dim row As Collection
+  Dim r As Result
+  Dim db As Connection
+  Dim historyCount As Integer
+  Dim stable As String
+  Dim denied As Boolean
+  WebDatabase.Register("live-owner", "x")
+  WebDatabase.Register("live-member", "x")
+  WebDatabase.Register("live-extra", "x")
+  WebDatabase.Register("live-outsider", "x")
+  SignIn("live-outsider")
+  foreignBoard = KanbanStore.AddBoard("Foreign roster")
+  foreignCard = KanbanStore.SaveCard(foreignBoard, 0, "Private foreign title", "", "Default", "Todo", "", "", "")
+  SignIn("live-owner")
+  boardId = KanbanStore.AddBoard("Live roster")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Live people card", "", "Default", "Todo", "", "", "")
+  BoardAccess.SetMember(boardId, "live-member", "normal")
+  BoardAccess.SetMember(boardId, "live-extra", "normal")
+  BoardAccess.RestoreCardMembers(boardId, cardId, ["live-member", "live-member"])
+  BoardAccess.SetAssignees(boardId, cardId, ["live-extra", "live-extra"])
+  db = WebDatabase.OpenConnection()
+  r = db.Find("kb_history")
+  historyCount = r.Count
+  data = PeopleLive.Roster(boardId)
+  If Not data["manager"] Or data["title"] <> "Live roster" Then Error.Raise("Roster capability or title missing")
+  If data["rows"].Count <> 3 Then Error.Raise("Roster lost active users")
+  If data["rows"][0]["username"] <> "live-extra" Or data["rows"][2]["username"] <> "live-owner" Then Error.Raise("Roster order is not deterministic")
+  For Each row In data["rows"]
+    If row.Count <> 2 Or Not row.Exist("username") Or Not row.Exist("role") Then Error.Raise("Roster exposed non-public user fields")
+  Next
+  data = PeopleLive.Card(boardId, cardId, False)
+  If data["names"].Count <> 2 Or data["names"][0] <> "live-member" Then Error.Raise("Snapshot changed raw member order/duplicates")
+  If Not data["write"] Or data["title"] <> "Live people card" Then Error.Raise("Card capabilities missing")
+  stable = JSON.Encode(data)
+  If JSON.Encode(PeopleLive.Card(boardId, cardId, False)) <> stable Then Error.Raise("Unchanged snapshot is unstable")
+  data = PeopleLive.Card(boardId, cardId, True)
+  If data["names"].Count <> 2 Or data["names"][0] <> "live-extra" Then Error.Raise("Assignee snapshot mixed card members")
+  r = db.Find("kb_history")
+  If r.Count <> historyCount Then Error.Raise("People snapshot wrote activity")
+  Try PeopleLive.Roster(foreignBoard)
+  denied = Error
+  If Not denied Then Error.Raise("Native site admin read a non-member roster")
+  Try PeopleLive.Card(foreignBoard, foreignCard, False)
+  denied = Error
+  If Not denied Then Error.Raise("Native site admin read a non-member card")
+  BoardAccess.SetMember(boardId, "live-member", "read-only")
+  SignIn("live-member")
+  data = PeopleLive.Card(boardId, cardId, False)
+  If data["write"] Or data["roster"]["manager"] Then Error.Raise("Read-only snapshot retained write controls")
+  SignIn("live-owner")
+  BoardAccess.SetMember(boardId, "live-member", "normal-assigned-only")
+  SignIn("live-member")
+  Try PeopleLive.Card(boardId, cardId, False)
+  denied = Error
+  If Not denied Then Error.Raise("Card membership bypassed assignment visibility")
+  SignIn("live-owner")
+  BoardAccess.SetAssignees(boardId, cardId, ["live-member"])
+  SignIn("live-member")
+  data = PeopleLive.Card(boardId, cardId, True)
+  If Not data["write"] Or data["names"][0] <> "live-member" Then Error.Raise("Assigned writer lost visible people snapshot")
+  SignIn("live-owner")
+  BoardAccess.RemoveMember(boardId, "live-extra")
+  data = PeopleLive.Roster(boardId)
+  If data["rows"].Count <> 2 Then Error.Raise("Inactive member remained an available candidate")
+  BoardAccess.RemoveMember(boardId, "live-member")
+  SignIn("live-member")
+  Try PeopleLive.Roster(boardId)
+  denied = Error
+  If Not denied Then Error.Raise("Revoked user read roster")
+  Try PeopleLive.Card(boardId, cardId, True)
+  denied = Error
+  If Not denied Then Error.Raise("Revoked user read card people")
+  Print "Live people: deterministic private snapshots, separate ordered people fields, no read-side activity, active candidates and native role/assignment/revocation guards passed"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

@@ -2,6 +2,14 @@
 
 This work adds the following features and fixes:
 
+- Synchronize native card member/assignee and board roster panes, including home
+  rosters. Preserve valid choices and invitation drafts, clear vanished targets,
+  refresh roles/capabilities and clear revoked card people fields. Add private
+  deterministic read snapshots, native scope tests and two-user source/packaged
+  browser checks for external edits, duplicate display, forged readonly denial,
+  assignment loss, removal and demotion. Full local/member/detail checks pass;
+  full original UI/API/security suites remain pending. Thanks to xet7.
+
 - Keep the color action dialog within mobile viewport height. Verify existing
   WeKan preset palettes, custom picker/hex synchronization and persistence with
   the packaged-app browser test. Thanks to xet7.

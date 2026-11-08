@@ -31,6 +31,12 @@ Private $draft As Collection
 Private $detailState As String
 Private $entryBaseline As Collection
 Private $detailFormBase As Collection
+Private $peopleState As String
+Private $membersState As String
+Private $loadingPeople As Boolean
+Private $loadingMembers As Boolean
+Private $memberFormUser As String
+Private $memberFormRole As Integer = 1
 
 Public Sub _HandleMessage()
   If Not WebIdentity.Username Then
@@ -105,15 +111,19 @@ End
 
 Public Sub BoardPoll_Timer()
   Dim state As String
-  If Not $board Then Return
-  If $view = "Profile" Or $view = "Admin panel" Then Return
-  If Not BoardAccess.Role($board) Then
-    RefreshTree()
-    Return
+  If $board > 0 Then
+    If $view <> "Profile" And $view <> "Admin panel" Then
+      If Not BoardAccess.Role($board) Then
+        RefreshTree()
+        Return
+      Endif
+      state = BoardLive.State($board, $archive)
+      If state <> $liveState Then RefreshTree()
+    Endif
   Endif
-  state = BoardLive.State($board, $archive)
-  If state <> $liveState Then RefreshTree()
   RefreshLiveDetails()
+  RefreshLiveCardPeople()
+  RefreshLiveMembers()
 Catch
   Notice.Text = "Board refresh failed"
 End
@@ -142,9 +152,7 @@ Private Sub ValidateOpenCards()
   Endif
   If $peopleCard > 0 Then
     If Not BoardLive.Visible($peopleBoard, $peopleCard, $archive) Then
-      $peopleCard = 0
-      CardPeoplePanel.Hide()
-      CardPeopleTree.Clear()
+      CloseStaleCardPeople()
     Endif
   Endif
   If $contextKind = "card" Then
@@ -1230,6 +1238,8 @@ Private Sub RefreshLiveDetails()
   Endif
   data = DetailLive.Read($detailsBoard, $detailsCard, DetailCode())
   If JSON.Encode(data) <> $detailState Then LoadDetails(True, data)
+Catch
+  Notice.Text = "Card details refresh failed"
 End
 
 Private Function CurrentDetailParent() As Integer
@@ -1701,38 +1711,85 @@ Private Sub OpenCardPeople(boardId As Integer, cardId As Integer, Optional assig
   CardPeoplePanel.Show()
 End
 
-Private Sub RefreshCardPeople()
-  Dim r As Result = WorkspaceStore.Record($peopleBoard, "card", $peopleCard)
+Private Sub CloseStaleCardPeople()
+  CardPeoplePanel.Hide()
+  CardPeopleTree.Clear()
+  CardPersonChoice.List = New String[]
+  CardPeopleName.Text = ""
+  $peopleCard = 0
+  $peopleState = ""
+End
+
+Private Sub RefreshLiveCardPeople()
+  Dim data As Collection
+  If $peopleCard <= 0 Then Return
+  If Not CardPeoplePanel.Visible Then Return
+  If Not BoardLive.Visible($peopleBoard, $peopleCard, $archive) Then
+    CloseStaleCardPeople()
+    ValidateOpenCards()
+    Return
+  Endif
+  data = PeopleLive.Card($peopleBoard, $peopleCard, $peopleAssignees)
+  If JSON.Encode(data) <> $peopleState Then RefreshCardPeople(True, data)
+Catch
+  Notice.Text = "Card people refresh failed"
+End
+
+Private Sub RefreshCardPeople(Optional preserve As Boolean, Optional data As Collection)
   Dim names As String[]
   Dim choices As New String[]
   Dim displayed As New Collection
+  Dim row As Collection
   Dim username As String
-  Dim writable As Boolean = BoardAccess.Can($peopleBoard, "write")
-  If $peopleAssignees Then
-    names = BoardAccess.Assignees($peopleBoard, $peopleCard)
-  Else
-    names = BoardAccess.CardMembers($peopleBoard, $peopleCard)
-  Endif
-  CardPeopleName.Text = r!title
+  Dim selected As String = CardPeopleTree.Key
+  Dim choice As String = CardPersonChoice.Text
+  Dim writable As Boolean
+  Dim state As String
+  If Not data Then data = PeopleLive.Card($peopleBoard, $peopleCard, $peopleAssignees)
+  state = JSON.Encode(data)
+  writable = data["write"]
+  names = data["names"]
+  $loadingPeople = True
+  CardPeopleName.Text = data["title"]
   CardPeopleTree.Clear()
   For Each username In names
     If Not displayed.Exist(username) Then CardPeopleTree.Add(username, username)
     displayed[username] = True
   Next
-  r = BoardAccess.Members($peopleBoard)
-  For Each r
-    If names.Find(r!username) < 0 Then choices.Add(r!username)
+  For Each row In data["roster"]["rows"]
+    username = row["username"]
+    If names.Find(username) < 0 Then choices.Add(username)
   Next
   CardPersonChoice.List = choices
-  If choices.Count Then CardPersonChoice.Index = 0
+  If preserve Then
+    CardPersonChoice.Index = choices.Find(choice)
+    If CardPeopleTree.Exist(selected) Then CardPeopleTree.Key = selected
+  Else If choices.Count Then
+    CardPersonChoice.Index = 0
+  Endif
   CardPersonChoice.Enabled = writable And choices.Count > 0
   AddCardPerson.Visible = writable
-  AddCardPerson.Enabled = writable And choices.Count > 0
+  AddCardPerson.Enabled = writable And CardPersonChoice.Index >= 0
   RemoveCardPerson.Visible = writable
-  RemoveCardPerson.Enabled = False
+  RemoveCardPerson.Enabled = writable And Len(CardPeopleTree.Key) > 0
+  $loadingPeople = False
+  $peopleState = state
+Catch
+  $loadingPeople = False
+  Error.Propagate()
+End
+
+Public Sub CardPersonChoice_Click()
+  If $loadingPeople Then Return
+  BoardAccess.RequireCard($peopleBoard, $peopleCard)
+  AddCardPerson.Enabled = BoardAccess.Can($peopleBoard, "write") And CardPersonChoice.Index >= 0
+Catch
+  Notice.Text = Error.Text
 End
 
 Public Sub CardPeopleTree_Select()
+  If $loadingPeople Then Return
+  BoardAccess.RequireCard($peopleBoard, $peopleCard)
   RemoveCardPerson.Enabled = BoardAccess.Can($peopleBoard, "write") And Len(CardPeopleTree.Key) > 0
 Catch
   Notice.Text = Error.Text
@@ -1766,9 +1823,8 @@ Private Sub RefreshChangedCardPeople()
   Dim r As Result
   Try BoardAccess.RequireCard($peopleBoard, $peopleCard)
   If Error Then
-    CardPeoplePanel.Hide()
-    Editor.Hide()
-    $card = 0
+    CloseStaleCardPeople()
+    ValidateOpenCards()
   Else
     RefreshCardPeople()
     If $peopleAssignees And $board = $peopleBoard And $card = $peopleCard Then
@@ -1784,21 +1840,82 @@ Public Sub CloseCardPeople_Click()
   CardPeoplePanel.Hide()
 End
 
-Private Sub RefreshMembers()
-  Dim r As Result
-  Dim keys As String[] = MemberRoles()
-  Dim index As Integer
-  r = WorkspaceStore.Record($membersBoard, "board", $membersBoard)
-  MemberBoardName.Text = r!title
-  $memberOwner = r!owner
+Private Sub CloseStaleMembers()
+  MembersPanel.Hide()
   MembersTree.Clear()
-  r = BoardAccess.Members($membersBoard)
-  For Each r
-    index = keys.Find(r!role)
+  MemberUsername.Text = ""
+  $memberFormUser = ""
+  $membersState = ""
+End
+
+Private Sub RefreshLiveMembers()
+  Dim data As Collection
+  If $membersBoard <= 0 Then Return
+  If Not MembersPanel.Visible Then Return
+  If Not BoardAccess.Role($membersBoard) Then
+    CloseStaleMembers()
+    If $board = 0 Then RefreshTree()
+    Return
+  Endif
+  data = PeopleLive.Roster($membersBoard)
+  If JSON.Encode(data) <> $membersState Then RefreshMembers(True, data)
+Catch
+  Notice.Text = "Board members refresh failed"
+End
+
+Private Sub RefreshMembers(Optional preserve As Boolean, Optional data As Collection)
+  Dim row As Collection
+  Dim keys As String[] = MemberRoles()
+  Dim selected As String = MembersTree.Key
+  Dim target As String = MemberUsername.Text
+  Dim roleIndex As Integer = MemberRole.Index
+  Dim currentRole As Integer = -1
+  Dim index As Integer
+  Dim pristine As Boolean = target = $memberFormUser And roleIndex = $memberFormRole
+  Dim state As String
+  If Not data Then data = PeopleLive.Roster($membersBoard)
+  state = JSON.Encode(data)
+  $loadingMembers = True
+  MemberBoardName.Text = data["title"]
+  $memberOwner = data["owner"]
+  MembersTree.Clear()
+  For Each row In data["rows"]
+    index = keys.Find(row["role"])
     If index < 0 Then Continue
-    MembersTree.Add(r!username, r!username & " · " & MemberRole.List[index])
+    MembersTree.Add(row["username"], row["username"] & " · " & MemberRole.List[index])
+    If row["username"] = target Then currentRole = index
   Next
+  If preserve Then
+    If MembersTree.Exist(selected) Then MembersTree.Key = selected
+    If Len($memberFormUser) > 0 Then
+      If target = $memberFormUser And currentRole < 0 Then
+        MemberUsername.Text = ""
+        MemberRole.Index = 1
+        $memberFormUser = ""
+        $memberFormRole = 1
+      Else If pristine And currentRole >= 0 Then
+        MemberRole.Index = currentRole
+        $memberFormRole = currentRole
+      Endif
+    Endif
+  Else
+    If currentRole >= 0 Then
+      MemberRole.Index = currentRole
+      $memberFormUser = target
+      $memberFormRole = currentRole
+    Else
+      MemberUsername.Text = ""
+      MemberRole.Index = 1
+      $memberFormUser = ""
+      $memberFormRole = 1
+    Endif
+  Endif
   UpdateMemberEditor()
+  $loadingMembers = False
+  $membersState = state
+Catch
+  $loadingMembers = False
+  Error.Propagate()
 End
 
 Private Sub UpdateMemberEditor()
@@ -1812,7 +1929,7 @@ End
 
 Private Sub UpdateMemberButtons()
   Dim manager As Boolean = BoardAccess.Can($membersBoard, "manageBoard")
-  SaveMember.Enabled = manager And MemberUsername.Text <> $memberOwner
+  SaveMember.Enabled = manager And MemberUsername.Text <> $memberOwner And Len(MemberUsername.Text) > 0
   RemoveMember.Enabled = manager And MemberUsername.Text <> $memberOwner And Len(MemberUsername.Text) > 0
 End
 
@@ -1822,12 +1939,15 @@ End
 
 Public Sub MembersTree_Select()
   Dim r As Result
+  If $loadingMembers Then Return
   If Not MembersTree.Key Then Return
   MemberUsername.Text = MembersTree.Key
   r = BoardAccess.Members($membersBoard)
   For Each r
     If r!username = MembersTree.Key Then MemberRole.Index = MemberRoles().Find(r!role)
   Next
+  $memberFormUser = MemberUsername.Text
+  $memberFormRole = MemberRole.Index
   UpdateMemberEditor()
 Catch
   Notice.Text = Error.Text
@@ -1846,10 +1966,7 @@ End
 Public Sub RemoveMember_Click()
   BoardAccess.RemoveMember($membersBoard, MemberUsername.Text)
   If Not BoardAccess.Role($membersBoard) Then
-    MembersPanel.Hide()
-    $board = 0
-    $card = 0
-    $view = "Boards"
+    CloseStaleMembers()
   Else
     RefreshMembers()
   Endif

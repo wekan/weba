@@ -1,4 +1,8 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Live people: Refresh native card members, assignees and home board rosters;
+  retain valid selections/drafts, clear missing targets and apply current roles.
+  Verify private snapshots, native scopes and two-user source/packaged live
+  changes, duplicate rows, forged readonly denial, assignment loss and demotion.
 - Colors: Keep the action dialog within the mobile viewport; verify presets,
   custom picker/hex synchronization and persistence in the packaged browser test.
 - Documentation: Explain derived relationship titles and read-only fields,
