@@ -282,8 +282,18 @@ and Workers cannot use these general REST writes; their supported native card
 operations have separate checks. A foreign list/card combination or archived
 card returns 404. A site-admin mutation does not enable general private-board
 reads afterward. Changes, order and audit history commit together; failures
-return a sanitized 500 and roll back. Card-member editing controls and card PUT
-array/bulk contracts remain pending.
+return a sanitized 500 and roll back. Card PUT array/bulk contracts remain pending.
+
+To edit card members in the native UI, open a saved card and choose Members
+(before Assignee), or use Members in the card menu. The Gambas tree shows
+current members in stored order; the picker offers only active board members
+not already on the card. Add applies immediately. Select a current member in
+the tree to remove it, including an inactive/stale member. Readers can inspect
+the tree but cannot modify it; direct forged events are also refused on the
+server. Assigned writers may modify members only on cards they can read.
+Workers retain their separate self-assignment controls. Card membership does
+not alter assignees. The dialog uses the shared anchored popup, Font Awesome
+icons, X/Escape closing and viewport limits.
 
 Current API account IDs are usernames, including the `:userId` above. Stable
 opaque IDs, complete source roster metadata and complete WeKan
@@ -324,7 +334,8 @@ rollback/retry for active role changes, removal, inactive role changes and
 reactivation, checking roles, flags and audit history after each failure. Card
 people tests independently force COMMIT failure for add/remove in both fields,
 then retry on the same Gambas connection and verify that scoped authority did
-not survive. Native store tests cover ordering, copy/move/JSON, invalid-import
+not survive. The same independent snapshots also force native editor add/remove
+COMMIT failures and successful same-process retries. Native store tests cover ordering, copy/move/JSON, invalid-import
 rollback, assigned-only denial and deletion cleanup.
 
 User-deletion tests inspect independent SQLite snapshots after denied requests
@@ -425,7 +436,7 @@ runner above, covering persisted values, invalid hex input and mobile placement.
 
 The login page and signed-in account menu have a language selector. The selected
 language is saved in this browser; a new browser starts with its preferred language
-when available. The imported WeKan catalog currently provides 92 matching interface
+when available. The imported WeKan catalog currently provides 105 matching interface
 keys for 237 languages, including their native language names and RTL metadata.
 Only the selected catalog is fetched, from local application assets. No external
 translation service is used. Labels and report/calendar headings are translated;

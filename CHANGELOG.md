@@ -2,6 +2,10 @@
 
 This work adds the following features and fixes:
 
+- Document native card-member editing, role/assigned scope, active/stale
+  choices, independent assignees and popup behavior. Describe native/REST
+  COMMIT checks and update the imported interface-key count. Thanks to xet7.
+
 - Add native Gambas card-member editing from saved cards and card menus, with
   active add candidates, ordered members and stale removal. Keep assignees
   separate, permit assigned writers only on readable cards and deny reader/

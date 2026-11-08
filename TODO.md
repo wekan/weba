@@ -109,6 +109,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   role negatives, two-session Chromium persistence/forged requests/stale cleanup,
   mobile fit/X, translated fixed captions and unchanged user/card names. Extend
   real COMMIT rollback/retry checks to native add/remove as well as REST.
+- Documented native member editor entry points, active candidates, stale
+  removal, read/write/assigned/Worker boundaries, independent assignees,
+  popup behavior, six native/REST COMMIT test phases and 105 translated keys.
 - Next card-person work: card PUT array/clear contracts,
   remaining card reads/bulk routes and complete original UI/API/security suites.
 - In progress: REST cards/containers and full API identity/data parity, including

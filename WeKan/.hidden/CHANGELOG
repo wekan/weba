@@ -1,4 +1,6 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Describe native card-member controls, permissions, active/stale
+  choices, popups, native/REST COMMIT tests and 105 imported interface keys.
 - Native card members: Add Gambas member tree/active picker/add/remove controls
   from saved cards and card menus; preserve assignees, check write/card scope
   under locks and deny readers/Workers/forged events. Reuse anchored popups,
