@@ -39,6 +39,23 @@ Public Function State(boardId As Integer, archived As Boolean) As String
   Return JSON.Encode(data)
 End
 
+Public Function Overview(archived As Boolean) As String
+  Dim boards As Result = KanbanStore.Boards(archived)
+  Dim data As New Variant[]
+  Dim row As Collection
+  For Each boards
+    row = New Collection
+    row.Add(boards!id, "id")
+    row.Add(CStr(boards!title), "title")
+    row.Add(WorkspaceStore.Setting(boards!id, "board", boards!id, "color", "#2980b9"), "color")
+    row.Add(WorkspaceStore.Setting(boards!id, "board", boards!id, "star"), "star")
+    ' Navigation includes only titles of cards the current user can actually read.
+    row["cards"] = Rows(KanbanStore.Cards(boards!id, archived), ["id", "title"])
+    data.Add(row)
+  Next
+  Return JSON.Encode(data)
+End
+
 Public Function Visible(boardId As Integer, cardId As Integer, archived As Boolean) As Boolean
   Dim r As Result
   BoardAccess.RequireCard(boardId, cardId)

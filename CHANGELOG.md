@@ -2,6 +2,13 @@
 
 This work adds the following features and fixes:
 
+- Refresh All Boards, Starred and Archive tiles/navigation after external native
+  title/color edits, membership grants/revocations and board archive/restore.
+  Compare private read-only scoped snapshots, preserve unchanged tile DOM and
+  isolate unreadable cards and other users' stars. Add native scope/privacy and
+  real two-user source/packaged browser tests. Original sorting/search/pagination
+  and full suite parity remain open. Thanks to xet7.
+
 - Document private live people snapshots, home roster checks, preserved choices
   and invitation drafts, role updates and missing/revoked target cleanup. Record
   native/two-user test scope and remaining full source reactivity/suite gaps.

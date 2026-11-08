@@ -1,0 +1,78 @@
+' Overview detection is scoped to visible navigation data and never writes it.
+Public Sub Main()
+  Dim boardId As Integer
+  Dim foreignBoard As Integer
+  Dim visible As Integer
+  Dim hidden As Integer
+  Dim db As Connection
+  Dim r As Result
+  Dim history As Integer
+  Dim initial As String
+  Dim changed As String
+  Dim flags As Collection
+  WebDatabase.Register("overview-owner", "x")
+  WebDatabase.Register("overview-member", "x")
+  WebDatabase.Register("overview-outsider", "x")
+  SignIn("overview-outsider")
+  foreignBoard = KanbanStore.AddBoard("FOREIGN-OVERVIEW-CANARY")
+  SignIn("overview-owner")
+  boardId = KanbanStore.AddBoard("Visible overview")
+  BoardAccess.SetMember(boardId, "overview-member", "board-admin")
+  visible = KanbanStore.SaveCard(boardId, 0, "Visible navigation title", "Private body not needed", "Default", "Todo", "overview-member", "", "")
+  hidden = KanbanStore.SaveCard(boardId, 0, "HIDDEN-OVERVIEW-CANARY", "", "Default", "Todo", "overview-owner", "", "")
+  flags = ApiMemberRoles.FlagsFor("board-admin")
+  flags["isNormalAssignedOnly"] = True
+  ApiMemberRoles.Save(boardId, "overview-member", flags)
+  SignIn("overview-member")
+  initial = BoardLive.Overview(False)
+  If InStr(initial, "CANARY") Or InStr(initial, "Private body") Then Error.Raise("Overview included private/hidden content")
+  If InStr(initial, "Visible navigation title") = 0 Then Error.Raise("Overview omitted readable navigation")
+  db = WebDatabase.OpenConnection()
+  r = db.Find("kb_history")
+  history = r.Count
+  If BoardLive.Overview(False) <> initial Then Error.Raise("Unchanged overview is unstable")
+  r = db.Find("kb_history")
+  If r.Count <> history Then Error.Raise("Overview read wrote history")
+  SignIn("overview-owner")
+  KanbanStore.SaveCard(boardId, hidden, "Changed HIDDEN-OVERVIEW-CANARY", "", "Default", "Todo", "overview-owner", "", "")
+  WorkspaceStore.SetSetting(boardId, "board", boardId, "star", "1")
+  SignIn("overview-member")
+  If BoardLive.Overview(False) <> initial Then Error.Raise("Hidden card or another user's star influenced overview")
+  WorkspaceStore.SetSetting(boardId, "board", boardId, "star", "1")
+  changed = BoardLive.Overview(False)
+  If changed = initial Then Error.Raise("Personal star did not change overview")
+  initial = changed
+  SignIn("overview-owner")
+  WorkspaceStore.Rename(boardId, "board", boardId, "Renamed visible overview")
+  WorkspaceStore.SetSetting(boardId, "board", boardId, "color", "#223344")
+  SignIn("overview-member")
+  changed = BoardLive.Overview(False)
+  If changed = initial Or InStr(changed, "Renamed visible overview") = 0 Or InStr(changed, "#223344") = 0 Then Error.Raise("Board presentation edit was missed")
+  initial = changed
+  SignIn("overview-owner")
+  WorkspaceStore.Rename(boardId, "card", visible, "Renamed visible navigation")
+  SignIn("overview-member")
+  If BoardLive.Overview(False) = initial Then Error.Raise("Visible tree rename was missed")
+  SignIn("overview-owner")
+  WorkspaceStore.SetArchived(boardId, "board", boardId, True)
+  SignIn("overview-member")
+  If BoardLive.Overview(False) <> "[]" Then Error.Raise("Archived board retained in active overview")
+  If InStr(BoardLive.Overview(True), "Renamed visible overview") = 0 Then Error.Raise("Archived overview omitted board")
+  SignIn("overview-owner")
+  WorkspaceStore.SetArchived(boardId, "board", boardId, False)
+  BoardAccess.RemoveMember(boardId, "overview-member")
+  SignIn("overview-member")
+  If BoardLive.Overview(False) <> "[]" Then Error.Raise("Revoked board retained in overview")
+  SignIn("overview-owner")
+  BoardAccess.SetMember(boardId, "overview-member", "read-only")
+  SignIn("overview-member")
+  If InStr(BoardLive.Overview(False), "Renamed visible overview") = 0 Then Error.Raise("Granted board did not enter overview")
+  SignIn("overview-owner")
+  If InStr(BoardLive.Overview(False), "FOREIGN-OVERVIEW-CANARY") Then Error.Raise("Native global admin bypassed membership")
+  Print "Overview live: stable read-only scoped navigation, hidden-change/privacy isolation, personal stars, titles/colors, archive/restore and membership grant/revocation passed"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

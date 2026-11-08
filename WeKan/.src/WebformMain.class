@@ -31,6 +31,7 @@ Private $draft As Collection
 Private $detailState As String
 Private $entryBaseline As Collection
 Private $detailFormBase As Collection
+Private $overviewState As String
 Private $peopleState As String
 Private $membersState As String
 Private $loadingPeople As Boolean
@@ -75,6 +76,7 @@ Private Sub RefreshTree()
   Dim b As Result
   Dim c As Result
   Dim unavailable As Boolean
+  Dim overviewSnapshot As String
   If $board Then
     If Not BoardAccess.Role($board) Then
       unavailable = True
@@ -94,6 +96,7 @@ Private Sub RefreshTree()
     Endif
   Endif
   ValidateOpenCards()
+  If IsOverview() Then overviewSnapshot = BoardLive.Overview($archive)
   Boards.Clear()
   b = KanbanStore.Boards($archive)
   For Each b
@@ -107,6 +110,7 @@ Private Sub RefreshTree()
   UpdateHeader()
   UpdateCardActions()
   Visual.Refresh()
+  If IsOverview() Then $overviewState = overviewSnapshot
 End
 
 Public Sub BoardPoll_Timer()
@@ -120,12 +124,19 @@ Public Sub BoardPoll_Timer()
       state = BoardLive.State($board, $archive)
       If state <> $liveState Then RefreshTree()
     Endif
+  Else If IsOverview() Then
+    state = BoardLive.Overview($archive)
+    If state <> $overviewState Then RefreshTree()
   Endif
   RefreshLiveDetails()
   RefreshLiveCardPeople()
   RefreshLiveMembers()
 Catch
   Notice.Text = "Board refresh failed"
+End
+
+Private Function IsOverview() As Boolean
+  Return $board = 0 And ($view = "Boards" Or $view = "Archive" Or $view = "Starred")
 End
 
 Private Sub ValidateOpenCards()

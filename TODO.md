@@ -6,6 +6,23 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Current UI/API/security work
 
+- Completed live All Boards/Starred/Archive overview tiles and their navigation.
+  Reproduced stale home titles with two native browser users; detect authorized
+  title/color/star/navigation changes, membership grants/revocations and board
+  archive/restore. Keep unchanged tile DOM nodes and exclude hidden card changes,
+  card bodies and another user's stars from the private snapshot. Capture before
+  navigation reads and remember after refresh succeeds. Native scope/privacy and
+  two-user source/packaged tests cover the implemented behavior; complete original
+  suites remain pending. Full build.sh test passes (28 Python tests and 20
+  card-update COMMIT phases); test-live passes on source and packaged apps,
+  including existing details/people/archive regressions.
+- In progress: original spec 39 All Boards parity. Persist custom/title-ascending/
+  title-descending order per user, add board-name search across categories and
+  guarded getAllBoardsPage-equivalent server pagination/counts with disjoint
+  pages and no private-board leakage. Original six callbacks, including Latin
+  workspace navigation/creation translations, remain unexecuted. Other open-view
+  navigation reactivity and efficient idle/background polling are still pending.
+
 - Documented private live people snapshots, home roster polling, identity-based
   selection preservation, vanished-target cleanup and current role controls.
   Recorded native/two-user browser evidence and retained incomplete full source
@@ -89,7 +106,7 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Documented the native heartbeat/private state, capture-before-render rule,
   draft/DOM preservation and revoked-panel cleanup; add the test-live command,
   actual original callback/browser evidence and polling/deep-pane limits.
-- In progress: full source inline-edit/unsaved-draft UX, all-boards navigation
+- In progress: full source inline-edit/unsaved-draft UX, other open-view navigation
   and efficient idle/background
   polling and complete original UI/API/security suites. Custom roles/list
   exceptions and full source hierarchy remain open.

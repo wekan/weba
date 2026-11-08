@@ -1,4 +1,8 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Overview updates: Refresh home/starred/archive tiles and navigation after
+  external edits, membership changes and archive/restore, using private scoped
+  snapshots and stable idle DOM. Verify native privacy and real browser cases;
+  full source sorting/search/pagination and suite parity remain pending.
 - Documentation: Explain private people snapshots, home roster checks, stable
   choices/drafts, fresh capabilities and cleanup; retain full suite/reactivity gaps.
 - Live people: Refresh native card members, assignees and home board rosters;
