@@ -470,6 +470,8 @@ Public Sub Visual_Render()
   Dim text As String
   Dim lane As Result
   Dim list As Result
+  Dim tiles As New Collection
+  Dim overviewId As Integer
   Dim overviewData As Collection
   Dim overviewIds As Integer[]
   Dim boardColor As String = "#2980b9"
@@ -481,7 +483,7 @@ Public Sub Visual_Render()
   Print "<script>" & File.Load(".public/kanban.js") & "</script>"
   Print "<link rel=\"stylesheet\" href=\"kanban.css\">"
   If $board Then boardColor = WorkspaceStore.Setting($board, "board", $board, "color", "#2980b9")
-  Print "<section data-board-color=\"" & Html(boardColor) & "\" data-context=\"" & Html(ContextAction.Name) & "\" data-drag=\"" & Html(DragAction.Name) & "\" data-board=\"" & Str($board) & "\" data-action=\"" & Html(BoardAction.Name) & "\" data-card-move=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "moveCard"), "true", "false") & "\" data-editable=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "write"), "true", "false") & "\" class=\"weba-content\" data-tree=\"" & Html(Boards.Name) & "\" data-view=\"" & Html($view) & "\">"
+  Print "<section data-board-reorder=\"" & If(IsOverview() And Not $archive And $catalogSort = "custom", "true", "false") & "\" data-board-color=\"" & Html(boardColor) & "\" data-context=\"" & Html(ContextAction.Name) & "\" data-drag=\"" & Html(DragAction.Name) & "\" data-board=\"" & Str($board) & "\" data-action=\"" & Html(BoardAction.Name) & "\" data-card-move=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "moveCard"), "true", "false") & "\" data-editable=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "write"), "true", "false") & "\" class=\"weba-content\" data-tree=\"" & Html(Boards.Name) & "\" data-view=\"" & Html($view) & "\">"
   If $view = "Profile" Then
     Print "<p>Signed in as " & Html(WebIdentity.Username) & "</p>"
   Else If $view = "Admin panel" Then
@@ -527,7 +529,7 @@ Public Sub Visual_Render()
         If WorkspaceStore.Setting(b!id, "board", b!id, "star") <> "1" Then Continue
       Endif
       If Not $board And ($view = "Boards" Or $view = "Archive" Or $view = "Starred") Then
-        Print "<div class=\"weba-board-tile-group\"><button style=\"background-color:" & Html(WorkspaceStore.Setting(b!id, "board", b!id, "color", "#2980b9")) & "\" type=\"button\" class=\"weba-board-tile\" data-board-key=\"b" & Str(b!id) & "\"><strong>" & Html(b!title) & "</strong></button><button class=\"weba-board-context fa fa-bars\" data-context-kind=\"board\" data-context-id=\"" & Str(b!id) & "\" aria-label=\"Board menu\"></button></div>"
+        tiles[CStr(b!id)] = "<div class=\"weba-board-tile-group\" data-board-id=\"" & Str(b!id) & "\">" & If(Not $archive And $catalogSort = "custom", "<button type=\"button\" class=\"weba-drag-handle weba-board-drag fa fa-arrows\" data-drag-kind=\"board\" aria-label=\"Sort boards\"></button>", "") & "<button style=\"background-color:" & Html(WorkspaceStore.Setting(b!id, "board", b!id, "color", "#2980b9")) & "\" type=\"button\" class=\"weba-board-tile\" data-board-key=\"b" & Str(b!id) & "\"><strong>" & Html(b!title) & "</strong></button><button class=\"weba-board-context fa fa-bars\" data-context-kind=\"board\" data-context-id=\"" & Str(b!id) & "\" aria-label=\"Board menu\"></button></div>"
         Continue
       Endif
       Print "<h3>" & Html(b!title) & "</h3>"
@@ -547,6 +549,11 @@ Public Sub Visual_Render()
         Print "<strong>" & Html(c!title) & "</strong><p>" & Html(c!description) & "</p><small>" & Html(c!status) & " · " & Html(c!assignee) & " · " & Html(c!labels) & " · " & Html(c!due_day) & "</small></article>"
       Next
     Next
+    If IsOverview() Then
+      For Each overviewId In overviewIds
+        If tiles.Exist(CStr(overviewId)) Then Print tiles[CStr(overviewId)]
+      Next
+    Endif
     Print "</div><div class=\"weba-report\"></div>"
   Endif
   Print "</section>"
@@ -815,15 +822,41 @@ Public Sub CloseAccount_Click()
   AccountMenu.Hide()
 End
 
+Private Sub ReorderCatalog(boardId As Integer, beforeId As Integer)
+  Dim data As Collection
+  Dim ids As Integer[]
+  Dim at As Integer
+  If Not IsOverview() Then Error.Raise("Select Custom board sort first")
+  If $archive Or $catalogSort <> "custom" Then Error.Raise("Select Custom board sort first")
+  data = LoadBoardOverview()
+  ids = data["ids"]
+  at = ids.Find(boardId)
+  If at < 0 Then Error.Raise("Invalid board order")
+  If beforeId <> 0 Then
+    If ids.Find(beforeId) < 0 Then Error.Raise("Invalid board order")
+  Endif
+  If boardId = beforeId Then Return
+  ids.Remove(at)
+  at = ids.Count
+  If beforeId > 0 Then at = ids.Find(beforeId)
+  ids.Add(boardId, at)
+  BoardOrder.Save(ids)
+  RefreshTree()
+End
+
 Public Sub DragAction_Change()
   Dim wire As String
   Dim fields As String[]
   If Not DragAction.Text Then Return
   wire = DragAction.Text
   DragAction.Text = ""
-  If $board = 0 Or $archive Then Error.Raise("Select an active board first")
   fields = Split(wire, "|")
   If fields.Count <> 5 Then Error.Raise("Invalid drag action")
+  If fields[0] = "board" Then
+    ReorderCatalog(CInt(UnBase64(fields[1])), CInt(UnBase64(fields[4])))
+    Return
+  Endif
+  If $board = 0 Or $archive Then Error.Raise("Select an active board first")
   Select fields[0]
     Case "card"
       KanbanStore.MoveCard($board, CInt(UnBase64(fields[1])), UnBase64(fields[2]), UnBase64(fields[3]), CInt(UnBase64(fields[4])))

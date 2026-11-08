@@ -2,6 +2,16 @@
 
 This work adds the following features and fixes:
 
+- Add personal Custom board ordering with mouse surface/handle, trusted touch
+  handle and repeatable keyboard moves. Merge filtered ranks, refresh personal
+  views, retain expected keyboard focus and isolate readonly members' preferences
+  from shared history/activity and other users. Recheck mode/session/boards under
+  transaction locks and clean account/permanent-board references. Verify native
+  write-failure rollback/retry, original helper/merge comparisons and real
+  source/packaged gestures/forgery/privacy; full local/live tests pass. Import
+  Custom translations across 237 catalogs; workspace/original-suite gaps remain.
+  Thanks to xet7.
+
 - Document native catalog controls, separate board/card search, pre-render page
   updates, persisted/cross-session sort state, unpaged Custom fallback and browser
   evidence. Retain manual ordering, workspace/original-callback and unmatched

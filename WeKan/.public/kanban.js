@@ -11,6 +11,7 @@
       const data = section.querySelector('.weba-data'), report = section.querySelector('.weba-report');
       if (!data || !report) return;
       report.replaceChildren(); data.hidden = false;
+      data.querySelectorAll('[data-drag-kind="board"]').forEach(handle=>{const label=t('Sort boards')+': '+(handle.closest('.weba-board-tile-group')?.querySelector('strong')?.textContent||'');handle.title=label;handle.setAttribute('aria-label',label);});
       data.querySelectorAll('[data-board-key]').forEach(tile => {
         tile.onclick = () => {
           if (root.gw && section.dataset.tree) root.gw.update(section.dataset.tree, '$' + btoa(tile.dataset.boardKey), null);
@@ -24,6 +25,7 @@
         root.gw.update(section.dataset.context,'text',kind+'|'+id+(action?'|'+action:''),null);return true;
       }
       data.querySelectorAll('[data-context-kind]').forEach(button=>button.onclick=event=>{event.stopPropagation();nativeMenu(button.dataset.contextKind,button.dataset.contextId,button);});
+      root.webaDrag?.restoreFocus?.(section);
       const cards = [...data.querySelectorAll('.weba-card')].sort((a,b)=>Number(a.dataset.order||0)-Number(b.dataset.order||0)), view = section.dataset.view;
       function add(parent, tag, text, cls, localize = true) {
         const el = document.createElement(tag);

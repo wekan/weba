@@ -99,6 +99,7 @@
   "search-boards": "ボードを検索",
   "searchElementPopup-title": "検索",
   "sort-boards": "ボードを並べ替え",
+  "sort-boards-custom": "カスタム(ドラッグ順)",
   "sort-boards-title-asc": "タイトル(A → Z)",
   "sort-boards-title-desc": "タイトル(Z → A)",
   "status": "ステータス",

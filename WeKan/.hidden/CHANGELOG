@@ -1,4 +1,9 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Custom board order: Add personal ranked mouse/touch/keyboard sorting and
+  filtered merges with live/focus preservation, locked scope/mode guards and
+  account/board cleanup. Verify readonly isolation, failure rollback/retry and
+  original helpers against trusted browser input on source/packaged apps.
+  Import Custom translations; full original/workspace parity remains pending.
 - Documentation: Explain native catalog sort/search/paging and pre-render
   updates, cross-session behavior and source/packaged verification; retain
   manual-order, workspace/original-callback and translation gaps.

@@ -41,12 +41,14 @@ End
 
 Public Function Overview(archived As Boolean) As String
   Dim boards As Result = KanbanStore.Boards(archived)
+  Dim positions As Collection = BoardOrder.Positions()
   Dim data As New Variant[]
   Dim row As Collection
   For Each boards
     row = New Collection
     row.Add(boards!id, "id")
     row.Add(CStr(boards!title), "title")
+    If positions.Exist(CStr(boards!id)) Then row["customOrder"] = positions[CStr(boards!id)]
     row.Add(WorkspaceStore.Setting(boards!id, "board", boards!id, "color", "#2980b9"), "color")
     row.Add(WorkspaceStore.Setting(boards!id, "board", boards!id, "star"), "star")
     ' Navigation includes only titles of cards the current user can actually read.

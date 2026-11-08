@@ -39,4 +39,27 @@ root.dataset.editable='true';const key=new w.KeyboardEvent('keydown',{key:'Arrow
 columns[0].dataset.listId='11';columns[1].dataset.listId='22';
 handle.dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true,cancelable:true}));
 assert.equal(Buffer.from(calls.at(-1)[2].split('|')[3],'base64').toString(),'#22','keyboard targets stable list identity');
+// Personal board order is independent of shared board write capabilities.
+const grid=d.createElement('div');grid.className='weba-data';root.append(grid);
+const groups=[101,102,103].map((id,index)=>{const e=d.createElement('div');e.className='weba-board-tile-group';e.dataset.boardId=String(id);e.innerHTML='<button class="weba-board-tile">Board</button><button class="weba-drag-handle" data-drag-kind="board">Move</button>';e.getBoundingClientRect=()=>rect(index*210,20,200,120);grid.append(e);return e;});
+grid.getBoundingClientRect=()=>rect(0,0,640,300);root.dataset.editable='false';root.dataset.boardReorder='true';
+d.elementFromPoint=(x,y)=>x<0?d.body:groups[Math.min(2,Math.floor(x/210))];
+const boardHandle=groups[2].querySelector('.weba-drag-handle'),tile=groups[2].querySelector('.weba-board-tile');
+assert.equal(w.webaDrag.identify(tile,'touch'),null,'ordinary board touch stays scrollable');
+assert.equal(w.webaDrag.identify(tile,'mouse').kind,'board','mouse board surface supports reorder');
+assert.equal(w.webaDrag.identify(boardHandle,'touch').kind,'board','readonly board member can reorder personal view');
+const baseline=calls.length;
+event('pointerdown',boardHandle,430,30);event('pointermove',d,10,30);event('pointerup',d,10,30);
+assert.equal(calls.length,baseline+1);let boardWire=calls.at(-1)[2].split('|');assert.equal(boardWire[0],'board');assert.deepEqual(boardWire.slice(1).map(x=>Buffer.from(x,'base64').toString()),['103','','','101']);
+for(const cancel of ['pointercancel','multitouch','outside','escape']){
+ event('pointerdown',boardHandle,430,30);event('pointermove',d,10,30);
+ if(cancel==='pointercancel')event('pointercancel',d,10,30);
+ if(cancel==='multitouch')event('pointerdown',d,10,30,{isPrimary:false,pointerId:2});
+ if(cancel==='outside'){event('pointermove',d,-10,30);event('pointerup',d,-10,30);}
+ if(cancel==='escape')boardHandle.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
+ assert.equal(calls.length,baseline+1,'cancelled board gesture must not write');assert.equal(d.querySelector('.weba-drag-ghost'),null);assert.equal(d.querySelector('.weba-drop-placeholder'),null);
+}
+groups.forEach(e=>e.style.direction='rtl');groups[0].querySelector('.weba-drag-handle').dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true,cancelable:true}));
+boardWire=calls.at(-1)[2].split('|');assert.deepEqual(boardWire.slice(1).map(x=>Buffer.from(x,'base64').toString()),['101','','','103'],'RTL keyboard moves in visual direction');
+root.dataset.boardReorder='false';assert.equal(w.webaDrag.identify(boardHandle,'touch'),null,'sorted/archive board mode has no reorder gesture');
 w.close();console.log('Drag gestures: touch-vs-scroll, mouse surface, threshold, UTF-8 targets, cancel/multitouch, invalid/read-only drops, cleanup and keyboard passed');

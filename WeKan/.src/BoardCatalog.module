@@ -126,5 +126,6 @@ Private Function SelectBoards(params As Collection, archived As Boolean, paged A
     Inc total
   Next
   data["total"] = total
+  If Not paged Then data["ids"] = BoardOrder.Arrange(ids)
   Return data
 End

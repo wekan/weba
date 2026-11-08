@@ -1,0 +1,137 @@
+' Personal board order does not grant board writes or bypass visibility.
+Public Sub Main()
+  Dim a As Integer
+  Dim b As Integer
+  Dim c As Integer
+  Dim foreignId As Integer
+  Dim ids As Integer[]
+  Dim params As New Collection
+  Dim data As Collection
+  Dim positions As String
+  Dim overview As String
+  Dim db As Connection
+  Dim r As Result
+  Dim history As Integer
+  Dim activity As Integer
+  Dim denied As Boolean
+  Dim guardChange As String
+  WebDatabase.Register("order-owner", "x")
+  WebDatabase.Register("order-reader", "x")
+  WebDatabase.Register("order-other", "x")
+  SignIn("order-other")
+  foreignId = KanbanStore.AddBoard("Private foreign order")
+  SignIn("order-owner")
+  a = KanbanStore.AddBoard("Alpha")
+  b = KanbanStore.AddBoard("Bravo")
+  c = KanbanStore.AddBoard("Charlie")
+  For Each foreignId In [a, b, c]
+    BoardAccess.SetMember(foreignId, "order-reader", "read-only")
+  Next
+  SignIn("order-other")
+  r = KanbanStore.Boards()
+  foreignId = r!id
+  SignIn("order-reader")
+  WorkspaceStore.OpenStore()
+  db = WebDatabase.OpenConnection()
+  r = db.Find("kb_history")
+  history = r.Count
+  r = db.Find("kb_activity")
+  activity = r.Count
+  BoardOrder.Save([c, a, b])
+  data = BoardCatalog.Unpaged(params)
+  If JSON.Encode(data["ids"]) <> JSON.Encode([c, a, b]) Then Error.Raise("Reader lost personal Custom order")
+  r = db.Find("kb_history")
+  If r.Count <> history Then Error.Raise("Initial personal order wrote history")
+  positions = JSON.Encode(BoardOrder.Positions())
+  overview = BoardLive.Overview(False)
+  If BoardLive.Overview(False) <> overview Then Error.Raise("Unchanged order state unstable")
+  SignIn("order-owner")
+  data = BoardCatalog.Unpaged(params)
+  If JSON.Encode(data["ids"]) <> JSON.Encode([a, b, c]) Then Error.Raise("Another user inherited personal order")
+  BoardOrder.Save([b, a, c])
+  SignIn("order-reader")
+  If BoardLive.Overview(False) <> overview Then Error.Raise("Another user's order changed live state")
+  BoardCatalog.SetSortBy("title-asc")
+  Try BoardOrder.Save([a, b, c])
+  denied = Error
+  If Not denied Then Error.Raise("Sorted mode accepted manual order")
+  If JSON.Encode(BoardOrder.Positions()) <> positions Then Error.Raise("Denied sorted move wrote positions")
+  params["sortBy"] = "title-asc"
+  data = BoardCatalog.Page(params)
+  If JSON.Encode(data["ids"]) <> JSON.Encode([a, b, c]) Then Error.Raise("Manual positions changed title sort")
+  BoardCatalog.SetSortBy("custom")
+  For Each ids In [[a, foreignId], [a, a], [a, 999999], []]
+    Try BoardOrder.Save(ids)
+    denied = Error
+    If Not denied Then Error.Raise("Foreign/duplicate/missing/empty order accepted")
+    If JSON.Encode(BoardOrder.Positions()) <> positions Then Error.Raise("Invalid order partially changed positions")
+  Next
+  SignIn("order-owner")
+  BoardAccess.RemoveMember(c, "order-reader")
+  SignIn("order-reader")
+  Try BoardOrder.Save([a, c])
+  denied = Error
+  If Not denied Then Error.Raise("Revoked board order accepted")
+  If JSON.Encode(BoardOrder.Positions()) <> positions Then Error.Raise("Revocation failure changed order")
+  SignIn("order-owner")
+  BoardAccess.SetMember(c, "order-reader", "read-only")
+  WorkspaceStore.SetArchived(c, "board", c, True)
+  SignIn("order-reader")
+  Try BoardOrder.Save([a, c])
+  denied = Error
+  If Not denied Then Error.Raise("Archived board order accepted")
+  SignIn("order-owner")
+  WorkspaceStore.SetArchived(c, "board", c, False)
+  SignIn("order-reader")
+  r = db.Find("kb_history")
+  history = r.Count
+  r = db.Find("kb_activity")
+  activity = r.Count
+  For Each guardChange In ["INSERT INTO kb_removed_members(board_id,username,role) VALUES (" & CStr(a) & ",'order-reader','read-only');", "UPDATE kb_board_preferences SET sort_by='title-asc' WHERE username='order-reader';"]
+    db.Exec("CREATE TRIGGER change_order_guard AFTER UPDATE ON users WHEN NEW.username='order-reader' BEGIN " & guardChange & " END")
+    Try BoardOrder.Save([a, b, c])
+    denied = Error
+    If Not denied Then Error.Raise("Late membership/mode change bypassed order guard")
+    If JSON.Encode(BoardOrder.Positions()) <> positions Then Error.Raise("Late guard failure wrote positions")
+    If BoardCatalog.SortBy() <> "custom" Then Error.Raise("Failed transaction leaked sort mutation")
+    BoardAccess.RequireRead(a)
+    db.Exec("DROP TRIGGER change_order_guard")
+  Next
+  db.Exec("CREATE TRIGGER fail_board_order BEFORE UPDATE ON kb_board_order WHEN NEW.username='order-reader' AND NEW.board_id=" & CStr(b) & " BEGIN SELECT RAISE(ABORT,'injected board order failure'); END")
+  Try BoardOrder.Save([a, b, c])
+  denied = Error
+  If Not denied Then Error.Raise("Injected order failure did not propagate")
+  If JSON.Encode(BoardOrder.Positions()) <> positions Then Error.Raise("Failed order left partial positions")
+  db.Exec("DROP TRIGGER fail_board_order")
+  BoardOrder.Save([c, a, b])
+  BoardOrder.Save([b, a])
+  data = BoardCatalog.Unpaged(params)
+  If JSON.Encode(data["ids"]) <> JSON.Encode([b, c, a]) Then Error.Raise("Filtered merge lost retained rank/title fallback")
+  If BoardLive.Overview(False) = overview Then Error.Raise("Own order change was not detected")
+  r = db.Find("kb_history")
+  If r.Count <> history Then Error.Raise("Personal order wrote board history")
+  r = db.Find("kb_activity")
+  If r.Count <> activity Then Error.Raise("Personal order wrote board activity")
+  Session["auth_generation"] = 0
+  Try BoardOrder.Save([a, b])
+  denied = Error
+  If Not denied Then Error.Raise("Stale session saved order")
+  SignIn("order-owner")
+  WorkspaceStore.SetArchived(c, "board", c, True)
+  WorkspaceActions.DeleteArchived(c, "board", c, "Charlie")
+  r = db.Find("kb_board_order", "board_id=&1", c)
+  If r.Count Then Error.Raise("Permanent board deletion retained order references")
+  WebDatabase.DeleteUser("order-reader")
+  r = db.Find("kb_board_order", "username=&1", "order-reader")
+  If r.Count Then Error.Raise("Account deletion retained personal order")
+  db.Exec("INSERT INTO kb_board_order (username,board_id,sort_order) VALUES (&1,&2,&3)", "order-reader", a, 0)
+  WebDatabase.NewUser("order-reader", "x", False)
+  SignIn("order-reader")
+  If BoardOrder.Positions().Count Then Error.Raise("Recreated username inherited order")
+  Print "Board order: per-user reader access, mode/scope/invalid denial, filtered rank merge, live isolation, atomic failure/retry and account/board cleanup passed"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

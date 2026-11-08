@@ -1,0 +1,110 @@
+' Personal Custom board positions; shared board data and clocks are untouched.
+Export
+Private $db As Connection
+
+Private Sub OpenStore()
+  Dim t As Table
+  If $db Then Return
+  $db = WebDatabase.OpenConnection()
+  If Not $db.Tables.Exist("kb_board_order") Then
+    t = $db.Tables.Add("kb_board_order")
+    t.Fields.Add("username", db.String, 255)
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("sort_order", db.Integer)
+    t.PrimaryKey = ["username", "board_id"]
+    t.Update()
+  Endif
+Catch
+  $db = Null
+  Error.Propagate()
+End
+
+Public Function Positions() As Collection
+  Dim data As New Collection
+  Dim r As Result
+  If Not WebIdentity.Username Then Error.Raise("Sign in required")
+  OpenStore()
+  r = $db.Find("kb_board_order", "username=&1 ORDER BY sort_order,board_id", WebIdentity.Username)
+  For Each r
+    data[CStr(r!board_id)] = r!sort_order
+  Next
+  Return data
+End
+
+Public Function Arrange(ids As Integer[]) As Integer[]
+  Dim resultIds As New Integer[]
+  Dim allowed As New Collection
+  Dim included As New Collection
+  Dim boardId As Integer
+  Dim r As Result
+  If Not WebIdentity.Username Then Error.Raise("Sign in required")
+  OpenStore()
+  For Each boardId In ids
+    BoardAccess.RequireRead(boardId)
+    allowed[CStr(boardId)] = True
+  Next
+  r = $db.Exec("SELECT o.board_id FROM kb_board_order o INNER JOIN kb_boards b ON b.id=o.board_id WHERE o.username=&1 ORDER BY o.sort_order,b.title,b.id", WebIdentity.Username)
+  For Each r
+    If Not allowed.Exist(CStr(r!board_id)) Then Continue
+    resultIds.Add(r!board_id)
+    included[CStr(r!board_id)] = True
+  Next
+  For Each boardId In ids
+    If Not included.Exist(CStr(boardId)) Then resultIds.Add(boardId)
+  Next
+  Return resultIds
+End
+
+Public Sub Save(ids As Integer[])
+  Dim username As String = WebIdentity.Username
+  Dim uniqueIds As New Collection
+  Dim lockIds As Integer[]
+  Dim boardId As Integer
+  Dim index As Integer
+  Dim transaction As Boolean
+  Dim failure As String
+  Dim r As Result
+  If Not username Then Error.Raise("Sign in required")
+  If Not ids Then Error.Raise("Invalid board order")
+  If ids.Count = 0 Then Error.Raise("Invalid board order")
+  If BoardCatalog.SortBy() <> "custom" Then Error.Raise("Select Custom board sort first")
+  OpenStore()
+  For Each boardId In ids
+    If boardId <= 0 Or uniqueIds.Exist(CStr(boardId)) Then Error.Raise("Invalid board order")
+    uniqueIds[CStr(boardId)] = True
+    CheckBoard(boardId)
+  Next
+  lockIds = ids.Copy()
+  lockIds.Sort()
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE users SET username=username WHERE username=&1", username)
+  If WebIdentity.Username <> username Or Not WebDatabase.UserExists(username) Then Error.Raise("Sign in required")
+  If BoardCatalog.SortBy() <> "custom" Then Error.Raise("Select Custom board sort first")
+  For Each boardId In lockIds
+    $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+    CheckBoard(boardId)
+  Next
+  For Each boardId In ids
+    r = $db.Edit("kb_board_order", "username=&1 AND board_id=&2", username, boardId)
+    If Not r.Available Then
+      r = $db.Create("kb_board_order")
+      r["username"] = username
+      r["board_id"] = boardId
+    Endif
+    r["sort_order"] = index
+    r.Update()
+    Inc index
+  Next
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+Private Sub CheckBoard(boardId As Integer)
+  BoardAccess.RequireRead(boardId)
+  If WorkspaceStore.Archived(boardId, "board", boardId) Then Error.Raise("Select an active board")
+End

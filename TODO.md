@@ -6,20 +6,35 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Current UI/API/security work
 
+- Completed per-user Custom board order with real mouse, trusted touch-handle
+  and repeated keyboard moves. Retain/merge filtered-out ranks, title fallback,
+  reload and live personal-order updates; sorted/archive modes do not reorder.
+  Recheck principal/mode/board visibility under locks, keep shared history and
+  activity untouched, roll back injected write failure and clean account/board
+  references. Native tests also inject late membership/mode changes after the
+  account lock and reject/roll them back. Source/packaged gesture tests cover readonly
+  members, foreign/sorted forgery, user isolation and original mapping/merge
+  helpers. Preserve keyboard focus only for the expected resulting order. Import
+  the original Custom (drag order) translations across 237 catalogs. Full original
+  UI callbacks/workspaces/multiselection remain pending. Full local tests pass
+  (28 Python tests and unchanged 20 card-update COMMIT phases), as do source/
+  packaged test-live. The separate order failure test injects UPDATE failure,
+  not a physical COMMIT failure.
+
 - Documented native catalog controls, board/card search separation, page-label/
   button update ordering, cross-session state and source/packaged/mobile/Finnish
-  evidence. Preserve manual Custom order, workspace/original-callback and
+  evidence. Preserve workspace/original-callback and
   unmatched-translation follow-up rather than claiming full spec 39 completion.
 
 - Completed native All Boards sort popup, live board-name search/clear and
   25-result paging, wired to scoped BoardCatalog data. Persist per-user A-Z/Z-A
-  choices, show the active choice, preserve unpaged Custom fallback and update
+  choices, show the active choice, preserve unpaged Custom/title fallback and update
   page/controls before rendering. Verify 25/5 pages, reload/user isolation,
   Unicode/private search, external sort changes, archive-induced page clamping,
   mobile controls and Finnish labels on real source/packaged browsers. Import
   current matching WeKan texts across 237 catalogs. Full local test/test-live and
-  existing desktop/mobile layout regressions pass. Custom drag order, workspaces
-  and unchanged original spec 39 callbacks remain pending.
+  existing desktop/mobile layout regressions pass. Workspaces and unchanged
+  original spec 39 callbacks remain pending.
 
 - Documented the native catalog service, principal and result bounds, UTF-8
   search and account preference cleanup. Recorded the 54-case source-method
@@ -48,14 +63,12 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   (28 Python tests/20 card-update COMMIT phases) and source/packaged test-live pass.
   Native controls are now wired for the implemented modes; there is no new
   public HTTP endpoint.
-- In progress: remaining original spec 39 All Boards parity: persist manual
-  Custom drag order and implement workspace/category semantics and translated
-  workspace creation/navigation. Original six callbacks remain unexecuted; native
-  browser tests and source-method comparison are separate evidence. Raw JSON
-  callers must preserve explicit null keys before validation; this service has
-  no raw-JSON endpoint contract. Efficient SQL count/paging and other open-view
-  navigation reactivity/idle polling remain pending. New Custom/Clear search
-  captions have no exact imported source lookup and remain in translation follow-up.
+- In progress: remaining original spec 39 All Boards parity: workspace/category
+  semantics and translated workspace creation/navigation, then run the unchanged
+  six callbacks. Native browser/source-method comparisons are separate evidence.
+  Multi-selection/cross-workspace drops, raw-JSON null-key preservation, efficient
+  SQL count/paging and other open-view/idle reactivity remain pending. Clear search
+  still lacks an exact imported source caption; Custom now uses its source key.
 
 - Documented private live people snapshots, home roster polling, identity-based
   selection preservation, vanished-target cleanup and current role controls.
