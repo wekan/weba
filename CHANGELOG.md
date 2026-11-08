@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Redirect revoked native browser sessions before command dispatch. Return a
+  login reload instead of throwing from the form event, which made Gambas drop
+  queued navigation and display an alert/backtrace. Verify no stale write or
+  alert and real browser login navigation after account deletion. Thanks to xet7.
+
 - Bind native browser sessions to persistent account session versions. Revoke
   other browsers after password changes, all native sessions after administrator
   resets, and predecessor sessions after same-name account recreation. Keep the

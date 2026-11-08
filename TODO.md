@@ -59,6 +59,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   REST token issuance serialize with password resets. Source/archive HTTP tests,
   legacy/negative store checks, forced reset-commit rollback and the complete
   local suite pass. Existing unversioned browser sessions must sign in again.
+  Revoked native commands now return a login reload before dispatch rather than
+  throwing into Gambas's alert/backtrace path; source/archive lifecycle tests and
+  the packaged two-browser deletion flow verify navigation and denied writes.
 - Follow-up security work: account deletion must not allow a re-registered
   username to inherit old ownership, author privileges or assignee links. Old
   browser-session reuse is fixed, but these stored content references still need

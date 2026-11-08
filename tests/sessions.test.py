@@ -45,7 +45,8 @@ class Native:
 
     def assert_revoked(self, marker):
         # Bypass visible navigation: exercise a stale native action directly.
-        self.set('BoardTitle', marker)
+        response = self.set('BoardTitle', marker)
+        assert 'location.reload' in response and 'alert(' not in response, 'Stale native command must redirect without an alert/backtrace'
         self.click('NewBoard')
         with sqlite3.connect(DATABASE) as db:
             assert db.execute('SELECT COUNT(*) FROM kb_boards WHERE title=?', (marker,)).fetchone()[0] == 0, 'Stale native session could still write'

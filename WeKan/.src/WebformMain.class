@@ -24,11 +24,23 @@ Private $view As String = "Boards"
 Private $boardTitle As String
 Private $archive As Boolean
 
-Public Sub WebForm_Event()
+Public Sub _HandleMessage()
   If Not WebIdentity.Username Then
+    ' Reject before the native dispatcher decodes or invokes a stale command.
+    ' Raising in WebForm_Event discards queued navigation and becomes an alert.
+    Session.Abandon()
     WebForm.Goto(WebformLogin)
-    Error.Raise("Please sign in")
+    Response.Buffered = True
+    Response.ContentType = "text/javascript;charset=utf-8"
+    Response.Begin
+    Print "location.reload(true);"
+    Response.End
+    Return
   Endif
+  Super._HandleMessage()
+End
+
+Public Sub WebForm_Event()
   NativeCommands.ApplyLarge(Me)
 End
 

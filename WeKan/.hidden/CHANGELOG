@@ -1,4 +1,7 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Expired native sessions: Reject messages before dispatch and return a login
+  reload without the native alert/backtrace path; verify stale writes and browser
+  navigation after account deletion.
 - Native session lifecycle: Persist nonreused account versions, revoke stale
   browsers after password changes/resets/recreation, keep the changing browser
   signed in and require old unversioned sessions to sign in again. Transact
