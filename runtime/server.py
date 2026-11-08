@@ -22,6 +22,15 @@ def handler(application, runner, environment):
 
         def _run_cgi(self):
             url = urllib.parse.urlsplit(self.path)
+            # Gambas exposes /~dump before application dispatch. It prints the
+            # CGI environment, including database credentials. Never expose
+            # development routes through the installed HTTP host.
+            decoded_path = url.path
+            for _ in range(3):
+                decoded_path = urllib.parse.unquote(decoded_path)
+                if decoded_path.startswith('/~'):
+                    self.send_error(404)
+                    return
             env = environment.copy()
             env.update(REQUEST_METHOD=self.command, SCRIPT_NAME='/', PATH_INFO=url.path,
                        QUERY_STRING=url.query, SERVER_NAME=self.server.server_address[0],

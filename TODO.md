@@ -13,6 +13,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Completed: remove login initializer request/query/user-agent logging and the
   unused shared temporary logfile sink. Guard sources against reintroducing
   request payload logging; validate registration through real CGI sessions.
+- Completed: block Gambas development/environment-dump routes before CGI,
+  including encoded paths; test the packaged HTTP endpoint and no-runner guard.
 - In progress: protect native command/upload requests against cross-origin
   mutations and move credential-bearing native commands out of query strings.
 - Next: authenticated REST API contracts and shared board access/role boundaries;

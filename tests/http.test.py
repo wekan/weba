@@ -4,6 +4,15 @@ username='http-'+uuid.uuid4().hex[:12]
 jar=http.cookiejar.CookieJar(); client=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
 def get(path='/'): return client.open(BASE+path,timeout=15).read().decode()
 def command(c): return get('/x?c='+urllib.parse.quote(json.dumps(c)))
+# Development routes must never expose the real CGI environment or mutate a
+# session. Check the installed host with an actual Gambas project/archive.
+for debug_path in ['/~dump', '/%7Edump', '/%257Edump', '/~logout']:
+ try:
+  get(debug_path)
+ except urllib.error.HTTPError as error:
+  assert error.code == 404
+ else:
+  raise AssertionError('Development route was exposed')
 page=get(); command(['raise',None,'open',[],False]); prefix=re.search(r'id="(@\d+)\.WebTextName"',page)[1]
 answer=command(['raise',prefix+'.ShowPassword','click',[],False])
 assert 'fa-eye-slash' in answer and 'Hide' in answer and 'text' in answer, 'Login password reveal failed'

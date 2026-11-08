@@ -2,6 +2,10 @@
 
 This work adds the following features and fixes:
 
+- Block Gambas development routes before starting CGI, including encoded
+  variants of the environment-dump endpoint. Prevent disclosure of database
+  credentials and other runtime environment values. Verify host rejection and
+  actual packaged HTTP requests. Thanks to xet7.
 - Remove raw query/request/user-agent logging from login initialization and
   remove the unused shared temporary logfile sink. Native update payloads may
   contain passwords and must never enter application logs. Add a regression

@@ -1,4 +1,6 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Security: Block development/environment-dump routes, including encoded paths,
+  before invoking Gambas; verify host and real packaged HTTP boundaries.
 - Security: Remove login request/query/user-agent logging and the unused shared
   temporary logfile sink; guard against credential-bearing payload logging.
 

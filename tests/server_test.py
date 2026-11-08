@@ -56,6 +56,21 @@ class ServerPortTest(unittest.TestCase):
             constructor.assert_called_once()
 
 
+class DevelopmentRouteTest(unittest.TestCase):
+    def test_debug_routes_are_rejected_before_starting_gambas(self):
+        cls = server.handler(Path('/unused.gambas'), 'unused-runner',
+                             {'WEBA_DB_PASSWORD': 'must-not-leak'})
+        for path in ['/~dump', '/~dump?secret=1', '/%7Edump', '/%257Edump', '/~logout']:
+            with self.subTest(path=path):
+                request = object.__new__(cls)
+                request.path = path
+                request.send_error = Mock()
+                with patch.object(server.subprocess, 'run') as runner:
+                    request._run_cgi()
+                request.send_error.assert_called_once_with(404)
+                runner.assert_not_called()
+
+
 class DisconnectedClientTest(unittest.TestCase):
     def request(self, write_error, cgi_failure=False):
         cls = server.handler(Path('/unused.gambas'), 'unused-runner', {})
