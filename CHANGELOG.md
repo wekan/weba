@@ -2,6 +2,10 @@
 
 This work adds the following features and fixes:
 
+- Remove raw query/request/user-agent logging from login initialization and
+  remove the unused shared temporary logfile sink. Native update payloads may
+  contain passwords and must never enter application logs. Add a regression
+  guard against raw request logging. Thanks to xet7.
 - Document color palette refresh, custom-wheel/hex controls, tested coverage
   and the remaining board gradient/theme limitation in README/TODO.
   Thanks to xet7.

@@ -1,8 +1,22 @@
 # Work in progress
 
-Updated 2026-11-07. Target: the signed-in pages of the current `wekan/wekan`
+Updated 2026-11-08. Target: the signed-in pages of the current `wekan/wekan`
 checkout, implemented with Gambas Web UI, SQLite persistence and portable Gambas
 DB operations. This is an initial implementation, not complete WeKan parity.
+
+## Current UI/API/security work
+
+- Full scope remains all items below and the current WeKan UI/API/security test
+  contracts. Existing WeKan fixtures directly seed MongoDB and use Meteor methods;
+  they have not passed against weba. Record their actual results before claiming
+  parity, and keep the original assertions when adapting execution to weba.
+- Completed: remove login initializer request/query/user-agent logging and the
+  unused shared temporary logfile sink. Guard sources against reintroducing
+  request payload logging; validate registration through real CGI sessions.
+- In progress: protect native command/upload requests against cross-origin
+  mutations and move credential-bearing native commands out of query strings.
+- Next: authenticated REST API contracts and shared board access/role boundaries;
+  remaining feature work below is still pending.
 
 ## Verification follow-up
 

@@ -1,3 +1,7 @@
+* Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Security: Remove login request/query/user-agent logging and the unused shared
+  temporary logfile sink; guard against credential-bearing payload logging.
+
 * Sat Nov 07 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
 - Documentation: Describe preset/color-wheel use and refresh, verification
   coverage and pending full board gradient/special-theme styling.

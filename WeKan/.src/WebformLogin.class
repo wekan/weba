@@ -6,27 +6,8 @@ Private $registerMode As Boolean
 
 Public Sub _new()
 
-  Dim Path As String
-
   WebForm.Debug = False
-
-  'Application Version is at Gambas IDE menu: Project / Properties / General / Version
   WebLabelVersion.Text = "v" & Application.Version
-
-  Path = Request.Path
-  If Path = "/" Then Path = ""
-
-  ModLogs.AddLogs("1-UserAgent= " & Request.UserAgent)
-  ModLogs.AddLogs("2-URL= " & Request.Query)
-  ModLogs.AddLogs("3-URL= " & Application.Request)
-  ModLogs.AddLogs("4-Path = " & Path) 
-
-
-Catch
-  Debug "Error at _new()"
-  Debug "Error: " & Error.Text & "   " & "Where: " & Error.Where
-
-
 
 End
 
