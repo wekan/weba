@@ -28,5 +28,5 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   assert.equal(actual.data.description,retained,'persisted description for source flag mask '+mask);
  }
  assert.equal((await send(roleRoute,'POST',admin,{role:'normal'})).status,200);
- console.log('REST write scope conformance: all 256 built-in raw flag combinations match actual source roleCan/memberRoleOf/isAssignedOnlyMember and persisted HTTP data; native/custom-role parity remains pending');
+ console.log('REST write scope conformance: all 256 built-in raw flag combinations match actual source roleCan/memberRoleOf/isAssignedOnlyMember and persisted HTTP data; native scope has a separate 256-case check; custom roles/list exceptions/full suites remain pending');
 })().catch(error=>{console.error(error.stack||String(error));process.exitCode=1;});

@@ -6,6 +6,17 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Current UI/API/security work
 
+- Completed native combined administrator/assigned-only card scope: reproduce
+  the former bypass, then narrow shared visibility by every raw assigned flag
+  independently of canonical role precedence. Keep write/manage capabilities and
+  the scoped REST site-admin override; native site administration cannot bypass
+  assignment, and inactive members still have no access. Verify direct cards,
+  comments/files/relations, export/history, hidden mutation denial, assigned-card
+  writes and clearing flags. All 256 active built-in flag combinations match
+  actual source role/scope functions and native card queries. Packaged two-user
+  Chromium checks all three flags, response packets and forged hidden contexts.
+  Full local tests pass (28 Python tests); original callback counts remain 10/30
+  for spec 17 and 2/3 for the separate archive spec.
 - Completed documentation consolidation: project-specific source map, Gambas
   tooling, database notes and verification limits live in docs/Development.md.
   Remove companion AGENTS.md/CLAUDE.md duplicates per the containing WeKan root
@@ -288,8 +299,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   board reopening; it does not establish automatic live synchronization.
 - In progress: archive live-board synchronization and the remaining original
   archive UI callback, full source parent/linked-card/cross-board hierarchy and
-  list-level exceptions. Native visibility for raw combined assigned-only flags,
-  custom roles and complete original UI/API/security coverage remain pending.
+  list-level exceptions. Custom roles and complete original UI/API/security
+  coverage remain pending.
 - Next card-person work: remaining card PUT fields, reads, creation/bulk routes
   and complete original UI/API/security suites.
 - In progress: REST cards/containers and full API identity/data parity, including

@@ -1,4 +1,8 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Native card scope: Enforce raw assigned-only flags alongside canonical admin
+  capabilities. Keep scoped REST administration separate; verify hidden data,
+  inactive/native site-admin boundaries, 256 source-backed native combinations
+  and two-user Chromium response/context isolation.
 - Documentation: Explain archive routes/UTC history and native graph/lifecycle
   semantics, sixteen card-update COMMIT phases, original callback and Chromium
   coverage; retain live synchronization/cross-board/list-exception parity gaps.

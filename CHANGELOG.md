@@ -2,6 +2,15 @@
 
 This work adds the following features and fixes:
 
+- Fix native combined board-admin/assigned-only flags bypassing card visibility.
+  Narrow all shared card queries/checks by raw assignment flags independently of
+  canonical role capabilities; retain the explicit scoped REST site-admin
+  override, with no native override. Reproduce the prior bypass and verify hidden
+  cards/comments/files/relations/export/history/writes, assigned writes, inactive
+  denial and cleared-flag recovery. Compare 256 active combinations with original
+  source functions and real native queries; packaged two-user Chromium verifies
+  all three flags, response packets and forged contexts. Thanks to xet7.
+
 - Document archive/restore routes, retained UTC metadata, native graph/lifecycle
   semantics, role/error/rollback contracts, sixteen card-update COMMIT phases,
   two original archive callbacks and packaged Chromium REST/native readback.

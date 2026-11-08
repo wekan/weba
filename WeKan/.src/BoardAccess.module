@@ -141,8 +141,21 @@ End
 Public Function Can(boardId As Integer, capability As String) As Boolean
   Dim roleKey As String = Role(boardId)
   Dim caps As Collection
+  Dim flags As Collection
+  Dim flag As String
   If Not roleKey Then Return False
   caps = $roles[roleKey]
+  If capability = "seesAllCards" Then
+    ' Card scope narrows the canonical role independently. In particular,
+    ' isAdmin does not cancel a raw assigned-only flag on an active member.
+    If $apiMemberBoard > 0 And boardId = $apiMemberBoard And Env["WEBA_API_REQUEST"] = "1" Then
+      If WebDatabase.GetIsAdmin(WebIdentity.Username) Then Return True
+    Endif
+    flags = ApiMemberRoles.MemberData(boardId, WebIdentity.Username, roleKey)
+    For Each flag In ["isNormalAssignedOnly", "isCommentAssignedOnly", "isReadAssignedOnly"]
+      If flags[flag] = True Then Return False
+    Next
+  Endif
   Return caps[capability] = True
 End
 

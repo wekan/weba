@@ -293,6 +293,36 @@ const fs = require('node:fs');
       await memberPage.click('.weba-column[data-list="Doing"] .weba-card-menu');await waitP();await clickP('ContextComments');await fillP('DetailBody','Worker comment');await clickP('DetailSave');await clickP('CloseDetails');
       await setRole('Read (assigned cards only)');await memberBoard();
       assert.equal(await memberPage.$$eval('.weba-data .weba-card',els=>els.length),1);assert.ok(await memberPage.$eval('.weba-data',e=>!e.textContent.includes('Hidden role card')));
+      if(process.env.WITH_API==='true'){
+        const hiddenId=await page.$$eval('.weba-report .weba-card',els=>els.find(e=>e.querySelector('strong').textContent==='Hidden role card').dataset.cardId);
+        const adminToken=await page.evaluate(async ownerName=>{
+          const response=await fetch('/users/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:ownerName,password:'layout-comparison-password'})});
+          if(response.status!==200)throw Error('Scope fixture login failed');
+          return(await response.json()).token;
+        },ownerName);
+        const packets=[];
+        const inspect=response=>{if(new URL(response.url()).pathname==='/x')packets.push(response.text());};
+        memberPage.on('response',inspect);
+        try{
+          for(const flag of ['isNormalAssignedOnly','isCommentAssignedOnly','isReadAssignedOnly']){
+            const status=await page.evaluate(async({memberName,adminToken,flag})=>{
+              const board=document.querySelector('.weba-content').dataset.board;
+              const response=await fetch(`/api/boards/${board}/members/${memberName}`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+adminToken},body:JSON.stringify({isAdmin:true,[flag]:true})});
+              return response.status;
+            },{memberName,adminToken,flag});
+            assert.equal(status,200);await memberBoard();
+            assert.equal(await memberPage.$$eval('.weba-data .weba-card',els=>els.length),1,flag+' narrows native admin card rows');
+            assert.ok(await memberPage.$eval('.weba-data',e=>!e.textContent.includes('Hidden role card')));
+            await memberPage.evaluate(id=>gw.update(document.querySelector('[id$=".ContextAction"]').id,'text','card|'+id),hiddenId);await waitP();
+            assert.ok(await memberPage.$eval(selector('Notice'),e=>e.textContent.replace(/\s+/g,' ').includes('Card not accessible')));
+            assert.equal(await memberPage.$eval(selector('ContextMenu'),e=>e.getBoundingClientRect().width),0,'forged hidden-card context stays closed');
+          }
+          const bodies=await Promise.all(packets);
+          assert.ok(bodies.length>0);
+          assert.ok(bodies.every(body=>!body.includes('Hidden role card')),'native response packets must not contain the hidden card');
+          console.log('Native combined-scope browser: each raw assigned flag constrains admin card DOM/response packets and rejects forged hidden-card contexts');
+        }finally{memberPage.off('response',inspect);}
+      }
       await setRole('Normal (assigned cards only)');await memberBoard();
       await memberPage.click('.weba-report .weba-card strong');await waitP();await clickP('CardAssigneesButton');
       await selectPerson(memberPage,memberName);await clickP('RemoveCardPerson');

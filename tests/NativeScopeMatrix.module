@@ -1,0 +1,50 @@
+' Only installed into the disposable source-conformance project.
+Public Sub Main()
+  Dim boardId As Integer
+  Dim visible As Integer
+  Dim hidden As Integer
+  Dim role As String
+  Dim capability As String
+  Dim cases As Variant[]
+  Dim flags As Collection
+  Dim row As Collection
+  Dim output As New Variant[]
+  Dim r As Result
+  Dim denied As Boolean
+  WebDatabase.Register("matrix-owner", "x")
+  WebDatabase.Register("matrix-member", "x")
+  SignIn("matrix-owner")
+  boardId = KanbanStore.AddBoard("Native scope source oracle")
+  BoardAccess.SetMember(boardId, "matrix-member", "normal")
+  visible = KanbanStore.SaveCard(boardId, 0, "Assigned", "", "Default", "Todo", "matrix-member", "", "")
+  hidden = KanbanStore.SaveCard(boardId, 0, "Unassigned", "", "Default", "Todo", "matrix-owner", "", "")
+  BoardAccess.RestoreCardMembers(boardId, hidden, ["matrix-member"])
+  cases = JSON.Decode(File.Load(".public/native-scope-cases.json"))
+  For Each flags In cases
+    SignIn("matrix-owner")
+    role = ApiMemberRoles.RoleFor(flags)
+    BoardAccess.SetMember(boardId, "matrix-member", role)
+    ApiMemberRoles.Save(boardId, "matrix-member", flags)
+    SignIn("matrix-member")
+    row = New Collection
+    row["role"] = BoardAccess.Role(boardId)
+    For Each capability In ["seesAllCards", "comment", "write", "manageBoard", "moveCard"]
+      row[capability] = BoardAccess.Can(boardId, capability)
+    Next
+    r = KanbanStore.Cards(boardId)
+    row["count"] = r.Count
+    Try BoardAccess.RequireCard(boardId, hidden)
+    denied = Error
+    row["hiddenReadable"] = Not denied
+    Try BoardAccess.RequireCard(boardId, visible)
+    denied = Error
+    row["assignedReadable"] = Not denied
+    output.Add(row)
+  Next
+  Print JSON.Encode(output)
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

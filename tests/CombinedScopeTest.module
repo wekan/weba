@@ -1,0 +1,106 @@
+' Combined raw role flags must narrow native card scope without changing role.
+Public Sub Main()
+  Dim boardId As Integer
+  Dim visible As Integer
+  Dim hidden As Integer
+  Dim listId As Integer
+  Dim relation As Integer
+  Dim entryId As Integer
+  Dim fileId As Integer
+  Dim flag As String
+  Dim flags As Collection
+  Dim r As Result
+  Dim denied As Boolean
+  Dim text As String
+  WebDatabase.Register("scope-owner", "x")
+  WebDatabase.Register("scope-admin", "x")
+  SignIn("scope-owner")
+  boardId = KanbanStore.AddBoard("Combined scope")
+  r = KanbanStore.Lanes(boardId)
+  r = KanbanStore.Lists(boardId, "Default")
+  listId = r!id
+  BoardAccess.SetMember(boardId, "scope-admin", "board-admin")
+  visible = KanbanStore.SaveCard(boardId, 0, "Visible combined card", "", "Default", "Todo", "scope-admin", "", "", listId)
+  hidden = KanbanStore.SaveCard(boardId, 0, "HIDDEN-COMBINED-CANARY", "HIDDEN-COMBINED-BODY", "Default", "Todo", "scope-owner", "", "", listId)
+  BoardAccess.RestoreCardMembers(boardId, hidden, ["scope-admin"])
+  relation = CardContent.Save(boardId, visible, 0, "dependency", "", "", 0, False, hidden)
+  entryId = CardContent.Save(boardId, hidden, 0, "comment", "", "HIDDEN-COMMENT", 0, False, 0)
+  fileId = CardContent.AddFile(boardId, hidden, "hidden.txt", "HIDDEN-FILE")
+  For Each flag In ["isNormalAssignedOnly", "isCommentAssignedOnly", "isReadAssignedOnly"]
+    SignIn("scope-owner")
+    flags = ApiMemberRoles.FlagsFor("board-admin")
+    flags[flag] = True
+    ApiMemberRoles.Save(boardId, "scope-admin", flags)
+    SignIn("scope-admin")
+    If BoardAccess.Role(boardId) <> "board-admin" Then Error.Raise("Combined canonical role changed")
+    If Not BoardAccess.Can(boardId, "write") Or Not BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Combined role capabilities changed")
+    If BoardAccess.Can(boardId, "seesAllCards") Then Error.Raise("Combined admin/assigned flag bypassed native card scope: " & flag)
+    r = KanbanStore.Cards(boardId)
+    If r.Count <> 1 Or r!id <> visible Then Error.Raise("Combined role list leaked hidden card")
+    BoardAccess.RequireCard(boardId, visible)
+    Try BoardAccess.RequireCard(boardId, hidden)
+    denied = Error
+    If Not denied Then Error.Raise("Combined role read hidden card")
+    Try CardContent.Entry(boardId, hidden, entryId)
+    denied = Error
+    If Not denied Then Error.Raise("Combined role read hidden comment")
+    Try CardContent.FileRecord(boardId, hidden, fileId)
+    denied = Error
+    If Not denied Then Error.Raise("Combined role read hidden attachment")
+    r = CardContent.Entries(boardId, visible, "dependency")
+    If r.Count Then Error.Raise("Combined role relationship leaked hidden target")
+    Try CardContent.Entry(boardId, visible, relation)
+    denied = Error
+    If Not denied Then Error.Raise("Combined role direct relationship leaked")
+    Try WorkspaceStore.ExportData(boardId, "board", boardId)
+    denied = Error
+    If Not denied Then Error.Raise("Combined role exported hidden container")
+    text = WorkspaceStore.ExportData(boardId, "card", visible)
+    If InStr(text, "HIDDEN-") Then Error.Raise("Combined role card export leaked hidden data")
+    Try KanbanStore.SaveCard(boardId, hidden, "Unauthorized change", "", "Default", "Todo", "scope-owner", "", "", listId)
+    denied = Error
+    If Not denied Then Error.Raise("Combined role edited hidden card")
+    Try KanbanStore.ArchiveCard(boardId, hidden, True)
+    denied = Error
+    If Not denied Then Error.Raise("Combined role archived hidden card")
+    r = KanbanStore.Activities(boardId)
+    For Each r
+      If InStr(r!message, "HIDDEN-") Then Error.Raise("Combined role history leaked hidden data")
+    Next
+    ' Role write capability still applies to an assigned, readable card.
+    KanbanStore.SaveCard(boardId, visible, "Visible combined card", "Allowed", "Default", "Todo", "scope-admin", "", "", listId)
+  Next
+  SignIn("scope-owner")
+  BoardAccess.SetMember(boardId, "scope-admin", "board-admin")
+  SignIn("scope-admin")
+  If Not BoardAccess.Can(boardId, "seesAllCards") Then Error.Raise("Cleared flags retained stale restriction")
+  BoardAccess.RequireCard(boardId, hidden)
+  r = KanbanStore.Cards(boardId)
+  If r.Count <> 2 Then Error.Raise("Unrestricted admin did not regain native visibility")
+  ' Global site administration is not a native card-scope override.
+  SignIn("scope-owner")
+  flags = ApiMemberRoles.FlagsFor("board-admin")
+  flags["isReadAssignedOnly"] = True
+  ApiMemberRoles.Save(boardId, "scope-owner", flags)
+  If BoardAccess.Can(boardId, "seesAllCards") Then Error.Raise("Native site admin bypassed assigned scope")
+  BoardAccess.RequireCard(boardId, hidden)
+  Try BoardAccess.RequireCard(boardId, visible)
+  denied = Error
+  If Not denied Then Error.Raise("Native site admin read an unassigned card")
+  ApiMemberRoles.Save(boardId, "scope-owner", ApiMemberRoles.FlagsFor("board-admin"))
+  BoardAccess.RemoveMember(boardId, "scope-admin")
+  ' Retained raw flags on an inactive row cannot grant native board access.
+  flags["isNormalAssignedOnly"] = True
+  ApiMemberRoles.Save(boardId, "scope-admin", flags)
+  SignIn("scope-admin")
+  If BoardAccess.Can(boardId, "seesAllCards") Or BoardAccess.Can(boardId, "write") Then Error.Raise("Inactive combined role granted native capabilities")
+  Try BoardAccess.RequireCard(boardId, hidden)
+  denied = Error
+  If Not denied Then Error.Raise("Inactive combined role read a card")
+  Print "Combined native scope: three raw assigned flags constrain admin reads/relations/files/export/history/writes; canonical capabilities and cleared-flag recovery passed"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End
