@@ -1,0 +1,14 @@
+' REST credentials and browser sessions are separate authentication contexts.
+Export
+Property Read Username As String
+Private $apiUsername As String
+
+Private Function Username_Read() As String
+  If Env["WEBA_API_REQUEST"] = "1" Then Return $apiUsername
+  Return Session["username"]
+End
+
+Public Sub AuthenticateApi(username As String)
+  If Env["WEBA_API_REQUEST"] <> "1" Then Error.Raise("Not an API request")
+  $apiUsername = username
+End

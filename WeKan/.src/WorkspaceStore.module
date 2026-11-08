@@ -40,7 +40,7 @@ Public Sub Log(boardId As Integer, kind As String, itemId As Integer, message As
   r["board_id"] = boardId
   r["kind"] = kind
   r["item_id"] = itemId
-  r["actor"] = Session["username"]
+  r["actor"] = WebIdentity.Username
   r["message"] = message
   r["created_at"] = Now
   r.Update()

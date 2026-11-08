@@ -1,4 +1,8 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- REST authentication: Add login/logout, expiring hashed Bearer tokens, scoped
+  board reads, all/presented-token revocation and password-reset invalidation.
+  Separate API/browser identity, throttle peer login attempts, honor WITH_API
+  and verify source/archive HTTP authentication and authorization boundaries.
 - Native transport security: Move commands to POST bodies, validate request
   origin/authority and require a custom header for mutations/uploads/callbacks.
   Deny framing, add referrer/nosniff headers and test browser/CGI integration.

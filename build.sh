@@ -33,6 +33,8 @@ tests() {
   tests/run-store.sh
   python3 tests/run-http.py
   python3 tests/run-http.py --archive
+  python3 tests/run-http.py --api
+  python3 tests/run-http.py --api --archive
   python3 -m unittest discover -s tests -p '*_test.py'
   "${NODE:-node}" tests/reports.test.cjs
   "${NODE:-node}" tests/i18n.test.cjs

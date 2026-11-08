@@ -23,13 +23,13 @@ Private $boardTitle As String
 Private $archive As Boolean
 
 Public Sub WebForm_Open()
-  If Not Session["username"] Then
+  If Not WebIdentity.Username Then
     WebForm.Goto(WebformLogin)
     Return
   Endif
   Status.Text = "Todo"
-  AccountToggle.Text = Session["username"]
-  Admin.Visible = WebDatabase.GetIsAdmin(Session["username"])
+  AccountToggle.Text = WebIdentity.Username
+  Admin.Visible = WebDatabase.GetIsAdmin(WebIdentity.Username)
   RefreshTree()
 Catch
   Notice.Text = Error.Text
@@ -125,7 +125,7 @@ Public Sub NewCard_Click()
   UpdateCardActions()
   CardTitle.Text = ""
   Description.Text = ""
-  Assignee.Text = Session["username"]
+  Assignee.Text = WebIdentity.Username
   Labels.Text = ""
   DueDay.Text = ""
 End
@@ -170,8 +170,8 @@ Private Sub ShowView(view As String)
   AccountPanel.Visible = view = "Profile"
   AdminPanel.Visible = False
   PasswordPolicyPanel.Hide()
-  If view = "Admin panel" Then AdminPanel.Visible = WebDatabase.GetIsAdmin(Session["username"])
-  If view = "Profile" Then Fullname.Text = WebDatabase.GetFullname(Session["username"])
+  If view = "Admin panel" Then AdminPanel.Visible = WebDatabase.GetIsAdmin(WebIdentity.Username)
+  If view = "Profile" Then Fullname.Text = WebDatabase.GetFullname(WebIdentity.Username)
   $view = view
   ContentRow.Visible = view <> "Profile"
   PageActions.Visible = view <> "Profile" And view <> "Admin panel"
@@ -220,15 +220,15 @@ Public Sub Visual_Render()
   Dim lane As Result
   Dim list As Result
   Dim boardColor As String = "#2980b9"
-  If Not Session["username"] Then Return
+  If Not WebIdentity.Username Then Return
   Print "<script>" & File.Load(".public/kanban.js") & "</script>"
   Print "<link rel=\"stylesheet\" href=\"kanban.css\">"
   If $board Then boardColor = WorkspaceStore.Setting($board, "board", $board, "color", "#2980b9")
   Print "<section data-board-color=\"" & Html(boardColor) & "\" data-context=\"" & Html(ContextAction.Name) & "\" data-drag=\"" & Html(DragAction.Name) & "\" data-board=\"" & Str($board) & "\" data-action=\"" & Html(BoardAction.Name) & "\" data-editable=\"" & If($board And Not $archive, "true", "false") & "\" class=\"weba-content\" data-tree=\"" & Html(Boards.Name) & "\" data-view=\"" & Html($view) & "\">"
   If $view = "Profile" Then
-    Print "<p>Signed in as " & Html(Session["username"]) & "</p>"
+    Print "<p>Signed in as " & Html(WebIdentity.Username) & "</p>"
   Else If $view = "Admin panel" Then
-    If Not WebDatabase.GetIsAdmin(Session["username"]) Then Error.Raise("Administrator required")
+    If Not WebDatabase.GetIsAdmin(WebIdentity.Username) Then Error.Raise("Administrator required")
     a = WebDatabase.GetUsers()
     Print "<table><tr><th>Username</th><th>Full name</th><th>Administrator</th></tr>"
     For Each a
@@ -269,7 +269,7 @@ Public Sub Visual_Render()
       c = KanbanStore.Cards(b!id, $archive)
       For Each c
         If Not $archive And WorkspaceStore.ListHidden(b!id, KanbanStore.CardListId(b!id, c!id)) Then Continue
-        If $view = "My cards" And c!assignee <> Session["username"] Then Continue
+        If $view = "My cards" And c!assignee <> WebIdentity.Username Then Continue
         If $view = "Due cards" Then
           If Not c!due_day Then Continue
           If c!due_day > Format(Now, "yyyy-mm-dd") Then Continue
@@ -341,14 +341,14 @@ Public Sub Admin_Click()
 End
 
 Public Sub SaveProfile_Click()
-  WebDatabase.SetFullname(Session["username"], Fullname.Text)
+  WebDatabase.SetFullname(WebIdentity.Username, Fullname.Text)
   Notice.Text = "Profile saved"
 Catch
   Notice.Text = Error.Text
 End
 
 Public Sub ChangePassword_Click()
-  If Not WebDatabase.SetPassword(Session["username"], OldPassword.Text, NewPassword.Text) Then Error.Raise("Current password incorrect")
+  If Not WebDatabase.SetPassword(WebIdentity.Username, OldPassword.Text, NewPassword.Text) Then Error.Raise("Current password incorrect")
   OldPassword.Text = ""
   NewPassword.Text = ""
   Notice.Text = "Password changed"
@@ -365,7 +365,7 @@ Catch
 End
 
 Public Sub ResetPassword_Click()
-  If Not WebDatabase.ForceResetPassword(Session["username"], Username.Text, UserPassword.Text) Then Error.Raise("Unknown user")
+  If Not WebDatabase.ForceResetPassword(WebIdentity.Username, Username.Text, UserPassword.Text) Then Error.Raise("Unknown user")
   UserPassword.Text = ""
   Notice.Text = "Password reset"
 Catch
@@ -395,7 +395,7 @@ Catch
 End
 
 Public Sub PasswordLength_Click()
-  If Not WebDatabase.GetIsAdmin(Session["username"]) Then Error.Raise("Administrator required")
+  If Not WebDatabase.GetIsAdmin(WebIdentity.Username) Then Error.Raise("Administrator required")
   PolicyEnforce.Value = WebDatabase.PasswordLengthEnforced()
   PolicyMinimum.Text = Str(WebDatabase.PasswordMinLength())
   ContentRow.Hide()

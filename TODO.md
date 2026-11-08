@@ -19,8 +19,18 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   authority/origin and Fetch Metadata validation. Cross-origin form/image/native
   requests are rejected before CGI; iframe embedding is denied. Browser tests
   inspect actual POST URLs/headers and exercise rich-card upload/download.
-- In progress: map authoritative WeKan REST/UI/security contracts to weba and
-  implement token-authenticated REST routes and shared board permission checks.
+- Completed first REST contracts: `/users/login`, `/users/logout`, owned-board
+  lists and board reads. Tokens have 256 bits of entropy, only SHA-256 digests
+  are stored, and expiry/logout/all/password-reset revocation are verified.
+  Native browser cookies cannot authenticate REST. Login attempts use a bounded
+  per-peer window and unknown-account password checks; WITH_API gates data routes.
+- `build.sh test` now includes real REST tests for source and archive, alongside
+  native sessions, store tests, runtime security cases and JS transport guards.
+- In progress: remaining REST contracts and shared-board roles/permissions.
+  Email/LDAP/2FA login, configurable token lifetime, native-login throttling,
+  registration policy, parallel first-API schema initialization, and the original
+  WeKan fixture/browser suites remain pending. Native very-large command bodies
+  also need coverage beyond the operating system's per-environment-string limit.
 - Next: authenticated REST API contracts and shared board access/role boundaries;
   remaining feature work below is still pending.
 

@@ -1,0 +1,164 @@
+' JSON REST entry point selected by the HTTP host; never trusts browser cookies.
+Export
+
+Public Sub Main()
+  Dim payload As Collection
+  Dim username As String
+  Dim r As Result
+  Dim rows As New Variant[]
+  Dim item As Collection
+  Dim fields As String[]
+  If Env["WEBA_API_REQUEST"] <> "1" Then
+    Reply(403, ErrorData("API host required"))
+    Return
+  Endif
+  If LCase(Request.Path) Begins "/api" Then
+    If Env["WITH_API"] <> "true" Then
+      Reply(403, ErrorData("API is disabled; set WITH_API=true"))
+      Return
+    Endif
+  Endif
+  If Request.Path = "/users/login" Then
+    If Request.Method <> "POST" Then
+      Reply(405, ErrorData("Method not allowed"))
+      Return
+    Endif
+    payload = JsonBody()
+    If Not payload Then Return
+    If Not payload.Exist("username") Or Not payload.Exist("password") Or payload.Count <> 2 Then
+      Reply(400, ErrorData("Expected username and password"))
+      Return
+    Endif
+    If TypeOf(payload["username"]) <> gb.String Or TypeOf(payload["password"]) <> gb.String Then
+      Reply(400, ErrorData("Expected username and password strings"))
+      Return
+    Endif
+    username = payload["username"]
+    If Not ApiTokens.CheckPassword(username, payload["password"]) Then
+      Reply(401, ErrorData("Invalid credentials"))
+      Return
+    Endif
+    Reply(200, ApiTokens.Issue(username))
+    Return
+  Endif
+  username = ApiTokens.Authenticate()
+  If Not username Then
+    Reply(401, ErrorData("Invalid credentials"))
+    Return
+  Endif
+  WebIdentity.AuthenticateApi(username)
+  If Request.Path = "/users/logout" Then
+    If Request.Method <> "POST" Then
+      Reply(405, ErrorData("Method not allowed"))
+      Return
+    Endif
+    payload = JsonBody()
+    If Not payload Then Return
+    If payload.Count > 1 Or (payload.Count = 1 And Not payload.Exist("all")) Then
+      Reply(400, ErrorData("Expected optional all flag"))
+      Return
+    Endif
+    If payload.Exist("all") Then
+      If TypeOf(payload["all"]) <> gb.Boolean Then
+        Reply(400, ErrorData("Expected boolean all flag"))
+        Return
+      Endif
+    Endif
+    ApiTokens.Revoke(payload["all"] = True)
+    item = New Collection
+    item["message"] = If(payload["all"] = True, "All login tokens have been invalidated.", "You've been logged out!")
+    Reply(200, item)
+    Return
+  Endif
+  If Env["WITH_API"] <> "true" Then
+    Reply(403, ErrorData("API is disabled; set WITH_API=true"))
+    Return
+  Endif
+  fields = Split(Request.Path, "/", "", True)
+  If fields.Count = 4 Then
+    If fields[0] = "api" And fields[1] = "users" And fields[3] = "boards" And Request.Method = "GET" Then
+      If fields[2] <> username Then
+        Reply(403, ErrorData("User not accessible"))
+        Return
+      Endif
+      r = KanbanStore.Boards(False)
+      For Each r
+        item = New Collection
+        item["_id"] = CStr(r!id)
+        item["title"] = r!title
+        rows.Add(item)
+      Next
+      Reply(200, rows)
+      Return
+    Endif
+  Endif
+  If fields.Count = 3 Then
+    If fields[0] = "api" And fields[1] = "boards" And Request.Method = "GET" Then
+      Try KanbanStore.RequireBoard(PositiveId(fields[2]))
+      If Error Then
+        Reply(404, ErrorData("Board not found"))
+        Return
+      Endif
+      r = WorkspaceStore.Record(PositiveId(fields[2]), "board", PositiveId(fields[2]))
+      item = New Collection
+      item["_id"] = CStr(r!id)
+      item["title"] = r!title
+      item["archived"] = r!archived
+      Reply(200, item)
+      Return
+    Endif
+  Endif
+  Reply(404, ErrorData("API route not found"))
+Catch
+  Reply(500, ErrorData("API request failed"))
+End
+
+Private Function PositiveId(value As String) As Integer
+  Dim index As Integer
+  Dim id As Integer
+  If Not value Or Len(value) > 10 Then Error.Raise("Invalid ID")
+  For index = 1 To Len(value)
+    If InStr("0123456789", Mid(value, index, 1)) = 0 Then Error.Raise("Invalid ID")
+  Next
+  id = CInt(value)
+  If id <= 0 Then Error.Raise("Invalid ID")
+  Return id
+End
+
+Private Function JsonBody() As Collection
+  Dim text As String
+  Dim data As Variant
+  If LCase(Split(Request.ContentType, ";")[0]) <> "application/json" Then
+    Reply(415, ErrorData("Expected application/json"))
+    Return Null
+  Endif
+  If Request.ContentLength <= 0 Or Request.ContentLength > 1048576 Then
+    Reply(400, ErrorData("Invalid JSON body length"))
+    Return Null
+  Endif
+  text = Read Request.ContentLength
+  data = JSON.Decode(text)
+  If Not (data Is Collection) Then
+    Reply(400, ErrorData("Expected a JSON object"))
+    Return Null
+  Endif
+  Return data
+Catch
+  Reply(400, ErrorData("Invalid JSON body"))
+  Return Null
+End
+
+Private Function ErrorData(message As String) As Collection
+  Dim data As New Collection
+  data["error"] = message
+  Return data
+End
+
+Private Sub Reply(status As Integer, data As Variant)
+  Dim text As String = JSON.Encode(data)
+  Print "Status: " & CStr(status)
+  Print "Content-Type: application/json; charset=utf-8"
+  Print "Cache-Control: no-store"
+  Print
+  Print text
+End

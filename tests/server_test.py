@@ -57,6 +57,22 @@ class ServerPortTest(unittest.TestCase):
             constructor.assert_called_once()
 
 
+class LoginThrottleTest(unittest.TestCase):
+    def test_limit_window_success_reset_and_capacity(self):
+        clock = [100.0]
+        gate = server.LoginThrottle(clock=lambda: clock[0], limit=2, window=60, capacity=2)
+        self.assertEqual(gate.admit('peer-a'), 0)
+        self.assertEqual(gate.admit('peer-a'), 0)
+        self.assertGreater(gate.admit('peer-a'), 0)
+        self.assertEqual(gate.admit('peer-b'), 0)
+        self.assertGreater(gate.admit('peer-c'), 0, 'capacity must not evict a blocked peer')
+        gate.success('peer-a')
+        self.assertEqual(gate.admit('peer-a'), 0)
+        clock[0] += 61
+        self.assertEqual(gate.admit('peer-c'), 0)
+        self.assertLessEqual(len(gate.attempts), 2)
+
+
 class NativeOriginTest(unittest.TestCase):
     def request(self, method='POST', path='/x', headers=None, environment=None):
         cls = server.handler(Path('/unused.gambas'), 'unused-runner', environment or {})

@@ -1,0 +1,96 @@
+' Opaque Bearer credentials. Only SHA-256 token digests are persisted.
+Export
+Private $db As Connection
+
+Private Sub OpenStore()
+  Dim t As Table
+  Dim r As Result
+  $db = WebDatabase.OpenConnection()
+  If Not $db.Tables.Exist("api_tokens") Then
+    t = $db.Tables.Add("api_tokens")
+    t.Fields.Add("digest", db.String, 64)
+    t.Fields.Add("username", db.String, 255)
+    t.Fields.Add("created_at", db.Date)
+    t.Fields.Add("expires_at", db.Date)
+    t.PrimaryKey = ["digest"]
+    t.Update()
+  Endif
+  If Not $db.Tables.Exist("api_auth_config") Then
+    t = $db.Tables.Add("api_auth_config")
+    t.Fields.Add("id", db.Integer)
+    t.Fields.Add("dummy_hash", db.String, 255)
+    t.PrimaryKey = ["id"]
+    t.Update()
+  Endif
+  r = $db.Find("api_auth_config", "id = &1", 1)
+  If Not r.Available Then
+    r = $db.Create("api_auth_config")
+    r["id"] = 1
+    r["dummy_hash"] = Crypt.Sha256("weba-invalid-account-timing-check")
+    r.Update()
+  Endif
+End
+
+Public Function CheckPassword(username As String, password As String) As Boolean
+  Dim r As Result
+  Dim found As Boolean
+  Dim hash As String
+  Dim mismatch As Boolean
+  OpenStore()
+  r = $db.Find("users", "username = &1", username)
+  found = r.Available
+  If found Then hash = r!password
+  r = $db.Find("api_auth_config", "id = &1", 1)
+  If Not found Then hash = r!dummy_hash
+  mismatch = Crypt.Check(password, hash)
+  Return found And Not mismatch
+End
+
+Public Function Issue(username As String) As Collection
+  Dim r As Result
+  Dim data As New Collection
+  Dim token As String = Env["WEBA_API_NEW_TOKEN"]
+  Dim digest As String = Env["WEBA_API_NEW_DIGEST"]
+  Dim expires As Date = DateAdd(Now, gb.Day, 90)
+  If Env["WEBA_API_REQUEST"] <> "1" Or Len(token) <> 43 Or Len(digest) <> 64 Then Error.Raise("Token entropy unavailable")
+  OpenStore()
+  If Not WebDatabase.UserExists(username) Then Error.Raise("Unknown user")
+  $db.Delete("api_tokens", "expires_at <= &1", Now)
+  r = $db.Create("api_tokens")
+  r["digest"] = digest
+  r["username"] = username
+  r["created_at"] = Now
+  r["expires_at"] = expires
+  r.Update()
+  data["id"] = username
+  data["token"] = token
+  data["tokenExpires"] = Env["WEBA_API_EXPIRES_ISO"]
+  Return data
+End
+
+Public Function Authenticate() As String
+  Dim r As Result
+  Dim digest As String = Env["WEBA_API_TOKEN_DIGEST"]
+  If Env["WEBA_API_REQUEST"] <> "1" Or Len(digest) <> 64 Then Return ""
+  OpenStore()
+  r = $db.Find("api_tokens", "digest = &1 AND expires_at > &2", digest, Now)
+  If Not r.Available Then Return ""
+  If Not WebDatabase.UserExists(r!username) Then Return ""
+  Return r!username
+End
+
+Public Sub Revoke(allTokens As Boolean)
+  Dim username As String = Authenticate()
+  If Not username Then Error.Raise("Invalid credentials")
+  OpenStore()
+  If allTokens Then
+    $db.Delete("api_tokens", "username = &1", username)
+  Else
+    $db.Delete("api_tokens", "digest = &1 AND username = &2", Env["WEBA_API_TOKEN_DIGEST"], username)
+  Endif
+End
+
+Public Sub RevokeUser(username As String)
+  OpenStore()
+  $db.Delete("api_tokens", "username = &1", username)
+End

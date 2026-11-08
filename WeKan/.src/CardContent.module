@@ -127,7 +127,7 @@ Public Function Save(boardId As Integer, cardId As Integer, entryId As Integer, 
     r = $db.Create("kb_entries")
     r["board_id"] = boardId
     r["card_id"] = cardId
-    r["author"] = Session["username"]
+    r["author"] = WebIdentity.Username
     r["created_at"] = Now
   Endif
   r["kind"] = kind
@@ -157,7 +157,7 @@ Public Function NewSubtask(boardId As Integer, cardId As Integer, title As Strin
   RequireCard(boardId, cardId)
   parent = WorkspaceStore.Record(boardId, "card", cardId)
   $db.Begin()
-  child = KanbanStore.SaveCard(boardId, 0, title, "", parent!lane, parent!status, Session["username"], "", "", KanbanStore.CardListId(boardId, cardId))
+  child = KanbanStore.SaveCard(boardId, 0, title, "", parent!lane, parent!status, WebIdentity.Username, "", "", KanbanStore.CardListId(boardId, cardId))
   Save(boardId, cardId, 0, "subtask", title, "", 0, False, child)
   $db.Commit()
   Return child
@@ -170,14 +170,14 @@ End
 Public Sub StartTimer(boardId As Integer, cardId As Integer)
   Dim r As Result
   RequireCard(boardId, cardId)
-  r = $db.Find("kb_entries", "board_id = &1 AND card_id = &2 AND kind = &3 AND author = &4 AND done = &5", boardId, cardId, "time", Session["username"], False)
+  r = $db.Find("kb_entries", "board_id = &1 AND card_id = &2 AND kind = &3 AND author = &4 AND done = &5", boardId, cardId, "time", WebIdentity.Username, False)
   If r.Available Then Error.Raise("Timer already running")
   r = $db.Create("kb_entries")
   r["board_id"] = boardId
   r["card_id"] = cardId
   r["kind"] = "time"
   r["title"] = "Running timer"
-  r["author"] = Session["username"]
+  r["author"] = WebIdentity.Username
   r["created_at"] = Now
   r["amount"] = 0
   r["done"] = False
@@ -187,7 +187,7 @@ End
 Public Sub StopTimer(boardId As Integer, cardId As Integer)
   Dim r As Result
   RequireCard(boardId, cardId)
-  r = $db.Edit("kb_entries", "board_id = &1 AND card_id = &2 AND kind = &3 AND author = &4 AND done = &5", boardId, cardId, "time", Session["username"], False)
+  r = $db.Edit("kb_entries", "board_id = &1 AND card_id = &2 AND kind = &3 AND author = &4 AND done = &5", boardId, cardId, "time", WebIdentity.Username, False)
   If Not r.Available Then Error.Raise("No running timer")
   r["amount"] = Max(0, DateDiff(r!created_at, Now, gb.Second)) / 60
   r["done"] = True
@@ -212,7 +212,7 @@ Public Function AddFile(boardId As Integer, cardId As Integer, filename As Strin
   r["card_id"] = cardId
   r["filename"] = filename
   r["content"] = data
-  r["author"] = Session["username"]
+  r["author"] = WebIdentity.Username
   r["created_at"] = Now
   r.Update()
   id = $db.LastInsertId

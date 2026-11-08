@@ -150,18 +150,18 @@ Private Sub Init()
 End
 
 Private Sub SignedInRequired()
-  If Not Session["username"] Then Error.Raise("Please sign in")
-  If Not UserExists(Session["username"]) Then Error.Raise("Unknown user")
+  If Not WebIdentity.Username Then Error.Raise("Please sign in")
+  If Not UserExists(WebIdentity.Username) Then Error.Raise("Unknown user")
 End
 
 Private Sub AdminRequired()
   SignedInRequired()
-  If Not GetIsAdmin(Session["username"]) Then Error.Raise("Administrator required")
+  If Not GetIsAdmin(WebIdentity.Username) Then Error.Raise("Administrator required")
 End
 
 Private Sub AdminOrOwnRequired(username As String)
   SignedInRequired()
-  If username = Session["username"] Then Return
+  If username = WebIdentity.Username Then Return
   AdminRequired()
 End
 
@@ -207,8 +207,9 @@ End
 Public Sub DeleteUser(username As String)
   Init()
   AdminRequired()
-  If username = Session["username"] Then Error.Raise("Cannot delete your own account")
+  If username = WebIdentity.Username Then Error.Raise("Cannot delete your own account")
   $hConn.Exec("DELETE FROM users WHERE username = &1", username)
+  ApiTokens.RevokeUser(username)
 End
 
 Public Function GetFullname(username As String) As String
@@ -232,6 +233,7 @@ Public Function SetPassword(username As String, oldpass As String, newpass As St
   RequirePassword(newpass)
   If Not Login(username, oldpass) Then Return False
   $hConn.Exec("UPDATE users SET password = &1 WHERE username = &2", Crypt.Sha256(newpass), username)
+  ApiTokens.RevokeUser(username)
   Return True
 End
 
@@ -242,12 +244,13 @@ Public Function ForceResetPassword(adminuser As String, username As String, newp
   RequirePassword(newpass)
   If Not UserExists(username) Then Return False
   $hConn.Exec("UPDATE users SET password = &1 WHERE username = &2", Crypt.Sha256(newpass), username)
+  ApiTokens.RevokeUser(username)
   Return True
 End
 
 Public Sub SetIsAdmin(username As String, is_admin As Boolean)
   Init()
   AdminRequired()
-  If username = Session["username"] And Not is_admin Then Error.Raise("Cannot remove your own administrator role")
+  If username = WebIdentity.Username And Not is_admin Then Error.Raise("Cannot remove your own administrator role")
   $hConn.Exec("UPDATE users SET admin = &1 WHERE username = &2", is_admin, username)
 End

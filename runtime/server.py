@@ -3,6 +3,11 @@
 import argparse
 import errno
 import ipaddress
+import hashlib
+import secrets
+import threading
+import time
+from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import os
@@ -10,10 +15,41 @@ import subprocess
 import urllib.parse
 
 
+class LoginThrottle:
+    """Bounded per-peer login window; forwarded identity headers are untrusted."""
+    def __init__(self, clock=time.monotonic, limit=5, window=60, capacity=4096):
+        self.clock, self.limit, self.window, self.capacity = clock, limit, window, capacity
+        self.attempts = {}
+        self.lock = threading.Lock()
+
+    def admit(self, peer):
+        now = self.clock()
+        with self.lock:
+            for key in list(self.attempts):
+                self.attempts[key] = [stamp for stamp in self.attempts[key] if stamp > now - self.window]
+                if not self.attempts[key]:
+                    del self.attempts[key]
+            stamps = self.attempts.get(peer, [])
+            if len(stamps) >= self.limit:
+                return max(1, int(self.window - (now - stamps[0])) + 1)
+            if peer not in self.attempts and len(self.attempts) >= self.capacity:
+                return int(self.window)
+            self.attempts.setdefault(peer, []).append(now)
+            return 0
+
+    def success(self, peer):
+        with self.lock:
+            self.attempts.pop(peer, None)
+
+
 def handler(application, runner, environment):
+    login_throttle = LoginThrottle()
     class GambasHandler(BaseHTTPRequestHandler):
         def do_GET(self): self.run_cgi()
         def do_POST(self): self.run_cgi()
+        def do_PUT(self): self.run_cgi()
+        def do_DELETE(self): self.run_cgi()
+        def do_PATCH(self): self.run_cgi()
         def end_headers(self):
             self.send_header('X-Content-Type-Options', 'nosniff')
             self.send_header('X-Frame-Options', 'DENY')
@@ -98,8 +134,32 @@ def handler(application, runner, environment):
                     return
             if not self._request_allowed(url._replace(path=decoded_path)):
                 return
+            api = decoded_path.lower() == '/api' or decoded_path.lower().startswith('/api/') or decoded_path.lower() in ('/users/login', '/users/logout')
+            login = decoded_path == '/users/login' and self.command == 'POST'
+            if login:
+                retry = login_throttle.admit(self.client_address[0])
+                if retry:
+                    self.send_response(429)
+                    self.send_header('Content-Type', 'application/json')
+                    self.send_header('Retry-After', str(retry))
+                    self.send_header('Cache-Control', 'no-store')
+                    self.end_headers()
+                    self.wfile.write(b'{"error":"Too many failed login attempts. Try again later."}')
+                    return
             env = environment.copy()
-            env.update(REQUEST_METHOD=self.command, SCRIPT_NAME='/', PATH_INFO=url.path,
+            env['WEBA_API_REQUEST'] = '1' if api else '0'
+            if api:
+                token = secrets.token_urlsafe(32)
+                env['WEBA_API_NEW_TOKEN'] = token
+                env['WEBA_API_NEW_DIGEST'] = hashlib.sha256(token.encode()).hexdigest()
+                env['WEBA_API_TOKEN_DIGEST'] = ''
+                env['WEBA_API_EXPIRES_ISO'] = (datetime.now(timezone.utc) + timedelta(days=90)).isoformat().replace('+00:00', 'Z')
+                authorization = self.headers.get('Authorization', '')
+                if authorization.lower().startswith('bearer '):
+                    raw = authorization[7:]
+                    if len(raw) == 43 and all(c in 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_' for c in raw):
+                        env['WEBA_API_TOKEN_DIGEST'] = hashlib.sha256(raw.encode()).hexdigest()
+            env.update(REQUEST_METHOD=self.command, SCRIPT_NAME='/', PATH_INFO=decoded_path,
                        QUERY_STRING=url.query, SERVER_NAME=self.server.server_address[0],
                        SERVER_PORT=str(self.server.server_port), SERVER_PROTOCOL='HTTP/1.1',
                        REMOTE_ADDR=self.client_address[0], GATEWAY_INTERFACE='CGI/1.1')
@@ -126,7 +186,8 @@ def handler(application, runner, environment):
                     env.update(QUERY_STRING=urllib.parse.urlencode({'c': fields['c'][0]}, quote_via=urllib.parse.quote),
                                REQUEST_METHOD='GET', CONTENT_LENGTH='0', CONTENT_TYPE='')
                     body = b''
-                result = subprocess.run([runner, str(application)], input=body,
+                command = [runner, '-s', 'RestApi', str(application)] if api else [runner, str(application)]
+                result = subprocess.run(command, input=body,
                                         env=env, capture_output=True, timeout=30)
                 headers, separator, body = result.stdout.partition(b'\r\n\r\n')
                 if not separator: headers, separator, body = result.stdout.partition(b'\n\n')
@@ -139,6 +200,8 @@ def handler(application, runner, environment):
                     if key.lower() == 'status': status = int(value.strip().split()[0])
                     elif key.lower() not in ['content-length', 'connection', 'transfer-encoding']:
                         parsed.append((key, value.strip()))
+                if login and status == 200:
+                    login_throttle.success(self.client_address[0])
                 self.send_response(status)
                 for key, value in parsed: self.send_header(key, value)
                 self.send_header('Content-Length', str(len(body)))

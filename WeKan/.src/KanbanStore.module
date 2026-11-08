@@ -84,20 +84,20 @@ Public Sub OpenDatabase()
 End
 
 Private Sub RequireUser()
-  If Not Session["username"] Then Error.Raise("Please sign in")
-  If Not WebDatabase.UserExists(Session["username"]) Then Error.Raise("Unknown user")
+  If Not WebIdentity.Username Then Error.Raise("Please sign in")
+  If Not WebDatabase.UserExists(WebIdentity.Username) Then Error.Raise("Unknown user")
   OpenDatabase()
 End
 
 Public Function Boards(Optional archived As Boolean = False) As Result
   RequireUser()
-  Return $db.Find("kb_boards", "owner = &1 AND archived = &2 ORDER BY title", Session["username"], archived)
+  Return $db.Find("kb_boards", "owner = &1 AND archived = &2 ORDER BY title", WebIdentity.Username, archived)
 End
 
 Public Sub RequireBoard(boardId As Integer)
   Dim r As Result
   RequireUser()
-  r = $db.Find("kb_boards", "id = &1 AND owner = &2", boardId, Session["username"])
+  r = $db.Find("kb_boards", "id = &1 AND owner = &2", boardId, WebIdentity.Username)
   If Not r.Available Then Error.Raise("Board not accessible")
 End
 
@@ -106,7 +106,7 @@ Public Function AddBoard(title As String) As Integer
   RequireUser()
   If Not Trim(title) Then Error.Raise("Enter a board title")
   r = $db.Create("kb_boards")
-  r["owner"] = Session["username"]
+  r["owner"] = WebIdentity.Username
   r["title"] = Trim(title)
   r["archived"] = False
   r.Update()
@@ -189,7 +189,7 @@ Public Sub Activity(boardId As Integer, message As String, Optional kind As Stri
   RequireBoard(boardId)
   r = $db.Create("kb_activity")
   r["board_id"] = boardId
-  r["actor"] = Session["username"]
+  r["actor"] = WebIdentity.Username
   r["message"] = message
   r["created_at"] = Now
   r.Update()

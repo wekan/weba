@@ -2,6 +2,16 @@
 
 This work adds the following features and fixes:
 
+- Add Gambas REST login/logout and owner-scoped board reads with independent
+  Bearer identity, 256-bit random tokens stored only as SHA-256 digests, expiry,
+  presented/all-token logout and password-change/reset revocation. Rate-limit
+  login attempts by direct peer using a bounded window; use a dummy password
+  check for unknown accounts. Honor WITH_API for data routes and add no-store
+  JSON responses. Validate cookies cannot authenticate REST, foreign-board
+  reads fail, token persistence/revocation/expiry/reset work, and disabled API
+  paths reject encoded/case variants in real source/archive runs. Other REST
+  endpoints, email/LDAP/2FA and shared-board roles remain pending.
+  Thanks to xet7.
 - Carry native Gambas commands in POST bodies instead of credential-bearing
   URLs. Require a non-simple native request header, validate authority/origin
   and Fetch Metadata, reject URL commands and protect uploads/callbacks. Add
