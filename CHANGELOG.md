@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Document the native board catalog service, effective principal, bounded
+  results, UTF-8 search and preference cleanup. Describe the 54-case original
+  method comparison and its SQL adapter, plus pending UI, raw-JSON, custom order,
+  workspace/facet and full original-suite contracts. Thanks to xet7.
+
 - Add the native current-user BoardCatalog paging and sort-preference service.
   Guard visible boards, literal UTF-8 search, personal stars, stable title/ID
   sorting and bounded returned pages; clear preferences on account deletion and

@@ -431,6 +431,23 @@ isolation. The two-user `overview-live.browser.cjs`, included in test-live, uses
 native menus and REST membership changes. These are additional native tests;
 original test 39 sorting/search/server-pagination requirements remain incomplete.
 
+`BoardCatalog` now supplies a native service for current-user board paging and
+sort preferences. It returns IDs/counts with stable title/ID ordering, literal
+UTF-8 case-insensitive name search, a 25-result default and a 200-result ceiling.
+Search spans the implemented categories; unimplemented workspace/template menus
+return no boards without a search. Account deletion/recreation clears saved sort
+preferences. Page evaluation enumerates authorized titles on the server; it does
+not yet optimize counting/slicing into driver-specific SQL queries.
+
+Native tests cover disjoint pages, 205-board limits, Unicode/literal search,
+identity/invalid-option boundaries and preference isolation/cleanup. An explicit
+SQL-to-document fixture adapter compares 54 results with the original
+getAllBoardsPage method body and actual source visibility/facet helpers. Meteor
+parameter checks, network authentication, UI callbacks and full workspace/facet
+semantics are not established by that comparison. This service has no new public
+HTTP endpoint; native sort/search/paging controls and custom drag order still
+need wiring. Raw JSON callers must preserve explicit null keys before validation.
+
 Polling cost grows with visible cards. Signed-in views still emit native heartbeat
 requests; visible people/detail panes are checked even without an active board.
 Efficient idle/background suspension, navigation updates while another board or

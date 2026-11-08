@@ -12,7 +12,7 @@ and in the [README](../README.md), rather than in duplicate instruction files.
 | Login and registration | `WeKan/.src/WebformLogin.class` and `.webform` |
 | Native navigation, editors and live board checks | `WeKan/.src/WebformMain.class`, `.webform`, `BoardLive.module`, `CardDraft.module`, `DetailLive.module`, `EntryDraft.module`, `PeopleLive.module` |
 | Accounts, sessions and connection | `WeKan/.src/WebDatabase.module`, `WebIdentity.module`, `ApiTokens.module` |
-| Board/card persistence and permissions | `KanbanStore.module`, `BoardAccess.module`, `ApiMemberRoles.module` |
+| Board/card persistence and permissions | `KanbanStore.module`, `BoardAccess.module`, `ApiMemberRoles.module`, `BoardCatalog.module` |
 | REST routing and projections | `RestApi.module`, `BoardRestData.module` |
 | UTC dates, archive history and change clocks | `CardDates.module`, `CardArchive.module`, `ItemChanges.module` |
 | Workspace menus, transfer and rich content | `WorkspaceStore.module`, `WorkspaceActions.module`, `BoardTransfer.module`, `CardContent.module` |
@@ -197,3 +197,32 @@ leave tile DOM nodes intact and independent detail/people polling continues.
 Native scope/privacy and two-user menu/membership/archive tests cover these
 paths. Full original All Boards custom sorting, search, pagination and workspace
 categories, other open-view navigation reactivity and idle cost remain pending.
+
+
+## All Boards catalog service
+
+`BoardCatalog.Page` accepts native options for search, title sort, category, page
+and per-page count. The current WebIdentity supplies the principal; no userId
+option is accepted. Missing/stale identities return empty pages. Native global
+administration does not bypass membership. Search is literal and uses UTF-8
+`String.LCase`; stable SQL title/ID ordering precedes server-side count/slicing.
+Default/maximum returned sizes are 25/200. Archived pages are an explicit native
+extension, not the default original All Boards method contract.
+
+`SortBy`/`SetSortBy` read and write only the principal's preference. Writes lock
+and recheck that account within a transaction. Account cleanup removes these
+rows both on deletion and before a reused name is created. Schema/operations use
+portable Gambas DB APIs; SQLite/Linux ARM64 is the verified driver/platform.
+
+`BoardCatalogTest` covers invalid native options, explicit null sentinels, stale
+sessions, stable/disjoint pages, 205-board limits, Unicode/literal search and
+preference cleanup. Ordinary JSON decode can drop null keys; a future JSON
+transport must retain them before passing options to this function. No new HTTP
+endpoint or raw-JSON service contract is provided by this step.
+
+The source conformance test executes the original getAllBoardsPage body with
+actual visibility/facet helpers on independently read native SQL rows. Its
+explicit adapter maps implicit native owners to active document memberships and
+supplies in-memory Mongo query operations for these fixtures. Only valid source
+parameters are compared; Meteor validation, wire/UI callbacks, organizations,
+teams, public templates, workspaces/facets and custom drag order remain open.

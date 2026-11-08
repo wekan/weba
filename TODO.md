@@ -6,6 +6,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Current UI/API/security work
 
+- Documented the native catalog service, principal and result bounds, UTF-8
+  search and account preference cleanup. Recorded the 54-case source-method
+  adapter and explicit UI/raw-JSON/custom-order/workspace/facet limitations.
+
 - Documented overview snapshot boundaries, capture/refresh ordering, stable idle
   tiles and the native/two-user browser evidence. Retained all original spec 39
   sorting/search/pagination/workspace requirements and remaining view/polling gaps.

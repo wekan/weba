@@ -1,4 +1,7 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Explain board catalog scope/paging/preferences and source
+  comparison evidence; retain UI, raw-JSON, custom order, workspace/facet and
+  full original-suite gaps.
 - Board catalog service: Add current-user sorted pages, bounded counts/results,
   literal UTF-8 search and personal sort preferences with account cleanup.
   Verify native boundaries/limits and 54 original-method source comparisons;
