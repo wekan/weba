@@ -1,0 +1,130 @@
+' Capability/negative tests use real native stores, not a mock permission helper.
+Public Sub Main()
+  Dim boardId As Integer
+  Dim listId As Integer
+  Dim laneId As Integer
+  Dim cardId As Integer
+  Dim commentId As Integer
+  Dim copied As Integer
+  Dim r As Result
+  Dim username As String
+  Dim denied As Boolean
+  For Each username In ["access-owner", "access-editor", "access-reader", "access-comment", "access-no-comment", "access-admin", "access-outside"]
+    WebDatabase.Register(username, "x")
+  Next
+  Session["username"] = "access-owner"
+  boardId = KanbanStore.AddBoard("Shared")
+  r = KanbanStore.Lanes(boardId)
+  laneId = r!id
+  r = KanbanStore.Lists(boardId, "Default")
+  listId = r!id
+  cardId = KanbanStore.SaveCard(boardId, 0, "Card", "Body", "Default", "Todo", "access-owner", "", "", listId)
+  commentId = CardContent.Save(boardId, cardId, 0, "comment", "", "Owner comment", 0, False, 0)
+  BoardAccess.SetMember(boardId, "access-editor", "normal")
+  BoardAccess.SetMember(boardId, "access-reader", "read-only")
+  BoardAccess.SetMember(boardId, "access-comment", "comment-only")
+  BoardAccess.SetMember(boardId, "access-no-comment", "no-comments")
+  BoardAccess.SetMember(boardId, "access-admin", "board-admin")
+  r = BoardAccess.Members(boardId)
+  If r.Count <> 6 Then Error.Raise("Shared member list lost owner/members")
+  WorkspaceStore.SetSetting(boardId, "board", boardId, "star", "1")
+  Session["username"] = "access-reader"
+  r = KanbanStore.Boards()
+  If r.Count <> 1 Then Error.Raise("Shared board not listed")
+  r = KanbanStore.Cards(boardId)
+  If r.Count <> 1 Then Error.Raise("Read-only card read failed")
+  If WorkspaceStore.Setting(boardId, "board", boardId, "star") = "1" Then Error.Raise("Owner's personal star leaked")
+  WorkspaceStore.SetSetting(boardId, "board", boardId, "star", "0")
+  Try KanbanStore.SaveCard(boardId, cardId, "Changed", "Body", "Default", "Todo", "access-owner", "", "", listId)
+  denied = Error
+  If Not denied Then Error.Raise("Read-only card edit accepted")
+  Try KanbanStore.ArchiveCard(boardId, cardId, True)
+  denied = Error
+  If Not denied Then Error.Raise("Read-only card archive accepted")
+  Try KanbanStore.MoveCard(boardId, cardId, "Default", "#" & CStr(listId), 0)
+  denied = Error
+  If Not denied Then Error.Raise("Read-only move accepted")
+  Try KanbanStore.AddList(boardId, "Default", "Denied", "")
+  denied = Error
+  If Not denied Then Error.Raise("Read-only list creation accepted")
+  Try WorkspaceStore.Rename(boardId, "list", listId, "Denied")
+  denied = Error
+  If Not denied Then Error.Raise("Read-only container rename accepted")
+  Try WorkspaceStore.SetArchived(boardId, "lane", laneId, True)
+  denied = Error
+  If Not denied Then Error.Raise("Read-only container archive accepted")
+  Try WorkspaceStore.SetSetting(boardId, "card", cardId, "color", "#123456")
+  denied = Error
+  If Not denied Then Error.Raise("Read-only card setting accepted")
+  Try WorkspaceStore.Copy(boardId, "card", cardId, "Denied")
+  denied = Error
+  If Not denied Then Error.Raise("Read-only same-board copy accepted")
+  Try CardContent.Save(boardId, cardId, 0, "comment", "", "Denied", 0, False, 0)
+  denied = Error
+  If Not denied Then Error.Raise("Read-only comment accepted")
+  Try CardContent.AddFile(boardId, cardId, "denied.txt", "data")
+  denied = Error
+  If Not denied Then Error.Raise("Read-only upload accepted")
+  Try CardContent.StartTimer(boardId, cardId)
+  denied = Error
+  If Not denied Then Error.Raise("Read-only timer accepted")
+  Try BoardAccess.SetMember(boardId, "access-reader", "board-admin")
+  denied = Error
+  If Not denied Then Error.Raise("Read-only member escalation accepted")
+  copied = WorkspaceStore.Copy(boardId, "board", boardId, "Readable copy")
+  r = KanbanStore.Cards(copied)
+  If r.Count <> 1 Then Error.Raise("Copy into own board lost readable content")
+  Session["username"] = "access-editor"
+  KanbanStore.SaveCard(boardId, cardId, "Edited", "Body", "Default", "Todo", "access-owner", "", "", listId)
+  Try WorkspaceStore.Rename(boardId, "board", boardId, "Denied")
+  denied = Error
+  If Not denied Then Error.Raise("Normal member changed board settings")
+  Try CardContent.Save(boardId, cardId, commentId, "comment", "", "Changed owner comment", 0, False, 0)
+  denied = Error
+  If Not denied Then Error.Raise("Normal member edited another author's comment")
+  Session["username"] = "access-comment"
+  copied = CardContent.Save(boardId, cardId, 0, "comment", "", "Comment-only reply", 0, False, 0)
+  CardContent.DeleteEntry(boardId, cardId, copied)
+  Try KanbanStore.SaveCard(boardId, cardId, "Denied", "", "Default", "Todo", "", "", "", listId)
+  denied = Error
+  If Not denied Then Error.Raise("Comment-only card edit accepted")
+  Session["username"] = "access-no-comment"
+  KanbanStore.SaveCard(boardId, cardId, "No comments editor", "Body", "Default", "Todo", "access-owner", "", "", listId)
+  Try CardContent.Save(boardId, cardId, 0, "comment", "", "Denied", 0, False, 0)
+  denied = Error
+  If Not denied Then Error.Raise("No-comments member commented")
+  copied = WorkspaceStore.Copy(boardId, "card", cardId, "No-comments copy")
+  r = CardContent.Entries(boardId, copied, "comment")
+  If r.Count <> 1 Then Error.Raise("No-comments copy lost existing comments")
+  Session["username"] = "access-admin"
+  BoardAccess.SetMember(boardId, "access-reader", "normal")
+  BoardAccess.RemoveMember(boardId, "access-admin")
+  If BoardAccess.Role(boardId) Then Error.Raise("Removed administrator retained access")
+  Session["username"] = "access-owner"
+  If WorkspaceStore.Setting(boardId, "board", boardId, "star") <> "1" Then Error.Raise("Member changed owner's star")
+  Try BoardAccess.SetMember(boardId, "access-owner", "read-only")
+  denied = Error
+  If Not denied Then Error.Raise("Owner lost protected administrator role")
+  Try BoardAccess.SetMember(boardId, "access-outside", "unknown")
+  denied = Error
+  If Not denied Then Error.Raise("Unknown role accepted")
+  r = WebDatabase.OpenConnection().Create("kb_members")
+  r["board_id"] = boardId
+  r["username"] = "access-outside"
+  r["role"] = "unknown"
+  r.Update()
+  Session["username"] = "access-outside"
+  r = KanbanStore.Boards()
+  If r.Count Then Error.Raise("Private shared board listed to outsider")
+  Try WorkspaceStore.Record(boardId, "card", cardId)
+  denied = Error
+  If Not denied Then Error.Raise("Outsider read private card")
+  Session["username"] = "access-owner"
+  WorkspaceStore.SetArchived(boardId, "board", boardId, True)
+  WorkspaceActions.DeleteArchived(boardId, "board", boardId, "Shared")
+  r = WebDatabase.OpenConnection().Find("kb_members", "board_id = &1", boardId)
+  If r.Count Then Error.Raise("Deleted board left memberships")
+  r = WebDatabase.OpenConnection().Find("kb_user_meta", "board_id = &1", boardId)
+  If r.Count Then Error.Raise("Deleted board left personal metadata")
+  Print "Shared boards: read/write/comment/admin boundaries, negative store actions, personal preferences and removal passed"
+End

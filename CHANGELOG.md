@@ -2,6 +2,15 @@
 
 This work adds the following features and fixes:
 
+- Add shared private-board membership and server-side capability checks for
+  board-admin, normal, no-comments, comment-only and read-only roles. Cover
+  card/container mutations, comments and authorship, uploads, timers, cross-board
+  moves, archives and deletion; fail closed for unsupported/unknown roles.
+  Preserve legacy owners as administrators, transact member changes and isolate
+  stars/watch preferences per user. Keep content copying separate from comment
+  authoring. Add real SQLite negative store tests and a snapshot guard against
+  the authoritative WeKan capability matrix. Assigned-only/Worker restrictions
+  and the native member controls are the next steps. Thanks to xet7.
 - Reject dot-only path segments, encoded traversal/backslashes, control bytes
   and excessively nested URL encoding before CGI. Keep Gambas static asset,
   library and icon paths from escaping the public asset boundary. Test no-runner

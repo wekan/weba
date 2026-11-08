@@ -1,0 +1,128 @@
+' Shared boards use the same capability matrix as WeKan; unknown roles deny.
+Export
+Private $db As Connection
+Private $roles As Collection
+
+Public Sub OpenStore()
+  Dim t As Table
+  If $db Then Return
+  KanbanStore.OpenDatabase()
+  $db = WebDatabase.OpenConnection()
+  $roles = JSON.Decode(File.Load(".public/board-roles.json"))
+  If Not $db.Tables.Exist("kb_members") Then
+    t = $db.Tables.Add("kb_members")
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("username", db.String, 255)
+    t.Fields.Add("role", db.String, 64)
+    t.PrimaryKey = ["board_id", "username"]
+    t.Update()
+  Endif
+  If Not $db.Tables.Exist("kb_user_meta") Then
+    t = $db.Tables.Add("kb_user_meta")
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("kind", db.String, 16)
+    t.Fields.Add("item_id", db.Integer)
+    t.Fields.Add("username", db.String, 255)
+    t.Fields.Add("setting", db.String, 64)
+    t.Fields.Add("value", db.String)
+    t.PrimaryKey = ["board_id", "kind", "item_id", "username", "setting"]
+    t.Update()
+  Endif
+End
+
+Public Function Role(boardId As Integer) As String
+  Dim r As Result
+  If Not WebIdentity.Username Then Return ""
+  If Not WebDatabase.UserExists(WebIdentity.Username) Then Return ""
+  OpenStore()
+  r = $db.Find("kb_boards", "id = &1", boardId)
+  If Not r.Available Then Return ""
+  If r!owner = WebIdentity.Username Then Return "board-admin"
+  r = $db.Find("kb_members", "board_id = &1 AND username = &2", boardId, WebIdentity.Username)
+  If Not r.Available Then Return ""
+  If ["board-admin", "normal", "no-comments", "comment-only", "read-only"].Find(r!role) < 0 Then Return ""
+  Return r!role
+End
+
+Public Function Can(boardId As Integer, capability As String) As Boolean
+  Dim roleKey As String = Role(boardId)
+  Dim caps As Collection
+  If Not roleKey Then Return False
+  caps = $roles[roleKey]
+  Return caps[capability] = True
+End
+
+Public Sub RequireRead(boardId As Integer)
+  If Not Role(boardId) Then Error.Raise("Board not accessible")
+End
+
+Public Sub Require(boardId As Integer, capability As String)
+  RequireRead(boardId)
+  If Not Can(boardId, capability) Then Error.Raise("Board permission denied")
+End
+
+Public Sub RequireActivity(boardId As Integer)
+  RequireRead(boardId)
+  If Not Can(boardId, "write") And Not Can(boardId, "comment") And Not Can(boardId, "moveCard") Then Error.Raise("Board permission denied")
+End
+
+Public Sub SetMember(boardId As Integer, username As String, role As String)
+  Dim r As Result
+  Dim transaction As Boolean
+  Dim failure As String
+  Require(boardId, "manageBoard")
+  ' Assigned-only/worker roles are enabled once their card-level policies are
+  ' installed. Never persist a role whose restrictions are not enforced yet.
+  If ["board-admin", "normal", "no-comments", "comment-only", "read-only"].Find(role) < 0 Then Error.Raise("Role is not supported yet")
+  If Not WebDatabase.UserExists(username) Then Error.Raise("Unknown user")
+  r = $db.Find("kb_boards", "id = &1", boardId)
+  If r!owner = username Then
+    If role <> "board-admin" Then Error.Raise("Transfer ownership before changing the owner's role")
+    Return
+  Endif
+  WorkspaceStore.OpenStore()
+  $db.Begin()
+  transaction = True
+  KanbanStore.Activity(boardId, "Changed board membership: " & username)
+  r = $db.Edit("kb_members", "board_id = &1 AND username = &2", boardId, username)
+  If Not r.Available Then
+    r = $db.Create("kb_members")
+    r["board_id"] = boardId
+    r["username"] = username
+  Endif
+  r["role"] = role
+  r.Update()
+  $db.Commit()
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try $db.Rollback()
+  Error.Raise(failure)
+End
+
+Public Sub RemoveMember(boardId As Integer, username As String)
+  Dim r As Result
+  Dim transaction As Boolean
+  Dim failure As String
+  Require(boardId, "manageBoard")
+  r = $db.Find("kb_boards", "id = &1", boardId)
+  If r!owner = username Then Error.Raise("Transfer ownership before removing the owner")
+  WorkspaceStore.OpenStore()
+  $db.Begin()
+  transaction = True
+  KanbanStore.Activity(boardId, "Removed board member: " & username)
+  $db.Delete("kb_members", "board_id = &1 AND username = &2", boardId, username)
+  $db.Commit()
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try $db.Rollback()
+  Error.Raise(failure)
+End
+
+Public Function Members(boardId As Integer) As Result
+  Dim r As Result
+  RequireRead(boardId)
+  r = $db.Find("kb_boards", "id = &1", boardId)
+  Return $db.Exec("SELECT owner AS username, &1 AS role FROM kb_boards WHERE id = &2 UNION ALL SELECT username, role FROM kb_members WHERE board_id = &2 AND username <> &3", "board-admin", boardId, r!owner)
+End

@@ -68,6 +68,7 @@ Public Function ExportData(boardId As Integer, kind As String, itemId As Integer
   Next
   r = $db.Find("kb_meta", "board_id = &1", boardId)
   For Each r
+    If r!setting = "star" Or r!setting = "watch" Then Continue
     include = False
     Select r!kind
       Case "board"

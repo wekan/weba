@@ -29,7 +29,16 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Completed: build.sh finds the shared tool area from .tools/w/weba as well
   as the legacy/standalone layouts; doctor fixture checks include path spaces
   and explicit overrides.
-- In progress: remaining REST contracts and shared-board roles/permissions.
+- Completed first shared-board layer: persisted private-board membership,
+  board-admin/normal/no-comments/comment-only/read-only capabilities enforced
+  across store operations, protected legacy owners and transactional changes.
+  Comment edits/deletes require authorship or board administration; deep copies
+  can retain existing comments without granting new comment authoring. Personal
+  stars/watch flags do not alter another member's preferences. SQLite negative
+  tests cover reader/editor/comment/admin boundaries and membership removal.
+- In progress: assigned-only/Worker card restrictions, native member controls
+  and remaining REST membership/card/container contracts. Unsupported role keys
+  currently fail closed, including on reads; no unrestricted partial role is exposed.
   Email/LDAP/2FA login, configurable token lifetime, native-login throttling,
   registration policy, parallel first-API schema initialization, and the original
   WeKan fixture/browser suites remain pending.

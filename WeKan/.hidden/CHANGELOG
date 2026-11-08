@@ -1,4 +1,7 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Shared board permissions: Add member/admin/write/comment/read-only checks
+  throughout native stores, transactional membership changes and personal stars/
+  watch preferences; verify negative operations and current WeKan capabilities.
 - Static asset boundary: Reject encoded/dot traversal, library/icon escapes,
   backslashes and control bytes before CGI; verify public/private test canaries.
 - CGI deadlines: Capture private file-backed output so inherited descendant

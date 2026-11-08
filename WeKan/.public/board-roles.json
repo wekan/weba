@@ -1,0 +1,65 @@
+{
+  "board-admin": {
+    "seesAllCards": true,
+    "comment": true,
+    "write": true,
+    "manageBoard": true,
+    "moveCard": true
+  },
+  "normal": {
+    "seesAllCards": true,
+    "comment": true,
+    "write": true,
+    "manageBoard": false,
+    "moveCard": true
+  },
+  "normal-assigned-only": {
+    "seesAllCards": false,
+    "comment": true,
+    "write": true,
+    "manageBoard": false,
+    "moveCard": true
+  },
+  "no-comments": {
+    "seesAllCards": true,
+    "comment": false,
+    "write": true,
+    "manageBoard": false,
+    "moveCard": true
+  },
+  "comment-only": {
+    "seesAllCards": true,
+    "comment": true,
+    "write": false,
+    "manageBoard": false,
+    "moveCard": false
+  },
+  "comment-assigned-only": {
+    "seesAllCards": false,
+    "comment": true,
+    "write": false,
+    "manageBoard": false,
+    "moveCard": false
+  },
+  "worker": {
+    "seesAllCards": true,
+    "comment": true,
+    "write": false,
+    "manageBoard": false,
+    "moveCard": true
+  },
+  "read-only": {
+    "seesAllCards": true,
+    "comment": false,
+    "write": false,
+    "manageBoard": false,
+    "moveCard": false
+  },
+  "read-assigned-only": {
+    "seesAllCards": false,
+    "comment": false,
+    "write": false,
+    "manageBoard": false,
+    "moveCard": false
+  }
+}

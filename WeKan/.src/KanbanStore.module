@@ -91,14 +91,13 @@ End
 
 Public Function Boards(Optional archived As Boolean = False) As Result
   RequireUser()
-  Return $db.Find("kb_boards", "owner = &1 AND archived = &2 ORDER BY title", WebIdentity.Username, archived)
+  BoardAccess.OpenStore()
+  Return $db.Find("kb_boards", "archived = &1 AND (owner = &2 OR id IN (SELECT board_id FROM kb_members WHERE username = &2 AND role IN ('board-admin','normal','no-comments','comment-only','read-only'))) ORDER BY title", archived, WebIdentity.Username)
 End
 
 Public Sub RequireBoard(boardId As Integer)
-  Dim r As Result
   RequireUser()
-  r = $db.Find("kb_boards", "id = &1 AND owner = &2", boardId, WebIdentity.Username)
-  If Not r.Available Then Error.Raise("Board not accessible")
+  BoardAccess.RequireRead(boardId)
 End
 
 Public Function AddBoard(title As String) As Integer
@@ -115,7 +114,7 @@ End
 
 Public Sub ArchiveBoard(boardId As Integer, archived As Boolean)
   Dim r As Result
-  RequireBoard(boardId)
+  BoardAccess.Require(boardId, "manageBoard")
   r = $db.Edit("kb_boards", "id = &1", boardId)
   r["archived"] = archived
   r.Update()
@@ -130,7 +129,7 @@ End
 Public Function SaveCard(boardId As Integer, cardId As Integer, title As String, description As String, lane As String, status As String, assignee As String, labels As String, dueDay As String, Optional listId As Integer) As Integer
   Dim r As Result
   Dim list As Result
-  RequireBoard(boardId)
+  BoardAccess.Require(boardId, "write")
   If Not Trim(lane) Then lane = "Default"
   If Not Trim(title) Then Error.Raise("Enter a card title")
   If status <> "Todo" And status <> "Doing" And status <> "Done" Then
@@ -176,7 +175,7 @@ End
 
 Public Sub ArchiveCard(boardId As Integer, cardId As Integer, archived As Boolean)
   Dim r As Result
-  RequireBoard(boardId)
+  BoardAccess.Require(boardId, "write")
   r = $db.Edit("kb_cards", "id = &1 AND board_id = &2", cardId, boardId)
   If Not r.Available Then Error.Raise("Card not accessible")
   r["archived"] = archived
@@ -186,7 +185,7 @@ End
 
 Public Sub Activity(boardId As Integer, message As String, Optional kind As String = "board", Optional itemId As Integer)
   Dim r As Result
-  RequireBoard(boardId)
+  BoardAccess.RequireActivity(boardId)
   r = $db.Create("kb_activity")
   r["board_id"] = boardId
   r["actor"] = WebIdentity.Username
@@ -250,7 +249,7 @@ End
 
 Public Sub AddLane(boardId As Integer, title As String)
   Dim r As Result
-  RequireBoard(boardId)
+  BoardAccess.Require(boardId, "write")
   title = Trim(title)
   If Not title Or String.Len(title) > 255 Then Error.Raise("Enter a swimlane title (1-255 characters)")
   r = $db.Find("kb_lanes", "board_id = &1 AND title = &2", boardId, title)
@@ -263,7 +262,7 @@ Public Sub AddList(boardId As Integer, lane As String, title As String, afterTit
   Dim r As Result
   Dim position As Integer
   Dim failure As String
-  RequireBoard(boardId)
+  BoardAccess.Require(boardId, "write")
   EnsureCardLinks(boardId)
   title = Trim(title)
   If Not title Or String.Len(title) > 32 Then Error.Raise("Enter a list title (1-32 characters)")
@@ -320,7 +319,7 @@ End
 
 Private Sub RequireActiveBoard(boardId As Integer)
   Dim r As Result
-  RequireBoard(boardId)
+  BoardAccess.Require(boardId, "write")
   WorkspaceStore.OpenStore()
   r = $db.Find("kb_boards", "id = &1", boardId)
   If r!archived Then Error.Raise("Archived board cannot be reordered")

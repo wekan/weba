@@ -35,7 +35,7 @@ End
 Public Sub Log(boardId As Integer, kind As String, itemId As Integer, message As String)
   Dim r As Result
   OpenStore()
-  KanbanStore.RequireBoard(boardId)
+  BoardAccess.RequireActivity(boardId)
   r = $db.Create("kb_history")
   r["board_id"] = boardId
   r["kind"] = kind
@@ -82,6 +82,13 @@ End
 Public Function Setting(boardId As Integer, kind As String, itemId As Integer, name As String, Optional fallback As String) As String
   Dim r As Result
   Record(boardId, kind, itemId)
+  If name = "star" Or name = "watch" Then
+    BoardAccess.OpenStore()
+    r = $db.Find("kb_user_meta", "board_id = &1 AND kind = &2 AND item_id = &3 AND username = &4 AND setting = &5", boardId, kind, itemId, WebIdentity.Username, name)
+    If r.Available Then Return r["value"]
+    r = $db.Find("kb_boards", "id = &1 AND owner = &2", boardId, WebIdentity.Username)
+    If Not r.Available Then Return fallback
+  Endif
   r = $db.Find("kb_meta", "board_id = &1 AND kind = &2 AND item_id = &3 AND setting = &4", boardId, kind, itemId, name)
   If r.Available Then Return r["value"]
   Return fallback
@@ -90,7 +97,16 @@ End
 Public Sub SetSetting(boardId As Integer, kind As String, itemId As Integer, name As String, value As String)
   Dim r As Result
   Dim index As Integer
+  Dim tableName As String = "kb_meta"
   Record(boardId, kind, itemId)
+  BoardAccess.OpenStore()
+  If name = "star" Or name = "watch" Then
+    tableName = "kb_user_meta"
+  Else If kind = "board" Then
+    BoardAccess.Require(boardId, "manageBoard")
+  Else
+    BoardAccess.Require(boardId, "write")
+  Endif
   Select name
     Case "star", "watch", "archived", "wip_strict"
       If value <> "0" And value <> "1" Then Error.Raise("Expected a boolean setting")
@@ -107,9 +123,14 @@ Public Sub SetSetting(boardId As Integer, kind As String, itemId As Integer, nam
   If name = "wip" Then
     If CFloat(value) <> CInt(value) Or CInt(value) < 0 Or CInt(value) > 100000 Then Error.Raise("Invalid WIP limit")
   Endif
-  r = $db.Edit("kb_meta", "board_id = &1 AND kind = &2 AND item_id = &3 AND setting = &4", boardId, kind, itemId, name)
+  If tableName = "kb_user_meta" Then
+    r = $db.Edit(tableName, "board_id = &1 AND kind = &2 AND item_id = &3 AND setting = &4 AND username = &5", boardId, kind, itemId, name, WebIdentity.Username)
+  Else
+    r = $db.Edit(tableName, "board_id = &1 AND kind = &2 AND item_id = &3 AND setting = &4", boardId, kind, itemId, name)
+  Endif
   If Not r.Available Then
-    r = $db.Create("kb_meta")
+    r = $db.Create(tableName)
+    If tableName = "kb_user_meta" Then r["username"] = WebIdentity.Username
     r["board_id"] = boardId
     r["kind"] = kind
     r["item_id"] = itemId
@@ -132,6 +153,11 @@ End
 
 Public Sub SetArchived(boardId As Integer, kind As String, itemId As Integer, value As Boolean)
   Record(boardId, kind, itemId)
+  If kind = "board" Then
+    BoardAccess.Require(boardId, "manageBoard")
+  Else
+    BoardAccess.Require(boardId, "write")
+  Endif
   Select kind
     Case "board"
       KanbanStore.ArchiveBoard(boardId, value)
@@ -161,6 +187,11 @@ Public Sub Rename(boardId As Integer, kind As String, itemId As Integer, title A
   Dim oldTitle As String
   Dim failure As String
   r = Record(boardId, kind, itemId)
+  If kind = "board" Then
+    BoardAccess.Require(boardId, "manageBoard")
+  Else
+    BoardAccess.Require(boardId, "write")
+  Endif
   title = Trim(title)
   If Not title Or String.Len(title) > If(kind = "list", 32, 255) Then Error.Raise("Enter a valid title")
   oldTitle = r!title
@@ -243,6 +274,7 @@ Public Function Copy(boardId As Integer, kind As String, itemId As Integer, titl
   Dim targetId As Integer
   Dim targetBoard As Integer
   source = Record(boardId, kind, itemId)
+  If kind <> "board" Then BoardAccess.Require(boardId, "write")
   title = Trim(title)
   If Not title Or String.Len(title) > If(kind = "list", 32, 255) Then Error.Raise("Enter a valid copy title")
   KanbanStore.PrimeCardLinks(boardId)
@@ -287,7 +319,7 @@ Public Function Copy(boardId As Integer, kind As String, itemId As Integer, titl
     Next
   Next
   CopySettings(boardId, kind, itemId, targetBoard, newId)
-  KanbanStore.Activity(boardId, "Copied " & kind & ": " & title, kind, itemId)
+  If BoardAccess.Can(boardId, "write") Or BoardAccess.Can(boardId, "comment") Then KanbanStore.Activity(boardId, "Copied " & kind & ": " & title, kind, itemId)
   $db.Commit()
   Return newId
 Catch

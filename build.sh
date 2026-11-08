@@ -47,6 +47,7 @@ tests() {
   "${NODE:-node}" tests/reports.test.cjs
   "${NODE:-node}" tests/i18n.test.cjs
   "${NODE:-node}" tests/popup.test.cjs
+  "${NODE:-node}" tests/roles.test.cjs
   "${NODE:-node}" tests/transport.test.cjs
   "${NODE:-node}" tests/drag.test.cjs
 }

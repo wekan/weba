@@ -210,6 +210,8 @@ Public Sub DeleteUser(username As String)
   If username = WebIdentity.Username Then Error.Raise("Cannot delete your own account")
   $hConn.Exec("DELETE FROM users WHERE username = &1", username)
   ApiTokens.RevokeUser(username)
+  If $hConn.Tables.Exist("kb_members") Then $hConn.Delete("kb_members", "username = &1", username)
+  If $hConn.Tables.Exist("kb_user_meta") Then $hConn.Delete("kb_user_meta", "username = &1", username)
 End
 
 Public Function GetFullname(username As String) As String

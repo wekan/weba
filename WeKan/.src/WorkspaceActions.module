@@ -40,7 +40,12 @@ Private Sub TransferRows(tableName As String, boardId As Integer, targetBoard As
 End
 
 Private Sub TransferMeta(boardId As Integer, targetBoard As Integer, kind As String, itemId As Integer)
-  Dim r As Result = $db.Edit("kb_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, kind, itemId)
+  Dim r As Result = $db.Edit("kb_user_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, kind, itemId)
+  For Each r
+    r["board_id"] = targetBoard
+    r.Update()
+  Next
+  r = $db.Edit("kb_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, kind, itemId)
   For Each r
     r["board_id"] = targetBoard
     r.Update()
@@ -56,6 +61,8 @@ Public Sub Move(boardId As Integer, kind As String, itemId As Integer, targetBoa
   Dim cardId As Integer
   Dim listId As Integer
   Dim failure As String
+  BoardAccess.Require(boardId, "write")
+  BoardAccess.Require(targetBoard, "write")
   Prepare(boardId)
   Prepare(targetBoard)
   source = WorkspaceStore.Record(boardId, kind, itemId)
@@ -145,6 +152,7 @@ Public Sub DeleteArchived(boardId As Integer, kind As String, itemId As Integer,
   Dim listId As Integer
   Dim tableName As String
   Dim failure As String
+  BoardAccess.Require(boardId, If(kind = "board", "manageBoard", "write"))
   Prepare(boardId)
   source = WorkspaceStore.Record(boardId, kind, itemId)
   If Not WorkspaceStore.Archived(boardId, kind, itemId) Then Error.Raise("Archive the item before deleting it")
@@ -160,7 +168,7 @@ Public Sub DeleteArchived(boardId As Integer, kind As String, itemId As Integer,
   Endif
   $db.Begin()
   If kind = "board" Then
-    For Each tableName In ["kb_entries", "kb_files", "kb_card_lists", "kb_cards", "kb_lists", "kb_lanes", "kb_meta", "kb_history", "kb_order", "kb_activity"]
+    For Each tableName In ["kb_entries", "kb_files", "kb_card_lists", "kb_cards", "kb_lists", "kb_lanes", "kb_meta", "kb_history", "kb_order", "kb_activity", "kb_members", "kb_user_meta"]
       $db.Delete(tableName, "board_id = &1", boardId)
     Next
     $db.Delete("kb_boards", "id = &1", boardId)
@@ -170,17 +178,20 @@ Public Sub DeleteArchived(boardId As Integer, kind As String, itemId As Integer,
       $db.Delete("kb_files", "board_id = &1 AND card_id = &2", boardId, cardId)
       $db.Delete("kb_card_lists", "board_id = &1 AND card_id = &2", boardId, cardId)
       $db.Delete("kb_cards", "board_id = &1 AND id = &2", boardId, cardId)
+      $db.Delete("kb_user_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "card", cardId)
       $db.Delete("kb_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "card", cardId)
       $db.Delete("kb_history", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "card", cardId)
       $db.Delete("kb_order", "board_id = &1 AND kind = &2 AND item = &3", boardId, "card", CStr(cardId))
     Next
     For Each listId In listIds
       $db.Delete("kb_lists", "board_id = &1 AND id = &2", boardId, listId)
+      $db.Delete("kb_user_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "list", listId)
       $db.Delete("kb_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "list", listId)
       $db.Delete("kb_history", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "list", listId)
     Next
     If kind = "lane" Then
       $db.Delete("kb_lanes", "board_id = &1 AND id = &2", boardId, itemId)
+      $db.Delete("kb_user_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "lane", itemId)
       $db.Delete("kb_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "lane", itemId)
       $db.Delete("kb_history", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "lane", itemId)
       $db.Delete("kb_order", "board_id = &1 AND kind = &2 AND item = &3", boardId, "lane", source!title)

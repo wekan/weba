@@ -78,12 +78,18 @@ Private Function Reaches(boardId As Integer, startId As Integer, targetId As Int
 End
 
 Public Function Save(boardId As Integer, cardId As Integer, entryId As Integer, kind As String, title As String, body As String, parentId As Integer, done As Boolean, amount As Float, Optional valueType As String = "text") As Integer
+  Return SaveEntry(boardId, cardId, entryId, kind, title, body, parentId, done, amount, valueType, False)
+End
+
+Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Integer, kind As String, title As String, body As String, parentId As Integer, done As Boolean, amount As Float, valueType As String, isCopy As Boolean) As Integer
   Dim r As Result
   Dim target As Result
   Dim id As Integer = entryId
   RequireCard(boardId, cardId)
+  BoardAccess.Require(boardId, If(kind = "comment" And Not isCopy, "comment", "write"))
   If entryId Then
     r = Entry(boardId, cardId, entryId)
+    If kind = "comment" And r!author <> WebIdentity.Username And Not BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Comment not editable")
     If r!kind <> kind Then Error.Raise("Entry type cannot be changed")
   Endif
   Select kind
@@ -145,6 +151,8 @@ End
 
 Public Sub DeleteEntry(boardId As Integer, cardId As Integer, entryId As Integer)
   Dim r As Result = Entry(boardId, cardId, entryId)
+  BoardAccess.Require(boardId, If(r!kind = "comment", "comment", "write"))
+  If r!kind = "comment" And r!author <> WebIdentity.Username And Not BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Comment not editable")
   If r!kind = "checklist" Then $db.Exec("DELETE FROM kb_entries WHERE board_id = &1 AND card_id = &2 AND parent_id = &3", boardId, cardId, entryId)
   $db.Exec("DELETE FROM kb_entries WHERE board_id = &1 AND card_id = &2 AND id = &3", boardId, cardId, entryId)
   KanbanStore.Activity(boardId, "Deleted card detail", "card", cardId)
@@ -155,6 +163,7 @@ Public Function NewSubtask(boardId As Integer, cardId As Integer, title As Strin
   Dim child As Integer
   Dim failure As String
   RequireCard(boardId, cardId)
+  BoardAccess.Require(boardId, "write")
   parent = WorkspaceStore.Record(boardId, "card", cardId)
   $db.Begin()
   child = KanbanStore.SaveCard(boardId, 0, title, "", parent!lane, parent!status, WebIdentity.Username, "", "", KanbanStore.CardListId(boardId, cardId))
@@ -170,6 +179,7 @@ End
 Public Sub StartTimer(boardId As Integer, cardId As Integer)
   Dim r As Result
   RequireCard(boardId, cardId)
+  BoardAccess.Require(boardId, "write")
   r = $db.Find("kb_entries", "board_id = &1 AND card_id = &2 AND kind = &3 AND author = &4 AND done = &5", boardId, cardId, "time", WebIdentity.Username, False)
   If r.Available Then Error.Raise("Timer already running")
   r = $db.Create("kb_entries")
@@ -187,6 +197,7 @@ End
 Public Sub StopTimer(boardId As Integer, cardId As Integer)
   Dim r As Result
   RequireCard(boardId, cardId)
+  BoardAccess.Require(boardId, "write")
   r = $db.Edit("kb_entries", "board_id = &1 AND card_id = &2 AND kind = &3 AND author = &4 AND done = &5", boardId, cardId, "time", WebIdentity.Username, False)
   If Not r.Available Then Error.Raise("No running timer")
   r["amount"] = Max(0, DateDiff(r!created_at, Now, gb.Second)) / 60
@@ -205,6 +216,7 @@ Public Function AddFile(boardId As Integer, cardId As Integer, filename As Strin
   Dim r As Result
   Dim id As Integer
   RequireCard(boardId, cardId)
+  BoardAccess.Require(boardId, "write")
   filename = File.Name(Replace(filename, "\\", "/"))
   If Not filename Or String.Len(filename) > 255 Or Len(data) > 10485760 Then Error.Raise("Choose a file up to 10 MiB with a valid name")
   r = $db.Create("kb_files")
@@ -230,6 +242,7 @@ End
 
 Public Sub DeleteFile(boardId As Integer, cardId As Integer, fileId As Integer)
   FileRecord(boardId, cardId, fileId)
+  BoardAccess.Require(boardId, "write")
   $db.Exec("DELETE FROM kb_files WHERE board_id = &1 AND card_id = &2 AND id = &3", boardId, cardId, fileId)
   KanbanStore.Activity(boardId, "Deleted attachment", "card", cardId)
 End
@@ -242,6 +255,7 @@ Public Sub CopyRecords(sourceBoard As Integer, sourceCard As Integer, targetBoar
   Dim id As Integer
   RequireCard(sourceBoard, sourceCard)
   RequireCard(targetBoard, targetCard)
+  BoardAccess.Require(targetBoard, "write")
   For Each kind In ["checklist", "checkitem", "comment", "custom", "time"]
     r = Entries(sourceBoard, sourceCard, kind)
     For Each r
@@ -251,7 +265,7 @@ Public Sub CopyRecords(sourceBoard As Integer, sourceCard As Integer, targetBoar
         If Not parents.Exist(CStr(r!parent_id)) Then Continue
         parentId = parents[CStr(r!parent_id)]
       Endif
-      id = Save(targetBoard, targetCard, 0, kind, r!title, r!body, parentId, r!done, r!amount, r!value_type)
+      id = SaveEntry(targetBoard, targetCard, 0, kind, r!title, r!body, parentId, r!done, r!amount, r!value_type, True)
       If kind = "checklist" Then parents[CStr(r!id)] = id
     Next
   Next
