@@ -6,6 +6,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Current UI/API/security work
 
+- Documented overview snapshot boundaries, capture/refresh ordering, stable idle
+  tiles and the native/two-user browser evidence. Retained all original spec 39
+  sorting/search/pagination/workspace requirements and remaining view/polling gaps.
+
 - Completed live All Boards/Starred/Archive overview tiles and their navigation.
   Reproduced stale home titles with two native browser users; detect authorized
   title/color/star/navigation changes, membership grants/revocations and board

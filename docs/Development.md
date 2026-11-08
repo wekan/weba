@@ -178,3 +178,22 @@ pane. Card scope loss clears its title, tree and candidate options alongside the
 card editor. `PeopleLiveTest` and the two-user test-live script cover native reads
 and actual browser/REST mutations; full original UI/API/security suites remain
 incomplete.
+
+
+## Live overview navigation
+
+`BoardLive.Overview` uses the current user's `KanbanStore.Boards` and scoped card
+queries. Include board IDs/titles, shared colors, current-user stars and only
+readable card IDs/titles needed by native navigation. Do not include bodies,
+hidden card changes or unrelated personal settings just to create a change token.
+The JSON string remains server-private.
+
+Poll this state only for All Boards, Starred and Archive overviews. Capture it
+before the tree/grid reads in `RefreshTree` and remember it after that refresh
+succeeds; otherwise a concurrent mutation or failed tree rebuild could be missed.
+Changed snapshots refresh the grid and navigation together. Unchanged snapshots
+leave tile DOM nodes intact and independent detail/people polling continues.
+
+Native scope/privacy and two-user menu/membership/archive tests cover these
+paths. Full original All Boards custom sorting, search, pagination and workspace
+categories, other open-view navigation reactivity and idle cost remain pending.

@@ -1,4 +1,7 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Explain private overview state, visibility/star isolation,
+  refresh ordering and stable idle DOM, preserving original All Boards and
+  other-view reactivity gaps.
 - Overview updates: Refresh home/starred/archive tiles and navigation after
   external edits, membership changes and archive/restore, using private scoped
   snapshots and stable idle DOM. Verify native privacy and real browser cases;

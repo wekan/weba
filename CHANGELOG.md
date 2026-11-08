@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Document overview snapshot visibility, personal-star isolation, navigation
+  refresh ordering and stable idle DOM. Record native/two-user verification and
+  keep original All Boards sorting/search/pagination and other-view reactivity
+  requirements explicit. Thanks to xet7.
+
 - Refresh All Boards, Starred and Archive tiles/navigation after external native
   title/color edits, membership grants/revocations and board archive/restore.
   Compare private read-only scoped snapshots, preserve unchanged tile DOM and

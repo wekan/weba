@@ -418,10 +418,24 @@ active candidates and read-only/assignment/revocation boundaries. The two-user
 selection/draft behavior, hidden-button forgery and card/board access loss.
 These native tests do not increase the original source callback count.
 
+All Boards, Starred and Archive overview pages now detect external changes to
+visible board titles/colors, personal stars and scoped navigation card titles.
+Membership grants/revocations and board archive/restore update the grid and tree
+without navigation. The private overview snapshot excludes other users' stars,
+unreadable cards and card bodies. Unchanged ticks preserve existing tile nodes.
+The snapshot is captured before rebuilding navigation and remembered after that
+refresh succeeds, so an intervening change remains detectable on the next tick.
+
+`OverviewLiveTest` covers deterministic read-only scoped state and hidden-change
+isolation. The two-user `overview-live.browser.cjs`, included in test-live, uses
+native menus and REST membership changes. These are additional native tests;
+original test 39 sorting/search/server-pagination requirements remain incomplete.
+
 Polling cost grows with visible cards. Signed-in views still emit native heartbeat
 requests; visible people/detail panes are checked even without an active board.
-Efficient idle/background suspension, all-boards navigation reactivity, full source
-inline-edit/unsaved-draft UX and complete source reactivity remain pending. The three archive callbacks establish that
+Efficient idle/background suspension, navigation updates while another board or
+multiboard report is open, full source inline-edit/unsaved-draft UX and complete
+source reactivity remain pending. The three archive callbacks establish that
 file's contract; complete original UI/API/security suites still require work.
 
 Each list exposes two independent #5251 timestamps: `modifiedAt` tracks the list
