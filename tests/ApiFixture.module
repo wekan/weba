@@ -14,6 +14,17 @@ Public Sub Main()
   Dim expectedFailure As String
   Dim data As New Collection
   If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
+  If Env["WEBA_TEST_MODE"] = "entry-draft-prepare" Then
+    data = JSON.Decode(Env["WEBA_TEST_BOARDS"])
+    boardId = data["otherBoardId"]
+    cardId = data["otherCardId"]
+    Session["username"] = "rest-other"
+    Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
+    otherId = CardContent.Save(boardId, cardId, 0, "checklist", "Commit parent", "", 0, False, 0)
+    otherId = CardContent.Save(boardId, cardId, 0, "checkitem", "Commit item", "Opened entry body", otherId, True, 0)
+    Print JSON.Encode(["entryId": otherId])
+    Return
+  Endif
   If Env["WEBA_TEST_MODE"] = "delete-content" Then
     Session["username"] = Env["WEBA_TEST_USER"]
     Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
@@ -308,7 +319,10 @@ Private Sub CardCommit()
   If nativePeople Then
     Session["username"] = "rest-other"
     Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
-    If personField = "draft" Then
+    If personField = "entry-draft" Then
+      memberPayload = EntryDraft.Read(boardId, cardId, CInt(Env["WEBA_TEST_ENTRY"]))
+      Try SaveNativeEntryDraft(boardId, cardId, memberPayload, memberAction)
+    Else If personField = "draft" Then
       memberPayload = CardDraft.Read(boardId, cardId)
       Try SaveNativeDraft(boardId, cardId, memberPayload, memberAction)
     Else If personField = "archive" Then
@@ -341,7 +355,9 @@ Private Sub CardCommit()
     Sleep 0.01
   Wend
   If nativePeople Then
-    If personField = "draft" Then
+    If personField = "entry-draft" Then
+      SaveNativeEntryDraft(boardId, cardId, memberPayload, memberAction)
+    Else If personField = "draft" Then
       SaveNativeDraft(boardId, cardId, memberPayload, memberAction)
     Else If personField = "archive" Then
       KanbanStore.ArchiveCard(boardId, cardId, memberAction = "add")
@@ -369,4 +385,10 @@ Private Sub SaveNativeDraft(boardId As Integer, cardId As Integer, baseline As C
   Dim description As String
   If action = "add" Then description = "Native draft description"
   KanbanStore.SaveCard(boardId, cardId, baseline["title"], description, baseline["lane"], baseline["status"], baseline["assignee"], baseline["labels"], baseline["due_day"], baseline["listId"], baseline)
+End
+
+Private Sub SaveNativeEntryDraft(boardId As Integer, cardId As Integer, baseline As Collection, action As String)
+  Dim body As String
+  If action = "add" Then body = "Entry draft committed"
+  CardContent.Save(boardId, cardId, baseline["entryId"], baseline["kind"], baseline["title"], body, baseline["parent_id"], baseline["done"], baseline["amount"], baseline["value_type"], baseline)
 End

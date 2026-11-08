@@ -1,0 +1,65 @@
+' Native detail editors merge their changed fields with the locked entry.
+Export
+
+Public Function Values(title As String, body As String, parentId As Integer, done As Boolean, amount As Float, valueType As String) As Collection
+  Dim data As New Collection
+  data.Add(title, "title")
+  data.Add(body, "body")
+  data.Add(parentId, "parent_id")
+  data.Add(done, "done")
+  data.Add(amount, "amount")
+  data.Add(valueType, "value_type")
+  Return data
+End
+
+Public Function Record(r As Result) As Collection
+  Dim parentId As Integer
+  Dim done As Boolean
+  Dim amount As Float
+  Dim data As Collection
+  If Not IsNull(r!parent_id) Then parentId = CInt(r!parent_id)
+  If Not IsNull(r!done) Then done = CBool(r!done)
+  If Not IsNull(r!amount) Then amount = CFloat(r!amount)
+  data = Values(CStr(r!title), CStr(r!body), parentId, done, amount, CStr(r!value_type))
+  data["boardId"] = r!board_id
+  data["cardId"] = r!card_id
+  data["entryId"] = r!id
+  data["kind"] = r!kind
+  data.Add(CStr(r!author), "author")
+  Return data
+End
+
+Public Function Read(boardId As Integer, cardId As Integer, entryId As Integer) As Collection
+  Return Record(CardContent.Entry(boardId, cardId, entryId))
+End
+
+Public Sub SetValue(data As Collection, field As String, value As Variant)
+  If data.Exist(field) Then data.Remove(field)
+  data.Add(value, field)
+End
+
+' SaveEntry has already locked and rechecked board/card and comment authorship.
+Public Function Merge(boardId As Integer, cardId As Integer, entryId As Integer, current As Result, submitted As Collection, baseline As Collection) As Collection
+  Dim latest As Collection = Record(current)
+  Dim merged As New Collection
+  Dim field As String
+  If baseline["boardId"] <> boardId Or baseline["cardId"] <> cardId Or baseline["entryId"] <> entryId Or baseline["kind"] <> latest["kind"] Then Error.Raise("Reopen the card entry before saving")
+  For Each field In ["title", "body", "parent_id", "done", "amount", "value_type"]
+    If Not baseline.Exist(field) Then Error.Raise("Invalid card entry editor state")
+    If submitted[field] <> baseline[field] Then
+      merged.Add(submitted[field], field)
+    Else
+      merged.Add(latest[field], field)
+    Endif
+  Next
+  If latest["kind"] = "custom" Then
+    If submitted["value_type"] <> baseline["value_type"] Then
+      SetValue(merged, "value_type", submitted["value_type"])
+      SetValue(merged, "body", submitted["body"])
+      SetValue(merged, "done", submitted["done"])
+    Else If latest["value_type"] <> baseline["value_type"] Then
+      If submitted["body"] <> baseline["body"] Or submitted["done"] <> baseline["done"] Then Error.Raise("Field type changed; reopen before saving")
+    Endif
+  Endif
+  Return merged
+End

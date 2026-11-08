@@ -48,6 +48,7 @@ Public Function Entries(boardId As Integer, cardId As Integer, kind As String) A
   RequireCard(boardId, cardId)
   If kind = "subtask" Or kind = "dependency" Then
     If Not BoardAccess.Can(boardId, "seesAllCards") Then Return $db.Find("kb_entries", "board_id = &1 AND card_id = &2 AND kind = &3 AND amount IN (SELECT id FROM kb_cards WHERE board_id = &1 AND (assignee = &4 OR id IN (SELECT card_id FROM kb_card_assignees WHERE board_id = &1 AND username = &4))) ORDER BY id", boardId, cardId, kind, WebIdentity.Username)
+    Return $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND amount IN (SELECT id FROM kb_cards WHERE board_id=&1) ORDER BY id", boardId, cardId, kind)
   Endif
   Return $db.Find("kb_entries", "board_id = &1 AND card_id = &2 AND kind = &3 ORDER BY id", boardId, cardId, kind)
 End
@@ -140,16 +141,17 @@ Catch
   Error.Raise(failure)
 End
 
-Public Function Save(boardId As Integer, cardId As Integer, entryId As Integer, kind As String, title As String, body As String, parentId As Integer, done As Boolean, amount As Float, Optional valueType As String = "text") As Integer
-  Return SaveEntry(boardId, cardId, entryId, kind, title, body, parentId, done, amount, valueType, False)
+Public Function Save(boardId As Integer, cardId As Integer, entryId As Integer, kind As String, title As String, body As String, parentId As Integer, done As Boolean, amount As Float, Optional valueType As String = "text", Optional baseline As Collection) As Integer
+  Return SaveEntry(boardId, cardId, entryId, kind, title, body, parentId, done, amount, valueType, False, baseline)
 End
 
-Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Integer, kind As String, title As String, body As String, parentId As Integer, done As Boolean, amount As Float, valueType As String, isCopy As Boolean) As Integer
+Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Integer, kind As String, title As String, body As String, parentId As Integer, done As Boolean, amount As Float, valueType As String, isCopy As Boolean, Optional baseline As Collection) As Integer
   Dim transaction As Boolean
   Dim failure As String
   Dim r As Result
   Dim target As Result
   Dim id As Integer = entryId
+  Dim merged As Collection
   RequireCard(boardId, cardId)
   BoardAccess.Require(boardId, If(kind = "comment" And Not isCopy, "comment", "write"))
   BeginChange(boardId, cardId, If(kind = "comment" And Not isCopy, "comment", "write"))
@@ -158,6 +160,15 @@ Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Int
     r = Entry(boardId, cardId, entryId)
     If kind = "comment" And r!author <> WebIdentity.Username And Not BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Comment not editable")
     If r!kind <> kind Then Error.Raise("Entry type cannot be changed")
+    If baseline Then
+      merged = EntryDraft.Merge(boardId, cardId, entryId, r, EntryDraft.Values(title, body, parentId, done, amount, valueType), baseline)
+      title = merged["title"]
+      body = merged["body"]
+      parentId = merged["parent_id"]
+      done = merged["done"]
+      amount = merged["amount"]
+      valueType = merged["value_type"]
+    Endif
   Endif
   Select kind
     Case "comment"
@@ -316,6 +327,11 @@ End
 Public Function Files(boardId As Integer, cardId As Integer) As Result
   RequireCard(boardId, cardId)
   Return $db.Find("kb_files", "board_id = &1 AND card_id = &2 ORDER BY id", boardId, cardId)
+End
+
+Public Function FileSummaries(boardId As Integer, cardId As Integer) As Result
+  RequireCard(boardId, cardId)
+  Return $db.Exec("SELECT id,board_id,card_id,filename,author,created_at FROM kb_files WHERE board_id=&1 AND card_id=&2 ORDER BY id", boardId, cardId)
 End
 
 Public Function AddFile(boardId As Integer, cardId As Integer, filename As String, data As String) As Integer

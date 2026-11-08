@@ -1,0 +1,48 @@
+' Authorized, binary-free native detail-panel snapshots kept on the server.
+Export
+
+Public Function Read(boardId As Integer, cardId As Integer, kind As String) As Collection
+  Dim data As New Collection
+  Dim entries As New Variant[]
+  Dim checklists As New Variant[]
+  Dim files As New Variant[]
+  Dim r As Result
+  Dim row As Collection
+  Dim capability As String
+  BoardAccess.RequireCard(boardId, cardId)
+  If ["comment", "checklist", "checkitem", "subtask", "dependency", "custom", "time", "file"].Find(kind) < 0 Then Error.Raise("Unknown card detail type")
+  r = WorkspaceStore.Record(boardId, "card", cardId)
+  data["title"] = r!title
+  data["kind"] = kind
+  For Each capability In ["comment", "write", "manageBoard", "seesAllCards"]
+    data[capability] = BoardAccess.Can(boardId, capability)
+  Next
+  If kind = "checklist" Or kind = "checkitem" Then
+    r = CardContent.Entries(boardId, cardId, "checklist")
+    For Each r
+      checklists.Add(EntryDraft.Record(r))
+    Next
+  Endif
+  If kind = "file" Then
+    r = CardContent.FileSummaries(boardId, cardId)
+    For Each r
+      row = New Collection
+      row["id"] = r!id
+      row["filename"] = r!filename
+      row.Add(CStr(r!author), "author")
+      row["createdAt"] = r!created_at
+      files.Add(row)
+    Next
+  Else If kind <> "checklist" Then
+    r = CardContent.Entries(boardId, cardId, kind)
+    For Each r
+      row = EntryDraft.Record(r)
+      If kind = "comment" Then row["authorName"] = CardContent.AuthorName(boardId, cardId, "entry", r!id)
+      entries.Add(row)
+    Next
+  Endif
+  data["entries"] = entries
+  data["checklists"] = checklists
+  data["files"] = files
+  Return data
+End

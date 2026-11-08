@@ -24,24 +24,27 @@ def request(path, method='POST', data=None, token=None):
 token = request('/users/login', data={'username': 'rest-owner', 'password': os.environ['WEBA_TEST_PASSWORD']})['token']
 for field in ('members', 'assignees'):
     request('/api/boards/'+board+'/lists/'+list_id+'/cards/'+card+'/'+field+'/rest-member', 'DELETE', token=token)
+prepared = json.loads(subprocess.check_output([os.environ['GBX'], '-s', 'ApiFixture', str(project)], env={**os.environ, 'WEBA_TEST_MODE': 'entry-draft-prepare', 'WEBA_API_REQUEST': '0'}, text=True))
+entry_id = prepared['entryId']
 reader = sqlite3.connect(project / 'database.db', timeout=1)
 process = None
 tables = ('kb_entries', 'kb_files', 'kb_card_archive', 'kb_item_changes', 'kb_cards', 'kb_card_dates', 'kb_card_members', 'kb_card_people_order', 'kb_card_people_sequence', 'kb_card_assignees', 'kb_card_lists', 'kb_history', 'kb_activity')
 def rows(table):
     return sorted(reader.execute('SELECT * FROM '+table).fetchall(), key=repr)
 try:
-    for field, native in (('members', False), ('assignees', False), ('members', True), ('assignees', True), ('replace', False), ('dates', False), ('archive', False), ('archive', True), ('draft', True)):
+    for field, native in (('members', False), ('assignees', False), ('members', True), ('assignees', True), ('replace', False), ('dates', False), ('archive', False), ('archive', True), ('draft', True), ('entry-draft', True)):
         for action in ('add', 'remove'):
             for signal in ('card-people-commit-failed', 'card-people-reader-released'):
                 (project / signal).unlink(missing_ok=True)
             before = {table: rows(table) for table in tables}
             prior_fields = reader.execute('SELECT title,lane,status,assignee,labels,due_day FROM kb_cards WHERE id=?', (card,)).fetchone()
+            prior_entry = reader.execute('SELECT title,parent_id,done,amount,value_type,author FROM kb_entries WHERE id=?', (entry_id,)).fetchone()
             reader.execute('BEGIN')
             reader.execute('SELECT id FROM kb_cards').fetchall()
             process = subprocess.Popen([os.environ['GBX'], '-s', 'ApiFixture', str(project)],
                 env={**os.environ, 'WEBA_TEST_MODE': 'card-people-commit', 'WEBA_API_REQUEST': '0' if native else '1',
                      'WEBA_TEST_NATIVE_CARD_PEOPLE': '1' if native else '0',
-                     'WEBA_TEST_PERSON_FIELD': field, 'WEBA_TEST_PERSON_ACTION': action},
+                     'WEBA_TEST_PERSON_FIELD': field, 'WEBA_TEST_PERSON_ACTION': action, 'WEBA_TEST_ENTRY': str(entry_id)},
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
             deadline = time.monotonic() + 15
             while not (project / 'card-people-commit-failed').exists():
@@ -55,7 +58,12 @@ try:
             (project / 'card-people-reader-released').write_text('ready')
             output, _ = process.communicate(timeout=15)
             assert process.returncode == 0, output
-            if field == 'draft':
+            if field == 'entry-draft':
+                assert (reader.execute('SELECT body FROM kb_entries WHERE id=?', (entry_id,)).fetchone()[0] or '') == ('Entry draft committed' if action == 'add' else '')
+                assert reader.execute('SELECT title,parent_id,done,amount,value_type,author FROM kb_entries WHERE id=?', (entry_id,)).fetchone() == prior_entry
+                for table in ('kb_cards', 'kb_card_dates', 'kb_card_members', 'kb_card_assignees', 'kb_card_people_order', 'kb_card_people_sequence', 'kb_card_archive', 'kb_files'):
+                    assert rows(table) == before[table], 'Entry draft retry changed '+table
+            elif field == 'draft':
                 assert (reader.execute('SELECT description FROM kb_cards WHERE id=?', (card,)).fetchone()[0] or '') == ('Native draft description' if action == 'add' else '')
                 current = reader.execute('SELECT title,lane,status,assignee,labels,due_day FROM kb_cards WHERE id=?', (card,)).fetchone()
                 assert tuple(value or '' for value in current) == tuple(value or '' for value in prior_fields)

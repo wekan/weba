@@ -1,11 +1,25 @@
 # Work in progress
 
-Updated 2026-11-08. Target: the signed-in pages of the current `wekan/wekan`
+Updated 2026-11-09. Target: the signed-in pages of the current `wekan/wekan`
 checkout, implemented with Gambas Web UI, SQLite persistence and portable Gambas
 DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Current UI/API/security work
 
+- Completed live refresh for the existing native detail kinds: reproduce the
+  missing external comment, then read private scoped pane snapshots and update
+  rows/clean selected fields while retaining dirty input. Merge entry drafts over
+  locked current data; retain author, role and identity guards. Preserve a missing
+  checklist selection instead of retargeting a pending item; clear deleted entry/
+  file selections, disable stale downloads and reject unsafe custom-type changes.
+  Read file metadata without blobs, exclude foreign/orphan native relationships
+  for all roles, normalize nullable timer fields and commit snapshot state only
+  after a successful pane rebuild. Native tests plus two-user source/packaged
+  test-live cover comments/checklists, drafts, author forgery, deletes/parents,
+  files, typed conflicts and role/scope loss without JS errors. Two real entry-
+  draft COMMIT/retry cases bring card-update phases to 20. Full local tests pass
+  (28 Python tests), with native details/member/account-deletion browser coverage.
+  Original callback counts stay 10/30 in spec 17 and 3/3 in the archive file.
 - Completed native stale-editor field merging: reproduce an old title editor
   undoing an external description update, then keep a private opening baseline
   and merge fields differing from it over the locked, reauthorized current card.
@@ -38,8 +52,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Documented the native heartbeat/private state, capture-before-render rule,
   draft/DOM preservation and revoked-panel cleanup; add the test-live command,
   actual original callback/browser evidence and polling/deep-pane limits.
-- In progress: deep open-panel content synchronization, full source inline-edit/
-  unsaved-draft UX, all-boards navigation reactivity, efficient idle/background
+- In progress: live people/roster panels, linked-target label reactivity, full
+  source inline-edit/unsaved-draft UX, all-boards navigation and efficient idle/background
   polling and complete original UI/API/security suites. Custom roles/list
   exceptions and full source hierarchy remain open.
 - Completed native combined administrator/assigned-only card scope: reproduce

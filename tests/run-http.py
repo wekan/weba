@@ -69,6 +69,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
         if '--live' in sys.argv:
             env['WEBA_ARCHIVE_LIVE'] = '1'
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/wekan-archive.test.cjs')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/details-live.browser.cjs')], check=True, env=env)
         elif '--members' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/dates-conformance.test.cjs')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/api-members.test.py')], check=True, env=env)

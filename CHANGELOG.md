@@ -2,6 +2,15 @@
 
 This work adds the following features and fixes:
 
+- Add live refresh for existing native detail panes with scoped binary-free
+  snapshots, preserved dirty fields and updated clean selected values. Merge
+  entry drafts under locks; preserve author/role guards, reject unsafe type
+  changes, clear deleted selections and avoid retargeting a missing checklist.
+  Exclude foreign/orphan native relationships, handle nullable timer fields and
+  retry failed pane builds. Verify native/two-user source/packaged browser cases,
+  file/parent/delete/scope behavior and two real entry COMMIT/retry phases (20
+  card-update phases total), retaining full original-suite gaps. Thanks to xet7.
+
 - Document private native editor baselines, changed-field merge and grouped
   placement, explicit last-write/clears, people/date retention and menu/retry
   behavior. Record browser data-loss reproduction, native lock/negative checks

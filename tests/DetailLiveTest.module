@@ -1,0 +1,128 @@
+' Live detail reads and stale entry edits must preserve scope and independent data.
+Public Sub Main()
+  Dim boardId As Integer
+  Dim foreignBoard As Integer
+  Dim cardId As Integer
+  Dim hidden As Integer
+  Dim foreignCard As Integer
+  Dim checklist As Integer
+  Dim item As Integer
+  Dim comment As Integer
+  Dim ownerComment As Integer
+  Dim custom As Integer
+  Dim fileId As Integer
+  Dim fake As Integer
+  Dim data As Collection
+  Dim first As Collection
+  Dim second As Collection
+  Dim initial As String
+  Dim before As String
+  Dim denied As Boolean
+  Dim r As Result
+  Dim db As Connection
+  WebDatabase.Register("detail-owner", "x")
+  WebDatabase.Register("detail-writer", "x")
+  SignIn("detail-owner")
+  boardId = KanbanStore.AddBoard("Detail live")
+  foreignBoard = KanbanStore.AddBoard("Foreign detail canary")
+  foreignCard = KanbanStore.SaveCard(foreignBoard, 0, "FOREIGN-DETAIL-CANARY", "", "Default", "Todo", "detail-owner", "", "")
+  BoardAccess.SetMember(boardId, "detail-writer", "normal")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Visible detail card", "", "Default", "Todo", "detail-writer", "", "")
+  hidden = KanbanStore.SaveCard(boardId, 0, "HIDDEN-DETAIL-CANARY", "", "Default", "Todo", "detail-owner", "", "")
+  checklist = CardContent.Save(boardId, cardId, 0, "checklist", "Checklist", "", 0, False, 0)
+  item = CardContent.Save(boardId, cardId, 0, "checkitem", "Opened item", "", checklist, False, 0)
+  ownerComment = CardContent.Save(boardId, cardId, 0, "comment", "", "Owner comment", 0, False, 0)
+  fileId = CardContent.AddFile(boardId, cardId, "metadata.txt", "SECRET-BINARY-CANARY" & Chr(0) & "tail")
+  CardContent.StartTimer(boardId, cardId)
+  data = DetailLive.Read(boardId, cardId, "time")
+  If data["entries"].Count <> 1 Then Error.Raise("Running timer missing from live details")
+  CardContent.StopTimer(boardId, cardId)
+  data = DetailLive.Read(boardId, cardId, "time")
+  If data["entries"][0]["title"] <> "Tracked time" Then Error.Raise("Stopped timer missing from live details")
+  initial = JSON.Encode(DetailLive.Read(boardId, cardId, "comment"))
+  If initial <> JSON.Encode(DetailLive.Read(boardId, cardId, "comment")) Then Error.Raise("Unchanged detail snapshot unstable")
+  SignIn("detail-writer")
+  comment = CardContent.Save(boardId, cardId, 0, "comment", "", "Writer comment", 0, False, 0)
+  If initial = JSON.Encode(DetailLive.Read(boardId, cardId, "comment")) Then Error.Raise("Comment did not change live state")
+  first = EntryDraft.Read(boardId, cardId, item)
+  CardContent.Save(boardId, cardId, item, "checkitem", "External title", "External body", checklist, True, 0)
+  SaveDraft(boardId, cardId, first, "title", "Local title")
+  r = CardContent.Entry(boardId, cardId, item)
+  If r!title <> "Local title" Or Not r!done Or r!body <> "External body" Then Error.Raise("Stale checklist edit overwrote independent fields")
+  first = EntryDraft.Read(boardId, cardId, comment)
+  second = EntryDraft.Read(boardId, cardId, comment)
+  SaveDraft(boardId, cardId, first, "title", "Comment title")
+  SaveDraft(boardId, cardId, second, "body", "Explicit latest body")
+  r = CardContent.Entry(boardId, cardId, comment)
+  If r!title <> "Comment title" Or r!body <> "Explicit latest body" Then Error.Raise("Comment drafts did not merge")
+  SaveDraft(boardId, cardId, first, "body", "Last explicit body")
+  r = CardContent.Entry(boardId, cardId, comment)
+  If r!body <> "Last explicit body" Then Error.Raise("Explicit changed field did not win")
+  first = EntryDraft.Read(boardId, cardId, ownerComment)
+  EntryDraft.SetValue(first, "author", "detail-writer")
+  before = BoardTransfer.ExportData(boardId, "board", boardId)
+  Try SaveDraft(boardId, cardId, first, "body", "Forged authorship")
+  denied = Error
+  If Not denied Then Error.Raise("Read baseline bypassed comment authorship")
+  If before <> BoardTransfer.ExportData(boardId, "board", boardId) Then Error.Raise("Denied authorship wrote data")
+  custom = CardContent.Save(boardId, cardId, 0, "custom", "Typed", "12", 0, False, 0, "text")
+  first = EntryDraft.Read(boardId, cardId, custom)
+  CardContent.Save(boardId, cardId, custom, "custom", "Typed", "", 0, True, 0, "checkbox")
+  Try SaveDraft(boardId, cardId, first, "body", "Stale text for changed type")
+  denied = Error
+  If Not denied Then Error.Raise("Stale custom-field type silently reinterpreted data")
+  SaveDraft(boardId, cardId, first, "title", "Renamed typed field")
+  r = CardContent.Entry(boardId, cardId, custom)
+  If r!value_type <> "checkbox" Or r!body <> "true" Then Error.Raise("Unrelated title edit reset custom type/value")
+  first = EntryDraft.Read(boardId, cardId, item)
+  EntryDraft.SetValue(first, "entryId", comment)
+  Try SaveDraft(boardId, cardId, first, "title", "Mismatched entry", item)
+  denied = Error
+  If Not denied Then Error.Raise("Different-entry baseline accepted")
+  SignIn("detail-owner")
+  db = WebDatabase.OpenConnection()
+  r = db.Create("kb_entries")
+  r["board_id"] = boardId
+  r["card_id"] = cardId
+  r["kind"] = "dependency"
+  r["amount"] = foreignCard
+  r["title"] = "FOREIGN-DETAIL-CANARY"
+  r.Update()
+  fake = db.LastInsertId
+  If InStr(JSON.Encode(DetailLive.Read(boardId, cardId, "dependency")), "FOREIGN-") Then Error.Raise("Whole-board detail snapshot leaked a foreign relationship")
+  db.Delete("kb_entries", "id=&1", fake)
+  CardContent.Save(boardId, cardId, 0, "dependency", "", "", 0, False, hidden)
+  BoardAccess.SetMember(boardId, "detail-writer", "normal-assigned-only")
+  SignIn("detail-writer")
+  If InStr(JSON.Encode(DetailLive.Read(boardId, cardId, "dependency")), "HIDDEN-") Then Error.Raise("Detail snapshot leaked an unassigned target")
+  initial = JSON.Encode(DetailLive.Read(boardId, cardId, "file"))
+  If InStr(initial, "SECRET-BINARY-") > 0 Or InStr(initial, "metadata.txt") = 0 Then Error.Raise("File summaries read blob data or lost metadata")
+  Try DetailLive.Read(boardId, hidden, "comment")
+  denied = Error
+  If Not denied Then Error.Raise("Hidden detail read accepted")
+  SignIn("detail-owner")
+  first = EntryDraft.Read(boardId, cardId, comment)
+  CardContent.DeleteEntry(boardId, cardId, comment)
+  Try SaveDraft(boardId, cardId, first, "body", "Deleted draft")
+  denied = Error
+  If Not denied Then Error.Raise("Deleted stale entry was recreated")
+  BoardAccess.SetMember(boardId, "detail-writer", "read-only")
+  SignIn("detail-writer")
+  first = EntryDraft.Read(boardId, cardId, item)
+  Try SaveDraft(boardId, cardId, first, "title", "Reader edit")
+  denied = Error
+  If Not denied Then Error.Raise("Reader wrote a stale entry")
+  Print "Detail live/drafts: stable scoped comments/checklists, independent fields, authorship/type/identity/delete/role guards, foreign/assigned relations and binary-free files passed"
+End
+
+Private Sub SaveDraft(boardId As Integer, cardId As Integer, baseline As Collection, field As String, value As Variant, Optional entryId As Integer)
+  Dim proposal As Collection = EntryDraft.Values(baseline["title"], baseline["body"], baseline["parent_id"], baseline["done"], baseline["amount"], baseline["value_type"])
+  EntryDraft.SetValue(proposal, field, value)
+  If Not entryId Then entryId = baseline["entryId"]
+  CardContent.Save(boardId, cardId, entryId, baseline["kind"], proposal["title"], proposal["body"], proposal["parent_id"], proposal["done"], proposal["amount"], proposal["value_type"], baseline)
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End
