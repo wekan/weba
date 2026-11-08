@@ -365,8 +365,20 @@ subtasks/dependencies, custom fields, tracked-time records and attachment lists.
 Its private snapshot reads authorized entries and explicit file metadata columns,
 leaving binary content for the existing authorized download/copy paths. Foreign
 or orphan native relationship targets are excluded for every role; assigned-only
-readers also exclude targets they cannot read. Open people/roster panels and
-linked-target label reactivity still need separate work.
+readers also exclude targets they cannot read. Dependency/subtask rows and their
+selected title field resolve the current target card through guarded reads, so a
+target rename appears without closing the pane. Generated relationship titles
+are read-only; rename the target through its card editor. A new subtask still
+accepts the title used to create its card. Reads keep stored link data and audit
+history unchanged.
+
+Native tests cover both relationship kinds, current rows/selection, no read-side
+cache/history writes and assignment denial/reauthorization. Two-user source and
+packaged test-live verifies successive target renames, selected title values,
+removal of a now-unreadable target while the source card remains readable, and
+reappearance after permission restoration. Full source cross-board hierarchy,
+dependency metadata/navigation and open people/roster synchronization remain
+separate work.
 
 When another user changes data, the pane rebuilds rows and refreshes clean selected
 fields while retaining dirty text, numbers, checkbox/type and parent choices.
@@ -396,8 +408,7 @@ local tests and existing details/member/account-deletion browser regressions pas
 Polling cost grows with visible cards. Other signed-in views still emit native
 heartbeat requests, while the handler returns before checking board data.
 Efficient idle/background suspension, all-boards navigation reactivity, live
-people/roster panels, linked-target labels, full source inline-edit/unsaved-draft
-UX and complete source reactivity remain pending. The three archive callbacks establish that
+people/roster panels, full source inline-edit/unsaved-draft UX and complete source reactivity remain pending. The three archive callbacks establish that
 file's contract; complete original UI/API/security suites still require work.
 
 Each list exposes two independent #5251 timestamps: `modifiedAt` tracks the list

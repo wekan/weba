@@ -85,8 +85,8 @@ visible rows and never creates clocks, activities or a client-visible version
 value. Include every rendered field when extending it. Capture state before
 render queries, so a concurrent mutation cannot be hidden by a newer post-render
 snapshot. Recheck scope when clearing stale open panels; keep permitted drafts
-unchanged. People/roster synchronization, linked-target label reactivity and
-complete inline-edit/unsaved-draft UX remain separate work.
+unchanged. People/roster synchronization and complete inline-edit/unsaved-draft
+UX remain separate work.
 
 Run `WEBA_BROWSER_URL=http://127.0.0.1:9231 ./build.sh test-live` against a local
 Chromium CDP service for both source and packaged original archive callbacks.
@@ -138,3 +138,19 @@ scope. Full source cross-board hierarchy remains pending.
 native browser regressions and two entry-draft COMMIT/retry phases cover the
 implemented behavior. The complete original suite still has unexecuted cases;
 these additional native tests do not increase the original callback count.
+
+## Relationship display titles
+
+`EntryDraft.Read` supplies the current authorized target title for dependencies
+and subtasks; use it for pane snapshots and selected display fields. `Record`
+retains the stored row representation used by entry merging. Display reads never
+rewrite the cached title or create history. Existing save validation still derives
+the relationship title from its validated target. Generated title fields are
+read-only while new-subtask creation retains its editable title.
+
+Collection reads filter foreign/orphan and unassigned targets; selected reads
+also recheck root/target authorization. Permission loss removes a target from an
+open pane without closing a still-readable source card, and restoration brings
+back its current title. `RelationLabelTest` and the two-user test-live scenarios
+cover these paths. Full source cross-board hierarchy, dependency metadata and
+navigation remain pending; original callback counts and COMMIT phases are unchanged.

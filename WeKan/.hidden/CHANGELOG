@@ -1,4 +1,7 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Explain derived relationship titles and read-only fields,
+  new-subtask creation, no read-side cache/history writes and native/two-user
+  authorization evidence; retain full source hierarchy/metadata/navigation gaps.
 - Relation labels: Read current authorized dependency/subtask titles in live
   rows and selected fields, keep generated titles read-only and avoid read-side
   cache/history writes. Verify native and two-user source/packaged rename/scope

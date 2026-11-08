@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Document current relationship display titles, generated read-only fields and
+  editable new-subtask creation, read-side stability and guarded row/selection
+  paths. Record native/two-user rename/scope evidence and remaining full source
+  hierarchy/metadata/navigation work. Thanks to xet7.
+
 - Fix stale native dependency/subtask names after target card edits. Derive live
   rows and selected values from authorized current target titles, preserve
   read-only generated labels and new-subtask creation, and leave stored cache/

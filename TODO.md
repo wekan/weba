@@ -16,6 +16,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   pass (28 Python tests), with native details/create/copy/archive browser coverage.
   Original callback counts and 20 COMMIT phases remain unchanged. Full source
   cross-board hierarchy and dependency metadata/navigation remain pending.
+- Documented current relationship labels, generated read-only fields versus new
+  subtask creation, read-side cache/history stability, guarded row/selection
+  paths and native/two-user evidence with full hierarchy/metadata gaps retained.
 - Completed live refresh for the existing native detail kinds: reproduce the
   missing external comment, then read private scoped pane snapshots and update
   rows/clean selected fields while retaining dirty input. Merge entry drafts over
