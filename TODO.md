@@ -19,6 +19,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   tests pass (28 Python tests), source/packaged test-live keeps the external value
   through save/reopen, and packaged people/date/details regressions pass. Original
   callback counts remain 10/30 for spec 17 and 3/3 for the archive file.
+- Documented changed-field/native baseline semantics, grouped placement,
+  explicit last-write/clear behavior, precise people/date retention and
+  menu/retry handling. Record the old browser data loss, native lock/negative
+  coverage and 18 COMMIT phases with full original/editor gaps explicit.
 - Completed open-board live updates through a one-second native Gambas
   WebTimer and private read-only scoped state. Compare visible cards/assignments,
   layout/order/colors/preferences and role capabilities before refreshing; hidden

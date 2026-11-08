@@ -2,6 +2,12 @@
 
 This work adds the following features and fixes:
 
+- Document private native editor baselines, changed-field merge and grouped
+  placement, explicit last-write/clears, people/date retention and menu/retry
+  behavior. Record browser data-loss reproduction, native lock/negative checks
+  and eighteen card-update COMMIT phases, preserving complete editor/original-
+  suite gaps. Thanks to xet7.
+
 - Fix stale native card editors overwriting unrelated concurrent changes. Keep
   server-side opening values and merge only differing fields over the current
   locked/reauthorized card; preserve other descriptions, moves, people and precise

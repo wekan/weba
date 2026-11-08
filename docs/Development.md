@@ -10,7 +10,7 @@ and in the [README](../README.md), rather than in duplicate instruction files.
 | Area | Files |
 | --- | --- |
 | Login and registration | `WeKan/.src/WebformLogin.class` and `.webform` |
-| Native navigation, editors and live board checks | `WeKan/.src/WebformMain.class`, `.webform`, `BoardLive.module` |
+| Native navigation, editors and live board checks | `WeKan/.src/WebformMain.class`, `.webform`, `BoardLive.module`, `CardDraft.module` |
 | Accounts, sessions and connection | `WeKan/.src/WebDatabase.module`, `WebIdentity.module`, `ApiTokens.module` |
 | Board/card persistence and permissions | `KanbanStore.module`, `BoardAccess.module`, `ApiMemberRoles.module` |
 | REST routing and projections | `RestApi.module`, `BoardRestData.module` |
@@ -85,8 +85,8 @@ visible rows and never creates clocks, activities or a client-visible version
 value. Include every rendered field when extending it. Capture state before
 render queries, so a concurrent mutation cannot be hidden by a newer post-render
 snapshot. Recheck scope when clearing stale open panels; keep permitted drafts
-unchanged. Deep-pane synchronization and collaborative save conflicts are still
-separate work.
+unchanged. Deep-pane synchronization and complete inline-edit/unsaved-draft UX
+remain separate work.
 
 Run `WEBA_BROWSER_URL=http://127.0.0.1:9231 ./build.sh test-live` against a local
 Chromium CDP service for both source and packaged original archive callbacks.
@@ -94,3 +94,24 @@ The adapter supplies explicit SQLite fixtures and an actual Playwright page;
 original callbacks/assertions remain unchanged. Unit/native checks cover stable
 read-only state, hidden-card isolation, layout/settings and scope revocation.
 Heartbeat efficiency and complete source reactivity remain TODO items.
+
+## Native editor saves
+
+`CardDraft.Read` supplies both the editor fields and the private opening baseline
+from the same authorized read. Existing-card native Save passes that baseline to
+`KanbanStore.SaveCard`; it merges against the current row only after existing
+user/board/card locks and permission rechecks. Values equal to the baseline keep
+current data. Changed values win independently; lane/status/list form one
+placement group. Preserve the existing full-replacement contract when no baseline
+is supplied, as used by creation/import and other internal store operations.
+
+Keep current-assignee and due-day comparisons after merging so an unrelated edit
+cannot reset raw people sequences or precise dates. Programmatic committed
+menu/people updates advance only their affected baseline fields. Refresh the
+whole baseline/UI only after success; failed transactions leave it reusable.
+Use typed empty strings in baseline collections. Add coverage for baseline and
+merge paths when introducing an editable field, alongside full-save callers.
+
+`CardDraftTest` and real browser Save exercise the old data-loss case. SQL lock
+injection verifies the current row is read after locking; two failed-COMMIT/retry
+phases inspect exact rollback and preserved other fields/relations/dates.

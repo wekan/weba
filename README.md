@@ -332,10 +332,38 @@ WEBA_BROWSER_URL=http://127.0.0.1:9231 python3 tests/run-http.py --browser --arc
 Native member/assignee and account-deletion browser regressions also pass with
 the timer active.
 
+Native card editors keep their opening field values privately on the server.
+Saving an existing card compares the submitted title, description, lane/status,
+primary assignee, labels and due day with those opening values. Fields that still
+match keep the current database value; differing values are applied after board/
+card locking and permission rechecks. This follows WeKan's independent title and
+description setters: a title edit preserves another user's description edit.
+An explicitly changed same field takes the latest submitted value, including an
+empty clear. Lane, status and list ID identify one destination; an unedited old
+destination cannot undo a later move.
+
+Unedited current assignees retain their multiple/raw ordered people data, and an
+unedited current day retains its exact API timestamp and other dates. A menu move/
+rename or assignee picker advances just the fields it already committed, keeping
+other drafts independent. After successful save, the editor loads the committed
+values as its new baseline; failure retains the draft for retry. A stale or
+mismatched card baseline cannot bypass read/write scope or edit an archived card.
+Other internal full-save callers keep their existing replacement contract.
+
+Native tests exercise two stale editors changing different fields, explicit
+same-field last writes/clears, external moves/people/precise dates, a trigger
+changing data at the lock, mismatched baselines and archive/role denial. Two
+additional real failed-COMMIT/retry phases cover draft description update/clear,
+bringing card-update phases to eighteen. `test-live` reproduces the former data
+loss and verifies title save/reopen preserves the external description through
+both source and packaged native UI. Member/date/details browser regressions also
+pass. Full source inline editing, unsaved-draft UI and deep-pane collaboration
+remain broader unfinished work.
+
 Polling cost grows with visible cards. Other signed-in views still emit native
 heartbeat requests, while the handler returns before checking board data.
 Efficient idle/background suspension, all-boards navigation reactivity, deep
-open-panel content updates, collaborative field conflict handling and complete
+open-panel content updates, full source inline-edit/unsaved-draft UX and complete
 source reactivity remain pending. The three archive callbacks establish that
 file's contract; complete original UI/API/security suites still require work.
 

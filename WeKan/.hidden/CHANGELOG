@@ -1,4 +1,7 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Explain native baseline/field merge, placement and explicit
+  clears, retained people/dates, menu/retry behavior and verified eighteen
+  card-update COMMIT phases with full editor/original-suite gaps explicit.
 - Card editor: Merge changed native fields against locked current data using
   private opening values. Preserve unrelated concurrent moves/people/dates,
   explicit clears and per-field last writes; verify browser data-loss regression,
