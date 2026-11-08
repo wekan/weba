@@ -2,6 +2,12 @@
 
 This work adds the following features and fixes:
 
+- Document personal Custom rank merging, readonly organization, sorted/archive
+  guards, transaction rechecks, cleanup and expected-order keyboard focus. Record
+  native rollback/late-guard and trusted source/packaged gesture evidence while
+  retaining workspace/multiselection/original-suite and collation gaps.
+  Thanks to xet7.
+
 - Add personal Custom board ordering with mouse surface/handle, trusted touch
   handle and repeatable keyboard moves. Merge filtered ranks, refresh personal
   views, retain expected keyboard focus and isolate readonly members' preferences

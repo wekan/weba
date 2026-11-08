@@ -12,7 +12,7 @@ and in the [README](../README.md), rather than in duplicate instruction files.
 | Login and registration | `WeKan/.src/WebformLogin.class` and `.webform` |
 | Native navigation, editors and live board checks | `WeKan/.src/WebformMain.class`, `.webform`, `BoardLive.module`, `CardDraft.module`, `DetailLive.module`, `EntryDraft.module`, `PeopleLive.module` |
 | Accounts, sessions and connection | `WeKan/.src/WebDatabase.module`, `WebIdentity.module`, `ApiTokens.module` |
-| Board/card persistence and permissions | `KanbanStore.module`, `BoardAccess.module`, `ApiMemberRoles.module`, `BoardCatalog.module` |
+| Board/card persistence and permissions | `KanbanStore.module`, `BoardAccess.module`, `ApiMemberRoles.module`, `BoardCatalog.module`, `BoardOrder.module` |
 | REST routing and projections | `RestApi.module`, `BoardRestData.module` |
 | UTC dates, archive history and change clocks | `CardDates.module`, `CardArchive.module`, `ItemChanges.module` |
 | Workspace menus, transfer and rich content | `WorkspaceStore.module`, `WorkspaceActions.module`, `BoardTransfer.module`, `CardContent.module` |
@@ -225,7 +225,8 @@ actual visibility/facet helpers on independently read native SQL rows. Its
 explicit adapter maps implicit native owners to active document memberships and
 supplies in-memory Mongo query operations for these fixtures. Only valid source
 parameters are compared; Meteor validation, wire/UI callbacks, organizations,
-teams, public templates, workspaces/facets and custom drag order remain open.
+teams, public templates and workspaces/facets remain open. Personal Custom
+ordering has separate native and real-gesture coverage below.
 
 
 ## Native catalog controls
@@ -233,8 +234,8 @@ teams, public templates, workspaces/facets and custom drag order remain open.
 `WebformMain` loads the principal's sort on open and refreshes it during overview
 polling. Native popup buttons persist title order; board-name search is separate
 from card Filter. Search/sort changes reset the page; shrinking totals clamp it.
-`BoardCatalog.Unpaged` supplies all matching IDs for the current Custom fallback,
-while Page retains its bounded service contract. Manual drag order is not wired.
+`BoardCatalog.Unpaged` applies personal BoardOrder positions to all matching IDs,
+while Page retains its bounded title-sort service contract.
 
 Compute scoped IDs and update pagination controls before queuing Visual.Refresh.
 The render function consumes the private page snapshot, intersects it with fresh
@@ -247,5 +248,33 @@ The dedicated fixture is copied only into disposable HTTP projects. Native
 catalog browser tests use actual menus/inputs and independently query saved sort
 preferences; external native transactions exercise preference changes and page
 clamping. Test source and packaged apps, mobile bounds/clicks and imported labels.
-Original UI callbacks, manual order, workspace/facet semantics and efficient SQL
+Original UI callbacks, workspace/facet semantics and efficient SQL
 count/slicing remain separate work.
+
+
+## Personal board order
+
+`BoardOrder` stores principal/board/index rows with portable Gambas schema APIs.
+Save locks the account and selected boards, rechecks current session, Custom mode
+and active membership, then upserts provided indices in one transaction. Preserve
+indices outside a filtered view, matching the original user-model merge. Readonly
+members may change this personal preference. Never update shared history/clocks.
+Account cleanup removes all principal rows; permanent board deletion removes its
+rows for every user. Positions are included only for visible boards in overview
+snapshots so unrelated users/hidden changes do not trigger personal refreshes.
+
+The native drag handler rebuilds the current filtered IDs rather than trusting
+client order arrays. Its two IDs must belong to that view; archive/sorted modes
+reject the request. The common pointer engine supports board grids independently
+of card write capabilities. Touch requires a handle; ordinary touch keeps native
+scrolling. Mouse surface/handle, cancellation, RTL arrows and keyboard moves use
+the existing drag transport and server guards. Keyboard focus is remembered only
+until the expected server order arrives (or expires/cancels), and another active
+field is not refocused.
+
+Native failure-injection tests verify late membership/mode guards and full
+rollback/retry. The row-write failure is an UPDATE
+failure test, not a new physical COMMIT phase. Real source/packaged Chromium tests
+use trusted touch events and compare actual stored maps with original helpers and
+setBoardSortIndexes. Original UI callbacks, multiselection/workspace transfers,
+locale/driver-wide collation and efficient polling remain unverified/pending.

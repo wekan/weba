@@ -1,4 +1,7 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Explain personal board ranks, filtered merges, late guards,
+  cleanup and keyboard focus, with trusted gesture/source-helper evidence and
+  explicit workspace/multiselection/original-suite/collation limits.
 - Custom board order: Add personal ranked mouse/touch/keyboard sorting and
   filtered merges with live/focus preservation, locked scope/mode guards and
   account/board cleanup. Verify readonly isolation, failure rollback/retry and

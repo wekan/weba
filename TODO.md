@@ -6,6 +6,11 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Current UI/API/security work
 
+- Documented personal rank merging, readonly/sorted/archive boundaries, fresh
+  transaction checks, cleanup, expected-order focus and trusted browser evidence.
+  Kept workspace/multiselection/original callbacks and collation/polling limits
+  explicit; order failure injection does not change the 20 card COMMIT phases.
+
 - Completed per-user Custom board order with real mouse, trusted touch-handle
   and repeated keyboard moves. Retain/merge filtered-out ranks, title fallback,
   reload and live personal-order updates; sorted/archive modes do not reorder.

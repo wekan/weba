@@ -446,24 +446,39 @@ getAllBoardsPage method body and actual source visibility/facet helpers. Meteor
 parameter checks, network authentication, UI callbacks and full workspace/facet
 semantics are not established by that comparison. This service has no new public
 HTTP endpoint. Native sort/search/paging controls are now wired for these modes;
-custom drag order still needs implementation. Raw JSON callers must preserve
+Custom ordering is described below. Raw JSON callers must preserve
 explicit null keys before validation.
 
 The header Sort button opens native saved title-order choices. All Boards,
 Starred and Archive use board-name search in the right sidebar; the separate
 card search remains available within card views. Sorted modes show 25 boards
 per page, reset after search/sort changes and clamp after external removals.
-Custom currently shows all matching boards in the title fallback order without
-pagination; it does not yet implement manual dragging. Cross-session preference
-changes refresh the choice and page. Update page labels/buttons before HTML
+Custom shows all matching boards without pagination, using the current user's
+saved positions with a title fallback. Active Custom grids support mouse surface
+or handle drag, touch handle drag and arrow-key moves. Readonly members can
+organize their personal view; shared board data is unchanged. Filtered moves
+merge with prior indices, and other users' positions remain separate. Sorted
+and archive grids reject reordering. Cross-session preference/order changes
+refresh the choice and grid. Update page labels/buttons before HTML
 rendering so the final-page Next button disables reliably.
 
 `catalog.browser.cjs` exercises real native controls, SQL preferences, 25/5 pages,
 Unicode/private search, reload/isolation, external preferences and archive-driven
 clamping, mobile interaction and Finnish labels on source/packaged applications.
-Matching original WeKan labels are imported for 237 languages; unmatched Custom
-and Clear search captions remain translation follow-up. These new native tests
+Matching original WeKan labels, including Custom (drag order), are imported for
+237 languages; Clear search remains unmatched translation follow-up. These new native tests
 do not count as unchanged original spec 39 callbacks.
+
+`BoardOrderTest` covers per-user readonly access, filtered rank merge, invalid/
+foreign/revoked/archive/mode rejection, injected write rollback/retry and account/
+permanent-board cleanup. `board-order.browser.cjs` uses real keyboard/mouse and
+Chromium trusted touch input, checks ordinary touch no-write, reload/isolation,
+forged requests and external order refresh, and compares stored mappings with
+original WeKan reorder helpers and the user-model merge method. Repeated keyboard
+moves retain focus when the expected new order arrives, without stealing focus
+from another active field. These checks supplement the original callback counts;
+multiselection, workspace drops and complete original UI/API/security suites
+remain separate work.
 
 Polling cost grows with visible cards. Signed-in views still emit native heartbeat
 requests; visible people/detail panes are checked even without an active board.
