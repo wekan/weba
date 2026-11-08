@@ -6,6 +6,16 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Current UI/API/security work
 
+- Completed current native dependency/subtask labels: reproduce stale cached
+  names after target rename, then derive pane rows and selected field values from
+  the current authorized target. Generated relationship titles are read-only;
+  creating a new subtask still accepts its title. Reads do not rewrite link data
+  or history. Native tests cover both kinds and assignment/reauthorization; real
+  source/packaged two-user live tests verify two renames, selected values, target
+  visibility loss while retaining root access and reappearance. Full local tests
+  pass (28 Python tests), with native details/create/copy/archive browser coverage.
+  Original callback counts and 20 COMMIT phases remain unchanged. Full source
+  cross-board hierarchy and dependency metadata/navigation remain pending.
 - Completed live refresh for the existing native detail kinds: reproduce the
   missing external comment, then read private scoped pane snapshots and update
   rows/clean selected fields while retaining dirty input. Merge entry drafts over
@@ -56,7 +66,7 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Documented the native heartbeat/private state, capture-before-render rule,
   draft/DOM preservation and revoked-panel cleanup; add the test-live command,
   actual original callback/browser evidence and polling/deep-pane limits.
-- In progress: live people/roster panels, linked-target label reactivity, full
+- In progress: live people/roster panels and full
   source inline-edit/unsaved-draft UX, all-boards navigation and efficient idle/background
   polling and complete original UI/API/security suites. Custom roles/list
   exceptions and full source hierarchy remain open.

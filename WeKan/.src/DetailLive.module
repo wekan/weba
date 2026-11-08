@@ -36,7 +36,11 @@ Public Function Read(boardId As Integer, cardId As Integer, kind As String) As C
   Else If kind <> "checklist" Then
     r = CardContent.Entries(boardId, cardId, kind)
     For Each r
-      row = EntryDraft.Record(r)
+      If kind = "subtask" Or kind = "dependency" Then
+        row = EntryDraft.Read(boardId, cardId, r!id)
+      Else
+        row = EntryDraft.Record(r)
+      Endif
       If kind = "comment" Then row["authorName"] = CardContent.AuthorName(boardId, cardId, "entry", r!id)
       entries.Add(row)
     Next

@@ -1405,6 +1405,8 @@ Private Sub UpdateDetailControls()
   DetailType.Visible = kind = "custom"
   DetailParent.Visible = kind = "checkitem"
   DetailTitle.ReadOnly = Not editable
+  If kind = "dependency" Then DetailTitle.ReadOnly = True
+  If kind = "subtask" And $entryId > 0 Then DetailTitle.ReadOnly = True
   DetailBody.ReadOnly = Not editable
   DetailNumber.ReadOnly = Not editable
   DetailType.Enabled = editable
@@ -1452,7 +1454,7 @@ Public Sub DetailTree_Select()
   $loadingDetails = True
   r = CardContent.Entry($detailsBoard, $detailsCard, $entryId)
   DetailKind.Index = ["comment", "checklist", "checkitem", "subtask", "dependency", "custom", "time"].Find(r!kind)
-  ShowEntry(EntryDraft.Record(r))
+  ShowEntry(EntryDraft.Read($detailsBoard, $detailsCard, $entryId))
   UpdateDetailControls()
   $loadingDetails = False
 Catch

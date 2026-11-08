@@ -2,6 +2,14 @@
 
 This work adds the following features and fixes:
 
+- Fix stale native dependency/subtask names after target card edits. Derive live
+  rows and selected values from authorized current target titles, preserve
+  read-only generated labels and new-subtask creation, and leave stored cache/
+  history untouched on reads. Verify native scopes/reauthorization and two-user
+  source/packaged renames, target visibility loss/reappearance and existing detail
+  regressions. Full source hierarchy/metadata/navigation remain open.
+  Thanks to xet7.
+
 - Document live detail snapshots, dirty/clean fields, deletion and missing-parent
   behavior, binary-free files, author/role/type safeguards and entry merge/retry.
   Describe native/two-user source/packaged evidence and twenty card-update COMMIT

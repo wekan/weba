@@ -30,7 +30,16 @@ Public Function Record(r As Result) As Collection
 End
 
 Public Function Read(boardId As Integer, cardId As Integer, entryId As Integer) As Collection
-  Return Record(CardContent.Entry(boardId, cardId, entryId))
+  Dim r As Result = CardContent.Entry(boardId, cardId, entryId)
+  Dim data As Collection = Record(r)
+  Dim target As Result
+  If r!kind = "subtask" Or r!kind = "dependency" Then
+    ' Labels are derived from the current authorized target, not the cached
+    ' title saved when the relationship was created. Reads never rewrite it.
+    target = WorkspaceStore.Record(boardId, "card", CInt(r!amount))
+    SetValue(data, "title", CStr(target!title))
+  Endif
+  Return data
 End
 
 Public Sub SetValue(data As Collection, field As String, value As Variant)

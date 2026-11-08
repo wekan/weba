@@ -1,4 +1,8 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Relation labels: Read current authorized dependency/subtask titles in live
+  rows and selected fields, keep generated titles read-only and avoid read-side
+  cache/history writes. Verify native and two-user source/packaged rename/scope
+  loss/reappearance; retain full source hierarchy/metadata/navigation gaps.
 - Documentation: Explain live detail snapshots/drafts, deleted parents/files,
   scoped relationships and author/role/type guards, entry merge/retry and twenty
   COMMIT phases; retain people/label/full-original-suite gaps.

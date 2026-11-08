@@ -1,0 +1,62 @@
+' Relationship labels use authorized current target titles without rewriting links.
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim target As Integer
+  Dim entryId As Integer
+  Dim kind As String
+  Dim data As Collection
+  Dim entry As Collection
+  Dim r As Result
+  Dim db As Connection
+  Dim before As Integer
+  Dim denied As Boolean
+  WebDatabase.Register("label-owner", "x")
+  WebDatabase.Register("label-member", "x")
+  SignIn("label-owner")
+  boardId = KanbanStore.AddBoard("Live relation labels")
+  BoardAccess.SetMember(boardId, "label-member", "normal")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Relation source", "", "Default", "Todo", "label-member", "", "")
+  target = KanbanStore.SaveCard(boardId, 0, "Opened target", "", "Default", "Todo", "label-owner", "", "")
+  db = WebDatabase.OpenConnection()
+  For Each kind In ["dependency", "subtask"]
+    entryId = CardContent.Save(boardId, cardId, 0, kind, "", "", 0, False, target)
+    r = db.Find("kb_entries", "id=&1", entryId)
+    If r!title <> "Opened target" Then Error.Raise("Unexpected initial relationship title")
+    KanbanStore.SaveCard(boardId, target, "Renamed target", "", "Default", "Todo", "label-owner", "", "")
+    r = db.Find("kb_history")
+    before = r.Count
+    data = DetailLive.Read(boardId, cardId, kind)
+    If data["entries"].Count <> 1 Then Error.Raise("Visible relationship disappeared")
+    entry = data["entries"][0]
+    If entry["title"] <> "Renamed target" Then Error.Raise("Relationship snapshot retained cached title")
+    entry = EntryDraft.Read(boardId, cardId, entryId)
+    If entry["title"] <> "Renamed target" Then Error.Raise("Selected relationship retained cached title")
+    r = db.Find("kb_entries", "id=&1", entryId)
+    If r!title <> "Opened target" Then Error.Raise("Reading a label rewrote relationship data")
+    r = db.Find("kb_history")
+    If r.Count <> before Then Error.Raise("Reading a label wrote activity")
+    BoardAccess.SetMember(boardId, "label-member", "normal-assigned-only")
+    SignIn("label-member")
+    data = DetailLive.Read(boardId, cardId, kind)
+    If data["entries"].Count Then Error.Raise("Unassigned target label leaked")
+    Try EntryDraft.Read(boardId, cardId, entryId)
+    denied = Error
+    If Not denied Then Error.Raise("Direct hidden target label read accepted")
+    SignIn("label-owner")
+    BoardAccess.SetAssignees(boardId, target, ["label-owner", "label-member"])
+    SignIn("label-member")
+    data = DetailLive.Read(boardId, cardId, kind)
+    If data["entries"][0]["title"] <> "Renamed target" Then Error.Raise("Reauthorized label did not return")
+    SignIn("label-owner")
+    BoardAccess.SetAssignees(boardId, target, ["label-owner"])
+    BoardAccess.SetMember(boardId, "label-member", "normal")
+    KanbanStore.SaveCard(boardId, target, "Opened target", "", "Default", "Todo", "label-owner", "", "")
+  Next
+  Print "Relation labels: current dependency/subtask titles in rows/selection, no data/history writes, assignment denial and reauthorization passed"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End
