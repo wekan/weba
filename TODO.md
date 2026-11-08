@@ -6,6 +6,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Current UI/API/security work
 
+- Completed documentation consolidation: project-specific source map, Gambas
+  tooling, database notes and verification limits live in docs/Development.md.
+  Remove companion AGENTS.md/CLAUDE.md duplicates per the containing WeKan root
+  instructions; retain shared policy at the root.
 - Full scope remains all items below and the current WeKan UI/API/security test
   contracts. Complete original suites have not passed against weba. Ten spec 17
   callbacks run unchanged with actual Playwright assertions and explicit SQLite

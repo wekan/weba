@@ -2,6 +2,12 @@
 
 This work adds the following features and fixes:
 
+- Consolidate project-specific source/toolchain/database/verification notes in
+  docs/Development.md and link them from README. Remove companion AGENTS.md and
+  CLAUDE.md copies as required by the containing WeKan root instructions, keeping
+  shared policy at that root and weba details in its own documentation.
+  Thanks to xet7.
+
 - Document #5251 list/card clock semantics, UTC storage, legacy/empty nulls,
   lifecycle and transactional writes. Describe source-reducer/SQL/HTTP comparison,
   four-zone clock verification, eight native write-failure rollback paths,

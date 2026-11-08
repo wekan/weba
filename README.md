@@ -17,6 +17,9 @@ charts show current counts, not historical forecasts.
 
 Developed by [WeKan ®](https://wekan.fi).
 
+Project-specific source/toolchain/database notes are in the
+[development guide](docs/Development.md).
+
 ## About Gambas
 
 Gambas has IDE similar to VB6. Gambas can create GUI, WebUI and CLI apps.
