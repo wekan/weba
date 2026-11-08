@@ -1,4 +1,10 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- People PUT: Add replacement/clear/coercion with active filtering and exact
+  ordered duplicates; preserve explicit JSON keys, legacy reads and unique
+  permission relations. Carry/clean sequence rows across the lifecycle, remove
+  every occurrence on pull/self-unassignment and group native member rows.
+  Verify original #3697, source/archive negatives, partial/failed-COMMIT rollback
+  and packaged Chromium PUT/native interaction; other card fields remain open.
 - Documentation: Describe native card-member controls, permissions, active/stale
   choices, popups, native/REST COMMIT tests and 105 imported interface keys.
 - Native card members: Add Gambas member tree/active picker/add/remove controls

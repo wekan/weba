@@ -12,7 +12,7 @@ subprocess.run(command, env={**os.environ, 'WEBA_TEST_MODE': 'prepare'}, check=T
 reader = sqlite3.connect(project / 'database.db', timeout=1)
 process = None
 tables = ('users', 'account_sessions', 'kb_boards', 'kb_cards', 'kb_members',
-          'kb_card_assignees', 'kb_card_members', 'kb_card_people_order', 'kb_removed_members', 'kb_member_flags', 'kb_user_meta', 'kb_entries', 'kb_files',
+          'kb_card_assignees', 'kb_card_members', 'kb_card_people_order', 'kb_card_people_sequence', 'kb_removed_members', 'kb_member_flags', 'kb_user_meta', 'kb_entries', 'kb_files',
           'kb_history', 'kb_activity', 'kb_retired_authors', 'api_tokens')
 def snapshot(table):
     return sorted(reader.execute('SELECT * FROM '+table).fetchall(), key=repr)

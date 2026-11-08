@@ -29,12 +29,13 @@ def login(username):
     assert status == 200, status
     return data['token']
 admin, owner, member = (login(name) for name in ('rest-owner', 'rest-other', 'rest-member'))
+assert call('/api/boards/'+board+'/members/rest-member/add', token=admin, data={'action': 'add', 'role': 'normal'})[0] == 200
 def role(value):
     assert call('/api/boards/'+board+'/members/rest-member', token=admin, data={'role': value})[0] == 200
 def change(field, username, method='POST', token=owner):
     return call(route+field+'/'+username, method, token)
 with sqlite3.connect(Path(os.environ['WEBA_DB_HOST']) / os.environ['WEBA_DB_NAME']) as db:
-    tables = ('kb_card_members', 'kb_card_people_order', 'kb_card_assignees', 'kb_cards', 'kb_card_lists', 'kb_history', 'kb_activity')
+    tables = ('kb_card_members', 'kb_card_people_order', 'kb_card_people_sequence', 'kb_card_assignees', 'kb_cards', 'kb_card_lists', 'kb_history', 'kb_activity')
     def snapshot():
         return {table: sorted(db.execute('SELECT * FROM '+table).fetchall(), key=repr) for table in tables}
     before = snapshot()

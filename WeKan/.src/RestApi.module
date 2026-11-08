@@ -83,6 +83,24 @@ Public Sub Main()
     Return
   Endif
   fields = Split(Request.Path, "/", "", True)
+  If fields.Count = 7 Then
+    If fields[0] = "api" And fields[1] = "boards" And fields[3] = "lists" And fields[5] = "cards" Then
+      If Request.Method <> "PUT" Then
+        Reply(405, ErrorData("Method not allowed"))
+        Return
+      Endif
+      Try ids = [PositiveId(fields[2]), PositiveId(fields[4]), PositiveId(fields[6])]
+      If Error Then
+        Reply(404, ErrorData("Card not found"))
+        Return
+      Endif
+      payload = JsonBody(True)
+      If Not payload Then Return
+      outcome = BoardAccess.UpdateApiCardPeople(ids[0], ids[1], ids[2], payload)
+      Reply(outcome["status"], outcome["data"])
+      Return
+    Endif
+  Endif
   If fields.Count = 9 Then
     If fields[0] = "api" And fields[1] = "boards" And fields[3] = "lists" And fields[5] = "cards" And (fields[7] = "members" Or fields[7] = "assignees") Then
       If Request.Method <> "POST" And Request.Method <> "DELETE" Then
@@ -210,9 +228,10 @@ Private Function PositiveId(value As String) As Integer
   Return id
 End
 
-Private Function JsonBody() As Collection
+Private Function JsonBody(Optional preserveNull As Boolean = False) As Collection
   Dim text As String
   Dim data As Variant
+  Dim validated As Variant
   If LCase(Split(Request.ContentType, ";")[0]) <> "application/json" Then
     Reply(415, ErrorData("Expected application/json"))
     Return Null
@@ -222,7 +241,14 @@ Private Function JsonBody() As Collection
     Return Null
   Endif
   text = Read Request.ContentLength
-  data = JSON.Decode(text)
+  If preserveNull Then
+    ' Preserve first: a prior ordinary decode loses empty keys on Gambas 3.20.
+    ' Separate ordinary validation rejects UseNull's undefined-only syntax.
+    data = JSON.Decode(text, True)
+    validated = JSON.Decode(text)
+  Else
+    data = JSON.Decode(text)
+  Endif
   If Not (data Is Collection) Then
     Reply(400, ErrorData("Expected a JSON object"))
     Return Null

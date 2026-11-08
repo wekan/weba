@@ -60,6 +60,16 @@ Public Sub OpenStore()
     t.PrimaryKey = ["card_id", "field", "username"]
     t.Update()
   Endif
+  If Not $db.Tables.Exist("kb_card_people_sequence") Then
+    t = $db.Tables.Add("kb_card_people_sequence")
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("card_id", db.Integer)
+    t.Fields.Add("field", db.String, 16)
+    t.Fields.Add("username", db.String, 255)
+    t.Fields.Add("sort_order", db.Integer)
+    t.PrimaryKey = ["card_id", "field", "sort_order"]
+    t.Update()
+  Endif
   If Not $db.Tables.Exist("kb_user_meta") Then
     t = $db.Tables.Add("kb_user_meta")
     t.Fields.Add("board_id", db.Integer)
@@ -480,6 +490,13 @@ Public Function Assignees(boardId As Integer, cardId As Integer) As String[]
   Dim names As New String[]
   Dim r As Result
   RequireCard(boardId, cardId)
+  r = $db.Find("kb_card_people_sequence", "board_id = &1 AND card_id = &2 AND field = &3 ORDER BY sort_order", boardId, cardId, "assignees")
+  If r.Available Then
+    For Each r
+      names.Add(r!username)
+    Next
+    Return names
+  Endif
   r = $db.Find("kb_cards", "board_id = &1 AND id = &2", boardId, cardId)
   If r!assignee Then names.Add(r!assignee)
   r = $db.Exec("SELECT m.username FROM kb_card_assignees m LEFT JOIN kb_card_people_order o ON o.board_id = m.board_id AND o.card_id = m.card_id AND o.username = m.username AND o.field = &3 WHERE m.board_id = &1 AND m.card_id = &2 ORDER BY o.sort_order, m.username", boardId, cardId, "assignees")
@@ -493,6 +510,13 @@ Public Function CardMembers(boardId As Integer, cardId As Integer) As String[]
   Dim names As New String[]
   Dim r As Result
   RequireCard(boardId, cardId)
+  r = $db.Find("kb_card_people_sequence", "board_id = &1 AND card_id = &2 AND field = &3 ORDER BY sort_order", boardId, cardId, "members")
+  If r.Available Then
+    For Each r
+      names.Add(r!username)
+    Next
+    Return names
+  Endif
   r = $db.Exec("SELECT m.username FROM kb_card_members m LEFT JOIN kb_card_people_order o ON o.board_id = m.board_id AND o.card_id = m.card_id AND o.username = m.username AND o.field = &3 WHERE m.board_id = &1 AND m.card_id = &2 ORDER BY o.sort_order, m.username", boardId, cardId, "members")
   For Each r
     names.Add(r!username)
@@ -535,7 +559,9 @@ Public Sub ChangeCardMember(boardId As Integer, cardId As Integer, username As S
   If add Then
     If names.Find(username) < 0 Then names.Add(username)
   Else
-    If names.Find(username) >= 0 Then names.Remove(names.Find(username))
+    While names.Find(username) >= 0
+      names.Remove(names.Find(username))
+    Wend
   Endif
   WriteCardMembers(boardId, cardId, names)
   DatabaseTransactions.Commit($db)
@@ -561,6 +587,7 @@ Private Sub WriteCardMembers(boardId As Integer, cardId As Integer, names As Str
   transaction = True
   KanbanStore.Activity(boardId, "Changed card members", "card", cardId)
   WritePeopleOrder(boardId, cardId, "members", unique)
+  WritePeopleSequence(boardId, cardId, "members", names)
   $db.Delete("kb_card_members", "board_id = &1 AND card_id = &2", boardId, cardId)
   For Each username In unique
     r = $db.Create("kb_card_members")
@@ -578,8 +605,24 @@ Catch
 End
 
 Public Function MutateApiCardPerson(boardId As Integer, listId As Integer, cardId As Integer, field As String, username As String, add As Boolean) As Collection
+  Return ChangeApiCardPeople(boardId, listId, cardId, field, username, If(add, "add", "remove"), Null)
+End
+
+Public Function UpdateApiCardPeople(boardId As Integer, listId As Integer, cardId As Integer, payload As Collection) As Collection
+  Return ChangeApiCardPeople(boardId, listId, cardId, "", "", "replace", payload)
+End
+
+Private Function ChangeApiCardPeople(boardId As Integer, listId As Integer, cardId As Integer, field As String, username As String, operation As String, payload As Collection) As Collection
   Dim r As Result
   Dim names As String[]
+  Dim memberNames As String[]
+  Dim assigneeNames As String[]
+  Dim key As String
+  Dim target As String
+  Dim targets As New Collection
+  Dim add As Boolean = operation = "add"
+  Dim replace As Boolean = operation = "replace"
+  Dim archived As Boolean
   Dim data As New Collection
   Dim actor As String = WebIdentity.Username
   Dim siteAdmin As Boolean
@@ -590,7 +633,9 @@ Public Function MutateApiCardPerson(boardId As Integer, listId As Integer, cardI
   If Env["WEBA_API_REQUEST"] <> "1" Then Return ApiFailure(403, "API context required")
   If Not actor Then Return ApiFailure(401, "Invalid credentials")
   If Not WebDatabase.UserExists(actor) Then Return ApiFailure(401, "Invalid credentials")
-  If field <> "members" And field <> "assignees" Then Return ApiFailure(404, "API route not found")
+  If Not replace Then
+    If field <> "members" And field <> "assignees" Then Return ApiFailure(404, "API route not found")
+  Endif
   OpenStore()
   WorkspaceStore.OpenStore()
   r = $db.Find("kb_boards", "id = &1", boardId)
@@ -599,12 +644,36 @@ Public Function MutateApiCardPerson(boardId As Integer, listId As Integer, cardI
   If Not siteAdmin Then
     If Not Can(boardId, "write") Or Not Can(boardId, "seesAllCards") Then Return ApiFailure(403, "Forbidden")
   Endif
-  If Not username Or Len(username) > 255 Then Return ApiFailure(400, "Invalid member ID")
+  If replace Then
+    If Not payload Then Return ApiFailure(400, "Expected a JSON object")
+    For Each key In payload.Keys
+      If key <> "members" And key <> "assignees" Then Return ApiFailure(400, "Card field not implemented")
+    Next
+    If payload.Exist("members") Then memberNames = RestPeople(payload["members"])
+    If payload.Exist("assignees") Then assigneeNames = RestPeople(payload["assignees"])
+    If memberNames Then
+      For Each target In memberNames
+        If String.Len(target) <= 255 Then targets[target] = True
+      Next
+    Endif
+    If assigneeNames Then
+      For Each target In assigneeNames
+        If String.Len(target) <= 255 Then targets[target] = True
+      Next
+    Endif
+  Else
+    If Not username Or Len(username) > 255 Then Return ApiFailure(400, "Invalid member ID")
+    targets[username] = True
+  Endif
   If siteAdmin Then $apiMemberBoard = boardId
   KanbanStore.PrimeCardLinks(boardId)
   DatabaseTransactions.Begin($db)
   transaction = True
-  $db.Exec("UPDATE users SET username = username WHERE username = &1", username)
+  names = targets.Keys
+  names.Sort()
+  For Each target In names
+    $db.Exec("UPDATE users SET username = username WHERE username = &1", target)
+  Next
   $db.Exec("UPDATE kb_boards SET title = title WHERE id = &1", boardId)
   $db.Exec("UPDATE kb_cards SET title = title WHERE id = &1 AND board_id = &2", cardId, boardId)
   siteAdmin = WebDatabase.GetIsAdmin(actor)
@@ -615,14 +684,34 @@ Public Function MutateApiCardPerson(boardId As Integer, listId As Integer, cardI
       Error.Raise("Forbidden")
     Endif
   Endif
-  r = $db.Find("kb_cards", "board_id = &1 AND id = &2 AND archived = &3", boardId, cardId, False)
+  r = $db.Find("kb_cards", "board_id = &1 AND id = &2", boardId, cardId)
   If Not r.Available Then
+    status = 404
+    Error.Raise("Card not found")
+  Endif
+  archived = r!archived
+  If archived And Not replace Then
     status = 404
     Error.Raise("Card not found")
   Endif
   If KanbanStore.CardListId(boardId, cardId) <> listId Then
     status = 404
     Error.Raise("Card not found")
+  Endif
+  If replace Then
+    If payload.Count = 0 Then
+      DatabaseTransactions.Rollback($db)
+      transaction = False
+      $apiMemberBoard = 0
+      data["message"] = "Error"
+      Return ApiAnswer(404, data)
+    Endif
+    If Not archived Then
+      If memberNames Then WriteCardMembers(boardId, cardId, ActivePeople(boardId, memberNames))
+      If assigneeNames Then WriteAssignees(boardId, cardId, ActivePeople(boardId, assigneeNames))
+    Endif
+    data["_id"] = CStr(cardId)
+    Goto FINISH
   Endif
   If add Then
     If Not RoleOf(boardId, username) Then
@@ -638,7 +727,9 @@ Public Function MutateApiCardPerson(boardId As Integer, listId As Integer, cardI
   If add Then
     If names.Find(username) < 0 Then names.Add(username)
   Else
-    If names.Find(username) >= 0 Then names.Remove(names.Find(username))
+    While names.Find(username) >= 0
+      names.Remove(names.Find(username))
+    Wend
   Endif
   If field = "members" Then
     WriteCardMembers(boardId, cardId, names)
@@ -648,6 +739,7 @@ Public Function MutateApiCardPerson(boardId As Integer, listId As Integer, cardI
   data["_id"] = CStr(cardId)
   data["members"] = CardMembers(boardId, cardId)
   data["assignees"] = Assignees(boardId, cardId)
+FINISH:
   DatabaseTransactions.Commit($db)
   transaction = False
   $apiMemberBoard = 0
@@ -658,6 +750,35 @@ Catch
   If transaction Then Try DatabaseTransactions.Rollback($db)
   If status = 500 Then failure = "Card membership update failed"
   Return ApiFailure(status, failure)
+End
+
+Private Function RestPeople(value As Variant) As String[]
+  Dim names As New String[]
+  Dim item As Variant
+  If TypeOf(value) = gb.String Then
+    If value <> "" Then names.Add(value)
+  Else If TypeOf(value) = gb.Object Then
+    If (value Is Variant[]) Or (value Is String[]) Then
+      For Each item In value
+        If TypeOf(item) = gb.String Then
+          If item <> "" Then names.Add(item)
+        Endif
+      Next
+    Endif
+  Endif
+  Return names
+End
+
+Private Function ActivePeople(boardId As Integer, names As String[]) As String[]
+  Dim active As New String[]
+  Dim username As String
+  Dim allowed As New Collection
+  For Each username In names
+    If String.Len(username) > 255 Then Continue
+    If Not allowed.Exist(username) Then allowed[username] = RoleOf(boardId, username) <> ""
+    If allowed[username] Then active.Add(username)
+  Next
+  Return active
 End
 
 Public Sub SetAssignees(boardId As Integer, cardId As Integer, names As String[])
@@ -708,6 +829,7 @@ Private Sub WriteAssignees(boardId As Integer, cardId As Integer, names As Strin
   transaction = True
   KanbanStore.Activity(boardId, "Changed card assignments", "card", cardId)
   WritePeopleOrder(boardId, cardId, "assignees", unique)
+  WritePeopleSequence(boardId, cardId, "assignees", names)
   $db.Delete("kb_card_assignees", "board_id = &1 AND card_id = &2", boardId, cardId)
   For Each username In unique
     r = $db.Create("kb_card_assignees")
@@ -726,6 +848,23 @@ Catch
   failure = Error.Text
   If transaction Then Try DatabaseTransactions.Rollback($db)
   Error.Raise(failure)
+End
+
+Private Sub WritePeopleSequence(boardId As Integer, cardId As Integer, field As String, names As String[])
+  Dim r As Result
+  Dim username As String
+  Dim position As Integer
+  $db.Delete("kb_card_people_sequence", "board_id = &1 AND card_id = &2 AND field = &3", boardId, cardId, field)
+  For Each username In names
+    r = $db.Create("kb_card_people_sequence")
+    r["board_id"] = boardId
+    r["card_id"] = cardId
+    r["field"] = field
+    r["username"] = username
+    r["sort_order"] = position
+    r.Update()
+    Inc position
+  Next
 End
 
 Private Sub WritePeopleOrder(boardId As Integer, cardId As Integer, field As String, names As String[])

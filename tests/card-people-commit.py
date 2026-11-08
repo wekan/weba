@@ -25,11 +25,11 @@ for field in ('members', 'assignees'):
     request('/api/boards/'+board+'/lists/'+list_id+'/cards/'+card+'/'+field+'/rest-member', 'DELETE', token=token)
 reader = sqlite3.connect(project / 'database.db', timeout=1)
 process = None
-tables = ('kb_cards', 'kb_card_members', 'kb_card_people_order', 'kb_card_assignees', 'kb_card_lists', 'kb_history', 'kb_activity')
+tables = ('kb_cards', 'kb_card_members', 'kb_card_people_order', 'kb_card_people_sequence', 'kb_card_assignees', 'kb_card_lists', 'kb_history', 'kb_activity')
 def rows(table):
     return sorted(reader.execute('SELECT * FROM '+table).fetchall(), key=repr)
 try:
-    for field, native in (('members', False), ('assignees', False), ('members', True)):
+    for field, native in (('members', False), ('assignees', False), ('members', True), ('replace', False)):
         for action in ('add', 'remove'):
             for signal in ('card-people-commit-failed', 'card-people-reader-released'):
                 (project / signal).unlink(missing_ok=True)
@@ -53,9 +53,16 @@ try:
             (project / 'card-people-reader-released').write_text('ready')
             output, _ = process.communicate(timeout=15)
             assert process.returncode == 0, output
-            table = 'kb_card_'+field
-            count = reader.execute('SELECT COUNT(*) FROM '+table+' WHERE board_id=? AND card_id=? AND username=?', (board, card, 'rest-member')).fetchone()[0]
-            assert count == (1 if action == 'add' else 0)
+            if field == 'replace':
+                for name, expected in (('members', ['rest-member', 'rest-other', 'rest-member']), ('assignees', ['rest-other', 'rest-member', 'rest-other'])):
+                    sequence = [row[0] for row in reader.execute('SELECT username FROM kb_card_people_sequence WHERE board_id=? AND card_id=? AND field=? ORDER BY sort_order', (board, card, name))]
+                    assert sequence == (expected if action == 'add' else [])
+                    actual = {row[0] for row in reader.execute('SELECT username FROM kb_card_'+name+' WHERE board_id=? AND card_id=?', (board, card))}
+                    assert actual == (set(expected) if action == 'add' else set())
+            else:
+                table = 'kb_card_'+field
+                count = reader.execute('SELECT COUNT(*) FROM '+table+' WHERE board_id=? AND card_id=? AND username=?', (board, card, 'rest-member')).fetchone()[0]
+                assert count == (1 if action == 'add' else 0)
             print(('Native ' if native else 'REST ')+field+' '+action+': '+output.strip())
 finally:
     reader.close()

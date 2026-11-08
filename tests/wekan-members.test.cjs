@@ -30,8 +30,8 @@ const secrets=[process.env.WEBA_TEST_PASSWORD];
   if(name==='../helpers/db')return db;
   throw Error('Unsupported original spec dependency '+name);
  }},{filename:spec});
- const selected=cases.filter(({title})=>title.startsWith('#5998 add board member ')||title.startsWith('#5998 adding a board member ')||title.startsWith('#5998 add card member:'));
- playwright.expect(selected.length).toBe(4);
+ const selected=cases.filter(({title})=>title.startsWith('#5998 add board member ')||title.startsWith('#5998 adding a board member ')||title.startsWith('#5998 add card member:')||title.startsWith('#3697 clearing members via REST'));
+ playwright.expect(selected.length).toBe(5);
  const request=await playwright.request.newContext({baseURL:process.env.WEBA_TEST_URL});
  try{
   const login=async username=>{
@@ -49,6 +49,7 @@ const secrets=[process.env.WEBA_TEST_PASSWORD];
   for(const {title,callback} of selected){
    // Same per-test member graph as the original fixture: owner/admin + user2.
    oracle('reset-board',boardId);
+   oracle('reset-card-people',boardId,fixture.otherCardId);
    await post('rest-other/add',{action:'add',role:'admin'});
    await post('rest-other',{role:'admin'});
    await post('rest-member/remove',{action:'remove'});
@@ -57,6 +58,7 @@ const secrets=[process.env.WEBA_TEST_PASSWORD];
    await callback({request,user,user2,board:{boardId,listIds:[String(fixture.otherListId)]}});
    console.log('Original spec 17 passed: '+title);
   }
+  oracle('reset-card-people',boardId,fixture.otherCardId);
   console.log(`Original spec 17: ${selected.length} unchanged membership callbacks passed; ${cases.length-selected.length} other callbacks not executed`);
  }finally{await request.dispose();}
 })().catch(error=>{

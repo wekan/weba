@@ -7,10 +7,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 ## Current UI/API/security work
 
 - Full scope remains all items below and the current WeKan UI/API/security test
-  contracts. Complete original suites have not passed against weba. Five spec 17
-  callbacks (three board membership, one card membership, one user deletion)
-  now run unchanged with actual Playwright assertions and explicit SQLite
-  fixture adapters; the other 25
+  contracts. Complete original suites have not passed against weba. Six spec 17
+  callbacks (three board membership, one card membership, one people-array clear,
+  one user deletion) run unchanged with actual Playwright assertions and explicit
+  SQLite fixture adapters; the other 24
   callbacks remain unexecuted. Preserve original assertions as execution adapters expand.
 - Completed: remove login initializer request/query/user-agent logging and the
   unused shared temporary logfile sink. Guard sources against reintroducing
@@ -112,8 +112,23 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Documented native member editor entry points, active candidates, stale
   removal, read/write/assigned/Worker boundaries, independent assignees,
   popup behavior, six native/REST COMMIT test phases and 105 translated keys.
-- Next card-person work: card PUT array/clear contracts,
-  remaining card reads/bulk routes and complete original UI/API/security suites.
+- Completed members/assignees card PUT replacement: normalize explicit
+  null/empty/non-array values to [], retain supplied string order/duplicates,
+  filter inactive/unknown board members and leave omitted fields untouched.
+  Preserve explicit empty JSON keys on Gambas 3.20 while rejecting undefined
+  syntax. Use portable sequence rows alongside unique permission relations;
+  retain legacy fallback reads and carry/clean sequences through copy, move,
+  JSON exchange, account recreation and permanent deletion. Merge additions
+  keep existing duplicates; removal and native self-unassignment remove every
+  occurrence. Native member trees offer one selectable row per person.
+  Match the legacy archived-PUT no-op/ID response and empty-body 404; unsupported
+  card fields return explicit 400 until their own contracts are implemented.
+  Verify the unchanged original #3697 callback, source/archive HTTP normalization,
+  role/list/cookie boundaries, partial second-field rollback, eight card-person
+  failed-COMMIT/retry phases, duplicate lifecycle and packaged Chromium PUT /
+  native editor interaction. Full original suite parity remains pending.
+- Next card-person work: remaining card PUT fields, reads, creation/bulk routes
+  and complete original UI/API/security suites.
 - In progress: REST cards/containers and full API identity/data parity, including
   stable IDs and complete source roster metadata. Custom roles, list-level
   exceptions and public/instance board visibility remain pending.

@@ -171,8 +171,25 @@ const fs = require('node:fs');
       await ownerPeople();await page.select('[id$=".CardPersonChoice:select"]',memberName);await settle();await click('AddCardPerson');
       assert.ok(await page.$eval(selector('CardPeopleTree'),(e,name)=>e.textContent.includes(name),memberName),'native add persists a card member');
       assert.equal(await page.$eval(entry('Assignee'),e=>e.value),ownerName,'card member does not replace assignee');
+      async function replacePeople(payload){
+        const result=await page.evaluate(async({ownerName,payload})=>{
+          const login=await fetch('/users/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:ownerName,password:'layout-comparison-password'})});
+          if(login.status!==200)return{login:login.status};
+          const {token}=await login.json();
+          const item=[...document.querySelectorAll('.weba-report .weba-card strong')].find(e=>e.textContent==='Shared card').closest('.weba-card');
+          const board=document.querySelector('.weba-content').dataset.board;
+          const response=await fetch(`/api/boards/${board}/lists/${item.dataset.listId}/cards/${item.dataset.cardId}`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify(payload)});
+          return{login:login.status,status:response.status};
+        },{ownerName,payload});
+        assert.equal(result.login,200);assert.equal(result.status,200);
+      }
+      if(process.env.WITH_API==='true'){
+        await replacePeople({members:[memberName,memberName],assignees:[ownerName,ownerName]});
+        console.log('Members browser: actual REST PUT seeded duplicate people arrays for native reopen/removal checks');
+      }
       await click('CloseCardPeople');await click('CloseEditor');await ownerPeople();
       assert.ok(await page.$eval(selector('CardPeopleTree'),(e,name)=>e.textContent.includes(name),memberName),'reopened panel reads persisted members');
+      assert.equal(await page.$$eval('[id$=".CardPeopleTree"] tr[id]',(els,name)=>els.filter(e=>e.textContent.trim()===name).length,memberName),1,'native tree has one selectable row per person even after duplicate PUT');
       await click('CloseCardPeople');await click('CloseEditor');
       await memberBoard();assert.equal(await memberPage.$$eval('.weba-data .weba-card',els=>els.length),2);
       assert.equal(await memberPage.$$eval('.weba-add-card-top,.weba-drag-handle',els=>els.length),0,'read-only has no create/drag controls');
@@ -196,6 +213,14 @@ const fs = require('node:fs');
       assert.equal(await memberPage.$$eval('.weba-drag-handle[data-drag-kind="card"]',els=>els.length),2);
       assert.equal(await memberPage.$$eval('.weba-drag-handle[data-drag-kind="list"],.weba-add-card-top',els=>els.length),0);
       await memberPage.click('.weba-card-menu');await waitP();await clickP('ContextAssignSelf');
+      if(process.env.WITH_API==='true'){
+        await replacePeople({assignees:[ownerName,memberName,memberName]});
+        await memberPage.click('.weba-card-menu');await waitP();await clickP('ContextAssignSelf');
+        await memberPage.click('.weba-card-menu');await waitP();
+        assert.equal(await memberPage.$eval(selector('ContextAssignSelf'),e=>e.textContent.replace(/\u00a0/g,' ').trim()),'Assign myself','native self-unassignment removes all duplicate occurrences');
+        await clickP('ContextAssignSelf');
+        console.log('Members browser: native self-unassignment removed every duplicate assignee occurrence');
+      }
       await memberPage.click('.weba-card-menu');await waitP();assert.ok(await memberPage.$eval(selector('ContextAssignSelf'),e=>e.textContent.includes('Unassign')));await clickP('CloseContext');
       await memberPage.focus('.weba-card .weba-drag-handle');await memberPage.keyboard.press('ArrowRight');await waitP();
       assert.equal(await memberPage.$$eval('.weba-column[data-list="Doing"] .weba-card',els=>els.length),1,'worker keyboard move persists');

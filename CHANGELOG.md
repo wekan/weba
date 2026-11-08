@@ -2,6 +2,18 @@
 
 This work adds the following features and fixes:
 
+- Add card PUT members/assignees replacement with explicit clear/coercion,
+  active-member filtering, omitted-field preservation and exact ordered duplicate
+  values. Preserve empty JSON keys on Gambas 3.20 without accepting undefined
+  syntax. Keep unique permission relations and legacy fallback reads; carry and
+  clean raw sequences throughout the native lifecycle. Keep merge additions
+  idempotent and remove every occurrence on pull/native self-unassignment;
+  show one native member row per person. Match legacy archived PUT/no-op and
+  empty-body responses; reject unsupported card fields explicitly. Verify the
+  unchanged original #3697 callback, source/archive role/normalization/rollback
+  cases, eight real card-person failed-COMMIT/retry phases and packaged Chromium
+  PUT/native interaction. Full original suite parity remains pending. Thanks to xet7.
+
 - Document native card-member editing, role/assigned scope, active/stale
   choices, independent assignees and popup behavior. Describe native/REST
   COMMIT checks and update the imported interface-key count. Thanks to xet7.

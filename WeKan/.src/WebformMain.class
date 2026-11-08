@@ -1465,12 +1465,14 @@ Private Sub RefreshCardPeople()
   Dim r As Result = WorkspaceStore.Record($peopleBoard, "card", $peopleCard)
   Dim names As String[] = BoardAccess.CardMembers($peopleBoard, $peopleCard)
   Dim choices As New String[]
+  Dim displayed As New Collection
   Dim username As String
   Dim writable As Boolean = BoardAccess.Can($peopleBoard, "write")
   CardPeopleName.Text = r!title
   CardPeopleTree.Clear()
   For Each username In names
-    CardPeopleTree.Add(username, username)
+    If Not displayed.Exist(username) Then CardPeopleTree.Add(username, username)
+    displayed[username] = True
   Next
   r = BoardAccess.Members($peopleBoard)
   For Each r
@@ -1596,7 +1598,9 @@ Public Sub ContextAssignSelf_Click()
   If index < 0 Then
     names.Add(WebIdentity.Username)
   Else
-    names.Remove(index)
+    While names.Find(WebIdentity.Username) >= 0
+      names.Remove(names.Find(WebIdentity.Username))
+    Wend
   Endif
   BoardAccess.SetAssignees($contextBoard, $contextId, names)
   ContextMenu.Hide()

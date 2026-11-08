@@ -9,7 +9,13 @@ schema = json.loads((Path(__file__).resolve().parent.parent / 'WeKan/.public/api
 role_flags = {item['role']: item['flag'] for item in schema['roles']}
 with sqlite3.connect(Path(os.environ['WEBA_DB_HOST']) / os.environ['WEBA_DB_NAME']) as db:
     board_id = int(sys.argv[2])
-    if sys.argv[1] == 'reset-board':
+    if sys.argv[1] == 'reset-card-people':
+        card_id = int(sys.argv[3])
+        db.execute('UPDATE kb_cards SET assignee=? WHERE board_id=? AND id=?', ('rest-other', board_id, card_id))
+        for table in ('kb_card_members', 'kb_card_assignees', 'kb_card_people_order', 'kb_card_people_sequence'):
+            if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)).fetchone():
+                db.execute('DELETE FROM '+table+' WHERE board_id=? AND card_id=?', (board_id, card_id))
+    elif sys.argv[1] == 'reset-board':
         for table in ('kb_members', 'kb_member_flags', 'kb_removed_members'):
             db.execute('DELETE FROM '+table+' WHERE board_id=?', (board_id,))
     elif sys.argv[1] == 'reset':
@@ -50,7 +56,20 @@ with sqlite3.connect(Path(os.environ['WEBA_DB_HOST']) / os.environ['WEBA_DB_NAME
         values = []
         for card_id, parent_id, archived, list_id in records:
             members = [row[0] for row in db.execute("SELECT m.username FROM kb_card_members m LEFT JOIN kb_card_people_order o ON o.board_id=m.board_id AND o.card_id=m.card_id AND o.username=m.username AND o.field='members' WHERE m.board_id=? AND m.card_id=? ORDER BY o.sort_order,m.username", (parent_id, card_id))] if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='kb_card_members'").fetchone() else []
-            values.append({'_id': str(card_id), 'boardId': str(parent_id), 'listId': str(list_id), 'archived': bool(archived), 'members': members})
+            primary = db.execute('SELECT assignee FROM kb_cards WHERE id=?', (card_id,)).fetchone()[0]
+            assignees = [primary] if primary else []
+            for (name,) in db.execute("SELECT m.username FROM kb_card_assignees m LEFT JOIN kb_card_people_order o ON o.board_id=m.board_id AND o.card_id=m.card_id AND o.username=m.username AND o.field='assignees' WHERE m.board_id=? AND m.card_id=? ORDER BY o.sort_order,m.username", (parent_id, card_id)):
+                if name not in assignees:
+                    assignees.append(name)
+            if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='kb_card_people_sequence'").fetchone():
+                for field in ('members', 'assignees'):
+                    sequence = [row[0] for row in db.execute('SELECT username FROM kb_card_people_sequence WHERE board_id=? AND card_id=? AND field=? ORDER BY sort_order', (parent_id, card_id, field))]
+                    if sequence:
+                        if field == 'members':
+                            members = sequence
+                        else:
+                            assignees = sequence
+            values.append({'_id': str(card_id), 'boardId': str(parent_id), 'listId': str(list_id), 'archived': bool(archived), 'members': members, 'assignees': assignees})
         print(json.dumps(values if sys.argv[1] == 'cards' else values[0] if values else None))
     else:
         raise AssertionError('Unknown fixture operation')
