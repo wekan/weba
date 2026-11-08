@@ -130,11 +130,22 @@ Public Function SaveCard(boardId As Integer, cardId As Integer, title As String,
   Dim r As Result
   Dim list As Result
   Dim previousAssignee As String
+  Dim previousDueDay As String
+  Dim transaction As Boolean
+  Dim failure As String
+  BoardAccess.Require(boardId, "write")
+  If cardId Then BoardAccess.RequireCard(boardId, cardId)
+  WorkspaceStore.OpenStore()
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE kb_boards SET title = title WHERE id = &1", boardId)
+  If cardId Then $db.Exec("UPDATE kb_cards SET title = title WHERE board_id = &1 AND id = &2", boardId, cardId)
   BoardAccess.Require(boardId, "write")
   If cardId Then
     BoardAccess.RequireCard(boardId, cardId)
     r = $db.Find("kb_cards", "board_id = &1 AND id = &2", boardId, cardId)
     previousAssignee = r!assignee
+    previousDueDay = r!due_day
   Endif
   If Not Trim(lane) Then lane = "Default"
   If Not Trim(title) Then Error.Raise("Enter a card title")
@@ -174,12 +185,19 @@ Public Function SaveCard(boardId As Integer, cardId As Integer, title As String,
   r["due_day"] = dueDay
   r.Update()
   If Not cardId Then cardId = $db.LastInsertId
+  If previousDueDay <> dueDay Then $db.Delete("kb_card_dates", "board_id = &1 AND card_id = &2 AND field = &3", boardId, cardId, "dueAt")
   If previousAssignee <> assignee Then $db.Delete("kb_card_assignees", "board_id = &1 AND card_id = &2", boardId, cardId)
   If previousAssignee <> assignee Then $db.Delete("kb_card_people_order", "board_id = &1 AND card_id = &2 AND field = &3", boardId, cardId, "assignees")
   If previousAssignee <> assignee Then $db.Delete("kb_card_people_sequence", "board_id = &1 AND card_id = &2 AND field = &3", boardId, cardId, "assignees")
   PutCardList(boardId, cardId, listId)
   Activity(boardId, "Saved card: " & title, "card", cardId)
+  DatabaseTransactions.Commit($db)
+  transaction = False
   Return cardId
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
 End
 
 Public Sub ArchiveCard(boardId As Integer, cardId As Integer, archived As Boolean)

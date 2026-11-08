@@ -1,0 +1,104 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim target As Integer
+  Dim imported As Integer
+  Dim cardId As Integer
+  Dim copied As Integer
+  Dim listId As Integer
+  Dim importedCard As Integer
+  Dim r As Result
+  Dim values As Collection
+  Dim changes As New Collection
+  Dim db As Connection
+  Dim denied As Boolean
+  Dim text As String
+  Dim data As Collection
+  Dim count As Integer
+  WebDatabase.Register("date-owner", "x")
+  WebDatabase.Register("date-reader", "x")
+  SignIn("date-owner")
+  boardId = KanbanStore.AddBoard("Date source")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Date card", "Body", "Default", "Todo", "date-owner", "", "2026-06-20")
+  values = CardDates.ReadDates(boardId, cardId)
+  If CardDates.Iso(values["dueAt"]) <> "2026-06-20T00:00:00.000Z" Then Error.Raise("Legacy due day lost its UTC fallback")
+  changes["receivedAt"] = CardDates.Parse(0)
+  changes["startAt"] = CardDates.Parse("2026-06-20")
+  changes["dueAt"] = CardDates.Parse("2026-06-20T00:30:40.123+03:30")
+  changes["endAt"] = CardDates.Parse("2026-06-22T12:00:00.456Z")
+  CardDates.Apply(boardId, cardId, changes)
+  CheckDates(boardId, cardId)
+  CardDates.RestoreDates(boardId, cardId, JSON.Decode("{\"endAt\":8640000000000000}"))
+  values = CardDates.ReadDates(boardId, cardId)
+  If CardDates.Iso(values["endAt"]) <> "+275760-09-13T00:00:00.000Z" Then Error.Raise("Date range boundary did not survive database persistence")
+  CardDates.Apply(boardId, cardId, changes)
+  r = WorkspaceStore.Record(boardId, "card", cardId)
+  If r!due_day <> "2026-06-19" Then Error.Raise("API date did not project its UTC day")
+  KanbanStore.SaveCard(boardId, cardId, "Date card", "Changed body", "Default", "Todo", "date-owner", "", "2026-06-19")
+  CheckDates(boardId, cardId)
+  copied = WorkspaceStore.Copy(boardId, "card", cardId, "Copied dates")
+  CheckDates(boardId, copied)
+  target = KanbanStore.AddBoard("Date target")
+  r = KanbanStore.Lanes(target)
+  r = KanbanStore.Lists(target, "Default")
+  listId = r!id
+  WorkspaceActions.Move(boardId, "card", copied, target, "Default", listId)
+  CheckDates(target, copied)
+  db = WebDatabase.OpenConnection()
+  r = db.Find("kb_card_dates", "board_id = &1 AND card_id = &2", boardId, copied)
+  If r.Count Then Error.Raise("Date move retained its old board identity")
+  text = BoardTransfer.ExportData(target, "board", target)
+  imported = BoardTransfer.ImportData(text, "Imported dates")
+  r = KanbanStore.Cards(imported)
+  importedCard = r!id
+  CheckDates(imported, importedCard)
+  r = KanbanStore.Boards()
+  count = r.Count
+  data = BoardTransfer.ReadData(text)
+  data["cards"][0]["dates"]["dueAt"] = "not-a-date"
+  Try BoardTransfer.ImportData(JSON.Encode(data), "Invalid dates")
+  denied = Error
+  If Not denied Then Error.Raise("Invalid imported date was accepted")
+  r = KanbanStore.Boards()
+  If r.Count <> count Then Error.Raise("Invalid imported dates left a partial board")
+  BoardAccess.SetMember(boardId, "date-reader", "read-assigned-only")
+  SignIn("date-reader")
+  Try CardDates.ReadDates(boardId, cardId)
+  denied = Error
+  If Not denied Then Error.Raise("Dates leaked an unassigned card")
+  SignIn("date-owner")
+  BoardAccess.SetAssignees(boardId, cardId, ["date-owner", "date-reader"])
+  SignIn("date-reader")
+  CheckDates(boardId, cardId)
+  Try CardDates.Apply(boardId, cardId, changes)
+  denied = Error
+  If Not denied Then Error.Raise("Reader changed card dates")
+  SignIn("date-owner")
+  KanbanStore.SaveCard(boardId, cardId, "Date card", "Body", "Default", "Todo", "date-owner", "", "2026-06-21")
+  values = CardDates.ReadDates(boardId, cardId)
+  If values.Count <> 4 Or CardDates.Iso(values["dueAt"]) <> "2026-06-21T00:00:00.000Z" Then Error.Raise("Native day edit retained a stale timestamp")
+  KanbanStore.SaveCard(boardId, cardId, "Date card", "Body", "Default", "Todo", "date-owner", "", "")
+  values = CardDates.ReadDates(boardId, cardId)
+  If values.Exist("dueAt") Or values.Count <> 3 Then Error.Raise("Native day clear lost other dates or retained due date")
+  WorkspaceStore.SetArchived(target, "card", copied, True)
+  WorkspaceActions.DeleteArchived(target, "card", copied, "Copied dates")
+  r = db.Find("kb_card_dates", "card_id = &1", copied)
+  If r.Count Then Error.Raise("Card deletion left date rows")
+  WorkspaceStore.SetArchived(imported, "board", imported, True)
+  WorkspaceActions.DeleteArchived(imported, "board", imported, "Imported dates")
+  r = db.Find("kb_card_dates", "board_id = &1", imported)
+  If r.Count Then Error.Raise("Board deletion left date rows")
+  Print "Card dates: exact milliseconds, legacy/native day synchronization, scope denial, copy/move/JSON, invalid import rollback and permanent cleanup passed"
+End
+
+Private Sub CheckDates(boardId As Integer, cardId As Integer)
+  Dim values As Collection = CardDates.ReadDates(boardId, cardId)
+  If values.Count <> 4 Then Error.Raise("Date fields were lost")
+  If values["receivedAt"] <> 0 Then Error.Raise("Epoch zero was lost")
+  If CardDates.Iso(values["dueAt"]) <> "2026-06-19T21:00:40.123Z" Then Error.Raise("Offset/millisecond timestamp was changed")
+  If CardDates.Iso(values["endAt"]) <> "2026-06-22T12:00:00.456Z" Then Error.Raise("End date was changed")
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

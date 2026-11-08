@@ -15,7 +15,14 @@ const fs = require('node:fs');
   const settle = () => page.waitForFunction(() => window.gw && gw.commands.length === 0);
   const click = async name => {await settle(); await page.locator(selector(name)).click(); await settle();};
   const visible = async name => page.waitForSelector(selector(name),{visible:true});
-  const fill = async (name,value) => {await settle(); await page.locator(entry(name)).fill(value);};
+  const fill = async (name,value) => {
+    await settle();
+    if(value===''){
+      // Puppeteer fill('') sets value without input; use a real edit so Gambas
+      // marks the field dirty and sends the empty value with the next command.
+      await page.focus(entry(name));await page.$eval(entry(name),e=>e.select());await page.keyboard.press('Backspace');
+    }else await page.locator(entry(name)).fill(value);
+  };
   const addStructure = async (trigger,title) => {await settle();await page.click(trigger);await settle();await visible('ActionPanel');await fill('ActionText',title);await click('ActionConfirm');};
   const shot = async name => {if(process.env.WEBA_SCREENSHOT_DIR) await page.screenshot({path:path.join(process.env.WEBA_SCREENSHOT_DIR,name+'.png')});};
   page.on('request',request=>{
@@ -184,13 +191,34 @@ const fs = require('node:fs');
         assert.equal(result.login,200);assert.equal(result.status,200);
       }
       if(process.env.WITH_API==='true'){
-        await replacePeople({members:[memberName,memberName],assignees:[ownerName,ownerName]});
+        await replacePeople({members:[memberName,memberName],assignees:[ownerName,ownerName],receivedAt:0,startAt:-1.9,dueAt:"2026-06-20T12:34:56.123Z",endAt:"2026-06-21T12:00:00.456Z"});
         console.log('Members browser: actual REST PUT seeded duplicate people arrays for native reopen/removal checks');
       }
       await click('CloseCardPeople');await click('CloseEditor');await ownerPeople();
       assert.ok(await page.$eval(selector('CardPeopleTree'),(e,name)=>e.textContent.includes(name),memberName),'reopened panel reads persisted members');
       assert.equal(await page.$$eval('[id$=".CardPeopleTree"] tr[id]',(els,name)=>els.filter(e=>e.textContent.trim()===name).length,memberName),1,'native tree has one selectable row per person even after duplicate PUT');
-      await click('CloseCardPeople');await click('CloseEditor');
+      await click('CloseCardPeople');
+      if(process.env.WITH_API==='true'){
+        async function exportedDateCard(){
+          await page.evaluate(()=>{delete window.__dateExport;window.__dateAnchor=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototype.click=function(){if(this.download)fetch(this.href).then(r=>r.text()).then(text=>window.__dateExport=text);};});
+          await page.evaluate(()=>[...document.querySelectorAll('.weba-report .weba-card strong')].find(e=>e.textContent==='Shared card').closest('.weba-card').querySelector('.weba-card-menu').click());await settle();await click('ContextExport');
+          await page.waitForFunction(()=>window.__dateExport!==undefined);
+          return page.evaluate(()=>{HTMLAnchorElement.prototype.click=window.__dateAnchor;delete window.__dateAnchor;return JSON.parse(window.__dateExport).cards[0];});
+        }
+        assert.equal(await page.$eval(entry('DueDay'),e=>e.value),'2026-06-20','API date projects to the native UTC day');
+        await fill('Description','Date-preserving native edit');await click('SaveCard');
+        let exported=await exportedDateCard();
+        assert.equal(exported.description,'Date-preserving native edit');
+        assert.equal(exported.dates.dueAt,Date.UTC(2026,5,20,12,34,56,123),'unchanged native day retains API milliseconds');
+        assert.deepEqual(exported.members,[memberName,memberName]);
+        await fill('DueDay','2026-06-22');await click('SaveCard');exported=await exportedDateCard();
+        assert.equal(exported.dates.dueAt,Date.UTC(2026,5,22),'native day change replaces the old instant');
+        await fill('DueDay','');await click('SaveCard');exported=await exportedDateCard();
+        assert.ok(!Object.hasOwn(exported.dates,'dueAt'),'native day clear removes the timestamp');
+        assert.equal(exported.dates.receivedAt,0);assert.equal(exported.dates.startAt,-1);assert.equal(exported.dates.endAt,Date.UTC(2026,5,21,12,0,0,456));
+        console.log('Dates browser: actual PUT, native unchanged/change/clear and exported millisecond/other-field retention passed');
+      }
+      await click('CloseEditor');
       await memberBoard();assert.equal(await memberPage.$$eval('.weba-data .weba-card',els=>els.length),2);
       assert.equal(await memberPage.$$eval('.weba-add-card-top,.weba-drag-handle',els=>els.length),0,'read-only has no create/drag controls');
       await memberPage.click('.weba-report .weba-card strong');await waitP();

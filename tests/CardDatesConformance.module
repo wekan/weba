@@ -1,0 +1,16 @@
+Public Sub Main()
+  Dim inputs As Variant = JSON.Decode(Env["WEBA_DATE_CASES"], True)
+  Dim value As Variant
+  Dim parsed As Collection
+  Dim rows As New Variant[]
+  For Each value In inputs
+    parsed = CardDates.Parse(value)
+    parsed["input_type"] = TypeOf(value)
+    If parsed["valid"] And Not parsed["clear"] Then
+      Try parsed["iso"] = CardDates.Iso(parsed["epoch"])
+      If Error Then Error.Raise(JSON.Encode(value) & " ISO failed: " & Error.Text & " epoch type=" & TypeOf(parsed["epoch"]))
+    Endif
+    rows.Add(parsed)
+  Next
+  Print JSON.Encode(rows)
+End

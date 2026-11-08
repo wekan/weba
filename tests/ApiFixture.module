@@ -67,6 +67,17 @@ Public Sub Main()
         memberPayload["members"] = New String[]
         memberPayload["assignees"] = New String[]
       Endif
+    Else If personField = "dates" Then
+      memberPayload = New Collection
+      If memberAction = "add" Then
+        memberPayload["members"] = ["rest-member", "rest-other"]
+        memberPayload["dueAt"] = "2026-06-20T12:34:56.123Z"
+        memberPayload["startAt"] = 0
+      Else
+        memberPayload["members"] = New String[]
+        memberPayload["dueAt"] = JSON.Null
+        memberPayload["startAt"] = JSON.Null
+      Endif
     Endif
     db = WebDatabase.OpenConnection()
     db.Timeout = 1
@@ -78,7 +89,7 @@ Public Sub Main()
       If Not Error Then Error.Raise("Expected rejected native member commit")
     Else
       WebIdentity.AuthenticateApi("rest-owner")
-      If personField = "replace" Then
+      If personField = "replace" Or personField = "dates" Then
         data = BoardAccess.UpdateApiCardPeople(boardId, otherId, cardId, memberPayload)
       Else
         data = BoardAccess.MutateApiCardPerson(boardId, otherId, cardId, personField, "rest-member", memberAction = "add")
@@ -96,7 +107,7 @@ Public Sub Main()
     If nativePeople Then
       BoardAccess.ChangeCardMember(boardId, cardId, "rest-member", memberAction = "add")
     Else
-      If personField = "replace" Then
+      If personField = "replace" Or personField = "dates" Then
         data = BoardAccess.UpdateApiCardPeople(boardId, otherId, cardId, memberPayload)
       Else
         data = BoardAccess.MutateApiCardPerson(boardId, otherId, cardId, personField, "rest-member", memberAction = "add")

@@ -111,6 +111,47 @@ class LoginThrottleTest(unittest.TestCase):
         self.assertLessEqual(len(gate.attempts), 2)
 
 
+class CardDateTransportTest(unittest.TestCase):
+    def test_numeric_timeclip_is_exact_and_does_not_change_other_fields(self):
+        body = b'{"dueAt":8640000000000000.0,"startAt":-1.9,"receivedAt":0.9999999999999999,"endAt":-0.0,"members":["owner"],"other":1.25}'
+        data = json.loads(server.canonical_card_dates(body))
+        self.assertEqual(data, {'dueAt': 8640000000000000, 'startAt': -1, 'receivedAt': 0, 'endAt': 0, 'members': ['owner'], 'other': 1.25})
+        self.assertIs(type(data['dueAt']), int)
+
+    def test_invalid_numeric_dates_do_not_turn_into_clears(self):
+        data = json.loads(server.canonical_card_dates(b'{"dueAt":1e309,"endAt":8640000000000001,"members":["owner"]}'))
+        self.assertEqual(data, {'dueAt': {}, 'endAt': {}, 'members': ['owner']})
+
+    def test_non_numeric_and_malformed_bodies_are_unchanged(self):
+        for body in (b'{"dueAt":null}', b'{"dueAt":true}', b'{"dueAt":"null"}', b'{"dueAt":"8640000000000000"}',
+                     b'{"members":[1.25]}', b'[]', b'{"dueAt":NaN}', b'{"dueAt":undefined}', b'{'):
+            with self.subTest(body=body):
+                self.assertEqual(server.canonical_card_dates(body), body)
+
+    def test_normalization_cannot_bypass_the_original_body_size_gate(self):
+        body = b'{"dueAt":0.0' + b' ' * 1048576 + b'}'
+        self.assertEqual(server.canonical_card_dates(body), body)
+
+    def test_cgi_gets_reencoded_length_only_on_card_put(self):
+        body = b'{"dueAt":8640000000000000.0}'
+        for method, path, changed in [('PUT', '/api/boards/1/lists/2/cards/3', True),
+                                      ('POST', '/api/boards/1/lists/2/cards/3', False),
+                                      ('PUT', '/api/boards/1/members/owner', False)]:
+            request = NativeOriginTest().request(method, path, {'Content-Type': 'application/json', 'Content-Length': str(len(body))})
+            request.rfile = io.BytesIO(body)
+            request.wfile = io.BytesIO()
+            request.client_address = ('127.0.0.1', 12345)
+            request.send_response = Mock()
+            request.send_header = Mock()
+            request.end_headers = Mock()
+            result = SimpleNamespace(returncode=0, stdout=b'Content-Type: application/json\r\n\r\n{}')
+            with patch.object(server, 'run_application', return_value=result) as runner:
+                request._run_cgi()
+            forwarded = runner.call_args.kwargs['input']
+            self.assertEqual(forwarded, server.canonical_card_dates(body) if changed else body)
+            self.assertEqual(int(runner.call_args.kwargs['env']['CONTENT_LENGTH']), len(forwarded))
+
+
 class NativeOriginTest(unittest.TestCase):
     def request(self, method='POST', path='/x', headers=None, environment=None):
         cls = server.handler(Path('/unused.gambas'), 'unused-runner', environment or {})

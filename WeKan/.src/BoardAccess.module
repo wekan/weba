@@ -70,6 +70,15 @@ Public Sub OpenStore()
     t.PrimaryKey = ["card_id", "field", "sort_order"]
     t.Update()
   Endif
+  If Not $db.Tables.Exist("kb_card_dates") Then
+    t = $db.Tables.Add("kb_card_dates")
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("card_id", db.Integer)
+    t.Fields.Add("field", db.String, 16)
+    t.Fields.Add("epoch_ms", db.Long)
+    t.PrimaryKey = ["card_id", "field"]
+    t.Update()
+  Endif
   If Not $db.Tables.Exist("kb_user_meta") Then
     t = $db.Tables.Add("kb_user_meta")
     t.Fields.Add("board_id", db.Integer)
@@ -623,6 +632,8 @@ Private Function ChangeApiCardPeople(boardId As Integer, listId As Integer, card
   Dim add As Boolean = operation = "add"
   Dim replace As Boolean = operation = "replace"
   Dim archived As Boolean
+  Dim dateChanges As New Collection
+  Dim parsedDate As Collection
   Dim data As New Collection
   Dim actor As String = WebIdentity.Username
   Dim siteAdmin As Boolean
@@ -647,7 +658,10 @@ Private Function ChangeApiCardPeople(boardId As Integer, listId As Integer, card
   If replace Then
     If Not payload Then Return ApiFailure(400, "Expected a JSON object")
     For Each key In payload.Keys
-      If key <> "members" And key <> "assignees" Then Return ApiFailure(400, "Card field not implemented")
+      If key = "members" Or key = "assignees" Then Continue
+      If CardDates.Fields().Find(key) < 0 Then Return ApiFailure(400, "Card field not implemented")
+      parsedDate = CardDates.Parse(payload[key])
+      If parsedDate["valid"] Then dateChanges[key] = parsedDate
     Next
     If payload.Exist("members") Then memberNames = RestPeople(payload["members"])
     If payload.Exist("assignees") Then assigneeNames = RestPeople(payload["assignees"])
@@ -699,7 +713,7 @@ Private Function ChangeApiCardPeople(boardId As Integer, listId As Integer, card
     Error.Raise("Card not found")
   Endif
   If replace Then
-    If payload.Count = 0 Then
+    If Not payload.Exist("members") And Not payload.Exist("assignees") And dateChanges.Count = 0 Then
       DatabaseTransactions.Rollback($db)
       transaction = False
       $apiMemberBoard = 0
@@ -709,6 +723,7 @@ Private Function ChangeApiCardPeople(boardId As Integer, listId As Integer, card
     If Not archived Then
       If memberNames Then WriteCardMembers(boardId, cardId, ActivePeople(boardId, memberNames))
       If assigneeNames Then WriteAssignees(boardId, cardId, ActivePeople(boardId, assigneeNames))
+      If dateChanges.Count Then CardDates.Apply(boardId, cardId, dateChanges)
     Endif
     data["_id"] = CStr(cardId)
     Goto FINISH

@@ -1,4 +1,9 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Card dates: Add four UTC PUT fields, exact milliseconds, clears/invalid skips
+  and atomic people/date writes. Preserve native day edits and lifecycle data;
+  prevent numeric JSON precision loss. Verify 44 original-helper cases, #5846,
+  source/archive HTTP and ten failed-COMMIT/retry phases. Full local-time parsing
+  and native date/time controls remain pending.
 - Documentation: Describe people PUT replacement/coercion/duplicates, native
   interactions, legacy responses, partial support, eight COMMIT phases and
   six-of-thirty original callback coverage.

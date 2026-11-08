@@ -4,6 +4,8 @@ import argparse
 import errno
 import ipaddress
 import hashlib
+import json
+import math
 import secrets
 import threading
 import time
@@ -14,6 +16,36 @@ from pathlib import Path
 import os
 import subprocess
 import urllib.parse
+
+
+def canonical_card_dates(body):
+    """Keep JS TimeClip semantics through Gambas 3.20's decimal JSON decoder.
+
+    Date numbers are integer milliseconds after TimeClip. Normalize them before
+    Gambas can round a decimal/exponent token by a millisecond at large epochs.
+    Invalid numbers stay invalid date values, rather than becoming clears.
+    Syntax/authentication errors remain the application's responsibility.
+    """
+    if len(body) > 1048576:
+        return body  # Do not compact an oversized body past the CGI size gate.
+    def reject_constant(value):
+        raise ValueError(value)
+    try:
+        data = json.loads(body.decode('utf-8'), parse_constant=reject_constant)
+        if not isinstance(data, dict):
+            return body
+        changed = False
+        for key in ('receivedAt', 'startAt', 'dueAt', 'endAt'):
+            value = data.get(key)
+            if type(value) is float:
+                data[key] = math.trunc(value) if math.isfinite(value) and abs(value) <= 8640000000000000 else {}
+                changed = True
+            elif type(value) is int and abs(value) > 8640000000000000:
+                data[key] = {}
+                changed = True
+        return json.dumps(data, ensure_ascii=False, separators=(',', ':'), allow_nan=False).encode('utf-8') if changed else body
+    except (ValueError, UnicodeError, OverflowError, RecursionError):
+        return body
 
 
 def run_application(command, *, input, env, timeout=30):
@@ -195,6 +227,12 @@ def handler(application, runner, environment):
                 if not 0 <= length <= 20 * 1024 * 1024:
                     self.send_error(413); return
                 body = self.rfile.read(length)
+                pieces = decoded_path.strip('/').split('/')
+                if (api and self.command == 'PUT' and len(pieces) == 7
+                        and pieces[0:2] == ['api', 'boards'] and pieces[3] == 'lists' and pieces[5] == 'cards'
+                        and self.headers.get('Content-Type', '').split(';', 1)[0].strip().lower() == 'application/json'):
+                    body = canonical_card_dates(body)
+                    length = len(body)
                 env.update(CONTENT_LENGTH=str(length), CONTENT_TYPE=self.headers.get('Content-Type', ''))
                 command_text = None
                 if decoded_path == '/x':

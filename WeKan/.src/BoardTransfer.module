@@ -44,6 +44,7 @@ Public Function ExportData(boardId As Integer, kind As String, itemId As Integer
     item = Row(r, ["id", "title", "description", "lane", "status", "assignee", "labels", "due_day", "archived"])
     item["assignees"] = BoardAccess.Assignees(boardId, r!id)
     item["members"] = BoardAccess.CardMembers(boardId, r!id)
+    item["dates"] = CardDates.ReadDates(boardId, r!id)
     item["list_id"] = listId
     item["sort_order"] = KanbanStore.ItemOrder(boardId, "card", CStr(r!id), r!id)
     cards.Add(item)
@@ -179,6 +180,7 @@ Public Function ImportData(text As String, title As String) As Integer
     id = KanbanStore.SaveCard(boardId, 0, item["title"], item["description"], item["lane"], item["status"], item["assignee"], item["labels"], item["due_day"], listMap[CStr(item["list_id"])])
     If item.Exist("assignees") Then BoardAccess.RestoreAssignees(boardId, id, item["assignees"])
     If item.Exist("members") Then BoardAccess.RestoreCardMembers(boardId, id, item["members"])
+    If item.Exist("dates") Then CardDates.RestoreDates(boardId, id, item["dates"])
     cardMap[oldId] = id
     r = $db.Create("kb_order")
     r["board_id"] = boardId

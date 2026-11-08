@@ -30,8 +30,8 @@ const secrets=[process.env.WEBA_TEST_PASSWORD];
   if(name==='../helpers/db')return db;
   throw Error('Unsupported original spec dependency '+name);
  }},{filename:spec});
- const selected=cases.filter(({title})=>title.startsWith('#5998 add board member ')||title.startsWith('#5998 adding a board member ')||title.startsWith('#5998 add card member:')||title.startsWith('#3697 clearing members via REST'));
- playwright.expect(selected.length).toBe(5);
+ const selected=cases.filter(({title})=>title.startsWith('#5998 add board member ')||title.startsWith('#5998 adding a board member ')||title.startsWith('#5998 add card member:')||title.startsWith('#3697 clearing members via REST')||title.startsWith('#5846 set then clear'));
+ playwright.expect(selected.length).toBe(6);
  const request=await playwright.request.newContext({baseURL:process.env.WEBA_TEST_URL});
  try{
   const login=async username=>{

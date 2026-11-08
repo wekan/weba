@@ -6,6 +6,7 @@ import sqlite3
 import subprocess
 import time
 import urllib.request
+from datetime import datetime, timezone
 
 project = Path(os.environ['WEBA_TEST_PROJECT'])
 base = os.environ['WEBA_TEST_URL']
@@ -25,11 +26,11 @@ for field in ('members', 'assignees'):
     request('/api/boards/'+board+'/lists/'+list_id+'/cards/'+card+'/'+field+'/rest-member', 'DELETE', token=token)
 reader = sqlite3.connect(project / 'database.db', timeout=1)
 process = None
-tables = ('kb_cards', 'kb_card_members', 'kb_card_people_order', 'kb_card_people_sequence', 'kb_card_assignees', 'kb_card_lists', 'kb_history', 'kb_activity')
+tables = ('kb_cards', 'kb_card_dates', 'kb_card_members', 'kb_card_people_order', 'kb_card_people_sequence', 'kb_card_assignees', 'kb_card_lists', 'kb_history', 'kb_activity')
 def rows(table):
     return sorted(reader.execute('SELECT * FROM '+table).fetchall(), key=repr)
 try:
-    for field, native in (('members', False), ('assignees', False), ('members', True), ('replace', False)):
+    for field, native in (('members', False), ('assignees', False), ('members', True), ('replace', False), ('dates', False)):
         for action in ('add', 'remove'):
             for signal in ('card-people-commit-failed', 'card-people-reader-released'):
                 (project / signal).unlink(missing_ok=True)
@@ -53,7 +54,18 @@ try:
             (project / 'card-people-reader-released').write_text('ready')
             output, _ = process.communicate(timeout=15)
             assert process.returncode == 0, output
-            if field == 'replace':
+            if field == 'dates':
+                dates = dict(reader.execute('SELECT field,epoch_ms FROM kb_card_dates WHERE board_id=? AND card_id=?', (board, card)))
+                if action == 'add':
+                    assert dates['dueAt'] == int(datetime(2026, 6, 20, 12, 34, 56, tzinfo=timezone.utc).timestamp())*1000+123
+                    assert dates['startAt'] == 0
+                    assert reader.execute('SELECT due_day FROM kb_cards WHERE id=?', (card,)).fetchone() == ('2026-06-20',)
+                else:
+                    assert 'dueAt' not in dates and 'startAt' not in dates
+                    assert reader.execute('SELECT due_day FROM kb_cards WHERE id=?', (card,)).fetchone() in ((None,), ('',))
+                people = [row[0] for row in reader.execute("SELECT username FROM kb_card_people_sequence WHERE card_id=? AND field='members' ORDER BY sort_order", (card,))]
+                assert people == (['rest-member', 'rest-other'] if action == 'add' else [])
+            elif field == 'replace':
                 for name, expected in (('members', ['rest-member', 'rest-other', 'rest-member']), ('assignees', ['rest-other', 'rest-member', 'rest-other'])):
                     sequence = [row[0] for row in reader.execute('SELECT username FROM kb_card_people_sequence WHERE board_id=? AND card_id=? AND field=? ORDER BY sort_order', (board, card, name))]
                     assert sequence == (expected if action == 'add' else [])

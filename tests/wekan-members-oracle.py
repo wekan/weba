@@ -4,9 +4,20 @@ import os
 from pathlib import Path
 import sqlite3
 import sys
+import subprocess
+from datetime import datetime, timezone
 
 schema = json.loads((Path(__file__).resolve().parent.parent / 'WeKan/.public/api-member-roles.json').read_text())
 role_flags = {item['role']: item['flag'] for item in schema['roles']}
+
+def iso_date(epoch):
+    seconds, millis = divmod(epoch, 1000)
+    try:
+        return datetime.fromtimestamp(seconds, timezone.utc).replace(microsecond=millis*1000).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+    except (ValueError, OverflowError, OSError):
+        # Match the original fixture's JS Date JSON format beyond Python's years.
+        return subprocess.check_output([os.environ.get('NODE', 'node'), '-e', 'process.stdout.write(new Date(Number(process.argv[1])).toISOString())', '--', str(epoch)], text=True)
+
 with sqlite3.connect(Path(os.environ['WEBA_DB_HOST']) / os.environ['WEBA_DB_NAME']) as db:
     board_id = int(sys.argv[2])
     if sys.argv[1] == 'reset-card-people':
@@ -69,7 +80,12 @@ with sqlite3.connect(Path(os.environ['WEBA_DB_HOST']) / os.environ['WEBA_DB_NAME
                             members = sequence
                         else:
                             assignees = sequence
-            values.append({'_id': str(card_id), 'boardId': str(parent_id), 'listId': str(list_id), 'archived': bool(archived), 'members': members, 'assignees': assignees})
+            dates = {field: iso_date(epoch) for field, epoch in db.execute('SELECT field,epoch_ms FROM kb_card_dates WHERE board_id=? AND card_id=?', (parent_id, card_id))}
+            if 'dueAt' not in dates:
+                due = db.execute('SELECT due_day FROM kb_cards WHERE id=?', (card_id,)).fetchone()[0]
+                if due:
+                    dates['dueAt'] = due+'T00:00:00.000Z'
+            values.append({**dates, '_id': str(card_id), 'boardId': str(parent_id), 'listId': str(list_id), 'archived': bool(archived), 'members': members, 'assignees': assignees})
         print(json.dumps(values if sys.argv[1] == 'cards' else values[0] if values else None))
     else:
         raise AssertionError('Unknown fixture operation')

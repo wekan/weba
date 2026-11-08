@@ -131,6 +131,19 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   fields, legacy archive/empty responses, unsupported-field limits, eight
   card-person COMMIT phases and API-enabled Chromium coverage. Original spec 17
   coverage is now six of thirty callbacks, with full-suite gaps explicit.
+- Completed: card PUT receivedAt/startAt/dueAt/endAt with UTC millisecond
+  storage, numeric epochs, ISO offsets, explicit clears and invalid-date skips.
+  Combine people/date writes atomically; preserve instants across copy/move/JSON,
+  native unchanged-day saves and permanent cleanup. Changed native due days reset
+  only dueAt to UTC midnight; clearing removes only that date. Normalize numeric
+  JSON date fields before Gambas decoding without bypassing the body-size limit.
+  Verified 44 cases against actual source date helpers, original #5846 callback,
+  source/archive HTTP boundaries, SQL persistence, rollback and ten card-update
+  failed-COMMIT/retry phases. Full local test command passes, including 27 Python
+  tests. Original spec 17 coverage totals seven of thirty callbacks across the
+  adapters; the complete original UI/API/security suites remain unverified.
+- Pending dates: local-time/unqualified and freeform V8 date parsing, complete
+  native controls for all four fields and time zones, and expanded-year day UI.
 - Next card-person work: remaining card PUT fields, reads, creation/bulk routes
   and complete original UI/API/security suites.
 - In progress: REST cards/containers and full API identity/data parity, including

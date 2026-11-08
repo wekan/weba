@@ -2,6 +2,14 @@
 
 This work adds the following features and fixes:
 
+- Add card PUT receivedAt/startAt/dueAt/endAt UTC instants with millisecond
+  precision, explicit clears, invalid-date skips and atomic people/date changes.
+  Preserve instants through native day edits, copy/move/JSON and deletion;
+  normalize numeric JSON dates before Gambas decoding to prevent precision loss.
+  Verify 44 cases against original date helpers, original #5846, source/archive
+  HTTP and ten real card-update failed-COMMIT/retry phases. Local-time/freeform
+  parsing and full native date/time controls remain pending. Thanks to xet7.
+
 - Document card people PUT normalization, ordered duplicates, partial field
   support, legacy archived/no-op behavior, native row/self-unassignment rules,
   eight card-person COMMIT phases and API-enabled Chromium verification. Keep

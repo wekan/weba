@@ -1,0 +1,277 @@
+' UTC wire dates retain milliseconds independently of the legacy day editor.
+Export
+
+Public Function Fields() As String[]
+  Return ["receivedAt", "startAt", "dueAt", "endAt"]
+End
+
+Private Function Digits(value As String) As Boolean
+  Dim i As Integer
+  If Not value Then Return False
+  For i = 1 To Len(value)
+    If InStr("0123456789", Mid(value, i, 1)) = 0 Then Return False
+  Next
+  Return True
+End
+
+Private Function CivilDays(y As Integer, m As Integer, d As Integer) As Long
+  Dim era As Long
+  Dim yo As Long
+  Dim doy As Long
+  If m <= 2 Then Dec y
+  era = Int(y / 400)
+  yo = y - era * 400
+  If m > 2 Then m -= 3 Else m += 9
+  doy = Int((153 * m + 2) / 5) + d - 1
+  Return era * 146097 + yo * 365 + Int(yo / 4) - Int(yo / 100) + doy - 719468
+End
+
+Public Function Parse(value As Variant) As Collection
+  Dim result As New Collection
+  Dim text As String
+  Dim number As Float
+  Dim stamp As Long
+  Dim y As Integer
+  Dim m As Integer = 1
+  Dim d As Integer = 1
+  Dim hh As Integer
+  Dim mm As Integer
+  Dim ss As Integer
+  Dim ms As Integer
+  Dim offset As Integer
+  Dim sign As Integer = 1
+  Dim width As Integer = 4
+  Dim rest As String
+  Dim clock As String
+  Dim zone As String
+  Dim fraction As String
+  Dim at As Integer
+  result["valid"] = False
+  result["clear"] = False
+  If IsNull(value) Then Goto CLEAR_DATE
+  If TypeOf(value) = gb.Pointer Then
+    If value = JSON.Null Then Goto CLEAR_DATE
+    Return result
+  Endif
+  If TypeOf(value) = gb.String Then
+    text = value
+    If text = "" Or text = "null" Then Goto CLEAR_DATE
+    text = Trim(text)
+    If Not text Then Return result
+    rest = text
+    If Left(rest, 1) = "-" Then rest = Mid(rest, 2)
+    If Digits(rest) Then
+      number = CLong(text)
+      Goto NUMBER_DATE
+    Endif
+    If Left(text, 1) = "+" Or Left(text, 1) = "-" Then
+      width = 6
+      If Left(text, 1) = "-" Then sign = -1
+      text = Mid(text, 2)
+    Endif
+    If Len(text) < width + 3 Or Not Digits(Left(text, width)) Then Return result
+    y = CInt(Left(text, width)) * sign
+    If sign = -1 And y = 0 Then Return result
+    rest = Mid(text, width + 1)
+    If Left(rest, 1) <> "-" Or Not Digits(Mid(rest, 2, 2)) Then Return result
+    m = CInt(Mid(rest, 2, 2))
+    rest = Mid(rest, 4)
+    If rest Then
+      If Left(rest, 1) <> "-" Or Not Digits(Mid(rest, 2, 2)) Then Return result
+      d = CInt(Mid(rest, 2, 2))
+      rest = Mid(rest, 4)
+    Endif
+    If m < 1 Or m > 12 Or d < 1 Or d > 31 Then Return result
+    If rest Then
+      If UCase(Left(rest, 1)) <> "T" And Left(rest, 1) <> " " Then Return result
+      clock = Mid(rest, 2)
+      If UCase(Right(clock, 1)) = "Z" Then
+        clock = Left(clock, -1)
+      Else
+        at = Max(InStr(clock, "+"), InStr(clock, "-"))
+        If at = 0 Then Return result ' Local-time and non-ISO forms remain pending.
+        zone = Mid(clock, at)
+        clock = Left(clock, at - 1)
+        sign = If(Left(zone, 1) = "-", -1, 1)
+        zone = Mid(zone, 2)
+        If Len(zone) = 5 Then
+          If Mid(zone, 3, 1) <> ":" Then Return result
+          zone = Left(zone, 2) & Right(zone, 2)
+        Else If Len(zone) <> 4 Then
+          Return result
+        Endif
+        If Not Digits(zone) Then Return result
+        If CInt(Left(zone, 2)) > 23 Or CInt(Right(zone, 2)) > 59 Then Return result
+        offset = sign * (CInt(Left(zone, 2)) * 60 + CInt(Right(zone, 2)))
+      Endif
+      at = InStr(clock, ".")
+      If at Then
+        fraction = Mid(clock, at + 1)
+        If Not Digits(fraction) Then Return result
+        ms = CInt(Left(fraction & "000", 3))
+        clock = Left(clock, at - 1)
+      Endif
+      If Len(clock) <> 5 And Len(clock) <> 8 Then Return result
+      If Mid(clock, 3, 1) <> ":" Or Not Digits(Left(clock, 2)) Or Not Digits(Mid(clock, 4, 2)) Then Return result
+      hh = CInt(Left(clock, 2))
+      mm = CInt(Mid(clock, 4, 2))
+      If Len(clock) = 8 Then
+        If Mid(clock, 6, 1) <> ":" Or Not Digits(Right(clock, 2)) Then Return result
+        ss = CInt(Right(clock, 2))
+      Else If fraction Then
+        Return result
+      Endif
+      If hh > 24 Or mm > 59 Or ss > 59 Then Return result
+      If hh = 24 And (mm <> 0 Or ss <> 0 Or ms <> 0) Then Return result
+    Endif
+    number = CivilDays(y, m, d) * 86400000.0 + hh * 3600000.0 + mm * 60000.0 + ss * 1000.0 + ms - offset * 60000.0
+  Else
+    Select TypeOf(value)
+      Case gb.Byte, gb.Short, gb.Integer, gb.Long, gb.Single, gb.Float
+        number = value
+      Case Else
+        Return result
+    End Select
+  Endif
+NUMBER_DATE:
+  If Abs(number) > 8640000000000000 Then Return result
+  If number < 0 Then stamp = -CLong(Int(-number)) Else stamp = CLong(Int(number))
+  result["epoch"] = stamp
+  result["valid"] = True
+  Return result
+CLEAR_DATE:
+  result["clear"] = True
+  result["valid"] = True
+  Return result
+Catch
+  result["valid"] = False
+  Return result
+End
+
+Private Function Pad(value As Long, size As Integer) As String
+  Return Right(String$(size, "0") & CStr(value), size)
+End
+
+Public Function Iso(stamp As Long) As String
+  Dim days As Long = Int(stamp / 86400000.0)
+  Dim remainderMs As Long = stamp - days * 86400000
+  Dim z As Long = days + 719468
+  Dim era As Long = Int(z / 146097)
+  Dim doe As Long = z - era * 146097
+  Dim yo As Long = Int((doe - Int(doe / 1460) + Int(doe / 36524) - Int(doe / 146096)) / 365)
+  Dim y As Long = yo + era * 400
+  Dim doy As Long = doe - (365 * yo + Int(yo / 4) - Int(yo / 100))
+  Dim mp As Long = Int((5 * doy + 2) / 153)
+  Dim d As Long = doy - Int((153 * mp + 2) / 5) + 1
+  Dim m As Long = mp + If(mp < 10, 3, -9)
+  Dim yearText As String
+  If Abs(CFloat(stamp)) > 8640000000000000 Then Error.Raise("Invalid date range")
+  If m <= 2 Then Inc y
+  If y >= 0 And y <= 9999 Then
+    yearText = Pad(y, 4)
+  Else
+    yearText = If(y < 0, "-", "+") & Pad(Abs(y), 6)
+  Endif
+  Return yearText & "-" & Pad(m, 2) & "-" & Pad(d, 2) & "T" & Pad(Int(remainderMs / 3600000), 2) & ":" & Pad(CInt(Int(remainderMs / 60000)) Mod 60, 2) & ":" & Pad(CInt(Int(remainderMs / 1000)) Mod 60, 2) & "." & Pad(CInt(remainderMs) Mod 1000, 3) & "Z"
+End
+
+Public Function ReadDates(boardId As Integer, cardId As Integer) As Collection
+  Dim values As New Collection
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim r As Result
+  Dim parsed As Collection
+  BoardAccess.RequireCard(boardId, cardId)
+  r = db.Find("kb_card_dates", "board_id = &1 AND card_id = &2", boardId, cardId)
+  For Each r
+    If Fields().Find(r!field) < 0 Then Continue
+    parsed = CardDates.Parse(r!epoch_ms)
+    If parsed["valid"] And Not parsed["clear"] Then values[r!field] = CLong(r!epoch_ms)
+  Next
+  If Not values.Exist("dueAt") Then
+    r = db.Find("kb_cards", "board_id = &1 AND id = &2", boardId, cardId)
+    If r!due_day Then
+      parsed = Parse(r!due_day)
+      If parsed["valid"] Then values["dueAt"] = parsed["epoch"]
+    Endif
+  Endif
+  Return values
+End
+
+Public Sub Apply(boardId As Integer, cardId As Integer, changes As Collection)
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim field As String
+  Dim parsed As Collection
+  Dim r As Result
+  Dim day As String
+  Dim checked As Collection
+  Dim transaction As Boolean
+  Dim failure As String
+  BoardAccess.Require(boardId, "write")
+  BoardAccess.RequireCard(boardId, cardId)
+  WorkspaceStore.OpenStore()
+  DatabaseTransactions.Begin(db)
+  transaction = True
+  db.Exec("UPDATE kb_boards SET title = title WHERE id = &1", boardId)
+  db.Exec("UPDATE kb_cards SET title = title WHERE board_id = &1 AND id = &2", boardId, cardId)
+  BoardAccess.Require(boardId, "write")
+  BoardAccess.RequireCard(boardId, cardId)
+  For Each field In changes.Keys
+    If Fields().Find(field) < 0 Then Error.Raise("Invalid date field")
+    parsed = changes[field]
+    If TypeOf(parsed["clear"]) <> gb.Boolean Or parsed["valid"] <> True Then Error.Raise("Invalid date")
+    If Not parsed["clear"] Then
+      checked = Parse(parsed["epoch"])
+      If Not checked["valid"] Or checked["clear"] Then Error.Raise("Invalid date")
+      parsed = checked
+    Endif
+    db.Delete("kb_card_dates", "board_id = &1 AND card_id = &2 AND field = &3", boardId, cardId, field)
+    If Not parsed["clear"] Then
+      r = db.Create("kb_card_dates")
+      r["board_id"] = boardId
+      r["card_id"] = cardId
+      r["field"] = field
+      r["epoch_ms"] = parsed["epoch"]
+      r.Update()
+    Endif
+    If field = "dueAt" Then
+      day = ""
+      If Not parsed["clear"] Then
+        day = Iso(parsed["epoch"])
+        If Mid(day, 5, 1) = "-" Then day = Left(day, 10) Else day = ""
+      Endif
+      db.Exec("UPDATE kb_cards SET due_day = &1 WHERE board_id = &2 AND id = &3", day, boardId, cardId)
+    Endif
+  Next
+  If changes.Count Then KanbanStore.Activity(boardId, "Changed card dates", "card", cardId)
+  DatabaseTransactions.Commit(db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback(db)
+  Error.Raise(failure)
+End
+
+Public Sub CopyDates(sourceBoard As Integer, sourceCard As Integer, targetBoard As Integer, targetCard As Integer)
+  Dim values As Collection = ReadDates(sourceBoard, sourceCard)
+  Dim changes As New Collection
+  Dim field As String
+  For Each field In values.Keys
+    changes[field] = Parse(values[field])
+  Next
+  Apply(targetBoard, targetCard, changes)
+End
+
+Public Sub RestoreDates(boardId As Integer, cardId As Integer, values As Collection)
+  Dim changes As New Collection
+  Dim field As String
+  Dim parsed As Collection
+  BoardAccess.Require(boardId, "write")
+  BoardAccess.RequireCard(boardId, cardId)
+  For Each field In values.Keys
+    If Fields().Find(field) < 0 Then Error.Raise("Invalid exported date field")
+    parsed = Parse(values[field])
+    If Not parsed["valid"] Then Error.Raise("Invalid exported date")
+    changes[field] = parsed
+  Next
+  Apply(boardId, cardId, changes)
+End

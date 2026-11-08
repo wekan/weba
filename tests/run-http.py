@@ -18,6 +18,8 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
     (project / '.public/public-canary.txt').write_text('public-fixture-canary')
     if any(mode in sys.argv for mode in ('--api', '--sessions', '--members')):
         shutil.copy2(root / 'tests/ApiFixture.module', project / '.src/ApiFixture.module')
+    if '--members' in sys.argv:
+        shutil.copy2(root / 'tests/CardDatesConformance.module', project / '.src/CardDatesConformance.module')
     subprocess.run([base_env.get('GBC', 'gbc3'), '-j', '1', '-a', str(project)], check=True, env=base_env)
     application = project
     runner = base_env.get('GBX', 'gbx3')
@@ -58,11 +60,15 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
     try:
         env = base_env.copy()
         env['WEBA_TEST_URL'] = 'http://127.0.0.1:' + str(server.server_port)
+        env['WEBA_TEST_RUNNER'] = runner
+        env['WEBA_TEST_APPLICATION'] = str(application)
         if '--members' in sys.argv:
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/dates-conformance.test.cjs')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/api-members.test.py')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/wekan-members.test.cjs')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/api-card-people.test.py')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/api-people-put.test.py')], check=True, env=env)
+            subprocess.run([sys.executable, str(root / 'tests/api-dates.test.py')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/card-people-commit.py')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/member-commit.py')], check=True, env=env)
         elif '--sessions' in sys.argv:
