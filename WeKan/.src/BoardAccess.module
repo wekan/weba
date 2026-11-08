@@ -552,6 +552,14 @@ Public Sub RestoreCardMembers(boardId As Integer, cardId As Integer, names As St
 End
 
 Public Sub ChangeCardMember(boardId As Integer, cardId As Integer, username As String, add As Boolean)
+  ChangeNativeCardPerson(boardId, cardId, username, add, False)
+End
+
+Public Sub ChangeCardAssignee(boardId As Integer, cardId As Integer, username As String, add As Boolean)
+  ChangeNativeCardPerson(boardId, cardId, username, add, True)
+End
+
+Private Sub ChangeNativeCardPerson(boardId As Integer, cardId As Integer, username As String, add As Boolean, editAssignees As Boolean)
   Dim names As String[]
   Dim transaction As Boolean
   Dim failure As String
@@ -569,7 +577,11 @@ Public Sub ChangeCardMember(boardId As Integer, cardId As Integer, username As S
   If add Then
     If Not RoleOf(boardId, username) Then Error.Raise("Member must be an active board member")
   Endif
-  names = CardMembers(boardId, cardId)
+  If editAssignees Then
+    names = Assignees(boardId, cardId)
+  Else
+    names = CardMembers(boardId, cardId)
+  Endif
   If add Then
     If names.Find(username) < 0 Then names.Add(username)
   Else
@@ -577,7 +589,11 @@ Public Sub ChangeCardMember(boardId As Integer, cardId As Integer, username As S
       names.Remove(names.Find(username))
     Wend
   Endif
-  WriteCardMembers(boardId, cardId, names)
+  If editAssignees Then
+    WriteAssignees(boardId, cardId, names)
+  Else
+    WriteCardMembers(boardId, cardId, names)
+  Endif
   DatabaseTransactions.Commit($db)
   transaction = False
 Catch

@@ -6,6 +6,7 @@ Private $membersBoard As Integer
 Private $memberOwner As String
 Private $peopleBoard As Integer
 Private $peopleCard As Integer
+Private $peopleAssignees As Boolean
 Private $board As Integer
 Private $loadingDetails As Boolean
 Private $loadingDestinations As Boolean
@@ -631,6 +632,7 @@ Private Sub OpenContext(kind As String, itemId As Integer, boardId As Integer)
   ContextTitle.Text = r!title
   ContextMenu.Show()
   ContextMembers.Visible = kind = "board" Or kind = "card"
+  ContextAssignees.Visible = kind = "card"
   ContextAssignSelf.Visible = kind = "card" And BoardAccess.Can(boardId, "moveCard")
   If kind = "card" Then ContextAssignSelf.Text = If(BoardAccess.IsAssigned(boardId, itemId, WebIdentity.Username), "Unassign myself", "Assign myself")
   ContextArchive.Visible = Not archived And change
@@ -1425,6 +1427,7 @@ Private Sub UpdateCardActions()
   CardTime.Enabled = $card > 0
   CardAttachments.Enabled = $card > 0
   CardMembersButton.Enabled = $card > 0
+  CardAssigneesButton.Enabled = $card > 0
 End
 
 Private Function MemberRoles() As String[]
@@ -1454,20 +1457,40 @@ Catch
   Notice.Text = Error.Text
 End
 
-Private Sub OpenCardPeople(boardId As Integer, cardId As Integer)
+Public Sub CardAssigneesButton_Click()
+  OpenCardPeople($board, $card, True)
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub ContextAssignees_Click()
+  ContextMenu.Hide()
+  OpenCardPeople($contextBoard, $contextId, True)
+Catch
+  Notice.Text = Error.Text
+End
+
+Private Sub OpenCardPeople(boardId As Integer, cardId As Integer, Optional assignees As Boolean = False)
   $peopleBoard = boardId
   $peopleCard = cardId
+  $peopleAssignees = assignees
+  CardPeopleHeading.Text = If(assignees, "Assignee", "Members")
   RefreshCardPeople()
   CardPeoplePanel.Show()
 End
 
 Private Sub RefreshCardPeople()
   Dim r As Result = WorkspaceStore.Record($peopleBoard, "card", $peopleCard)
-  Dim names As String[] = BoardAccess.CardMembers($peopleBoard, $peopleCard)
+  Dim names As String[]
   Dim choices As New String[]
   Dim displayed As New Collection
   Dim username As String
   Dim writable As Boolean = BoardAccess.Can($peopleBoard, "write")
+  If $peopleAssignees Then
+    names = BoardAccess.Assignees($peopleBoard, $peopleCard)
+  Else
+    names = BoardAccess.CardMembers($peopleBoard, $peopleCard)
+  Endif
   CardPeopleName.Text = r!title
   CardPeopleTree.Clear()
   For Each username In names
@@ -1494,19 +1517,44 @@ Catch
 End
 
 Public Sub AddCardPerson_Click()
-  BoardAccess.ChangeCardMember($peopleBoard, $peopleCard, CardPersonChoice.Text, True)
-  RefreshCardPeople()
+  If $peopleAssignees Then
+    BoardAccess.ChangeCardAssignee($peopleBoard, $peopleCard, CardPersonChoice.Text, True)
+  Else
+    BoardAccess.ChangeCardMember($peopleBoard, $peopleCard, CardPersonChoice.Text, True)
+  Endif
+  RefreshChangedCardPeople()
   Notice.Text = "Member saved"
 Catch
   Notice.Text = Error.Text
 End
 
 Public Sub RemoveCardPerson_Click()
-  BoardAccess.ChangeCardMember($peopleBoard, $peopleCard, CardPeopleTree.Key, False)
-  RefreshCardPeople()
+  If $peopleAssignees Then
+    BoardAccess.ChangeCardAssignee($peopleBoard, $peopleCard, CardPeopleTree.Key, False)
+  Else
+    BoardAccess.ChangeCardMember($peopleBoard, $peopleCard, CardPeopleTree.Key, False)
+  Endif
+  RefreshChangedCardPeople()
   Notice.Text = "Member removed"
 Catch
   Notice.Text = Error.Text
+End
+
+Private Sub RefreshChangedCardPeople()
+  Dim r As Result
+  Try BoardAccess.RequireCard($peopleBoard, $peopleCard)
+  If Error Then
+    CardPeoplePanel.Hide()
+    Editor.Hide()
+    $card = 0
+  Else
+    RefreshCardPeople()
+    If $peopleAssignees And $board = $peopleBoard And $card = $peopleCard Then
+      r = WorkspaceStore.Record($peopleBoard, "card", $peopleCard)
+      Assignee.Text = r!assignee
+    Endif
+  Endif
+  RefreshTree()
 End
 
 Public Sub CloseCardPeople_Click()

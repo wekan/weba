@@ -2,6 +2,15 @@
 
 This work adds the following features and fixes:
 
+- Add a native Gambas multiple-assignee editor from saved cards and card menus,
+  reusing the member tree, active-member picker, anchored mobile popup, X and
+  translated captions. Add/remove atomically with permission/card checks under
+  locks; preserve independent members and ordered duplicate semantics. Synchronize
+  the scalar primary before later saves and close inaccessible details after
+  assigned-only self-removal. Verify store negatives, twelve card-update COMMIT
+  phases and packaged two-user Chromium persistence/forgery/mobile checks.
+  New-card roster picking and full original suites remain pending. Thanks to xet7.
+
 - Document native assignee roster checks, unchanged historical values and
   authorized copy/import restoration, with store/browser evidence and remaining
   picker UI gaps. Correct the leading TODO coverage summary to seven original

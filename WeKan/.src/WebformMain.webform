@@ -251,6 +251,9 @@
     { ContextMembers WebButton
       Text = ("Members")
     }
+    { ContextAssignees WebButton
+      Text = ("Assignee")
+    }
     { ContextAssignSelf WebButton
       Text = ("Assign myself")
     }
@@ -502,6 +505,9 @@
             Text = ("Assignee")
           }
           { Assignee WebTextBox
+          }
+          { CardAssigneesButton WebButton
+            Text = ("Assignee")
           }
           { DescriptionCaption WebLabel
             Text = ("Description")

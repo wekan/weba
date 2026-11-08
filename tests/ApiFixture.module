@@ -87,7 +87,11 @@ Public Sub Main()
     If nativePeople Then
       Session["username"] = "rest-other"
       Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
-      Try BoardAccess.ChangeCardMember(boardId, cardId, "rest-member", memberAction = "add")
+      If personField = "assignees" Then
+        Try BoardAccess.ChangeCardAssignee(boardId, cardId, "rest-member", memberAction = "add")
+      Else
+        Try BoardAccess.ChangeCardMember(boardId, cardId, "rest-member", memberAction = "add")
+      Endif
       If Not Error Then Error.Raise("Expected rejected native member commit")
     Else
       WebIdentity.AuthenticateApi("rest-owner")
@@ -107,7 +111,11 @@ Public Sub Main()
       Sleep 0.01
     Wend
     If nativePeople Then
-      BoardAccess.ChangeCardMember(boardId, cardId, "rest-member", memberAction = "add")
+      If personField = "assignees" Then
+        BoardAccess.ChangeCardAssignee(boardId, cardId, "rest-member", memberAction = "add")
+      Else
+        BoardAccess.ChangeCardMember(boardId, cardId, "rest-member", memberAction = "add")
+      Endif
     Else
       If personField = "replace" Or personField = "dates" Then
         data = BoardAccess.UpdateApiCardPeople(boardId, otherId, cardId, memberPayload)

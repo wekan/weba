@@ -1,4 +1,9 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Native multi-assignee editor: Add saved-card/menu picker and current tree,
+  atomic add/remove with active roster and scoped write checks, independent
+  members, duplicate grouping/removal and synchronized scalar primary. Close
+  inaccessible details on assigned-only self-removal. Verify store negatives,
+  twelve COMMIT phases and packaged Chromium persistence/reader/mobile behavior.
 - Documentation: Describe native assignee validation and historical restore
   behavior, verification and picker gaps; correct leading original coverage
   counts to seven executed callbacks and 23 unexecuted callbacks.

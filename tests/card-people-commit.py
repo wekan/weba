@@ -30,7 +30,7 @@ tables = ('kb_cards', 'kb_card_dates', 'kb_card_members', 'kb_card_people_order'
 def rows(table):
     return sorted(reader.execute('SELECT * FROM '+table).fetchall(), key=repr)
 try:
-    for field, native in (('members', False), ('assignees', False), ('members', True), ('replace', False), ('dates', False)):
+    for field, native in (('members', False), ('assignees', False), ('members', True), ('assignees', True), ('replace', False), ('dates', False)):
         for action in ('add', 'remove'):
             for signal in ('card-people-commit-failed', 'card-people-reader-released'):
                 (project / signal).unlink(missing_ok=True)

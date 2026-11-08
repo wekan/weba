@@ -169,9 +169,25 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   verify no partial card/lane/history on denial, reactivation and stale copy/
   import; full local tests and final extended store checks pass. Packaged
   Chromium verifies forged edits are rejected and the persisted assignee survives.
-  A native active-roster picker and complete multiple-assignee editing remain open.
+  Saved-card multi-assignee editor is implemented below; new-card roster picking
+  and complete WeKan assignee/avatar workflow parity remain open.
 - Documented native assignee roster validation, transaction checks, unchanged
   stale values, copy/import restoration, test evidence and remaining picker UI.
+- Completed: native multiple-assignee editor from saved card details and card
+  menus. Reuse Gambas tree/active-member choices/add/remove, existing translated
+  captions and anchored mobile/X behavior. Additions recheck active targets;
+  stale targets can be removed; ordered duplicates remain in data but render as
+  one selectable row, and removal deletes all occurrences. General edits require
+  write permission and visible-card scope; Worker self-assignment stays separate.
+  Synchronize primary Assignee before subsequent Save; assigned-only self-removal
+  closes the picker/details and refreshes the card out of the visible view.
+  Store negatives verify reader/Worker/assigned scope and independent members;
+  two new native-assignee failed-COMMIT/retry phases bring card-update phases to
+  twelve. Full local tests pass (28 Python tests), and packaged two-user Chromium
+  verifies add/remove/save/reopen, forged reader writes, self-removal and mobile
+  menu placement/X. Original callbacks remain 7/30; complete suites remain open.
+- Pending assignee UI: active roster selection before first card save, avatars,
+  full WeKan menu/keyboard/accessibility parity and complete original UI suites.
 - Next card-person work: remaining card PUT fields, reads, creation/bulk routes
   and complete original UI/API/security suites.
 - In progress: REST cards/containers and full API identity/data parity, including

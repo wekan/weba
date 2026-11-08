@@ -10,6 +10,7 @@ Public Sub Main()
   Dim copied As Integer
   Dim imported As Integer
   Dim data As String
+  Dim names As String[]
   WebDatabase.Register("assignee-owner", "x")
   WebDatabase.Register("assignee-member", "x")
   WebDatabase.Register("assignee-outsider", "x")
@@ -54,5 +55,48 @@ Public Sub Main()
   KanbanStore.SaveCard(boardId, cardId, "Reactivated", "", "Default", "Todo", "assignee-member", "", "")
   r = db.Find("kb_cards", "id = &1", cardId)
   If r!title <> "Reactivated" Or r!assignee <> "assignee-member" Then Error.Raise("Valid active assignee failed")
-  Print "Native assignees: active roster, unknown/foreign/inactive denial, atomic create/edit, unchanged stale preservation, clear and reactivation passed"
+  BoardAccess.RestoreCardMembers(boardId, cardId, ["assignee-owner"])
+  BoardAccess.RestoreAssignees(boardId, cardId, ["assignee-member", "assignee-owner", "assignee-member"])
+  BoardAccess.ChangeCardAssignee(boardId, cardId, "assignee-member", True)
+  names = BoardAccess.Assignees(boardId, cardId)
+  If names.Count <> 3 Then Error.Raise("Idempotent native add changed duplicates")
+  BoardAccess.ChangeCardAssignee(boardId, cardId, "assignee-member", False)
+  names = BoardAccess.Assignees(boardId, cardId)
+  If names.Count <> 1 Or names[0] <> "assignee-owner" Then Error.Raise("Native removal left duplicate assignees")
+  names = BoardAccess.CardMembers(boardId, cardId)
+  If names.Count <> 1 Or names[0] <> "assignee-owner" Then Error.Raise("Assignment changed card members")
+  Try BoardAccess.ChangeCardAssignee(boardId, cardId, "assignee-outsider", True)
+  denied = Error
+  If Not denied Then Error.Raise("Native editor added a nonmember")
+  BoardAccess.ChangeCardAssignee(boardId, cardId, "assignee-member", True)
+  BoardAccess.RemoveMember(boardId, "assignee-member")
+  Try BoardAccess.ChangeCardAssignee(boardId, cardId, "assignee-member", True)
+  denied = Error
+  If Not denied Then Error.Raise("Native editor added an inactive member")
+  BoardAccess.ChangeCardAssignee(boardId, cardId, "assignee-member", False)
+  BoardAccess.SetMember(boardId, "assignee-member", "read-only")
+  Session["username"] = "assignee-member"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
+  Try BoardAccess.ChangeCardAssignee(boardId, cardId, "assignee-member", True)
+  denied = Error
+  If Not denied Then Error.Raise("Reader edited assignments")
+  Session["username"] = "assignee-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
+  BoardAccess.SetMember(boardId, "assignee-member", "normal-assigned-only")
+  BoardAccess.ChangeCardAssignee(boardId, cardId, "assignee-member", True)
+  Session["username"] = "assignee-member"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
+  BoardAccess.ChangeCardAssignee(boardId, cardId, "assignee-member", False)
+  Try BoardAccess.RequireCard(boardId, cardId)
+  denied = Error
+  If Not denied Then Error.Raise("Self-unassignment retained assigned-only access")
+  Session["username"] = "assignee-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
+  BoardAccess.SetMember(boardId, "assignee-member", "worker")
+  Session["username"] = "assignee-member"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
+  Try BoardAccess.ChangeCardAssignee(boardId, cardId, "assignee-owner", False)
+  denied = Error
+  If Not denied Then Error.Raise("Worker entered general assignment editor")
+  Print "Native assignees: active roster, unknown/foreign/inactive denial, atomic create/edit, unchanged stale preservation, clear/reactivation, multiple assignments, independent members, stale removal and assigned-only/reader/Worker boundaries passed"
 End
