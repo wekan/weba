@@ -1,4 +1,6 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Describe runtime origin/POST boundaries, proxy configuration,
+  initial REST contracts, token lifecycle/throttling and remaining test parity.
 - Native large-text updates: Bypass environment/dispatcher limits using a
   short event and a private request file. Limit updates to current-form text
   controls; verify Unicode persistence, rejected events and cleanup on failure.

@@ -37,7 +37,7 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   through private per-request files and a short native event. Independent SQLite
   checks verify the full Unicode description; unit tests verify mode 0600,
   cleanup on success/timeout and rejection of arbitrary large event payloads.
-- Next: authenticated REST API contracts and shared board access/role boundaries;
+- Next: expand REST API contracts and shared board access/role boundaries;
   remaining feature work below is still pending.
 
 ## Verification follow-up
@@ -68,7 +68,7 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - New portable `kb_order` metadata retains manual order without altering existing
   card/lane schema. Moves validate ownership, active state and destinations and
   use transactions. Blank legacy lanes remain part of Default. Rejected moves
-  reload canonical data; duplicate destination list titles are rejected safely.
+  reload canonical data; duplicate-title lists retain distinct stable identities.
 - Store/gesture/protocol tests pass. Chromium CDP touch events cover ordering,
   cross-lane/list moves with UTF-8 names, list confirmation/decline, carried cards,
   persistence, mouse surface dragging, edge scrolling and ordinary swipes. These

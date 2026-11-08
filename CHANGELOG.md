@@ -2,6 +2,10 @@
 
 This work adds the following features and fixes:
 
+- Document the runtime origin/development-route boundary, reverse-proxy origin
+  configuration, native POST/large-text protocol, initial Bearer REST routes,
+  token/throttle behavior and verified source/archive contracts. Keep remaining
+  WeKan fixture/feature parity explicit. Thanks to xet7.
 - Preserve large native text updates beyond OS environment/dispatcher limits.
   Send a short native wake-up and read the checked text update from a private
   mode-0600 request file, removed on success or timeout. Restrict targets to

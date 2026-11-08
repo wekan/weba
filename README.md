@@ -196,6 +196,61 @@ The local CLI requires a clean checkout, an existing remote tag and a working
 share a per-version concurrency group and never cancel an in-progress release.
 No workflow has been dispatched as part of preparing this implementation.
 
+## HTTP boundaries and REST API
+
+Launch through `./build.sh run` (or the installed runtime host) to enforce the
+HTTP origin/authority checks, blocked development routes and framing protection.
+The Gambas IDE's embedded development server bypasses this Python host and does
+not establish the same deployment boundary. Native commands use POST `/x` with
+`X-WeBa-Request: 1`; the body contains the native form command. Credentials and
+commands no longer appear in HTTP query strings. Native uploads/callbacks use
+the same request-header/origin check. Large text updates use private mode-0600
+request files that are removed after the request, including timeout/failure.
+
+For a named reverse proxy or a different external port, configure the exact
+public root origin, for example `WEBA_PUBLIC_URL=https://boards.example.org`.
+Forwarded host/scheme/IP headers are not trusted implicitly. Direct local runs
+use the bound port and localhost/IP authority. Request access logs and the old
+login request/query logfile sink are disabled; the runtime denies Gambas `~`
+development routes before executing CGI.
+
+The first implemented REST contracts use JSON request/response bodies:
+
+| Method/path | Behavior |
+| --- | --- |
+| `POST /users/login` | Accept username/password strings; return `id`, `token`, `tokenExpires` |
+| `POST /users/logout` | Revoke the presented Bearer token; optional boolean `all` revokes all the user's tokens |
+| `GET /api/users/:username/boards` | List the authenticated user's owned active boards |
+| `GET /api/boards/:id` | Read an owned board; inaccessible boards return 404 |
+
+Set `WITH_API=true` to enable data routes. Authentication endpoints remain
+available independently, matching WeKan's API gate. Authenticate data/logout
+requests with `Authorization: Bearer <token>`; native browser cookies never
+substitute for a Bearer credential. Tokens contain 256 bits of random entropy,
+expire after 90 days and are stored only as SHA-256 digests. Password changes,
+administrator resets and user deletion revoke associated tokens. Responses are
+`no-store`. Five unsuccessful/admitted logins within a 60-second peer window
+lead to 429 with `Retry-After`; success resets the window. Peer identities come
+from the actual socket, and the in-memory table is bounded.
+
+Email/LDAP/2FA authentication, registration policy, configurable expiry, shared
+board roles and the remaining REST endpoints are still pending. These initial
+contracts do not mean that WeKan's complete REST/UI/security suites pass.
+
+`./build.sh test` runs isolated source/archive native and REST tests. To run
+only the REST integration tests with a configured toolchain:
+
+```sh
+python3 tests/run-http.py --api
+python3 tests/run-http.py --api --archive
+```
+
+The API fixture creates accounts only inside a disposable project/database and
+checks cookie isolation, stored token digests, foreign-board denial, logout/all,
+expiry, reset revocation, disabled API paths and login throttling. Existing
+WeKan Playwright fixtures seed MongoDB directly and still need a weba execution
+adapter preserving their assertions before their full coverage can be claimed.
+
 ## Native component layout
 
 The signed-in shell follows the current WeKan control order using Gambas controls:
