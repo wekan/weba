@@ -1,4 +1,5 @@
 import errno
+from email.message import Message
 import io
 from types import SimpleNamespace
 from unittest.mock import Mock
@@ -56,6 +57,84 @@ class ServerPortTest(unittest.TestCase):
             constructor.assert_called_once()
 
 
+class NativeOriginTest(unittest.TestCase):
+    def request(self, method='POST', path='/x', headers=None, environment=None):
+        cls = server.handler(Path('/unused.gambas'), 'unused-runner', environment or {})
+        request = object.__new__(cls)
+        request.path = path
+        request.command = method
+        request.headers = Message()
+        defaults = {'Host': '127.0.0.1:8080', 'X-WeBa-Request': '1',
+                    'Content-Type': 'application/x-www-form-urlencoded'}
+        defaults.update(headers or {})
+        for key, value in defaults.items():
+            if value is not None:
+                request.headers[key] = value
+        request.server = SimpleNamespace(server_address=('127.0.0.1', 8080), server_port=8080)
+        request.send_error = Mock()
+        return request
+
+    def test_same_origin_and_non_browser_native_requests_are_allowed(self):
+        for headers in [{}, {'Origin': 'http://127.0.0.1:8080'},
+                        {'Referer': 'http://127.0.0.1:8080/', 'Sec-Fetch-Site': 'same-origin'}]:
+            request = self.request(headers=headers)
+            self.assertTrue(request._request_allowed(server.urllib.parse.urlsplit(request.path)))
+            request.send_error.assert_not_called()
+
+    def test_cross_origin_simple_and_malformed_requests_never_reach_gambas(self):
+        cases = [
+            ('GET', '/x?c=private', {}, 405),
+            ('POST', '/x', {'X-WeBa-Request': None}, 403),
+            ('POST', '/x', {'Content-Type': 'text/plain'}, 403),
+            ('POST', '/x?c=private', {}, 403),
+            ('POST', '/x', {'Origin': 'null'}, 403),
+            ('POST', '/x', {'Origin': 'http://attacker.invalid'}, 403),
+            ('POST', '/x', {'Origin': 'http://127.0.0.1:9999'}, 403),
+            ('POST', '/x', {'Referer': 'http://attacker.invalid/'}, 403),
+            ('POST', '/x', {'Sec-Fetch-Site': 'same-site'}, 403),
+            ('POST', '/x', {'Sec-Fetch-Site': 'cross-site'}, 403),
+            ('POST', '/x', {'Host': 'rebinding.attacker.invalid:8080'}, 403),
+            ('POST', '/x', {'Host': '127.0.0.1:8080@attacker.invalid'}, 403),
+            ('POST', '/upload:123', {'X-WeBa-Request': None}, 403),
+            ('POST', '/call:1', {'Origin': 'http://attacker.invalid'}, 403),
+            ('GET', '/%78?c=private', {}, 405),
+        ]
+        for method, path, headers, status in cases:
+            with self.subTest(method=method, path=path, headers=headers):
+                request = self.request(method, path, headers)
+                with patch.object(server.subprocess, 'run') as runner:
+                    request._run_cgi()
+                self.assertEqual(request.send_error.call_args.args[0], status)
+                runner.assert_not_called()
+
+    def test_command_body_reaches_gambas_without_plus_encoding_corruption(self):
+        command = '["update", "@1.WebTextPass", "text", "secret + & ä", true]'
+        body = server.urllib.parse.urlencode({'c': command}).encode()
+        request = self.request(headers={'Content-Length': str(len(body))})
+        request.rfile = io.BytesIO(body)
+        request.wfile = io.BytesIO()
+        request.client_address = ('127.0.0.1', 12345)
+        request.send_response = Mock()
+        request.send_header = Mock()
+        request.end_headers = Mock()
+        result = SimpleNamespace(returncode=0, stdout=b'Content-Type: text/plain\r\n\r\nOK')
+        with patch.object(server.subprocess, 'run', return_value=result) as runner:
+            request._run_cgi()
+        env = runner.call_args.kwargs['env']
+        self.assertEqual(server.urllib.parse.parse_qs(env['QUERY_STRING'])['c'], [command])
+        self.assertNotIn('+', env['QUERY_STRING'], 'Gambas query decoding does not treat + as whitespace')
+        self.assertEqual(env['CONTENT_LENGTH'], '0')
+        self.assertEqual(runner.call_args.kwargs['input'], b'')
+        self.assertEqual(request.wfile.getvalue(), b'OK')
+
+    def test_explicit_public_origin_works_for_reverse_proxy_without_trusting_forwarded_headers(self):
+        request = self.request(headers={'Host': 'weba.example', 'Origin': 'https://weba.example'},
+                               environment={'WEBA_PUBLIC_URL': 'https://weba.example'})
+        self.assertTrue(request._request_allowed(server.urllib.parse.urlsplit('/x')))
+        request = self.request(headers={'Host': 'weba.example', 'Origin': 'https://weba.example'})
+        self.assertFalse(request._request_allowed(server.urllib.parse.urlsplit('/x')))
+
+
 class DevelopmentRouteTest(unittest.TestCase):
     def test_debug_routes_are_rejected_before_starting_gambas(self):
         cls = server.handler(Path('/unused.gambas'), 'unused-runner',
@@ -77,7 +156,7 @@ class DisconnectedClientTest(unittest.TestCase):
         request = object.__new__(cls)
         request.path = '/'
         request.command = 'GET'
-        request.headers = {}
+        request.headers = {'Host': '127.0.0.1:8080'}
         request.server = SimpleNamespace(server_address=('127.0.0.1', 8080), server_port=8080)
         request.client_address = ('127.0.0.1', 12345)
         request.rfile = io.BytesIO()

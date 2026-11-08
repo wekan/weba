@@ -6,6 +6,7 @@ const fs = require('node:fs');
 (async () => {
   const browser = await puppeteer.connect({browserURL:process.env.WEBA_BROWSER_URL});
   let attachmentFile;
+  let nativeRequests=0;
   const context = await browser.createBrowserContext();
   const page = await context.newPage();
   const selector = name => `[id$=".${name}"]`;
@@ -16,6 +17,14 @@ const fs = require('node:fs');
   const fill = async (name,value) => {await settle(); await page.locator(entry(name)).fill(value);};
   const addStructure = async (trigger,title) => {await settle();await page.click(trigger);await settle();await visible('ActionPanel');await fill('ActionText',title);await click('ActionConfirm');};
   const shot = async name => {if(process.env.WEBA_SCREENSHOT_DIR) await page.screenshot({path:path.join(process.env.WEBA_SCREENSHOT_DIR,name+'.png')});};
+  page.on('request',request=>{
+    const url=new URL(request.url());
+    if(url.pathname!=='/x')return;
+    nativeRequests++;
+    assert.equal(request.method(),'POST','native commands must never use GET URLs');
+    assert.equal(url.search,'','native command values must not appear in request URLs');
+    assert.equal(request.headers()['x-weba-request'],'1');
+  });
   page.on('pageerror', error => {throw error;});
   try {
     await page.setViewport({width:1440,height:1000});
@@ -90,6 +99,7 @@ const fs = require('node:fs');
     assert.ok(geometry.nav.right<=geometry.content.left+1,'navigation precedes main content');
     assert.ok(geometry.body.top>=geometry.header[0].bottom,'content is below one header');
     assert.equal(geometry.overflow,false,'desktop must not overflow');
+    assert.ok(nativeRequests>0,'browser exercised the protected native transport');
     await click('AddBoardTile');
     await visible('PageSidebar');
     await fill('BoardTitle','Layout board');

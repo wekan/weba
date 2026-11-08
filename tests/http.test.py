@@ -3,7 +3,11 @@ BASE=os.environ.get('WEBA_TEST_URL','http://127.0.0.1:8100')
 username='http-'+uuid.uuid4().hex[:12]
 jar=http.cookiejar.CookieJar(); client=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
 def get(path='/'): return client.open(BASE+path,timeout=15).read().decode()
-def command(c): return get('/x?c='+urllib.parse.quote(json.dumps(c)))
+def command(c):
+ data=urllib.parse.urlencode({'c':json.dumps(c)}).encode()
+ request=urllib.request.Request(BASE+'/x',data=data,headers={
+  'Content-Type':'application/x-www-form-urlencoded', 'X-WeBa-Request':'1'})
+ return client.open(request,timeout=15).read().decode()
 # Development routes must never expose the real CGI environment or mutate a
 # session. Check the installed host with an actual Gambas project/archive.
 for debug_path in ['/~dump', '/%7Edump', '/%257Edump', '/~logout']:
@@ -13,6 +17,26 @@ for debug_path in ['/~dump', '/%7Edump', '/%257Edump', '/~logout']:
   assert error.code == 404
  else:
   raise AssertionError('Development route was exposed')
+# The native form protocol must not accept cross-site form/image mutations.
+for method,path,headers in [
+ ('GET','/x?c=private',{}),
+ ('POST','/x',{}),
+ ('POST','/x',{'X-WeBa-Request':'1','Origin':'https://attacker.invalid'}),
+ ('POST','/upload:invalid',{'Origin':'https://attacker.invalid'}),
+]:
+ req=urllib.request.Request(BASE+path,data=b'c=%5B%5D' if method=='POST' else None,
+  method=method,headers={'Content-Type':'application/x-www-form-urlencoded',**headers})
+ try:
+  client.open(req,timeout=15)
+ except urllib.error.HTTPError as error:
+  assert error.code == (405 if method=='GET' else 403)
+ else:
+  raise AssertionError('Unsafe native request was accepted')
+with client.open(BASE,timeout=15) as response:
+ assert response.headers['X-Frame-Options'] == 'DENY'
+ assert response.headers['Content-Security-Policy'] == "frame-ancestors 'none'"
+ assert response.headers['Referrer-Policy'] == 'same-origin'
+ assert response.headers['X-Content-Type-Options'] == 'nosniff'
 page=get(); command(['raise',None,'open',[],False]); prefix=re.search(r'id="(@\d+)\.WebTextName"',page)[1]
 answer=command(['raise',prefix+'.ShowPassword','click',[],False])
 assert 'fa-eye-slash' in answer and 'Hide' in answer and 'text' in answer, 'Login password reveal failed'

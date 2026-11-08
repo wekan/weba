@@ -1,4 +1,7 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Native transport security: Move commands to POST bodies, validate request
+  origin/authority and require a custom header for mutations/uploads/callbacks.
+  Deny framing, add referrer/nosniff headers and test browser/CGI integration.
 - Security: Block development/environment-dump routes, including encoded paths,
   before invoking Gambas; verify host and real packaged HTTP boundaries.
 - Security: Remove login request/query/user-agent logging and the unused shared

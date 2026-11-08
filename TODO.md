@@ -15,8 +15,12 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   request payload logging; validate registration through real CGI sessions.
 - Completed: block Gambas development/environment-dump routes before CGI,
   including encoded paths; test the packaged HTTP endpoint and no-runner guard.
-- In progress: protect native command/upload requests against cross-origin
-  mutations and move credential-bearing native commands out of query strings.
+- Completed: native commands now use POST bodies with a required custom header,
+  authority/origin and Fetch Metadata validation. Cross-origin form/image/native
+  requests are rejected before CGI; iframe embedding is denied. Browser tests
+  inspect actual POST URLs/headers and exercise rich-card upload/download.
+- In progress: map authoritative WeKan REST/UI/security contracts to weba and
+  implement token-authenticated REST routes and shared board permission checks.
 - Next: authenticated REST API contracts and shared board access/role boundaries;
   remaining feature work below is still pending.
 

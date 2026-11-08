@@ -2,6 +2,39 @@
 (function(root){
   'use strict';
   if(root.webaUI)return;
+  // Gambas 3 uses GET /x?c=... even for password and mutation events. Keep
+  // the native protocol, but move its payload into POST and tag same-origin
+  // command/upload requests. The host rejects simple/cross-origin requests.
+  if(root.XMLHttpRequest){
+    const requests=new WeakMap(),prototype=root.XMLHttpRequest.prototype;
+    const open=prototype.open,send=prototype.send;
+    prototype.open=function(method,address,...options){
+      requests.delete(this);
+      const url=new URL(address,root.location.href);
+      const native=url.origin===root.location.origin &&
+        (url.pathname==='/x'||url.pathname==='/c'||/^\/(upload|call):/.test(url.pathname));
+      if(native){
+        const state={};
+        if(url.pathname==='/x'&&method.toUpperCase()==='GET'){
+          state.body=url.searchParams.toString();
+          url.search='';method='POST';
+        }
+        requests.set(this,state);
+      }
+      return open.call(this,method,native?url.href:address,...options);
+    };
+    prototype.send=function(body){
+      const state=requests.get(this);
+      if(state){
+        this.setRequestHeader('X-WeBa-Request','1');
+        if(state.body!==undefined){
+          this.setRequestHeader('Content-Type','application/x-www-form-urlencoded;charset=UTF-8');
+          body=state.body;
+        }
+      }
+      return send.call(this,body);
+    };
+  }
   const icons={Swimlanes:'th-large',Kanban:'trello',Calendar:'calendar',Gantt:'bar-chart',TableView:'table',Charts:'pie-chart',ImportBoard:'download',ContextDelete:'trash-o',ContextRename:'pencil',ContextCopy:'clipboard',ContextMove:'arrow-up',ContextColor:'paint-brush',ContextStar:'star-o',ContextWatch:'eye-slash',ContextWip:'ban',ContextDescription:'align-left',ContextHistory:'history',ContextExport:'upload',ContextArchive:'archive',ContextRestore:'undo',ContextAddCard:'plus',ContextAddList:'plus',ContextAddLane:'plus',Starred:'star',BoardSettings:'cog',ArchivedItems:'archive',ContextComments:'comment-o',ContextChecklists:'check-square-o',ContextChecklistItems:'check',ContextSubtasks:'sitemap',ContextDependencies:'link',ContextFields:'list-alt',ContextTime:'clock-o',ContextAttachments:'paperclip',CardComments:'comment-o',CardChecklists:'check-square-o',CardChecklistItems:'check',CardSubtasks:'sitemap',CardDependencies:'link',CardFields:'list-alt',CardTime:'clock-o',CardAttachments:'paperclip',DetailStart:'play',DetailStop:'stop',DetailDownload:'download',DetailDelete:'trash-o'};
   function decorate(){
     if(!root.document)return;

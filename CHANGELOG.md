@@ -2,6 +2,13 @@
 
 This work adds the following features and fixes:
 
+- Carry native Gambas commands in POST bodies instead of credential-bearing
+  URLs. Require a non-simple native request header, validate authority/origin
+  and Fetch Metadata, reject URL commands and protect uploads/callbacks. Add
+  frame-denial, nosniff and referrer headers. Adapt the checked POST body to
+  Gambas 3.20 session dispatch internally, preserving spaces/plus/Unicode.
+  Verify negative origin cases, real CGI sessions and browser file transfers.
+  Named reverse proxies configure WEBA_PUBLIC_URL. Thanks to xet7.
 - Block Gambas development routes before starting CGI, including encoded
   variants of the environment-dump endpoint. Prevent disclosure of database
   credentials and other runtime environment values. Verify host rejection and
