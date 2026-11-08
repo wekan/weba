@@ -163,6 +163,28 @@ Public Sub Main()
     Print "Member commit rollback retained roles/flags/history and recovered without authority leakage"
     Return
   Endif
+  If Env["WEBA_TEST_MODE"] = "board-read-scope" Then
+    data = JSON.Decode(Env["WEBA_TEST_BOARDS"])
+    boardId = data["otherBoardId"]
+    otherId = data["otherListId"]
+    WebIdentity.AuthenticateApi("rest-owner")
+    data = BoardAccess.ReadApiBoard(boardId, "lists")
+    If data["status"] <> 200 Then Error.Raise("Global administrator read denied")
+    If BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Read authority leaked after success")
+    db = WebDatabase.OpenConnection()
+    ' SQLite-only fault injection in this disposable fixture, never production.
+    db.Exec("ALTER TABLE kb_order RENAME TO kb_order_read_failure")
+    data = BoardAccess.ReadApiBoard(boardId, "cards", otherId)
+    db.Exec("ALTER TABLE kb_order_read_failure RENAME TO kb_order")
+    If data["status"] <> 500 Then Error.Raise("Expected sanitized read failure")
+    If data["data"]["error"] <> "Board read failed" Then Error.Raise("Read failure exposed internals")
+    If BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Read authority leaked after failure")
+    data = BoardAccess.ReadApiBoard(boardId, "board")
+    If data["status"] <> 200 Then Error.Raise("Read retry failed")
+    If BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Read authority leaked after retry")
+    Print "REST read authority reset after success/failure/retry without changing native board permissions"
+    Return
+  Endif
   If Env["WEBA_TEST_MODE"] = "member-scope" Then
     data = JSON.Decode(Env["WEBA_TEST_BOARDS"])
     WebIdentity.AuthenticateApi("rest-owner")

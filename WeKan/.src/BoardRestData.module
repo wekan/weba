@@ -1,0 +1,80 @@
+' REST projections run only inside BoardAccess.ReadApiBoard's checked scope.
+Export
+
+Public Function Read(boardId As Integer, kind As String, Optional listId As Integer) As Variant
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim r As Result
+  Dim lane As Result
+  Dim item As Collection
+  Dim rows As New Variant[]
+  Dim values As Collection
+  Dim field As String
+  Dim data As Collection
+  Dim index As Integer
+  Dim prior As Collection
+  If Env["WEBA_API_REQUEST"] <> "1" Then Error.Raise("API context required")
+  BoardAccess.RequireRead(boardId)
+  r = db.Find("kb_boards", "id = &1", boardId)
+  If kind = "board" Then
+    data = New Collection
+    data["_id"] = CStr(r!id)
+    data["title"] = r!title
+    data["archived"] = r!archived
+    data["members"] = BoardAccess.ApiMembers(boardId)
+  Else If kind = "lists" Or kind = "swimlanes" Then
+    If kind = "lists" Then
+      r = db.Find("kb_lists", "board_id = &1 ORDER BY sort_order, id", boardId)
+    Else
+      r = KanbanStore.Lanes(boardId)
+    Endif
+    For Each r
+      If WorkspaceStore.Archived(boardId, If(kind = "lists", "list", "lane"), r!id) Then Continue
+      item = JSON.Decode("{}", True)
+      item["_id"] = CStr(r!id)
+      item["title"] = r!title
+      If kind = "lists" Then
+        item["modifiedAt"] = JSON.Null
+        item["cardsModifiedAt"] = JSON.Null
+      Endif
+      rows.Add(item)
+    Next
+  Else If kind = "cards_count" Then
+    data = New Collection
+    r = db.Find("kb_cards", "board_id = &1 AND archived = &2", boardId, False)
+    data["board_cards_count"] = r.Count
+  Else If kind = "cards" Or kind = "list_cards_count" Then
+    KanbanStore.PrimeCardLinks(boardId)
+    r = db.Exec("SELECT c.* FROM kb_cards c INNER JOIN kb_card_lists l ON l.board_id = c.board_id AND l.card_id = c.id WHERE c.board_id = &1 AND l.list_id = &2 AND c.archived = &3 ORDER BY c.id", boardId, listId, False)
+    If kind = "list_cards_count" Then
+      data = New Collection
+      data["list_cards_count"] = r.Count
+    Else
+      For Each r
+        item = New Collection
+        item["_id"] = CStr(r!id)
+        ' Add stores typed empty strings; indexed assignment removes them,
+        ' while JSONCollection._put turns them into null on Gambas 3.20.
+        item.Add(CStr(r!title), "title")
+        item.Add(CStr(r!description), "description")
+        lane = db.Find("kb_lanes", "board_id = &1 AND title = &2", boardId, r!lane)
+        If lane.Available Then item["swimlaneId"] = CStr(lane!id)
+        item["assignees"] = BoardAccess.Assignees(boardId, r!id)
+        item["sort"] = KanbanStore.ItemOrder(boardId, "card", CStr(r!id), r!id)
+        values = CardDates.ReadDates(boardId, r!id)
+        For Each field In values.Keys
+          item[field] = CardDates.Iso(values[field])
+        Next
+        index = 0
+        For Each prior In rows
+          If prior["sort"] > item["sort"] Then Break
+          Inc index
+        Next
+        rows.Add(item, index)
+      Next
+    Endif
+  Else
+    Error.Raise("Unknown board read")
+  Endif
+  If data Then Return data
+  Return rows
+End

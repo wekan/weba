@@ -39,6 +39,19 @@ with sqlite3.connect(Path(os.environ['WEBA_DB_HOST']) / os.environ['WEBA_DB_NAME
         db.execute('INSERT INTO kb_members(board_id,username,role) VALUES(?,?,?)', (board_id, username, 'board-admin' if is_admin else 'normal'))
         db.execute('DELETE FROM kb_member_flags WHERE board_id=? AND username=?', (board_id, username))
         db.execute('DELETE FROM kb_removed_members WHERE board_id=? AND username=?', (board_id, username))
+    elif sys.argv[1] == 'replace-board-members':
+        members = json.loads(sys.argv[3])
+        for table in ('kb_members', 'kb_member_flags', 'kb_removed_members'):
+            db.execute('DELETE FROM '+table+' WHERE board_id=?', (board_id,))
+        for member in members:
+            username = member['userId']
+            assert db.execute('SELECT 1 FROM users WHERE username=?', (username,)).fetchone()
+            role = next((item['role'] for item in schema['roles'] if item['flag'] and member.get(item['flag']) is True), 'normal')
+            table = 'kb_members' if member.get('isActive') else 'kb_removed_members'
+            db.execute('INSERT INTO '+table+'(board_id,username,role) VALUES(?,?,?)', (board_id, username, role))
+            for flag in role_flags.values():
+                if flag and member.get(flag) is True:
+                    db.execute('INSERT INTO kb_member_flags(board_id,username,flag) VALUES(?,?,?)', (board_id, username, flag))
     elif sys.argv[1] == 'get':
         row = db.execute('SELECT title,owner FROM kb_boards WHERE id=?', (board_id,)).fetchone()
         if row is None:

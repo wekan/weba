@@ -78,7 +78,7 @@ with sqlite3.connect(Path(os.environ['WEBA_DB_HOST']) / os.environ['WEBA_DB_NAME
     assert not db.execute('SELECT 1 FROM kb_card_assignees WHERE card_id=?', (card,)).fetchone()
     assert call('/api/boards/'+board+'/members/rest-member/add', token=admin, data={'action': 'add', 'role': 'normal'})[0] == 200
     assert change('members', 'rest-member', token=admin)[0] == 200, 'explicit site-admin mutation is allowed'
-    assert call('/api/boards/'+board, 'GET', admin)[0] == 404, 'scoped mutation must not grant general board reads'
+    assert call('/api/boards/'+board, 'GET', admin)[0] == 200, 'Global administrator REST reads follow WeKan independently of scoped mutation'
     other_list = str(db.execute('SELECT id FROM kb_lists WHERE board_id=? AND id<>? LIMIT 1', (board, list_id)).fetchone()[0])
     before = snapshot()
     assert call(route.replace('/lists/'+list_id+'/', '/lists/'+other_list+'/')+'members/rest-member', token=owner)[0] == 404

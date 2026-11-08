@@ -186,9 +186,15 @@ const fs = require('node:fs');
           const item=[...document.querySelectorAll('.weba-report .weba-card strong')].find(e=>e.textContent==='Shared card').closest('.weba-card');
           const board=document.querySelector('.weba-content').dataset.board;
           const response=await fetch(`/api/boards/${board}/lists/${item.dataset.listId}/cards/${item.dataset.cardId}`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify(payload)});
-          return{login:login.status,status:response.status};
+          const cards=await fetch(`/api/boards/${board}/lists/${item.dataset.listId}/cards`,{headers:{Authorization:'Bearer '+token}});
+          const records=await cards.json();
+          return{login:login.status,status:response.status,read:cards.status,card:Array.isArray(records)?records.find(card=>card._id===item.dataset.cardId):null};
         },{ownerName,payload});
-        assert.equal(result.login,200);assert.equal(result.status,200);
+        assert.equal(result.login,200);assert.equal(result.status,200);assert.equal(result.read,200);
+        assert.ok(result.card,'actual REST list read contains the edited card');
+        if(Object.hasOwn(payload,'assignees'))assert.deepEqual(result.card.assignees,payload.assignees);
+        if(Object.hasOwn(payload,'description'))assert.equal(result.card.description,payload.description??'');
+        if(payload.receivedAt===0)assert.equal(result.card.receivedAt,'1970-01-01T00:00:00.000Z');
       }
       if(process.env.WITH_API==='true'){
         await replacePeople({members:[memberName,memberName],assignees:[ownerName,ownerName],description:"API description ää 中文 😀",receivedAt:0,startAt:-1.9,dueAt:"2026-06-20T12:34:56.123Z",endAt:"2026-06-21T12:00:00.456Z"});

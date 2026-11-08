@@ -68,7 +68,8 @@ assert member_data(member)['isAdmin'] is True
 assert call(path+'/add', 'POST', {'action': 'add', 'role': 'worker'}, board_owner)[0] == 200
 assert role(board, 'rest-member') == 'board-admin'
 assert change({'role': 'worker'}, member)[0] == 200
-current = member_data(member)
+assert call(base, token=member)[0] == 403, 'Combined Worker flag denies whole-board REST read'
+current = member_data(board_owner)
 assert current['isAdmin'] is True and current['isWorker'] is True, 'Self role update must preserve admin'
 assert role(board, 'rest-member') == 'board-admin'
 assert change({'role': 'readonly'}) == (200, 1)
@@ -87,7 +88,8 @@ for alias, expected in [(' ADMIN ', 'board-admin'), ('normal', 'normal'), ('memb
     assert role(board, 'rest-member') == expected
 assert change({'isNormalAssignedOnly': True, 'isNoComments': 'true', 'isAdmin': 'FALSE'}) == (200, 1)
 assert role(board, 'rest-member') == 'normal-assigned-only', 'WeKan flag precedence changed'
-current = member_data(member)
+assert call(base, token=member)[0] == 403, 'Assigned/no-comments flags deny whole-board REST read'
+current = member_data(board_owner)
 assert current['isNormalAssignedOnly'] is True and current['isNoComments'] is True and current['isAdmin'] is False
 assert change({'role': 'normal', 'isAdmin': True, 'isReadOnly': True}) == (200, 1)
 assert call(path+'/set', 'POST', {'role': 'admin'}, board_owner)[0] == 404
@@ -108,23 +110,23 @@ inactive = member_data(board_owner)
 assert inactive['isActive'] is False and inactive['isAdmin'] is False
 assert inactive['isNoComments'] is True and inactive['isWorker'] is True, 'Removal lost non-admin flags'
 assert call('/api/users/rest-member/boards', token=member) == (200, [])
-assert call(base, token=member)[0] == 404
+assert call(base, token=member)[0] == 403
 assert change({'role': 'admin', 'isActive': True}) == (200, 1)
 assert member_data(board_owner)['isActive'] is False and member_data(board_owner)['isAdmin'] is True
-assert call(base, token=member)[0] == 404, 'Inactive admin flags granted board access'
+assert call(base, token=member)[0] == 403, 'Inactive admin flags granted board access'
 assert call(path+'/add', 'POST', {'action': 'add', 'role': 'readonly'}, board_owner)[0] == 200
 assert member_data(board_owner)['isActive'] is True
 assert member_data(board_owner)['isReadOnly'] is True and member_data(board_owner)['isAdmin'] is False
 assert member_data(board_owner)['isWorker'] is False, 'Reactivation retained old flags'
 assert call(path+'/remove', 'POST', {'action': 'remove'}, board_owner)[0] == 200
 assert role(board, 'rest-member') is None
-assert call(base, token=member)[0] == 404
-# Global administration is limited to this membership operation; it does not
-# silently create membership or grant general private-board read access.
-assert call(base, token=site_admin)[0] == 404
+assert call(base, token=member)[0] == 403
+# Global REST reads follow checkBoardAccess independently of membership
+# mutation scope; neither operation silently creates board membership.
+assert call(base, token=site_admin)[0] == 200
 assert call(path+'/add', 'POST', {'action': 'add', 'role': 'admin'}, site_admin)[0] == 200
 assert role(board, 'rest-member') == 'board-admin'
-assert role(board, 'rest-owner') is None and call(base, token=site_admin)[0] == 404
+assert role(board, 'rest-owner') is None and call(base, token=site_admin)[0] == 200
 # Another administrator may replace/remove the legacy owner's implicit role.
 owner_path = base+'/members/rest-other'
 assert call(owner_path, 'POST', {'role': 'normal'}, site_admin) == (200, 1)
@@ -137,7 +139,7 @@ status, data = call(owner_path+'/remove', 'POST', {'action': 'remove'}, board_ow
 assert status == 200
 assert_minimal(data)
 assert role(board, 'rest-other') is None
-assert call(base, token=board_owner)[0] == 404
+assert call(base, token=board_owner)[0] == 403
 status, data = call(path+'/remove', 'POST', {'action': 'remove'}, member)
 assert status == 200
 assert_minimal(data)
@@ -145,7 +147,7 @@ assert role(board, 'rest-member') == 'board-admin', 'Removing the last administr
 assert change({'role': 'normal'}, site_admin)[0] == 400
 assert role(board, 'rest-member') == 'board-admin'
 orphan = '/api/boards/'+str(BOARDS['orphanBoardId'])
-assert call(orphan, token=site_admin)[0] == 404
+assert call(orphan, token=site_admin)[0] == 200
 assert call(orphan+'/members/rest-owner/add', 'POST', {'action': 'add', 'role': 'admin'}, site_admin)[0] == 200
 assert call(orphan, token=site_admin)[0] == 200, 'Explicit site-admin recovery did not restore board access'
 with sqlite3.connect(DATABASE) as db:
@@ -164,7 +166,7 @@ assert member_data(member, 'rest-owner')['isActive'] is False
 assert member_data(member, 'rest-owner')['isAdmin'] is True
 assert call(base+'/members/rest-owner', 'POST', {'role': 'worker'}, site_admin) == (200, 1)
 assert member_data(member, 'rest-owner')['isAdmin'] is True
-assert call(base, token=site_admin)[0] == 404, 'Removed site admin silently regained ordinary board access'
+assert call(base, token=site_admin)[0] == 200, 'Global administrator REST override follows source without restoring membership'
 assert change({'role': 'normal'}, site_admin)[0] == 400, 'Inactive administrators were counted as active'
 assert call(path+'/remove', 'POST', {'action': 'remove'}, member)[0] == 200
 assert role(board, 'rest-member') == 'board-admin'

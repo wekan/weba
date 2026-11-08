@@ -24,14 +24,15 @@ const secrets=[process.env.WEBA_TEST_PASSWORD];
  const db={getBoard:id=>JSON.parse(oracle('get',id)),addBoardMember:({boardId,userId,isAdmin})=>oracle('add',boardId,userId,isAdmin),
   find:(collection,query)=>{if(collection!=='cards'||query.archived!==false)throw Error('Unsupported card query');return JSON.parse(oracle('cards',query.boardId,query.listId));},
   getCard:id=>JSON.parse(oracle('card',id)),
+  updateOne:(collection,query,update)=>{if(collection!=='boards'||!Array.isArray(update.$set?.members))throw Error('Unsupported original board update');return oracle('replace-board-members',query._id,JSON.stringify(update.$set.members));},
  };
  vm.runInNewContext(fs.readFileSync(spec,'utf8'),{require:name=>{
   if(name==='../fixtures')return{test,expect:playwright.expect};
   if(name==='../helpers/db')return db;
   throw Error('Unsupported original spec dependency '+name);
  }},{filename:spec});
- const selected=cases.filter(({title})=>title.startsWith('#5998 add board member ')||title.startsWith('#5998 adding a board member ')||title.startsWith('#5998 add card member:')||title.startsWith('#3697 clearing members via REST')||title.startsWith('#5846 set then clear'));
- playwright.expect(selected.length).toBe(6);
+ const selected=cases.filter(({title})=>title.startsWith('#5998 add board member ')||title.startsWith('#5998 adding a board member ')||title.startsWith('#5998 add card member:')||title.startsWith('#3697 clearing members via REST')||title.startsWith('#5846 set then clear')||['(HashBleed)','(ErrorBleed)','(AssignedBleed)'].some(suffix=>title.endsWith(suffix)));
+ playwright.expect(selected.length).toBe(9);
  const request=await playwright.request.newContext({baseURL:process.env.WEBA_TEST_URL});
  try{
   const login=async username=>{

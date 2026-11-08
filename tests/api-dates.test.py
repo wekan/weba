@@ -96,5 +96,5 @@ with sqlite3.connect(Path(os.environ['WEBA_DB_HOST']) / os.environ['WEBA_DB_NAME
     assert put({'members': ['rest-member'], 'dueAt': 0, 'endAt': 0}, token=admin)[0] == 200
     assert dates()['dueAt'] == dates()['endAt'] == 0
     assert db.execute('SELECT due_day FROM kb_cards WHERE id=?', (card,)).fetchone() == ('1970-01-01',)
-    assert call('/api/boards/'+board, 'GET', admin)[0] == 404
+    assert call('/api/boards/'+board, 'GET', admin)[0] == 200, 'Global administrator REST reads follow WeKan independently of scoped mutation'
 print('Dates PUT: four UTC fields, milliseconds/offset/epoch zero, all clear forms, invalid skips, role/list/archive boundaries and combined sanitized rollback passed')

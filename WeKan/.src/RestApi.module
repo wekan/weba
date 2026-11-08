@@ -83,6 +83,39 @@ Public Sub Main()
     Return
   Endif
   fields = Split(Request.Path, "/", "", True)
+  If fields.Count = 4 Or fields.Count = 6 Then
+    If fields[0] = "api" And fields[1] = "boards" Then
+      action = ""
+      listId = 0
+      If fields.Count = 4 Then
+        If fields[3] = "lists" Or fields[3] = "swimlanes" Or fields[3] = "cards_count" Then action = fields[3]
+      Else If fields[3] = "lists" Then
+        If fields[5] = "cards" Then action = "cards"
+        If fields[5] = "cards_count" Then action = "list_cards_count"
+      Endif
+      If action Then
+        If Request.Method <> "GET" Then
+          Reply(405, ErrorData("Method not allowed"))
+          Return
+        Endif
+        Try boardId = PositiveId(fields[2])
+        If Error Then
+          Reply(404, ErrorData("Board not found"))
+          Return
+        Endif
+        If fields.Count = 6 Then
+          Try listId = PositiveId(fields[4])
+          If Error Then
+            Reply(404, ErrorData("List not found"))
+            Return
+          Endif
+        Endif
+        outcome = BoardAccess.ReadApiBoard(boardId, action, listId)
+        Reply(outcome["status"], outcome["data"])
+        Return
+      Endif
+    Endif
+  Endif
   If fields.Count = 7 Then
     If fields[0] = "api" And fields[1] = "boards" And fields[3] = "lists" And fields[5] = "cards" Then
       If Request.Method <> "PUT" Then
@@ -196,18 +229,13 @@ Public Sub Main()
       Return
     Endif
     If fields[0] = "api" And fields[1] = "boards" And Request.Method = "GET" Then
-      Try KanbanStore.RequireBoard(PositiveId(fields[2]))
+      Try boardId = PositiveId(fields[2])
       If Error Then
         Reply(404, ErrorData("Board not found"))
         Return
       Endif
-      r = WorkspaceStore.Record(PositiveId(fields[2]), "board", PositiveId(fields[2]))
-      item = New Collection
-      item["_id"] = CStr(r!id)
-      item["title"] = r!title
-      item["archived"] = r!archived
-      item["members"] = BoardAccess.ApiMembers(PositiveId(fields[2]))
-      Reply(200, item)
+      outcome = BoardAccess.ReadApiBoard(boardId, "board")
+      Reply(outcome["status"], outcome["data"])
       Return
     Endif
   Endif

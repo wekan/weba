@@ -2,6 +2,17 @@
 
 This work adds the following features and fixes:
 
+- Add REST whole-board lists/swimlanes/card-list/count reads with WeKan's
+  built-in role/combined-flag checks and scoped global-administrator access.
+  Refuse nonmembers and assigned-only roles with 403, return missing boards as
+  404 and preserve native permissions after success/failure/retry. Keep active
+  archive filters, ordered card/assignee/date projections and exact empty strings.
+  Execute unchanged HashBleed/ErrorBleed/AssignedBleed assertions in addition to
+  existing original callbacks. Verify independent SQL results, malformed/missing
+  targets, API gating and packaged Chromium PUT-to-GET/native interaction.
+  Full board documents, list activity timestamps and complete suites remain open.
+  Thanks to xet7.
+
 - Document the native multiple-assignee entry points, active/stale choices,
   immediate changes, primary synchronization, reader/Worker rules and assigned-
   only self-removal. Record twelve COMMIT phases and packaged Chromium/mobile

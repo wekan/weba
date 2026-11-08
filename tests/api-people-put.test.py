@@ -77,7 +77,7 @@ with sqlite3.connect(Path(os.environ['WEBA_DB_HOST']) / os.environ['WEBA_DB_NAME
     role('normal')
     assert put({'members': ['rest-member']}, token=member)[0] == 200
     assert put({'members': ['rest-other']}, token=admin)[0] == 200
-    assert call('/api/boards/'+board, 'GET', admin)[0] == 404, 'PUT override must not grant private reads'
+    assert call('/api/boards/'+board, 'GET', admin)[0] == 200, 'Global administrator REST reads follow WeKan independently of scoped mutation'
     before = snapshot()
     assert put({}) == (404, {'message': 'Error'})
     assert put({'members': [], 'title': 'Not implemented'})[0] == 400

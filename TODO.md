@@ -7,12 +7,12 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 ## Current UI/API/security work
 
 - Full scope remains all items below and the current WeKan UI/API/security test
-  contracts. Complete original suites have not passed against weba. Seven spec 17
-  callbacks (three board membership, one card membership, one people-array clear,
-  one due-date clear, one user deletion) run unchanged with actual Playwright
-  assertions and explicit SQLite fixture adapters; the other 23 callbacks remain
-  unexecuted. Preserve
-  original assertions as execution adapters expand.
+  contracts. Complete original suites have not passed against weba. Ten spec 17
+  callbacks run unchanged with actual Playwright assertions and explicit SQLite
+  adapters: three board membership, one card membership, one people-array clear,
+  one due-date clear, one user deletion and HashBleed/ErrorBleed/AssignedBleed.
+  The other 20 callbacks remain unexecuted. Preserve original assertions as
+  execution adapters expand.
 - Completed: remove login initializer request/query/user-agent logging and the
   unused shared temporary logfile sink. Guard sources against reintroducing
   request payload logging; validate registration through real CGI sessions.
@@ -191,6 +191,22 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   packaged Chromium/mobile evidence with original-suite gaps explicit.
 - Pending assignee UI: active roster selection before first card save, avatars,
   full WeKan menu/keyboard/accessibility parity and complete original UI suites.
+- Completed initial whole-board REST reads: lists, swimlanes, board/list card
+  counts and active list cards with title/description/swimlane/assignees/order/
+  UTC dates. Refuse nonmembers, inactive members, assigned-only and other source-
+  excluded built-in/combined flags with 403; missing boards return 404. Match
+  source global-administrator REST reads independently of board membership while
+  preserving native board access and reset scoped authority after success, SQL
+  failure and retry. Keep real empty strings through Collection.Add on Gambas
+  3.20. Verify archive/empty/missing filters, independent SQL ordering (negative/
+  zero ranks), exact text/dates, WITH_API=false and native-cookie boundaries.
+  Original HashBleed/ErrorBleed/AssignedBleed pass unchanged; total spec 17
+  callback coverage is 10/30. Packaged Chromium reads back actual PUT data and
+  verifies the existing native multiple-assignee/member/date workflows.
+- Pending read parity: complete board/card documents and single-card GET routes,
+  list modifiedAt/cardsModifiedAt tracking (#5251; currently null without stored
+  timestamps), full fractional sort support, custom roles, legacy lane mapping,
+  public/instance visibility and complete original UI/API/security suites.
 - Next card-person work: remaining card PUT fields, reads, creation/bulk routes
   and complete original UI/API/security suites.
 - In progress: REST cards/containers and full API identity/data parity, including

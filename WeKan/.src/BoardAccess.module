@@ -331,6 +331,41 @@ Private Function ApiFailure(status As Integer, message As String) As Collection
   Return ApiAnswer(status, data)
 End
 
+Public Function ReadApiBoard(boardId As Integer, kind As String, Optional listId As Integer) As Collection
+  Dim actor As String = WebIdentity.Username
+  Dim roleKey As String
+  Dim flags As Collection
+  Dim flag As String
+  Dim r As Result
+  Dim answer As Collection
+  Dim siteAdmin As Boolean
+  $apiMemberBoard = 0
+  If Env["WEBA_API_REQUEST"] <> "1" Then Return ApiFailure(403, "API context required")
+  If Not actor Then Return ApiFailure(401, "Invalid credentials")
+  If Not WebDatabase.UserExists(actor) Then Return ApiFailure(401, "Invalid credentials")
+  OpenStore()
+  WorkspaceStore.OpenStore()
+  r = $db.Find("kb_boards", "id = &1", boardId)
+  If Not r.Available Then Return ApiFailure(404, "Board not found")
+  siteAdmin = WebDatabase.GetIsAdmin(actor)
+  If Not siteAdmin Then
+    roleKey = RoleOf(boardId, actor)
+    If Not roleKey Then Return ApiFailure(403, "Forbidden")
+    flags = ApiMemberRoles.MemberData(boardId, actor, roleKey)
+    For Each flag In ["isNoComments", "isCommentOnly", "isWorker", "isNormalAssignedOnly", "isCommentAssignedOnly", "isReadAssignedOnly"]
+      If flags[flag] = True Then Return ApiFailure(403, "Forbidden")
+    Next
+  Endif
+  If ["board", "lists", "swimlanes", "cards_count", "cards", "list_cards_count"].Find(kind) < 0 Then Return ApiFailure(404, "API route not found")
+  If siteAdmin Then $apiMemberBoard = boardId
+  answer = ApiAnswer(200, BoardRestData.Read(boardId, kind, listId))
+  $apiMemberBoard = 0
+  Return answer
+Catch
+  $apiMemberBoard = 0
+  Return ApiFailure(500, "Board read failed")
+End
+
 Public Function MutateApiMember(boardId As Integer, username As String, action As String, payload As Collection) As Collection
   Dim actor As String = WebIdentity.Username
   Dim r As Result

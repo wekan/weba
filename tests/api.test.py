@@ -77,7 +77,7 @@ status, rows, headers = call('/api/users/rest-owner/boards', token=first)
 assert status == 200 and [row['_id'] for row in rows] == [str(BOARDS['boardId'])]
 assert headers['Cache-Control'] == 'no-store'
 assert call('/api/boards/'+str(BOARDS['boardId']), token=first)[1]['title'] == 'Private owner board'
-assert call('/api/boards/'+str(BOARDS['otherBoardId']), token=first)[0] == 404
+assert call('/api/boards/'+str(BOARDS['otherBoardId']), token=first)[0] == 200, 'Global administrator reads follow WeKan checkBoardAccess'
 assert call('/api/users/rest-other/boards', token=first)[0] == 403
 assert call('/api/boards/1.0', token=first)[0] == 404
 assert call('/api/boards/'+str(BOARDS['boardId']), token='forged')[0] == 401
