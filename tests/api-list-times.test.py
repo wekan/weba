@@ -90,7 +90,7 @@ with sqlite3.connect(Path(os.environ['WEBA_DB_HOST']) / os.environ['WEBA_DB_NAME
     assert db.execute('SELECT * FROM kb_cards WHERE id=?', (card,)).fetchone() == before_card
     assert db.execute('SELECT * FROM kb_history ORDER BY id').fetchall() == before_history
     assert db.execute('SELECT * FROM kb_item_changes ORDER BY board_id,kind,item_id').fetchall() == before
-    all_tables = ('kb_cards', 'kb_item_changes', 'kb_entries', 'kb_files', 'kb_meta', 'kb_history', 'kb_activity', 'kb_retired_authors')
+    all_tables = ('kb_card_archive', 'kb_cards', 'kb_item_changes', 'kb_entries', 'kb_files', 'kb_meta', 'kb_history', 'kb_activity', 'kb_retired_authors')
     def snapshot():
         return {table: sorted(db.execute('SELECT * FROM '+table).fetchall(), key=repr) for table in all_tables}
     for action in ('comment', 'delete-entry', 'start', 'stop', 'file', 'delete-file', 'archive', 'setting'):

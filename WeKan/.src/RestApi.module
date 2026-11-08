@@ -116,6 +116,32 @@ Public Sub Main()
       Endif
     Endif
   Endif
+  If fields.Count = 8 Then
+    If fields[0] = "api" And fields[1] = "boards" And fields[3] = "lists" And fields[5] = "cards" And (fields[7] = "archive" Or fields[7] = "unarchive") Then
+      If Request.Method <> "POST" Then
+        Reply(405, ErrorData("Method not allowed"))
+        Return
+      Endif
+      Try boardId = PositiveId(fields[2])
+      If Error Then
+        Reply(404, ErrorData("Board not found"))
+        Return
+      Endif
+      outcome = BoardAccess.ApiCardWriteAccess(boardId)
+      If outcome["status"] <> 200 Then
+        Reply(outcome["status"], outcome["data"])
+        Return
+      Endif
+      Try ids = [boardId, PositiveId(fields[4]), PositiveId(fields[6])]
+      If Error Then
+        Reply(404, ErrorData("Card not found"))
+        Return
+      Endif
+      outcome = BoardAccess.ArchiveApiCard(ids[0], ids[1], ids[2], fields[7] = "archive")
+      Reply(outcome["status"], outcome["data"])
+      Return
+    Endif
+  Endif
   If fields.Count = 7 Then
     If fields[0] = "api" And fields[1] = "boards" And fields[3] = "lists" And fields[5] = "cards" Then
       If Request.Method <> "PUT" And Request.Method <> "GET" Then

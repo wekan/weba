@@ -1,0 +1,131 @@
+' Archive metadata and scoped, atomic native subtask graph persistence.
+Public Sub Main()
+  Dim boardId As Integer
+  Dim foreignBoard As Integer
+  Dim target As Integer
+  Dim imported As Integer
+  Dim parent As Integer
+  Dim child As Integer
+  Dim grand As Integer
+  Dim foreignCard As Integer
+  Dim copied As Integer
+  Dim moving As Integer
+  Dim targetList As Integer
+  Dim id As Integer
+  Dim fake As Integer
+  Dim cycle As Integer
+  Dim before As Integer
+  Dim denied As Boolean
+  Dim stamp As String
+  Dim text As String
+  Dim data As Collection
+  Dim r As Result
+  Dim db As Connection
+  WebDatabase.Register("archive-owner", "x")
+  WebDatabase.Register("archive-foreign", "x")
+  WebDatabase.Register("archive-assigned", "x")
+  SignIn("archive-foreign")
+  foreignBoard = KanbanStore.AddBoard("Foreign archive canary")
+  foreignCard = KanbanStore.SaveCard(foreignBoard, 0, "PRIVATE-ARCHIVE-CANARY", "", "Default", "Todo", "archive-foreign", "", "")
+  SignIn("archive-owner")
+  boardId = KanbanStore.AddBoard("Archive graph")
+  parent = KanbanStore.SaveCard(boardId, 0, "Parent", "", "Default", "Todo", "archive-owner", "", "")
+  child = CardContent.NewSubtask(boardId, parent, "Child")
+  grand = CardContent.NewSubtask(boardId, child, "Grandchild")
+  CardContent.Save(boardId, parent, 0, "subtask", "", "", 0, False, grand)
+  db = WebDatabase.OpenConnection()
+  r = db.Find("kb_history", "board_id=&1 AND kind=&2", boardId, "card")
+  before = r.Count
+  KanbanStore.ArchiveCard(boardId, parent, True)
+  stamp = CardArchive.Timestamp(boardId, parent)
+  If Not stamp Then Error.Raise("Archive timestamp missing")
+  For Each id In [parent, child, grand]
+    r = db.Find("kb_cards", "board_id=&1 AND id=&2", boardId, id)
+    If Not r!archived Then Error.Raise("Archive did not reach a descendant")
+    If CardArchive.Timestamp(boardId, id) <> stamp Then Error.Raise("Archive graph clock missing")
+  Next
+  r = db.Find("kb_history", "board_id=&1 AND kind=&2", boardId, "card")
+  If r.Count <> before + 3 Then Error.Raise("Diamond graph wrote duplicate activity")
+  KanbanStore.ArchiveCard(boardId, parent, False)
+  For Each id In [parent, child, grand]
+    r = db.Find("kb_cards", "id=&1", id)
+    If r!archived Then Error.Raise("Restore did not reach a descendant")
+    If CardArchive.Timestamp(boardId, id) <> stamp Then Error.Raise("Restore erased archive history")
+  Next
+  r = db.Create("kb_entries")
+  r["board_id"] = boardId
+  r["card_id"] = grand
+  r["kind"] = "subtask"
+  r["amount"] = parent
+  r.Update()
+  cycle = db.LastInsertId
+  r = db.Create("kb_entries")
+  r["board_id"] = boardId
+  r["card_id"] = parent
+  r["kind"] = "subtask"
+  r["amount"] = foreignCard
+  r.Update()
+  fake = db.LastInsertId
+  KanbanStore.ArchiveCard(boardId, parent, True)
+  r = db.Find("kb_cards", "id=&1", foreignCard)
+  If r!archived Then Error.Raise("Malformed edge archived a foreign card")
+  r = db.Find("kb_card_archive", "card_id=&1", foreignCard)
+  If r.Available Then Error.Raise("Malformed edge wrote foreign archive metadata")
+  KanbanStore.ArchiveCard(boardId, parent, False)
+  db.Delete("kb_entries", "id=&1 OR id=&2", fake, cycle)
+  CardArchive.RestoreStamp(boardId, parent, 0)
+  If CardArchive.Timestamp(boardId, parent) <> CardDates.Iso(0) Then Error.Raise("Archive epoch zero lost")
+  copied = WorkspaceStore.Copy(boardId, "card", parent, "Copied active parent")
+  If CardArchive.Timestamp(boardId, copied) Then Error.Raise("Fresh copy inherited old archive metadata")
+  text = BoardTransfer.ExportData(boardId, "board", boardId)
+  imported = BoardTransfer.ImportData(text, "Imported archive graph")
+  r = db.Find("kb_cards", "board_id=&1 AND title=&2", imported, "Parent")
+  If CardArchive.Timestamp(imported, r!id) <> CardDates.Iso(0) Then Error.Raise("JSON lost retained archive timestamp")
+  data = JSON.Decode(text, True)
+  data["cards"][0]["archivedAt"] = "invalid archive time"
+  r = db.Find("kb_boards")
+  before = r.Count
+  Try BoardTransfer.ImportData(JSON.Encode(data), "Invalid archive import")
+  denied = Error
+  If Not denied Then Error.Raise("Invalid imported archive timestamp accepted")
+  r = db.Find("kb_boards")
+  If r.Count <> before Then Error.Raise("Invalid archive import left a board")
+  BoardAccess.SetMember(boardId, "archive-assigned", "normal-assigned-only")
+  BoardAccess.SetAssignees(boardId, parent, ["archive-assigned"])
+  SignIn("archive-assigned")
+  Try KanbanStore.ArchiveCard(boardId, parent, True)
+  denied = Error
+  If Not denied Then Error.Raise("Assigned writer archived an unreadable descendant")
+  For Each id In [parent, child, grand]
+    r = db.Find("kb_cards", "id=&1", id)
+    If r!archived Then Error.Raise("Denied descendant left a partial graph archive")
+  Next
+  SignIn("archive-owner")
+  If CardArchive.Timestamp(boardId, parent) <> CardDates.Iso(0) Then Error.Raise("Denied graph changed archive time")
+  target = KanbanStore.AddBoard("Archive move destination")
+  r = KanbanStore.Lanes(target)
+  r = KanbanStore.Lists(target, "Default")
+  targetList = r!id
+  moving = KanbanStore.SaveCard(boardId, 0, "Move archive history", "", "Default", "Todo", "archive-owner", "", "")
+  KanbanStore.ArchiveCard(boardId, moving, True)
+  KanbanStore.ArchiveCard(boardId, moving, False)
+  stamp = CardArchive.Timestamp(boardId, moving)
+  WorkspaceActions.Move(boardId, "card", moving, target, "Default", targetList)
+  If CardArchive.Timestamp(target, moving) <> stamp Then Error.Raise("Move lost archive history")
+  r = db.Find("kb_card_archive", "board_id=&1 AND card_id=&2", boardId, moving)
+  If r.Available Then Error.Raise("Move left old-scope archive metadata")
+  KanbanStore.ArchiveCard(target, moving, True)
+  WorkspaceActions.DeleteArchived(target, "card", moving, "Move archive history")
+  r = db.Find("kb_card_archive", "card_id=&1", moving)
+  If r.Available Then Error.Raise("Permanent deletion retained archive metadata")
+  WorkspaceStore.SetArchived(imported, "board", imported, True)
+  WorkspaceActions.DeleteArchived(imported, "board", imported, "Imported archive graph")
+  r = db.Find("kb_card_archive", "board_id=&1", imported)
+  If r.Count Then Error.Raise("Board deletion retained archive metadata")
+  Print "Card archive: atomic diamond/cycle graph, foreign/assigned scope, retained/zero archive time, fresh copy, JSON rollback, move and permanent cleanup passed"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

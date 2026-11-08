@@ -71,6 +71,14 @@ Public Sub OpenDatabase()
     t.PrimaryKey = ["board_id", "kind", "item"]
     t.Update()
   Endif
+  If Not $db.Tables.Exist("kb_card_archive") Then
+    t = $db.Tables.Add("kb_card_archive")
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("card_id", db.Integer)
+    t.Fields.Add("archived_ms", db.Long)
+    t.PrimaryKey = ["card_id"]
+    t.Update()
+  Endif
   If Not $db.Tables.Exist("kb_item_changes") Then
     t = $db.Tables.Add("kb_item_changes")
     t.Fields.Add("board_id", db.Integer)
@@ -212,28 +220,7 @@ Catch
 End
 
 Public Sub ArchiveCard(boardId As Integer, cardId As Integer, archived As Boolean)
-  Dim r As Result
-  Dim transaction As Boolean
-  Dim failure As String
-  BoardAccess.Require(boardId, "write")
-  BoardAccess.RequireCard(boardId, cardId)
-  DatabaseTransactions.Begin($db)
-  transaction = True
-  $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
-  $db.Exec("UPDATE kb_cards SET title=title WHERE board_id=&1 AND id=&2", boardId, cardId)
-  BoardAccess.Require(boardId, "write")
-  BoardAccess.RequireCard(boardId, cardId)
-  r = $db.Edit("kb_cards", "id = &1 AND board_id = &2", cardId, boardId)
-  If Not r.Available Then Error.Raise("Card not accessible")
-  r["archived"] = archived
-  r.Update()
-  Activity(boardId, "Card archive state changed", "card", cardId)
-  DatabaseTransactions.Commit($db)
-  transaction = False
-Catch
-  failure = Error.Text
-  If transaction Then Try DatabaseTransactions.Rollback($db)
-  Error.Raise(failure)
+  CardArchive.Change(boardId, cardId, archived)
 End
 
 Public Sub Activity(boardId As Integer, message As String, Optional kind As String = "board", Optional itemId As Integer, Optional changed As Boolean = True)

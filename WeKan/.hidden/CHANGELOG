@@ -1,4 +1,8 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Card archive: Add guarded REST archive/restore, retained UTC archive times,
+  atomic native subtask graphs and metadata lifecycle cleanup. Verify scope/state
+  negatives, diamond/cycle/foreign references, SQL/COMMIT rollback and two original
+  archive callbacks. Live UI/cross-board hierarchy/list exceptions remain pending.
 - Documentation: Explain raw assigned-only write restrictions and canonical
   role/site-admin controls, late-injection rollback and 256 source-backed active
   flag combinations; preserve native/custom-role/list-exception parity gaps.

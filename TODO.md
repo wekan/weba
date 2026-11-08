@@ -270,10 +270,22 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Documented the raw assigned-only REST write restriction, source-compatible
   non-scope/admin controls, late-injection rollback and 256 active boolean flag
   comparisons. Keep native combined-scope/custom-role/list-exception gaps explicit.
-- In progress: archive/unarchive REST source contract review. Implement endpoints,
-  archivedAt persistence and child cascades with the corrected write boundary.
-  Native visibility for raw combined assigned-only flags, custom roles/list
-  exceptions and complete original UI/API/security coverage remain pending.
+- Completed archive/unarchive POST endpoints with authorization before scoped
+  identifiers, lock/recheck, exact JSON missing/wrong-list/wrong-state 404s and
+  repeat no-write behavior. Persist UTC archivedAt and retain it on restore;
+  carry metadata through move/JSON and remove it on permanent deletion. Fresh
+  copies do not inherit archive history; legacy unknown timestamps stay absent.
+  Native same-board subtask graphs archive/restore atomically, deduplicate diamond
+  and cyclic edges and exclude foreign-board references. Verify role/site-admin
+  boundaries, late scope injection, descendant SQL rollback, timestamp/clock
+  failures and four additional failed-COMMIT/retry phases. Full local test command
+  passes, including 28 Python tests. Two of three original archive callbacks run
+  unchanged with actual Playwright assertions and an explicit SQLite adapter.
+  Original spec 17 remains 10/30; the separate archive file is 2/3.
+- In progress: archive live-board synchronization and the remaining original
+  archive UI callback, full source parent/linked-card/cross-board hierarchy and
+  list-level exceptions. Native visibility for raw combined assigned-only flags,
+  custom roles and complete original UI/API/security coverage remain pending.
 - Next card-person work: remaining card PUT fields, reads, creation/bulk routes
   and complete original UI/API/security suites.
 - In progress: REST cards/containers and full API identity/data parity, including

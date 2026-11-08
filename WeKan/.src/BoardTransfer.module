@@ -45,6 +45,7 @@ Public Function ExportData(boardId As Integer, kind As String, itemId As Integer
     item["assignees"] = BoardAccess.Assignees(boardId, r!id)
     item["members"] = BoardAccess.CardMembers(boardId, r!id)
     item["dates"] = CardDates.ReadDates(boardId, r!id)
+    If CardArchive.Timestamp(boardId, r!id) Then item["archivedAt"] = CardArchive.Timestamp(boardId, r!id)
     item["list_id"] = listId
     item["sort_order"] = KanbanStore.ItemOrder(boardId, "card", CStr(r!id), r!id)
     cards.Add(item)
@@ -195,6 +196,11 @@ Public Function ImportData(text As String, title As String) As Integer
     r["sort_order"] = CInt(item["sort_order"])
     r.Update()
     If item["archived"] Then KanbanStore.ArchiveCard(boardId, id, True)
+    If item.Exist("archivedAt") Then
+      CardArchive.RestoreStamp(boardId, id, item["archivedAt"])
+    Else
+      CardArchive.RestoreStamp(boardId, id, Null)
+    Endif
   Next
   ' Checklists must exist before their children, regardless of JSON array order.
   For Each kind In ["checklist", "comment", "custom", "time", "checkitem", "subtask", "dependency"]

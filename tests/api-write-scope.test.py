@@ -35,10 +35,11 @@ def put(data, token=owner):
     return call(path, token=token, data=data)
 
 with sqlite3.connect(Path(os.environ['WEBA_DB_HOST']) / os.environ['WEBA_DB_NAME']) as db:
-    tables = ('kb_cards', 'kb_card_dates', 'kb_item_changes', 'kb_card_members', 'kb_card_assignees', 'kb_card_people_order', 'kb_card_people_sequence', 'kb_history', 'kb_activity')
+    tables = ('kb_card_archive', 'kb_cards', 'kb_card_dates', 'kb_item_changes', 'kb_card_members', 'kb_card_assignees', 'kb_card_people_order', 'kb_card_people_sequence', 'kb_history', 'kb_activity')
     def snapshot():
         return {table: sorted(db.execute('SELECT * FROM '+table).fetchall(), key=repr) for table in tables}
-    operations = [(path, 'PUT', {'description': 'Forbidden combined flag'}),
+    operations = [(path+'/archive', 'POST', None), (path+'/unarchive', 'POST', None),
+                  (path, 'PUT', {'description': 'Forbidden combined flag'}),
                   (path, 'PUT', {'members': [], 'assignees': [], 'dueAt': 0}),
                   *[(path+'/'+field+'/rest-other', method, None) for field in ('members', 'assignees') for method in ('POST', 'DELETE')]]
     for flag in ('isNormalAssignedOnly', 'isCommentAssignedOnly', 'isReadAssignedOnly'):
@@ -66,11 +67,12 @@ with sqlite3.connect(Path(os.environ['WEBA_DB_HOST']) / os.environ['WEBA_DB_NAME
     for flag in ('isNormalAssignedOnly', 'isCommentAssignedOnly', 'isReadAssignedOnly'):
         db.execute("CREATE TRIGGER inject_write_scope BEFORE UPDATE ON kb_boards WHEN NEW.id="+board+" BEGIN INSERT INTO kb_member_flags(board_id,username,flag) VALUES("+board+",'rest-member','"+flag+"'); END")
         db.commit()
-        before = snapshot()
-        before_flags = db.execute('SELECT * FROM kb_member_flags ORDER BY board_id,username,flag').fetchall()
-        assert call(path, 'PUT', member, {'description': 'Late scope bypass'}) == (403, {'error': 'Forbidden'})
-        assert snapshot() == before
-        assert db.execute('SELECT * FROM kb_member_flags ORDER BY board_id,username,flag').fetchall() == before_flags
+        for route, method, body in ((path, 'PUT', {'description': 'Late scope bypass'}), (path+'/archive', 'POST', None), (path+'/unarchive', 'POST', None)):
+            before = snapshot()
+            before_flags = db.execute('SELECT * FROM kb_member_flags ORDER BY board_id,username,flag').fetchall()
+            assert call(route, method, member, body) == (403, {'error': 'Forbidden'})
+            assert snapshot() == before
+            assert db.execute('SELECT * FROM kb_member_flags ORDER BY board_id,username,flag').fetchall() == before_flags
         db.execute('DROP TRIGGER inject_write_scope'); db.commit()
     assert call('/api/boards/'+board+'/members/rest-member', 'POST', admin, {'role': 'normal'})[0] == 200
 print('REST write scope: each raw assigned-only flag denies combined board-admin card PUT/merge/pull without writes; late flag injection rolls back; unrestricted board/site admin controls pass')

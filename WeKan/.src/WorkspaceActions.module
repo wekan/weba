@@ -121,6 +121,7 @@ Public Sub Move(boardId As Integer, kind As String, itemId As Integer, targetBoa
     TransferRows("kb_card_people_order", boardId, targetBoard, cardId, "card_id")
     TransferRows("kb_card_people_sequence", boardId, targetBoard, cardId, "card_id")
     TransferRows("kb_card_dates", boardId, targetBoard, cardId, "card_id")
+    TransferRows("kb_card_archive", boardId, targetBoard, cardId, "card_id")
     TransferRows("kb_retired_authors", boardId, targetBoard, cardId, "card_id")
     TransferRows("kb_entries", boardId, targetBoard, cardId, "card_id")
     TransferRows("kb_files", boardId, targetBoard, cardId, "card_id")
@@ -184,7 +185,7 @@ Public Sub DeleteArchived(boardId As Integer, kind As String, itemId As Integer,
   Endif
   DatabaseTransactions.Begin($db)
   If kind = "board" Then
-    For Each tableName In ["kb_entries", "kb_files", "kb_card_lists", "kb_cards", "kb_lists", "kb_lanes", "kb_meta", "kb_history", "kb_order", "kb_activity", "kb_members", "kb_removed_members", "kb_member_flags", "kb_user_meta", "kb_card_assignees", "kb_card_members", "kb_card_people_order", "kb_card_people_sequence", "kb_card_dates", "kb_item_changes", "kb_retired_authors"]
+    For Each tableName In ["kb_entries", "kb_files", "kb_card_lists", "kb_cards", "kb_lists", "kb_lanes", "kb_meta", "kb_history", "kb_order", "kb_activity", "kb_members", "kb_removed_members", "kb_member_flags", "kb_user_meta", "kb_card_assignees", "kb_card_members", "kb_card_people_order", "kb_card_people_sequence", "kb_card_dates", "kb_card_archive", "kb_item_changes", "kb_retired_authors"]
       $db.Delete(tableName, "board_id = &1", boardId)
     Next
     $db.Delete("kb_boards", "id = &1", boardId)
@@ -200,6 +201,7 @@ Public Sub DeleteArchived(boardId As Integer, kind As String, itemId As Integer,
       $db.Delete("kb_card_people_order", "board_id = &1 AND card_id = &2", boardId, cardId)
       $db.Delete("kb_card_people_sequence", "board_id = &1 AND card_id = &2", boardId, cardId)
       $db.Delete("kb_card_dates", "board_id = &1 AND card_id = &2", boardId, cardId)
+      $db.Delete("kb_card_archive", "board_id=&1 AND card_id=&2", boardId, cardId)
       $db.Delete("kb_item_changes", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "card", cardId)
       $db.Delete("kb_files", "board_id = &1 AND card_id = &2", boardId, cardId)
       $db.Delete("kb_card_lists", "board_id = &1 AND card_id = &2", boardId, cardId)

@@ -1,0 +1,34 @@
+' Native setup for disposable original archive-spec fixtures only.
+Public Sub Main()
+  Dim boardId As Integer
+  Dim parent As Integer
+  Dim child As Integer
+  Dim grand As Integer
+  Dim r As Result
+  Dim ids As New String[]
+  Dim data As New Collection
+  If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
+  Session["username"] = Env["WEBA_TEST_USER"]
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
+  If Env["WEBA_TEST_MODE"] = "archive-graph" Then
+    data = JSON.Decode(Env["WEBA_TEST_BOARDS"])
+    boardId = data["otherBoardId"]
+    parent = data["otherCardId"]
+    child = CardContent.NewSubtask(boardId, parent, "REST archive child")
+    grand = CardContent.NewSubtask(boardId, child, "REST archive grandchild")
+    CardContent.Save(boardId, parent, 0, "subtask", "", "", 0, False, grand)
+    data = New Collection
+    data["ids"] = [parent, child, grand]
+    Print JSON.Encode(data)
+    Return
+  Endif
+  boardId = KanbanStore.AddBoard("Original archive spec temporary board")
+  r = KanbanStore.Lanes(boardId)
+  r = KanbanStore.Lists(boardId, "Default")
+  For Each r
+    ids.Add(CStr(r!id))
+  Next
+  data["boardId"] = CStr(boardId)
+  data["listIds"] = ids
+  Print JSON.Encode(data)
+End

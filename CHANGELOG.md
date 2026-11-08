@@ -2,6 +2,16 @@
 
 This work adds the following features and fixes:
 
+- Add guarded card archive/unarchive POST routes with JSON scope/state errors,
+  persisted UTC archive times retained by restore and atomic same-board native
+  subtask cascades. Preserve metadata through move/JSON and clear it on permanent
+  deletion; keep fresh copies and unknown legacy timestamps distinct. Verify
+  cycles/diamonds/foreign references, roles/late scope checks, SQL rollback and
+  four additional real failed-COMMIT/retry phases. Run two unchanged original
+  archive callbacks with explicit SQLite fixtures; live board synchronization,
+  full source cross-board hierarchy and list exceptions remain open.
+  Thanks to xet7.
+
 - Document raw assigned-only REST write restrictions, canonical non-scope/admin
   controls, late-injection rollback and the 256 active boolean flag matrix against
   original source functions and persisted data. Keep native/custom-role/list

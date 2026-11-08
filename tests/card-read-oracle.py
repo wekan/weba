@@ -22,6 +22,9 @@ with sqlite3.connect(Path(os.environ['WEBA_DB_HOST']) / os.environ['WEBA_DB_NAME
     changed = db.execute("SELECT modified_ms FROM kb_item_changes WHERE board_id=? AND kind='card' AND item_id=?", (board, card_id)).fetchone()
     if changed:
         card['modifiedAt'] = iso(changed[0])
+    archived = db.execute('SELECT archived_ms FROM kb_card_archive WHERE board_id=? AND card_id=?', (board, card_id)).fetchone()
+    if archived:
+        card['archivedAt'] = iso(archived[0])
     checklists, items = [], []
     for identity, title, created_at in db.execute("SELECT id,title,created_at FROM kb_entries WHERE board_id=? AND card_id=? AND kind='checklist' ORDER BY id", (board, card_id)):
         row = {'_id': str(identity), 'boardId': str(board), 'cardId': str(card_id), 'title': title or '', 'sort': identity}

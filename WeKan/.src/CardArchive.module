@@ -1,0 +1,89 @@
+ ' Archive/restore a same-board native subtask graph as one guarded change.
+Export
+
+Public Sub Change(boardId As Integer, cardId As Integer, archived As Boolean)
+  Dim db As Connection
+  Dim r As Result
+  Dim ids As New Integer[]
+  Dim pending As New Integer[]
+  Dim seen As New Collection
+  Dim id As Integer
+  Dim stamp As Long
+  Dim transaction As Boolean
+  Dim failure As String
+  BoardAccess.Require(boardId, "write")
+  BoardAccess.RequireCard(boardId, cardId)
+  CardContent.OpenStore()
+  db = WebDatabase.OpenConnection()
+  DatabaseTransactions.Begin(db)
+  transaction = True
+  db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+  BoardAccess.Require(boardId, "write")
+  pending.Add(cardId)
+  While pending.Count
+    id = pending[0]
+    pending.Remove(0)
+    If seen.Exist(CStr(id)) Then Continue
+    seen[CStr(id)] = True
+    BoardAccess.RequireCard(boardId, id)
+    ids.Add(id)
+    ' A malformed legacy edge cannot cross the authorized board boundary.
+    r = db.Exec("SELECT c.id FROM kb_entries e INNER JOIN kb_cards c ON c.board_id=e.board_id AND c.id=e.amount WHERE e.board_id=&1 AND e.card_id=&2 AND e.kind=&3", boardId, id, "subtask")
+    For Each r
+      pending.Add(r!id)
+    Next
+  Wend
+  ids.Sort()
+  For Each id In ids
+    db.Exec("UPDATE kb_cards SET title=title WHERE board_id=&1 AND id=&2", boardId, id)
+    BoardAccess.RequireCard(boardId, id)
+  Next
+  BoardAccess.Require(boardId, "write")
+  stamp = ItemChanges.UtcNow()
+  For Each id In ids
+    db.Exec("UPDATE kb_cards SET archived=&1 WHERE board_id=&2 AND id=&3", archived, boardId, id)
+    If archived Then StoreStamp(boardId, id, stamp)
+    KanbanStore.Activity(boardId, "Card archive state changed", "card", id)
+  Next
+  DatabaseTransactions.Commit(db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback(db)
+  Error.Raise(failure)
+End
+
+' Internal hook; the archive mutation/import owns authorization and transaction.
+Private Sub StoreStamp(boardId As Integer, cardId As Integer, stamp As Long)
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim r As Result = db.Edit("kb_card_archive", "board_id=&1 AND card_id=&2", boardId, cardId)
+  If Not r.Available Then
+    r = db.Create("kb_card_archive")
+    r["board_id"] = boardId
+    r["card_id"] = cardId
+  Endif
+  r["archived_ms"] = stamp
+  r.Update()
+End
+
+Public Function Timestamp(boardId As Integer, cardId As Integer) As String
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim r As Result
+  BoardAccess.RequireCard(boardId, cardId)
+  r = db.Find("kb_card_archive", "board_id=&1 AND card_id=&2", boardId, cardId)
+  If r.Available Then Return CardDates.Iso(r!archived_ms)
+  Return ""
+End
+
+Public Sub RestoreStamp(boardId As Integer, cardId As Integer, value As Variant)
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim parsed As Collection = CardDates.Parse(value)
+  BoardAccess.Require(boardId, "manageBoard")
+  BoardAccess.RequireCard(boardId, cardId)
+  If Not parsed["valid"] Then Error.Raise("Invalid exported archive time")
+  If parsed["clear"] Then
+    db.Delete("kb_card_archive", "board_id=&1 AND card_id=&2", boardId, cardId)
+  Else
+    StoreStamp(boardId, cardId, parsed["epoch"])
+  Endif
+End

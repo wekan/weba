@@ -35,7 +35,7 @@ def role(value):
 def change(field, username, method='POST', token=owner):
     return call(route+field+'/'+username, method, token)
 with sqlite3.connect(Path(os.environ['WEBA_DB_HOST']) / os.environ['WEBA_DB_NAME']) as db:
-    tables = ('kb_item_changes', 'kb_card_members', 'kb_card_people_order', 'kb_card_people_sequence', 'kb_card_assignees', 'kb_cards', 'kb_card_lists', 'kb_history', 'kb_activity')
+    tables = ('kb_card_archive', 'kb_item_changes', 'kb_card_members', 'kb_card_people_order', 'kb_card_people_sequence', 'kb_card_assignees', 'kb_cards', 'kb_card_lists', 'kb_history', 'kb_activity')
     def snapshot():
         return {table: sorted(db.execute('SELECT * FROM '+table).fetchall(), key=repr) for table in tables}
     before = snapshot()

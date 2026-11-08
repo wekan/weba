@@ -20,6 +20,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
         shutil.copy2(root / 'tests/ApiFixture.module', project / '.src/ApiFixture.module')
     if '--members' in sys.argv:
         shutil.copy2(root / 'tests/CardDatesConformance.module', project / '.src/CardDatesConformance.module')
+        shutil.copy2(root / 'tests/ArchiveFixture.module', project / '.src/ArchiveFixture.module')
     subprocess.run([base_env.get('GBC', 'gbc3'), '-j', '1', '-a', str(project)], check=True, env=base_env)
     application = project
     runner = base_env.get('GBX', 'gbx3')
@@ -43,7 +44,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             disabled_thread = threading.Thread(target=disabled.serve_forever, daemon=True)
             disabled_thread.start()
             try:
-                for route in ['/api/users/rest-owner/boards', '/%61pi/users/rest-owner/boards', '/API/users/rest-owner/boards', '/api/boards/1/lists', '/api/boards/1/swimlanes', '/api/boards/1/cards_count', '/api/boards/1/lists/1/cards', '/api/cards/1', '/api/boards/1/lists/1/cards/1']:
+                for route in ['/api/users/rest-owner/boards', '/%61pi/users/rest-owner/boards', '/API/users/rest-owner/boards', '/api/boards/1/lists', '/api/boards/1/swimlanes', '/api/boards/1/cards_count', '/api/boards/1/lists/1/cards', '/api/cards/1', '/api/boards/1/lists/1/cards/1', '/api/boards/1/lists/1/cards/1/archive']:
                     try:
                         urllib.request.urlopen('http://127.0.0.1:' + str(disabled.server_port) + route, timeout=10)
                     except urllib.error.HTTPError as error:
@@ -75,6 +76,8 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/list-times-conformance.test.cjs')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/api-single-card.test.py')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/card-read-conformance.test.cjs')], check=True, env=env)
+            subprocess.run([sys.executable, str(root / 'tests/api-archive.test.py')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/wekan-archive.test.cjs')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/api-write-scope.test.py')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/write-scope-conformance.test.cjs')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/card-people-commit.py')], check=True, env=env)

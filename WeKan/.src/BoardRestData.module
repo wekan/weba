@@ -97,6 +97,7 @@ Public Function Card(boardId As Integer, cardId As Integer) As Collection
   Dim entry As Collection
   Dim checklists As New Variant[]
   Dim entries As Variant[]
+  Dim archivedAt As String
   If Env["WEBA_API_REQUEST"] <> "1" Then Error.Raise("API context required")
   BoardAccess.RequireCard(boardId, cardId)
   If Not BoardAccess.Can(boardId, "seesAllCards") Then Error.Raise("Whole-board permission required")
@@ -107,6 +108,8 @@ Public Function Card(boardId As Integer, cardId As Integer) As Collection
   item["boardId"] = CStr(boardId)
   item["listId"] = CStr(KanbanStore.CardListId(boardId, cardId))
   item["archived"] = r!archived
+  archivedAt = CardArchive.Timestamp(boardId, cardId)
+  If archivedAt Then item["archivedAt"] = archivedAt
   item["members"] = BoardAccess.CardMembers(boardId, cardId)
   row = db.Find("kb_item_changes", "board_id=&1 AND kind=&2 AND item_id=&3", boardId, "card", cardId)
   If row.Available Then item["modifiedAt"] = CardDates.Iso(row!modified_ms)
