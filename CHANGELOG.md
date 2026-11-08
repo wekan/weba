@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Reject dot-only path segments, encoded traversal/backslashes, control bytes
+  and excessively nested URL encoding before CGI. Keep Gambas static asset,
+  library and icon paths from escaping the public asset boundary. Test no-runner
+  rejection and actual public/private canary files through packaged HTTP.
+  Thanks to xet7.
 - Bound CGI process deadlines even when a descendant inherits output handles.
   Capture output in private temporary files instead of pipes so timeout cleanup
   does not wait indefinitely for descendants; never log CGI stderr. Test a real

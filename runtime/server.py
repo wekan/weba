@@ -148,6 +148,14 @@ def handler(application, runner, environment):
                 if decoded_path.startswith('/~'):
                     self.send_error(404)
                     return
+            segments = decoded_path.replace(':', '/').split('/')
+            if (urllib.parse.unquote(decoded_path) != decoded_path or '\\' in decoded_path
+                    or any(ord(character) < 32 or ord(character) == 127 for character in decoded_path)
+                    or any(segment and set(segment) == {'.'} for segment in segments)):
+                # Gambas sends files relative to .public; do not let dot paths,
+                # including library/icon prefixes, escape that asset boundary.
+                self.send_error(404)
+                return
             if not self._request_allowed(url._replace(path=decoded_path)):
                 return
             api = decoded_path.lower() == '/api' or decoded_path.lower().startswith('/api/') or decoded_path.lower() in ('/users/login', '/users/logout')

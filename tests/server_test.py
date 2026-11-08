@@ -230,7 +230,10 @@ class DevelopmentRouteTest(unittest.TestCase):
     def test_debug_routes_are_rejected_before_starting_gambas(self):
         cls = server.handler(Path('/unused.gambas'), 'unused-runner',
                              {'WEBA_DB_PASSWORD': 'must-not-leak'})
-        for path in ['/~dump', '/~dump?secret=1', '/%7Edump', '/%257Edump', '/~logout']:
+        for path in ['/~dump', '/~dump?secret=1', '/%7Edump', '/%257Edump', '/~logout',
+                     '/../private.txt', '/%2e%2e/private.txt', '/%252e%252e/private.txt',
+                     '/icon:../private.txt', '/lib:../private.js', '/.../private.txt',
+                     '/%5c..%5cprivate.txt', '/%00private.txt', '/%2525252e%2525252e/private.txt']:
             with self.subTest(path=path):
                 request = object.__new__(cls)
                 request.path = path

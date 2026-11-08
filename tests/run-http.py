@@ -14,6 +14,8 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
     project.mkdir()
     for name in ['.src', '.public']: shutil.copytree(root / 'WeKan' / name, project / name)
     shutil.copy2(root / 'WeKan/.project', project / '.project')
+    (project / 'private-canary.txt').write_text('private-fixture-canary-must-not-be-served')
+    (project / '.public/public-canary.txt').write_text('public-fixture-canary')
     if '--api' in sys.argv:
         shutil.copy2(root / 'tests/ApiFixture.module', project / '.src/ApiFixture.module')
     subprocess.run([base_env.get('GBC', 'gbc3'), '-j', '1', '-a', str(project)], check=True, env=base_env)

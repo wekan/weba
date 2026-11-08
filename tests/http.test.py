@@ -38,6 +38,18 @@ with client.open(BASE,timeout=15) as response:
  assert response.headers['Content-Security-Policy'] == "frame-ancestors 'none'"
  assert response.headers['Referrer-Policy'] == 'same-origin'
  assert response.headers['X-Content-Type-Options'] == 'nosniff'
+assert get('/public-canary.txt') == 'public-fixture-canary'
+for private_path in ['/../private-canary.txt', '/%2e%2e/private-canary.txt',
+                     '/%252e%252e/private-canary.txt', '/icon:../private-canary.txt',
+                     '/lib:../private-canary.js', '/%5c..%5cprivate-canary.txt',
+                     '/%2525252e%2525252e/private-canary.txt']:
+ try:
+  get(private_path)
+ except urllib.error.HTTPError as error:
+  assert error.code == 404
+  assert b'private-fixture-canary-must-not-be-served' not in error.read()
+ else:
+  raise AssertionError('Private asset boundary was bypassed')
 page=get(); command(['raise',None,'open',[],False]); prefix=re.search(r'id="(@\d+)\.WebTextName"',page)[1]
 answer=command(['raise',prefix+'.ShowPassword','click',[],False])
 assert 'fa-eye-slash' in answer and 'Hide' in answer and 'text' in answer, 'Login password reveal failed'

@@ -40,6 +40,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Completed: CGI timeouts no longer wait for descendants holding inherited
   stdout/stderr pipes. Test a real spawned descendant, actual CGI output and
   error handling; diagnostic stderr is not logged.
+- Completed: reject dot/encoded traversal and library/icon escapes before CGI;
+  test public/private canary boundaries without reading real private files.
 - Next: expand REST API contracts and shared board access/role boundaries;
   remaining feature work below is still pending.
 
