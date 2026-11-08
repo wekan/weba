@@ -201,7 +201,7 @@ Public Sub Rename(boardId As Integer, kind As String, itemId As Integer, title A
     If r.Available Then Error.Raise("Swimlane already exists")
   Endif
   KanbanStore.PrimeCardLinks(boardId)
-  $db.Begin()
+  DatabaseTransactions.Begin($db)
   Select kind
     Case "board"
       tableName = "kb_boards"
@@ -245,10 +245,10 @@ Public Sub Rename(boardId As Integer, kind As String, itemId As Integer, title A
     Endif
   Endif
   KanbanStore.Activity(boardId, "Renamed " & kind & ": " & oldTitle & " → " & title, kind, itemId)
-  $db.Commit()
+  DatabaseTransactions.Commit($db)
 Catch
   failure = Error.Text
-  Try $db.Rollback()
+  Try DatabaseTransactions.Rollback($db)
   Error.Raise(failure)
 End
 
@@ -290,7 +290,7 @@ Public Function Copy(boardId As Integer, kind As String, itemId As Integer, titl
     r = $db.Find("kb_lanes", "board_id = &1 AND title = &2", boardId, targetLane)
     If Not r.Available Then Error.Raise("Destination swimlane not accessible")
   Endif
-  $db.Begin()
+  DatabaseTransactions.Begin($db)
   Select kind
     Case "card"
       listId = KanbanStore.CardListId(boardId, itemId)
@@ -325,11 +325,11 @@ Public Function Copy(boardId As Integer, kind As String, itemId As Integer, titl
   Next
   CopySettings(boardId, kind, itemId, targetBoard, newId)
   If BoardAccess.Can(boardId, "write") Or BoardAccess.Can(boardId, "comment") Then KanbanStore.Activity(boardId, "Copied " & kind & ": " & title, kind, itemId)
-  $db.Commit()
+  DatabaseTransactions.Commit($db)
   Return newId
 Catch
   failure = Error.Text
-  Try $db.Rollback()
+  Try DatabaseTransactions.Rollback($db)
   Error.Raise(failure)
 End
 

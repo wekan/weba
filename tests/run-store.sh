@@ -27,6 +27,16 @@ WEBA_TEST_MODE=register WEBA_TEST_USER=parallel-one "${GBX:-gbx3}" -s Registrati
 first=$!
 WEBA_TEST_MODE=register WEBA_TEST_USER=parallel-two "${GBX:-gbx3}" -s RegistrationRace "$project" &
 second=$!
-wait "$first"
-wait "$second"
+status=0
+wait "$first" || status=1
+wait "$second" || status=1
+[ "$status" = 0 ]
 WEBA_TEST_MODE=verify "${GBX:-gbx3}" -s RegistrationRace "$project"
+
+project="$work/registration-commit"
+mkdir -p "$project"
+cp -R "$root/WeKan/.src" "$root/WeKan/.public" "$project/"
+cp "$root/WeKan/.project" "$project/"
+cp "$root/tests/RegistrationCommitTest.module" "$project/.src/RegistrationCommitTest.module"
+"${GBC:-gbc3}" -j 1 -a "$project"
+python3 "$root/tests/registration-commit.py" "$project"

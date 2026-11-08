@@ -2,6 +2,15 @@
 
 This work adds the following features and fixes:
 
+- Recover database connections after failed transaction commands. Gambas 3.20
+  can decrement its nesting counter before a driver rejects COMMIT, leaving
+  pending writes that a subsequent Rollback cannot discard. Use shared portable
+  connection lifecycle recovery throughout the stores, without retrying an
+  ambiguous commit. Reproduce with independent SQLite reader locks and verify
+  registration/card rollback, unchanged history and later successful writes on
+  the same connection. Wait for both concurrency workers before fixture cleanup;
+  verify eight fresh first-admin races and the full local suite. Thanks to xet7.
+
 - Add native shared-board member controls for all nine roles, with member add,
   role changes and removal. Adapt menus, card/detail editors and drag handles to
   server capabilities; enable Worker self-assignment and card movement. Keep

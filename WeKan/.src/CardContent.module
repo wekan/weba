@@ -169,14 +169,14 @@ Public Function NewSubtask(boardId As Integer, cardId As Integer, title As Strin
   RequireCard(boardId, cardId)
   BoardAccess.Require(boardId, "write")
   parent = WorkspaceStore.Record(boardId, "card", cardId)
-  $db.Begin()
+  DatabaseTransactions.Begin($db)
   child = KanbanStore.SaveCard(boardId, 0, title, "", parent!lane, parent!status, WebIdentity.Username, "", "", KanbanStore.CardListId(boardId, cardId))
   Save(boardId, cardId, 0, "subtask", title, "", 0, False, child)
-  $db.Commit()
+  DatabaseTransactions.Commit($db)
   Return child
 Catch
   failure = Error.Text
-  Try $db.Rollback()
+  Try DatabaseTransactions.Rollback($db)
   Error.Raise(failure)
 End
 

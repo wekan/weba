@@ -80,7 +80,7 @@ Public Sub Register(username As String, password As String)
     Error.Raise(RegistrationError)
   Endif
   passwordHash = Crypt.Sha256(password)
-  $hConn.Begin()
+  DatabaseTransactions.Begin($hConn)
   transaction = True
   r = $hConn.Find("users")
   first = Not r.Available
@@ -94,11 +94,11 @@ Public Sub Register(username As String, password As String)
     r = Null
   Endif
   $hConn.Exec("INSERT INTO users (username, password, fullname, admin) VALUES (&1, &2, &3, &4)", username, passwordHash, "", first)
-  $hConn.Commit()
+  DatabaseTransactions.Commit($hConn)
   transaction = False
 Catch
   r = Null
-  If transaction Then Try $hConn.Rollback()
+  If transaction Then Try DatabaseTransactions.Rollback($hConn)
   Error.Raise(RegistrationError)
 End
 

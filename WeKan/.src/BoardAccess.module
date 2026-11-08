@@ -91,7 +91,7 @@ Public Sub SetMember(boardId As Integer, username As String, role As String)
     Return
   Endif
   WorkspaceStore.OpenStore()
-  $db.Begin()
+  DatabaseTransactions.Begin($db)
   transaction = True
   KanbanStore.Activity(boardId, "Changed board membership: " & username)
   r = $db.Edit("kb_members", "board_id = &1 AND username = &2", boardId, username)
@@ -102,11 +102,11 @@ Public Sub SetMember(boardId As Integer, username As String, role As String)
   Endif
   r["role"] = role
   r.Update()
-  $db.Commit()
+  DatabaseTransactions.Commit($db)
   transaction = False
 Catch
   failure = Error.Text
-  If transaction Then Try $db.Rollback()
+  If transaction Then Try DatabaseTransactions.Rollback($db)
   Error.Raise(failure)
 End
 
@@ -118,15 +118,15 @@ Public Sub RemoveMember(boardId As Integer, username As String)
   r = $db.Find("kb_boards", "id = &1", boardId)
   If r!owner = username Then Error.Raise("Transfer ownership before removing the owner")
   WorkspaceStore.OpenStore()
-  $db.Begin()
+  DatabaseTransactions.Begin($db)
   transaction = True
   KanbanStore.Activity(boardId, "Removed board member: " & username)
   $db.Delete("kb_members", "board_id = &1 AND username = &2", boardId, username)
-  $db.Commit()
+  DatabaseTransactions.Commit($db)
   transaction = False
 Catch
   failure = Error.Text
-  If transaction Then Try $db.Rollback()
+  If transaction Then Try DatabaseTransactions.Rollback($db)
   Error.Raise(failure)
 End
 
@@ -233,7 +233,7 @@ Private Sub WriteAssignees(boardId As Integer, cardId As Integer, names As Strin
     If unique.Find(username) < 0 Then unique.Add(username)
   Next
   WorkspaceStore.OpenStore()
-  $db.Begin()
+  DatabaseTransactions.Begin($db)
   transaction = True
   KanbanStore.Activity(boardId, "Changed card assignments", "card", cardId)
   $db.Delete("kb_card_assignees", "board_id = &1 AND card_id = &2", boardId, cardId)
@@ -248,10 +248,10 @@ Private Sub WriteAssignees(boardId As Integer, cardId As Integer, names As Strin
   r["assignee"] = ""
   If unique.Count Then r["assignee"] = unique[0]
   r.Update()
-  $db.Commit()
+  DatabaseTransactions.Commit($db)
   transaction = False
 Catch
   failure = Error.Text
-  If transaction Then Try $db.Rollback()
+  If transaction Then Try DatabaseTransactions.Rollback($db)
   Error.Raise(failure)
 End

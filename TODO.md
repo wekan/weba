@@ -67,10 +67,16 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Next: expand REST API contracts and shared board access/role boundaries;
   remaining feature work below is still pending.
 
-- Verification follow-up: the 2026-11-08 full local suite passed after two
-  earlier runs failed the first-registration concurrency retry. Isolated repeated
-  races passed, so the intermittent failure remains unresolved and needs a
-  deterministic reproduction; do not describe this race as fixed.
+- Completed: reproduce the failed-COMMIT registration retry failure with a
+  separate SQLite reader lock. Gambas 3.20 decrements its transaction counter
+  before driver commit/rollback, so failed commits could leave pending writes
+  on a connection that could not roll them back. Shared transaction helpers now
+  close/reopen failed connections without retrying an ambiguous commit. All
+  store transaction boundaries use the helper. Deterministic registration/card
+  tests verify discarded accounts/content/history and successful later writes
+  on the same shared connection; eight fresh two-process registration races and
+  the complete local build.sh test suite pass. Only SQLite/ARM64 was executed;
+  other database drivers still need conformance tests.
 
 ## Verification follow-up
 

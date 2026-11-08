@@ -98,7 +98,7 @@ Public Sub Move(boardId As Integer, kind As String, itemId As Integer, targetBoa
   For Each r
     If (ids.Find(r!card_id) >= 0) Xor (ids.Find(CInt(r!amount)) >= 0) Then Error.Raise("Move linked cards together or remove their relationship first")
   Next
-  $db.Begin()
+  DatabaseTransactions.Begin($db)
   For Each cardId In ids
     listId = KanbanStore.CardListId(boardId, cardId)
     If kind = "card" Then listId = targetList
@@ -138,10 +138,10 @@ Public Sub Move(boardId As Integer, kind As String, itemId As Integer, targetBoa
   Endif
   KanbanStore.Activity(boardId, "Moved " & kind & " to another board: " & source!title)
   KanbanStore.Activity(targetBoard, "Received " & kind & ": " & source!title, kind, itemId)
-  $db.Commit()
+  DatabaseTransactions.Commit($db)
 Catch
   failure = Error.Text
-  If $db Then Try $db.Rollback()
+  If $db Then Try DatabaseTransactions.Rollback($db)
   Error.Raise(failure)
 End
 
@@ -169,7 +169,7 @@ Public Sub DeleteArchived(boardId As Integer, kind As String, itemId As Integer,
   Else If kind = "list" Then
     listIds.Add(itemId)
   Endif
-  $db.Begin()
+  DatabaseTransactions.Begin($db)
   If kind = "board" Then
     For Each tableName In ["kb_entries", "kb_files", "kb_card_lists", "kb_cards", "kb_lists", "kb_lanes", "kb_meta", "kb_history", "kb_order", "kb_activity", "kb_members", "kb_user_meta", "kb_card_assignees"]
       $db.Delete(tableName, "board_id = &1", boardId)
@@ -202,9 +202,9 @@ Public Sub DeleteArchived(boardId As Integer, kind As String, itemId As Integer,
     Endif
     KanbanStore.Activity(boardId, "Permanently deleted " & kind & ": " & source!title)
   Endif
-  $db.Commit()
+  DatabaseTransactions.Commit($db)
 Catch
   failure = Error.Text
-  If $db Then Try $db.Rollback()
+  If $db Then Try DatabaseTransactions.Rollback($db)
   Error.Raise(failure)
 End

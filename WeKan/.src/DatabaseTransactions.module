@@ -1,0 +1,31 @@
+' Restore a usable connection after a driver transaction command fails.
+' Gambas 3.20 adjusts its nesting counter before Commit/Rollback reaches the
+' driver. A failed SQLite COMMIT can therefore leave a physical transaction
+' open at logical depth zero, where Connection.Rollback() would do nothing.
+Export
+
+Public Sub Begin(db As Connection)
+  db.Begin()
+Catch
+  Recover(db, Error.Text)
+End
+
+Public Sub Commit(db As Connection)
+  db.Commit()
+Catch
+  Recover(db, Error.Text)
+End
+
+Public Sub Rollback(db As Connection)
+  db.Rollback()
+Catch
+  Recover(db, Error.Text)
+End
+
+Private Sub Recover(db As Connection, failure As String)
+  ' Closing discards pending writes using the driver's connection lifecycle;
+  ' no driver-specific transaction SQL or ambiguous commit retry is used.
+  Try db.Close()
+  Try db.Open()
+  Error.Raise(failure)
+End

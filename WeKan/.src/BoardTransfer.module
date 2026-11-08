@@ -134,7 +134,7 @@ Public Function ImportData(text As String, title As String) As Integer
   If Not Trim(title) Or String.Len(title) > 255 Then Error.Raise("Enter a valid board title")
   CardContent.OpenStore()
   $db = WebDatabase.OpenConnection()
-  $db.Begin()
+  DatabaseTransactions.Begin($db)
   transaction = True
   boardId = KanbanStore.AddBoard(title)
   For Each item In data["lanes"]
@@ -229,11 +229,11 @@ Public Function ImportData(text As String, title As String) As Integer
     WorkspaceStore.SetSetting(boardId, item["kind"], id, item["setting"], item["value"])
   Next
   KanbanStore.Activity(boardId, "Imported weba JSON")
-  $db.Commit()
+  DatabaseTransactions.Commit($db)
   transaction = False
   Return boardId
 Catch
   failure = Error.Text
-  If transaction Then Try $db.Rollback()
+  If transaction Then Try DatabaseTransactions.Rollback($db)
   Error.Raise(failure)
 End

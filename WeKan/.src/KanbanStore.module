@@ -220,7 +220,7 @@ Private Sub EnsureLane(boardId As Integer, title As String)
   Dim failure As String
   r = $db.Find("kb_lanes", "board_id = &1 AND title = &2", boardId, title)
   If r.Available Then Return
-  $db.Begin()
+  DatabaseTransactions.Begin($db)
   r = $db.Create("kb_lanes")
   r["board_id"] = boardId
   r["title"] = title
@@ -234,10 +234,10 @@ Private Sub EnsureLane(boardId As Integer, title As String)
     r.Update()
     Inc index
   Next
-  $db.Commit()
+  DatabaseTransactions.Commit($db)
 Catch
   failure = Error.Text
-  Try $db.Rollback()
+  Try DatabaseTransactions.Rollback($db)
   r = $db.Find("kb_lanes", "board_id = &1 AND title = &2", boardId, title)
   If Not r.Available Then Error.Raise(failure)
 End
@@ -288,7 +288,7 @@ Public Sub AddList(boardId As Integer, lane As String, title As String, afterTit
     position = 0
     If r.Available Then position = r!sort_order + 1
   Endif
-  $db.Begin()
+  DatabaseTransactions.Begin($db)
   r = $db.Edit("kb_lists", "board_id = &1 AND lane = &2 AND sort_order >= &3", boardId, lane, position)
   For Each r
     r["sort_order"] = r!sort_order + 1
@@ -300,11 +300,11 @@ Public Sub AddList(boardId As Integer, lane As String, title As String, afterTit
   r["title"] = title
   r["sort_order"] = position
   r.Update()
-  $db.Commit()
+  DatabaseTransactions.Commit($db)
   Activity(boardId, "Added list: " & title)
 Catch
   failure = Error.Text
-  If $db Then Try $db.Rollback()
+  If $db Then Try DatabaseTransactions.Rollback($db)
   Error.Raise(failure)
 End
 
@@ -376,7 +376,7 @@ Public Sub MoveCard(boardId As Integer, cardId As Integer, laneTitle As String, 
   If WorkspaceStore.ListHidden(boardId, listId) Then Error.Raise("Destination is archived")
   WorkspaceStore.RequireCapacity(boardId, listId, cardId)
   If beforeId = cardId Then Return
-  $db.Begin()
+  DatabaseTransactions.Begin($db)
   ids = CardOrder(boardId, laneTitle, "#" & CStr(listId))
   index = ids.Find(CStr(cardId))
   If index >= 0 Then ids.Remove(index)
@@ -395,10 +395,10 @@ Public Sub MoveCard(boardId As Integer, cardId As Integer, laneTitle As String, 
     PutOrder(boardId, "card", ids[index], index)
   Next
   Activity(boardId, "Moved card: " & CStr(cardId), "card", cardId)
-  $db.Commit()
+  DatabaseTransactions.Commit($db)
 Catch
   failure = Error.Text
-  Try $db.Rollback()
+  Try DatabaseTransactions.Rollback($db)
   Error.Raise(failure)
 End
 
@@ -429,15 +429,15 @@ Public Sub MoveLane(boardId As Integer, laneTitle As String, beforeTitle As Stri
     If index < 0 Then Error.Raise("Destination swimlane not accessible")
   Endif
   names.Add(laneTitle, index)
-  $db.Begin()
+  DatabaseTransactions.Begin($db)
   For index = 0 To names.Max
     PutOrder(boardId, "lane", names[index], index)
   Next
   Activity(boardId, "Moved swimlane: " & laneTitle)
-  $db.Commit()
+  DatabaseTransactions.Commit($db)
 Catch
   failure = Error.Text
-  Try $db.Rollback()
+  Try DatabaseTransactions.Rollback($db)
   Error.Raise(failure)
 End
 
@@ -471,7 +471,7 @@ Public Sub MoveList(boardId As Integer, sourceLane As String, listTitle As Strin
     If index < 0 Then Error.Raise("Destination list not accessible")
   Endif
   ids.Add(listId, index)
-  $db.Begin()
+  DatabaseTransactions.Begin($db)
   r = $db.Edit("kb_lists", "id = &1 AND board_id = &2", listId, boardId)
   r["lane"] = targetLane
   r.Update()
@@ -490,10 +490,10 @@ Public Sub MoveList(boardId As Integer, sourceLane As String, listTitle As Strin
     r.Update()
   Next
   Activity(boardId, "Moved list: " & listTitle, "list", listId)
-  $db.Commit()
+  DatabaseTransactions.Commit($db)
 Catch
   failure = Error.Text
-  Try $db.Rollback()
+  Try DatabaseTransactions.Rollback($db)
   Error.Raise(failure)
 End
 

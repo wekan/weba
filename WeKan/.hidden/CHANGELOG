@@ -1,4 +1,8 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Database transactions: Recover shared connections after failed driver
+  Begin/Commit/Rollback commands; discard pending writes despite Gambas nesting
+  counter drift. Force real SQLite commit failures for accounts/cards, verify
+  atomic history/content and later writes, and exercise first-admin races.
 - Native membership UI: Add member/role/remove controls, role-aware menus and
   editors, Worker self-assignment/movement, translated captions, anchored refresh
   and disabled HTML/ARIA states; test two sessions, forged writes and mobile UI.

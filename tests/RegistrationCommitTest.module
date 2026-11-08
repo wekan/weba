@@ -1,0 +1,42 @@
+' Only copied into disposable SQLite commit-failure test projects.
+Public Sub Main()
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim r As Result
+  If Env["WEBA_TEST_MODE"] = "prepare" Then Return
+  db.Timeout = 1
+  Try WebDatabase.Register("commit-retry", "commit test password")
+  If Not Error Then Error.Raise("Reader lock did not reject the first commit")
+  File.Save(Application.Path &/ "commit-failed", "ready")
+  WaitFor("reader-released")
+  Try WebDatabase.Register("commit-retry", "commit test password")
+  If Error Then Error.Raise("Registration connection remained unusable after a failed commit")
+  If Not WebDatabase.Login("commit-retry", "commit test password") Then Error.Raise("Recovered registration could not authenticate")
+  Session["username"] = "commit-retry"
+  boardId = KanbanStore.AddBoard("Commit probe board")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Before commit failure", "Unchanged body", "Default", "Todo", "", "", "")
+  WorkspaceStore.OpenStore()
+  KanbanStore.PrimeCardLinks(boardId)
+  File.Save(Application.Path &/ "card-ready", "ready")
+  WaitFor("card-reader-held")
+  Try WorkspaceStore.Rename(boardId, "card", cardId, "Uncommitted title")
+  If Not Error Then Error.Raise("Reader lock did not reject the card commit")
+  r = WorkspaceStore.Record(boardId, "card", cardId)
+  If r!title <> "Before commit failure" Then Error.Raise("Failed card commit was not discarded")
+  r = Null
+  File.Save(Application.Path &/ "card-commit-failed", "ready")
+  WaitFor("card-reader-released")
+  WorkspaceStore.Rename(boardId, "card", cardId, "Recovered card")
+  r = WorkspaceStore.Record(boardId, "card", cardId)
+  If r!title <> "Recovered card" Or r!description <> "Unchanged body" Then Error.Raise("Recovered card mutation lost content")
+  Print "Failed registration/card commits discarded pending writes and recovered on the shared connection"
+End
+
+Private Sub WaitFor(name As String)
+  Dim deadline As Float = Timer + 10
+  While Not Exist(Application.Path &/ name)
+    If Timer > deadline Then Error.Raise("Reader synchronization timed out")
+    Sleep 0.01
+  Wend
+End
