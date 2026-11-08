@@ -6,6 +6,12 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Current UI/API/security work
 
+- Documented private live people snapshots, home roster polling, identity-based
+  selection preservation, vanished-target cleanup and current role controls.
+  Recorded native/two-user browser evidence and retained incomplete full source
+  reactivity and original-suite requirements. Existing account-deletion browser
+  regression also passes.
+
 - Completed live native card member/assignee and board roster panes. Preserve
   valid row/candidate selections and invitation drafts, clear vanished choices
   without retargeting, update clean selected roles and reapply capabilities.
@@ -587,8 +593,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   header/navigation/sidebar geometry, view menus, board/card creation, calendar,
   admin forms and keyboard-focus placement. Other browsers and a comprehensive
   accessibility audit remain to be done.
-- Weba now has its own project-only AGENTS.md and CLAUDE.md. Its information is
-  removed from the parent instruction files as requested.
+- Shared instruction files remain in the parent workspace; project-specific
+  guidance is in docs/Development.md. Duplicate AGENTS.md/CLAUDE.md files were
+  removed under the current parent repository instructions.
 - The user-provided legacy `.tools/bin/gambas3` contains the IDE, components, metadata
   and source; compiler/interpreter executables were absent from `bin/` when
   inspected. Initial tests use a disposable Debian ARM64 3.20.2 toolchain under

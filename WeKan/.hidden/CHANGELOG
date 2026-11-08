@@ -1,4 +1,6 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Explain private people snapshots, home roster checks, stable
+  choices/drafts, fresh capabilities and cleanup; retain full suite/reactivity gaps.
 - Live people: Refresh native card members, assignees and home board rosters;
   retain valid selections/drafts, clear missing targets and apply current roles.
   Verify private snapshots, native scopes and two-user source/packaged live

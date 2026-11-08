@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Document private live people snapshots, home roster checks, preserved choices
+  and invitation drafts, role updates and missing/revoked target cleanup. Record
+  native/two-user test scope and remaining full source reactivity/suite gaps.
+  Thanks to xet7.
+
 - Synchronize native card member/assignee and board roster panes, including home
   rosters. Preserve valid choices and invitation drafts, clear vanished targets,
   refresh roles/capabilities and clear revoked card people fields. Add private

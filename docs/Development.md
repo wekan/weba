@@ -10,7 +10,7 @@ and in the [README](../README.md), rather than in duplicate instruction files.
 | Area | Files |
 | --- | --- |
 | Login and registration | `WeKan/.src/WebformLogin.class` and `.webform` |
-| Native navigation, editors and live board checks | `WeKan/.src/WebformMain.class`, `.webform`, `BoardLive.module`, `CardDraft.module`, `DetailLive.module`, `EntryDraft.module` |
+| Native navigation, editors and live board checks | `WeKan/.src/WebformMain.class`, `.webform`, `BoardLive.module`, `CardDraft.module`, `DetailLive.module`, `EntryDraft.module`, `PeopleLive.module` |
 | Accounts, sessions and connection | `WeKan/.src/WebDatabase.module`, `WebIdentity.module`, `ApiTokens.module` |
 | Board/card persistence and permissions | `KanbanStore.module`, `BoardAccess.module`, `ApiMemberRoles.module` |
 | REST routing and projections | `RestApi.module`, `BoardRestData.module` |
@@ -154,3 +154,27 @@ open pane without closing a still-readable source card, and restoration brings
 back its current title. `RelationLabelTest` and the two-user test-live scenarios
 cover these paths. Full source cross-board hierarchy, dependency metadata and
 navigation remain pending; original callback counts and COMMIT phases are unchanged.
+
+
+## Live people panes
+
+`PeopleLive` returns server-private snapshots after fresh board/card authorization.
+Roster rows contain only public username and role, sorted deterministically. Card
+snapshots keep member and assignee arrays separate and preserve raw order and
+repetitions; only the native display deduplicates names. Reads write no history.
+Use the current active roster for candidates, never a full user record.
+
+`BoardPoll_Timer` checks visible people panes even when a roster was opened from
+home with no selected board. Each pane records its snapshot only after successful
+rendering. Loading flags suppress programmatic selection events. Preserve a valid
+row/candidate by identity; clear a vanished candidate and disable Add instead of
+silently choosing somebody else. Refresh role capabilities and let existing server
+mutation methods recheck them on every submitted action.
+
+The board roster editor tracks its last selected user/role. Clean fields advance
+with external role changes; invitation and role drafts survive unrelated updates.
+Removal of the selected existing user clears its editor. Revocation closes the
+pane. Card scope loss clears its title, tree and candidate options alongside the
+card editor. `PeopleLiveTest` and the two-user test-live script cover native reads
+and actual browser/REST mutations; full original UI/API/security suites remain
+incomplete.

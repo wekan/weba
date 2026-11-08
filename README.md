@@ -377,8 +377,7 @@ cache/history writes and assignment denial/reauthorization. Two-user source and
 packaged test-live verifies successive target renames, selected title values,
 removal of a now-unreadable target while the source card remains readable, and
 reappearance after permission restoration. Full source cross-board hierarchy,
-dependency metadata/navigation and open people/roster synchronization remain
-separate work.
+dependency metadata/navigation remain separate work.
 
 When another user changes data, the pane rebuilds rows and refreshes clean selected
 fields while retaining dirty text, numbers, checkbox/type and parent choices.
@@ -405,10 +404,24 @@ legacy timer nulls, binary-free metadata and entry draft guards. Two additional
 entry-draft failed-COMMIT/retry phases bring card-update phases to twenty; full
 local tests and existing details/member/account-deletion browser regressions pass.
 
-Polling cost grows with visible cards. Other signed-in views still emit native
-heartbeat requests, while the handler returns before checking board data.
-Efficient idle/background suspension, all-boards navigation reactivity, live
-people/roster panels, full source inline-edit/unsaved-draft UX and complete source reactivity remain pending. The three archive callbacks establish that
+Native card member/assignee panes now refresh from authorized current snapshots.
+Valid selected rows and candidate choices survive external edits; missing choices
+clear without selecting a replacement. Duplicate imported names remain stored but
+appear once in the pane. Read-only and revoked scopes update controls or close and
+clear the pane. Board member panes also refresh when opened from the home page;
+clean selected roles advance, invitation drafts survive, and removed selected
+members clear the role editor. Server mutation guards remain authoritative.
+
+`PeopleLiveTest` covers private deterministic snapshots, independent ordered fields,
+active candidates and read-only/assignment/revocation boundaries. The two-user
+`people-live.browser.cjs` test is included in `test-live`; it checks external changes,
+selection/draft behavior, hidden-button forgery and card/board access loss.
+These native tests do not increase the original source callback count.
+
+Polling cost grows with visible cards. Signed-in views still emit native heartbeat
+requests; visible people/detail panes are checked even without an active board.
+Efficient idle/background suspension, all-boards navigation reactivity, full source
+inline-edit/unsaved-draft UX and complete source reactivity remain pending. The three archive callbacks establish that
 file's contract; complete original UI/API/security suites still require work.
 
 Each list exposes two independent #5251 timestamps: `modifiedAt` tracks the list
