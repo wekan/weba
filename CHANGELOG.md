@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Document inactive member API rows, activation rules, native re-invitation,
+  preferences/identity cleanup and four-phase transaction failure tests. Keep
+  stable identity, complete roster metadata and full-suite gaps explicit.
+  Thanks to xet7.
+
 - Retain removed board memberships as inactive API rows with non-admin flags.
   Deny access and administrator counts despite stale owner/member pointers;
   keep inactive role updates inactive and require explicit add to reactivate

@@ -221,9 +221,9 @@ The first implemented REST contracts use JSON request/response bodies:
 | `POST /users/login` | Accept username/password strings; return `id`, `token`, `tokenExpires` |
 | `POST /users/logout` | Revoke the presented Bearer token; optional boolean `all` revokes all the user's tokens |
 | `GET /api/users/:username/boards` | List active boards owned by or shared with the authenticated user |
-| `GET /api/boards/:id` | Read an accessible board and its active member flags; inaccessible boards return 404 |
+| `GET /api/boards/:id` | Read an accessible board and its active/inactive member flags; inaccessible boards return 404 |
 | `POST /api/boards/:id/members/:userId/add` | Add an existing account with `action: "add"` and optional role/flags; an active member is unchanged |
-| `POST /api/boards/:id/members/:userId` | Change an active member's role/flags |
+| `POST /api/boards/:id/members/:userId` | Change an active or inactive member's role/flags without changing activation |
 | `POST /api/boards/:id/members/:userId/remove` | Remove with `action: "remove"`; the final administrator remains active |
 
 Member mutations require a board administrator or a site administrator.
@@ -244,8 +244,18 @@ Self role changes preserve the existing board-admin bit. An administrator may
 replace another legacy owner's implicit role when another administrator remains;
 personal preferences are preserved. Native role changes clear stale API flags.
 
+Removing a member keeps an API roster row with `isActive: false`, clears
+`isAdmin` and retains the other flags. Inactive rows grant no board access and
+do not count toward the final-administrator guard, even if their flags are later
+changed to admin. Updating an inactive role (including a submitted `isActive`
+field) does not reactivate it. Explicit add reactivates the account and replaces
+its old role/flags. Personal preferences survive removal. The native member
+picker lists active members; entering the username explicitly can re-invite a
+removed account. Account/board deletion removes retained membership rows, and
+new accounts cannot inherit historical same-name membership references.
+
 Current API account IDs are usernames, including the `:userId` above. Stable
-opaque IDs, inactive-member roster/history representation and complete WeKan
+opaque IDs, complete source roster metadata and complete WeKan
 identity/data parity remain pending. Native recovery/ownership administration
 controls are also still pending; the recovery path above is REST only.
 
@@ -277,7 +287,10 @@ The API fixture creates accounts only inside a disposable project/database and
 checks cookie isolation, stored token digests, foreign-board denial, logout/all,
 expiry, reset revocation, disabled API paths and login throttling. Membership
 checks add role/flag correctness, negative permissions, minimal responses,
-legacy-owner migration, scoped authority and real failed-COMMIT rollback/retry.
+legacy-owner migration, scoped authority, inactive rows without access and
+explicit reactivation. Independent SQLite readers force real failed-COMMIT
+rollback/retry for active role changes, removal, inactive role changes and
+reactivation, checking roles, flags and audit history after each failure.
 
 When the parent WeKan checkout is available, `--members` also executes three
 original `#5998` spec 17 callbacks unchanged, using actual Playwright assertions

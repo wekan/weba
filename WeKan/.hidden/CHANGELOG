@@ -1,4 +1,6 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Describe inactive API rows, activation rules, native
+  re-invitation, identity cleanup, four-phase rollback tests and remaining gaps.
 - Inactive membership: Retain removed member flags without authority, exclude
   inactive administrators from last-admin counts, require explicit reactivation
   and clear retained identities on deletion/recreation. Transact audit history;

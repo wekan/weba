@@ -70,6 +70,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   on account/board deletion and historical username cleanup. Verify native
   negatives, source/archive API contracts, three unchanged original callbacks,
   four forced-COMMIT rollback/retry phases and packaged browser re-invitation.
+- Documented active/inactive roster semantics, explicit re-invitation, retained
+  preferences, identity cleanup and the four real failed-COMMIT test phases.
 - In progress: REST cards/containers and full API identity/data parity, including
   stable IDs and complete source roster metadata. Custom roles, list-level
   exceptions and public/instance board visibility remain pending.
