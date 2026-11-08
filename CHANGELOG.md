@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Document card members/assignees merge routes, ordered independent fields,
+  active/stale targets, REST role restrictions, lifecycle/rollback verification
+  and exact five-of-thirty original callback coverage. Keep native card-member
+  editor, card PUT/bulk and complete suite gaps explicit. Thanks to xet7.
+
 - Add separate card members and assignees merge REST routes with active-member
   validation, stale removal, deduplication, persisted append order and source
   role/full-card-scope rules with

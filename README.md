@@ -226,6 +226,8 @@ The first implemented REST contracts use JSON request/response bodies:
 | `POST /api/boards/:id/members/:userId/add` | Add an existing account with `action: "add"` and optional role/flags; an active member is unchanged |
 | `POST /api/boards/:id/members/:userId` | Change an active or inactive member's role/flags without changing activation |
 | `POST /api/boards/:id/members/:userId/remove` | Remove with `action: "remove"`; the final administrator remains active |
+| `POST` / `DELETE /api/boards/:id/lists/:listId/cards/:cardId/members/:userId` | Add/remove one card member, preserving other members and the separate assignees |
+| `POST` / `DELETE /api/boards/:id/lists/:listId/cards/:cardId/assignees/:userId` | Add/remove one assignee, preserving other assignees and the separate members |
 
 User deletion requires a site administrator; a board administrator alone is
 refused. It removes account/session/token and current/historical privilege
@@ -265,6 +267,24 @@ picker lists active members; entering the username explicitly can re-invite a
 removed account. Account/board deletion removes retained membership rows, and
 new accounts cannot inherit historical same-name membership references.
 
+Card-person merge requests need Bearer authentication but no JSON body. They
+return `{_id, members: [...], assignees: [...]}`. Adds deduplicate and append in
+stored order, and require an active board member; inactive, missing and unrelated
+accounts are refused with 400. Removal can clear stale IDs without revalidating
+the other people. Empty people fields return arrays. Card members do not grant
+board access or assigned-only card visibility; assignees remain the separate
+assignment field. Members and people order survive copy, cross-board move and
+weba JSON exchange, with account/card/board deletion cleaning their references.
+
+These REST writes require a writing role with full-card scope, or a site
+administrator acting through the explicit scoped mutation. Assigned-only roles
+and Workers cannot use these general REST writes; their supported native card
+operations have separate checks. A foreign list/card combination or archived
+card returns 404. A site-admin mutation does not enable general private-board
+reads afterward. Changes, order and audit history commit together; failures
+return a sanitized 500 and roll back. Card-member editing controls and card PUT
+array/bulk contracts remain pending.
+
 Current API account IDs are usernames, including the `:userId` above. Stable
 opaque IDs, complete source roster metadata and complete WeKan
 identity/data parity remain pending. Native recovery/ownership administration
@@ -301,20 +321,25 @@ checks add role/flag correctness, negative permissions, minimal responses,
 legacy-owner migration, scoped authority, inactive rows without access and
 explicit reactivation. Independent SQLite readers force real failed-COMMIT
 rollback/retry for active role changes, removal, inactive role changes and
-reactivation, checking roles, flags and audit history after each failure.
+reactivation, checking roles, flags and audit history after each failure. Card
+people tests independently force COMMIT failure for add/remove in both fields,
+then retry on the same Gambas connection and verify that scoped authority did
+not survive. Native store tests cover ordering, copy/move/JSON, invalid-import
+rollback, assigned-only denial and deletion cleanup.
 
 User-deletion tests inspect independent SQLite snapshots after denied requests
 and a real database failure partway through cleanup, then verify successful
 cleanup, retained content and credential revocation. The native deletion UI is
 also checked with the packaged Chromium workflow (`WEBA_DELETION_ONLY=1`).
 
-When the parent WeKan checkout is available, `--members` executes three original
-`#5998` spec 17 callbacks unchanged, and `--api` executes its user-deletion callback
+When the parent WeKan checkout is available, `--members` executes four original
+`#5998` spec 17 callbacks unchanged (three board-member, one card-member), and
+`--api` executes its user-deletion callback
 unchanged. Both use actual Playwright assertions and explicit SQLite fixture
 adapters. User fixtures are created through the real Gambas account store;
 post-delete checks read SQLite independently of the HTTP response. Each adapter
-reports which callbacks it did not execute. Together they cover four of the
-file's 30 callbacks; the other 26 and the complete original UI/API/security
+reports which callbacks it did not execute. Together they cover five of the
+file's 30 callbacks; the other 25 and the complete original UI/API/security
 suites have not passed against weba. The reference checkout's
 `tests/playwright/package.json` dependencies must be installed. A standalone
 weba checkout can select the reference with `WEKAN_SOURCE=/absolute/path/to/wekan`.

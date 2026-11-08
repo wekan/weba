@@ -83,8 +83,7 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Documented active/inactive roster semantics, explicit re-invitation, retained
   preferences, identity cleanup and the four real failed-COMMIT test phases.
 - Documented REST user deletion, site-admin/self-delete behavior, authoritative
-  responses, rollback/content guarantees and four-of-thirty original callback
-  coverage. Native deletion cancel/confirm and session revocation still pass in
+  responses, rollback/content guarantees and original callback coverage. Native deletion cancel/confirm and session revocation still pass in
   packaged Chromium after sharing the deletion implementation with REST.
 - Completed card-person merge routes: POST/DELETE card members and assignees
   remain separate, deduplicate additions, preserve append order, require active
@@ -97,6 +96,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   source/archive role/negative HTTP tests, sanitized database failures,
   four forced-COMMIT rollback/retry phases and native lifecycle/invalid-import
   rollback. Extend account-deletion rollback snapshots to the member table.
+- Documented card-person routes, independent ordered fields, active/stale
+  targets, REST role restrictions, scoped administration, lifecycle/rollback
+  tests and exact five-of-thirty original callback coverage.
 - Next card-person work: native member editor, card PUT array/clear contracts,
   remaining card reads/bulk routes and complete original UI/API/security suites.
 - In progress: REST cards/containers and full API identity/data parity, including

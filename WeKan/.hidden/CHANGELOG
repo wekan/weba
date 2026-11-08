@@ -1,4 +1,7 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Describe card-person merge routes, ordered independent fields,
+  permissions, lifecycle/rollback tests and five-of-thirty original callbacks;
+  keep remaining native editor, PUT/bulk and complete-suite gaps explicit.
 - Card people: Add separate members/assignees merge REST routes with active
   target checks, stale removal, append order, scoped administration and
   role/list/card guards.
