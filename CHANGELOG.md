@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Document membership REST routes, named/legacy roles, scoped administration,
+  explicit REST recovery, role/preference migration and test commands. Explain
+  the original-callback fixture adapter, reference dependencies and remaining
+  identity/inactive-roster/full-suite gaps. Thanks to xet7.
+
 - Add membership REST add/remove/role routes with WeKan named aliases, ordered
   legacy flags, combined flag retention and active-member add idempotency.
   Serialize roles/flags/history together, synchronize native role changes and

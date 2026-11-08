@@ -220,8 +220,34 @@ The first implemented REST contracts use JSON request/response bodies:
 | --- | --- |
 | `POST /users/login` | Accept username/password strings; return `id`, `token`, `tokenExpires` |
 | `POST /users/logout` | Revoke the presented Bearer token; optional boolean `all` revokes all the user's tokens |
-| `GET /api/users/:username/boards` | List the authenticated user's owned active boards |
-| `GET /api/boards/:id` | Read an owned board; inaccessible boards return 404 |
+| `GET /api/users/:username/boards` | List active boards owned by or shared with the authenticated user |
+| `GET /api/boards/:id` | Read an accessible board and its active member flags; inaccessible boards return 404 |
+| `POST /api/boards/:id/members/:userId/add` | Add an existing account with `action: "add"` and optional role/flags; an active member is unchanged |
+| `POST /api/boards/:id/members/:userId` | Change an active member's role/flags |
+| `POST /api/boards/:id/members/:userId/remove` | Remove with `action: "remove"`; the final administrator remains active |
+
+Member mutations require a board administrator or a site administrator.
+A site administrator can explicitly recover a known orphan-board ID by adding
+an administrator through this endpoint; this does not silently grant general
+private-board read access. Add/remove replies contain only board `_id`/`title`
+rows, never account documents. Unknown accounts produce an empty successful
+add/remove response. Role updates return an affected-record count.
+
+Use a named role such as `{"role":"admin"}`, `{"role":"readonly"}` or
+`{"role":"normalAssignedOnly"}`, or the legacy boolean/string flags such as
+`{"isReadOnly":true}`. A named role wins over supplied flags. The complete
+aliases and ordered flag precedence are in
+[api-member-roles.json](WeKan/.public/api-member-roles.json), refreshed together
+with capabilities by `node tools/import-wekan-roles.cjs /path/to/wekan`.
+Simultaneous flags are retained; the source precedence decides capabilities.
+Self role changes preserve the existing board-admin bit. An administrator may
+replace another legacy owner's implicit role when another administrator remains;
+personal preferences are preserved. Native role changes clear stale API flags.
+
+Current API account IDs are usernames, including the `:userId` above. Stable
+opaque IDs, inactive-member roster/history representation and complete WeKan
+identity/data parity remain pending. Native recovery/ownership administration
+controls are also still pending; the recovery path above is REST only.
 
 Set `WITH_API=true` to enable data routes. Authentication endpoints remain
 available independently, matching WeKan's API gate. Authenticate data/logout
@@ -233,8 +259,8 @@ administrator resets and user deletion revoke associated tokens. Responses are
 lead to 429 with `Retry-After`; success resets the window. Peer identities come
 from the actual socket, and the in-memory table is bounded.
 
-Email/LDAP/2FA authentication, registration policy, configurable expiry, shared
-board roles and the remaining REST endpoints are still pending. These initial
+Email/LDAP/2FA authentication, registration policy, configurable expiry, custom
+roles/list exceptions and the remaining REST endpoints are still pending. These initial
 contracts do not mean that WeKan's complete REST/UI/security suites pass.
 
 `./build.sh test` runs isolated source/archive native and REST tests. To run
@@ -243,13 +269,25 @@ only the REST integration tests with a configured toolchain:
 ```sh
 python3 tests/run-http.py --api
 python3 tests/run-http.py --api --archive
+python3 tests/run-http.py --members
+python3 tests/run-http.py --members --archive
 ```
 
 The API fixture creates accounts only inside a disposable project/database and
 checks cookie isolation, stored token digests, foreign-board denial, logout/all,
-expiry, reset revocation, disabled API paths and login throttling. Existing
-WeKan Playwright fixtures seed MongoDB directly and still need a weba execution
-adapter preserving their assertions before their full coverage can be claimed.
+expiry, reset revocation, disabled API paths and login throttling. Membership
+checks add role/flag correctness, negative permissions, minimal responses,
+legacy-owner migration, scoped authority and real failed-COMMIT rollback/retry.
+
+When the parent WeKan checkout is available, `--members` also executes three
+original `#5998` spec 17 callbacks unchanged, using actual Playwright assertions
+and a documented SQLite fixture adapter. The other 27 callbacks in that file
+are explicitly reported as unexecuted by this adapter; the full original
+UI/API/security suites have not passed against weba. The reference checkout's
+`tests/playwright/package.json` dependencies must be installed. A standalone
+weba checkout can select the reference with `WEKAN_SOURCE=/absolute/path/to/wekan`.
+Without a reference checkout, the original-callback check reports an explicit
+skip; weba's independent contract/rollback checks still run.
 
 ## Native component layout
 

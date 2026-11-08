@@ -60,6 +60,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   source/archive HTTP cases, unchanged spec 17 callbacks, scope reset after
   success/failure, native role resets, deletion cleanup and real failed-COMMIT
   rollback/retry of roles/flags/history.
+- Documented membership REST payloads, explicit recovery and source/archive
+  original-callback execution, including reference dependencies and honest gaps.
 - In progress: REST cards/containers, complete inactive member roster/history
   representation and full API identity/data parity. Custom roles, list-level
   exceptions and public/instance board visibility remain pending.
