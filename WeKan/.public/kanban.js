@@ -34,6 +34,7 @@
       if (view === 'Lists' || view === 'Swimlanes') {
         const layout = [...section.querySelectorAll('.weba-layout section[data-lane]')].sort((a,b)=>Number(a.dataset.order||0)-Number(b.dataset.order||0));
         const editable = section.dataset.editable === 'true';
+        const cardMovable = section.dataset.cardMove === 'true' || editable;
         const lanes = view === 'Swimlanes' ? [...new Set([...layout.map(l=>l.dataset.lane), ...cards.map(c=>c.dataset.lane || 'Default')])] : ['All cards'];
         if (!lanes.length) lanes.push('Default');
         function send(action, lane, list, title = '') {
@@ -93,8 +94,10 @@
             const controls=add(laneHeader,'div',undefined,'weba-swimlane-controls');
             const caret=button(controls,columns.hidden?'▸':'▾','Collapse',el=>toggle(laneKey,columns,el),'weba-collapse-lane');
             caret.setAttribute('aria-expanded',String(!columns.hidden));
-            if(editable) {
+            if(editable||section.dataset.context) {
               button(controls,'☰','Swimlane',trigger=>{const id=layout.find(e=>e.dataset.lane===lane)?.dataset.laneId;if(id&&nativeMenu('lane',id,trigger))return;menu(laneHeader,[['Add swimlane',()=>composer(row,'lane',lane)],['Collapse',()=>toggle(laneKey,columns,caret)]],trigger);},'weba-lane-menu');
+            }
+            if(editable) {
               button(controls,'+','Add swimlane',trigger=>{const id=layout.find(e=>e.dataset.lane===lane)?.dataset.laneId;if(id&&nativeMenu('lane',id,trigger,'Add swimlane'))return;composer(row,'lane',lane);},'weba-add-lane');
               handle(controls,'lane');
             }
@@ -124,7 +127,11 @@
             if(editable) {
               handle(controls,'list');
               button(controls,'+','Add card',()=>send('card',actualLane,reference),'weba-add-card-top');
+            }
+            if(editable||section.dataset.context) {
               button(controls,'☰','List',trigger=>{if(item.id&&nativeMenu('list',item.id,trigger))return;menu(listHeader,[['Add card',()=>{if(root.webaPopup)root.webaPopup.rememberEditor(trigger);send('card',actualLane,reference);}],['Add list',()=>composer(columns,'list',actualLane,reference,column)],['Collapse',()=>toggle(listKey,body,caret)]],trigger);},'weba-list-menu');
+            }
+            if(editable) {
               button(controls,'⊞','Add list',trigger=>{if(item.id&&nativeMenu('list',item.id,trigger,'Add list'))return;composer(columns,'list',actualLane,reference,column);},'weba-add-list');
             }
             const title=add(listHeader,'h4',status,undefined,['Todo','Doing','Done'].includes(status));
@@ -134,8 +141,10 @@
             cards.filter(c=>item.id?c.dataset.listId===item.id:c.dataset.status===status && (view!=='Swimlanes'||(c.dataset.lane||'Default')===lane)).forEach(c=>{
               const clone=c.cloneNode(true);body.append(clone);
               if(c.dataset.color)clone.style.backgroundColor=c.dataset.color;
-              if(editable&&c.dataset.cardId){
+              if(cardMovable&&c.dataset.cardId){
                 clone.classList.add('weba-draggable-card');handle(clone,'card');
+              }
+              if(c.dataset.cardId&&(editable||section.dataset.context)){
                 const menuButton=button(clone,'☰','Card actions',trigger=>nativeMenu('card',c.dataset.cardId,trigger),'weba-card-menu');
               }
               if(c.dataset.cardKey) {

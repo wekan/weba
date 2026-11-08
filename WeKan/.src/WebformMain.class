@@ -2,6 +2,8 @@
 
 Export
 
+Private $membersBoard As Integer
+Private $memberOwner As String
 Private $board As Integer
 Private $loadingDetails As Boolean
 Private $loadingDestinations As Boolean
@@ -42,6 +44,18 @@ End
 Private Sub RefreshTree()
   Dim b As Result
   Dim c As Result
+  If $board Then
+    If Not BoardAccess.Role($board) Then
+      $board = 0
+      $card = 0
+      $view = "Boards"
+      Editor.Hide()
+      DetailsPanel.Hide()
+      MembersPanel.Hide()
+      ContextMenu.Hide()
+      ActionPanel.Hide()
+    Endif
+  Endif
   Boards.Clear()
   b = KanbanStore.Boards($archive)
   For Each b
@@ -53,6 +67,7 @@ Private Sub RefreshTree()
     Next
   Next
   UpdateHeader()
+  UpdateCardActions()
   Visual.Refresh()
 End
 
@@ -228,7 +243,7 @@ Public Sub Visual_Render()
   Print "<script>" & File.Load(".public/kanban.js") & "</script>"
   Print "<link rel=\"stylesheet\" href=\"kanban.css\">"
   If $board Then boardColor = WorkspaceStore.Setting($board, "board", $board, "color", "#2980b9")
-  Print "<section data-board-color=\"" & Html(boardColor) & "\" data-context=\"" & Html(ContextAction.Name) & "\" data-drag=\"" & Html(DragAction.Name) & "\" data-board=\"" & Str($board) & "\" data-action=\"" & Html(BoardAction.Name) & "\" data-editable=\"" & If($board And Not $archive, "true", "false") & "\" class=\"weba-content\" data-tree=\"" & Html(Boards.Name) & "\" data-view=\"" & Html($view) & "\">"
+  Print "<section data-board-color=\"" & Html(boardColor) & "\" data-context=\"" & Html(ContextAction.Name) & "\" data-drag=\"" & Html(DragAction.Name) & "\" data-board=\"" & Str($board) & "\" data-action=\"" & Html(BoardAction.Name) & "\" data-card-move=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "moveCard"), "true", "false") & "\" data-editable=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "write"), "true", "false") & "\" class=\"weba-content\" data-tree=\"" & Html(Boards.Name) & "\" data-view=\"" & Html($view) & "\">"
   If $view = "Profile" Then
     Print "<p>Signed in as " & Html(WebIdentity.Username) & "</p>"
   Else If $view = "Admin panel" Then
@@ -273,7 +288,9 @@ Public Sub Visual_Render()
       c = KanbanStore.Cards(b!id, $archive)
       For Each c
         If Not $archive And WorkspaceStore.ListHidden(b!id, KanbanStore.CardListId(b!id, c!id)) Then Continue
-        If $view = "My cards" And c!assignee <> WebIdentity.Username Then Continue
+        If $view = "My cards" Then
+          If Not BoardAccess.IsAssigned(b!id, c!id, WebIdentity.Username) Then Continue
+        Endif
         If $view = "Due cards" Then
           If Not c!due_day Then Continue
           If c!due_day > Format(Now, "yyyy-mm-dd") Then Continue
@@ -586,20 +603,28 @@ End
 Private Sub OpenContext(kind As String, itemId As Integer, boardId As Integer)
   Dim r As Result = WorkspaceStore.Record(boardId, kind, itemId)
   Dim archived As Boolean = WorkspaceStore.Archived(boardId, kind, itemId)
+  Dim writable As Boolean = BoardAccess.Can(boardId, "write")
+  Dim manager As Boolean = BoardAccess.Can(boardId, "manageBoard")
+  Dim change As Boolean = If(kind = "board", manager, writable)
   $contextBoard = boardId
   $contextKind = kind
   $contextId = itemId
   ContextTitle.Text = r!title
   ContextMenu.Show()
-  ContextArchive.Visible = Not archived
-  ContextRestore.Visible = archived
-  ContextDelete.Visible = archived
-  ContextRename.Visible = Not archived
-  ContextCopy.Visible = True
-  ContextAddCard.Visible = Not archived And kind <> "card"
-  ContextAddList.Visible = Not archived And kind <> "card"
-  ContextAddLane.Visible = Not archived And (kind = "lane" Or kind = "board")
-  ContextMove.Visible = Not archived And kind <> "board"
+  ContextMembers.Visible = kind = "board"
+  ContextAssignSelf.Visible = kind = "card" And BoardAccess.Can(boardId, "moveCard")
+  If kind = "card" Then ContextAssignSelf.Text = If(BoardAccess.IsAssigned(boardId, itemId, WebIdentity.Username), "Unassign myself", "Assign myself")
+  ContextArchive.Visible = Not archived And change
+  ContextRestore.Visible = archived And change
+  ContextDelete.Visible = archived And change
+  ContextRename.Visible = Not archived And change
+  ContextCopy.Visible = (kind = "board" And BoardAccess.Can(boardId, "seesAllCards")) Or (kind <> "board" And writable)
+  ContextAddCard.Visible = writable And Not archived And kind <> "card"
+  ContextAddList.Visible = writable And Not archived And kind <> "card"
+  ContextAddLane.Visible = writable And Not archived And (kind = "lane" Or kind = "board")
+  ContextMove.Visible = Not archived And kind <> "board" And (writable Or (kind = "card" And BoardAccess.Can(boardId, "moveCard")))
+  ContextColor.Visible = change
+  ContextExport.Visible = kind = "card" Or BoardAccess.Can(boardId, "seesAllCards")
   ContextComments.Visible = kind = "card"
   ContextChecklists.Visible = kind = "card"
   ContextChecklistItems.Visible = kind = "card"
@@ -608,8 +633,8 @@ Private Sub OpenContext(kind As String, itemId As Integer, boardId As Integer)
   ContextFields.Visible = kind = "card"
   ContextTime.Visible = kind = "card"
   ContextAttachments.Visible = kind = "card"
-  ContextWip.Visible = kind = "list"
-  ContextDescription.Visible = kind = "board"
+  ContextWip.Visible = kind = "list" And writable
+  ContextDescription.Visible = kind = "board" And manager
   ContextStar.Class = If(WorkspaceStore.Setting(boardId, kind, itemId, "star") = "1", "weba-starred", "")
   ContextWatch.Class = If(WorkspaceStore.Setting(boardId, kind, itemId, "watch") = "1", "weba-watched", "")
   ContextStar.Text = If(WorkspaceStore.Setting(boardId, kind, itemId, "star") = "1", "Unstar", "Star")
@@ -666,7 +691,7 @@ Private Sub BeginAction(action As String)
   ColorChooser.Visible = action = "Color"
   $loadingDestinations = True
   LoadDestinationBoards()
-  DestinationBoard.Visible = action = "Move"
+  DestinationBoard.Visible = action = "Move" And BoardAccess.Can($contextBoard, "write")
   DestinationBoardLabel.Visible = DestinationBoard.Visible
   ActionTitle.Text = action & ": " & r!title
   ActionText.Text = r!title
@@ -1127,17 +1152,26 @@ End
 
 Private Sub UpdateDetailControls()
   Dim kind As String = DetailCode()
+  Dim editable As Boolean = BoardAccess.Can($detailsBoard, If(kind = "comment", "comment", "write"))
   DetailTitle.Visible = kind <> "file"
   DetailBody.Visible = kind = "comment" Or kind = "custom" Or kind = "time"
   DetailNumber.Visible = kind = "subtask" Or kind = "dependency" Or kind = "time"
   DetailDone.Visible = kind = "checkitem" Or kind = "custom"
   DetailType.Visible = kind = "custom"
   DetailParent.Visible = kind = "checkitem"
-  DetailSave.Visible = kind <> "file"
-  DetailNew.Visible = kind <> "file"
-  DetailStart.Visible = kind = "time"
-  DetailStop.Visible = kind = "time"
-  DetailUpload.Visible = kind = "file"
+  DetailTitle.ReadOnly = Not editable
+  DetailBody.ReadOnly = Not editable
+  DetailNumber.ReadOnly = Not editable
+  DetailType.Enabled = editable
+  DetailParent.Enabled = editable
+  DetailDone.Enabled = editable
+  DetailDelete.Visible = editable
+  DetailDelete.Enabled = $entryId > 0 Or $fileId > 0
+  DetailSave.Visible = editable And kind <> "file"
+  DetailNew.Visible = editable And kind <> "file"
+  DetailStart.Visible = editable And kind = "time"
+  DetailStop.Visible = editable And kind = "time"
+  DetailUpload.Visible = editable And kind = "file"
   DetailDownload.Visible = kind = "file"
 End
 
@@ -1154,6 +1188,7 @@ Public Sub DetailTree_Select()
   If Not DetailTree.Key Then Return
   If Left(DetailTree.Key) = "f" Then
     $fileId = CInt(Mid(DetailTree.Key, 2))
+    UpdateDetailControls()
     Return
   Endif
   $entryId = CInt(Mid(DetailTree.Key, 2))
@@ -1166,6 +1201,12 @@ Public Sub DetailTree_Select()
   DetailNumber.Text = Str(r!amount)
   DetailDone.Value = r!done
   DetailType.Index = DetailType.List.Find(r!value_type)
+  If r!kind = "comment" And r!author <> WebIdentity.Username And Not BoardAccess.Can($detailsBoard, "manageBoard") Then
+    DetailSave.Hide()
+    DetailDelete.Hide()
+    DetailBody.ReadOnly = True
+    DetailTitle.ReadOnly = True
+  Endif
   $loadingDetails = False
   If r!parent_id Then
     For index = 0 To DetailParent.List.Max
@@ -1183,6 +1224,7 @@ Public Sub DetailNew_Click()
   DetailBody.Text = ""
   DetailNumber.Text = "0"
   DetailDone.Value = False
+  UpdateDetailControls()
 End
 
 Public Sub DetailSave_Click()
@@ -1343,6 +1385,18 @@ Catch
 End
 
 Private Sub UpdateCardActions()
+  Dim writable As Boolean = BoardAccess.Can($board, "write")
+  SaveCard.Enabled = writable
+  ArchiveCard.Enabled = writable And $card > 0
+  NewCard.Enabled = writable And Not $archive
+  ArchiveBoard.Enabled = BoardAccess.Can($board, "manageBoard")
+  CardTitle.ReadOnly = Not writable
+  Description.ReadOnly = Not writable
+  Assignee.ReadOnly = Not writable
+  Labels.ReadOnly = Not writable
+  Lane.ReadOnly = Not writable
+  Status.ReadOnly = Not writable
+  DueDay.ReadOnly = Not writable
   CardComments.Enabled = $card > 0
   CardChecklists.Enabled = $card > 0
   CardChecklistItems.Enabled = $card > 0
@@ -1351,4 +1405,115 @@ Private Sub UpdateCardActions()
   CardFields.Enabled = $card > 0
   CardTime.Enabled = $card > 0
   CardAttachments.Enabled = $card > 0
+End
+
+Private Function MemberRoles() As String[]
+  Return ["board-admin", "normal", "normal-assigned-only", "no-comments", "comment-only", "comment-assigned-only", "worker", "read-only", "read-assigned-only"]
+End
+
+Public Sub ContextMembers_Click()
+  $membersBoard = $contextBoard
+  MemberRole.List = ["Board administrator", "Normal", "Normal (assigned cards only)", "No comments", "Comment only", "Comment (assigned cards only)", "Worker", "Read only", "Read (assigned cards only)"]
+  MemberRole.Index = 1
+  MemberUsername.Text = ""
+  ContextMenu.Hide()
+  RefreshMembers()
+  MembersPanel.Show()
+Catch
+  Notice.Text = Error.Text
+End
+
+Private Sub RefreshMembers()
+  Dim r As Result
+  Dim keys As String[] = MemberRoles()
+  Dim index As Integer
+  r = WorkspaceStore.Record($membersBoard, "board", $membersBoard)
+  MemberBoardName.Text = r!title
+  $memberOwner = r!owner
+  MembersTree.Clear()
+  r = BoardAccess.Members($membersBoard)
+  For Each r
+    index = keys.Find(r!role)
+    If index < 0 Then Continue
+    MembersTree.Add(r!username, r!username & " · " & MemberRole.List[index])
+  Next
+  UpdateMemberEditor()
+End
+
+Private Sub UpdateMemberEditor()
+  Dim manager As Boolean = BoardAccess.Can($membersBoard, "manageBoard")
+  MemberUsername.ReadOnly = Not manager
+  MemberRole.Enabled = manager
+  SaveMember.Visible = manager
+  RemoveMember.Visible = manager
+  UpdateMemberButtons()
+End
+
+Private Sub UpdateMemberButtons()
+  Dim manager As Boolean = BoardAccess.Can($membersBoard, "manageBoard")
+  SaveMember.Enabled = manager And MemberUsername.Text <> $memberOwner
+  RemoveMember.Enabled = manager And MemberUsername.Text <> $memberOwner And Len(MemberUsername.Text) > 0
+End
+
+Public Sub MemberUsername_Change()
+  UpdateMemberButtons()
+End
+
+Public Sub MembersTree_Select()
+  Dim r As Result
+  If Not MembersTree.Key Then Return
+  MemberUsername.Text = MembersTree.Key
+  r = BoardAccess.Members($membersBoard)
+  For Each r
+    If r!username = MembersTree.Key Then MemberRole.Index = MemberRoles().Find(r!role)
+  Next
+  UpdateMemberEditor()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub SaveMember_Click()
+  If MemberRole.Index < 0 Or MemberRole.Index > MemberRoles().Max Then Error.Raise("Choose a role")
+  BoardAccess.SetMember($membersBoard, Trim(MemberUsername.Text), MemberRoles()[MemberRole.Index])
+  RefreshMembers()
+  RefreshTree()
+  Notice.Text = "Member saved"
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub RemoveMember_Click()
+  BoardAccess.RemoveMember($membersBoard, MemberUsername.Text)
+  If Not BoardAccess.Role($membersBoard) Then
+    MembersPanel.Hide()
+    $board = 0
+    $card = 0
+    $view = "Boards"
+  Else
+    RefreshMembers()
+  Endif
+  RefreshTree()
+  Notice.Text = "Member removed"
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub CloseMembers_Click()
+  MembersPanel.Hide()
+End
+
+Public Sub ContextAssignSelf_Click()
+  Dim names As String[] = BoardAccess.Assignees($contextBoard, $contextId)
+  Dim index As Integer = names.Find(WebIdentity.Username)
+  If index < 0 Then
+    names.Add(WebIdentity.Username)
+  Else
+    names.Remove(index)
+  Endif
+  BoardAccess.SetAssignees($contextBoard, $contextId, names)
+  ContextMenu.Hide()
+  Editor.Hide()
+  RefreshTree()
+Catch
+  Notice.Text = Error.Text
 End

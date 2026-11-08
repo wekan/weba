@@ -6,6 +6,7 @@ const publicDir=path.join(__dirname,'../WeKan/.public');
 const dom = new JSDOM(`<div id="@1.LanguageSelector"><select data-weba-language></select></div>
 <div id="@1.WebLabelUser">Username</div><button id="@1.WebButtonLogin">Login</button>
 <div id="@1.PageTitle">Boards</div><div id="@1.ContextTitle">Boards</div><div id="@1.ActionTitle">Boards</div><div id="@1.DetailsTitle">Boards</div><input id="@1.WebTextName" value="Username">
+<div id="@1.MemberBoardName">Members</div><div id="@1.MembersTree" class="gw-tree">Normal</div><div id="@1.MemberRole"><select><option value="Read only">Read only</option></select></div>
 <article class="weba-card"><strong>Username</strong></article>`,{url:'http://localhost',runScripts:'outside-only'});
 const {window}=dom;
 window.fetch=async url=>({ok:true,json:async()=>JSON.parse(fs.readFileSync(path.join(publicDir,url),'utf8'))});
@@ -19,6 +20,10 @@ window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
   const fi=JSON.parse(fs.readFileSync(path.join(publicDir,'i18n/fi.json'),'utf8'));
   const key=window.webaI18nCatalog.lookup.Username;
   assert.equal(doc.getElementById('@1.WebLabelUser').textContent,fi[key]);
+  assert.equal(doc.getElementById('@1.MemberRole').textContent,api.t('Read only'),'fixed role caption translated');
+  assert.equal(doc.getElementById('@1.MemberRole').querySelector('option').value,'Read only','role wire value stays stable');
+  assert.equal(doc.getElementById('@1.MemberBoardName').textContent,'Members','user board name stays unchanged');
+  assert.equal(doc.getElementById('@1.MembersTree').textContent,'Normal','user identities stay unchanged');
   assert.equal(doc.documentElement.lang,'fi');
   assert.equal(window.localStorage.getItem('weba.language'),'fi');
   assert.equal(doc.querySelector('select').options.length,237);

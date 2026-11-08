@@ -42,8 +42,13 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   retained across copies/imports/moves; Workers can move within a board, comment
   and change only their own assignment. Hidden WIP occupants are counted by the
   server. Store tests include negative cases and late import rollback.
-- In progress: native member controls, role-aware actions and REST membership/
-  card/container contracts. Custom roles, list-level exceptions, ownership
+- Completed: native member list/add/role/remove controls, role-aware editors,
+  menus and drag handles; Workers can assign themselves and move cards. Native
+  disabled buttons expose matching HTML/ARIA states, and rerendered dialogs keep
+  their anchor. Packaged two-session Chromium tests verify member changes,
+  forged reader writes, Worker comments/moves, assigned-only scope and mobile
+  placement. Static member/role captions use the existing WeKan translations.
+- In progress: REST membership/card/container contracts. Custom roles, list-level exceptions, ownership
   transfer and public/instance board visibility are still pending.
 - Follow-up security work: account deletion must not allow a re-registered
   username to inherit old ownership, author privileges or assignee links.
@@ -61,6 +66,11 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   test public/private canary boundaries without reading real private files.
 - Next: expand REST API contracts and shared board access/role boundaries;
   remaining feature work below is still pending.
+
+- Verification follow-up: the 2026-11-08 full local suite passed after two
+  earlier runs failed the first-registration concurrency retry. Isolated repeated
+  races passed, so the intermittent failure remains unresolved and needs a
+  deterministic reproduction; do not describe this race as fixed.
 
 ## Verification follow-up
 

@@ -14,6 +14,11 @@ source = args.wekan / 'imports/i18n'
 english = json.loads((source / 'data/en.i18n.json').read_text())
 # Explicit equivalents where weba and WeKan use different English captions.
 aliases = {
+    'Board administrator': 'board-admin', 'Save member': 'save',
+    'Role': 'roles-status-role',
+    'Normal (assigned cards only)': 'normal-assigned-only',
+    'Comment (assigned cards only)': 'comment-assigned-only',
+    'Read (assigned cards only)': 'read-assigned-only',
     'Repeat password': 'password-again', 'Create account': 'create-account',
     'Back to login': 'login', 'Archive': 'archived-items', 'Remaining': 'allboards.remaining',
     'Table': 'board-view-table', 'Admin panel': 'admin-panel', 'Admin Panel': 'admin-panel',
@@ -28,7 +33,9 @@ aliases = {
     'Mon': 'monday', 'Tue': 'tuesday', 'Wed': 'wednesday', 'Thu': 'thursday',
     'Fri': 'friday', 'Sat': 'saturday', 'Sun': 'sunday',
 }
-texts = {'Language', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'}
+texts = {'Board administrator', 'Normal', 'Normal (assigned cards only)',
+         'No comments', 'Comment only', 'Comment (assigned cards only)',
+         'Worker', 'Read only', 'Read (assigned cards only)', 'Language', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'}
 controls = set()
 for path in (root / 'WeKan/.src').glob('*.webform'):
     current = ''
@@ -58,6 +65,7 @@ for text in sorted(texts):
         lookup[text] = key
 # Never translate identities, user content, stored status values or editor inputs.
 controls -= {'AccountToggle', 'PageTitle', 'PaneTitle', 'Status', 'Boards', 'WebLabelVersion', 'ContextTitle', 'ActionTitle', 'DetailsTitle'}
+controls.add('MemberRole')
 metadata = []
 for line in (source / 'languages.js').read_text().splitlines():
     match = re.match(r'\s*(\[".*\]),?\s*$', line)

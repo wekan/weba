@@ -1,4 +1,7 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Native membership UI: Add member/role/remove controls, role-aware menus and
+  editors, Worker self-assignment/movement, translated captions, anchored refresh
+  and disabled HTML/ARIA states; test two sessions, forged writes and mobile UI.
 - Assigned/Worker roles: Scope every card read and relationship/history/export
   path, support multiple assignees and restrict Workers to moves/self-assignment/
   comments. Retain assignments in copies/imports/moves and test hidden WIP counts.

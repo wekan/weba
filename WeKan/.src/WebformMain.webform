@@ -168,6 +168,42 @@
   { ContextAction WebTextBox
     Visible = False
   }
+  { MembersPanel WebContainer
+    Class = "weba-members-panel"
+    Visible = False
+    Ignore = True
+    Arrangement = Arrange.Vertical
+    Spacing = True
+    Width = "440px"
+    { CloseMembers WebButton
+      Class = "weba-icon-only weba-popup-close fa fa-times-thin"
+      Tooltip = ("Close")
+    }
+    { MembersTitle WebLabel
+      Text = ("Members")
+    }
+    { MemberBoardName WebLabel
+    }
+    { MembersTree WebTree
+      Height = "180px"
+    }
+    { MemberUserLabel WebLabel
+      Text = ("Username")
+    }
+    { MemberUsername WebTextBox
+    }
+    { MemberRoleLabel WebLabel
+      Text = ("Role")
+    }
+    { MemberRole WebComboBox
+    }
+    { SaveMember WebButton
+      Text = ("Save member")
+    }
+    { RemoveMember WebButton
+      Text = ("Remove member")
+    }
+  }
   { ContextMenu WebContainer
     Class = "weba-context-menu"
     Visible = False
@@ -180,6 +216,12 @@
     }
     { ContextTitle WebLabel
       Text = ("Menu")
+    }
+    { ContextMembers WebButton
+      Text = ("Members")
+    }
+    { ContextAssignSelf WebButton
+      Text = ("Assign myself")
     }
     { ContextAddCard WebButton
       Text = ("Add card")

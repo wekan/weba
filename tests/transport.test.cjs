@@ -32,4 +32,14 @@ for(const url of ['https://attacker.invalid/x?c=private','/i18n/fi.json']){
 // Reusing an XHR must not carry native form bodies/headers into unrelated calls.
 request.headers={};request.open('GET','https://attacker.invalid/x');request.send();
 assert.equal(request.body,undefined);assert.deepEqual(request.headers,{});
-window.close();console.log('Native transport: POST payload privacy, same-origin header, multipart upload and unrelated/reused XHR boundaries passed');
+(async()=>{
+ const button=window.document.createElement('button');button.className='gw-button';window.document.body.append(button);
+ window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
+ const settle=()=>new Promise(resolve=>window.setTimeout(resolve,0));
+ await settle();assert.equal(button.disabled,false);
+ button.classList.add('gw-disabled');await settle();
+ assert.equal(button.disabled,true);assert.equal(button.getAttribute('aria-disabled'),'true');
+ button.classList.remove('gw-disabled');await settle();
+ assert.equal(button.disabled,false);assert.equal(button.getAttribute('aria-disabled'),'false');
+ window.close();console.log('Native transport: POST payload privacy, same-origin header, multipart upload and unrelated/reused XHR boundaries passed');
+})().catch(error=>{window.close();console.error(error);process.exitCode=1;});

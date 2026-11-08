@@ -35,7 +35,7 @@
       return send.call(this,body);
     };
   }
-  const icons={Swimlanes:'th-large',Kanban:'trello',Calendar:'calendar',Gantt:'bar-chart',TableView:'table',Charts:'pie-chart',ImportBoard:'download',ContextDelete:'trash-o',ContextRename:'pencil',ContextCopy:'clipboard',ContextMove:'arrow-up',ContextColor:'paint-brush',ContextStar:'star-o',ContextWatch:'eye-slash',ContextWip:'ban',ContextDescription:'align-left',ContextHistory:'history',ContextExport:'upload',ContextArchive:'archive',ContextRestore:'undo',ContextAddCard:'plus',ContextAddList:'plus',ContextAddLane:'plus',Starred:'star',BoardSettings:'cog',ArchivedItems:'archive',ContextComments:'comment-o',ContextChecklists:'check-square-o',ContextChecklistItems:'check',ContextSubtasks:'sitemap',ContextDependencies:'link',ContextFields:'list-alt',ContextTime:'clock-o',ContextAttachments:'paperclip',CardComments:'comment-o',CardChecklists:'check-square-o',CardChecklistItems:'check',CardSubtasks:'sitemap',CardDependencies:'link',CardFields:'list-alt',CardTime:'clock-o',CardAttachments:'paperclip',DetailStart:'play',DetailStop:'stop',DetailDownload:'download',DetailDelete:'trash-o'};
+  const icons={Swimlanes:'th-large',Kanban:'trello',Calendar:'calendar',Gantt:'bar-chart',TableView:'table',Charts:'pie-chart',ContextMembers:'users',ContextAssignSelf:'user-plus',SaveMember:'save',RemoveMember:'user-times',ImportBoard:'download',ContextDelete:'trash-o',ContextRename:'pencil',ContextCopy:'clipboard',ContextMove:'arrow-up',ContextColor:'paint-brush',ContextStar:'star-o',ContextWatch:'eye-slash',ContextWip:'ban',ContextDescription:'align-left',ContextHistory:'history',ContextExport:'upload',ContextArchive:'archive',ContextRestore:'undo',ContextAddCard:'plus',ContextAddList:'plus',ContextAddLane:'plus',Starred:'star',BoardSettings:'cog',ArchivedItems:'archive',ContextComments:'comment-o',ContextChecklists:'check-square-o',ContextChecklistItems:'check',ContextSubtasks:'sitemap',ContextDependencies:'link',ContextFields:'list-alt',ContextTime:'clock-o',ContextAttachments:'paperclip',CardComments:'comment-o',CardChecklists:'check-square-o',CardChecklistItems:'check',CardSubtasks:'sitemap',CardDependencies:'link',CardFields:'list-alt',CardTime:'clock-o',CardAttachments:'paperclip',DetailStart:'play',DetailStop:'stop',DetailDownload:'download',DetailDelete:'trash-o'};
   function decorate(){
     if(!root.document)return;
     for(const [name,icon] of Object.entries(icons)){
@@ -46,6 +46,11 @@
         const className='fa fa-'+nameIcon+' weba-native-icon';if(i.className!==className)i.className=className;
       });
     }
+    document.querySelectorAll('button.gw-button').forEach(button=>{
+      const disabled=button.classList.contains('gw-disabled');
+      if(button.disabled!==disabled)button.disabled=disabled;
+      if(button.getAttribute('aria-disabled')!==String(disabled))button.setAttribute('aria-disabled',String(disabled));
+    });
     document.querySelectorAll('.weba-icon-only').forEach(button=>{
       if(button.title&&button.getAttribute('aria-label')!==button.title)button.setAttribute('aria-label',button.title);
     });
@@ -65,6 +70,7 @@
   root.webaUI={decorate,syncColor};
   function start(){
     document.addEventListener('input',event=>{
+      if(event.target.id?.endsWith('.MemberUsername:entry'))root.gw?.update(event.target.id.slice(0,-6),'text',event.target.value);
       const wheel=document.querySelector('.weba-custom-color');
       if(!wheel)return;
       if(event.target===wheel){
@@ -72,7 +78,7 @@
         if(input){input.value=wheel.value;gw.update(wheel.dataset.target,'text',wheel.value);}
       }else if(event.target.id===wheel.dataset.target+':entry')syncColor();
     });
-    decorate();new MutationObserver(decorate).observe(document.body,{childList:true,subtree:true});
+    decorate();new MutationObserver(decorate).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })(window);

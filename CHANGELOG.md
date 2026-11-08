@@ -2,6 +2,14 @@
 
 This work adds the following features and fixes:
 
+- Add native shared-board member controls for all nine roles, with member add,
+  role changes and removal. Adapt menus, card/detail editors and drag handles to
+  server capabilities; enable Worker self-assignment and card movement. Keep
+  refreshed dialogs anchored, synchronize disabled button HTML/ARIA states and
+  translate fixed member/role captions using WeKan catalogs. Verify packaged
+  two-session reader/Worker/assigned-only behavior, forged writes and mobile
+  placement, plus disabled-state and drag regressions. Thanks to xet7.
+
 - Enable all nine built-in WeKan roles with assigned-only card scopes on lists,
   direct reads, comments/files, relationships, history, card ordering and export.
   Reject assigned-only container copies/transfers and retain only readable

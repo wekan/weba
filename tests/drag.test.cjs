@@ -28,6 +28,13 @@ for(const cancel of ['pointercancel','multitouch','outside']){
   assert.equal(w.webaDrag.active,false);assert.equal(calls.length,1,'canceled/invalid drops do not write');
 }
 root.dataset.editable='false';assert.equal(w.webaDrag.identify(handle,'touch'),null,'archive/read-only view cannot drag');
+root.dataset.cardMove='true';
+assert.equal(w.webaDrag.identify(handle,'touch').kind,'card','Worker can drag cards without general write access');
+event('pointerdown',handle,10,30);event('pointermove',d,330,80);event('pointerup',d,330,80);
+assert.equal(calls.length,2,'Worker card drop reaches the authoritative server guard');
+const listHandle=d.createElement('button');listHandle.dataset.dragKind='list';columns[0].append(listHandle);
+assert.equal(w.webaDrag.identify(listHandle,'touch'),null,'Worker cannot drag lists');
+listHandle.remove();delete root.dataset.cardMove;calls.pop();
 root.dataset.editable='true';const key=new w.KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true,cancelable:true});handle.dispatchEvent(key);assert.equal(calls.length,2,'keyboard handle can move a card');
 columns[0].dataset.listId='11';columns[1].dataset.listId='22';
 handle.dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true,cancelable:true}));

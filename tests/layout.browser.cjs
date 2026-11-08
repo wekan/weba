@@ -6,6 +6,7 @@ const fs = require('node:fs');
 (async () => {
   const browser = await puppeteer.connect({browserURL:process.env.WEBA_BROWSER_URL});
   let attachmentFile;
+  let secondaryContext;
   let nativeRequests=0;
   const context = await browser.createBrowserContext();
   const page = await context.newPage();
@@ -67,7 +68,8 @@ const fs = require('node:fs');
       console.log('Login/register layout: white inputs, right-side independent visibility buttons passed');
       return;
     }
-    await fill('WebTextName','layout-'+Date.now());
+    const ownerName='layout-'+Date.now();
+    await fill('WebTextName',ownerName);
     await fill('WebTextPass','layout-comparison-password');
     await fill('ConfirmPassword','layout-comparison-password');
     await click('Register');
@@ -112,6 +114,49 @@ const fs = require('node:fs');
     assert.equal(await page.$$eval('[id$=".Boards"] img',els=>els.filter(e=>e.getBoundingClientRect().width>0).length),0,'tree uses Font Awesome instead of visible bitmap icons');
     assert.equal(await page.$$eval('.weba-add-list .fa-plus-square-o',els=>els.length),3,'list-add uses the same regular Font Awesome icon as WeKan');
     assert.equal(await page.$$eval('.weba-column',els=>els.length),3,'empty board shows its initial lists');
+    if(process.env.WEBA_MEMBERS_ONLY) {
+      async function make(title){await page.click('.weba-add-card-top');await settle();await fill('CardTitle',title);await click('SaveCard');await click('CloseEditor');}
+      await make('Shared card');await make('Hidden role card');
+      secondaryContext=await browser.createBrowserContext();
+      const memberPage=await secondaryContext.newPage();await memberPage.setViewport({width:1440,height:1000});
+      const waitP=()=>memberPage.waitForFunction(()=>window.gw&&gw.commands.length===0);
+      const clickP=async name=>{await waitP();await memberPage.locator(selector(name)).click();await waitP();};
+      const fillP=async(name,value)=>{await waitP();await memberPage.locator(entry(name)).fill(value);};
+      const memberName='member-'+Date.now();
+      await memberPage.goto(process.env.WEBA_TEST_URL,{waitUntil:'networkidle2'});
+      await memberPage.waitForFunction(()=>window.webaI18n);await memberPage.evaluate(()=>webaI18n.setLanguage('en'));
+      await clickP('ShowRegistration');await fillP('WebTextName',memberName);await fillP('WebTextPass','member-test-password');await fillP('ConfirmPassword','member-test-password');await clickP('Register');
+      await memberPage.waitForSelector(selector('Header'),{visible:true});assert.equal(await memberPage.$$eval('.weba-board-tile',els=>els.length),0);
+      async function members(){await click('BoardSettings');await click('ContextMembers');await visible('MembersPanel');}
+      async function setRole(role){await members();await fill('MemberUsername',memberName);await page.select('[id$=".MemberRole:select"]',role);await settle();await click('SaveMember');assert.ok(await page.$eval(selector('MembersTree'),(e,name)=>e.textContent.includes(name),memberName));await click('CloseMembers');}
+      async function memberBoard(){await clickP('Home');await memberPage.waitForSelector('.weba-board-tile');await memberPage.click('.weba-board-tile');await waitP();}
+      await click('SidebarToggle');await setRole('Read only');
+      await memberBoard();assert.equal(await memberPage.$$eval('.weba-data .weba-card',els=>els.length),2);
+      assert.equal(await memberPage.$$eval('.weba-add-card-top,.weba-drag-handle',els=>els.length),0,'read-only has no create/drag controls');
+      await memberPage.click('.weba-report .weba-card strong');await waitP();
+      assert.equal(await memberPage.$eval(entry('CardTitle'),e=>e.readOnly),true);assert.equal(await memberPage.$eval(selector('SaveCard'),e=>e.disabled),true);
+      await memberPage.evaluate(()=>{gw.update(document.querySelector('[id$=".CardTitle"]').id,'text','Forged edit');});await waitP();
+      await memberPage.evaluate(()=>gw.raise(document.querySelector('[id$=".SaveCard"]').id,'click',[]));await waitP();
+      assert.ok(await memberPage.$eval(selector('Notice'),e=>e.textContent.replace(/\u00a0/g,' ').includes('permission denied')));
+      await clickP('CloseEditor');await memberPage.click('.weba-card-menu');await waitP();await clickP('ContextComments');
+      assert.equal(await memberPage.$eval(selector('DetailSave'),e=>e.getBoundingClientRect().width),0,'reader cannot author comments');await clickP('CloseDetails');
+      await setRole('Worker');await memberBoard();
+      assert.equal(await memberPage.$$eval('.weba-drag-handle[data-drag-kind="card"]',els=>els.length),2);
+      assert.equal(await memberPage.$$eval('.weba-drag-handle[data-drag-kind="list"],.weba-add-card-top',els=>els.length),0);
+      await memberPage.click('.weba-card-menu');await waitP();await clickP('ContextAssignSelf');
+      await memberPage.click('.weba-card-menu');await waitP();assert.ok(await memberPage.$eval(selector('ContextAssignSelf'),e=>e.textContent.includes('Unassign')));await clickP('CloseContext');
+      await memberPage.focus('.weba-card .weba-drag-handle');await memberPage.keyboard.press('ArrowRight');await waitP();
+      assert.equal(await memberPage.$$eval('.weba-column[data-list="Doing"] .weba-card',els=>els.length),1,'worker keyboard move persists');
+      await memberPage.click('.weba-column[data-list="Doing"] .weba-card-menu');await waitP();await clickP('ContextComments');await fillP('DetailBody','Worker comment');await clickP('DetailSave');await clickP('CloseDetails');
+      await setRole('Read (assigned cards only)');await memberBoard();
+      assert.equal(await memberPage.$$eval('.weba-data .weba-card',els=>els.length),1);assert.ok(await memberPage.$eval('.weba-data',e=>!e.textContent.includes('Hidden role card')));
+      await members();await fill('MemberUsername',memberName);await click('RemoveMember');await click('CloseMembers');await clickP('Home');
+      assert.equal(await memberPage.$$eval('.weba-board-tile',els=>els.length),0,'removed member loses the board');
+      await click('CloseSidebar');await page.setViewport({width:390,height:844});await click('SidebarToggle');await members();
+      const box=await page.$eval(selector('MembersPanel'),e=>{const r=e.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom};});
+      assert.ok(box.left>=0&&box.right<=390&&box.top>=0&&box.bottom<=844,'member dialog fits mobile viewport');await click('CloseMembers');
+      console.log('Members browser: native add/role/remove, forged reader writes, Worker assignment/move/comment, assigned-only scope and mobile dialog passed');return;
+    }
     if(process.env.WEBA_COLORS_ONLY) {
       async function colorMenu(kind){
         if(kind==='board'){await click('SidebarToggle');await click('BoardSettings');}
@@ -416,5 +461,5 @@ const fs = require('node:fs');
     await click('AccountToggle');
     await Promise.all([page.waitForNavigation({waitUntil:'networkidle2'}), page.locator(selector('Logout')).click()]);
     await settle();
-  } catch(error) {await shot('weba-failure'); throw error;} finally {if(attachmentFile&&fs.existsSync(attachmentFile))fs.unlinkSync(attachmentFile);await context.close(); await browser.disconnect();}
+  } catch(error) {await shot('weba-failure'); throw error;} finally {if(secondaryContext)await secondaryContext.close();if(attachmentFile&&fs.existsSync(attachmentFile))fs.unlinkSync(attachmentFile);await context.close(); await browser.disconnect();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

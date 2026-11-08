@@ -8,7 +8,7 @@
   const visible=e=>e && !e.hidden && e.getBoundingClientRect().width>0 && e.getBoundingClientRect().height>0;
   function encode(text){return btoa(Array.from(new TextEncoder().encode(String(text)),byte=>String.fromCharCode(byte)).join(''));}
   function send(section,kind,values){
-    if(section.dataset.editable!=='true'||!section.dataset.drag||!root.gw)return;
+    if((kind==='card' ? section.dataset.cardMove!=='true'&&section.dataset.editable!=='true' : section.dataset.editable!=='true')||!section.dataset.drag||!root.gw)return;
     root.gw.update(section.dataset.drag,'text',[kind,...values.map(encode)].join('|'),null);
   }
   function identify(target,pointerType){
@@ -19,7 +19,8 @@
     else if(kind==='list')element=handle.closest('.weba-column');
     else if(kind==='card'||(pointerType==='mouse'&&card&&!target.closest('button,input,textarea,a,select'))){kind='card';element=card;}
     const section=element?.closest('.weba-content');
-    if(!element||!section||section.dataset.editable!=='true'||!section.dataset.drag)return null;
+    if(!element||!section||!section.dataset.drag)return null;
+    if(kind==='card' ? section.dataset.cardMove!=='true'&&section.dataset.editable!=='true' : section.dataset.editable!=='true')return null;
     return {kind,element,section,handle};
   }
   function reset(){
