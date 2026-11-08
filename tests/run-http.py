@@ -43,7 +43,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             disabled_thread = threading.Thread(target=disabled.serve_forever, daemon=True)
             disabled_thread.start()
             try:
-                for route in ['/api/users/rest-owner/boards', '/%61pi/users/rest-owner/boards', '/API/users/rest-owner/boards', '/api/boards/1/lists', '/api/boards/1/swimlanes', '/api/boards/1/cards_count', '/api/boards/1/lists/1/cards']:
+                for route in ['/api/users/rest-owner/boards', '/%61pi/users/rest-owner/boards', '/API/users/rest-owner/boards', '/api/boards/1/lists', '/api/boards/1/swimlanes', '/api/boards/1/cards_count', '/api/boards/1/lists/1/cards', '/api/cards/1', '/api/boards/1/lists/1/cards/1']:
                     try:
                         urllib.request.urlopen('http://127.0.0.1:' + str(disabled.server_port) + route, timeout=10)
                     except urllib.error.HTTPError as error:
@@ -73,6 +73,8 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             subprocess.run([sys.executable, str(root / 'tests/api-board-reads.test.py')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/api-list-times.test.py')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/list-times-conformance.test.cjs')], check=True, env=env)
+            subprocess.run([sys.executable, str(root / 'tests/api-single-card.test.py')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/card-read-conformance.test.cjs')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/card-people-commit.py')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/member-commit.py')], check=True, env=env)
         elif '--sessions' in sys.argv:

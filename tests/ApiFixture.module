@@ -163,6 +163,40 @@ Public Sub Main()
     Print "Member commit rollback retained roles/flags/history and recovered without authority leakage"
     Return
   Endif
+  If Env["WEBA_TEST_MODE"] = "single-card-content" Then
+    data = JSON.Decode(Env["WEBA_TEST_BOARDS"])
+    boardId = data["otherBoardId"]
+    cardId = data["otherCardId"]
+    Session["username"] = "rest-other"
+    Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
+    otherId = CardContent.Save(boardId, cardId, 0, "checklist", "Checklist ää 中文", "", 0, False, 0)
+    CardContent.Save(boardId, cardId, 0, "checkitem", "First 😀", "", otherId, False, 0)
+    CardContent.Save(boardId, cardId, 0, "checkitem", "Second", "", otherId, True, 0)
+    CardContent.Save(boardId, cardId, 0, "checklist", "Empty checklist", "", 0, False, 0)
+    Return
+  Endif
+  If Env["WEBA_TEST_MODE"] = "single-card-read-scope" Then
+    data = JSON.Decode(Env["WEBA_TEST_BOARDS"])
+    boardId = data["otherBoardId"]
+    otherId = data["otherListId"]
+    cardId = data["otherCardId"]
+    WebIdentity.AuthenticateApi("rest-owner")
+    data = BoardAccess.ReadApiCard(cardId)
+    If data["status"] <> 200 Then Error.Raise("Single-card global administrator read denied")
+    If BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Single-card read authority leaked")
+    db = WebDatabase.OpenConnection()
+    db.Exec("ALTER TABLE kb_entries RENAME TO kb_entries_card_read_failure")
+    data = BoardAccess.ReadApiCard(cardId)
+    db.Exec("ALTER TABLE kb_entries_card_read_failure RENAME TO kb_entries")
+    If data["status"] <> 500 Then Error.Raise("Expected single-card SQL failure")
+    If data["data"]["error"] <> "Board read failed" Then Error.Raise("Single-card failure exposed internals")
+    If BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Single-card authority leaked after SQL failure")
+    data = BoardAccess.ReadApiBoard(boardId, "card", otherId, cardId)
+    If data["status"] <> 200 Then Error.Raise("Single-card read retry failed")
+    If BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Single-card authority leaked after retry")
+    Print "Single-card read scope reset after success/failure/retry"
+    Return
+  Endif
   If Env["WEBA_TEST_MODE"] = "list-clock-failure" Then
     data = JSON.Decode(Env["WEBA_TEST_BOARDS"])
     boardId = data["otherBoardId"]

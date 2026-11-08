@@ -4,11 +4,8 @@ Export
 Public Function Read(boardId As Integer, kind As String, Optional listId As Integer) As Variant
   Dim db As Connection = WebDatabase.OpenConnection()
   Dim r As Result
-  Dim lane As Result
   Dim item As Collection
   Dim rows As New Variant[]
-  Dim values As Collection
-  Dim field As String
   Dim data As Collection
   Dim index As Integer
   Dim prior As Collection
@@ -54,20 +51,7 @@ Public Function Read(boardId As Integer, kind As String, Optional listId As Inte
       data["list_cards_count"] = r.Count
     Else
       For Each r
-        item = New Collection
-        item["_id"] = CStr(r!id)
-        ' Add stores typed empty strings; indexed assignment removes them,
-        ' while JSONCollection._put turns them into null on Gambas 3.20.
-        item.Add(CStr(r!title), "title")
-        item.Add(CStr(r!description), "description")
-        lane = db.Find("kb_lanes", "board_id = &1 AND title = &2", boardId, r!lane)
-        If lane.Available Then item["swimlaneId"] = CStr(lane!id)
-        item["assignees"] = BoardAccess.Assignees(boardId, r!id)
-        item["sort"] = KanbanStore.ItemOrder(boardId, "card", CStr(r!id), r!id)
-        values = CardDates.ReadDates(boardId, r!id)
-        For Each field In values.Keys
-          item[field] = CardDates.Iso(values[field])
-        Next
+        item = CardFields(boardId, r)
         index = 0
         For Each prior In rows
           If prior["sort"] > item["sort"] Then Break
@@ -81,4 +65,75 @@ Public Function Read(boardId As Integer, kind As String, Optional listId As Inte
   Endif
   If data Then Return data
   Return rows
+End
+
+Private Function CardFields(boardId As Integer, record As Result) As Collection
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim item As New Collection
+  Dim lane As Result
+  Dim values As Collection
+  Dim field As String
+  item["_id"] = CStr(record!id)
+  item.Add(CStr(record!title), "title")
+  item.Add(CStr(record!description), "description")
+  lane = db.Find("kb_lanes", "board_id=&1 AND title=&2", boardId, record!lane)
+  If lane.Available Then item["swimlaneId"] = CStr(lane!id)
+  item["assignees"] = BoardAccess.Assignees(boardId, record!id)
+  item["sort"] = KanbanStore.ItemOrder(boardId, "card", CStr(record!id), record!id)
+  values = CardDates.ReadDates(boardId, record!id)
+  For Each field In values.Keys
+    item[field] = CardDates.Iso(values[field])
+  Next
+  Return item
+End
+
+Public Function Card(boardId As Integer, cardId As Integer) As Collection
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim r As Result
+  Dim row As Result
+  Dim subrow As Result
+  Dim item As Collection
+  Dim checklist As Collection
+  Dim entry As Collection
+  Dim checklists As New Variant[]
+  Dim entries As Variant[]
+  If Env["WEBA_API_REQUEST"] <> "1" Then Error.Raise("API context required")
+  BoardAccess.RequireCard(boardId, cardId)
+  If Not BoardAccess.Can(boardId, "seesAllCards") Then Error.Raise("Whole-board permission required")
+  KanbanStore.PrimeCardLinks(boardId)
+  r = db.Find("kb_cards", "board_id=&1 AND id=&2", boardId, cardId)
+  If Not r.Available Then Error.Raise("Card not found")
+  item = CardFields(boardId, r)
+  item["boardId"] = CStr(boardId)
+  item["listId"] = CStr(KanbanStore.CardListId(boardId, cardId))
+  item["archived"] = r!archived
+  item["members"] = BoardAccess.CardMembers(boardId, cardId)
+  row = db.Find("kb_item_changes", "board_id=&1 AND kind=&2 AND item_id=&3", boardId, "card", cardId)
+  If row.Available Then item["modifiedAt"] = CardDates.Iso(row!modified_ms)
+  CardContent.OpenStore()
+  row = CardContent.Entries(boardId, cardId, "checklist")
+  For Each row
+    checklist = New Collection
+    checklist["_id"] = CStr(row!id)
+    checklist["boardId"] = CStr(boardId)
+    checklist["cardId"] = CStr(cardId)
+    checklist.Add(CStr(row!title), "title")
+    checklist["sort"] = row!id
+    checklist["dueAt"] = JSON.Null
+    If TypeOf(row!created_at) = gb.Date And Not IsNull(row!created_at) Then checklist["createdAt"] = CardDates.Iso(ItemChanges.Epoch(row!created_at))
+    entries = New Variant[]
+    subrow = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", boardId, cardId, "checkitem", row!id)
+    For Each subrow
+      entry = New Collection
+      entry["_id"] = CStr(subrow!id)
+      entry.Add(CStr(subrow!title), "title")
+      entry["isFinished"] = subrow!done
+      entry["dueAt"] = JSON.Null
+      entries.Add(entry)
+    Next
+    checklist["items"] = entries
+    checklists.Add(checklist)
+  Next
+  item["checklists"] = checklists
+  Return item
 End

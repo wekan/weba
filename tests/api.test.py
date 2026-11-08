@@ -63,6 +63,8 @@ for command in [['raise', None, 'open', [], False],
         headers={'Content-Type': 'application/x-www-form-urlencoded', 'X-WeBa-Request': '1'})
     client.open(request, timeout=15).read()
 assert call('/api/users/rest-owner/boards')[0] == 401, 'Native cookie must not authenticate REST'
+assert call('/api/cards/1')[0] == 401, 'Native cookie must not authenticate global card reads'
+assert call('/api/boards/'+str(BOARDS['boardId'])+'/lists/1/cards/1')[0] == 401, 'Native cookie must not authenticate scoped card reads'
 assert call('/api/users/rest-other', 'DELETE')[0] == 401, 'Native cookie must not authorize REST deletion'
 assert call('/api/boards/'+str(BOARDS['boardId'])+'/lists/1/cards/1', 'PUT', {'members': []})[0] == 401, 'Native cookie must not authorize REST card PUT'
 assert call('/users/login', 'POST', raw=b'[')[0] == 400

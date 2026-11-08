@@ -118,13 +118,31 @@ Public Sub Main()
   Endif
   If fields.Count = 7 Then
     If fields[0] = "api" And fields[1] = "boards" And fields[3] = "lists" And fields[5] = "cards" Then
-      If Request.Method <> "PUT" Then
+      If Request.Method <> "PUT" And Request.Method <> "GET" Then
         Reply(405, ErrorData("Method not allowed"))
         Return
+      Endif
+      If Request.Method = "GET" Then
+        Try boardId = PositiveId(fields[2])
+        If Error Then
+          Reply(404, ErrorData("Board not found"))
+          Return
+        Endif
+        ' Authorize the board before interpreting the list/card identifiers.
+        outcome = BoardAccess.ReadApiBoard(boardId, "access")
+        If outcome["status"] <> 200 Then
+          Reply(outcome["status"], outcome["data"])
+          Return
+        Endif
       Endif
       Try ids = [PositiveId(fields[2]), PositiveId(fields[4]), PositiveId(fields[6])]
       If Error Then
         Reply(404, ErrorData("Card not found"))
+        Return
+      Endif
+      If Request.Method = "GET" Then
+        outcome = BoardAccess.ReadApiBoard(ids[0], "card", ids[1], ids[2])
+        Reply(outcome["status"], outcome["data"])
         Return
       Endif
       payload = JsonBody(True)
@@ -201,6 +219,20 @@ Public Sub Main()
     Endif
   Endif
   If fields.Count = 3 Then
+    If fields[0] = "api" And fields[1] = "cards" Then
+      If Request.Method <> "GET" Then
+        Reply(405, ErrorData("Method not allowed"))
+        Return
+      Endif
+      Try cardId = PositiveId(fields[2])
+      If Error Then
+        Reply(404, ErrorData("Card not found"))
+        Return
+      Endif
+      outcome = BoardAccess.ReadApiCard(cardId)
+      Reply(outcome["status"], outcome["data"])
+      Return
+    Endif
     If fields[0] = "api" And fields[1] = "users" Then
       If Request.Method <> "DELETE" Then
         Reply(405, ErrorData("Method not allowed"))

@@ -421,6 +421,26 @@ const fs = require('node:fs');
       await click('DetailDownload');await page.waitForFunction(()=>window.__attachmentText!==undefined);assert.equal(await page.evaluate(()=>window.__attachmentText),contents);
       await click('CloseDetails');await page.click('.weba-card-menu');await settle();await click('ContextCopy');await fill('ActionText','Rich copy');await click('ActionConfirm');
       await page.waitForFunction(()=>[...document.querySelectorAll('.weba-data .weba-card strong')].some(e=>e.textContent==='Rich copy'));
+      if(process.env.WITH_API==='true'){
+        const rich=await page.$$eval('.weba-data .weba-card',els=>{const card=els.find(e=>e.querySelector('strong').textContent==='Rich card');return{id:card.dataset.cardId,list:card.dataset.listId,board:document.querySelector('.weba-content').dataset.board};});
+        async function readRich(){return page.evaluate(async({ownerName,rich})=>{
+          const login=await fetch('/users/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:ownerName,password:'layout-comparison-password'})});
+          if(login.status!==200)return{login:login.status};
+          const {token}=await login.json(),headers={Authorization:'Bearer '+token};
+          const global=await fetch(`/api/cards/${rich.id}`,{headers});
+          const scoped=await fetch(`/api/boards/${rich.board}/lists/${rich.list}/cards/${rich.id}`,{headers});
+          return{login:login.status,global:global.status,scoped:scoped.status,card:await global.json(),data:await scoped.json()};
+        },{ownerName,rich});}
+        let result=await readRich();assert.equal(result.login,200);assert.equal(result.global,200);assert.equal(result.scoped,200);assert.deepEqual(result.card,result.data);
+        assert.equal(result.card.title,'Rich card');assert.deepEqual(result.card.assignees,[ownerName]);
+        assert.equal(result.card.checklists[0].title,'Checklist');assert.equal(result.card.checklists[0].items[0].title,'First item');assert.equal(result.card.checklists[0].items[0].isFinished,false);
+        assert.equal(result.card.checklists[0].dueAt,null);assert.ok(Number.isFinite(Date.parse(result.card.modifiedAt)));
+        await page.evaluate(id=>document.querySelector(`.weba-card[data-card-id="${id}"] .weba-card-menu`).click(),rich.id);await settle();await click('ContextArchive');
+        assert.equal(await page.$$eval('.weba-data .weba-card',(els,id)=>els.filter(e=>e.dataset.cardId===id).length,rich.id),0);
+        result=await readRich();assert.equal(result.global,200);assert.equal(result.card.archived,true);assert.equal(result.scoped,404);assert.deepEqual(result.data,{error:'Card not found'});
+        assert.equal(result.card.checklists[0].items[0].title,'First item');
+        console.log('Single-card browser: native checklist/checkbox persistence, both GETs and archived global/scoped distinction passed');
+      }
       console.log('Browser native card details: comments, checklist create/edit, typed fields, dependencies, real subtasks, timers, native file upload/download and rich copy passed');return;
     }
     if(process.env.WEBA_MENUS_ONLY) {

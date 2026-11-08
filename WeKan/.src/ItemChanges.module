@@ -2,8 +2,12 @@
 Export
 
 Public Function UtcNow() As Long
+  Return Epoch(Now)
+End
+
+Public Function Epoch(value As Date) As Long
   Dim parsed As Collection
-  Dim wire As String = JSON.Decode(JSON.Encode(Now))
+  Dim wire As String = JSON.Decode(JSON.Encode(value))
   ' gb.util.web serializes a Date as UTC. Gambas 3.20 uses MM/DD/YYYY;
   ' newer releases use ISO. Normalize only that known legacy wire format.
   If Len(wire) >= 19 And Mid(wire, 3, 1) = "/" And Mid(wire, 6, 1) = "/" Then

@@ -2,6 +2,16 @@
 
 This work adds the following features and fixes:
 
+- Add single-card GET at global and board/list paths with source whole-board
+  permissions, permission-before-scoped-ID/card lookup, scoped admin reset and JSON
+  missing-card errors. Global GET includes archived cards; scoped GET requires
+  an active matching card. Return implemented fields, raw ordered people, precise
+  UTC dates/change time and scoped checklist/item arrays with nullable deadlines.
+  Reuse the original cardWithChecklists serializer as an SQL-backed oracle;
+  verify roles/combined/inactive flags, canary isolation, Date limits, cookie/API
+  gates, SQL failure/retry and packaged native checklist/archive Chromium flows.
+  Full document/custom-field and deadline parity remain open. Thanks to xet7.
+
 - Consolidate project-specific source/toolchain/database/verification notes in
   docs/Development.md and link them from README. Remove companion AGENTS.md and
   CLAUDE.md copies as required by the containing WeKan root instructions, keeping

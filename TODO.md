@@ -231,7 +231,25 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   storage and lifecycle/transaction semantics. Describe source-reducer comparison,
   four-zone clock checks, eight native write-failure rollbacks, timestamp-aware
   COMMIT snapshots and packaged Chromium verification.
-- Pending read parity: complete board/card documents and single-card GET routes,
+- Completed initial single-card GET: global /api/cards/:id includes archived
+  cards; /api/boards/:id/lists/:listId/cards/:cardId reads only the active matching
+  card. Check whole-board REST permission before scoped list/card validation and
+  existence; preserve source 403/404 distinctions and scoped global admin cleanup.
+  Return implemented IDs/text/swimlane/archived/order, independent ordered people,
+  exact four UTC dates/change time and checklist/item arrays. Empty strings/arrays
+  stay exact, checklists/items stay scoped by card/board, unrecorded deadlines are
+  null and checklist creation dates use canonical UTC across Gambas date encodings.
+  Verify nine roles plus combined/inactive flags, cookie/WITH_API boundaries,
+  crafted foreign/stale checklist parents, missing/malformed scope privacy,
+  TimeClip limits and read-only data/history/clock snapshots. Source/archive HTTP
+  responses match the actual original cardWithChecklists on independent SQL inputs
+  for implemented fields; SQL failure/retry resets native authority. Full local
+  tests and packaged Chromium native checklist/checkbox/archive GET flows pass.
+  Original spec 17 callbacks remain 10/30; these helper checks do not imply full
+  original suite or full schema coverage.
+- Pending read parity: complete board/card documents (including remaining source
+  attributes and board-defined/admin-only custom-field behavior), checklist/item
+  deadline editing/persistence,
   full fractional sort support, custom roles, legacy lane mapping,
   public/instance visibility and complete original UI/API/security suites.
 - Next card-person work: remaining card PUT fields, reads, creation/bulk routes

@@ -1,4 +1,9 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Single-card GET: Add global/board-list reads, archived-vs-active distinction,
+  permission-first scope and reset after failure. Expose implemented fields,
+  ordered people/UTC times and isolated checklist/items; verify source serializer,
+  SQL canaries/roles/date bounds and packaged Chromium native/archive behavior.
+  Full documents/custom fields and checklist deadlines remain pending.
 - Documentation: Move weba development details to docs/Development.md and
   README; remove duplicate companion instruction files under the shared root
   instruction policy without changing application behavior.

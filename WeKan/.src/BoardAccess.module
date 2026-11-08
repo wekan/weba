@@ -331,7 +331,22 @@ Private Function ApiFailure(status As Integer, message As String) As Collection
   Return ApiAnswer(status, data)
 End
 
-Public Function ReadApiBoard(boardId As Integer, kind As String, Optional listId As Integer) As Collection
+Public Function ReadApiCard(cardId As Integer) As Collection
+  Dim r As Result
+  $apiMemberBoard = 0
+  If Env["WEBA_API_REQUEST"] <> "1" Then Return ApiFailure(403, "API context required")
+  If Not WebIdentity.Username Then Return ApiFailure(401, "Invalid credentials")
+  If Not WebDatabase.UserExists(WebIdentity.Username) Then Return ApiFailure(401, "Invalid credentials")
+  OpenStore()
+  r = $db.Find("kb_cards", "id=&1", cardId)
+  If Not r.Available Then Return ApiFailure(404, "Card not found")
+  Return ReadApiBoard(r!board_id, "card-any", 0, cardId)
+Catch
+  $apiMemberBoard = 0
+  Return ApiFailure(500, "Card read failed")
+End
+
+Public Function ReadApiBoard(boardId As Integer, kind As String, Optional listId As Integer, Optional cardId As Integer) As Collection
   Dim actor As String = WebIdentity.Username
   Dim roleKey As String
   Dim flags As Collection
@@ -356,9 +371,29 @@ Public Function ReadApiBoard(boardId As Integer, kind As String, Optional listId
       If flags[flag] = True Then Return ApiFailure(403, "Forbidden")
     Next
   Endif
-  If ["board", "lists", "swimlanes", "cards_count", "cards", "list_cards_count"].Find(kind) < 0 Then Return ApiFailure(404, "API route not found")
+  If ["board", "lists", "swimlanes", "cards_count", "cards", "list_cards_count", "card", "card-any", "access"].Find(kind) < 0 Then Return ApiFailure(404, "API route not found")
+  If kind = "access" Then Return ApiAnswer(200, True)
   If siteAdmin Then $apiMemberBoard = boardId
-  answer = ApiAnswer(200, BoardRestData.Read(boardId, kind, listId))
+  If kind = "card" Or kind = "card-any" Then
+    If kind = "card" Then
+      r = $db.Find("kb_cards", "board_id=&1 AND id=&2 AND archived=&3", boardId, cardId, False)
+    Else
+      r = $db.Find("kb_cards", "board_id=&1 AND id=&2", boardId, cardId)
+    Endif
+    If Not r.Available Then
+      $apiMemberBoard = 0
+      Return ApiFailure(404, "Card not found")
+    Endif
+    If kind = "card" Then
+      If KanbanStore.CardListId(boardId, cardId) <> listId Then
+        $apiMemberBoard = 0
+        Return ApiFailure(404, "Card not found")
+      Endif
+    Endif
+    answer = ApiAnswer(200, BoardRestData.Card(boardId, cardId))
+  Else
+    answer = ApiAnswer(200, BoardRestData.Read(boardId, kind, listId))
+  Endif
   $apiMemberBoard = 0
   Return answer
 Catch
