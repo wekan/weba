@@ -1,4 +1,7 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Describe single-card GET semantics/projection and original
+  serializer/SQL/HTTP/Chromium verification, keeping full document/deadline gaps
+  and original callback counts explicit.
 - Single-card GET: Add global/board-list reads, archived-vs-active distinction,
   permission-first scope and reset after failure. Expose implemented fields,
   ordered people/UTC times and isolated checklist/items; verify source serializer,

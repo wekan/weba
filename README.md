@@ -231,6 +231,8 @@ The first implemented REST contracts use JSON request/response bodies:
 | `GET /api/boards/:id/cards_count` | Return `board_cards_count` for nonarchived cards |
 | `GET /api/boards/:id/lists/:listId/cards` | Ordered active cards with text, swimlane, assignees, sort and UTC dates |
 | `GET /api/boards/:id/lists/:listId/cards_count` | Return `list_cards_count` for nonarchived cards |
+| `GET /api/cards/:cardId` | Implemented card fields/checklists, including archived cards, with whole-board REST permission |
+| `GET /api/boards/:id/lists/:listId/cards/:cardId` | Same implemented projection for an active card matching the board/list |
 | `POST /api/boards/:id/members/:userId/add` | Add an existing account with `action: "add"` and optional role/flags; an active member is unchanged |
 | `POST /api/boards/:id/members/:userId` | Change an active or inactive member's role/flags without changing activation |
 | `POST /api/boards/:id/members/:userId/remove` | Remove with `action: "remove"`; the final administrator remains active |
@@ -250,8 +252,25 @@ board permissions and membership remain unchanged.
 List/card results filter their own archived state. Card lists preserve exact text,
 including empty strings, ordered assignees/duplicates, native integer ordering and
 stored UTC date precision. A nonexistent/foreign list produces an empty card list
-or zero count, matching the source selector. Full board/card documents, single-card
-routes and fractional sort remain pending.
+or zero count, matching the source selector. Complete board/card documents and
+fractional sort remain pending.
+
+Single-card GETs share the whole-board read permission check. The scoped route
+authorizes the board before interpreting list/card IDs or looking for the card,
+so an excluded role gets 403 even for malformed/missing targets. Authorized callers
+get JSON 404 for a mismatched/missing/archived scoped card. The global route looks
+up the card's board and can return archived cards, as in WeKan #5546. Its temporary
+global-administrator scope also resets after SQL errors and retries.
+
+The current projection includes IDs, title/description, swimlane, archived state,
+integer sort, ordered members/assignees, four UTC dates, recorded modifiedAt and
+checklists/items. Empty strings and arrays are retained. Checklists use native
+creation/ID order, canonical UTC creation dates and items with `_id`, title,
+isFinished and nullable dueAt. Item queries also enforce card/board boundaries.
+Unrecorded checklist/item deadlines are null; editing/persisting them is pending.
+Remaining card attributes, author/creation metadata, board-defined label IDs,
+custom fields/admin-only behavior and complete WeKan document parity are also
+pending. Unsupported fields are not represented as if implemented.
 
 Each list exposes two independent #5251 timestamps: `modifiedAt` tracks the list
 itself (creation, title, order, shared settings or archive), while
@@ -482,6 +501,18 @@ and combined flags, inactive members, global administration, archives, negative/
 zero ordering, text, dates and missing targets. A same-process injected SQL failure
 verifies sanitized errors and authority reset before retry. Packaged Chromium
 reads the actual PUT results through GET before reopening the native editor.
+
+Single-card tests compare both actual GET responses against the original
+`cardWithChecklists` serializer for implemented fields, using independent SQLite
+inputs. They cover archived/global-vs-scoped behavior, all built-in roles plus
+combined/inactive flags, scoped malformed-ID privacy, cookie/API gates, foreign
+checklist canaries, exact empty/Unicode text, full UTC date boundaries, creation/
+change dates and unchanged card/history/clock snapshots. SQL-failure/retry checks
+verify authority cleanup. Packaged Chromium reads native checklist/checkbox edits
+through both GETs, then verifies native archiving preserves the global read and
+makes the scoped read return 404 (`WITH_API=true WEBA_DETAILS_ONLY=1`). These
+helper/contract checks do not add another original spec 17 callback or prove full
+schema/deadline/original-suite parity.
 
 List-change tests compare actual HTTP results and independent SQLite inputs with
 WeKan's unchanged `newestCardChangeByList`, including an archived dated card and

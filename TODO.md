@@ -247,6 +247,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   tests and packaged Chromium native checklist/checkbox/archive GET flows pass.
   Original spec 17 callbacks remain 10/30; these helper checks do not imply full
   original suite or full schema coverage.
+- Documented global/scoped single-card GET distinctions, supported metadata/
+  checklist fields, source permission-first handling and authority reset. Describe
+  independent serializer/SQL/HTTP tests, UTC/type/role/canary boundaries and native
+  Chromium checklist/archive verification; retain full-schema/deadline gaps.
 - Pending read parity: complete board/card documents (including remaining source
   attributes and board-defined/admin-only custom-field behavior), checklist/item
   deadline editing/persistence,

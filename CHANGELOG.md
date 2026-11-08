@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Document single-card GET routes, archived/scoped permission behavior, supported
+  card/checklist fields, UTC/type/role isolation and SQL/source-serializer/browser
+  verification. Preserve full schema/custom-field/deadline gaps and the unchanged
+  ten-of-thirty original spec 17 callback count. Thanks to xet7.
+
 - Add single-card GET at global and board/list paths with source whole-board
   permissions, permission-before-scoped-ID/card lookup, scoped admin reset and JSON
   missing-card errors. Global GET includes archived cards; scoped GET requires

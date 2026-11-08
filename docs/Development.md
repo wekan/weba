@@ -64,7 +64,8 @@ wire object must retain a typed empty string: indexed assignment removes it,
 and Gambas 3.20 `JSONCollection._put` converts it to null.
 
 The HTTP tests run source and packaged paths. `WEKAN_SOURCE` can select a
-reference checkout for unchanged original callbacks/helper comparisons; absent
+reference checkout for unchanged original callbacks/helper comparisons, including
+list reduction and implemented single-card/checklist serialization; absent
 reference checks report a skip. Those partial checks and Chromium workflows do
 not establish that the complete original UI/API/security suites pass. See the
 README and TODO for the exact current coverage and remaining work.
