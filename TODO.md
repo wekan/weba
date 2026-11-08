@@ -141,10 +141,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   Verified 44 cases against actual source date helpers, original #5846 callback,
   source/archive HTTP boundaries, SQL persistence, rollback and ten card-update
   failed-COMMIT/retry phases. Full local test command passes, including 27 Python
-  tests. Original spec 17 coverage totals seven of thirty callbacks across the
-  adapters; the complete original UI/API/security suites remain unverified.
+  tests. Original #5846 is covered; the current callback count is summarized
+  above. Complete original UI/API/security suites remain unverified.
 - Documented: date PUT inputs/clears, numeric precision, UTC native projection,
-  seven original callbacks, 44 helper cases and ten COMMIT phases. Packaged
+  original date callbacks, 44 helper cases and ten COMMIT phases at that stage. Packaged
   Chromium verifies actual PUT plus native unchanged/change/clear and preserved
   milliseconds/other dates.
 - Pending dates: local-time/unqualified and freeform V8 date parsing, complete
@@ -157,7 +157,7 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   cover type/role/list/archive boundaries and trigger-induced combined rollback;
   existing real failed-COMMIT date phases now include description replace/clear.
   Packaged Chromium confirms API Unicode descriptions reopen in the native editor.
-  Full local tests pass (28 Python tests); original callback coverage stays 7/30.
+  Full local tests pass (28 Python tests); current original callback coverage is summarized above.
   Lone-surrogate behavior and remaining scalar fields still need source parity.
 - Documented description PUT values/errors, atomic writes, escaped/direct
   Unicode transport, native reopening and remaining scalar/lone-surrogate gaps.
@@ -185,7 +185,7 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   two new native-assignee failed-COMMIT/retry phases bring card-update phases to
   twelve. Full local tests pass (28 Python tests), and packaged two-user Chromium
   verifies add/remove/save/reopen, forged reader writes, self-removal and mobile
-  menu placement/X. Original callbacks remain 7/30; complete suites remain open.
+  menu placement/X. Complete original suites remain open.
 - Documented saved-card multi-assignee controls, stale removal/duplicates,
   primary synchronization, role/self-removal behavior, twelve COMMIT phases and
   packaged Chromium/mobile evidence with original-suite gaps explicit.
@@ -203,6 +203,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   Original HashBleed/ErrorBleed/AssignedBleed pass unchanged; total spec 17
   callback coverage is 10/30. Packaged Chromium reads back actual PUT data and
   verifies the existing native multiple-assignee/member/date workflows.
+- Documented whole-board read routes, source role/combined/global-admin checks,
+  independent scope reset, empty text and archive/order/date behavior. Update
+  current original callback coverage to 10/30 and retain full document/timestamp/
+  fractional-sort and complete-suite gaps.
 - Pending read parity: complete board/card documents and single-card GET routes,
   list modifiedAt/cardsModifiedAt tracking (#5251; currently null without stored
   timestamps), full fractional sort support, custom roles, legacy lane mapping,

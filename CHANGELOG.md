@@ -2,6 +2,12 @@
 
 This work adds the following features and fixes:
 
+- Document whole-board REST routes, source role/combined-flag checks, independent
+  global-administrator reads, native scope isolation and exact text/order/date
+  results. Record ten-of-thirty original callbacks and SQL/browser verification;
+  retain full document, list timestamp, fractional-sort and complete-suite gaps.
+  Thanks to xet7.
+
 - Add REST whole-board lists/swimlanes/card-list/count reads with WeKan's
   built-in role/combined-flag checks and scoped global-administrator access.
   Refuse nonmembers and assigned-only roles with 403, return missing boards as

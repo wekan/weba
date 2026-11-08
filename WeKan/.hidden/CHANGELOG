@@ -1,4 +1,7 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Describe whole-board REST read routes/roles, global-admin
+  independence and scope reset, data projections and ten original callbacks;
+  keep full documents/list timestamps/fractional sorts and complete suites open.
 - REST board reads: Add lists/swimlanes/cards/count projections with source
   role/combined-flag denial and scoped global admin; reset authority after SQL
   failure and retry. Preserve archived filters, ordered/date/person data and

@@ -222,13 +222,34 @@ The first implemented REST contracts use JSON request/response bodies:
 | `POST /users/logout` | Revoke the presented Bearer token; optional boolean `all` revokes all the user's tokens |
 | `DELETE /api/users/:userId` | Site administrator only; return the deleted `{_id}` after commit, or 404 for a missing user |
 | `GET /api/users/:username/boards` | List active boards owned by or shared with the authenticated user |
-| `GET /api/boards/:id` | Read an accessible board and its active/inactive member flags; inaccessible boards return 404 |
+| `GET /api/boards/:id` | Read implemented board metadata/member flags with whole-board REST permissions; denied 403, missing 404 |
+| `GET /api/boards/:id/lists` | Active list IDs/titles; activity timestamps currently null pending tracking |
+| `GET /api/boards/:id/swimlanes` | Active swimlane IDs/titles |
+| `GET /api/boards/:id/cards_count` | Return `board_cards_count` for nonarchived cards |
+| `GET /api/boards/:id/lists/:listId/cards` | Ordered active cards with text, swimlane, assignees, sort and UTC dates |
+| `GET /api/boards/:id/lists/:listId/cards_count` | Return `list_cards_count` for nonarchived cards |
 | `POST /api/boards/:id/members/:userId/add` | Add an existing account with `action: "add"` and optional role/flags; an active member is unchanged |
 | `POST /api/boards/:id/members/:userId` | Change an active or inactive member's role/flags without changing activation |
 | `POST /api/boards/:id/members/:userId/remove` | Remove with `action: "remove"`; the final administrator remains active |
 | `POST` / `DELETE /api/boards/:id/lists/:listId/cards/:cardId/members/:userId` | Add/remove one card member, preserving other members and the separate assignees |
 | `POST` / `DELETE /api/boards/:id/lists/:listId/cards/:cardId/assignees/:userId` | Add/remove one assignee, preserving other assignees and the separate members |
 | `PUT /api/boards/:id/lists/:listId/cards/:cardId` | Replace provided people, description and four UTC date fields; other card fields are pending |
+
+Whole-board REST reads follow WeKan's `Authentication.checkBoardAccess` and
+`memberReadsWholeBoard`: active board administrators, Normal and Read Only may
+read; No Comments, Comment Only, Worker and the assigned-only flags are refused.
+Combined exclusion flags still deny a board administrator. A global site
+administrator may read independently of membership, as in the source. Missing
+boards return 404; refused reads return a plain 403 without internal errors.
+The temporary REST authority resets on success, SQL failure and retry; native
+board permissions and membership remain unchanged.
+
+List/card results filter their own archived state. Card lists preserve exact text,
+including empty strings, ordered assignees/duplicates, native integer ordering and
+stored UTC date precision. A nonexistent/foreign list produces an empty card list
+or zero count, matching the source selector. Full board/card documents, single-card
+routes, fractional sort and list `modifiedAt`/`cardsModifiedAt` tracking remain
+pending. List timestamps are currently null because weba has no stored equivalent.
 
 User deletion requires a site administrator; a board administrator alone is
 refused. It removes account/session/token and current/historical privilege
@@ -242,8 +263,8 @@ complete account administration remain tracked in `TODO.md`.
 
 Member mutations require a board administrator or a site administrator.
 A site administrator can explicitly recover a known orphan-board ID by adding
-an administrator through this endpoint; this does not silently grant general
-private-board read access. Add/remove replies contain only board `_id`/`title`
+an administrator through this endpoint; it does not silently create membership.
+Global-administrator REST reads are authorized independently as described above. Add/remove replies contain only board `_id`/`title`
 rows, never account documents. Unknown accounts produce an empty successful
 add/remove response. Role updates return an affected-record count.
 
@@ -281,8 +302,8 @@ These REST writes require a writing role with full-card scope, or a site
 administrator acting through the explicit scoped mutation. Assigned-only roles
 and Workers cannot use these general REST writes; their supported native card
 operations have separate checks. A foreign list/card combination or archived
-card returns 404. A site-admin mutation does not enable general private-board
-reads afterward. Changes, order and audit history commit together; failures
+card returns 404. A site-admin mutation clears its temporary scope afterward;
+independent REST read checks still apply. Changes, order and audit history commit together; failures
 return a sanitized 500 and roll back.
 
 Card PUT implements `members`, `assignees`, `description` and the four date fields below, returning
@@ -424,17 +445,25 @@ also checked with the packaged Chromium workflow (`WEBA_DELETION_ONLY=1`).
 
 When the parent WeKan checkout is available, `--members` executes four original
 `#5998` spec 17 callbacks unchanged (three board-member, one card-member), plus
-the original `#3697` people-clear and `#5846` due-date callbacks. `--api` executes its user-deletion callback
+the original `#3697` people-clear and `#5846` due-date callbacks and unchanged
+HashBleed, ErrorBleed and AssignedBleed security callbacks. `--api` executes its
+user-deletion callback
 unchanged. Both use actual Playwright assertions and explicit SQLite fixture
 adapters. User fixtures are created through the real Gambas account store;
 post-delete checks read SQLite independently of the HTTP response. Each adapter
-reports which callbacks it did not execute. Together they cover seven of the
-file's 30 callbacks; the other 23 and the complete original UI/API/security
+reports which callbacks it did not execute. Together they cover ten of the
+file's 30 callbacks; the other 20 and the complete original UI/API/security
 suites have not passed against weba. The reference checkout's
 `tests/playwright/package.json` dependencies must be installed. A standalone
 weba checkout can select the reference with `WEKAN_SOURCE=/absolute/path/to/wekan`.
 Without a reference checkout, the original-callback check reports an explicit
 skip; weba's independent contract/rollback checks still run.
+
+REST read tests compare real responses with independent SQLite results for role
+and combined flags, inactive members, global administration, archives, negative/
+zero ordering, text, dates and missing targets. A same-process injected SQL failure
+verifies sanitized errors and authority reset before retry. Packaged Chromium
+reads the actual PUT results through GET before reopening the native editor.
 
 Date conformance executes 44 supported UTC/offset/epoch cases against the actual
 reference date helpers. Description HTTP tests cover both escaped JSON and
