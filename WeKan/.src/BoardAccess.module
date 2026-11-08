@@ -93,6 +93,11 @@ Public Sub SetMember(boardId As Integer, username As String, role As String)
   WorkspaceStore.OpenStore()
   DatabaseTransactions.Begin($db)
   transaction = True
+  $db.Exec("UPDATE users SET username = username WHERE username = &1", username)
+  If Not WebDatabase.UserExists(username) Then Error.Raise("Unknown user")
+  $db.Exec("UPDATE kb_boards SET title = title WHERE id = &1", boardId)
+  Require(boardId, "manageBoard")
+  CheckLastAdmin(boardId, username, role)
   KanbanStore.Activity(boardId, "Changed board membership: " & username)
   r = $db.Edit("kb_members", "board_id = &1 AND username = &2", boardId, username)
   If Not r.Available Then
@@ -120,6 +125,9 @@ Public Sub RemoveMember(boardId As Integer, username As String)
   WorkspaceStore.OpenStore()
   DatabaseTransactions.Begin($db)
   transaction = True
+  $db.Exec("UPDATE kb_boards SET title = title WHERE id = &1", boardId)
+  Require(boardId, "manageBoard")
+  CheckLastAdmin(boardId, username, "")
   KanbanStore.Activity(boardId, "Removed board member: " & username)
   $db.Delete("kb_members", "board_id = &1 AND username = &2", boardId, username)
   DatabaseTransactions.Commit($db)
@@ -132,9 +140,27 @@ End
 
 Public Function Members(boardId As Integer) As Result
   Dim r As Result
+  Dim owner As String
   RequireRead(boardId)
   r = $db.Find("kb_boards", "id = &1", boardId)
-  Return $db.Exec("SELECT owner AS username, &1 AS role FROM kb_boards WHERE id = &2 UNION ALL SELECT username, role FROM kb_members WHERE board_id = &2 AND username <> &3", "board-admin", boardId, r!owner)
+  owner = r!owner
+  Return $db.Exec("SELECT owner AS username, &1 AS role FROM kb_boards WHERE id = &2 AND owner IS NOT NULL AND owner <> &3 AND owner IN (SELECT username FROM users) UNION ALL SELECT m.username, m.role FROM kb_members m INNER JOIN users u ON u.username = m.username WHERE m.board_id = &2 AND m.username <> &4", "board-admin", boardId, "", owner)
+End
+
+Private Sub CheckLastAdmin(boardId As Integer, username As String, nextRole As String)
+  Dim r As Result
+  Dim owner As String
+  Dim count As Integer
+  If nextRole = "board-admin" Then Return
+  If RoleOf(boardId, username) <> "board-admin" Then Return
+  r = $db.Find("kb_boards", "id = &1", boardId)
+  owner = r!owner
+  If owner Then
+    If WebDatabase.UserExists(owner) Then Inc count
+  Endif
+  r = $db.Exec("SELECT COUNT(*) AS total FROM kb_members m INNER JOIN users u ON u.username = m.username WHERE m.board_id = &1 AND m.role = &2 AND m.username <> &3", boardId, "board-admin", owner)
+  count += r!total
+  If count <= 1 Then Error.Raise("The board must keep an administrator")
 End
 
 Public Function CardRows(boardId As Integer, Optional byArchive As Boolean, Optional archived As Boolean) As Result

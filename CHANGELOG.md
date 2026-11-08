@@ -2,6 +2,17 @@
 
 This work adds the following features and fixes:
 
+- Prevent same-name accounts from reclaiming deleted users' board ownership,
+  memberships, personal preferences, assignments or comment/timer privileges.
+  Clean current and historical dangling references transactionally; keep other
+  members/assignments, comments, binary files and history, retaining author names
+  as display-only provenance and stopping orphan timers. Preserve comment/file
+  authors in copies, retain display-only names in JSON exchange, and carry/prune
+  provenance on moves/permanent deletion. Protect the last active board admin
+  and reject invalid imported author metadata. Verify real
+  store negatives, failed-COMMIT snapshots, packaged admin delete cancel/confirm,
+  same-name re-registration and denied predecessor edits. Thanks to xet7.
+
 - Redirect revoked native browser sessions before command dispatch. Return a
   login reload instead of throwing from the form event, which made Gambas drop
   queued navigation and display an alert/backtrace. Verify no stale write or

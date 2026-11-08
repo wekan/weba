@@ -88,13 +88,16 @@ Public Function ExportData(boardId As Integer, kind As String, itemId As Integer
   For Each r
     If cardIds.Find(r!card_id) < 0 Then Continue
     If (r!kind = "subtask" Or r!kind = "dependency") And cardIds.Find(CInt(r!amount)) < 0 Then Continue
-    entries.Add(Row(r, ["id", "card_id", "kind", "parent_id", "title", "body", "value_type", "done", "amount"]))
+    item = Row(r, ["id", "card_id", "kind", "parent_id", "title", "body", "value_type", "done", "amount"])
+    item["author_name"] = CardContent.AuthorName(boardId, r!card_id, "entry", r!id)
+    entries.Add(item)
   Next
   r = $db.Find("kb_files", "board_id = &1 ORDER BY id", boardId)
   For Each r
     If cardIds.Find(r!card_id) < 0 Then Continue
     item = Row(r, ["card_id", "filename"])
     item["base64"] = Base64(r!content.Data)
+    item["author_name"] = CardContent.AuthorName(boardId, r!card_id, "file", r!id)
     files.Add(item)
   Next
   data["lanes"] = lanes
@@ -202,12 +205,20 @@ Public Function ImportData(text As String, title As String) As Integer
       Else
         entryMap[oldId] = CardContent.Save(boardId, cardMap[CStr(item["card_id"])], 0, kind, item["title"], item["body"], parentId, item["done"], item["amount"], item["value_type"])
       Endif
+      If item.Exist("author_name") Then
+        If TypeOf(item["author_name"]) <> gb.String Then Error.Raise("Invalid author name")
+        CardContent.RetainAuthorName(boardId, cardMap[CStr(item["card_id"])], "entry", entryMap[oldId], item["author_name"])
+      Endif
     Next
   Next
   If entryMap.Count <> data["entries"].Count Then Error.Raise("Unknown exported detail kind")
   For Each item In data["files"]
     If Not cardMap.Exist(CStr(item["card_id"])) Then Error.Raise("Exported attachment has no card")
-    CardContent.AddFile(boardId, cardMap[CStr(item["card_id"])], item["filename"], UnBase64(item["base64"]))
+    id = CardContent.AddFile(boardId, cardMap[CStr(item["card_id"])], item["filename"], UnBase64(item["base64"]))
+    If item.Exist("author_name") Then
+      If TypeOf(item["author_name"]) <> gb.String Then Error.Raise("Invalid author name")
+      CardContent.RetainAuthorName(boardId, cardMap[CStr(item["card_id"])], "file", id, item["author_name"])
+    Endif
   Next
   For Each item In data["metadata"]
     oldId = CStr(item["item_id"])

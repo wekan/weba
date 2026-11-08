@@ -4,7 +4,7 @@ set -eu
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 work=$(mktemp -d "$TMPDIR/weba-test.XXXXXX")
 trap 'rm -rf -- "$work"' EXIT HUP INT TERM
-for test in AuthTest SessionGenerationTest PasswordPolicyTest StoreTest DragStoreTest WorkspaceTest BoardAccessTest AssignedAccessTest CardContentTest WorkspaceActionsTest BoardTransferTest; do
+for test in AuthTest UserDeletionTest SessionGenerationTest PasswordPolicyTest StoreTest DragStoreTest WorkspaceTest BoardAccessTest AssignedAccessTest CardContentTest WorkspaceActionsTest BoardTransferTest; do
   [ -f "$root/tests/$test.module" ] || continue
   project="$work/$test"
   mkdir -p "$project"
@@ -40,3 +40,11 @@ cp "$root/WeKan/.project" "$project/"
 cp "$root/tests/RegistrationCommitTest.module" "$project/.src/RegistrationCommitTest.module"
 "${GBC:-gbc3}" -j 1 -a "$project"
 python3 "$root/tests/registration-commit.py" "$project"
+
+project="$work/deletion-commit"
+mkdir -p "$project"
+cp -R "$root/WeKan/.src" "$root/WeKan/.public" "$project/"
+cp "$root/WeKan/.project" "$project/"
+cp "$root/tests/UserDeletionCommitTest.module" "$project/.src/UserDeletionCommitTest.module"
+"${GBC:-gbc3}" -j 1 -a "$project"
+python3 "$root/tests/deletion-commit.py" "$project"

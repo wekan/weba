@@ -1,0 +1,49 @@
+' Only copied into disposable deletion commit-failure fixtures.
+Public Sub Main()
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim r As Result
+  Dim deadline As Float
+  If Env["WEBA_TEST_MODE"] = "prepare" Then
+    WebDatabase.Register("delete-commit-admin", "admin password")
+    WebDatabase.Register("delete-commit-target", "target password")
+    WebDatabase.Register("delete-commit-keeper", "keeper password")
+    SignIn("delete-commit-target")
+    boardId = KanbanStore.AddBoard("Retained deletion board")
+    cardId = KanbanStore.SaveCard(boardId, 0, "Retained deletion card", "Retained body", "Default", "Todo", "delete-commit-target", "", "")
+    BoardAccess.SetMember(boardId, "delete-commit-keeper", "board-admin")
+    BoardAccess.SetAssignees(boardId, cardId, ["delete-commit-target", "delete-commit-keeper"])
+    CardContent.Save(boardId, cardId, 0, "comment", "", "Retained deletion comment", 0, False, 0)
+    CardContent.AddFile(boardId, cardId, "retained.bin", "retained" & Chr(0) & "bytes")
+    CardContent.StartTimer(boardId, cardId)
+    WorkspaceStore.SetSetting(boardId, "card", cardId, "watch", "1")
+    ApiTokens.PrepareStore()
+    r = db.Create("api_tokens")
+    r["digest"] = String$(64, "b")
+    r["username"] = "delete-commit-target"
+    r["created_at"] = Now
+    r["expires_at"] = DateAdd(Now, gb.Day, 1)
+    r.Update()
+    Return
+  Endif
+  db.Timeout = 1
+  SignIn("delete-commit-admin")
+  Try WebDatabase.DeleteUser("delete-commit-target")
+  If Not Error Then Error.Raise("Reader lock did not reject deletion commit")
+  File.Save(Application.Path &/ "deletion-failed", "ready")
+  deadline = Timer + 10
+  While Not Exist(Application.Path &/ "deletion-reader-released")
+    If Timer > deadline Then Error.Raise("Deletion reader release timed out")
+    Sleep 0.01
+  Wend
+  If Not WebDatabase.UserExists("delete-commit-target") Then Error.Raise("Failed deletion lost its account")
+  WebDatabase.DeleteUser("delete-commit-target")
+  If WebDatabase.UserExists("delete-commit-target") Then Error.Raise("Recovered deletion did not remove the account")
+  Print "Failed deletion commit retained all references/tokens/provenance; successful retry cleaned privileges and kept content"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

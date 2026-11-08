@@ -1,0 +1,232 @@
+' Disposable SQLite/native stores: preserve history without reusing privileges.
+Public Sub Main()
+  Dim db As Connection
+  Dim privateBoard As Integer
+  Dim archivedBoard As Integer
+  Dim sharedBoard As Integer
+  Dim memberBoard As Integer
+  Dim cardId As Integer
+  Dim sharedCard As Integer
+  Dim commentId As Integer
+  Dim fileId As Integer
+  Dim copied As Integer
+  Dim imported As Integer
+  Dim copiedComment As Integer
+  Dim copiedFile As Integer
+  Dim importedCard As Integer
+  Dim text As String
+  Dim r As Result
+  Dim denied As Boolean
+  Dim names As String[]
+  WebDatabase.Register("delete-admin", "admin password")
+  WebDatabase.Register("reusable", "same password")
+  WebDatabase.Register("remaining", "remaining password")
+  SignIn("reusable")
+  privateBoard = KanbanStore.AddBoard("Private predecessor board")
+  BoardAccess.SetMember(privateBoard, "remaining", "normal")
+  archivedBoard = KanbanStore.AddBoard("Archived predecessor board")
+  KanbanStore.ArchiveBoard(archivedBoard, True)
+  sharedBoard = KanbanStore.AddBoard("Shared predecessor board")
+  sharedCard = KanbanStore.SaveCard(sharedBoard, 0, "Shared assigned", "Retained body", "Default", "Todo", "reusable", "", "")
+  BoardAccess.SetMember(sharedBoard, "remaining", "board-admin")
+  BoardAccess.SetAssignees(sharedBoard, sharedCard, ["reusable", "remaining"])
+  SignIn("delete-admin")
+  memberBoard = KanbanStore.AddBoard("Existing member board")
+  cardId = KanbanStore.SaveCard(memberBoard, 0, "Member card", "History survives", "Default", "Todo", "remaining", "", "")
+  BoardAccess.SetMember(memberBoard, "remaining", "normal")
+  BoardAccess.SetMember(memberBoard, "reusable", "normal")
+  BoardAccess.SetAssignees(memberBoard, cardId, ["remaining", "reusable"])
+  SignIn("reusable")
+  commentId = CardContent.Save(memberBoard, cardId, 0, "comment", "", "Predecessor comment", 0, False, 0)
+  fileId = CardContent.AddFile(memberBoard, cardId, "history.txt", "Retained bytes")
+  CardContent.StartTimer(memberBoard, cardId)
+  WorkspaceStore.SetSetting(memberBoard, "board", memberBoard, "star", "1")
+  WorkspaceStore.SetSetting(memberBoard, "card", cardId, "watch", "1")
+  SignIn("remaining")
+  CardContent.Save(memberBoard, cardId, 0, "comment", "", "Remaining author's comment", 0, False, 0)
+  SignIn("delete-admin")
+  Try WebDatabase.DeleteUser("")
+  denied = Error
+  If Not denied Then Error.Raise("Empty deletion principal was accepted")
+  Try WebDatabase.DeleteUser(String$(256, "a"))
+  denied = Error
+  If Not denied Then Error.Raise("Oversized deletion principal was accepted")
+  Try WebDatabase.DeleteUser("delete-admin")
+  denied = Error
+  If Not denied Then Error.Raise("Administrator deleted their own account")
+  WebDatabase.DeleteUser("reusable' OR '1'='1")
+  If Not WebDatabase.UserExists("reusable") Then Error.Raise("Deletion selector injection was accepted")
+  WebDatabase.DeleteUser("reusable")
+  If WebDatabase.UserExists("reusable") Then Error.Raise("Deleted account still exists")
+  WebDatabase.Register("reusable", "same password")
+  SignIn("reusable")
+  Try KanbanStore.RequireBoard(privateBoard)
+  denied = Error
+  If Not denied Then Error.Raise("Recreated username inherited a private board")
+  Try KanbanStore.RequireBoard(archivedBoard)
+  denied = Error
+  If Not denied Then Error.Raise("Recreated username inherited an archived board")
+  r = KanbanStore.Boards()
+  If r.Count Then Error.Raise("Predecessor memberships survived account deletion")
+  Try CardContent.AuthorName(memberBoard, cardId, "entry", commentId)
+  denied = Error
+  If Not denied Then Error.Raise("Retired author lookup bypassed board access")
+  SignIn("delete-admin")
+  BoardAccess.SetMember(memberBoard, "reusable", "normal")
+  SignIn("reusable")
+  If WorkspaceStore.Setting(memberBoard, "board", memberBoard, "star") = "1" Then Error.Raise("Predecessor star was inherited")
+  If WorkspaceStore.Setting(memberBoard, "card", cardId, "watch") = "1" Then Error.Raise("Predecessor watch was inherited")
+  r = CardContent.Entry(memberBoard, cardId, commentId)
+  If r!body <> "Predecessor comment" Then Error.Raise("Deletion erased a comment")
+  If CardContent.AuthorName(memberBoard, cardId, "entry", commentId) <> "reusable" Then Error.Raise("Deleted author attribution was lost")
+  Try CardContent.RetainAuthorName(memberBoard, cardId, "entry", commentId, "Forged display name")
+  denied = Error
+  If Not denied Then Error.Raise("Normal member rewrote predecessor attribution")
+  If CardContent.AuthorName(memberBoard, cardId, "entry", commentId) <> "reusable" Then Error.Raise("Rejected attribution update changed the display name")
+  Try CardContent.Save(memberBoard, cardId, commentId, "comment", "", "Forged predecessor edit", 0, False, 0)
+  denied = Error
+  If Not denied Then Error.Raise("Recreated username inherited comment edit permission")
+  Try CardContent.DeleteEntry(memberBoard, cardId, commentId)
+  denied = Error
+  If Not denied Then Error.Raise("Recreated username inherited comment deletion permission")
+  Try CardContent.StopTimer(memberBoard, cardId)
+  denied = Error
+  If Not denied Then Error.Raise("Recreated username inherited a running timer")
+  CardContent.StartTimer(memberBoard, cardId)
+  CardContent.StopTimer(memberBoard, cardId)
+  If CardContent.FileRecord(memberBoard, cardId, fileId)!content.Data <> "Retained bytes" Then Error.Raise("Deletion erased an attachment")
+  If CardContent.AuthorName(memberBoard, cardId, "file", fileId) <> "reusable" Then Error.Raise("Deleted attachment attribution was lost")
+  names = BoardAccess.Assignees(memberBoard, cardId)
+  If names.Count <> 1 Or names[0] <> "remaining" Then Error.Raise("Deletion lost another user's assignment or retained a deleted one")
+  copied = WorkspaceStore.Copy(memberBoard, "card", cardId, "Copied retired history")
+  r = CardContent.Entries(memberBoard, copied, "comment")
+  If r.Count <> 2 Then Error.Raise("Copy lost comments")
+  For Each r
+    If r!body = "Predecessor comment" Then
+      copiedComment = r!id
+      If r!author Then Error.Raise("Copy restored deleted author privileges")
+      If CardContent.AuthorName(memberBoard, copied, "entry", r!id) <> "reusable" Then Error.Raise("Copy lost retired attribution")
+    Else
+      If r!author <> "remaining" Then Error.Raise("Copy changed a live author's principal")
+    Endif
+    Try CardContent.Save(memberBoard, copied, r!id, "comment", "", "Forged copy edit", 0, False, 0)
+    denied = Error
+    If Not denied Then Error.Raise("Copy granted authorship to its creator")
+  Next
+  r = CardContent.Files(memberBoard, copied)
+  copiedFile = r!id
+  If CardContent.AuthorName(memberBoard, copied, "file", copiedFile) <> "reusable" Then Error.Raise("Copy lost attachment attribution")
+  text = BoardTransfer.ExportData(memberBoard, "card", copied)
+  SignIn("remaining")
+  imported = BoardTransfer.ImportData(text, "Imported retired history")
+  BoardAccess.SetMember(imported, "reusable", "normal")
+  r = KanbanStore.Cards(imported)
+  importedCard = r!id
+  SignIn("reusable")
+  r = CardContent.Entries(imported, importedCard, "comment")
+  For Each r
+    If r!author Then Error.Raise("Untrusted exported name became a local principal")
+    If r!body <> "Predecessor comment" Then Continue
+    If CardContent.AuthorName(imported, importedCard, "entry", r!id) <> "reusable" Then Error.Raise("Exchange lost retired attribution")
+    Try CardContent.DeleteEntry(imported, importedCard, r!id)
+    denied = Error
+    If Not denied Then Error.Raise("Imported name granted comment authorship")
+  Next
+  SignIn("remaining")
+  WorkspaceStore.SetArchived(imported, "board", imported, True)
+  WorkspaceActions.DeleteArchived(imported, "board", imported, "Imported retired history")
+  db = WebDatabase.OpenConnection()
+  r = db.Find("kb_retired_authors", "board_id = &1", imported)
+  If r.Count Then Error.Raise("Board deletion left retired attribution rows")
+  r = KanbanStore.Lists(sharedBoard, "Default")
+  WorkspaceActions.Move(memberBoard, "card", copied, sharedBoard, "Default", r!id)
+  If CardContent.AuthorName(sharedBoard, copied, "entry", copiedComment) <> "reusable" Then Error.Raise("Move lost retired comment attribution")
+  If CardContent.AuthorName(sharedBoard, copied, "file", copiedFile) <> "reusable" Then Error.Raise("Move lost retired attachment attribution")
+  WorkspaceStore.SetArchived(sharedBoard, "card", copied, True)
+  WorkspaceActions.DeleteArchived(sharedBoard, "card", copied, "Copied retired history")
+  r = db.Find("kb_retired_authors", "card_id = &1", copied)
+  If r.Count Then Error.Raise("Card deletion left retired attribution rows")
+  If BoardAccess.Role(privateBoard) <> "normal" Then Error.Raise("Deletion silently promoted a normal member")
+  names = BoardAccess.Assignees(sharedBoard, sharedCard)
+  If names.Count <> 1 Or names[0] <> "remaining" Then Error.Raise("Deleted primary assignee was not removed")
+  r = BoardAccess.Members(sharedBoard)
+  If r.Count <> 1 Then Error.Raise("Shared board retained a ghost owner/member")
+  For Each r
+    If r!username <> "remaining" Then Error.Raise("Shared board lost the remaining administrator")
+  Next
+  Try BoardAccess.RemoveMember(sharedBoard, "remaining")
+  denied = Error
+  If Not denied Then Error.Raise("Owner deletion allowed the last board administrator to leave")
+  Try BoardAccess.SetMember(sharedBoard, "remaining", "normal")
+  denied = Error
+  If Not denied Then Error.Raise("Owner deletion allowed the last board administrator to demote themself")
+  BoardAccess.SetMember(sharedBoard, "reusable", "read-assigned-only")
+  SignIn("reusable")
+  r = KanbanStore.Cards(sharedBoard)
+  If r.Count Then Error.Raise("Recreated assigned-only user inherited predecessor assignments")
+  db = WebDatabase.OpenConnection()
+  r = db.Find("kb_boards")
+  If r.Count <> 4 Then Error.Raise("Account deletion erased boards")
+  r = db.Find("kb_entries", "board_id = &1 AND kind = &2 AND done = &3", memberBoard, "time", False)
+  If r.Count Then Error.Raise("Deleted account left a running orphan timer")
+  r = db.Find("kb_history", "actor = &1", "reusable")
+  If Not r.Count Then Error.Raise("Account deletion erased activity attribution")
+  CheckLegacyReferences("legacy-registration", privateBoard, memberBoard, cardId, False)
+  CheckLegacyReferences("legacy-created-user", archivedBoard, memberBoard, cardId, True)
+  Print "Account deletion: no reused ownership/authorship/assignment, retained history/files/other members and last-admin guards passed"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End
+
+Private Sub CheckLegacyReferences(username As String, boardId As Integer, memberBoard As Integer, cardId As Integer, viaAdmin As Boolean)
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim r As Result
+  Dim commentId As Integer
+  Dim denied As Boolean
+  SignIn("delete-admin")
+  ' Simulate dangling references left by an earlier version's account deletion.
+  db.Exec("UPDATE kb_boards SET owner = &1 WHERE id = &2", username, boardId)
+  db.Exec("UPDATE kb_cards SET assignee = &1 WHERE id = &2", username, cardId)
+  r = db.Create("kb_card_assignees")
+  r["board_id"] = memberBoard
+  r["card_id"] = cardId
+  r["username"] = username
+  r.Update()
+  r = db.Create("kb_members")
+  r["board_id"] = memberBoard
+  r["username"] = username
+  r["role"] = "normal"
+  r.Update()
+  r = db.Create("kb_entries")
+  r["board_id"] = memberBoard
+  r["card_id"] = cardId
+  r["kind"] = "comment"
+  r["body"] = "Historical retained comment"
+  r["author"] = username
+  r["created_at"] = Now
+  r.Update()
+  commentId = db.LastInsertId
+  If viaAdmin Then
+    WebDatabase.NewUser(username, "new password", False)
+  Else
+    WebDatabase.Register(username, "new password")
+  Endif
+  SignIn(username)
+  Try KanbanStore.RequireBoard(boardId)
+  denied = Error
+  If Not denied Then Error.Raise("New account inherited a historical dangling owner reference")
+  Try KanbanStore.RequireBoard(memberBoard)
+  denied = Error
+  If Not denied Then Error.Raise("New account inherited historical dangling membership")
+  SignIn("delete-admin")
+  BoardAccess.SetMember(memberBoard, username, "normal")
+  SignIn(username)
+  If BoardAccess.IsAssigned(memberBoard, cardId, username) Then Error.Raise("New account inherited historical dangling assignment")
+  If CardContent.AuthorName(memberBoard, cardId, "entry", commentId) <> username Then Error.Raise("Historical author display was not retained")
+  Try CardContent.Save(memberBoard, cardId, commentId, "comment", "", "Forged historical edit", 0, False, 0)
+  denied = Error
+  If Not denied Then Error.Raise("New account inherited historical comment authorship")
+End

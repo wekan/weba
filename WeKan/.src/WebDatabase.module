@@ -71,6 +71,8 @@ Private Sub EnsureAccountSchema()
     t.PrimaryKey = ["username"]
     t.Update()
   Endif
+  ' Prepare display-only deletion provenance before any account transaction.
+  RetiredAuthors.OpenStore()
 End
 
 Public Function SessionGeneration(username As String) As Long
@@ -146,6 +148,7 @@ Public Sub Register(username As String, password As String)
     RegistrationError = "Username already exists. Choose another username or log in."
     Error.Raise(RegistrationError)
   Endif
+  RetiredAuthors.OpenStore()
   passwordHash = Crypt.Sha256(password)
   DatabaseTransactions.Begin($hConn)
   transaction = True
@@ -160,6 +163,7 @@ Public Sub Register(username As String, password As String)
     r.Update()
     r = Null
   Endif
+  CleanupUserReferences(username)
   $hConn.Exec("INSERT INTO users (username, password, fullname, admin) VALUES (&1, &2, &3, &4)", username, passwordHash, "", first)
   RotateSessionGeneration(username)
   DatabaseTransactions.Commit($hConn)
@@ -273,10 +277,13 @@ Public Sub NewUser(username As String, password As String, is_admin As Boolean)
   username = Trim(username)
   If Not username Or Len(username) > 255 Then Error.Raise("Enter a username")
   RequirePassword(password)
+  RetiredAuthors.OpenStore()
   passwordHash = Crypt.Sha256(password)
   DatabaseTransactions.Begin($hConn)
   transaction = True
   AdminRequired()
+  If UserExists(username) Then Error.Raise("Username already exists")
+  CleanupUserReferences(username)
   $hConn.Exec("INSERT INTO users (username, password, fullname, admin) VALUES (&1, &2, &3, &4)", username, passwordHash, "", is_admin)
   RotateSessionGeneration(username)
   DatabaseTransactions.Commit($hConn)
@@ -292,23 +299,76 @@ Public Sub DeleteUser(username As String)
   Dim failure As String
   Init()
   AdminRequired()
+  If Not username Or Len(username) > 255 Then Error.Raise("Choose a user")
   If username = WebIdentity.Username Then Error.Raise("Cannot delete your own account")
   ApiTokens.PrepareStore()
+  RetiredAuthors.OpenStore()
   DatabaseTransactions.Begin($hConn)
   transaction = True
   $hConn.Exec("UPDATE users SET username = username WHERE username = &1", username)
   AdminRequired()
+  If Not UserExists(username) Then
+    DatabaseTransactions.Rollback($hConn)
+    transaction = False
+    Return
+  Endif
+  CleanupUserReferences(username)
   $hConn.Delete("users", "username = &1", username)
   ApiTokens.RevokeUser(username)
   $hConn.Delete("account_sessions", "username = &1", username)
-  If $hConn.Tables.Exist("kb_members") Then $hConn.Delete("kb_members", "username = &1", username)
-  If $hConn.Tables.Exist("kb_user_meta") Then $hConn.Delete("kb_user_meta", "username = &1", username)
   DatabaseTransactions.Commit($hConn)
   transaction = False
 Catch
   failure = Error.Text
   If transaction Then Try DatabaseTransactions.Rollback($hConn)
   Error.Raise(failure)
+End
+
+Private Sub CleanupUserReferences(username As String)
+  Dim r As Result
+  Dim remaining As Result
+  Dim primary As String
+  Dim minutes As Float
+  If $hConn.Tables.Exist("kb_members") Then $hConn.Delete("kb_members", "username = &1", username)
+  If $hConn.Tables.Exist("kb_user_meta") Then $hConn.Delete("kb_user_meta", "username = &1", username)
+  If $hConn.Tables.Exist("kb_card_assignees") Then $hConn.Delete("kb_card_assignees", "username = &1", username)
+  If $hConn.Tables.Exist("kb_boards") Then
+    If $hConn.Tables.Exist("kb_meta") Then $hConn.Delete("kb_meta", "board_id IN (SELECT id FROM kb_boards WHERE owner = &1) AND (setting = &2 OR setting = &3)", username, "star", "watch")
+    ' A missing principal has no implicit owner rights. Other board members and
+    ' administrators keep their roles; never silently promote a normal member.
+    $hConn.Exec("UPDATE kb_boards SET owner = NULL WHERE owner = &1", username)
+  Endif
+  If $hConn.Tables.Exist("kb_cards") Then
+    r = $hConn.Find("kb_cards", "assignee = &1", username)
+    For Each r
+      primary = ""
+      If $hConn.Tables.Exist("kb_card_assignees") Then
+        remaining = $hConn.Find("kb_card_assignees", "board_id = &1 AND card_id = &2 ORDER BY username", r!board_id, r!id)
+        If remaining.Available Then primary = remaining!username
+      Endif
+      $hConn.Exec("UPDATE kb_cards SET assignee = &1 WHERE id = &2", primary, r!id)
+    Next
+  Endif
+  If $hConn.Tables.Exist("kb_entries") Then
+    r = $hConn.Find("kb_entries", "author = &1", username)
+    For Each r
+      RetiredAuthors.Remember("entry", r!id, r!board_id, r!card_id, username)
+      If r!kind = "time" And Not r!done Then
+        minutes = Max(0, r!amount)
+        If TypeOf(r!created_at) = gb.Date Then minutes = Max(0, DateDiff(r!created_at, Now, gb.Second)) / 60
+        $hConn.Exec("UPDATE kb_entries SET author = NULL, done = &1, title = &2, amount = &3 WHERE id = &4", True, "Tracked time", minutes, r!id)
+      Else
+        $hConn.Exec("UPDATE kb_entries SET author = NULL WHERE id = &1", r!id)
+      Endif
+    Next
+  Endif
+  If $hConn.Tables.Exist("kb_files") Then
+    r = $hConn.Find("kb_files", "author = &1", username)
+    For Each r
+      RetiredAuthors.Remember("file", r!id, r!board_id, r!card_id, username)
+      $hConn.Exec("UPDATE kb_files SET author = NULL WHERE id = &1", r!id)
+    Next
+  Endif
 End
 
 Public Function GetFullname(username As String) As String

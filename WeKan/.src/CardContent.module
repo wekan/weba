@@ -36,6 +36,7 @@ Public Sub OpenStore()
     t.PrimaryKey = ["id"]
     t.Update()
   Endif
+  RetiredAuthors.OpenStore()
 End
 
 Private Sub RequireCard(boardId As Integer, cardId As Integer)
@@ -58,6 +59,47 @@ Public Function Entry(boardId As Integer, cardId As Integer, entryId As Integer)
   If Not r.Available Then Error.Raise("Card entry not accessible")
   If r!kind = "subtask" Or r!kind = "dependency" Then BoardAccess.RequireCard(boardId, CInt(r!amount))
   Return r
+End
+
+Public Function AuthorName(boardId As Integer, cardId As Integer, kind As String, itemId As Integer) As String
+  Dim r As Result
+  If kind = "entry" Then
+    r = Entry(boardId, cardId, itemId)
+  Else If kind = "file" Then
+    r = FileRecord(boardId, cardId, itemId)
+  Else
+    Error.Raise("Unknown author record")
+  Endif
+  Return RetiredAuthors.DisplayName(kind, itemId, r!author)
+End
+
+Public Sub RetainAuthorName(boardId As Integer, cardId As Integer, kind As String, itemId As Integer, authorName As String)
+  Dim r As Result
+  Dim tableName As String
+  If kind = "entry" Then
+    r = Entry(boardId, cardId, itemId)
+    tableName = "kb_entries"
+  Else If kind = "file" Then
+    r = FileRecord(boardId, cardId, itemId)
+    tableName = "kb_files"
+  Else
+    Error.Raise("Unknown author record")
+  Endif
+  BoardAccess.Require(boardId, "write")
+  If r!author <> WebIdentity.Username Then Error.Raise("Author provenance requires a newly created record")
+  If String.Len(authorName) > 255 Then Error.Raise("Author name is too long")
+  ' Imported names are display text, never a claim to a local account.
+  $db.Exec("UPDATE " & tableName & " SET author = NULL WHERE id = &1 AND board_id = &2 AND card_id = &3", itemId, boardId, cardId)
+  RetiredAuthors.Remember(kind, itemId, boardId, cardId, authorName)
+End
+
+Private Sub CopyAuthor(boardId As Integer, cardId As Integer, kind As String, itemId As Integer, author As String, displayName As String)
+  Dim tableName As String = If(kind = "entry", "kb_entries", "kb_files")
+  If Not author Then
+    RetainAuthorName(boardId, cardId, kind, itemId, displayName)
+    Return
+  Endif
+  $db.Exec("UPDATE " & tableName & " SET author = &1 WHERE id = &2 AND board_id = &3 AND card_id = &4", author, itemId, boardId, cardId)
 End
 
 Private Function Reaches(boardId As Integer, startId As Integer, targetId As Integer, kind As String, skipId As Integer) As Boolean
@@ -159,6 +201,7 @@ Public Sub DeleteEntry(boardId As Integer, cardId As Integer, entryId As Integer
   If r!kind = "comment" And r!author <> WebIdentity.Username And Not BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Comment not editable")
   If r!kind = "checklist" Then $db.Exec("DELETE FROM kb_entries WHERE board_id = &1 AND card_id = &2 AND parent_id = &3", boardId, cardId, entryId)
   $db.Exec("DELETE FROM kb_entries WHERE board_id = &1 AND card_id = &2 AND id = &3", boardId, cardId, entryId)
+  RetiredAuthors.Prune(boardId)
   KanbanStore.Activity(boardId, "Deleted card detail", "card", cardId)
 End
 
@@ -248,6 +291,7 @@ Public Sub DeleteFile(boardId As Integer, cardId As Integer, fileId As Integer)
   FileRecord(boardId, cardId, fileId)
   BoardAccess.Require(boardId, "write")
   $db.Exec("DELETE FROM kb_files WHERE board_id = &1 AND card_id = &2 AND id = &3", boardId, cardId, fileId)
+  RetiredAuthors.Prune(boardId)
   KanbanStore.Activity(boardId, "Deleted attachment", "card", cardId)
 End
 
@@ -270,11 +314,13 @@ Public Sub CopyRecords(sourceBoard As Integer, sourceCard As Integer, targetBoar
         parentId = parents[CStr(r!parent_id)]
       Endif
       id = SaveEntry(targetBoard, targetCard, 0, kind, r!title, r!body, parentId, r!done, r!amount, r!value_type, True)
+      CopyAuthor(targetBoard, targetCard, "entry", id, r!author, AuthorName(sourceBoard, sourceCard, "entry", r!id))
       If kind = "checklist" Then parents[CStr(r!id)] = id
     Next
   Next
   r = Files(sourceBoard, sourceCard)
   For Each r
-    AddFile(targetBoard, targetCard, r!filename, r!content.Data)
+    id = AddFile(targetBoard, targetCard, r!filename, r!content.Data)
+    CopyAuthor(targetBoard, targetCard, "file", id, r!author, AuthorName(sourceBoard, sourceCard, "file", r!id))
   Next
 End

@@ -48,7 +48,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   their anchor. Packaged two-session Chromium tests verify member changes,
   forged reader writes, Worker comments/moves, assigned-only scope and mobile
   placement. Static member/role captions use the existing WeKan translations.
-- In progress: REST membership/card/container contracts. Custom roles, list-level exceptions, ownership
+- In progress: REST membership/card/container contracts. Custom roles, list-level
+  exceptions, ownership
   transfer and public/instance board visibility are still pending.
 - Completed: native browser sessions bind to persistent nonreused account
   session versions. Password changes retain the changing browser but revoke
@@ -62,14 +63,28 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   Revoked native commands now return a login reload before dispatch rather than
   throwing into Gambas's alert/backtrace path; source/archive lifecycle tests and
   the packaged two-browser deletion flow verify navigation and denied writes.
-- Follow-up security work: account deletion must not allow a re-registered
-  username to inherit old ownership, author privileges or assignee links. Old
-  browser-session reuse is fixed, but these stored content references still need
-  immutable identities or transactional cleanup and independent regression tests.
-  Email/LDAP/2FA login, configurable token lifetime, native-login throttling,
-  registration policy, concurrent site-admin deletion/demotion, parallel first-API
-  schema initialization, and the original
-  WeKan fixture/browser suites remain pending.
+- Completed: account deletion clears legacy owners, memberships, personal
+  stars/watch flags and both assignee representations in the same transaction
+  as account/token/session removal. Other members and assignments remain;
+  normal members are never silently promoted. Comments, files and history stay,
+  with display-only attribution detached from deleted account principals and
+  orphan timers stopped. Registration/admin-created accounts also clear
+  historical dangling references before claiming a formerly unused name.
+  Copies retain comment/file authors, JSON exchange retains display-only names,
+  moves preserve provenance and permanent deletion prunes its metadata. Reject
+  forged comment ownership and invalid imported author values. Protect the last
+  active board admin after an owner disappears. Real SQLite negatives,
+  independent failed-COMMIT snapshots and packaged
+  two-browser admin cancel/confirm/re-registration tests pass; no broad WeKan
+  suite parity is implied by these focused checks.
+- Follow-up: explicit site-admin recovery/ownership transfer for boards left
+  without an administrator, and stable opaque account IDs for full WeKan API
+  identity/import parity. Current deletion cleanup does not reconstruct the
+  original principals of accounts already reused before this update.
+- Follow-up security work: email/LDAP/2FA login, configurable token lifetime,
+  native-login throttling, registration policy, concurrent site-admin deletion/
+  demotion, parallel first-API schema initialization, and the original WeKan
+  fixture/browser suites remain pending.
 - Completed: native large-text updates bypass environment/dispatcher limits
   through private per-request files and a short native event. Independent SQLite
   checks verify the full Unicode description; unit tests verify mode 0600,

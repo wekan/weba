@@ -113,5 +113,6 @@ normal_token = token_for('rest-other', PASSWORD)
 fixture('recreate-other')
 assert api('/api/users/rest-other/boards', token=normal_token)[0] == 401, 'Recreated account inherited an API token'
 normal.assert_revoked('Revoked after account recreation')
-Native('rest-other', PASSWORD)
+recreated = Native('rest-other', PASSWORD)
+assert "Other user's private board" not in recreated.get(), 'Recreated account inherited a predecessor board'
 print('Native sessions: failed/successful password changes, current-session retention, administrator reset and same-name recreation passed')

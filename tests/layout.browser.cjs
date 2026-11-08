@@ -114,6 +114,41 @@ const fs = require('node:fs');
     assert.equal(await page.$$eval('[id$=".Boards"] img',els=>els.filter(e=>e.getBoundingClientRect().width>0).length),0,'tree uses Font Awesome instead of visible bitmap icons');
     assert.equal(await page.$$eval('.weba-add-list .fa-plus-square-o',els=>els.length),3,'list-add uses the same regular Font Awesome icon as WeKan');
     assert.equal(await page.$$eval('.weba-column',els=>els.length),3,'empty board shows its initial lists');
+    if(process.env.WEBA_DELETION_ONLY) {
+      secondaryContext=await browser.createBrowserContext();
+      const memberPage=await secondaryContext.newPage();await memberPage.setViewport({width:1440,height:1000});
+      const waitP=()=>memberPage.waitForFunction(()=>window.gw&&gw.commands.length===0);
+      const clickP=async name=>{await waitP();await memberPage.locator(selector(name)).click();await waitP();};
+      const fillP=async(name,value)=>{await waitP();await memberPage.locator(entry(name)).fill(value);};
+      const memberName='deleted-'+Date.now(),boardName='Retained deleted board';
+      await memberPage.goto(process.env.WEBA_TEST_URL,{waitUntil:'networkidle2'});
+      await memberPage.waitForFunction(()=>window.webaI18n);await memberPage.evaluate(()=>webaI18n.setLanguage('en'));
+      async function registerAgain(){await clickP('ShowRegistration');await fillP('WebTextName',memberName);await fillP('WebTextPass','deletion-test-password');await fillP('ConfirmPassword','deletion-test-password');await clickP('Register');await memberPage.waitForSelector(selector('Header'),{visible:true});}
+      await registerAgain();await clickP('AddBoardTile');await fillP('BoardTitle',boardName);await clickP('NewBoard');await clickP('CloseSidebar');
+      await memberPage.click('.weba-board-tile');await waitP();
+      await memberPage.click('.weba-add-card-top');await waitP();await fillP('CardTitle','Retained deleted card');await clickP('SaveCard');await clickP('CloseEditor');
+      await memberPage.click('.weba-card-menu');await waitP();await clickP('ContextComments');await fillP('DetailBody','Retained deleted comment');await clickP('DetailSave');await clickP('CloseDetails');
+      await clickP('SidebarToggle');await clickP('BoardSettings');await clickP('ContextMembers');await fillP('MemberUsername',ownerName);await memberPage.select('[id$=".MemberRole:select"]','Board administrator');await waitP();await clickP('SaveMember');await clickP('CloseMembers');await clickP('CloseSidebar');
+      await click('AccountToggle');await click('Admin');await click('AdminUsers');await click('SidebarToggle');await fill('Username',memberName);
+      // Exercise both choices of the real native Gambas confirmation dialog.
+      await page.locator(selector('DeleteUser')).click();await page.waitForSelector(selector('btnButton2'),{visible:true});await page.locator(selector('btnButton2')).click();await settle();
+      await clickP('Home');assert.equal(await memberPage.$$eval('.weba-board-tile',els=>els.length),1,'cancel leaves the account and ownership active');
+      await page.locator(selector('DeleteUser')).click();await page.waitForSelector(selector('btnButton1'),{visible:true});await page.locator(selector('btnButton1')).click();await settle();
+      assert.ok(await page.$eval('.weba-content',(e,name)=>!e.textContent.includes(name),memberName),'native admin deletion removed the user');
+      await memberPage.locator(selector('Home')).click();await memberPage.waitForSelector(selector('WebTextName'),{visible:true});
+      await registerAgain();assert.equal(await memberPage.$$eval('.weba-board-tile',els=>els.length),0,'new account cannot inherit the deleted owner board');
+      await click('CloseSidebar');await click('Home');await page.waitForSelector('.weba-board-tile');
+      await page.evaluate(title=>[...document.querySelectorAll('.weba-board-tile')].find(e=>e.textContent===title).click(),boardName);await settle();
+      await page.click('.weba-card-menu');await settle();await click('ContextComments');
+      assert.ok(await page.$eval(selector('DetailTree'),(e,name)=>e.textContent.includes(name)&&e.textContent.includes('Retained deleted comment'),memberName),'shared board keeps the comment and displayed author');await click('CloseDetails');
+      await click('SidebarToggle');await click('BoardSettings');await click('ContextMembers');await fill('MemberUsername',memberName);await page.select('[id$=".MemberRole:select"]','Normal');await settle();await click('SaveMember');await click('CloseMembers');
+      await clickP('Home');await memberPage.waitForSelector('.weba-board-tile');await memberPage.click('.weba-board-tile');await waitP();await memberPage.click('.weba-card-menu');await waitP();await clickP('ContextComments');
+      const point=await memberPage.$eval(selector('DetailTree'),tree=>{const row=[...tree.querySelectorAll('tr[id]')].find(e=>e.textContent.includes('Retained deleted comment'));const r=row.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2};});
+      await memberPage.mouse.click(point.x,point.y);await waitP();
+      assert.equal(await memberPage.$eval(selector('DetailSave'),e=>e.getBoundingClientRect().width),0,'new same-name member cannot edit predecessor comment');
+      assert.equal(await memberPage.$eval(entry('DetailBody'),e=>e.readOnly),true);
+      console.log('Deletion browser: native cancel/confirm, session revocation, same-name registration, shared history/author retention and denied predecessor edits passed');return;
+    }
     if(process.env.WEBA_MEMBERS_ONLY) {
       async function make(title){await page.click('.weba-add-card-top');await settle();await fill('CardTitle',title);await click('SaveCard');await click('CloseEditor');}
       await make('Shared card');await make('Hidden role card');

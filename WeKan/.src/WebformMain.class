@@ -1153,7 +1153,7 @@ Private Sub LoadDetails()
     r = CardContent.Entries($detailsBoard, $detailsCard, kind)
     For Each r
       value = r!title
-      If kind = "comment" Then value = r!author & ": " & r!body
+      If kind = "comment" Then value = CardContent.AuthorName($detailsBoard, $detailsCard, "entry", r!id) & ": " & r!body
       If kind = "custom" Then value &= ": " & r!body
       If kind = "time" Then value &= " · " & Str(Round(r!amount, -2)) & " min"
       If kind = "checkitem" Then

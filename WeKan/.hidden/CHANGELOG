@@ -1,4 +1,10 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Account deletion: Atomically remove current/historical username privilege
+  references without erasing comments/files/history or other members. Keep
+  display-only author provenance through copies/exchange/moves, prune it on
+  deletion, stop orphan timers and guard the last board admin. Verify real
+  browser confirmation/recreation
+  and independent SQLite rollback snapshots.
 - Expired native sessions: Reject messages before dispatch and return a login
   reload without the native alert/backtrace path; verify stale writes and browser
   navigation after account deletion.

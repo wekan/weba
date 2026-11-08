@@ -1,0 +1,54 @@
+' Display-only provenance for records whose account principal was deleted.
+Export
+Private $db As Connection
+
+Public Sub OpenStore()
+  Dim t As Table
+  If $db Then Return
+  $db = WebDatabase.OpenConnection()
+  If Not $db.Tables.Exist("kb_retired_authors") Then
+    t = $db.Tables.Add("kb_retired_authors")
+    t.Fields.Add("kind", db.String, 16)
+    t.Fields.Add("item_id", db.Integer)
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("card_id", db.Integer)
+    t.Fields.Add("display_name", db.String, 255)
+    t.PrimaryKey = ["kind", "item_id"]
+    t.Update()
+  Endif
+Catch
+  $db = Null
+  Error.Propagate()
+End
+
+Public Sub Remember(kind As String, itemId As Integer, boardId As Integer, cardId As Integer, displayName As String)
+  Dim r As Result
+  OpenStore()
+  If kind <> "entry" And kind <> "file" Then Error.Raise("Unknown author record")
+  If Not displayName Then Return
+  If String.Len(displayName) > 255 Then Error.Raise("Author name is too long")
+  r = $db.Edit("kb_retired_authors", "kind = &1 AND item_id = &2", kind, itemId)
+  If Not r.Available Then
+    r = $db.Create("kb_retired_authors")
+    r["kind"] = kind
+    r["item_id"] = itemId
+  Endif
+  r["board_id"] = boardId
+  r["card_id"] = cardId
+  r["display_name"] = displayName
+  r.Update()
+End
+
+Public Function DisplayName(kind As String, itemId As Integer, liveAuthor As String) As String
+  Dim r As Result
+  If liveAuthor Then Return liveAuthor
+  OpenStore()
+  r = $db.Find("kb_retired_authors", "kind = &1 AND item_id = &2", kind, itemId)
+  If r.Available Then Return r!display_name
+  Return ""
+End
+
+Public Sub Prune(boardId As Integer)
+  OpenStore()
+  $db.Delete("kb_retired_authors", "board_id = &1 AND ((kind = &2 AND item_id NOT IN (SELECT id FROM kb_entries WHERE board_id = &1)) OR (kind = &3 AND item_id NOT IN (SELECT id FROM kb_files WHERE board_id = &1)))", boardId, "entry", "file")
+End

@@ -11,6 +11,9 @@ Public Sub Main()
   Dim item As Collection
   Dim denied As Boolean
   Dim count As Integer
+  Dim badAuthor As Variant
+  Dim db As Connection
+  Dim authorRows As Integer
   WebDatabase.Register("transfer-owner", "x")
   Session["username"] = "transfer-owner"
   Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
@@ -74,6 +77,21 @@ Public Sub Main()
   If Not denied Then Error.Raise("Invalid late import accepted")
   r = KanbanStore.Boards(False)
   If r.Count <> count Then Error.Raise("Nested assignment writes committed a partial import")
+  db = WebDatabase.OpenConnection()
+  r = db.Find("kb_retired_authors")
+  authorRows = r.Count
+  For Each badAuthor In [123, String$(256, "a")]
+    data = BoardTransfer.ReadData(text)
+    item = data["entries"][0]
+    item["author_name"] = badAuthor
+    Try BoardTransfer.ImportData(JSON.Encode(data), "Invalid author")
+    denied = Error
+    If Not denied Then Error.Raise("Invalid imported author was accepted")
+    r = KanbanStore.Boards(False)
+    If r.Count <> count Then Error.Raise("Invalid author left a partial board")
+    r = db.Find("kb_retired_authors")
+    If r.Count <> authorRows Then Error.Raise("Invalid author left orphan provenance")
+  Next
   Try BoardTransfer.ImportData("{}", "Invalid")
   denied = Error
   If Not denied Then Error.Raise("Unknown format accepted")
