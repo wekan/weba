@@ -20,6 +20,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   draft COMMIT/retry cases bring card-update phases to 20. Full local tests pass
   (28 Python tests), with native details/member/account-deletion browser coverage.
   Original callback counts stay 10/30 in spec 17 and 3/3 in the archive file.
+- Documented live detail row/field preservation, missing-parent/delete behavior,
+  binary-free metadata, scoped relationships, author/role/type boundaries and
+  entry merge/retry semantics. Record native/two-user source/package evidence,
+  20 COMMIT phases and remaining people/label/full-original-suite gaps.
 - Completed native stale-editor field merging: reproduce an old title editor
   undoing an external description update, then keep a private opening baseline
   and merge fields differing from it over the locked, reauthorized current card.

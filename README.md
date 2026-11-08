@@ -357,14 +357,47 @@ additional real failed-COMMIT/retry phases cover draft description update/clear,
 bringing card-update phases to eighteen. `test-live` reproduces the former data
 loss and verifies title save/reopen preserves the external description through
 both source and packaged native UI. Member/date/details browser regressions also
-pass. Full source inline editing, unsaved-draft UI and deep-pane collaboration
-remain broader unfinished work.
+pass. Full source inline editing and unsaved-draft UI remain broader unfinished
+work.
+
+The existing native detail pane also refreshes comments, checklists/items,
+subtasks/dependencies, custom fields, tracked-time records and attachment lists.
+Its private snapshot reads authorized entries and explicit file metadata columns,
+leaving binary content for the existing authorized download/copy paths. Foreign
+or orphan native relationship targets are excluded for every role; assigned-only
+readers also exclude targets they cannot read. Open people/roster panels and
+linked-target label reactivity still need separate work.
+
+When another user changes data, the pane rebuilds rows and refreshes clean selected
+fields while retaining dirty text, numbers, checkbox/type and parent choices.
+Deleted selected entries/files clear the editor or download selection. A deleted
+checklist parent leaves a pending item's selection empty; Save requires an
+explicit valid checklist, preventing silent retargeting. Comment authorship and
+current role restrictions are reapplied after each rebuild and checked again by
+the server on save. Nullable timer columns normalize to safe native defaults.
+
+Entry saves use their private baseline to merge changed fields over the locked,
+reauthorized entry. Other independent updates survive, while changed fields retain
+explicit last-write behavior. Custom-field type/value changes are grouped; stale
+value edits across an external type change are refused until reopened. Full-save
+and copy callers retain their existing contract. Snapshot comparison uses data
+captured before UI changes, and its state advances only after a successful rebuild.
+
+`test-live` now also runs a separate two-user native detail test on source and
+packaged applications. It verifies external rows/clean fields, preserved drafts,
+independent saves, forged comment-author denial, deleted entries/parents, real
+binary upload and metadata/removal, custom-type conflicts, role/scope loss and
+absence of JavaScript errors. These extra native checks add no unchanged original
+callbacks. Native tests cover stable/scoped snapshots, foreign/assigned canaries,
+legacy timer nulls, binary-free metadata and entry draft guards. Two additional
+entry-draft failed-COMMIT/retry phases bring card-update phases to twenty; full
+local tests and existing details/member/account-deletion browser regressions pass.
 
 Polling cost grows with visible cards. Other signed-in views still emit native
 heartbeat requests, while the handler returns before checking board data.
-Efficient idle/background suspension, all-boards navigation reactivity, deep
-open-panel content updates, full source inline-edit/unsaved-draft UX and complete
-source reactivity remain pending. The three archive callbacks establish that
+Efficient idle/background suspension, all-boards navigation reactivity, live
+people/roster panels, linked-target labels, full source inline-edit/unsaved-draft
+UX and complete source reactivity remain pending. The three archive callbacks establish that
 file's contract; complete original UI/API/security suites still require work.
 
 Each list exposes two independent #5251 timestamps: `modifiedAt` tracks the list

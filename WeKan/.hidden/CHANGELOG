@@ -1,4 +1,7 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Explain live detail snapshots/drafts, deleted parents/files,
+  scoped relationships and author/role/type guards, entry merge/retry and twenty
+  COMMIT phases; retain people/label/full-original-suite gaps.
 - Native detail live: Refresh scoped rows/clean fields while preserving drafts;
   merge entry saves under locks, retain author/role/type guards and handle deleted
   entries/files/parents safely. Exclude foreign relations and blobs from live

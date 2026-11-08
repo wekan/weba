@@ -2,6 +2,12 @@
 
 This work adds the following features and fixes:
 
+- Document live detail snapshots, dirty/clean fields, deletion and missing-parent
+  behavior, binary-free files, author/role/type safeguards and entry merge/retry.
+  Describe native/two-user source/packaged evidence and twenty card-update COMMIT
+  phases; keep people/linked-label/full-original-suite gaps explicit.
+  Thanks to xet7.
+
 - Add live refresh for existing native detail panes with scoped binary-free
   snapshots, preserved dirty fields and updated clean selected values. Merge
   entry drafts under locks; preserve author/role guards, reject unsafe type

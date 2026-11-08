@@ -10,7 +10,7 @@ and in the [README](../README.md), rather than in duplicate instruction files.
 | Area | Files |
 | --- | --- |
 | Login and registration | `WeKan/.src/WebformLogin.class` and `.webform` |
-| Native navigation, editors and live board checks | `WeKan/.src/WebformMain.class`, `.webform`, `BoardLive.module`, `CardDraft.module` |
+| Native navigation, editors and live board checks | `WeKan/.src/WebformMain.class`, `.webform`, `BoardLive.module`, `CardDraft.module`, `DetailLive.module`, `EntryDraft.module` |
 | Accounts, sessions and connection | `WeKan/.src/WebDatabase.module`, `WebIdentity.module`, `ApiTokens.module` |
 | Board/card persistence and permissions | `KanbanStore.module`, `BoardAccess.module`, `ApiMemberRoles.module` |
 | REST routing and projections | `RestApi.module`, `BoardRestData.module` |
@@ -85,8 +85,8 @@ visible rows and never creates clocks, activities or a client-visible version
 value. Include every rendered field when extending it. Capture state before
 render queries, so a concurrent mutation cannot be hidden by a newer post-render
 snapshot. Recheck scope when clearing stale open panels; keep permitted drafts
-unchanged. Deep-pane synchronization and complete inline-edit/unsaved-draft UX
-remain separate work.
+unchanged. People/roster synchronization, linked-target label reactivity and
+complete inline-edit/unsaved-draft UX remain separate work.
 
 Run `WEBA_BROWSER_URL=http://127.0.0.1:9231 ./build.sh test-live` against a local
 Chromium CDP service for both source and packaged original archive callbacks.
@@ -115,3 +115,26 @@ merge paths when introducing an editable field, alongside full-save callers.
 `CardDraftTest` and real browser Save exercise the old data-loss case. SQL lock
 injection verifies the current row is read after locking; two failed-COMMIT/retry
 phases inspect exact rollback and preserved other fields/relations/dates.
+
+## Detail pane updates and entry saves
+
+`DetailLive.Read` builds authorized current-kind entry/checklist data and explicit
+binary-free file summaries. Keep comparison state private and advance it only
+after the pane rebuild succeeds; retain a pre-rebuild encoded snapshot because
+preserving dirty entry baselines mutates local collections. Unchanged snapshots
+leave the tree/form intact. Rebuilds preserve dirty fields, update clean fields,
+retain valid parent IDs and clear deleted selections. Do not substitute the first
+checklist when a draft's selected parent disappeared. Reapply comment author and
+role restrictions to refreshed forms; server save guards remain authoritative.
+
+`EntryDraft` canonicalizes nullable legacy/timer values and merges fields within
+`CardContent.SaveEntry` after existing locks, permission and author checks. Copy/
+full-save paths omit this baseline. Preserve explicit type/value grouping and
+reject stale value edits across external custom-type changes. Foreign/orphan
+native relationships are filtered before collection reads, alongside assigned
+scope. Full source cross-board hierarchy remains pending.
+
+`DetailLiveTest`, the two-user `details-live.browser.cjs` run by test-live, existing
+native browser regressions and two entry-draft COMMIT/retry phases cover the
+implemented behavior. The complete original suite still has unexecuted cases;
+these additional native tests do not increase the original callback count.
