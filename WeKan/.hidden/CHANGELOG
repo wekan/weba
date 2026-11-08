@@ -1,4 +1,7 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Explain archive routes/UTC history and native graph/lifecycle
+  semantics, sixteen card-update COMMIT phases, original callback and Chromium
+  coverage; retain live synchronization/cross-board/list-exception parity gaps.
 - Card archive: Add guarded REST archive/restore, retained UTC archive times,
   atomic native subtask graphs and metadata lifecycle cleanup. Verify scope/state
   negatives, diamond/cycle/foreign references, SQL/COMMIT rollback and two original

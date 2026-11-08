@@ -282,6 +282,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   passes, including 28 Python tests. Two of three original archive callbacks run
   unchanged with actual Playwright assertions and an explicit SQLite adapter.
   Original spec 17 remains 10/30; the separate archive file is 2/3.
+- Documented archive/restore routes, retained UTC metadata, native graph and
+  copy/move/JSON/deletion behavior, exact scope/state errors and verification.
+  Packaged Chromium passes actual REST lifecycle/readback and explicit native
+  board reopening; it does not establish automatic live synchronization.
 - In progress: archive live-board synchronization and the remaining original
   archive UI callback, full source parent/linked-card/cross-board hierarchy and
   list-level exceptions. Native visibility for raw combined assigned-only flags,

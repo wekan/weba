@@ -238,6 +238,8 @@ The first implemented REST contracts use JSON request/response bodies:
 | `POST /api/boards/:id/members/:userId/remove` | Remove with `action: "remove"`; the final administrator remains active |
 | `POST` / `DELETE /api/boards/:id/lists/:listId/cards/:cardId/members/:userId` | Add/remove one card member, preserving other members and the separate assignees |
 | `POST` / `DELETE /api/boards/:id/lists/:listId/cards/:cardId/assignees/:userId` | Add/remove one assignee, preserving other assignees and the separate members |
+| `POST /api/boards/:id/lists/:listId/cards/:cardId/archive` | Archive an active matching card and its same-board native subtask graph; return ID, state and persisted UTC archivedAt |
+| `POST /api/boards/:id/lists/:listId/cards/:cardId/unarchive` | Restore an archived matching card and its same-board native subtask graph; retain prior archivedAt |
 | `PUT /api/boards/:id/lists/:listId/cards/:cardId` | Replace provided people, description and four UTC date fields; other card fields are pending |
 
 Whole-board REST reads follow WeKan's `Authentication.checkBoardAccess` and
@@ -271,6 +273,38 @@ Unrecorded checklist/item deadlines are null; editing/persisting them is pending
 Remaining card attributes, author/creation metadata, board-defined label IDs,
 custom fields/admin-only behavior and complete WeKan document parity are also
 pending. Unsupported fields are not represented as if implemented.
+
+Archive/restore routes require the general card REST write boundary, including
+all three raw assigned-only flags even for combined board-admin rows. Explicit
+site administration remains the source override. Check board authorization before
+interpreting list/card identifiers, then lock and recheck inside the transaction.
+Missing, foreign-list or wrong-state cards return JSON 404 `Card not found` without
+business writes. A repeated successful operation therefore returns 404.
+
+Archive writes a UTC millisecond timestamp shared by the native subtask graph;
+restore keeps that timestamp. Single-card GET includes recorded `archivedAt`, even
+on a restored active card. An old card without archive metadata has no invented
+timestamp. Moves and JSON exchange preserve it; a fresh copy starts without it,
+and permanent card/board deletion removes it. Native child traversal deduplicates
+diamond/cyclic references, excludes foreign-board edges, checks visible descendants
+and commits flags, times, history and change clocks together. Full WeKan parent/
+linked-card/cross-board hierarchy, custom roles and list exceptions remain pending.
+
+The source/archive HTTP tests verify authorization order, permitted/refused roles,
+exact scope/state errors, persisted archive time and retained restore history,
+repeat no-write behavior and complete rollback after timestamp, clock or descendant
+failure. Four additional real failed-COMMIT/retry phases cover REST/native archive
+and restore on the same connection, bringing card-update phases to sixteen. Two
+callbacks from the original `rest-card-archive.e2e.js` run unchanged with actual
+Playwright assertions and an explicit SQLite fixture adapter. Its live-board UI
+callback remains unexecuted; original spec 17 remains 10/30 independently.
+
+Packaged Chromium runs real REST archive/restore/repeat requests, reads the results
+back through both single-card GETs and verifies native rendering after explicitly
+reopening the board. This establishes persistence and native interoperability;
+automatic synchronization of a board already open in another session remains
+pending. Run the focused check with `WITH_API=true WEBA_DETAILS_ONLY=1
+WEBA_BROWSER_URL=http://127.0.0.1:9231 python3 tests/run-http.py --browser --archive`.
 
 Each list exposes two independent #5251 timestamps: `modifiedAt` tracks the list
 itself (creation, title, order, shared settings or archive), while

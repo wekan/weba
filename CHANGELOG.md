@@ -2,6 +2,12 @@
 
 This work adds the following features and fixes:
 
+- Document archive/restore routes, retained UTC metadata, native graph/lifecycle
+  semantics, role/error/rollback contracts, sixteen card-update COMMIT phases,
+  two original archive callbacks and packaged Chromium REST/native readback.
+  Keep live UI synchronization, cross-board hierarchy, list exceptions and full
+  original-suite gaps explicit. Thanks to xet7.
+
 - Add guarded card archive/unarchive POST routes with JSON scope/state errors,
   persisted UTC archive times retained by restore and atomic same-board native
   subtask cascades. Preserve metadata through move/JSON and clear it on permanent

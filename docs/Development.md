@@ -14,7 +14,7 @@ and in the [README](../README.md), rather than in duplicate instruction files.
 | Accounts, sessions and connection | `WeKan/.src/WebDatabase.module`, `WebIdentity.module`, `ApiTokens.module` |
 | Board/card persistence and permissions | `KanbanStore.module`, `BoardAccess.module`, `ApiMemberRoles.module` |
 | REST routing and projections | `RestApi.module`, `BoardRestData.module` |
-| UTC card dates and change clocks | `CardDates.module`, `ItemChanges.module` |
+| UTC dates, archive history and change clocks | `CardDates.module`, `CardArchive.module`, `ItemChanges.module` |
 | Workspace menus, transfer and rich content | `WorkspaceStore.module`, `WorkspaceActions.module`, `BoardTransfer.module`, `CardContent.module` |
 | Embedded report components | `WeKan/.public/kanban.js`, `kanban.css`, `ui.js` |
 | Local CGI host | `runtime/server.py` |
