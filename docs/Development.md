@@ -226,3 +226,26 @@ explicit adapter maps implicit native owners to active document memberships and
 supplies in-memory Mongo query operations for these fixtures. Only valid source
 parameters are compared; Meteor validation, wire/UI callbacks, organizations,
 teams, public templates, workspaces/facets and custom drag order remain open.
+
+
+## Native catalog controls
+
+`WebformMain` loads the principal's sort on open and refreshes it during overview
+polling. Native popup buttons persist title order; board-name search is separate
+from card Filter. Search/sort changes reset the page; shrinking totals clamp it.
+`BoardCatalog.Unpaged` supplies all matching IDs for the current Custom fallback,
+while Page retains its bounded service contract. Manual drag order is not wired.
+
+Compute scoped IDs and update pagination controls before queuing Visual.Refresh.
+The render function consumes the private page snapshot, intersects it with fresh
+board visibility and emits only the selected tiles in the chosen title order.
+Updating button properties from inside Render left stale enabled states in the
+browser; retain the pre-render update ordering. Overview change detection still
+captures state before reads and commits it after the refresh.
+
+The dedicated fixture is copied only into disposable HTTP projects. Native
+catalog browser tests use actual menus/inputs and independently query saved sort
+preferences; external native transactions exercise preference changes and page
+clamping. Test source and packaged apps, mobile bounds/clicks and imported labels.
+Original UI callbacks, manual order, workspace/facet semantics and efficient SQL
+count/slicing remain separate work.

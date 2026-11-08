@@ -445,8 +445,25 @@ SQL-to-document fixture adapter compares 54 results with the original
 getAllBoardsPage method body and actual source visibility/facet helpers. Meteor
 parameter checks, network authentication, UI callbacks and full workspace/facet
 semantics are not established by that comparison. This service has no new public
-HTTP endpoint; native sort/search/paging controls and custom drag order still
-need wiring. Raw JSON callers must preserve explicit null keys before validation.
+HTTP endpoint. Native sort/search/paging controls are now wired for these modes;
+custom drag order still needs implementation. Raw JSON callers must preserve
+explicit null keys before validation.
+
+The header Sort button opens native saved title-order choices. All Boards,
+Starred and Archive use board-name search in the right sidebar; the separate
+card search remains available within card views. Sorted modes show 25 boards
+per page, reset after search/sort changes and clamp after external removals.
+Custom currently shows all matching boards in the title fallback order without
+pagination; it does not yet implement manual dragging. Cross-session preference
+changes refresh the choice and page. Update page labels/buttons before HTML
+rendering so the final-page Next button disables reliably.
+
+`catalog.browser.cjs` exercises real native controls, SQL preferences, 25/5 pages,
+Unicode/private search, reload/isolation, external preferences and archive-driven
+clamping, mobile interaction and Finnish labels on source/packaged applications.
+Matching original WeKan labels are imported for 237 languages; unmatched Custom
+and Clear search captions remain translation follow-up. These new native tests
+do not count as unchanged original spec 39 callbacks.
 
 Polling cost grows with visible cards. Signed-in views still emit native heartbeat
 requests; visible people/detail panes are checked even without an active board.

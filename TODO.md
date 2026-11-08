@@ -6,6 +6,11 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Current UI/API/security work
 
+- Documented native catalog controls, board/card search separation, page-label/
+  button update ordering, cross-session state and source/packaged/mobile/Finnish
+  evidence. Preserve manual Custom order, workspace/original-callback and
+  unmatched-translation follow-up rather than claiming full spec 39 completion.
+
 - Completed native All Boards sort popup, live board-name search/clear and
   25-result paging, wired to scoped BoardCatalog data. Persist per-user A-Z/Z-A
   choices, show the active choice, preserve unpaged Custom fallback and update

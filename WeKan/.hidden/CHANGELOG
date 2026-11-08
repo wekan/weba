@@ -1,4 +1,7 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Explain native catalog sort/search/paging and pre-render
+  updates, cross-session behavior and source/packaged verification; retain
+  manual-order, workspace/original-callback and translation gaps.
 - Native catalog UI: Add saved sort choices, visible selection, live board-name
   search/clear and 25-result pages with external preference/page-clamp updates.
   Keep Custom unpaged with title fallback; import matching WeKan labels and

@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Document native catalog controls, separate board/card search, pre-render page
+  updates, persisted/cross-session sort state, unpaged Custom fallback and browser
+  evidence. Retain manual ordering, workspace/original-callback and unmatched
+  translation requirements. Thanks to xet7.
+
 - Wire native board sort/search/paging controls to BoardCatalog: saved A-Z/Z-A
   choices, visible active state, live name search/clear, 25-result pages, external
   preference changes and page clamping. Keep Custom unpaged with title fallback;
