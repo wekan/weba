@@ -308,7 +308,10 @@ Private Sub CardCommit()
   If nativePeople Then
     Session["username"] = "rest-other"
     Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
-    If personField = "archive" Then
+    If personField = "draft" Then
+      memberPayload = CardDraft.Read(boardId, cardId)
+      Try SaveNativeDraft(boardId, cardId, memberPayload, memberAction)
+    Else If personField = "archive" Then
       Try KanbanStore.ArchiveCard(boardId, cardId, memberAction = "add")
     Else If personField = "assignees" Then
       Try BoardAccess.ChangeCardAssignee(boardId, cardId, "rest-member", memberAction = "add")
@@ -338,7 +341,9 @@ Private Sub CardCommit()
     Sleep 0.01
   Wend
   If nativePeople Then
-    If personField = "archive" Then
+    If personField = "draft" Then
+      SaveNativeDraft(boardId, cardId, memberPayload, memberAction)
+    Else If personField = "archive" Then
       KanbanStore.ArchiveCard(boardId, cardId, memberAction = "add")
     Else If personField = "assignees" Then
       BoardAccess.ChangeCardAssignee(boardId, cardId, "rest-member", memberAction = "add")
@@ -358,4 +363,10 @@ Private Sub CardCommit()
   Endif
   Print "Card people failed COMMIT rolled back data/history and recovered without authority leakage"
 
+End
+
+Private Sub SaveNativeDraft(boardId As Integer, cardId As Integer, baseline As Collection, action As String)
+  Dim description As String
+  If action = "add" Then description = "Native draft description"
+  KanbanStore.SaveCard(boardId, cardId, baseline["title"], description, baseline["lane"], baseline["status"], baseline["assignee"], baseline["labels"], baseline["due_day"], baseline["listId"], baseline)
 End

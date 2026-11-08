@@ -1,0 +1,62 @@
+' A native editor submits changed fields over the current locked card state.
+Export
+
+Public Function Values(title As String, description As String, lane As String, status As String, assignee As String, labels As String, dueDay As String) As Collection
+  Dim data As New Collection
+  data.Add(title, "title")
+  data.Add(description, "description")
+  data.Add(lane, "lane")
+  data.Add(status, "status")
+  data.Add(assignee, "assignee")
+  data.Add(labels, "labels")
+  data.Add(dueDay, "due_day")
+  Return data
+End
+
+Public Function Read(boardId As Integer, cardId As Integer) As Collection
+  Dim r As Result
+  Dim data As Collection
+  BoardAccess.RequireCard(boardId, cardId)
+  r = WorkspaceStore.Record(boardId, "card", cardId)
+  data = Values(CStr(r!title), CStr(r!description), CStr(r!lane), CStr(r!status), CStr(r!assignee), CStr(r!labels), CStr(r!due_day))
+  data["boardId"] = boardId
+  data["cardId"] = cardId
+  data["listId"] = KanbanStore.CardListId(boardId, cardId)
+  Return data
+End
+
+' Called by SaveCard only after its board/card locks and authorization recheck.
+Public Function Merge(boardId As Integer, cardId As Integer, current As Result, submitted As Collection, baseline As Collection, listId As Integer) As Collection
+  Dim field As String
+  Dim merged As New Collection
+  Dim placement As Boolean
+  If baseline["boardId"] <> boardId Or baseline["cardId"] <> cardId Then Error.Raise("Reopen the card before saving")
+  If Not baseline.Exist("listId") Then Error.Raise("Reopen the card before saving")
+  If current!archived Then Error.Raise("Restore the card before saving")
+  For Each field In ["title", "description", "lane", "status", "assignee", "labels", "due_day"]
+    If Not baseline.Exist(field) Then Error.Raise("Reopen the card before saving")
+    If TypeOf(baseline[field]) <> gb.String Then Error.Raise("Invalid card editor state")
+    If submitted[field] <> baseline[field] Then
+      merged.Add(CStr(submitted[field]), field)
+    Else
+      merged.Add(CStr(current[field]), field)
+    Endif
+  Next
+  placement = submitted["lane"] <> baseline["lane"] Or submitted["status"] <> baseline["status"] Or listId <> baseline["listId"]
+  If placement Then
+    ' Lane/status/list identify a single destination; keep an explicit move.
+    SetValue(merged, "lane", CStr(submitted["lane"]))
+    SetValue(merged, "status", CStr(submitted["status"]))
+    merged["listId"] = listId
+  Else
+    merged["listId"] = KanbanStore.CardListId(boardId, cardId)
+  Endif
+  Return merged
+End
+
+' Advance just a field already committed by a native menu or people editor.
+Public Sub SetValue(data As Collection, field As String, value As String)
+  If Not data Then Return
+  If data.Exist(field) Then data.Remove(field)
+  data.Add(value, field)
+End

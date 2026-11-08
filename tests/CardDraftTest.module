@@ -1,0 +1,109 @@
+' Stale native editor fields must not undo other committed changes.
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim otherCard As Integer
+  Dim listOne As Integer
+  Dim listTwo As Integer
+  Dim listThree As Integer
+  Dim first As Collection
+  Dim second As Collection
+  Dim dates As New Collection
+  Dim r As Result
+  Dim db As Connection
+  Dim denied As Boolean
+  Dim before As String
+  Dim history As Integer
+  WebDatabase.Register("draft-owner", "x")
+  WebDatabase.Register("draft-member", "x")
+  SignIn("draft-owner")
+  boardId = KanbanStore.AddBoard("Draft merge")
+  BoardAccess.SetMember(boardId, "draft-member", "normal")
+  r = KanbanStore.Lanes(boardId)
+  r = KanbanStore.Lists(boardId, "Default")
+  listOne = r!id
+  r.MoveNext()
+  listTwo = r!id
+  r.MoveNext()
+  listThree = r!id
+  cardId = KanbanStore.SaveCard(boardId, 0, "Opened title", "Opened body", "Default", "Todo", "draft-owner", "old", "2026-06-20", listOne)
+  otherCard = KanbanStore.SaveCard(boardId, 0, "Other card", "", "Default", "Todo", "draft-owner", "", "", listOne)
+  first = CardDraft.Read(boardId, cardId)
+  KanbanStore.SaveCard(boardId, cardId, "External title", "External body", "Default", "Doing", "draft-member", "external labels", "2026-06-21", listTwo)
+  BoardAccess.SetAssignees(boardId, cardId, ["draft-member", "draft-owner"])
+  dates["dueAt"] = "2026-06-21T12:34:56.123Z"
+  dates["receivedAt"] = 0
+  CardDates.RestoreDates(boardId, cardId, dates)
+  SaveDraft(boardId, cardId, first, "title", "Local title")
+  second = CardDraft.Read(boardId, cardId)
+  If second["title"] <> "Local title" Or second["description"] <> "External body" Then Error.Raise("Draft overwrote another field")
+  If second["status"] <> "Doing" Or second["listId"] <> listTwo Or second["labels"] <> "external labels" Then Error.Raise("Draft undid a move or labels")
+  If second["assignee"] <> "draft-member" Or BoardAccess.Assignees(boardId, cardId).Count <> 2 Then Error.Raise("Draft reset concurrent assignees")
+  dates = CardDates.ReadDates(boardId, cardId)
+  If CardDates.Iso(dates["dueAt"]) <> "2026-06-21T12:34:56.123Z" Or dates["receivedAt"] <> 0 Then Error.Raise("Draft reset precise or other dates")
+  first = CardDraft.Read(boardId, cardId)
+  second = CardDraft.Read(boardId, cardId)
+  SaveDraft(boardId, cardId, first, "title", "First title edit")
+  SaveDraft(boardId, cardId, second, "description", "Second body edit")
+  r = WorkspaceStore.Record(boardId, "card", cardId)
+  If r!title <> "First title edit" Or r!description <> "Second body edit" Then Error.Raise("Independent stale drafts did not merge")
+  SaveDraft(boardId, cardId, first, "title", "Last explicit title")
+  r = WorkspaceStore.Record(boardId, "card", cardId)
+  If r!title <> "Last explicit title" Or r!description <> "Second body edit" Then Error.Raise("Explicit same-field last write changed other fields")
+  first = CardDraft.Read(boardId, cardId)
+  SaveDraft(boardId, cardId, first, "description", "")
+  second = CardDraft.Read(boardId, cardId)
+  If Not second.Exist("description") Or second["description"] <> "" Then Error.Raise("Explicit empty description lost")
+  SaveDraft(boardId, cardId, first, "due_day", "")
+  dates = CardDates.ReadDates(boardId, cardId)
+  If dates.Exist("dueAt") Or dates["receivedAt"] <> 0 Then Error.Raise("Explicit day clear did not preserve other dates")
+  first = CardDraft.Read(boardId, cardId)
+  KanbanStore.MoveCard(boardId, cardId, "Default", "#" & CStr(listOne), 0)
+  SaveDraft(boardId, cardId, first, "description", "Keep external move")
+  If KanbanStore.CardListId(boardId, cardId) <> listOne Then Error.Raise("Stale placement overwrote external move")
+  SaveDraft(boardId, cardId, first, "status", "Done", listThree)
+  If KanbanStore.CardListId(boardId, cardId) <> listThree Then Error.Raise("Explicit destination was not applied")
+  db = WebDatabase.OpenConnection()
+  before = BoardTransfer.ExportData(boardId, "board", boardId)
+  r = db.Find("kb_history")
+  history = r.Count
+  second = CardDraft.Read(boardId, otherCard)
+  Try SaveDraft(boardId, cardId, second, "title", "Wrong baseline")
+  denied = Error
+  If Not denied Then Error.Raise("Different-card baseline accepted")
+  If BoardTransfer.ExportData(boardId, "board", boardId) <> before Then Error.Raise("Invalid baseline left partial data")
+  r = db.Find("kb_history")
+  If r.Count <> history Then Error.Raise("Invalid baseline wrote history")
+  first = CardDraft.Read(boardId, cardId)
+  db.Exec("CREATE TRIGGER inject_draft BEFORE UPDATE OF title ON kb_cards WHEN OLD.id=" & CStr(cardId) & " BEGIN UPDATE kb_cards SET description='Locked concurrent edit' WHERE id=" & CStr(cardId) & "; END")
+  SaveDraft(boardId, cardId, first, "title", "After lock")
+  db.Exec("DROP TRIGGER inject_draft")
+  r = WorkspaceStore.Record(boardId, "card", cardId)
+  If r!description <> "Locked concurrent edit" Then Error.Raise("Draft merged before locked read")
+  first = CardDraft.Read(boardId, cardId)
+  KanbanStore.ArchiveCard(boardId, cardId, True)
+  before = BoardTransfer.ExportData(boardId, "board", boardId)
+  Try SaveDraft(boardId, cardId, first, "title", "Archived draft")
+  denied = Error
+  If Not denied Then Error.Raise("Archived stale draft accepted")
+  If BoardTransfer.ExportData(boardId, "board", boardId) <> before Then Error.Raise("Archived draft changed data")
+  KanbanStore.ArchiveCard(boardId, cardId, False)
+  BoardAccess.SetMember(boardId, "draft-member", "read-only")
+  SignIn("draft-member")
+  Try SaveDraft(boardId, cardId, first, "title", "Reader draft")
+  denied = Error
+  If Not denied Then Error.Raise("Reader used old draft to write")
+  Print "Card drafts: independent stale fields, explicit last-write/clears, move/people/date retention, locked read, invalid/archive/role denial passed"
+End
+
+Private Sub SaveDraft(boardId As Integer, cardId As Integer, baseline As Collection, field As String, value As String, Optional destination As Integer)
+  Dim proposal As Collection = CardDraft.Values(baseline["title"], baseline["description"], baseline["lane"], baseline["status"], baseline["assignee"], baseline["labels"], baseline["due_day"])
+  CardDraft.SetValue(proposal, field, value)
+  If Not destination Then destination = baseline["listId"]
+  KanbanStore.SaveCard(boardId, cardId, proposal["title"], proposal["description"], proposal["lane"], proposal["status"], proposal["assignee"], proposal["labels"], proposal["due_day"], destination, baseline)
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

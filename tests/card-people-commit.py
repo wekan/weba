@@ -30,11 +30,12 @@ tables = ('kb_entries', 'kb_files', 'kb_card_archive', 'kb_item_changes', 'kb_ca
 def rows(table):
     return sorted(reader.execute('SELECT * FROM '+table).fetchall(), key=repr)
 try:
-    for field, native in (('members', False), ('assignees', False), ('members', True), ('assignees', True), ('replace', False), ('dates', False), ('archive', False), ('archive', True)):
+    for field, native in (('members', False), ('assignees', False), ('members', True), ('assignees', True), ('replace', False), ('dates', False), ('archive', False), ('archive', True), ('draft', True)):
         for action in ('add', 'remove'):
             for signal in ('card-people-commit-failed', 'card-people-reader-released'):
                 (project / signal).unlink(missing_ok=True)
             before = {table: rows(table) for table in tables}
+            prior_fields = reader.execute('SELECT title,lane,status,assignee,labels,due_day FROM kb_cards WHERE id=?', (card,)).fetchone()
             reader.execute('BEGIN')
             reader.execute('SELECT id FROM kb_cards').fetchall()
             process = subprocess.Popen([os.environ['GBX'], '-s', 'ApiFixture', str(project)],
@@ -54,7 +55,13 @@ try:
             (project / 'card-people-reader-released').write_text('ready')
             output, _ = process.communicate(timeout=15)
             assert process.returncode == 0, output
-            if field == 'archive':
+            if field == 'draft':
+                assert (reader.execute('SELECT description FROM kb_cards WHERE id=?', (card,)).fetchone()[0] or '') == ('Native draft description' if action == 'add' else '')
+                current = reader.execute('SELECT title,lane,status,assignee,labels,due_day FROM kb_cards WHERE id=?', (card,)).fetchone()
+                assert tuple(value or '' for value in current) == tuple(value or '' for value in prior_fields)
+                for table in ('kb_card_dates', 'kb_card_members', 'kb_card_assignees', 'kb_card_people_order', 'kb_card_people_sequence'):
+                    assert rows(table) == before[table], 'Draft retry changed '+table
+            elif field == 'archive':
                 assert bool(reader.execute('SELECT archived FROM kb_cards WHERE id=?', (card,)).fetchone()[0]) == (action == 'add')
                 assert reader.execute('SELECT archived_ms FROM kb_card_archive WHERE board_id=? AND card_id=?', (board, card)).fetchone() is not None
             elif field == 'dates':

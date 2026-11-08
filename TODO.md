@@ -6,6 +6,19 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Current UI/API/security work
 
+- Completed native stale-editor field merging: reproduce an old title editor
+  undoing an external description update, then keep a private opening baseline
+  and merge fields differing from it over the locked, reauthorized current card.
+  Preserve unedited concurrent descriptions, labels, moves, assignees/raw people
+  and precise dates. Explicit same-field changed values win on save; clears remain
+  explicit. Treat lane/status/list as one destination. Advance committed menu/
+  people fields without rebasing unrelated drafts; refresh values/baseline after
+  success and keep them for retry after failure. Reject mismatched/archived draft
+  targets and retain role/scope checks. Native/SQL late-lock tests and two extra
+  real failed-COMMIT/retry phases pass (18 card-update phases total). Full local
+  tests pass (28 Python tests), source/packaged test-live keeps the external value
+  through save/reopen, and packaged people/date/details regressions pass. Original
+  callback counts remain 10/30 for spec 17 and 3/3 for the archive file.
 - Completed open-board live updates through a one-second native Gambas
   WebTimer and private read-only scoped state. Compare visible cards/assignments,
   layout/order/colors/preferences and role capabilities before refreshing; hidden
@@ -21,8 +34,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Documented the native heartbeat/private state, capture-before-render rule,
   draft/DOM preservation and revoked-panel cleanup; add the test-live command,
   actual original callback/browser evidence and polling/deep-pane limits.
-- In progress: deep open-panel content synchronization, collaborative field
-  conflict handling, all-boards navigation reactivity, efficient idle/background
+- In progress: deep open-panel content synchronization, full source inline-edit/
+  unsaved-draft UX, all-boards navigation reactivity, efficient idle/background
   polling and complete original UI/API/security suites. Custom roles/list
   exceptions and full source hierarchy remain open.
 - Completed native combined administrator/assigned-only card scope: reproduce

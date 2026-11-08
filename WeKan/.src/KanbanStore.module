@@ -143,11 +143,12 @@ Public Function Cards(boardId As Integer, Optional archived As Boolean = False) 
   Return BoardAccess.CardRows(boardId, True, archived)
 End
 
-Public Function SaveCard(boardId As Integer, cardId As Integer, title As String, description As String, lane As String, status As String, assignee As String, labels As String, dueDay As String, Optional listId As Integer) As Integer
+Public Function SaveCard(boardId As Integer, cardId As Integer, title As String, description As String, lane As String, status As String, assignee As String, labels As String, dueDay As String, Optional listId As Integer, Optional baseline As Collection) As Integer
   Dim r As Result
   Dim list As Result
   Dim previousAssignee As String
   Dim previousDueDay As String
+  Dim merged As Collection
   Dim transaction As Boolean
   Dim failure As String
   BoardAccess.Require(boardId, "write")
@@ -164,6 +165,17 @@ Public Function SaveCard(boardId As Integer, cardId As Integer, title As String,
     r = $db.Find("kb_cards", "board_id = &1 AND id = &2", boardId, cardId)
     previousAssignee = r!assignee
     previousDueDay = r!due_day
+    If baseline Then
+      merged = CardDraft.Merge(boardId, cardId, r, CardDraft.Values(title, description, lane, status, assignee, labels, dueDay), baseline, listId)
+      title = merged["title"]
+      description = merged["description"]
+      lane = merged["lane"]
+      status = merged["status"]
+      assignee = merged["assignee"]
+      labels = merged["labels"]
+      dueDay = merged["due_day"]
+      listId = merged["listId"]
+    Endif
   Endif
   If assignee And assignee <> previousAssignee Then BoardAccess.RequireActiveMember(boardId, assignee)
   If Not Trim(lane) Then lane = "Default"

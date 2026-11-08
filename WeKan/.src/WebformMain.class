@@ -27,6 +27,7 @@ Private $view As String = "Boards"
 Private $boardTitle As String
 Private $archive As Boolean
 Private $liveState As String
+Private $draft As Collection
 
 Public Sub _HandleMessage()
   If Not WebIdentity.Username Then
@@ -118,6 +119,7 @@ Private Sub ValidateOpenCards()
     If Not BoardLive.Visible($board, $card, $archive) Then
       $card = 0
       Editor.Hide()
+      $draft = Null
       CardTitle.Text = ""
       Description.Text = ""
       Assignee.Text = ""
@@ -163,18 +165,7 @@ Public Sub Boards_Select()
     parts = Split(Mid(Boards.Key, 2), ":")
     $card = CInt(parts[0])
     $board = CInt(parts[1])
-    c = KanbanStore.Cards($board, $archive)
-    For Each c
-      If c!id <> $card Then Continue
-      $listId = KanbanStore.CardListId($board, $card)
-      CardTitle.Text = c!title
-      Description.Text = c!description
-      Lane.Text = c!lane
-      Status.Text = c!status
-      Assignee.Text = c!assignee
-      Labels.Text = c!labels
-      DueDay.Text = c!due_day
-    Next
+    LoadCardDraft()
     Editor.Show()
   Endif
   UpdateCardActions()
@@ -187,6 +178,18 @@ Public Sub Boards_Select()
   RefreshTree()
 Catch
   Notice.Text = Error.Text
+End
+
+Private Sub LoadCardDraft()
+  $draft = CardDraft.Read($board, $card)
+  $listId = $draft["listId"]
+  CardTitle.Text = $draft["title"]
+  Description.Text = $draft["description"]
+  Lane.Text = $draft["lane"]
+  Status.Text = $draft["status"]
+  Assignee.Text = $draft["assignee"]
+  Labels.Text = $draft["labels"]
+  DueDay.Text = $draft["due_day"]
 End
 
 Public Sub NewBoard_Click()
@@ -221,6 +224,7 @@ Public Sub NewCard_Click()
   Endif
   Editor.Show()
   $card = 0
+  $draft = Null
   UpdateCardActions()
   CardTitle.Text = ""
   Description.Text = ""
@@ -230,7 +234,14 @@ Public Sub NewCard_Click()
 End
 
 Public Sub SaveCard_Click()
-  $card = KanbanStore.SaveCard($board, $card, CardTitle.Text, Description.Text, Lane.Text, Status.Text, Assignee.Text, Labels.Text, DueDay.Text, $listId)
+  $card = KanbanStore.SaveCard($board, $card, CardTitle.Text, Description.Text, Lane.Text, Status.Text, Assignee.Text, Labels.Text, DueDay.Text, $listId, $draft)
+  If BoardLive.Visible($board, $card, $archive) Then
+    LoadCardDraft()
+  Else
+    Editor.Hide()
+    $card = 0
+    $draft = Null
+  Endif
   UpdateCardActions()
   Notice.Text = "Card saved"
   RefreshTree()
@@ -995,9 +1006,18 @@ Public Sub ActionConfirm_Click()
       r = WorkspaceStore.Record($contextBoard, $contextKind, $contextId)
       oldTitle = r!title
       WorkspaceStore.Rename($contextBoard, $contextKind, $contextId, ActionText.Text)
-      If $contextKind = "lane" And Lane.Text = oldTitle Then Lane.Text = ActionText.Text
-      If $contextKind = "list" And $listId = $contextId Then Status.Text = ActionText.Text
-      If $contextKind = "card" And $card = $contextId Then CardTitle.Text = ActionText.Text
+      If $contextKind = "lane" And Lane.Text = oldTitle Then
+        Lane.Text = ActionText.Text
+        CardDraft.SetValue($draft, "lane", Lane.Text)
+      Endif
+      If $contextKind = "list" And $listId = $contextId Then
+        Status.Text = ActionText.Text
+        CardDraft.SetValue($draft, "status", Status.Text)
+      Endif
+      If $contextKind = "card" And $card = $contextId Then
+        CardTitle.Text = ActionText.Text
+        CardDraft.SetValue($draft, "title", CardTitle.Text)
+      Endif
     Case "Copy"
       WorkspaceStore.Copy($contextBoard, $contextKind, $contextId, ActionText.Text, DestinationLane.Text)
     Case "Color"
@@ -1024,10 +1044,16 @@ Public Sub ActionConfirm_Click()
             Lane.Text = DestinationLane.Text
             Status.Text = r!title
             $listId = destination
+            CardDraft.SetValue($draft, "lane", Lane.Text)
+            CardDraft.SetValue($draft, "status", Status.Text)
+            If $draft Then $draft["listId"] = $listId
           Endif
         Case "list"
           KanbanStore.MoveList($contextBoard, r!lane, "#" & CStr($contextId), DestinationLane.Text, "")
-          If $listId = $contextId Then Lane.Text = DestinationLane.Text
+          If $listId = $contextId Then
+            Lane.Text = DestinationLane.Text
+            CardDraft.SetValue($draft, "lane", Lane.Text)
+          Endif
         Case "lane"
           KanbanStore.MoveLane($contextBoard, r!title, DestinationLane.Text)
       End Select
@@ -1616,6 +1642,7 @@ Private Sub RefreshChangedCardPeople()
     If $peopleAssignees And $board = $peopleBoard And $card = $peopleCard Then
       r = WorkspaceStore.Record($peopleBoard, "card", $peopleCard)
       Assignee.Text = r!assignee
+      CardDraft.SetValue($draft, "assignee", CStr(r!assignee))
     Endif
   Endif
   RefreshTree()

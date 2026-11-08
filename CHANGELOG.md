@@ -2,6 +2,15 @@
 
 This work adds the following features and fixes:
 
+- Fix stale native card editors overwriting unrelated concurrent changes. Keep
+  server-side opening values and merge only differing fields over the current
+  locked/reauthorized card; preserve other descriptions, moves, people and precise
+  dates. Keep explicit last-write/clear behavior, advance committed menu/people
+  baselines and refresh after success. Verify the prior browser data loss,
+  independent fields, late-lock merge, invalid/archive/role denial and two real
+  failed-COMMIT/retry phases (18 total), plus source/packaged live and native
+  people/date/details browser regressions. Thanks to xet7.
+
 - Document open-board heartbeat/private-state semantics, capture-before-render,
   draft/DOM preservation and revoked-panel cleanup. Explain test-live source/
   packaged execution of all three original archive callbacks, additional browser

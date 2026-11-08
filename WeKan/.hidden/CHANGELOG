@@ -1,4 +1,8 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Card editor: Merge changed native fields against locked current data using
+  private opening values. Preserve unrelated concurrent moves/people/dates,
+  explicit clears and per-field last writes; verify browser data-loss regression,
+  lock/scope guards and two extra failed-COMMIT/retry phases (18 total).
 - Documentation: Describe live-board state/heartbeat, draft and scope cleanup,
   test-live with three unchanged original callbacks, browser evidence and the
   remaining polling/deep-pane/full-suite limits.
