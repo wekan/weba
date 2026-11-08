@@ -2,6 +2,13 @@
 
 This work adds the following features and fixes:
 
+- Add the native current-user BoardCatalog paging and sort-preference service.
+  Guard visible boards, literal UTF-8 search, personal stars, stable title/ID
+  sorting and bounded returned pages; clear preferences on account deletion and
+  recreation. Verify native negative/205-board limits and 54 results against the
+  original getAllBoardsPage body, plus full local and live regressions. UI controls,
+  custom/workspace categories and full original suites remain open. Thanks to xet7.
+
 - Document overview snapshot visibility, personal-star isolation, navigation
   refresh ordering and stable idle DOM. Record native/two-user verification and
   keep original All Boards sorting/search/pagination and other-view reactivity

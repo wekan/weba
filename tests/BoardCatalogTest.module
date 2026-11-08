@@ -1,0 +1,184 @@
+' All Boards service paging reads only the authenticated user's visible boards.
+Public Sub Main()
+  Dim index As Integer
+  Dim boardId As Integer
+  Dim privateId As Integer
+  Dim first As Collection
+  Dim second As Collection
+  Dim data As Collection
+  Dim params As New Collection
+  Dim db As Connection
+  Dim r As Result
+  Dim denied As Boolean
+  Dim history As Integer
+  WebDatabase.Register("catalog-owner", "x")
+  WebDatabase.Register("catalog-other", "x")
+  SignIn("catalog-other")
+  privateId = KanbanStore.AddBoard("Secret User2 Board")
+  BoardCatalog.SetSortBy("title-desc")
+  SignIn("catalog-owner")
+  If BoardCatalog.SortBy() <> "custom" Then Error.Raise("Default sort inherited another user's preference")
+  For index = 1 To 30
+    boardId = KanbanStore.AddBoard("Board " & Format(index, "00"))
+  Next
+  WorkspaceStore.OpenStore()
+  db = WebDatabase.OpenConnection()
+  r = db.Find("kb_history")
+  history = r.Count
+  params["sortBy"] = "title-asc"
+  params["page"] = 1
+  params["perPage"] = 10
+  first = BoardCatalog.Page(params)
+  If first["total"] <> 30 Or first["ids"].Count <> 10 Then Error.Raise("First page count wrong")
+  r = db.Find("kb_boards", "id=&1", first["ids"][0])
+  If r!title <> "Board 01" Then Error.Raise("Ascending first title wrong")
+  params["page"] = 2
+  second = BoardCatalog.Page(params)
+  If second["total"] <> 30 Or second["ids"].Count <> 10 Then Error.Raise("Second page count wrong")
+  For Each boardId In first["ids"]
+    If second["ids"].Find(boardId) >= 0 Then Error.Raise("Pages overlap")
+  Next
+  params["page"] = 1
+  params["sortBy"] = "title-desc"
+  data = BoardCatalog.Page(params)
+  r = db.Find("kb_boards", "id=&1", data["ids"][0])
+  If r!title <> "Board 30" Then Error.Raise("Descending first title wrong")
+  For Each boardId In first["ids"]
+    If data["ids"].Find(boardId) >= 0 Then Error.Raise("Opposite sort pages overlap")
+  Next
+  params["search"] = "  bOaRd 0  "
+  params["perPage"] = 100
+  data = BoardCatalog.Page(params)
+  If data["total"] <> 9 Or data["ids"].Count <> 9 Then Error.Raise("Trimmed case-insensitive search failed")
+  params["search"] = "zzz-nonexistent-zzz"
+  data = BoardCatalog.Page(params)
+  If data["total"] <> 0 Or data["ids"].Count Then Error.Raise("Empty search result leaked data")
+  params["search"] = "Secret User2 Board"
+  data = BoardCatalog.Page(params)
+  If data["total"] <> 0 Or data["ids"].Count Then Error.Raise("Global site admin bypassed native visibility")
+  params.Remove("search")
+  params["page"] = 2147483647
+  data = BoardCatalog.Page(params)
+  If data["total"] <> 30 Or data["ids"].Count Then Error.Raise("Large page offset overflowed")
+  params["page"] = 0
+  params["perPage"] = 0
+  data = BoardCatalog.Page(params)
+  If data["ids"].Count <> 25 Then Error.Raise("Zero/default paging mismatch")
+  params["perPage"] = -1
+  data = BoardCatalog.Page(params)
+  If data["ids"].Count <> 1 Then Error.Raise("Lower page size clamp failed")
+  params["perPage"] = 1000
+  data = BoardCatalog.Page(params)
+  If data["ids"].Count <> 30 Then Error.Raise("Large page size lost visible boards")
+  r = db.Find("kb_history")
+  If r.Count <> history Then Error.Raise("Paging wrote history")
+  BoardCatalog.SetSortBy("title-asc")
+  If BoardCatalog.SortBy() <> "title-asc" Then Error.Raise("Sort preference not saved")
+  SignIn("catalog-other")
+  If BoardCatalog.SortBy() <> "title-desc" Then Error.Raise("Another user's sort was overwritten")
+  SignIn("catalog-owner")
+  Try BoardCatalog.SetSortBy("invalid")
+  denied = Error
+  If Not denied Then Error.Raise("Invalid sort was accepted")
+  If BoardCatalog.SortBy() <> "title-asc" Then Error.Raise("Invalid sort overwrote preference")
+  CheckValidation()
+  CheckCategories()
+  CheckLimits()
+  CheckText()
+  Session["auth_generation"] = 0
+  params = New Collection
+  data = BoardCatalog.Page(params)
+  If data["total"] Or data["ids"].Count Then Error.Raise("Stale session received boards")
+  Try BoardCatalog.SetSortBy("custom")
+  denied = Error
+  If Not denied Then Error.Raise("Stale session changed sort")
+  SignIn("catalog-owner")
+  WebDatabase.DeleteUser("catalog-other")
+  r = db.Find("kb_board_preferences", "username=&1", "catalog-other")
+  If r.Count Then Error.Raise("Deleted user retained sort preference")
+  WebDatabase.NewUser("catalog-other", "x", False)
+  SignIn("catalog-other")
+  If BoardCatalog.SortBy() <> "custom" Then Error.Raise("Recreated user inherited prior sort")
+  Print "Board catalog: scoped disjoint pages/counts, both sorts, literal search, clamps, categories, invalid/stale denial, personal preferences and deletion/recreation cleanup passed"
+End
+
+Private Sub CheckValidation()
+  Dim params As Collection
+  Dim value As Variant
+  Dim keys As String[] = ["page", "page", "perPage", "search", "userId"]
+  Dim index As Integer
+  Dim denied As Boolean
+  For Each value In ["1", 1.5, True, JSON.Null, "catalog-other"]
+    params = New Collection
+    ' Preserve explicit invalid values: ordinary JSON decode drops null keys.
+    params.Add(value, keys[index])
+    Try BoardCatalog.Page(params)
+    denied = Error
+    If Not denied Then Error.Raise("Invalid/forged page option accepted: " & keys[index])
+    Inc index
+  Next
+End
+
+Private Sub CheckCategories()
+  Dim boardId As Integer
+  Dim firstId As Integer
+  Dim data As Collection
+  Dim params As New Collection
+  boardId = KanbanStore.AddBoard("Literal .*%_ board")
+  firstId = boardId
+  WorkspaceStore.SetSetting(boardId, "board", boardId, "star", "1")
+  params["menu"] = "starred"
+  data = BoardCatalog.Page(params)
+  If data["total"] <> 1 Or data["ids"][0] <> boardId Then Error.Raise("Personal starred filter failed")
+  params["search"] = ".*%_"
+  data = BoardCatalog.Page(params)
+  If data["total"] <> 1 Then Error.Raise("Search interpreted regex/SQL wildcard characters")
+  params["menu"] = "unknown-workspace"
+  data = BoardCatalog.Page(params)
+  If data["total"] <> 1 Then Error.Raise("Search failed to span implemented categories")
+  params.Remove("search")
+  data = BoardCatalog.Page(params)
+  If data["total"] Then Error.Raise("Unknown workspace exposed remaining boards")
+  params["menu"] = "remaining"
+  params["search"] = ".*%_"
+  WorkspaceStore.SetArchived(boardId, "board", boardId, True)
+  data = BoardCatalog.Page(params)
+  If data["total"] Then Error.Raise("Archived board leaked into active results")
+  data = BoardCatalog.Page(params, True)
+  If data["total"] <> 1 Or data["ids"][0] <> firstId Then Error.Raise("Explicit archived page omitted board")
+End
+
+Private Sub CheckLimits()
+  Dim index As Integer
+  Dim data As Collection
+  Dim params As New Collection
+  For index = 31 To 205
+    KanbanStore.AddBoard("Limit board " & Format(index, "000"))
+  Next
+  params["perPage"] = 1000
+  data = BoardCatalog.Page(params)
+  If data["total"] <> 205 Or data["ids"].Count <> 200 Then Error.Raise("Maximum page size was not enforced")
+  params["page"] = 2
+  data = BoardCatalog.Page(params)
+  If data["total"] <> 205 Or data["ids"].Count <> 5 Then Error.Raise("Last page count is wrong")
+End
+
+Private Sub CheckText()
+  Dim firstId As Integer = KanbanStore.AddBoard("Same title")
+  Dim secondId As Integer = KanbanStore.AddBoard("Same title")
+  Dim data As Collection
+  Dim params As New Collection
+  params["search"] = "Same title"
+  params["sortBy"] = "title-desc"
+  data = BoardCatalog.Page(params)
+  If data["ids"].Count <> 2 Or data["ids"][0] <> firstId Or data["ids"][1] <> secondId Then Error.Raise("Equal-title tie order unstable")
+  KanbanStore.AddBoard("Ångström board")
+  params["search"] = "ångström"
+  data = BoardCatalog.Page(params)
+  If data["total"] <> 1 Then Error.Raise("Unicode case-insensitive search failed")
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

@@ -1,0 +1,118 @@
+' Current-user All Boards paging and preferences; no caller-supplied identity.
+Export
+Private $db As Connection
+
+Private Sub OpenStore()
+  Dim t As Table
+  If $db Then Return
+  $db = WebDatabase.OpenConnection()
+  If Not $db.Tables.Exist("kb_board_preferences") Then
+    t = $db.Tables.Add("kb_board_preferences")
+    t.Fields.Add("username", db.String, 255)
+    t.Fields.Add("sort_by", db.String, 32)
+    t.PrimaryKey = ["username"]
+    t.Update()
+  Endif
+Catch
+  $db = Null
+  Error.Propagate()
+End
+
+Public Function SortBy() As String
+  Dim r As Result
+  Dim username As String = WebIdentity.Username
+  If Not username Then Error.Raise("Sign in required")
+  OpenStore()
+  r = $db.Find("kb_board_preferences", "username=&1", username)
+  If r.Available Then
+    If r!sort_by = "title-asc" Or r!sort_by = "title-desc" Then Return r!sort_by
+  Endif
+  Return "custom"
+End
+
+Public Sub SetSortBy(value As String)
+  Dim username As String = WebIdentity.Username
+  Dim transaction As Boolean
+  Dim failure As String
+  Dim r As Result
+  If Not username Then Error.Raise("Sign in required")
+  If value <> "custom" And value <> "title-asc" And value <> "title-desc" Then Error.Raise("Invalid board sort")
+  OpenStore()
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE users SET username=username WHERE username=&1", username)
+  If WebIdentity.Username <> username Or Not WebDatabase.UserExists(username) Then Error.Raise("Sign in required")
+  r = $db.Edit("kb_board_preferences", "username=&1", username)
+  If Not r.Available Then
+    r = $db.Create("kb_board_preferences")
+    r["username"] = username
+  Endif
+  r["sort_by"] = value
+  r.Update()
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+Public Function Page(params As Collection, Optional archived As Boolean) As Collection
+  Dim data As New Collection
+  Dim ids As New Integer[]
+  Dim r As Result
+  Dim key As String
+  Dim search As String
+  Dim menu As String = "remaining"
+  Dim sortBy As String = "title-asc"
+  Dim pageNumber As Integer = 1
+  Dim perPage As Integer = 25
+  Dim total As Integer
+  Dim offset As Long
+  Dim include As Boolean
+  If Not params Then Error.Raise("Invalid board page")
+  For Each key In params.Keys
+    Select key
+      Case "search", "sortBy", "menu"
+        If TypeOf(params[key]) <> gb.String Then Error.Raise("Invalid board page text")
+      Case "page", "perPage"
+        If TypeOf(params[key]) <> gb.Integer And TypeOf(params[key]) <> gb.Long And TypeOf(params[key]) <> gb.Float Then Error.Raise("Invalid board page number")
+        If params[key] <> Int(params[key]) Or Abs(params[key]) > 2147483647 Then Error.Raise("Invalid board page number")
+      Case Else
+        Error.Raise("Unknown board page option")
+    End Select
+  Next
+  If params.Exist("search") Then search = String.LCase(Trim(params["search"]))
+  If params.Exist("menu") Then menu = params["menu"]
+  If Not menu Then menu = "remaining"
+  If params.Exist("sortBy") Then
+    If params["sortBy"] = "title-desc" Then sortBy = "title-desc"
+  Endif
+  If params.Exist("page") Then pageNumber = Max(1, CInt(params["page"]))
+  If params.Exist("perPage") Then
+    perPage = CInt(params["perPage"])
+    If perPage = 0 Then perPage = 25
+    perPage = Min(200, Max(1, perPage))
+  Endif
+  data["ids"] = ids
+  data["total"] = 0
+  If Not WebIdentity.Username Then Return data
+  ' Search spans the implemented categories. Unknown workspace/template menus
+  ' return nothing until those entities have their own guarded implementation.
+  If Not search And menu <> "remaining" And menu <> "starred" Then Return data
+  offset = CLong(pageNumber - 1) * perPage
+  r = KanbanStore.Boards(archived, sortBy = "title-desc")
+  For Each r
+    include = True
+    If search Then
+      include = InStr(String.LCase(CStr(r!title)), search) > 0
+    Else If menu = "starred" Then
+      include = WorkspaceStore.Setting(r!id, "board", r!id, "star") = "1"
+    Endif
+    If Not include Then Continue
+    If total >= offset And ids.Count < perPage Then ids.Add(r!id)
+    Inc total
+  Next
+  data["total"] = total
+  Return data
+End

@@ -20,10 +20,22 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   suites remain pending. Full build.sh test passes (28 Python tests and 20
   card-update COMMIT phases); test-live passes on source and packaged apps,
   including existing details/people/archive regressions.
-- In progress: original spec 39 All Boards parity. Persist custom/title-ascending/
-  title-descending order per user, add board-name search across categories and
-  guarded getAllBoardsPage-equivalent server pagination/counts with disjoint
-  pages and no private-board leakage. Original six callbacks, including Latin
+- Completed the native BoardCatalog service for current-user sorted board pages
+  and per-user sort preferences. Verify disjoint pages/counts, stable equal-title
+  IDs, literal/UTF-8 case-insensitive search, 25 default/200 maximum results,
+  active/starred/archive scopes, stale/invalid/forged option rejection and
+  deletion/recreation preference cleanup. Compare 54 actual native results with
+  the original getAllBoardsPage body on independent SQL rows. Full local tests
+  (28 Python tests/20 card-update COMMIT phases) and source/packaged test-live pass.
+  This is the service layer, not completed UI or a new public HTTP endpoint.
+- In progress: original spec 39 All Boards parity. Wire the native sorting,
+  board-name search and paging controls; implement custom drag order and workspace
+  categories. JSON callers must preserve explicit null keys before validation:
+  ordinary Gambas decode drops them. Native explicit-null rejection is covered,
+  but a raw-JSON request contract is not established for this service. Connect
+  the saved sort preference to native controls and extend category/search/count
+  semantics when workspaces/templates are implemented. Original six callbacks,
+  including Latin
   workspace navigation/creation translations, remain unexecuted. Other open-view
   navigation reactivity and efficient idle/background polling are still pending.
 
