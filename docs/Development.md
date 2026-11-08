@@ -10,7 +10,7 @@ and in the [README](../README.md), rather than in duplicate instruction files.
 | Area | Files |
 | --- | --- |
 | Login and registration | `WeKan/.src/WebformLogin.class` and `.webform` |
-| Native navigation and editors | `WeKan/.src/WebformMain.class` and `.webform` |
+| Native navigation, editors and live board checks | `WeKan/.src/WebformMain.class`, `.webform`, `BoardLive.module` |
 | Accounts, sessions and connection | `WeKan/.src/WebDatabase.module`, `WebIdentity.module`, `ApiTokens.module` |
 | Board/card persistence and permissions | `KanbanStore.module`, `BoardAccess.module`, `ApiMemberRoles.module` |
 | REST routing and projections | `RestApi.module`, `BoardRestData.module` |
@@ -76,3 +76,21 @@ list reduction and implemented single-card/checklist serialization; absent
 reference checks report a skip. Those partial checks and Chromium workflows do
 not establish that the complete original UI/API/security suites pass. See the
 README and TODO for the exact current coverage and remaining work.
+
+## Open-board synchronization
+
+`BoardPoll_Timer` uses a native one-second WebTimer event through the authenticated
+same-origin command transport. Its private `BoardLive.State` reads authorized
+visible rows and never creates clocks, activities or a client-visible version
+value. Include every rendered field when extending it. Capture state before
+render queries, so a concurrent mutation cannot be hidden by a newer post-render
+snapshot. Recheck scope when clearing stale open panels; keep permitted drafts
+unchanged. Deep-pane synchronization and collaborative save conflicts are still
+separate work.
+
+Run `WEBA_BROWSER_URL=http://127.0.0.1:9231 ./build.sh test-live` against a local
+Chromium CDP service for both source and packaged original archive callbacks.
+The adapter supplies explicit SQLite fixtures and an actual Playwright page;
+original callbacks/assertions remain unchanged. Unit/native checks cover stable
+read-only state, hidden-card isolation, layout/settings and scope revocation.
+Heartbeat efficiency and complete source reactivity remain TODO items.

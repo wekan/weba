@@ -1,4 +1,7 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Describe live-board state/heartbeat, draft and scope cleanup,
+  test-live with three unchanged original callbacks, browser evidence and the
+  remaining polling/deep-pane/full-suite limits.
 - Live board: Add native timer/scoped read-only state, automatic card/layout
   updates and revoked/archived pane cleanup while preserving permitted drafts.
   Run all three original archive callbacks unchanged on source/packaged pages;

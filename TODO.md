@@ -18,6 +18,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   details/membership/account-deletion regressions. Full local tests pass, including
   28 Python tests. The timer checks DB state only for an open board; it still
   emits native heartbeat requests on other signed-in views.
+- Documented the native heartbeat/private state, capture-before-render rule,
+  draft/DOM preservation and revoked-panel cleanup; add the test-live command,
+  actual original callback/browser evidence and polling/deep-pane limits.
 - In progress: deep open-panel content synchronization, collaborative field
   conflict handling, all-boards navigation reactivity, efficient idle/background
   polling and complete original UI/API/security suites. Custom roles/list

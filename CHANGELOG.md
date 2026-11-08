@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Document open-board heartbeat/private-state semantics, capture-before-render,
+  draft/DOM preservation and revoked-panel cleanup. Explain test-live source/
+  packaged execution of all three original archive callbacks, additional browser
+  evidence and remaining polling/deep-pane/full-suite work. Thanks to xet7.
+
 - Add open-board live updates with a native Gambas timer and private read-only
   permission-scoped state for visible cards/layout/metadata/role capabilities.
   Preserve permitted unsaved input and stable DOM on unchanged ticks; close and

@@ -294,17 +294,50 @@ The source/archive HTTP tests verify authorization order, permitted/refused role
 exact scope/state errors, persisted archive time and retained restore history,
 repeat no-write behavior and complete rollback after timestamp, clock or descendant
 failure. Four additional real failed-COMMIT/retry phases cover REST/native archive
-and restore on the same connection, bringing card-update phases to sixteen. Two
-callbacks from the original `rest-card-archive.e2e.js` run unchanged with actual
-Playwright assertions and an explicit SQLite fixture adapter. Its live-board UI
-callback remains unexecuted; original spec 17 remains 10/30 independently.
+and restore on the same connection, bringing card-update phases to sixteen. The
+HTTP-only command runs two original `rest-card-archive.e2e.js` callbacks unchanged
+with actual Playwright assertions and an explicit SQLite fixture adapter.
+`test-live` runs all three, including the original open-board UI callback, on a
+real Playwright page and Gambas DOM. No reload, locator remapping or synthetic
+page is used. Original spec 17 remains 10/30 independently.
 
-Packaged Chromium runs real REST archive/restore/repeat requests, reads the results
-back through both single-card GETs and verifies native rendering after explicitly
-reopening the board. This establishes persistence and native interoperability;
-automatic synchronization of a board already open in another session remains
-pending. Run the focused check with `WITH_API=true WEBA_DETAILS_ONLY=1
+Open boards use a one-second Gambas WebTimer and private server-side state for
+visible cards/assignees, list links/order, empty lists/swimlanes, colors/shared
+settings, current-user preferences and role capabilities. The state is read-only
+and never sent as a wire token; hidden card changes do not alter a restricted
+member's card state. Capture it before rendering so a mutation racing the render
+is observed on a subsequent tick. A changed state refreshes the native board;
+unchanged ticks preserve card DOM and permitted unsaved editor text. Archive,
+assignment loss or board revocation closes stale card panels and clears fields.
+Archiving the current board also returns navigation to the board list.
+
+The live check also verifies external description updates while a native title
+draft is open, stable DOM across unchanged ticks, assignment loss closing editor/
+people panels and direct board revocation clearing an open editor without
+navigation. Source and packaged CGI are both exercised:
+
+```sh
+WEBA_BROWSER_URL=http://127.0.0.1:9231 ./build.sh test-live
+```
+
+This requires a running local Chromium CDP endpoint and the parent WeKan checkout
+(or WEKAN_SOURCE) with its Playwright dependencies. Each run uses an isolated
+project/database/browser context. The ordinary `./build.sh test` remains usable
+without a browser endpoint.
+
+Packaged native details tests also perform real REST archive/restore/repeat
+requests, read both GETs and wait for the already open board to update. Run that
+focused regression with `WITH_API=true WEBA_DETAILS_ONLY=1
 WEBA_BROWSER_URL=http://127.0.0.1:9231 python3 tests/run-http.py --browser --archive`.
+Native member/assignee and account-deletion browser regressions also pass with
+the timer active.
+
+Polling cost grows with visible cards. Other signed-in views still emit native
+heartbeat requests, while the handler returns before checking board data.
+Efficient idle/background suspension, all-boards navigation reactivity, deep
+open-panel content updates, collaborative field conflict handling and complete
+source reactivity remain pending. The three archive callbacks establish that
+file's contract; complete original UI/API/security suites still require work.
 
 Each list exposes two independent #5251 timestamps: `modifiedAt` tracks the list
 itself (creation, title, order, shared settings or archive), while
