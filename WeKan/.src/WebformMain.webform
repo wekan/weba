@@ -5,6 +5,10 @@
   Class = "weba-shell"
   Height = "100vh"
   Arrangement = Arrange.Vertical
+  { BoardPoll WebTimer
+    Delay = 1000
+    Enabled = True
+  }
   { Header WebContainer
     Class = "weba-topbar"
     Arrangement = Arrange.Horizontal

@@ -6,6 +6,22 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Current UI/API/security work
 
+- Completed open-board live updates through a one-second native Gambas
+  WebTimer and private read-only scoped state. Compare visible cards/assignments,
+  layout/order/colors/preferences and role capabilities before refreshing; hidden
+  card edits do not change restricted state. Close/clear stale card panels after
+  archive, assignment loss or board revocation, while retaining permitted unsaved
+  input. Unchanged ticks preserve card DOM. Original archive callbacks pass 3/3
+  unchanged on real source and packaged Playwright pages via build.sh test-live;
+  original spec 17 remains 10/30 independently. Verify native stable/read-only
+  state, empty lanes/metadata, draft/DOM behavior, direct revocation and packaged
+  details/membership/account-deletion regressions. Full local tests pass, including
+  28 Python tests. The timer checks DB state only for an open board; it still
+  emits native heartbeat requests on other signed-in views.
+- In progress: deep open-panel content synchronization, collaborative field
+  conflict handling, all-boards navigation reactivity, efficient idle/background
+  polling and complete original UI/API/security suites. Custom roles/list
+  exceptions and full source hierarchy remain open.
 - Completed native combined administrator/assigned-only card scope: reproduce
   the former bypass, then narrow shared visibility by every raw assigned flag
   independently of canonical role precedence. Keep write/manage capabilities and
@@ -16,11 +32,11 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   actual source role/scope functions and native card queries. Packaged two-user
   Chromium checks all three flags, response packets and forged hidden contexts.
   Full local tests pass (28 Python tests); original callback counts remain 10/30
-  for spec 17 and 2/3 for the separate archive spec.
+  for spec 17 and 3/3 for the separate archive spec (via test-live).
 - Documented independent native raw assignment scope versus canonical action
   capabilities, native/site-admin/inactive boundaries, 256-case source comparison
   and packaged two-user response/context evidence. Keep custom roles/list
-  exceptions, full original suites and live synchronization open.
+  exceptions, full original suites and deep-pane synchronization open.
 - Completed documentation consolidation: project-specific source map, Gambas
   tooling, database notes and verification limits live in docs/Development.md.
   Remove companion AGENTS.md/CLAUDE.md duplicates per the containing WeKan root
@@ -301,10 +317,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   copy/move/JSON/deletion behavior, exact scope/state errors and verification.
   Packaged Chromium passes actual REST lifecycle/readback and explicit native
   board reopening; it does not establish automatic live synchronization.
-- In progress: archive live-board synchronization and the remaining original
-  archive UI callback, full source parent/linked-card/cross-board hierarchy and
-  list-level exceptions. Custom roles and complete original UI/API/security
-  coverage remain pending.
+- Archive live-board synchronization and its original UI callback now pass via
+  the open-board watcher above. Full source parent/linked-card/cross-board
+  hierarchy, list-level exceptions, custom roles and complete original
+  UI/API/security coverage remain pending.
 - Next card-person work: remaining card PUT fields, reads, creation/bulk routes
   and complete original UI/API/security suites.
 - In progress: REST cards/containers and full API identity/data parity, including

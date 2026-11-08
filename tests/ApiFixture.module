@@ -235,6 +235,7 @@ Public Sub Main()
   data["boardId"] = boardId
   data["otherBoardId"] = otherId
   If Env["WEBA_TEST_MEMBERS"] = "1" Then
+    CardContent.OpenStore()
     r = KanbanStore.Lanes(otherId)
     r = KanbanStore.Lists(otherId, "Default")
     data["otherListId"] = r!id

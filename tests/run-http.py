@@ -7,6 +7,9 @@ root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(root / 'runtime'))
 from server import handler
 
+if '--live' in sys.argv and '--members' not in sys.argv:
+    sys.argv.append('--members')
+
 base_env = os.environ.copy()
 base_env['PATH'] = str(Path(shutil.which(base_env.get('GBX', 'gbx3'))).parent) + os.pathsep + base_env['PATH']
 with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) as work:
@@ -63,7 +66,10 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
         env['WEBA_TEST_URL'] = 'http://127.0.0.1:' + str(server.server_port)
         env['WEBA_TEST_RUNNER'] = runner
         env['WEBA_TEST_APPLICATION'] = str(application)
-        if '--members' in sys.argv:
+        if '--live' in sys.argv:
+            env['WEBA_ARCHIVE_LIVE'] = '1'
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/wekan-archive.test.cjs')], check=True, env=env)
+        elif '--members' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/dates-conformance.test.cjs')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/api-members.test.py')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/wekan-members.test.cjs')], check=True, env=env)

@@ -1,0 +1,63 @@
+' Private server-side state for an open board; never returned as a wire token.
+Export
+
+Public Function State(boardId As Integer, archived As Boolean) As String
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim data As New Collection
+  Dim cards As New Variant[]
+  Dim row As Collection
+  Dim r As Result
+  Dim cardLink As Result
+  Dim field As String
+  BoardAccess.RequireRead(boardId)
+  r = WorkspaceStore.Record(boardId, "board", boardId)
+  data["title"] = r!title
+  data["archived"] = r!archived
+  data["role"] = BoardAccess.Role(boardId)
+  For Each field In ["seesAllCards", "comment", "write", "manageBoard", "moveCard"]
+    data[field] = BoardAccess.Can(boardId, field)
+  Next
+  data["lanes"] = Rows(db.Find("kb_lanes", "board_id=&1 ORDER BY id", boardId), ["id", "title"])
+  data["lists"] = Rows(db.Find("kb_lists", "board_id=&1 ORDER BY id", boardId), ["id", "lane", "title", "sort_order"])
+  data["settings"] = Rows(db.Find("kb_meta", "board_id=&1 AND kind<>&2 ORDER BY kind,item_id,setting", boardId, "card"), ["kind", "item_id", "setting", "value"])
+  data["personal"] = Rows(db.Find("kb_user_meta", "board_id=&1 AND username=&2 AND kind<>&3 ORDER BY kind,item_id,setting", boardId, WebIdentity.Username, "card"), ["kind", "item_id", "setting", "value"])
+  data["order"] = Rows(db.Find("kb_order", "board_id=&1 AND kind<>&2 ORDER BY kind,item", boardId, "card"), ["kind", "item", "sort_order"])
+  r = BoardAccess.CardRows(boardId, True, archived)
+  For Each r
+    row = New Collection
+    For Each field In ["id", "title", "description", "lane", "status", "assignee", "labels", "due_day", "archived"]
+      row.Add(r[field], field)
+    Next
+    cardLink = db.Find("kb_card_lists", "board_id=&1 AND card_id=&2", boardId, r!id)
+    If cardLink.Available Then row["listId"] = cardLink!list_id
+    row["order"] = KanbanStore.ItemOrder(boardId, "card", CStr(r!id), r!id)
+    row["color"] = WorkspaceStore.Setting(boardId, "card", r!id, "color")
+    row["assignees"] = BoardAccess.Assignees(boardId, r!id)
+    cards.Add(row)
+  Next
+  data["cards"] = cards
+  Return JSON.Encode(data)
+End
+
+Public Function Visible(boardId As Integer, cardId As Integer, archived As Boolean) As Boolean
+  Dim r As Result
+  BoardAccess.RequireCard(boardId, cardId)
+  r = WorkspaceStore.Record(boardId, "card", cardId)
+  Return r!archived = archived
+Catch
+  Return False
+End
+
+Private Function Rows(r As Result, fields As String[]) As Variant[]
+  Dim resultRows As New Variant[]
+  Dim row As Collection
+  Dim field As String
+  For Each r
+    row = New Collection
+    For Each field In fields
+      row.Add(r[field], field)
+    Next
+    resultRows.Add(row)
+  Next
+  Return resultRows
+End

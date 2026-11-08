@@ -2,6 +2,16 @@
 
 This work adds the following features and fixes:
 
+- Add open-board live updates with a native Gambas timer and private read-only
+  permission-scoped state for visible cards/layout/metadata/role capabilities.
+  Preserve permitted unsaved input and stable DOM on unchanged ticks; close and
+  clear stale panels after archive, assignment loss or board revocation. Add
+  build.sh test-live for source/packaged real Playwright pages, running all three
+  original archive callbacks unchanged. Verify drafts/DOM/revocation, scoped
+  native state and packaged details/membership/account-deletion regressions.
+  Full source reactivity, deep panes and idle polling work remain open.
+  Thanks to xet7.
+
 - Document native raw assigned-only scope versus canonical capabilities and
   scoped REST administration, inactive/cleared-flag behavior, 256 source-backed
   native cases and packaged response/context privacy checks. Keep custom roles,

@@ -139,7 +139,7 @@
             const limit=Number(meta?.dataset.wip||0),count=Number(meta?.dataset.count||0);
             if(limit>0)add(title,'span',`${count}/${limit}`,'weba-wip-badge'+(count>limit?' weba-wip-exceeded':''),false);
             cards.filter(c=>item.id?c.dataset.listId===item.id:c.dataset.status===status && (view!=='Swimlanes'||(c.dataset.lane||'Default')===lane)).forEach(c=>{
-              const clone=c.cloneNode(true);body.append(clone);
+              const clone=c.cloneNode(true);clone.classList.add('minicard-wrapper');body.append(clone);
               if(c.dataset.color)clone.style.backgroundColor=c.dataset.color;
               if(cardMovable&&c.dataset.cardId){
                 clone.classList.add('weba-draggable-card');handle(clone,'card');

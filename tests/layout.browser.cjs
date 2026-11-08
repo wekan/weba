@@ -480,20 +480,14 @@ const fs = require('node:fs');
         },{ownerName,rich,operation});}
         assert.deepEqual(await changeArchive('unarchive'),{status:200,data:{_id:rich.id,archived:false}});
         result=await readRich();assert.equal(result.scoped,200);assert.equal(result.card.archivedAt,archivedAt);
-        // Explicit native refresh checks persistence. This does not establish
-        // source live-update parity or execute the original live-board callback.
-        async function reopenRichBoard(){
-          await click('Home');
-          await page.evaluate(id=>document.querySelector(`.weba-board-tile[data-board-key="b${id}"]`).click(),rich.board);
-          await settle();
-        }
-        await reopenRichBoard();await page.waitForSelector(`.weba-report .weba-card[data-card-id="${rich.id}"]`);
+        // Wait on the already open board; do not navigate, reload or invoke a
+        // native refresh to make the REST lifecycle appear reactive.
+        await page.waitForSelector(`.weba-report .weba-card[data-card-id="${rich.id}"]`);
         assert.deepEqual(await changeArchive('unarchive'),{status:404,data:{error:'Card not found'}});
         const archived=await changeArchive('archive');assert.equal(archived.status,200);assert.equal(archived.data.archived,true);
-        await reopenRichBoard();
-        assert.equal(await page.$$eval('.weba-report .weba-card',(els,id)=>els.filter(e=>e.dataset.cardId===id).length,rich.id),0);
+        await page.waitForFunction(id=>![...document.querySelectorAll('.weba-report .weba-card')].some(e=>e.dataset.cardId===id),{},rich.id);
         assert.deepEqual(await changeArchive('archive'),{status:404,data:{error:'Card not found'}});
-        console.log('Single-card/archive browser: native checklist and archive, both GETs, REST restore/archive/repeat, retained archive time and explicit native refresh passed; live synchronization remains pending');
+        console.log('Single-card/archive browser: native checklist and archive, both GETs, REST restore/archive/repeat, retained archive time and automatic native board updates passed');
       }
       console.log('Browser native card details: comments, checklist create/edit, typed fields, dependencies, real subtasks, timers, native file upload/download and rich copy passed');return;
     }

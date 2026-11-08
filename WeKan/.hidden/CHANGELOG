@@ -1,4 +1,9 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Live board: Add native timer/scoped read-only state, automatic card/layout
+  updates and revoked/archived pane cleanup while preserving permitted drafts.
+  Run all three original archive callbacks unchanged on source/packaged pages;
+  verify stable DOM, direct revocation and details/member/deletion regressions.
+  Deep panes, broader reactivity and idle polling remain pending.
 - Documentation: Explain independent native assignment scope, canonical action
   capabilities, native/site-admin/inactive boundaries and the source/native/
   Chromium verification with remaining custom-role/list/full-suite gaps.

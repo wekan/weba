@@ -1,0 +1,78 @@
+' Read-only, permission-scoped detection for an already open board.
+Public Sub Main()
+  Dim boardId As Integer
+  Dim visible As Integer
+  Dim hidden As Integer
+  Dim initial As String
+  Dim changed As String
+  Dim flags As Collection
+  Dim db As Connection
+  Dim r As Result
+  Dim history As Integer
+  Dim denied As Boolean
+  WebDatabase.Register("live-owner", "x")
+  WebDatabase.Register("live-member", "x")
+  SignIn("live-owner")
+  boardId = KanbanStore.AddBoard("Live state")
+  BoardAccess.SetMember(boardId, "live-member", "board-admin")
+  visible = KanbanStore.SaveCard(boardId, 0, "Visible live card", "", "Default", "Todo", "live-member", "", "")
+  hidden = KanbanStore.SaveCard(boardId, 0, "HIDDEN-LIVE-CANARY", "", "Default", "Todo", "live-owner", "", "")
+  flags = ApiMemberRoles.FlagsFor("board-admin")
+  flags["isNormalAssignedOnly"] = True
+  ApiMemberRoles.Save(boardId, "live-member", flags)
+  db = WebDatabase.OpenConnection()
+  SignIn("live-member")
+  initial = BoardLive.State(boardId, False)
+  If InStr(initial, "HIDDEN-") Then Error.Raise("Live state included an unreadable card")
+  r = db.Find("kb_history")
+  history = r.Count
+  If BoardLive.State(boardId, False) <> initial Then Error.Raise("Unchanged live state was unstable")
+  r = db.Find("kb_history")
+  If r.Count <> history Then Error.Raise("Live state read created activity")
+  SignIn("live-owner")
+  KanbanStore.SaveCard(boardId, hidden, "Changed hidden title", "Secret", "Default", "Todo", "live-owner", "", "")
+  SignIn("live-member")
+  If BoardLive.State(boardId, False) <> initial Then Error.Raise("Hidden change influenced scoped live state")
+  SignIn("live-owner")
+  KanbanStore.SaveCard(boardId, visible, "Changed visible title", "Updated", "Default", "Todo", "live-member", "", "")
+  SignIn("live-member")
+  changed = BoardLive.State(boardId, False)
+  If changed = initial Then Error.Raise("Visible edit did not change live state")
+  If Not BoardLive.Visible(boardId, visible, False) Or BoardLive.Visible(boardId, hidden, False) Then Error.Raise("Live pane visibility ignored card scope")
+  SignIn("live-owner")
+  KanbanStore.ArchiveCard(boardId, visible, True)
+  SignIn("live-member")
+  If BoardLive.State(boardId, False) = changed Then Error.Raise("Archive did not change active live state")
+  If BoardLive.Visible(boardId, visible, False) Or Not BoardLive.Visible(boardId, visible, True) Then Error.Raise("Live pane archive state ignored")
+  SignIn("live-owner")
+  KanbanStore.ArchiveCard(boardId, visible, False)
+  SignIn("live-member")
+  If BoardLive.State(boardId, False) <> changed Then Error.Raise("Restore did not recover visible live state")
+  SignIn("live-owner")
+  BoardAccess.SetMember(boardId, "live-member", "read-only")
+  SignIn("live-member")
+  If BoardLive.State(boardId, False) = changed Then Error.Raise("Role change did not change live state")
+  initial = BoardLive.State(boardId, False)
+  SignIn("live-owner")
+  KanbanStore.AddLane(boardId, "New empty live lane")
+  SignIn("live-member")
+  changed = BoardLive.State(boardId, False)
+  If changed = initial Then Error.Raise("Empty lane addition did not change live state")
+  SignIn("live-owner")
+  WorkspaceStore.SetSetting(boardId, "board", boardId, "color", "#223344")
+  SignIn("live-member")
+  If BoardLive.State(boardId, False) = changed Then Error.Raise("Board metadata did not change live state")
+  SignIn("live-owner")
+  BoardAccess.RemoveMember(boardId, "live-member")
+  SignIn("live-member")
+  Try BoardLive.State(boardId, False)
+  denied = Error
+  If Not denied Then Error.Raise("Revoked member read live state")
+  If BoardLive.Visible(boardId, visible, False) Then Error.Raise("Revoked member retained an open pane")
+  Print "Board live state: stable read-only scoped data, hidden-change isolation, visible edits, archive/restore, role changes and revocation passed"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

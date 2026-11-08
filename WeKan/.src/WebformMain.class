@@ -26,6 +26,7 @@ Private $card As Integer
 Private $view As String = "Boards"
 Private $boardTitle As String
 Private $archive As Boolean
+Private $liveState As String
 
 Public Sub _HandleMessage()
   If Not WebIdentity.Username Then
@@ -63,10 +64,16 @@ End
 Private Sub RefreshTree()
   Dim b As Result
   Dim c As Result
+  Dim unavailable As Boolean
   If $board Then
     If Not BoardAccess.Role($board) Then
+      unavailable = True
+    Else
+      unavailable = WorkspaceStore.Archived($board, "board", $board) <> $archive
+    Endif
+    If unavailable Then
       $board = 0
-      $card = 0
+      ' ValidateOpenCards clears stale fields before resetting the card ID.
       $view = "Boards"
       Editor.Hide()
       DetailsPanel.Hide()
@@ -76,6 +83,7 @@ Private Sub RefreshTree()
       ActionPanel.Hide()
     Endif
   Endif
+  ValidateOpenCards()
   Boards.Clear()
   b = KanbanStore.Boards($archive)
   For Each b
@@ -89,6 +97,58 @@ Private Sub RefreshTree()
   UpdateHeader()
   UpdateCardActions()
   Visual.Refresh()
+End
+
+Public Sub BoardPoll_Timer()
+  Dim state As String
+  If Not $board Then Return
+  If $view = "Profile" Or $view = "Admin panel" Then Return
+  If Not BoardAccess.Role($board) Then
+    RefreshTree()
+    Return
+  Endif
+  state = BoardLive.State($board, $archive)
+  If state <> $liveState Then RefreshTree()
+Catch
+  Notice.Text = "Board refresh failed"
+End
+
+Private Sub ValidateOpenCards()
+  If $card > 0 Then
+    If Not BoardLive.Visible($board, $card, $archive) Then
+      $card = 0
+      Editor.Hide()
+      CardTitle.Text = ""
+      Description.Text = ""
+      Assignee.Text = ""
+      Labels.Text = ""
+      DueDay.Text = ""
+    Endif
+  Endif
+  If $detailsCard > 0 Then
+    If Not BoardLive.Visible($detailsBoard, $detailsCard, $archive) Then
+      $detailsCard = 0
+      DetailsPanel.Hide()
+      DetailTree.Clear()
+      DetailTitle.Text = ""
+      DetailBody.Text = ""
+    Endif
+  Endif
+  If $peopleCard > 0 Then
+    If Not BoardLive.Visible($peopleBoard, $peopleCard, $archive) Then
+      $peopleCard = 0
+      CardPeoplePanel.Hide()
+      CardPeopleTree.Clear()
+    Endif
+  Endif
+  If $contextKind = "card" Then
+    If Not BoardLive.Visible($contextBoard, $contextId, $archive) Then
+      $contextId = 0
+      $contextKind = ""
+      ContextMenu.Hide()
+      ActionPanel.Hide()
+    Endif
+  Endif
 End
 
 Public Sub Boards_Select()
@@ -260,6 +320,10 @@ Public Sub Visual_Render()
   Dim list As Result
   Dim boardColor As String = "#2980b9"
   If Not WebIdentity.Username Then Return
+  ' Capture before rendering: a concurrent mutation after this read must be
+  ' noticed by the next tick, even if it races the render queries.
+  $liveState = ""
+  If $board Then $liveState = BoardLive.State($board, $archive)
   Print "<script>" & File.Load(".public/kanban.js") & "</script>"
   Print "<link rel=\"stylesheet\" href=\"kanban.css\">"
   If $board Then boardColor = WorkspaceStore.Setting($board, "board", $board, "color", "#2980b9")

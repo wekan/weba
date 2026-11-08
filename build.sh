@@ -101,9 +101,10 @@ doctor() {
 }
 case "${1:-}" in
   '') menu ;; build) build ;; run) shift; run "$@" ;; test) tests ;;
+  test-live) : "${WEBA_BROWSER_URL:?Set WEBA_BROWSER_URL to a local Chromium CDP endpoint}"; python3 tests/run-http.py --live; python3 tests/run-http.py --live --archive ;;
   package) shift; python3 releases/package.py "$@" ;;
   release-all) shift; release release-all.yml "${1:-}" ;;
   release-all-missing) shift; release release-all-missing.yml "${1:-}" ;;
   copy-gambas) shift; copy_gambas "$@" ;; targets) python3 releases/release.py targets ;; doctor) doctor ;;
-  *) printf 'Usage: %s [build|run|test|package|release-all|release-all-missing|copy-gambas|targets|doctor]\n' "$0" >&2; exit 2 ;;
+  *) printf 'Usage: %s [build|run|test|test-live|package|release-all|release-all-missing|copy-gambas|targets|doctor]\n' "$0" >&2; exit 2 ;;
 esac
