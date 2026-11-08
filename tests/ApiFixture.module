@@ -73,10 +73,12 @@ Public Sub Main()
         memberPayload["members"] = ["rest-member", "rest-other"]
         memberPayload["dueAt"] = "2026-06-20T12:34:56.123Z"
         memberPayload["startAt"] = 0
+        memberPayload["description"] = "Date and description commit"
       Else
         memberPayload["members"] = New String[]
         memberPayload["dueAt"] = JSON.Null
         memberPayload["startAt"] = JSON.Null
+        memberPayload["description"] = JSON.Null
       Endif
     Endif
     db = WebDatabase.OpenConnection()

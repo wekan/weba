@@ -55,6 +55,7 @@ try:
             output, _ = process.communicate(timeout=15)
             assert process.returncode == 0, output
             if field == 'dates':
+                assert (reader.execute('SELECT description FROM kb_cards WHERE id=?', (card,)).fetchone()[0] or '') == ('Date and description commit' if action == 'add' else '')
                 dates = dict(reader.execute('SELECT field,epoch_ms FROM kb_card_dates WHERE board_id=? AND card_id=?', (board, card)))
                 if action == 'add':
                     assert dates['dueAt'] == int(datetime(2026, 6, 20, 12, 34, 56, tzinfo=timezone.utc).timestamp())*1000+123

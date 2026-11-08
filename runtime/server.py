@@ -19,11 +19,13 @@ import urllib.parse
 
 
 def canonical_card_dates(body):
-    """Keep JS TimeClip semantics through Gambas 3.20's decimal JSON decoder.
+    """Preserve card date numbers and supplementary description characters.
 
     Date numbers are integer milliseconds after TimeClip. Normalize them before
     Gambas can round a decimal/exponent token by a millisecond at large epochs.
     Invalid numbers stay invalid date values, rather than becoming clears.
+    Valid escaped UTF-16 pairs in descriptions are forwarded as UTF-8 because
+    Gambas 3.20 otherwise drops them.
     Syntax/authentication errors remain the application's responsibility.
     """
     if len(body) > 1048576:
@@ -34,7 +36,10 @@ def canonical_card_dates(body):
         data = json.loads(body.decode('utf-8'), parse_constant=reject_constant)
         if not isinstance(data, dict):
             return body
-        changed = False
+        # Gambas 3.20 drops JSON-escaped UTF-16 surrogate pairs. Python has
+        # joined valid pairs; serialize a supplementary description as UTF-8.
+        description = data.get('description')
+        changed = isinstance(description, str) and any(ord(char) > 0xffff for char in description)
         for key in ('receivedAt', 'startAt', 'dueAt', 'endAt'):
             value = data.get(key)
             if type(value) is float:

@@ -118,6 +118,14 @@ class CardDateTransportTest(unittest.TestCase):
         self.assertEqual(data, {'dueAt': 8640000000000000, 'startAt': -1, 'receivedAt': 0, 'endAt': 0, 'members': ['owner'], 'other': 1.25})
         self.assertIs(type(data['dueAt']), int)
 
+    def test_escaped_supplementary_description_is_forwarded_as_utf8(self):
+        expected = {'description': 'Kept ää 中文 😀', 'members': ['owner'], 'dueAt': None}
+        encoded = json.dumps(expected, ensure_ascii=True).encode()
+        actual = server.canonical_card_dates(encoded)
+        self.assertIn('😀'.encode(), actual)
+        self.assertEqual(json.loads(actual), expected)
+        self.assertEqual(json.loads(server.canonical_card_dates(json.dumps(expected, ensure_ascii=False).encode())), expected)
+
     def test_invalid_numeric_dates_do_not_turn_into_clears(self):
         data = json.loads(server.canonical_card_dates(b'{"dueAt":1e309,"endAt":8640000000000001,"members":["owner"]}'))
         self.assertEqual(data, {'dueAt': {}, 'endAt': {}, 'members': ['owner']})

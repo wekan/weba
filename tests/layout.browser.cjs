@@ -191,7 +191,7 @@ const fs = require('node:fs');
         assert.equal(result.login,200);assert.equal(result.status,200);
       }
       if(process.env.WITH_API==='true'){
-        await replacePeople({members:[memberName,memberName],assignees:[ownerName,ownerName],receivedAt:0,startAt:-1.9,dueAt:"2026-06-20T12:34:56.123Z",endAt:"2026-06-21T12:00:00.456Z"});
+        await replacePeople({members:[memberName,memberName],assignees:[ownerName,ownerName],description:"API description ää 中文 😀",receivedAt:0,startAt:-1.9,dueAt:"2026-06-20T12:34:56.123Z",endAt:"2026-06-21T12:00:00.456Z"});
         console.log('Members browser: actual REST PUT seeded duplicate people arrays for native reopen/removal checks');
       }
       await click('CloseCardPeople');await click('CloseEditor');await ownerPeople();
@@ -206,6 +206,7 @@ const fs = require('node:fs');
           return page.evaluate(()=>{HTMLAnchorElement.prototype.click=window.__dateAnchor;delete window.__dateAnchor;return JSON.parse(window.__dateExport).cards[0];});
         }
         assert.equal(await page.$eval(entry('DueDay'),e=>e.value),'2026-06-20','API date projects to the native UTC day');
+        assert.equal(await page.$eval(entry('Description'),e=>e.value),'API description ää 中文 😀','native editor preserves API description');
         await fill('Description','Date-preserving native edit');await click('SaveCard');
         let exported=await exportedDateCard();
         assert.equal(exported.description,'Date-preserving native edit');

@@ -148,6 +148,16 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   milliseconds/other dates.
 - Pending dates: local-time/unqualified and freeform V8 date parsing, complete
   native controls for all four fields and time zones, and expanded-year day UI.
+- Completed: card PUT description accepts strings (including empty), clears
+  JSON null, preserves omitted data and rejects other types with 400 before any
+  people/date write. Literal HTML, Unicode and whitespace remain exact. The
+  card PUT host re-encodes valid supplementary description characters as UTF-8
+  to avoid Gambas 3.20 dropping escaped surrogate pairs. Independent HTTP tests
+  cover type/role/list/archive boundaries and trigger-induced combined rollback;
+  existing real failed-COMMIT date phases now include description replace/clear.
+  Packaged Chromium confirms API Unicode descriptions reopen in the native editor.
+  Full local tests pass (28 Python tests); original callback coverage stays 7/30.
+  Lone-surrogate behavior and remaining scalar fields still need source parity.
 - Next card-person work: remaining card PUT fields, reads, creation/bulk routes
   and complete original UI/API/security suites.
 - In progress: REST cards/containers and full API identity/data parity, including

@@ -2,6 +2,14 @@
 
 This work adds the following features and fixes:
 
+- Add card PUT description strings, empty/null clears, omitted preservation
+  and strict type errors inside atomic people/date updates. Preserve Unicode,
+  whitespace and literal HTML; forward valid escaped supplementary characters
+  as UTF-8 to prevent Gambas 3.20 emoji loss. Verify role/list/archive boundaries,
+  partial-write rollback, real failed-COMMIT/retry snapshots and packaged
+  Chromium native-editor reopening. Full scalar/API parity remains pending.
+  Thanks to xet7.
+
 - Document four card date fields, clears/invalid skips, atomic people/date
   writes, numeric precision handling, UTC native day projection and remaining
   date-editor/parser gaps. Record seven-of-thirty original callbacks, 44 source

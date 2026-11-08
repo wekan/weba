@@ -634,6 +634,9 @@ Private Function ChangeApiCardPeople(boardId As Integer, listId As Integer, card
   Dim archived As Boolean
   Dim dateChanges As New Collection
   Dim parsedDate As Collection
+  Dim hasDescription As Boolean
+  Dim description As String
+  Dim rawDescription As Variant
   Dim data As New Collection
   Dim actor As String = WebIdentity.Username
   Dim siteAdmin As Boolean
@@ -657,7 +660,22 @@ Private Function ChangeApiCardPeople(boardId As Integer, listId As Integer, card
   Endif
   If replace Then
     If Not payload Then Return ApiFailure(400, "Expected a JSON object")
+    hasDescription = payload.Exist("description")
+    If hasDescription Then
+      rawDescription = payload["description"]
+      If IsNull(rawDescription) Then
+        description = ""
+      Else If TypeOf(rawDescription) = gb.Pointer Then
+        If rawDescription <> JSON.Null Then Return ApiFailure(400, "Invalid description")
+        description = ""
+      Else If TypeOf(rawDescription) = gb.String Then
+        description = rawDescription
+      Else
+        Return ApiFailure(400, "Invalid description")
+      Endif
+    Endif
     For Each key In payload.Keys
+      If key = "description" Then Continue
       If key = "members" Or key = "assignees" Then Continue
       If CardDates.Fields().Find(key) < 0 Then Return ApiFailure(400, "Card field not implemented")
       parsedDate = CardDates.Parse(payload[key])
@@ -713,7 +731,7 @@ Private Function ChangeApiCardPeople(boardId As Integer, listId As Integer, card
     Error.Raise("Card not found")
   Endif
   If replace Then
-    If Not payload.Exist("members") And Not payload.Exist("assignees") And dateChanges.Count = 0 Then
+    If Not payload.Exist("members") And Not payload.Exist("assignees") And dateChanges.Count = 0 And Not hasDescription Then
       DatabaseTransactions.Rollback($db)
       transaction = False
       $apiMemberBoard = 0
@@ -724,6 +742,10 @@ Private Function ChangeApiCardPeople(boardId As Integer, listId As Integer, card
       If memberNames Then WriteCardMembers(boardId, cardId, ActivePeople(boardId, memberNames))
       If assigneeNames Then WriteAssignees(boardId, cardId, ActivePeople(boardId, assigneeNames))
       If dateChanges.Count Then CardDates.Apply(boardId, cardId, dateChanges)
+      If hasDescription Then
+        $db.Exec("UPDATE kb_cards SET description = &1 WHERE board_id = &2 AND id = &3", description, boardId, cardId)
+        KanbanStore.Activity(boardId, "Changed card description", "card", cardId)
+      Endif
     Endif
     data["_id"] = CStr(cardId)
     Goto FINISH

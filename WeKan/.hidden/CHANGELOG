@@ -1,4 +1,8 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Card description PUT: Support strings and empty/null clears, reject invalid
+  types atomically and preserve omitted data. Keep Unicode/whitespace/HTML;
+  fix escaped emoji loss in Gambas 3.20 transport. Verify permissions, archived
+  no-op, SQL rollback/failed-COMMIT retry and native Chromium reopening.
 - Documentation: Describe date PUT, UTC storage/native projection and remaining
   controls/parser gaps; record seven original callbacks, 44 helper cases,
   ten COMMIT phases and packaged Chromium date verification.
