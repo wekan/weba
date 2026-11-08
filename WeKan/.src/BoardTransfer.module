@@ -43,6 +43,7 @@ Public Function ExportData(boardId As Integer, kind As String, itemId As Integer
     If kind = "lane" And r!lane <> source!title And Not (source!title = "Default" And Not r!lane) Then Continue
     item = Row(r, ["id", "title", "description", "lane", "status", "assignee", "labels", "due_day", "archived"])
     item["assignees"] = BoardAccess.Assignees(boardId, r!id)
+    item["members"] = BoardAccess.CardMembers(boardId, r!id)
     item["list_id"] = listId
     item["sort_order"] = KanbanStore.ItemOrder(boardId, "card", CStr(r!id), r!id)
     cards.Add(item)
@@ -177,6 +178,7 @@ Public Function ImportData(text As String, title As String) As Integer
     If String.Len(item["title"]) > 255 Then Error.Raise("Invalid exported card title")
     id = KanbanStore.SaveCard(boardId, 0, item["title"], item["description"], item["lane"], item["status"], item["assignee"], item["labels"], item["due_day"], listMap[CStr(item["list_id"])])
     If item.Exist("assignees") Then BoardAccess.RestoreAssignees(boardId, id, item["assignees"])
+    If item.Exist("members") Then BoardAccess.RestoreCardMembers(boardId, id, item["members"])
     cardMap[oldId] = id
     r = $db.Create("kb_order")
     r["board_id"] = boardId

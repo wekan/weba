@@ -1,0 +1,108 @@
+' Separate card people fields survive the native store lifecycle.
+Public Sub Main()
+  Dim boardId As Integer
+  Dim target As Integer
+  Dim imported As Integer
+  Dim cardId As Integer
+  Dim copied As Integer
+  Dim importedCard As Integer
+  Dim listId As Integer
+  Dim r As Result
+  Dim db As Connection
+  Dim names As String[]
+  Dim denied As Boolean
+  Dim text As String
+  Dim data As Collection
+  Dim count As Integer
+  Dim memberCount As Integer
+  WebDatabase.Register("people-owner", "x")
+  WebDatabase.Register("people-member", "x")
+  WebDatabase.Register("people-reader", "x")
+  SignIn("people-owner")
+  boardId = KanbanStore.AddBoard("Card people source")
+  cardId = KanbanStore.SaveCard(boardId, 0, "People card", "Body", "Default", "Todo", "", "", "")
+  BoardAccess.SetMember(boardId, "people-member", "normal")
+  BoardAccess.SetMember(boardId, "people-reader", "read-assigned-only")
+  BoardAccess.RestoreCardMembers(boardId, cardId, ["people-reader", "people-member", "people-reader"])
+  names = BoardAccess.CardMembers(boardId, cardId)
+  If names.Count <> 2 Or names[0] <> "people-reader" Then Error.Raise("Card members lost order or deduplication")
+  names = BoardAccess.Assignees(boardId, cardId)
+  If names.Count Then Error.Raise("Card membership changed assignees")
+  SignIn("people-reader")
+  Try BoardAccess.CardMembers(boardId, cardId)
+  denied = Error
+  If Not denied Then Error.Raise("Membership bypassed assigned-only visibility")
+  r = KanbanStore.Cards(boardId)
+  If r.Count Then Error.Raise("Membership leaked a card to an unassigned reader")
+  SignIn("people-owner")
+  BoardAccess.SetAssignees(boardId, cardId, ["people-reader"])
+  SignIn("people-reader")
+  names = BoardAccess.CardMembers(boardId, cardId)
+  If names.Count <> 2 Then Error.Raise("Assigned reader lost readable member data")
+  Try BoardAccess.RestoreCardMembers(boardId, cardId, [])
+  denied = Error
+  If Not denied Then Error.Raise("Reader replaced card members")
+  SignIn("people-owner")
+  BoardAccess.SetAssignees(boardId, cardId, ["people-member", "people-reader", "people-owner"])
+  copied = WorkspaceStore.Copy(boardId, "card", cardId, "Copied people card")
+  names = BoardAccess.CardMembers(boardId, copied)
+  If names.Count <> 2 Or names[0] <> "people-reader" Then Error.Raise("Copy lost member order")
+  names = BoardAccess.Assignees(boardId, copied)
+  If names.Count <> 3 Or names[1] <> "people-reader" Or names[2] <> "people-owner" Then Error.Raise("Copy lost assignee order or combined people fields")
+  target = KanbanStore.AddBoard("Card people target")
+  r = KanbanStore.Lanes(target)
+  r = KanbanStore.Lists(target, "Default")
+  listId = r!id
+  WorkspaceActions.Move(boardId, "card", copied, target, "Default", listId)
+  names = BoardAccess.CardMembers(target, copied)
+  If names.Count <> 2 Or names[0] <> "people-reader" Then Error.Raise("Cross-board move lost member order")
+  db = WebDatabase.OpenConnection()
+  r = db.Find("kb_card_members", "board_id = &1 AND card_id = &2", boardId, copied)
+  If r.Count Then Error.Raise("Move retained old-board members")
+  text = BoardTransfer.ExportData(target, "board", target)
+  imported = BoardTransfer.ImportData(text, "Imported people")
+  r = KanbanStore.Cards(imported)
+  importedCard = r!id
+  names = BoardAccess.CardMembers(imported, importedCard)
+  If names.Count <> 2 Or names[0] <> "people-reader" Then Error.Raise("JSON exchange lost member order")
+  names = BoardAccess.Assignees(imported, importedCard)
+  If names.Count <> 3 Or names[1] <> "people-reader" Or names[2] <> "people-owner" Then Error.Raise("JSON exchange lost assignee order or combined people fields")
+  r = KanbanStore.Boards()
+  count = r.Count
+  r = db.Find("kb_card_members")
+  memberCount = r.Count
+  data = BoardTransfer.ReadData(text)
+  data["cards"][0]["members"] = [""]
+  Try BoardTransfer.ImportData(JSON.Encode(data), "Invalid people")
+  denied = Error
+  If Not denied Then Error.Raise("Invalid member import succeeded")
+  r = KanbanStore.Boards()
+  If r.Count <> count Then Error.Raise("Invalid import left a partial board")
+  r = db.Find("kb_card_members")
+  If r.Count <> memberCount Then Error.Raise("Invalid import left partial members")
+  WebDatabase.DeleteUser("people-member")
+  r = db.Find("kb_card_members", "username = &1", "people-member")
+  If r.Count Then Error.Raise("Deleted user retained card membership")
+  names = BoardAccess.Assignees(boardId, cardId)
+  If names.Count <> 2 Or names[0] <> "people-reader" Or names[1] <> "people-owner" Then Error.Raise("Deleted primary assignee reordered the remaining names")
+  names = BoardAccess.CardMembers(boardId, cardId)
+  If names.Count <> 1 Or names[0] <> "people-reader" Then Error.Raise("Deletion lost another member")
+  BoardAccess.RestoreCardMembers(boardId, cardId, ["people-reader", "people-future"])
+  WebDatabase.NewUser("people-future", "x", False)
+  r = db.Find("kb_card_members", "username = &1", "people-future")
+  If r.Count Then Error.Raise("New username inherited historical card membership")
+  WorkspaceStore.SetArchived(target, "card", copied, True)
+  WorkspaceActions.DeleteArchived(target, "card", copied, "Copied people card")
+  r = db.Find("kb_card_members", "card_id = &1", copied)
+  If r.Count Then Error.Raise("Permanent card deletion left members")
+  WorkspaceStore.SetArchived(imported, "board", imported, True)
+  WorkspaceActions.DeleteArchived(imported, "board", imported, "Imported people")
+  r = db.Find("kb_card_members", "board_id = &1", imported)
+  If r.Count Then Error.Raise("Permanent board deletion left members")
+  Print "Card members: independent assignees, assigned-only denial, copy/move/JSON, atomic invalid import and account/card/board cleanup passed"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

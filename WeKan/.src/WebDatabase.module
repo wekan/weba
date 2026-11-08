@@ -345,6 +345,8 @@ Private Sub CleanupUserReferences(username As String)
   If $hConn.Tables.Exist("kb_removed_members") Then $hConn.Delete("kb_removed_members", "username = &1", username)
   If $hConn.Tables.Exist("kb_user_meta") Then $hConn.Delete("kb_user_meta", "username = &1", username)
   If $hConn.Tables.Exist("kb_card_assignees") Then $hConn.Delete("kb_card_assignees", "username = &1", username)
+  If $hConn.Tables.Exist("kb_card_members") Then $hConn.Delete("kb_card_members", "username = &1", username)
+  If $hConn.Tables.Exist("kb_card_people_order") Then $hConn.Delete("kb_card_people_order", "username = &1", username)
   If $hConn.Tables.Exist("kb_boards") Then
     If $hConn.Tables.Exist("kb_meta") Then $hConn.Delete("kb_meta", "board_id IN (SELECT id FROM kb_boards WHERE owner = &1) AND (setting = &2 OR setting = &3)", username, "star", "watch")
     ' A missing principal has no implicit owner rights. Other board members and
@@ -356,7 +358,11 @@ Private Sub CleanupUserReferences(username As String)
     For Each r
       primary = ""
       If $hConn.Tables.Exist("kb_card_assignees") Then
-        remaining = $hConn.Find("kb_card_assignees", "board_id = &1 AND card_id = &2 ORDER BY username", r!board_id, r!id)
+        If $hConn.Tables.Exist("kb_card_people_order") Then
+          remaining = $hConn.Exec("SELECT m.username FROM kb_card_assignees m LEFT JOIN kb_card_people_order o ON o.board_id = m.board_id AND o.card_id = m.card_id AND o.username = m.username AND o.field = &3 WHERE m.board_id = &1 AND m.card_id = &2 ORDER BY o.sort_order, m.username", r!board_id, r!id, "assignees")
+        Else
+          remaining = $hConn.Find("kb_card_assignees", "board_id = &1 AND card_id = &2 ORDER BY username", r!board_id, r!id)
+        Endif
         If remaining.Available Then primary = remaining!username
       Endif
       $hConn.Exec("UPDATE kb_cards SET assignee = &1 WHERE id = &2", primary, r!id)

@@ -29,7 +29,9 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
     if any(mode in sys.argv for mode in ('--api', '--sessions', '--members')):
         base_env.update(WITH_API='true', WEBA_TEST_FIXTURE='1', WEBA_TEST_PASSWORD=secrets.token_urlsafe(24), WEBA_TEST_MEMBERS='1' if '--members' in sys.argv else '0')
         fixture = subprocess.run([base_env.get('GBX', 'gbx3'), '-s', 'ApiFixture', str(project)],
-                                 check=True, env=base_env, capture_output=True, text=True)
+                                 env=base_env, capture_output=True, text=True)
+        if fixture.returncode:
+            raise AssertionError((fixture.stdout + fixture.stderr).replace(base_env['WEBA_TEST_PASSWORD'], '[redacted]'))
         base_env['WEBA_TEST_BOARDS'] = fixture.stdout.strip()
         base_env['WEBA_TEST_PROJECT'] = str(project)
     if any(mode in sys.argv for mode in ('--api', '--sessions', '--members')):
@@ -59,6 +61,8 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
         if '--members' in sys.argv:
             subprocess.run([sys.executable, str(root / 'tests/api-members.test.py')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/wekan-members.test.cjs')], check=True, env=env)
+            subprocess.run([sys.executable, str(root / 'tests/api-card-people.test.py')], check=True, env=env)
+            subprocess.run([sys.executable, str(root / 'tests/card-people-commit.py')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/member-commit.py')], check=True, env=env)
         elif '--sessions' in sys.argv:
             subprocess.run([sys.executable, str(root / 'tests/sessions.test.py')], check=True, env=env)

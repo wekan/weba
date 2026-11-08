@@ -42,7 +42,7 @@ victim = login(target)
 path = '/api/users/'+target
 with sqlite3.connect(Path(os.environ['WEBA_DB_HOST']) / os.environ['WEBA_DB_NAME']) as db:
     tables = ('users', 'account_sessions', 'api_tokens', 'kb_boards', 'kb_cards', 'kb_members',
-              'kb_removed_members', 'kb_member_flags', 'kb_card_assignees', 'kb_user_meta',
+              'kb_removed_members', 'kb_member_flags', 'kb_card_assignees', 'kb_card_members', 'kb_card_people_order', 'kb_user_meta',
               'kb_entries', 'kb_files', 'kb_history', 'kb_activity', 'kb_retired_authors')
     def rows(table):
         return sorted(db.execute('SELECT * FROM '+table).fetchall(), key=repr)
@@ -66,10 +66,11 @@ with sqlite3.connect(Path(os.environ['WEBA_DB_HOST']) / os.environ['WEBA_DB_NAME
     status, result, headers = call(path, 'DELETE', token=owner)
     assert status == 200 and result == {'_id': target}
     assert headers['Cache-Control'] == 'no-store'
-    for table in ('users', 'account_sessions', 'api_tokens', 'kb_members', 'kb_removed_members', 'kb_member_flags', 'kb_card_assignees', 'kb_user_meta'):
+    for table in ('users', 'account_sessions', 'api_tokens', 'kb_members', 'kb_removed_members', 'kb_member_flags', 'kb_card_assignees', 'kb_card_members', 'kb_card_people_order', 'kb_user_meta'):
         assert db.execute('SELECT COUNT(*) FROM '+table+' WHERE username=?', (target,)).fetchone()[0] == 0, table
     assert db.execute('SELECT owner FROM kb_boards WHERE id=?', (content['boardId'],)).fetchone() == (None,)
     assert db.execute('SELECT title,description,assignee FROM kb_cards WHERE id=?', (content['cardId'],)).fetchone() == ('REST retained card', 'REST retained body', 'rest-other')
+    assert db.execute('SELECT username FROM kb_card_members WHERE card_id=?', (content['cardId'],)).fetchall() == [('rest-other',)]
     assert db.execute('SELECT body,author FROM kb_entries WHERE card_id=? AND kind=?', (content['cardId'], 'comment')).fetchall() == [('REST retained comment', None)]
     assert db.execute('SELECT content,author FROM kb_files WHERE card_id=?', (content['cardId'],)).fetchall() == [(b'retained\0bytes', None)]
     assert db.execute('SELECT COUNT(*) FROM kb_entries WHERE card_id=? AND kind=? AND done=0', (content['cardId'], 'time')).fetchone()[0] == 0

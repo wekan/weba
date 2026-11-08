@@ -9,6 +9,9 @@ Public Sub Main()
   Dim item As Collection
   Dim fields As String[]
   Dim boardId As Integer
+  Dim listId As Integer
+  Dim cardId As Integer
+  Dim ids As Integer[]
   Dim action As String
   Dim outcome As Collection
   Dim removed As Boolean
@@ -80,6 +83,25 @@ Public Sub Main()
     Return
   Endif
   fields = Split(Request.Path, "/", "", True)
+  If fields.Count = 9 Then
+    If fields[0] = "api" And fields[1] = "boards" And fields[3] = "lists" And fields[5] = "cards" And (fields[7] = "members" Or fields[7] = "assignees") Then
+      If Request.Method <> "POST" And Request.Method <> "DELETE" Then
+        Reply(405, ErrorData("Method not allowed"))
+        Return
+      Endif
+      Try ids = [PositiveId(fields[2]), PositiveId(fields[4]), PositiveId(fields[6])]
+      If Error Then
+        Reply(404, ErrorData("Card not found"))
+        Return
+      Endif
+      boardId = ids[0]
+      listId = ids[1]
+      cardId = ids[2]
+      outcome = BoardAccess.MutateApiCardPerson(boardId, listId, cardId, fields[7], fields[8], Request.Method = "POST")
+      Reply(outcome["status"], outcome["data"])
+      Return
+    Endif
+  Endif
   If fields.Count = 5 Or fields.Count = 6 Then
     If fields[0] = "api" And fields[1] = "boards" And fields[3] = "members" Then
       If Request.Method <> "POST" Then

@@ -2,6 +2,17 @@
 
 This work adds the following features and fixes:
 
+- Add separate card members and assignees merge REST routes with active-member
+  validation, stale removal, deduplication, persisted append order and source
+  role/full-card-scope rules with
+  tightly scoped site-admin writes. Reject foreign list/board and archived-card
+  targets. Preserve members through copy/move/JSON; clean account/card/board and
+  historical identity references without granting assigned-only visibility.
+  Verify an additional unchanged original spec 17 callback, native lifecycle,
+  source/archive role negatives, sanitized database-error rollback and four real
+  failed-COMMIT/retry phases. Card member UI, array PUT/bulk contracts and full
+  original suite parity remain pending. Thanks to xet7.
+
 - Document REST user deletion, site-admin/self-delete policy, committed
   responses, retained content, rollback verification and exact original-test
   adapter coverage. Record packaged native deletion regression verification.

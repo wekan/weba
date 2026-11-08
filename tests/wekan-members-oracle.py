@@ -42,5 +42,15 @@ with sqlite3.connect(Path(os.environ['WEBA_DB_HOST']) / os.environ['WEBA_DB_NAME
                         flags[flag] = True
                 values.append({'userId': username, 'isActive': active, **flags})
             print(json.dumps({'_id': str(board_id), 'title': title, 'members': values}))
+    elif sys.argv[1] in ('cards', 'card'):
+        if sys.argv[1] == 'cards':
+            records = db.execute('SELECT c.id,c.board_id,c.archived,l.list_id FROM kb_cards c JOIN kb_card_lists l ON l.card_id=c.id AND l.board_id=c.board_id WHERE c.board_id=? AND l.list_id=? AND c.archived=0', (board_id, int(sys.argv[3]))).fetchall()
+        else:
+            records = db.execute('SELECT c.id,c.board_id,c.archived,l.list_id FROM kb_cards c JOIN kb_card_lists l ON l.card_id=c.id AND l.board_id=c.board_id WHERE c.id=?', (board_id,)).fetchall()
+        values = []
+        for card_id, parent_id, archived, list_id in records:
+            members = [row[0] for row in db.execute("SELECT m.username FROM kb_card_members m LEFT JOIN kb_card_people_order o ON o.board_id=m.board_id AND o.card_id=m.card_id AND o.username=m.username AND o.field='members' WHERE m.board_id=? AND m.card_id=? ORDER BY o.sort_order,m.username", (parent_id, card_id))] if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='kb_card_members'").fetchone() else []
+            values.append({'_id': str(card_id), 'boardId': str(parent_id), 'listId': str(list_id), 'archived': bool(archived), 'members': members})
+        print(json.dumps(values if sys.argv[1] == 'cards' else values[0] if values else None))
     else:
         raise AssertionError('Unknown fixture operation')

@@ -12,7 +12,7 @@ subprocess.run(command, env={**os.environ, 'WEBA_TEST_MODE': 'prepare'}, check=T
 reader = sqlite3.connect(project / 'database.db', timeout=1)
 process = None
 tables = ('users', 'account_sessions', 'kb_boards', 'kb_cards', 'kb_members',
-          'kb_card_assignees', 'kb_removed_members', 'kb_member_flags', 'kb_user_meta', 'kb_entries', 'kb_files',
+          'kb_card_assignees', 'kb_card_members', 'kb_card_people_order', 'kb_removed_members', 'kb_member_flags', 'kb_user_meta', 'kb_entries', 'kb_files',
           'kb_history', 'kb_activity', 'kb_retired_authors', 'api_tokens')
 def snapshot(table):
     return sorted(reader.execute('SELECT * FROM '+table).fetchall(), key=repr)
@@ -35,7 +35,7 @@ try:
     output, _ = process.communicate(timeout=15)
     assert process.returncode == 0, output
     target = ('delete-commit-target',)
-    for table in ('users', 'account_sessions', 'api_tokens', 'kb_user_meta', 'kb_members', 'kb_removed_members', 'kb_member_flags', 'kb_card_assignees'):
+    for table in ('users', 'account_sessions', 'api_tokens', 'kb_user_meta', 'kb_members', 'kb_removed_members', 'kb_member_flags', 'kb_card_assignees', 'kb_card_members'):
         assert reader.execute('SELECT COUNT(*) FROM '+table+' WHERE username=?', target).fetchone()[0] == 0, 'Successful deletion retained a principal in '+table
     assert reader.execute('SELECT owner FROM kb_boards').fetchall() == [(None,)]
     assert reader.execute('SELECT title, description, assignee FROM kb_cards').fetchall() == [('Retained deletion card', 'Retained body', 'delete-commit-keeper')]
@@ -45,6 +45,7 @@ try:
     assert reader.execute('SELECT display_name FROM kb_retired_authors').fetchall() == [('delete-commit-target',)] * 3
     assert snapshot('kb_history') == before['kb_history'] and snapshot('kb_activity') == before['kb_activity'], 'Deletion erased history'
     assert reader.execute('SELECT username, role FROM kb_members').fetchall() == [('delete-commit-keeper', 'board-admin')]
+    assert reader.execute('SELECT username FROM kb_card_members').fetchall() == [('delete-commit-keeper',)]
     print(output.strip())
 finally:
     reader.close()

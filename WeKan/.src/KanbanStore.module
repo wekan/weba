@@ -175,6 +175,7 @@ Public Function SaveCard(boardId As Integer, cardId As Integer, title As String,
   r.Update()
   If Not cardId Then cardId = $db.LastInsertId
   If previousAssignee <> assignee Then $db.Delete("kb_card_assignees", "board_id = &1 AND card_id = &2", boardId, cardId)
+  If previousAssignee <> assignee Then $db.Delete("kb_card_people_order", "board_id = &1 AND card_id = &2 AND field = &3", boardId, cardId, "assignees")
   PutCardList(boardId, cardId, listId)
   Activity(boardId, "Saved card: " & title, "card", cardId)
   Return cardId

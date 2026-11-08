@@ -9,6 +9,7 @@ Public Sub Main()
   Dim memberAction As String
   Dim memberPayload As Collection
   Dim memberOperation As String
+  Dim personField As String
   Dim data As New Collection
   If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
   If Env["WEBA_TEST_MODE"] = "delete-content" Then
@@ -18,6 +19,7 @@ Public Sub Main()
     cardId = KanbanStore.SaveCard(boardId, 0, "REST retained card", "REST retained body", "Default", "Todo", Session["username"], "", "")
     BoardAccess.SetMember(boardId, "rest-other", "board-admin")
     BoardAccess.SetAssignees(boardId, cardId, [Session["username"], "rest-other"])
+    BoardAccess.RestoreCardMembers(boardId, cardId, [Session["username"], "rest-other"])
     CardContent.Save(boardId, cardId, 0, "comment", "", "REST retained comment", 0, False, 0)
     CardContent.AddFile(boardId, cardId, "retained.bin", "retained" & Chr(0) & "bytes")
     CardContent.StartTimer(boardId, cardId)
@@ -46,6 +48,32 @@ Public Sub Main()
     Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
     WebDatabase.DeleteUser("rest-other")
     WebDatabase.NewUser("rest-other", Env["WEBA_TEST_PASSWORD"], False)
+    Return
+  Endif
+  If Env["WEBA_TEST_MODE"] = "card-people-commit" Then
+    data = JSON.Decode(Env["WEBA_TEST_BOARDS"])
+    boardId = data["otherBoardId"]
+    cardId = data["otherCardId"]
+    otherId = data["otherListId"]
+    personField = Env["WEBA_TEST_PERSON_FIELD"]
+    memberAction = Env["WEBA_TEST_PERSON_ACTION"]
+    db = WebDatabase.OpenConnection()
+    db.Timeout = 1
+    WebIdentity.AuthenticateApi("rest-owner")
+    data = BoardAccess.MutateApiCardPerson(boardId, otherId, cardId, personField, "rest-member", memberAction = "add")
+    If data["status"] <> 500 Then Error.Raise("Expected rejected card people commit")
+    If data["data"]["error"] <> "Card membership update failed" Then Error.Raise("Card people failure was not sanitized")
+    If BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Card authority leaked after commit failure")
+    File.Save(Application.Path &/ "card-people-commit-failed", "ready")
+    deadline = Timer + 10
+    While Not Exist(Application.Path &/ "card-people-reader-released")
+      If Timer > deadline Then Error.Raise("Card people reader release timed out")
+      Sleep 0.01
+    Wend
+    data = BoardAccess.MutateApiCardPerson(boardId, otherId, cardId, personField, "rest-member", memberAction = "add")
+    If data["status"] <> 200 Then Error.Raise("Card people retry failed")
+    If BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Card authority leaked after retry")
+    Print "Card people failed COMMIT rolled back data/history and recovered without authority leakage"
     Return
   Endif
   If Env["WEBA_TEST_MODE"] = "member-commit" Then
@@ -113,6 +141,10 @@ Public Sub Main()
   data["boardId"] = boardId
   data["otherBoardId"] = otherId
   If Env["WEBA_TEST_MEMBERS"] = "1" Then
+    r = KanbanStore.Lanes(otherId)
+    r = KanbanStore.Lists(otherId, "Default")
+    data["otherListId"] = r!id
+    data["otherCardId"] = KanbanStore.SaveCard(otherId, 0, "Other member card", "Member fixture body", "Default", "Todo", "rest-other", "", "", r!id)
     r = WebDatabase.OpenConnection().Create("kb_meta")
     r["board_id"] = otherId
     r["kind"] = "board"

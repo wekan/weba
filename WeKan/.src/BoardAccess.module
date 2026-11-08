@@ -42,6 +42,24 @@ Public Sub OpenStore()
     t.PrimaryKey = ["card_id", "username"]
     t.Update()
   Endif
+  If Not $db.Tables.Exist("kb_card_members") Then
+    t = $db.Tables.Add("kb_card_members")
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("card_id", db.Integer)
+    t.Fields.Add("username", db.String, 255)
+    t.PrimaryKey = ["card_id", "username"]
+    t.Update()
+  Endif
+  If Not $db.Tables.Exist("kb_card_people_order") Then
+    t = $db.Tables.Add("kb_card_people_order")
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("card_id", db.Integer)
+    t.Fields.Add("field", db.String, 16)
+    t.Fields.Add("username", db.String, 255)
+    t.Fields.Add("sort_order", db.Integer)
+    t.PrimaryKey = ["card_id", "field", "username"]
+    t.Update()
+  Endif
   If Not $db.Tables.Exist("kb_user_meta") Then
     t = $db.Tables.Add("kb_user_meta")
     t.Fields.Add("board_id", db.Integer)
@@ -464,11 +482,149 @@ Public Function Assignees(boardId As Integer, cardId As Integer) As String[]
   RequireCard(boardId, cardId)
   r = $db.Find("kb_cards", "board_id = &1 AND id = &2", boardId, cardId)
   If r!assignee Then names.Add(r!assignee)
-  r = $db.Find("kb_card_assignees", "board_id = &1 AND card_id = &2 ORDER BY username", boardId, cardId)
+  r = $db.Exec("SELECT m.username FROM kb_card_assignees m LEFT JOIN kb_card_people_order o ON o.board_id = m.board_id AND o.card_id = m.card_id AND o.username = m.username AND o.field = &3 WHERE m.board_id = &1 AND m.card_id = &2 ORDER BY o.sort_order, m.username", boardId, cardId, "assignees")
   For Each r
     If names.Find(r!username) < 0 Then names.Add(r!username)
   Next
   Return names
+End
+
+Public Function CardMembers(boardId As Integer, cardId As Integer) As String[]
+  Dim names As New String[]
+  Dim r As Result
+  RequireCard(boardId, cardId)
+  r = $db.Exec("SELECT m.username FROM kb_card_members m LEFT JOIN kb_card_people_order o ON o.board_id = m.board_id AND o.card_id = m.card_id AND o.username = m.username AND o.field = &3 WHERE m.board_id = &1 AND m.card_id = &2 ORDER BY o.sort_order, m.username", boardId, cardId, "members")
+  For Each r
+    names.Add(r!username)
+  Next
+  Return names
+End
+
+Public Sub CopyCardMembers(sourceBoard As Integer, sourceCard As Integer, targetBoard As Integer, targetCard As Integer)
+  Dim names As String[] = CardMembers(sourceBoard, sourceCard)
+  Require(targetBoard, "write")
+  RequireCard(targetBoard, targetCard)
+  WriteCardMembers(targetBoard, targetCard, names)
+End
+
+Public Sub RestoreCardMembers(boardId As Integer, cardId As Integer, names As String[])
+  Require(boardId, "manageBoard")
+  RequireCard(boardId, cardId)
+  WriteCardMembers(boardId, cardId, names)
+End
+
+Private Sub WriteCardMembers(boardId As Integer, cardId As Integer, names As String[])
+  Dim r As Result
+  Dim username As String
+  Dim unique As New String[]
+  Dim transaction As Boolean
+  Dim failure As String
+  For Each username In names
+    If Not username Or String.Len(username) > 255 Then Error.Raise("Invalid card member")
+    If unique.Find(username) < 0 Then unique.Add(username)
+  Next
+  WorkspaceStore.OpenStore()
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  KanbanStore.Activity(boardId, "Changed card members", "card", cardId)
+  WritePeopleOrder(boardId, cardId, "members", unique)
+  $db.Delete("kb_card_members", "board_id = &1 AND card_id = &2", boardId, cardId)
+  For Each username In unique
+    r = $db.Create("kb_card_members")
+    r["board_id"] = boardId
+    r["card_id"] = cardId
+    r["username"] = username
+    r.Update()
+  Next
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+Public Function MutateApiCardPerson(boardId As Integer, listId As Integer, cardId As Integer, field As String, username As String, add As Boolean) As Collection
+  Dim r As Result
+  Dim names As String[]
+  Dim data As New Collection
+  Dim actor As String = WebIdentity.Username
+  Dim siteAdmin As Boolean
+  Dim transaction As Boolean
+  Dim status As Integer = 500
+  Dim failure As String
+  $apiMemberBoard = 0
+  If Env["WEBA_API_REQUEST"] <> "1" Then Return ApiFailure(403, "API context required")
+  If Not actor Then Return ApiFailure(401, "Invalid credentials")
+  If Not WebDatabase.UserExists(actor) Then Return ApiFailure(401, "Invalid credentials")
+  If field <> "members" And field <> "assignees" Then Return ApiFailure(404, "API route not found")
+  OpenStore()
+  WorkspaceStore.OpenStore()
+  r = $db.Find("kb_boards", "id = &1", boardId)
+  If Not r.Available Then Return ApiFailure(404, "Board not found")
+  siteAdmin = WebDatabase.GetIsAdmin(actor)
+  If Not siteAdmin Then
+    If Not Can(boardId, "write") Or Not Can(boardId, "seesAllCards") Then Return ApiFailure(403, "Forbidden")
+  Endif
+  If Not username Or Len(username) > 255 Then Return ApiFailure(400, "Invalid member ID")
+  If siteAdmin Then $apiMemberBoard = boardId
+  KanbanStore.PrimeCardLinks(boardId)
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE users SET username = username WHERE username = &1", username)
+  $db.Exec("UPDATE kb_boards SET title = title WHERE id = &1", boardId)
+  $db.Exec("UPDATE kb_cards SET title = title WHERE id = &1 AND board_id = &2", cardId, boardId)
+  siteAdmin = WebDatabase.GetIsAdmin(actor)
+  If Not siteAdmin Then
+    $apiMemberBoard = 0
+    If Not Can(boardId, "write") Or Not Can(boardId, "seesAllCards") Then
+      status = 403
+      Error.Raise("Forbidden")
+    Endif
+  Endif
+  r = $db.Find("kb_cards", "board_id = &1 AND id = &2 AND archived = &3", boardId, cardId, False)
+  If Not r.Available Then
+    status = 404
+    Error.Raise("Card not found")
+  Endif
+  If KanbanStore.CardListId(boardId, cardId) <> listId Then
+    status = 404
+    Error.Raise("Card not found")
+  Endif
+  If add Then
+    If Not RoleOf(boardId, username) Then
+      status = 400
+      Error.Raise("userId is not an active member of this board")
+    Endif
+  Endif
+  If field = "members" Then
+    names = CardMembers(boardId, cardId)
+  Else
+    names = Assignees(boardId, cardId)
+  Endif
+  If add Then
+    If names.Find(username) < 0 Then names.Add(username)
+  Else
+    If names.Find(username) >= 0 Then names.Remove(names.Find(username))
+  Endif
+  If field = "members" Then
+    WriteCardMembers(boardId, cardId, names)
+  Else
+    WriteAssignees(boardId, cardId, names)
+  Endif
+  data["_id"] = CStr(cardId)
+  data["members"] = CardMembers(boardId, cardId)
+  data["assignees"] = Assignees(boardId, cardId)
+  DatabaseTransactions.Commit($db)
+  transaction = False
+  $apiMemberBoard = 0
+  Return ApiAnswer(200, data)
+Catch
+  failure = Error.Text
+  $apiMemberBoard = 0
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  If status = 500 Then failure = "Card membership update failed"
+  Return ApiFailure(status, failure)
 End
 
 Public Sub SetAssignees(boardId As Integer, cardId As Integer, names As String[])
@@ -518,6 +674,7 @@ Private Sub WriteAssignees(boardId As Integer, cardId As Integer, names As Strin
   DatabaseTransactions.Begin($db)
   transaction = True
   KanbanStore.Activity(boardId, "Changed card assignments", "card", cardId)
+  WritePeopleOrder(boardId, cardId, "assignees", unique)
   $db.Delete("kb_card_assignees", "board_id = &1 AND card_id = &2", boardId, cardId)
   For Each username In unique
     r = $db.Create("kb_card_assignees")
@@ -536,4 +693,21 @@ Catch
   failure = Error.Text
   If transaction Then Try DatabaseTransactions.Rollback($db)
   Error.Raise(failure)
+End
+
+Private Sub WritePeopleOrder(boardId As Integer, cardId As Integer, field As String, names As String[])
+  Dim r As Result
+  Dim username As String
+  Dim position As Integer
+  $db.Delete("kb_card_people_order", "board_id = &1 AND card_id = &2 AND field = &3", boardId, cardId, field)
+  For Each username In names
+    r = $db.Create("kb_card_people_order")
+    r["board_id"] = boardId
+    r["card_id"] = cardId
+    r["field"] = field
+    r["username"] = username
+    r["sort_order"] = position
+    r.Update()
+    Inc position
+  Next
 End

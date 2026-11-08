@@ -7,9 +7,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 ## Current UI/API/security work
 
 - Full scope remains all items below and the current WeKan UI/API/security test
-  contracts. Complete original suites have not passed against weba. Four spec 17
-  callbacks (three membership, one user deletion) now run unchanged with actual
-  Playwright assertions and explicit SQLite fixture adapters; the other 26
+  contracts. Complete original suites have not passed against weba. Five spec 17
+  callbacks (three board membership, one card membership, one user deletion)
+  now run unchanged with actual Playwright assertions and explicit SQLite
+  fixture adapters; the other 25
   callbacks remain unexecuted. Preserve original assertions as execution adapters expand.
 - Completed: remove login initializer request/query/user-agent logging and the
   unused shared temporary logfile sink. Guard sources against reintroducing
@@ -85,6 +86,19 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   responses, rollback/content guarantees and four-of-thirty original callback
   coverage. Native deletion cancel/confirm and session revocation still pass in
   packaged Chromium after sharing the deletion implementation with REST.
+- Completed card-person merge routes: POST/DELETE card members and assignees
+  remain separate, deduplicate additions, preserve append order, require active
+  board members for adds
+  and allow stale removals. Match REST write/full-card-scope checks and the
+  explicit scoped site-admin exception; reject foreign board/list IDs and
+  archived cards. Card members never bypass assigned-only visibility. Preserve
+  members through copy/move/JSON and clear them on account/card/board deletion
+  and historical username cleanup. Verify original card-member callback,
+  source/archive role/negative HTTP tests, sanitized database failures,
+  four forced-COMMIT rollback/retry phases and native lifecycle/invalid-import
+  rollback. Extend account-deletion rollback snapshots to the member table.
+- Next card-person work: native member editor, card PUT array/clear contracts,
+  remaining card reads/bulk routes and complete original UI/API/security suites.
 - In progress: REST cards/containers and full API identity/data parity, including
   stable IDs and complete source roster metadata. Custom roles, list-level
   exceptions and public/instance board visibility remain pending.

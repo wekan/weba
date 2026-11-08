@@ -1,4 +1,10 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Card people: Add separate members/assignees merge REST routes with active
+  target checks, stale removal, append order, scoped administration and
+  role/list/card guards.
+  Preserve members through copy/move/JSON and clean deleted identities; verify
+  assigned-only denial, native lifecycle/import rollback, original callback,
+  source/archive negative cases and four failed-COMMIT/retry phases.
 - Documentation: Describe REST user-deletion authorization/results, retained
   content, rollback tests and four-of-thirty original callback coverage; record
   the packaged native deletion regression check.
