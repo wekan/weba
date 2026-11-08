@@ -177,8 +177,12 @@ Public Function ImportData(text As String, title As String) As Integer
     r = WorkspaceStore.Record(boardId, "list", listMap[CStr(item["list_id"])])
     If r!lane <> item["lane"] Or r!title <> item["status"] Then Error.Raise("Exported card/list mismatch")
     If String.Len(item["title"]) > 255 Then Error.Raise("Invalid exported card title")
-    id = KanbanStore.SaveCard(boardId, 0, item["title"], item["description"], item["lane"], item["status"], item["assignee"], item["labels"], item["due_day"], listMap[CStr(item["list_id"])])
-    If item.Exist("assignees") Then BoardAccess.RestoreAssignees(boardId, id, item["assignees"])
+    id = KanbanStore.SaveCard(boardId, 0, item["title"], item["description"], item["lane"], item["status"], "", item["labels"], item["due_day"], listMap[CStr(item["list_id"])])
+    If item.Exist("assignees") Then
+      BoardAccess.RestoreAssignees(boardId, id, item["assignees"])
+    Else If item["assignee"] Then
+      BoardAccess.RestoreAssignees(boardId, id, [CStr(item["assignee"])])
+    Endif
     If item.Exist("members") Then BoardAccess.RestoreCardMembers(boardId, id, item["members"])
     If item.Exist("dates") Then CardDates.RestoreDates(boardId, id, item["dates"])
     cardMap[oldId] = id

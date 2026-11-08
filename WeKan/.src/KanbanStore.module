@@ -138,6 +138,7 @@ Public Function SaveCard(boardId As Integer, cardId As Integer, title As String,
   WorkspaceStore.OpenStore()
   DatabaseTransactions.Begin($db)
   transaction = True
+  If assignee Then $db.Exec("UPDATE users SET username = username WHERE username = &1", assignee)
   $db.Exec("UPDATE kb_boards SET title = title WHERE id = &1", boardId)
   If cardId Then $db.Exec("UPDATE kb_cards SET title = title WHERE board_id = &1 AND id = &2", boardId, cardId)
   BoardAccess.Require(boardId, "write")
@@ -147,6 +148,7 @@ Public Function SaveCard(boardId As Integer, cardId As Integer, title As String,
     previousAssignee = r!assignee
     previousDueDay = r!due_day
   Endif
+  If assignee And assignee <> previousAssignee Then BoardAccess.RequireActiveMember(boardId, assignee)
   If Not Trim(lane) Then lane = "Default"
   If Not Trim(title) Then Error.Raise("Enter a card title")
   If status <> "Todo" And status <> "Doing" And status <> "Done" Then

@@ -160,6 +160,15 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   Lone-surrogate behavior and remaining scalar fields still need source parity.
 - Documented description PUT values/errors, atomic writes, escaped/direct
   Unicode transport, native reopening and remaining scalar/lone-surrogate gaps.
+- Completed: native card create/edit rejects a newly supplied unknown, foreign
+  or inactive assignee using the active board roster under user/board/card locks.
+  Unchanged stale assignees can remain while editing other fields; clearing is
+  allowed. Copy/import restore historical values via guarded restoration paths,
+  including old exports containing only the scalar assignee. Store regressions
+  verify no partial card/lane/history on denial, reactivation and stale copy/
+  import; full local tests and final extended store checks pass. Packaged
+  Chromium verifies forged edits are rejected and the persisted assignee survives.
+  A native active-roster picker and complete multiple-assignee editing remain open.
 - Next card-person work: remaining card PUT fields, reads, creation/bulk routes
   and complete original UI/API/security suites.
 - In progress: REST cards/containers and full API identity/data parity, including

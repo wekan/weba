@@ -1,0 +1,58 @@
+' Native scalar assignee edits use the active board roster, not arbitrary IDs.
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim db As Connection
+  Dim r As Result
+  Dim denied As Boolean
+  Dim name As String
+  Dim before As Integer
+  Dim copied As Integer
+  Dim imported As Integer
+  Dim data As String
+  WebDatabase.Register("assignee-owner", "x")
+  WebDatabase.Register("assignee-member", "x")
+  WebDatabase.Register("assignee-outsider", "x")
+  Session["username"] = "assignee-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
+  boardId = KanbanStore.AddBoard("Native assignments")
+  BoardAccess.SetMember(boardId, "assignee-member", "normal")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Original", "Body", "Default", "Todo", "assignee-member", "", "")
+  db = WebDatabase.OpenConnection()
+  For Each name In ["missing-person", "assignee-outsider"]
+    r = db.Find("kb_activity", "board_id = &1", boardId)
+    before = r.Count
+    Try KanbanStore.SaveCard(boardId, cardId, "Denied", "Changed body", "Forged lane", "Todo", name, "", "")
+    denied = Error
+    If Not denied Then Error.Raise("Unrelated assignee accepted")
+    r = db.Find("kb_cards", "id = &1", cardId)
+    If r!title <> "Original" Or r!description <> "Body" Or r!assignee <> "assignee-member" Then Error.Raise("Denied assignment changed the card")
+    r = db.Find("kb_lanes", "board_id = &1 AND title = &2", boardId, "Forged lane")
+    If r.Available Then Error.Raise("Denied assignment created a lane")
+    r = db.Find("kb_activity", "board_id = &1", boardId)
+    If r.Count <> before Then Error.Raise("Denied assignment changed history")
+    Try KanbanStore.SaveCard(boardId, 0, "Denied new", "", "Default", "Todo", name, "", "")
+    denied = Error
+    If Not denied Then Error.Raise("Created card with unrelated assignee")
+    r = db.Find("kb_cards", "board_id = &1", boardId)
+    If r.Count <> 1 Then Error.Raise("Denied assignment created a card")
+  Next
+  BoardAccess.RemoveMember(boardId, "assignee-member")
+  KanbanStore.SaveCard(boardId, cardId, "Preserved", "Changed body", "Default", "Todo", "assignee-member", "", "")
+  copied = WorkspaceStore.Copy(boardId, "card", cardId, "Stale copy")
+  r = db.Find("kb_cards", "id = &1", copied)
+  If r!assignee <> "assignee-member" Then Error.Raise("Copy lost inactive assignment")
+  data = BoardTransfer.ExportData(boardId, "card", cardId)
+  imported = BoardTransfer.ImportData(data, "Stale import")
+  r = db.Find("kb_cards", "board_id = &1", imported)
+  If r.Count <> 1 Or r!assignee <> "assignee-member" Then Error.Raise("Import lost inactive assignment")
+  KanbanStore.SaveCard(boardId, cardId, "Cleared", "", "Default", "Todo", "", "", "")
+  Try KanbanStore.SaveCard(boardId, cardId, "Denied inactive", "", "Default", "Todo", "assignee-member", "", "")
+  denied = Error
+  If Not denied Then Error.Raise("Inactive member reassigned")
+  BoardAccess.SetMember(boardId, "assignee-member", "read-only")
+  KanbanStore.SaveCard(boardId, cardId, "Reactivated", "", "Default", "Todo", "assignee-member", "", "")
+  r = db.Find("kb_cards", "id = &1", cardId)
+  If r!title <> "Reactivated" Or r!assignee <> "assignee-member" Then Error.Raise("Valid active assignee failed")
+  Print "Native assignees: active roster, unknown/foreign/inactive denial, atomic create/edit, unchanged stale preservation, clear and reactivation passed"
+End

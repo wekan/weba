@@ -198,6 +198,13 @@ const fs = require('node:fs');
       assert.ok(await page.$eval(selector('CardPeopleTree'),(e,name)=>e.textContent.includes(name),memberName),'reopened panel reads persisted members');
       assert.equal(await page.$$eval('[id$=".CardPeopleTree"] tr[id]',(els,name)=>els.filter(e=>e.textContent.trim()===name).length,memberName),1,'native tree has one selectable row per person even after duplicate PUT');
       await click('CloseCardPeople');
+      await fill('Assignee','not-a-board-member');await click('SaveCard');
+      const assigneeNotice=await page.$eval('[id$=".Notice"]',e=>e.textContent.replace(/\s+/g,' '));
+      assert.ok(assigneeNotice.includes('active board member'),'forged native assignee is rejected: '+assigneeNotice);
+      await click('CloseEditor');await ownerPeople();
+      assert.equal(await page.$eval(entry('Assignee'),e=>e.value),ownerName,'rejected assignee was not persisted');
+      await click('CloseCardPeople');
+      console.log('Native assignee browser: forged nonmember denied and persisted assignment preserved');
       if(process.env.WITH_API==='true'){
         async function exportedDateCard(){
           await page.evaluate(()=>{delete window.__dateExport;window.__dateAnchor=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototype.click=function(){if(this.download)fetch(this.href).then(r=>r.text()).then(text=>window.__dateExport=text);};});

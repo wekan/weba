@@ -255,7 +255,7 @@ End
 Private Function CloneCard(sourceBoard As Integer, cardId As Integer, targetBoard As Integer, listId As Integer, lane As String, listTitle As String, title As String) As Integer
   Dim r As Result = Record(sourceBoard, "card", cardId)
   Dim id As Integer
-  Dim assignee As String = r!assignee
+  Dim assignee As String
   If Not BoardAccess.Can(targetBoard, "seesAllCards") Then assignee = WebIdentity.Username
   id = KanbanStore.SaveCard(targetBoard, 0, title, r!description, lane, listTitle, assignee, r!labels, r!due_day, listId)
   BoardAccess.CopyAssignees(sourceBoard, cardId, targetBoard, id)

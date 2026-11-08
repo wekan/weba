@@ -26,9 +26,9 @@ Public Sub Main()
   listId = r!id
   r.MoveNext()
   otherList = r!id
+  BoardAccess.SetMember(boardId, "assigned-normal", "normal-assigned-only")
   one = KanbanStore.SaveCard(boardId, 0, "Visible card", "Public to assignees", "Default", "Todo", "assigned-normal", "", "", listId)
   two = KanbanStore.SaveCard(boardId, 0, "HIDDEN-CARD-CANARY", "HIDDEN-BODY-CANARY", "Default", "Todo", "assigned-owner", "", "", listId)
-  BoardAccess.SetMember(boardId, "assigned-normal", "normal-assigned-only")
   BoardAccess.SetMember(boardId, "assigned-comment", "comment-assigned-only")
   BoardAccess.SetMember(boardId, "assigned-read", "read-assigned-only")
   BoardAccess.SetMember(boardId, "assigned-worker", "worker")

@@ -1,4 +1,8 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Native assignees: Check active board membership for new assignments under
+  transaction locks. Preserve unchanged stale values, clearing and historical
+  copy/import through guarded restore paths. Verify store atomic denial,
+  reactivation and stale lifecycle; check forged native edits in Chromium.
 - Documentation: Describe description PUT, strict types/clears/omitted values,
   atomic writes, emoji forwarding, native reopening and verification limits.
 - Card description PUT: Support strings and empty/null clears, reject invalid

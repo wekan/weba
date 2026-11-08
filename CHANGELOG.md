@@ -2,6 +2,14 @@
 
 This work adds the following features and fixes:
 
+- Reject new native card assignees outside the active board roster inside the
+  card-save transaction, rechecking after user/board/card locks. Preserve an
+  unchanged retired assignee, allow clearing and retain historical assignments
+  through the authorized copy/JSON restore paths. Verify unknown/foreign/inactive
+  create/edit denial without partial cards/lanes/history, reactivation, stale
+  copy/import and packaged Chromium forged-assignee persistence boundaries.
+  Full original suite parity remains pending. Thanks to xet7.
+
 - Document description PUT values, strict errors, atomic updates, native text
   reopening and the escaped emoji transport fix. Record direct/escaped Unicode
   HTTP and combined COMMIT verification while keeping remaining API/scalar and

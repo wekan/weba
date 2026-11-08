@@ -160,6 +160,11 @@ Public Sub RequireActivity(boardId As Integer)
   If Not Can(boardId, "write") And Not Can(boardId, "comment") And Not Can(boardId, "moveCard") Then Error.Raise("Board permission denied")
 End
 
+Public Sub RequireActiveMember(boardId As Integer, username As String)
+  RequireRead(boardId)
+  If Not RoleOf(boardId, username) Then Error.Raise("Choose an active board member")
+End
+
 Public Sub SetMember(boardId As Integer, username As String, role As String)
   Dim r As Result
   Dim transaction As Boolean
