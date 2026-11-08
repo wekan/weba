@@ -2,6 +2,15 @@
 
 This work adds the following features and fixes:
 
+- Fix combined board-admin/assigned-only flags bypassing general card REST
+  writes. Check all three raw assigned-only flags before mutation and again under
+  locks for PUT and member/assignee merge/pull routes; retain the explicit site
+  administrator override and source-compatible non-scope combinations. Reproduce
+  the prior unauthorized 200, then verify no data/history/clock writes on denial,
+  late injected-flag rollback and all 256 active built-in boolean flag combinations
+  against actual source functions and persisted HTTP results. Native/custom-role
+  and remaining archive endpoint parity remain open. Thanks to xet7.
+
 - Document single-card GET routes, archived/scoped permission behavior, supported
   card/checklist fields, UTC/type/role isolation and SQL/source-serializer/browser
   verification. Preserve full schema/custom-field/deadline gaps and the unchanged

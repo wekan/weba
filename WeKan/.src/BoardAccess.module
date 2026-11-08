@@ -712,6 +712,19 @@ Public Function UpdateApiCardPeople(boardId As Integer, listId As Integer, cardI
   Return ChangeApiCardPeople(boardId, listId, cardId, "", "", "replace", payload)
 End
 
+Private Function CanWriteApiCards(boardId As Integer) As Boolean
+  Dim flags As Collection
+  Dim flag As String
+  If Not Can(boardId, "write") Or Not Can(boardId, "seesAllCards") Then Return False
+  ' Source checkBoardWriteAccess applies the three raw scope flags even when
+  ' canonical role precedence selected board-admin for a combined member row.
+  flags = ApiMemberRoles.MemberData(boardId, WebIdentity.Username, RoleOf(boardId, WebIdentity.Username))
+  For Each flag In ["isNormalAssignedOnly", "isCommentAssignedOnly", "isReadAssignedOnly"]
+    If flags[flag] = True Then Return False
+  Next
+  Return True
+End
+
 Private Function ChangeApiCardPeople(boardId As Integer, listId As Integer, cardId As Integer, field As String, username As String, operation As String, payload As Collection) As Collection
   Dim r As Result
   Dim names As String[]
@@ -747,7 +760,7 @@ Private Function ChangeApiCardPeople(boardId As Integer, listId As Integer, card
   If Not r.Available Then Return ApiFailure(404, "Board not found")
   siteAdmin = WebDatabase.GetIsAdmin(actor)
   If Not siteAdmin Then
-    If Not Can(boardId, "write") Or Not Can(boardId, "seesAllCards") Then Return ApiFailure(403, "Forbidden")
+    If Not CanWriteApiCards(boardId) Then Return ApiFailure(403, "Forbidden")
   Endif
   If replace Then
     If Not payload Then Return ApiFailure(400, "Expected a JSON object")
@@ -802,7 +815,7 @@ Private Function ChangeApiCardPeople(boardId As Integer, listId As Integer, card
   siteAdmin = WebDatabase.GetIsAdmin(actor)
   If Not siteAdmin Then
     $apiMemberBoard = 0
-    If Not Can(boardId, "write") Or Not Can(boardId, "seesAllCards") Then
+    If Not CanWriteApiCards(boardId) Then
       status = 403
       Error.Raise("Forbidden")
     Endif

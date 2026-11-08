@@ -1,4 +1,9 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- REST write security: Refuse each raw assigned-only flag even when canonical
+  role precedence selects board-admin. Check before mutation and under locks,
+  preserving source site-admin/non-scope behavior. Verify the prior 200 bypass,
+  no-write/late-injection rollback and all 256 active built-in boolean flag
+  combinations against actual source role/scope functions and HTTP data.
 - Documentation: Describe single-card GET semantics/projection and original
   serializer/SQL/HTTP/Chromium verification, keeping full document/deadline gaps
   and original callback counts explicit.

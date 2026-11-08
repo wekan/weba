@@ -256,6 +256,21 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   deadline editing/persistence,
   full fractional sort support, custom roles, legacy lane mapping,
   public/instance visibility and complete original UI/API/security suites.
+- Completed REST write scope correction: a combined board-admin/assigned-only
+  raw member row previously bypassed the canonical role-only check (reproduced
+  unauthorized PUT 200). Check isNormalAssignedOnly/isCommentAssignedOnly/
+  isReadAssignedOnly independently before general card writes and after locking.
+  PUT text/date/people plus member/assignee add/remove now return 403 without
+  writes; injected scope changes at the first board write roll back flags/data/
+  history/clocks. Preserve source site-admin override and non-scope combinations
+  such as admin+Worker/no-comments where the source canonical write role permits.
+  Verify all 256 active built-in boolean flag combinations using actual source
+  roleCan/memberRoleOf/isAssignedOnlyMember and persisted HTTP descriptions.
+  Source/archive and full local tests pass; original spec 17 remains 10/30.
+- In progress: archive/unarchive REST source contract review. Implement endpoints,
+  archivedAt persistence and child cascades with the corrected write boundary.
+  Native visibility for raw combined assigned-only flags, custom roles/list
+  exceptions and complete original UI/API/security coverage remain pending.
 - Next card-person work: remaining card PUT fields, reads, creation/bulk routes
   and complete original UI/API/security suites.
 - In progress: REST cards/containers and full API identity/data parity, including
