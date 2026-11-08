@@ -1,4 +1,9 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Native card members: Add Gambas member tree/active picker/add/remove controls
+  from saved cards and card menus; preserve assignees, check write/card scope
+  under locks and deny readers/Workers/forged events. Reuse anchored popups,
+  X/icons and translated captions; verify two-session Chromium/mobile behavior,
+  native role negatives and real failed-COMMIT rollback/retry.
 - Documentation: Describe card-person merge routes, ordered independent fields,
   permissions, lifecycle/rollback tests and five-of-thirty original callbacks;
   keep remaining native editor, PUT/bulk and complete-suite gaps explicit.

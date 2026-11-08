@@ -7,6 +7,8 @@ const dom = new JSDOM(`<div id="@1.LanguageSelector"><select data-weba-language>
 <div id="@1.WebLabelUser">Username</div><button id="@1.WebButtonLogin">Login</button>
 <div id="@1.PageTitle">Boards</div><div id="@1.ContextTitle">Boards</div><div id="@1.ActionTitle">Boards</div><div id="@1.DetailsTitle">Boards</div><input id="@1.WebTextName" value="Username">
 <div id="@1.MemberBoardName">Members</div><div id="@1.MembersTree" class="gw-tree">Normal</div><div id="@1.MemberRole"><select><option value="Read only">Read only</option></select></div>
+<div id="@1.CardPeopleHeading">Members</div><div id="@1.CardPeopleName">Members</div><div id="@1.CardPeopleTree" class="gw-tree">Normal</div>
+<div id="@1.CardPersonChoice"><select><option value="Normal">Normal</option></select></div><button id="@1.AddCardPerson">Add</button>
 <article class="weba-card"><strong>Username</strong></article>`,{url:'http://localhost',runScripts:'outside-only'});
 const {window}=dom;
 window.fetch=async url=>({ok:true,json:async()=>JSON.parse(fs.readFileSync(path.join(publicDir,url),'utf8'))});
@@ -24,6 +26,12 @@ window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
   assert.equal(doc.getElementById('@1.MemberRole').querySelector('option').value,'Read only','role wire value stays stable');
   assert.equal(doc.getElementById('@1.MemberBoardName').textContent,'Members','user board name stays unchanged');
   assert.equal(doc.getElementById('@1.MembersTree').textContent,'Normal','user identities stay unchanged');
+  assert.equal(doc.getElementById('@1.CardPeopleHeading').textContent,api.t('Members'),'card-member heading translated');
+  assert.equal(doc.getElementById('@1.AddCardPerson').textContent,api.t('Add'),'card-member add caption translated');
+  assert.equal(doc.getElementById('@1.CardPeopleName').textContent,'Members','card title stays unchanged');
+  assert.equal(doc.getElementById('@1.CardPeopleTree').textContent,'Normal','card member identity stays unchanged');
+  assert.equal(doc.querySelector('[id="@1.CardPersonChoice"] option').textContent,'Normal','candidate username stays unchanged');
+  assert.equal(doc.querySelector('[id="@1.CardPersonChoice"] option').value,'Normal','candidate username wire value stays unchanged');
   assert.equal(doc.documentElement.lang,'fi');
   assert.equal(window.localStorage.getItem('weba.language'),'fi');
   assert.equal(doc.querySelector('select').options.length,237);

@@ -29,7 +29,7 @@ tables = ('kb_cards', 'kb_card_members', 'kb_card_people_order', 'kb_card_assign
 def rows(table):
     return sorted(reader.execute('SELECT * FROM '+table).fetchall(), key=repr)
 try:
-    for field in ('members', 'assignees'):
+    for field, native in (('members', False), ('assignees', False), ('members', True)):
         for action in ('add', 'remove'):
             for signal in ('card-people-commit-failed', 'card-people-reader-released'):
                 (project / signal).unlink(missing_ok=True)
@@ -37,7 +37,8 @@ try:
             reader.execute('BEGIN')
             reader.execute('SELECT id FROM kb_cards').fetchall()
             process = subprocess.Popen([os.environ['GBX'], '-s', 'ApiFixture', str(project)],
-                env={**os.environ, 'WEBA_TEST_MODE': 'card-people-commit', 'WEBA_API_REQUEST': '1',
+                env={**os.environ, 'WEBA_TEST_MODE': 'card-people-commit', 'WEBA_API_REQUEST': '0' if native else '1',
+                     'WEBA_TEST_NATIVE_CARD_PEOPLE': '1' if native else '0',
                      'WEBA_TEST_PERSON_FIELD': field, 'WEBA_TEST_PERSON_ACTION': action},
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
             deadline = time.monotonic() + 15
@@ -55,7 +56,7 @@ try:
             table = 'kb_card_'+field
             count = reader.execute('SELECT COUNT(*) FROM '+table+' WHERE board_id=? AND card_id=? AND username=?', (board, card, 'rest-member')).fetchone()[0]
             assert count == (1 if action == 'add' else 0)
-            print(field+' '+action+': '+output.strip())
+            print(('Native ' if native else 'REST ')+field+' '+action+': '+output.strip())
 finally:
     reader.close()
     if process is not None and process.poll() is None:

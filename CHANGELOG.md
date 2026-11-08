@@ -2,6 +2,16 @@
 
 This work adds the following features and fixes:
 
+- Add native Gambas card-member editing from saved cards and card menus, with
+  active add candidates, ordered members and stale removal. Keep assignees
+  separate, permit assigned writers only on readable cards and deny reader/
+  Worker or forged changes on the server. Recheck permission/scope under locks.
+  Reuse anchored mobile popups, X buttons and WeKan Font Awesome icons; import
+  the Add caption verbatim for 237 languages without translating user data.
+  Verify native negatives, two-session packaged Chromium persistence/removal/
+  forged requests/mobile layout and native add/remove failed-COMMIT retries.
+  Full original suite parity remains pending. Thanks to xet7.
+
 - Document card members/assignees merge routes, ordered independent fields,
   active/stale targets, REST role restrictions, lifecycle/rollback verification
   and exact five-of-thirty original callback coverage. Keep native card-member

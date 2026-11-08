@@ -112,7 +112,7 @@
       const target=event.target.closest('button,[role="button"]');
       if(!target)return;
       if(target.matches('.weba-add-card-top,.weba-add-card-bottom,[id$=".NewCard"],.weba-card'))rememberEditor(target);
-      for(const [button,panel] of [['ViewMenu','Views'],['AccountToggle','AccountMenu'],['ContextRename','ActionPanel'],['ContextCopy','ActionPanel'],['ContextMove','ActionPanel'],['ContextColor','ActionPanel'],['ContextWip','ActionPanel'],['ContextDescription','ActionPanel'],['ContextAddList','ActionPanel'],['ContextAddLane','ActionPanel'],['ContextMembers','MembersPanel'],['ContextHistory','ItemBrowser'],['ArchivedItems','ItemBrowser'],['BoardSettings','ContextMenu'],...['Comments','Checklists','ChecklistItems','Subtasks','Dependencies','Fields','Time','Attachments'].flatMap(name=>[['Context'+name,'DetailsPanel'],['Card'+name,'DetailsPanel']])]){
+      for(const [button,panel] of [['ViewMenu','Views'],['AccountToggle','AccountMenu'],['ContextRename','ActionPanel'],['ContextCopy','ActionPanel'],['ContextMove','ActionPanel'],['ContextColor','ActionPanel'],['ContextWip','ActionPanel'],['ContextDescription','ActionPanel'],['ContextAddList','ActionPanel'],['ContextAddLane','ActionPanel'],['ContextMembers','MembersPanel'],['ContextMembers','CardPeoplePanel'],['CardMembersButton','CardPeoplePanel'],['ContextHistory','ItemBrowser'],['ArchivedItems','ItemBrowser'],['BoardSettings','ContextMenu'],...['Comments','Checklists','ChecklistItems','Subtasks','Dependencies','Fields','Time','Attachments'].flatMap(name=>[['Context'+name,'DetailsPanel'],['Card'+name,'DetailsPanel']])]){
         if(target.id.endsWith('.'+button)){
           const popup=document.querySelector(`[id$=".${panel}"]`);
           if(popup)near(popup,target);
@@ -123,7 +123,7 @@
       if(event.key!=='Escape')return;
       const html=[...document.querySelectorAll('.weba-structure-menu,.weba-structure-composer')].filter(visible).pop();
       if(html){html.querySelector('.weba-popup-close')?.click();event.preventDefault();return;}
-      for(const [panel,close] of [['MembersPanel','CloseMembers'],['DetailsPanel','CloseDetails'],['ActionPanel','CloseAction'],['ContextMenu','CloseContext'],['ItemBrowser','CloseBrowser'],['Editor','CloseEditor'],['Views','CloseViews'],['AccountMenu','CloseAccount']]){
+      for(const [panel,close] of [['CardPeoplePanel','CloseCardPeople'],['MembersPanel','CloseMembers'],['DetailsPanel','CloseDetails'],['ActionPanel','CloseAction'],['ContextMenu','CloseContext'],['ItemBrowser','CloseBrowser'],['Editor','CloseEditor'],['Views','CloseViews'],['AccountMenu','CloseAccount']]){
         if(visible(document.querySelector(`[id$=".${panel}"]`))){document.querySelector(`[id$=".${close}"]`)?.click();event.preventDefault();break;}
       }
     });

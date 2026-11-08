@@ -10,6 +10,7 @@ Public Sub Main()
   Dim memberPayload As Collection
   Dim memberOperation As String
   Dim personField As String
+  Dim nativePeople As Boolean
   Dim data As New Collection
   If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
   If Env["WEBA_TEST_MODE"] = "delete-content" Then
@@ -59,20 +60,32 @@ Public Sub Main()
     memberAction = Env["WEBA_TEST_PERSON_ACTION"]
     db = WebDatabase.OpenConnection()
     db.Timeout = 1
-    WebIdentity.AuthenticateApi("rest-owner")
-    data = BoardAccess.MutateApiCardPerson(boardId, otherId, cardId, personField, "rest-member", memberAction = "add")
-    If data["status"] <> 500 Then Error.Raise("Expected rejected card people commit")
-    If data["data"]["error"] <> "Card membership update failed" Then Error.Raise("Card people failure was not sanitized")
-    If BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Card authority leaked after commit failure")
+    nativePeople = Env["WEBA_TEST_NATIVE_CARD_PEOPLE"] = "1"
+    If nativePeople Then
+      Session["username"] = "rest-other"
+      Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
+      Try BoardAccess.ChangeCardMember(boardId, cardId, "rest-member", memberAction = "add")
+      If Not Error Then Error.Raise("Expected rejected native member commit")
+    Else
+      WebIdentity.AuthenticateApi("rest-owner")
+      data = BoardAccess.MutateApiCardPerson(boardId, otherId, cardId, personField, "rest-member", memberAction = "add")
+      If data["status"] <> 500 Then Error.Raise("Expected rejected card people commit")
+      If data["data"]["error"] <> "Card membership update failed" Then Error.Raise("Card people failure was not sanitized")
+      If BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Card authority leaked after commit failure")
+    Endif
     File.Save(Application.Path &/ "card-people-commit-failed", "ready")
     deadline = Timer + 10
     While Not Exist(Application.Path &/ "card-people-reader-released")
       If Timer > deadline Then Error.Raise("Card people reader release timed out")
       Sleep 0.01
     Wend
-    data = BoardAccess.MutateApiCardPerson(boardId, otherId, cardId, personField, "rest-member", memberAction = "add")
-    If data["status"] <> 200 Then Error.Raise("Card people retry failed")
-    If BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Card authority leaked after retry")
+    If nativePeople Then
+      BoardAccess.ChangeCardMember(boardId, cardId, "rest-member", memberAction = "add")
+    Else
+      data = BoardAccess.MutateApiCardPerson(boardId, otherId, cardId, personField, "rest-member", memberAction = "add")
+      If data["status"] <> 200 Then Error.Raise("Card people retry failed")
+      If BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Card authority leaked after retry")
+    Endif
     Print "Card people failed COMMIT rolled back data/history and recovered without authority leakage"
     Return
   Endif

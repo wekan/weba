@@ -4,6 +4,8 @@ Export
 
 Private $membersBoard As Integer
 Private $memberOwner As String
+Private $peopleBoard As Integer
+Private $peopleCard As Integer
 Private $board As Integer
 Private $loadingDetails As Boolean
 Private $loadingDestinations As Boolean
@@ -68,6 +70,7 @@ Private Sub RefreshTree()
       Editor.Hide()
       DetailsPanel.Hide()
       MembersPanel.Hide()
+      CardPeoplePanel.Hide()
       ContextMenu.Hide()
       ActionPanel.Hide()
     Endif
@@ -627,7 +630,7 @@ Private Sub OpenContext(kind As String, itemId As Integer, boardId As Integer)
   $contextId = itemId
   ContextTitle.Text = r!title
   ContextMenu.Show()
-  ContextMembers.Visible = kind = "board"
+  ContextMembers.Visible = kind = "board" Or kind = "card"
   ContextAssignSelf.Visible = kind = "card" And BoardAccess.Can(boardId, "moveCard")
   If kind = "card" Then ContextAssignSelf.Text = If(BoardAccess.IsAssigned(boardId, itemId, WebIdentity.Username), "Unassign myself", "Assign myself")
   ContextArchive.Visible = Not archived And change
@@ -1421,6 +1424,7 @@ Private Sub UpdateCardActions()
   CardFields.Enabled = $card > 0
   CardTime.Enabled = $card > 0
   CardAttachments.Enabled = $card > 0
+  CardMembersButton.Enabled = $card > 0
 End
 
 Private Function MemberRoles() As String[]
@@ -1428,6 +1432,11 @@ Private Function MemberRoles() As String[]
 End
 
 Public Sub ContextMembers_Click()
+  If $contextKind = "card" Then
+    ContextMenu.Hide()
+    OpenCardPeople($contextBoard, $contextId)
+    Return
+  Endif
   $membersBoard = $contextBoard
   MemberRole.List = ["Board administrator", "Normal", "Normal (assigned cards only)", "No comments", "Comment only", "Comment (assigned cards only)", "Worker", "Read only", "Read (assigned cards only)"]
   MemberRole.Index = 1
@@ -1437,6 +1446,69 @@ Public Sub ContextMembers_Click()
   MembersPanel.Show()
 Catch
   Notice.Text = Error.Text
+End
+
+Public Sub CardMembersButton_Click()
+  OpenCardPeople($board, $card)
+Catch
+  Notice.Text = Error.Text
+End
+
+Private Sub OpenCardPeople(boardId As Integer, cardId As Integer)
+  $peopleBoard = boardId
+  $peopleCard = cardId
+  RefreshCardPeople()
+  CardPeoplePanel.Show()
+End
+
+Private Sub RefreshCardPeople()
+  Dim r As Result = WorkspaceStore.Record($peopleBoard, "card", $peopleCard)
+  Dim names As String[] = BoardAccess.CardMembers($peopleBoard, $peopleCard)
+  Dim choices As New String[]
+  Dim username As String
+  Dim writable As Boolean = BoardAccess.Can($peopleBoard, "write")
+  CardPeopleName.Text = r!title
+  CardPeopleTree.Clear()
+  For Each username In names
+    CardPeopleTree.Add(username, username)
+  Next
+  r = BoardAccess.Members($peopleBoard)
+  For Each r
+    If names.Find(r!username) < 0 Then choices.Add(r!username)
+  Next
+  CardPersonChoice.List = choices
+  If choices.Count Then CardPersonChoice.Index = 0
+  CardPersonChoice.Enabled = writable And choices.Count > 0
+  AddCardPerson.Visible = writable
+  AddCardPerson.Enabled = writable And choices.Count > 0
+  RemoveCardPerson.Visible = writable
+  RemoveCardPerson.Enabled = False
+End
+
+Public Sub CardPeopleTree_Select()
+  RemoveCardPerson.Enabled = BoardAccess.Can($peopleBoard, "write") And Len(CardPeopleTree.Key) > 0
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub AddCardPerson_Click()
+  BoardAccess.ChangeCardMember($peopleBoard, $peopleCard, CardPersonChoice.Text, True)
+  RefreshCardPeople()
+  Notice.Text = "Member saved"
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub RemoveCardPerson_Click()
+  BoardAccess.ChangeCardMember($peopleBoard, $peopleCard, CardPeopleTree.Key, False)
+  RefreshCardPeople()
+  Notice.Text = "Member removed"
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub CloseCardPeople_Click()
+  CardPeoplePanel.Hide()
 End
 
 Private Sub RefreshMembers()

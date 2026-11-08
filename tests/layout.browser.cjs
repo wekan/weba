@@ -166,10 +166,27 @@ const fs = require('node:fs');
       async function setRole(role){await members();await fill('MemberUsername',memberName);await page.select('[id$=".MemberRole:select"]',role);await settle();await click('SaveMember');assert.ok(await page.$eval(selector('MembersTree'),(e,name)=>e.textContent.includes(name),memberName));await click('CloseMembers');}
       async function memberBoard(){await clickP('Home');await memberPage.waitForSelector('.weba-board-tile');await memberPage.click('.weba-board-tile');await waitP();}
       await click('SidebarToggle');await setRole('Read only');
+      async function ownerPeople(){await page.evaluate(()=>[...document.querySelectorAll('.weba-report .weba-card strong')].find(e=>e.textContent==='Shared card').click());await settle();await click('CardMembersButton');await visible('CardPeoplePanel');}
+      async function selectPerson(targetPage,name){const p=await targetPage.$eval(selector('CardPeopleTree'),(tree,name)=>{const row=[...tree.querySelectorAll('tr[id]')].find(e=>e.textContent.trim()===name);const r=row.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2};},name);await targetPage.mouse.click(p.x,p.y);await targetPage.waitForFunction(()=>gw.commands.length===0);}
+      await ownerPeople();await page.select('[id$=".CardPersonChoice:select"]',memberName);await settle();await click('AddCardPerson');
+      assert.ok(await page.$eval(selector('CardPeopleTree'),(e,name)=>e.textContent.includes(name),memberName),'native add persists a card member');
+      assert.equal(await page.$eval(entry('Assignee'),e=>e.value),ownerName,'card member does not replace assignee');
+      await click('CloseCardPeople');await click('CloseEditor');await ownerPeople();
+      assert.ok(await page.$eval(selector('CardPeopleTree'),(e,name)=>e.textContent.includes(name),memberName),'reopened panel reads persisted members');
+      await click('CloseCardPeople');await click('CloseEditor');
       await memberBoard();assert.equal(await memberPage.$$eval('.weba-data .weba-card',els=>els.length),2);
       assert.equal(await memberPage.$$eval('.weba-add-card-top,.weba-drag-handle',els=>els.length),0,'read-only has no create/drag controls');
       await memberPage.click('.weba-report .weba-card strong');await waitP();
       assert.equal(await memberPage.$eval(entry('CardTitle'),e=>e.readOnly),true);assert.equal(await memberPage.$eval(selector('SaveCard'),e=>e.disabled),true);
+      await clickP('CardMembersButton');await memberPage.waitForSelector(selector('CardPeoplePanel'),{visible:true});
+      assert.ok(await memberPage.$eval(selector('CardPeopleTree'),(e,name)=>e.textContent.includes(name),memberName));
+      assert.equal(await memberPage.$eval(selector('AddCardPerson'),e=>e.getBoundingClientRect().width),0);
+      assert.equal(await memberPage.$eval(selector('RemoveCardPerson'),e=>e.getBoundingClientRect().width),0);
+      await memberPage.evaluate(()=>gw.raise(document.querySelector('[id$=".AddCardPerson"]').id,'click',[]));await waitP();
+      const deniedPeople=await memberPage.$eval(selector('Notice'),e=>e.textContent.replace(/\u00a0/g,' '));
+      assert.ok(deniedPeople.includes('permission denied'),deniedPeople);
+      await selectPerson(memberPage,memberName);await memberPage.evaluate(()=>gw.raise(document.querySelector('[id$=".RemoveCardPerson"]').id,'click',[]));await waitP();
+      assert.ok(await memberPage.$eval(selector('CardPeopleTree'),(e,name)=>e.textContent.includes(name),memberName),'forged reader removal is rejected');await clickP('CloseCardPeople');
       await memberPage.evaluate(()=>{gw.update(document.querySelector('[id$=".CardTitle"]').id,'text','Forged edit');});await waitP();
       await memberPage.evaluate(()=>gw.raise(document.querySelector('[id$=".SaveCard"]').id,'click',[]));await waitP();
       assert.ok(await memberPage.$eval(selector('Notice'),e=>e.textContent.replace(/\u00a0/g,' ').includes('permission denied')));
@@ -187,13 +204,20 @@ const fs = require('node:fs');
       assert.equal(await memberPage.$$eval('.weba-data .weba-card',els=>els.length),1);assert.ok(await memberPage.$eval('.weba-data',e=>!e.textContent.includes('Hidden role card')));
       await members();await fill('MemberUsername',memberName);await click('RemoveMember');await click('CloseMembers');await clickP('Home');
       assert.equal(await memberPage.$$eval('.weba-board-tile',els=>els.length),0,'removed member loses the board');
+      await ownerPeople();assert.ok(await page.$eval(selector('CardPeopleTree'),(e,name)=>e.textContent.includes(name),memberName),'inactive card member remains visible for removal');
+      assert.equal(await page.$$eval('[id$=".CardPersonChoice:select"] option',(els,name)=>els.some(e=>e.value===name),memberName),false,'inactive member cannot be added');
+      await selectPerson(page,memberName);await click('RemoveCardPerson');assert.ok(await page.$eval(selector('CardPeopleTree'),(e,name)=>!e.textContent.includes(name),memberName));await click('CloseCardPeople');await click('CloseEditor');
       await setRole('Read only');await memberBoard();
       assert.equal(await memberPage.$$eval('.weba-data .weba-card',els=>els.length),2,'native reinvite replaces the old assigned-only scope');
       assert.equal(await memberPage.$$eval('.weba-add-card-top,.weba-drag-handle',els=>els.length),0,'reactivated reader does not retain Worker writes');
       await click('CloseSidebar');await page.setViewport({width:390,height:844});await click('SidebarToggle');await members();
       const box=await page.$eval(selector('MembersPanel'),e=>{const r=e.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom};});
       assert.ok(box.left>=0&&box.right<=390&&box.top>=0&&box.bottom<=844,'member dialog fits mobile viewport');await click('CloseMembers');
-      console.log('Members browser: native add/role/remove, forged reader writes, Worker assignment/move/comment, assigned-only scope, explicit reactivation and mobile dialog passed');return;
+      await click('CloseSidebar');await page.click('.weba-card-menu');await settle();await click('ContextMembers');await visible('CardPeoplePanel');
+      const peopleBox=await page.$eval(selector('CardPeoplePanel'),e=>{const r=e.getBoundingClientRect();return{left:r.left,right:r.right,top:r.top,bottom:r.bottom};});
+      assert.ok(peopleBox.left>=0&&peopleBox.right<=390&&peopleBox.top>=0&&peopleBox.bottom<=844,'card-member dialog fits mobile viewport');
+      assert.ok(await page.$eval(selector('CloseCardPeople'),e=>getComputedStyle(e,'::before').content!=='none'),'card-member dialog has an X');await click('CloseCardPeople');
+      console.log('Members browser: board roles, native card-member add/remove/persistence, independent assignee, forged reader writes, stale cleanup, Worker/assigned scopes and mobile dialogs passed');return;
     }
     if(process.env.WEBA_COLORS_ONLY) {
       async function colorMenu(kind){

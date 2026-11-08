@@ -99,7 +99,17 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Documented card-person routes, independent ordered fields, active/stale
   targets, REST role restrictions, scoped administration, lifecycle/rollback
   tests and exact five-of-thirty original callback coverage.
-- Next card-person work: native member editor, card PUT array/clear contracts,
+- Completed native Gambas card-member editor from the saved-card panel and
+  card context menu. Show ordered current members and only unselected active
+  board members as add candidates; let writers remove inactive/stale members.
+  Readers can inspect members, while hidden/disabled controls and server-side
+  checks prevent forged changes. Assigned writers may edit visible cards;
+  Workers and readers cannot change membership. Recheck permissions/scope under
+  transaction locks and preserve the independent assignee field. Verify native
+  role negatives, two-session Chromium persistence/forged requests/stale cleanup,
+  mobile fit/X, translated fixed captions and unchanged user/card names. Extend
+  real COMMIT rollback/retry checks to native add/remove as well as REST.
+- Next card-person work: card PUT array/clear contracts,
   remaining card reads/bulk routes and complete original UI/API/security suites.
 - In progress: REST cards/containers and full API identity/data parity, including
   stable IDs and complete source roster metadata. Custom roles, list-level

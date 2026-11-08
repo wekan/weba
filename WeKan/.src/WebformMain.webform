@@ -204,6 +204,37 @@
       Text = ("Remove member")
     }
   }
+  { CardPeoplePanel WebContainer
+    Class = "weba-members-panel"
+    Visible = False
+    Ignore = True
+    Arrangement = Arrange.Vertical
+    Spacing = True
+    Width = "440px"
+    { CloseCardPeople WebButton
+      Class = "weba-icon-only weba-popup-close fa fa-times-thin"
+      Tooltip = ("Close")
+    }
+    { CardPeopleHeading WebLabel
+      Text = ("Members")
+    }
+    { CardPeopleName WebLabel
+    }
+    { CardPeopleTree WebTree
+      Height = "180px"
+    }
+    { CardPersonLabel WebLabel
+      Text = ("Username")
+    }
+    { CardPersonChoice WebComboBox
+    }
+    { AddCardPerson WebButton
+      Text = ("Add")
+    }
+    { RemoveCardPerson WebButton
+      Text = ("Remove member")
+    }
+  }
   { ContextMenu WebContainer
     Class = "weba-context-menu"
     Visible = False
@@ -463,6 +494,9 @@
             Text = ("Labels")
           }
           { Labels WebTextBox
+          }
+          { CardMembersButton WebButton
+            Text = ("Members")
           }
           { AssigneeCaption WebLabel
             Text = ("Assignee")

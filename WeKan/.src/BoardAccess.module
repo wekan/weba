@@ -513,6 +513,39 @@ Public Sub RestoreCardMembers(boardId As Integer, cardId As Integer, names As St
   WriteCardMembers(boardId, cardId, names)
 End
 
+Public Sub ChangeCardMember(boardId As Integer, cardId As Integer, username As String, add As Boolean)
+  Dim names As String[]
+  Dim transaction As Boolean
+  Dim failure As String
+  Require(boardId, "write")
+  RequireCard(boardId, cardId)
+  If Not username Or String.Len(username) > 255 Then Error.Raise("Choose a member")
+  WorkspaceStore.OpenStore()
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE users SET username = username WHERE username = &1", username)
+  $db.Exec("UPDATE kb_boards SET title = title WHERE id = &1", boardId)
+  $db.Exec("UPDATE kb_cards SET title = title WHERE id = &1 AND board_id = &2", cardId, boardId)
+  Require(boardId, "write")
+  RequireCard(boardId, cardId)
+  If add Then
+    If Not RoleOf(boardId, username) Then Error.Raise("Member must be an active board member")
+  Endif
+  names = CardMembers(boardId, cardId)
+  If add Then
+    If names.Find(username) < 0 Then names.Add(username)
+  Else
+    If names.Find(username) >= 0 Then names.Remove(names.Find(username))
+  Endif
+  WriteCardMembers(boardId, cardId, names)
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
 Private Sub WriteCardMembers(boardId As Integer, cardId As Integer, names As String[])
   Dim r As Result
   Dim username As String

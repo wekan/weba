@@ -6,6 +6,7 @@ Public Sub Main()
   Dim cardId As Integer
   Dim copied As Integer
   Dim importedCard As Integer
+  Dim hiddenCard As Integer
   Dim listId As Integer
   Dim r As Result
   Dim db As Connection
@@ -18,6 +19,7 @@ Public Sub Main()
   WebDatabase.Register("people-owner", "x")
   WebDatabase.Register("people-member", "x")
   WebDatabase.Register("people-reader", "x")
+  WebDatabase.Register("people-outsider", "x")
   SignIn("people-owner")
   boardId = KanbanStore.AddBoard("Card people source")
   cardId = KanbanStore.SaveCard(boardId, 0, "People card", "Body", "Default", "Todo", "", "", "")
@@ -28,7 +30,25 @@ Public Sub Main()
   If names.Count <> 2 Or names[0] <> "people-reader" Then Error.Raise("Card members lost order or deduplication")
   names = BoardAccess.Assignees(boardId, cardId)
   If names.Count Then Error.Raise("Card membership changed assignees")
+  Try BoardAccess.ChangeCardMember(boardId, cardId, "people-outsider", True)
+  denied = Error
+  If Not denied Then Error.Raise("Native editor added an unknown board member")
+  BoardAccess.ChangeCardMember(boardId, cardId, "people-owner", True)
+  BoardAccess.ChangeCardMember(boardId, cardId, "people-owner", True)
+  names = BoardAccess.CardMembers(boardId, cardId)
+  If names.Count <> 3 Or names[2] <> "people-owner" Then Error.Raise("Native add lost deduplication/order")
+  BoardAccess.ChangeCardMember(boardId, cardId, "people-owner", False)
+  BoardAccess.RemoveMember(boardId, "people-member")
+  Try BoardAccess.ChangeCardMember(boardId, cardId, "people-member", True)
+  denied = Error
+  If Not denied Then Error.Raise("Native editor added an inactive member")
+  BoardAccess.ChangeCardMember(boardId, cardId, "people-member", False)
+  BoardAccess.SetMember(boardId, "people-member", "normal")
+  BoardAccess.ChangeCardMember(boardId, cardId, "people-member", True)
   SignIn("people-reader")
+  Try BoardAccess.ChangeCardMember(boardId, cardId, "people-owner", True)
+  denied = Error
+  If Not denied Then Error.Raise("Reader changed card members")
   Try BoardAccess.CardMembers(boardId, cardId)
   denied = Error
   If Not denied Then Error.Raise("Membership bypassed assigned-only visibility")
@@ -44,6 +64,22 @@ Public Sub Main()
   If Not denied Then Error.Raise("Reader replaced card members")
   SignIn("people-owner")
   BoardAccess.SetAssignees(boardId, cardId, ["people-member", "people-reader", "people-owner"])
+  hiddenCard = KanbanStore.SaveCard(boardId, 0, "Hidden people card", "Private body", "Default", "Todo", "", "", "")
+  BoardAccess.SetMember(boardId, "people-member", "normal-assigned-only")
+  SignIn("people-member")
+  BoardAccess.ChangeCardMember(boardId, cardId, "people-owner", True)
+  BoardAccess.ChangeCardMember(boardId, cardId, "people-owner", False)
+  Try BoardAccess.ChangeCardMember(boardId, hiddenCard, "people-owner", True)
+  denied = Error
+  If Not denied Then Error.Raise("Assigned writer changed a hidden card's members")
+  SignIn("people-owner")
+  BoardAccess.SetMember(boardId, "people-member", "worker")
+  SignIn("people-member")
+  Try BoardAccess.ChangeCardMember(boardId, cardId, "people-member", False)
+  denied = Error
+  If Not denied Then Error.Raise("Worker changed card membership")
+  SignIn("people-owner")
+  BoardAccess.SetMember(boardId, "people-member", "normal")
   copied = WorkspaceStore.Copy(boardId, "card", cardId, "Copied people card")
   names = BoardAccess.CardMembers(boardId, copied)
   If names.Count <> 2 Or names[0] <> "people-reader" Then Error.Raise("Copy lost member order")
