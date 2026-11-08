@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Document native raw assigned-only scope versus canonical capabilities and
+  scoped REST administration, inactive/cleared-flag behavior, 256 source-backed
+  native cases and packaged response/context privacy checks. Keep custom roles,
+  list exceptions and complete original-suite gaps explicit. Thanks to xet7.
+
 - Fix native combined board-admin/assigned-only flags bypassing card visibility.
   Narrow all shared card queries/checks by raw assignment flags independently of
   canonical role capabilities; retain the explicit scoped REST site-admin

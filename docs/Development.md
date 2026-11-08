@@ -59,6 +59,13 @@ versions have dedicated tests. Native cookies and Bearer tokens are separate.
 
 `ItemChanges.Mark` is an internal hook called only after the owning mutation has
 authorized its operation. Its clocks must share that mutation's transaction.
+Native card visibility uses raw assigned-only flags independently of canonical
+role precedence. Preserve this distinction when adding card readers/writers:
+role capabilities decide the action, while RequireCard/CardRows constrain the
+card. Native global site administration does not bypass that scope; the explicit
+private REST override is scoped and reset separately. The native 256-case
+conformance test compares actual queries with the parent source functions.
+
 Whole-board clock reads require full-card scope. Use `Collection.Add` when a
 wire object must retain a typed empty string: indexed assignment removes it,
 and Gambas 3.20 `JSONCollection._put` converts it to null.

@@ -548,9 +548,28 @@ A trigger injects each flag at the first board write to verify the later check
 and full rollback. All 256 active built-in boolean role-flag combinations are
 compared with the actual source `memberRoleOf`, `roleCan` and
 `isAssignedOnlyMember`, including independent persisted description reads. This
-runs through both source and packaged CGI paths. Custom roles, per-list exceptions
-and native visibility for raw combined flags still require separate parity work;
-this matrix does not establish complete UI/API/security coverage.
+runs through both source and packaged CGI paths.
+
+Native card visibility also uses all three raw assigned-only flags independently
+of canonical role precedence. A member with isAdmin plus any assigned-only flag
+retains the administrator's other capabilities while seeing only assigned cards.
+Card membership by itself does not count as assignment. This narrowing applies to
+card queries, direct details/comments/files/relationships, exports, history and
+card mutations. Clearing flags restores ordinary administrator visibility. An
+inactive row grants no access, and global site administration is not a native
+scope override; its explicit temporary REST override remains separate.
+
+`tests/native-scope-conformance.test.cjs` runs 256 active built-in flag combinations
+through actual native card queries/capability checks and compares results with
+WeKan's original `memberRoleOf`, `roleCan`, `isAssignedOnlyMember` and
+`assignedOnlyAllowsCard`. It creates a disposable project and explicitly isolated
+SQLite database. The focused native regression also checks hidden relationships,
+attachments, exports/history, denied edits/archive, permitted assigned-card edits,
+native site administration, inactive rows and clearing restrictions. Packaged
+two-user Chromium checks all three combined-admin flags, native response packets
+and forged hidden-card context commands. These are helper/native regression
+comparisons, not additional unchanged original callbacks. Custom roles, per-list
+exceptions and complete original UI/API/security coverage still require work.
 
 Single-card tests compare both actual GET responses against the original
 `cardWithChecklists` serializer for implemented fields, using independent SQLite

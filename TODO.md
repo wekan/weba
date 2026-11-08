@@ -17,6 +17,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   Chromium checks all three flags, response packets and forged hidden contexts.
   Full local tests pass (28 Python tests); original callback counts remain 10/30
   for spec 17 and 2/3 for the separate archive spec.
+- Documented independent native raw assignment scope versus canonical action
+  capabilities, native/site-admin/inactive boundaries, 256-case source comparison
+  and packaged two-user response/context evidence. Keep custom roles/list
+  exceptions, full original suites and live synchronization open.
 - Completed documentation consolidation: project-specific source map, Gambas
   tooling, database notes and verification limits live in docs/Development.md.
   Remove companion AGENTS.md/CLAUDE.md duplicates per the containing WeKan root
