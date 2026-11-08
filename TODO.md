@@ -32,8 +32,11 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - In progress: remaining REST contracts and shared-board roles/permissions.
   Email/LDAP/2FA login, configurable token lifetime, native-login throttling,
   registration policy, parallel first-API schema initialization, and the original
-  WeKan fixture/browser suites remain pending. Native very-large command bodies
-  also need coverage beyond the operating system's per-environment-string limit.
+  WeKan fixture/browser suites remain pending.
+- Completed: native large-text updates bypass environment/dispatcher limits
+  through private per-request files and a short native event. Independent SQLite
+  checks verify the full Unicode description; unit tests verify mode 0600,
+  cleanup on success/timeout and rejection of arbitrary large event payloads.
 - Next: authenticated REST API contracts and shared board access/role boundaries;
   remaining feature work below is still pending.
 

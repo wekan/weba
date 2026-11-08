@@ -1,0 +1,22 @@
+' Large text updates bypass the native dispatcher's environment/pipe limits.
+Export
+
+Public Sub ApplyLarge(form As WebForm)
+  Dim path As String = CGI["WEBA_COMMAND_FILE"]
+  Dim command As Variant
+  Dim control As WebControl
+  If Not path Then Return
+  ' This CGI variable is supplied by the host, never by a query/header/body.
+  ' Clear it before calling a native event handler so it cannot be re-applied.
+  CGI["WEBA_COMMAND_FILE"] = ""
+  command = JSON.Decode(File.Load(path))
+  If Not (command Is Variant[]) Then Error.Raise("Invalid large update")
+  If command.Count <> 5 Then Error.Raise("Invalid large update")
+  If command[0] <> "update" Or command[2] <> "text" Then Error.Raise("Only text updates support large payloads")
+  If TypeOf(command[1]) <> gb.String Or TypeOf(command[3]) <> gb.String Then Error.Raise("Invalid text update")
+  control = WebControl.FromName(command[1])
+  If Not control Then Error.Raise("Text control not found")
+  If control.Form <> form Then Error.Raise("Text control not accessible")
+  If Not (control Is WebTextBox) And Not (control Is WebTextArea) Then Error.Raise("Text control required")
+  control._UpdateProperty("text", command[3])
+End

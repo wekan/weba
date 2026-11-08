@@ -2,6 +2,12 @@
 
 This work adds the following features and fixes:
 
+- Preserve large native text updates beyond OS environment/dispatcher limits.
+  Send a short native wake-up and read the checked text update from a private
+  mode-0600 request file, removed on success or timeout. Restrict targets to
+  text controls on the current form; reject large arbitrary event payloads.
+  Verify long Unicode descriptions independently in SQLite and test bridge
+  privacy/cleanup plus packaged CGI behavior. Thanks to xet7.
 - Discover the shared tool area from both .tools/weba and .tools/w/weba
   companion checkouts while keeping standalone defaults and explicit overrides.
   Test doctor resolution with paths containing spaces in all layouts.

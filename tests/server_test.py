@@ -1,6 +1,10 @@
 import errno
 from email.message import Message
 import io
+import json
+import os
+import stat
+import tempfile
 from types import SimpleNamespace
 from unittest.mock import Mock
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -122,6 +126,43 @@ class NativeOriginTest(unittest.TestCase):
                     request._run_cgi()
                 self.assertEqual(request.send_error.call_args.args[0], status)
                 runner.assert_not_called()
+
+    def test_large_command_bridge_is_private_and_deleted_after_success_or_failure(self):
+        command = json.dumps(['update', '@1.Description', 'text', 'private text ' * 10000, True])
+        body = server.urllib.parse.urlencode({'c': command}).encode()
+        for fail in [False, True]:
+            with self.subTest(fail=fail), tempfile.TemporaryDirectory() as work:
+                request = self.request(headers={'Content-Length': str(len(body))},
+                                       environment={'TMPDIR': work})
+                request.rfile = io.BytesIO(body)
+                request.wfile = io.BytesIO()
+                request.client_address = ('127.0.0.1', 12345)
+                request.send_response = Mock()
+                request.send_header = Mock()
+                request.end_headers = Mock()
+                paths = []
+
+                def run(*args, **kwargs):
+                    env = kwargs['env']
+                    private = Path(env['WEBA_COMMAND_FILE'])
+                    paths.append(private)
+                    self.assertEqual(stat.S_IMODE(private.stat().st_mode), 0o600)
+                    self.assertEqual(private.read_text(), command)
+                    self.assertLess(len(env['QUERY_STRING']), 1024)
+                    self.assertNotIn('private text', str(args))
+                    self.assertNotIn('private text', str(env))
+                    if fail:
+                        raise server.subprocess.TimeoutExpired(args[0], 30)
+                    return SimpleNamespace(returncode=0, stdout=b'Content-Type: text/plain\r\n\r\nOK')
+
+                with patch.object(server.subprocess, 'run', side_effect=run):
+                    request._run_cgi()
+                self.assertTrue(paths)
+                self.assertTrue(all(not path.exists() for path in paths))
+                if fail:
+                    request.send_error.assert_called_once_with(500, 'Gambas request failed')
+                else:
+                    request.send_error.assert_not_called()
 
     def test_command_body_reaches_gambas_without_plus_encoding_corruption(self):
         command = '["update", "@1.WebTextPass", "text", "secret + & ä", true]'

@@ -1,4 +1,7 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Native large-text updates: Bypass environment/dispatcher limits using a
+  short event and a private request file. Limit updates to current-form text
+  controls; verify Unicode persistence, rejected events and cleanup on failure.
 - Build: Discover shared Gambas tools from the new .tools/w/weba layout; test
   standalone/legacy/nested layouts, spaces and explicit tool overrides.
 - REST authentication: Add login/logout, expiring hashed Bearer tokens, scoped

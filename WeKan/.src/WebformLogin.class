@@ -4,6 +4,10 @@ Export
 
 Private $registerMode As Boolean
 
+Public Sub WebForm_Event()
+  NativeCommands.ApplyLarge(Me)
+End
+
 Public Sub _new()
 
   WebForm.Debug = False

@@ -1,4 +1,5 @@
-import urllib.request,urllib.parse,http.cookiejar,json,re,os,uuid
+import urllib.request,urllib.parse,http.cookiejar,json,re,os,uuid,sqlite3
+from pathlib import Path
 BASE=os.environ.get('WEBA_TEST_URL','http://127.0.0.1:8100')
 username='http-'+uuid.uuid4().hex[:12]
 jar=http.cookiejar.CookieJar(); client=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
@@ -74,10 +75,17 @@ answer=command(['update',prefix+'.Boards','$'+key,None,True])
 assert 'Board&nbsp;not&nbsp;accessible' not in answer
 assert re.search(r'data-view=.{0,2}Swimlanes', answer), 'Board must open in Swimlanes'
 command(['raise',prefix+'.NewCard','click',[],False])
-for name,value in [('CardTitle','HTTP card'),('Description','<script>user text</script>'),('DueDay','2026-11-06')]:
+long_description='<script>user text</script>'+'Long native body ä + & '*9000
+for name,value in [('CardTitle','HTTP card'),('Description',long_description),('DueDay','2026-11-06')]:
  command(['update',prefix+'.'+name,'text',value,True])
 answer=command(['raise',prefix+'.SaveCard','click',[],False])
 assert 'Card&nbsp;saved' in answer, answer
+with sqlite3.connect(Path(os.environ['WEBA_DB_HOST']) / os.environ['WEBA_DB_NAME']) as database:
+ stored=database.execute('SELECT description FROM kb_cards WHERE title=?',('HTTP card',)).fetchone()
+ assert stored[0] == long_description, 'Large native text was truncated or corrupted'
+answer=command(['raise',prefix+'.SaveCard','click',['x'*100000],False])
+assert 'Only text updates' in answer or 'Only&nbsp;text&nbsp;updates' in answer, 'Large event arguments bypassed the text-only bridge'
+
 for control,view in [('Calendar','Calendar'),('Charts','Charts'),('TableView','Table'),('Swimlanes','Swimlanes')]:
  answer=command(['raise',prefix+'.'+control,'click',[],False])
  assert 'HTTP card' in answer and view in answer, answer

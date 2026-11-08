@@ -7,6 +7,7 @@ import hashlib
 import secrets
 import threading
 import time
+import tempfile
 from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -148,6 +149,7 @@ def handler(application, runner, environment):
                     return
             env = environment.copy()
             env['WEBA_API_REQUEST'] = '1' if api else '0'
+            env['WEBA_COMMAND_FILE'] = ''
             if api:
                 token = secrets.token_urlsafe(32)
                 env['WEBA_API_NEW_TOKEN'] = token
@@ -171,6 +173,7 @@ def handler(application, runner, environment):
                     self.send_error(413); return
                 body = self.rfile.read(length)
                 env.update(CONTENT_LENGTH=str(length), CONTENT_TYPE=self.headers.get('Content-Type', ''))
+                command_text = None
                 if decoded_path == '/x':
                     try:
                         fields = urllib.parse.parse_qs(body.decode('utf-8'), strict_parsing=True,
@@ -180,15 +183,29 @@ def handler(application, runner, environment):
                     except (ValueError, UnicodeError):
                         self.send_error(400, 'Invalid native command body')
                         return
-                    # Gambas 3.20 forwards only CGI variables to its persistent
-                    # session process (not stdin). Translate the already checked
-                    # POST body internally; no command appears in an HTTP URL.
-                    env.update(QUERY_STRING=urllib.parse.urlencode({'c': fields['c'][0]}, quote_via=urllib.parse.quote),
-                               REQUEST_METHOD='GET', CONTENT_LENGTH='0', CONTENT_TYPE='')
+                    # Gambas 3.20 forwards CGI variables, not stdin, to its
+                    # session process. Its query decoder requires percent-encoded
+                    # spaces. Large commands must avoid the OS env-string limit.
+                    command_text = urllib.parse.urlencode({'c': fields['c'][0]}, quote_via=urllib.parse.quote)
+                    env.update(QUERY_STRING='', REQUEST_METHOD='GET', CONTENT_LENGTH='0', CONTENT_TYPE='')
                     body = b''
                 command = [runner, '-s', 'RestApi', str(application)] if api else [runner, str(application)]
-                result = subprocess.run(command, input=body,
-                                        env=env, capture_output=True, timeout=30)
+                if command_text is not None and len(command_text.encode()) > 32768:
+                    # NamedTemporaryFile creates mode 0600 and deletes even on
+                    # timeout/failure. Only its path crosses the exec boundary.
+                    with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', prefix='weba-command.',
+                                                     dir=environment.get('TMPDIR')) as private:
+                        private.write(fields['c'][0])
+                        private.flush()
+                        env['WEBA_COMMAND_FILE'] = private.name
+                        env['QUERY_STRING'] = urllib.parse.urlencode({
+                            'c': '["update",null,"weba-large-update",null,true]'
+                        }, quote_via=urllib.parse.quote)
+                        result = subprocess.run(command, input=body, env=env, capture_output=True, timeout=30)
+                else:
+                    if command_text is not None:
+                        env['QUERY_STRING'] = command_text
+                    result = subprocess.run(command, input=body, env=env, capture_output=True, timeout=30)
                 headers, separator, body = result.stdout.partition(b'\r\n\r\n')
                 if not separator: headers, separator, body = result.stdout.partition(b'\n\n')
                 if result.returncode or not separator: raise RuntimeError('CGI failed')
