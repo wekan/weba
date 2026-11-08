@@ -17,6 +17,14 @@ Public Sub OpenStore()
     t.PrimaryKey = ["board_id", "username"]
     t.Update()
   Endif
+  If Not $db.Tables.Exist("kb_card_assignees") Then
+    t = $db.Tables.Add("kb_card_assignees")
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("card_id", db.Integer)
+    t.Fields.Add("username", db.String, 255)
+    t.PrimaryKey = ["card_id", "username"]
+    t.Update()
+  Endif
   If Not $db.Tables.Exist("kb_user_meta") Then
     t = $db.Tables.Add("kb_user_meta")
     t.Fields.Add("board_id", db.Integer)
@@ -31,16 +39,20 @@ Public Sub OpenStore()
 End
 
 Public Function Role(boardId As Integer) As String
+  Return RoleOf(boardId, WebIdentity.Username)
+End
+
+Private Function RoleOf(boardId As Integer, username As String) As String
   Dim r As Result
-  If Not WebIdentity.Username Then Return ""
-  If Not WebDatabase.UserExists(WebIdentity.Username) Then Return ""
+  If Not username Then Return ""
+  If Not WebDatabase.UserExists(username) Then Return ""
   OpenStore()
   r = $db.Find("kb_boards", "id = &1", boardId)
   If Not r.Available Then Return ""
-  If r!owner = WebIdentity.Username Then Return "board-admin"
-  r = $db.Find("kb_members", "board_id = &1 AND username = &2", boardId, WebIdentity.Username)
+  If r!owner = username Then Return "board-admin"
+  r = $db.Find("kb_members", "board_id = &1 AND username = &2", boardId, username)
   If Not r.Available Then Return ""
-  If ["board-admin", "normal", "no-comments", "comment-only", "read-only"].Find(r!role) < 0 Then Return ""
+  If Not $roles.Exist(r!role) Then Return ""
   Return r!role
 End
 
@@ -71,9 +83,7 @@ Public Sub SetMember(boardId As Integer, username As String, role As String)
   Dim transaction As Boolean
   Dim failure As String
   Require(boardId, "manageBoard")
-  ' Assigned-only/worker roles are enabled once their card-level policies are
-  ' installed. Never persist a role whose restrictions are not enforced yet.
-  If ["board-admin", "normal", "no-comments", "comment-only", "read-only"].Find(role) < 0 Then Error.Raise("Role is not supported yet")
+  If Not $roles.Exist(role) Then Error.Raise("Unknown role")
   If Not WebDatabase.UserExists(username) Then Error.Raise("Unknown user")
   r = $db.Find("kb_boards", "id = &1", boardId)
   If r!owner = username Then
@@ -125,4 +135,123 @@ Public Function Members(boardId As Integer) As Result
   RequireRead(boardId)
   r = $db.Find("kb_boards", "id = &1", boardId)
   Return $db.Exec("SELECT owner AS username, &1 AS role FROM kb_boards WHERE id = &2 UNION ALL SELECT username, role FROM kb_members WHERE board_id = &2 AND username <> &3", "board-admin", boardId, r!owner)
+End
+
+Public Function CardRows(boardId As Integer, Optional byArchive As Boolean, Optional archived As Boolean) As Result
+  RequireRead(boardId)
+  If Not Can(boardId, "seesAllCards") Then
+    If byArchive Then Return $db.Find("kb_cards", "board_id = &1 AND archived = &2 AND (assignee = &3 OR id IN (SELECT card_id FROM kb_card_assignees WHERE board_id = &1 AND username = &3)) ORDER BY id", boardId, archived, WebIdentity.Username)
+    Return $db.Find("kb_cards", "board_id = &1 AND (assignee = &2 OR id IN (SELECT card_id FROM kb_card_assignees WHERE board_id = &1 AND username = &2)) ORDER BY id", boardId, WebIdentity.Username)
+  Endif
+  If byArchive Then Return $db.Find("kb_cards", "board_id = &1 AND archived = &2 ORDER BY id", boardId, archived)
+  Return $db.Find("kb_cards", "board_id = &1 ORDER BY id", boardId)
+End
+
+Public Sub RequireCard(boardId As Integer, cardId As Integer)
+  Dim r As Result
+  RequireRead(boardId)
+  If Can(boardId, "seesAllCards") Then
+    r = $db.Find("kb_cards", "board_id = &1 AND id = &2", boardId, cardId)
+  Else
+    r = $db.Find("kb_cards", "board_id = &1 AND id = &2 AND (assignee = &3 OR id IN (SELECT card_id FROM kb_card_assignees WHERE board_id = &1 AND username = &3))", boardId, cardId, WebIdentity.Username)
+  Endif
+  If Not r.Available Then Error.Raise("Card not accessible")
+End
+
+Public Sub RequireContainer(boardId As Integer, kind As String, itemId As Integer)
+  RequireRead(boardId)
+  If kind = "card" Then
+    RequireCard(boardId, itemId)
+  Else If Not Can(boardId, "seesAllCards") Then
+    Error.Raise("Assigned-only members cannot copy, export or transfer containers")
+  Endif
+End
+
+Public Function IsAssigned(boardId As Integer, cardId As Integer, username As String) As Boolean
+  Dim r As Result
+  RequireCard(boardId, cardId)
+  r = $db.Find("kb_cards", "board_id = &1 AND id = &2 AND assignee = &3", boardId, cardId, username)
+  If r.Available Then Return True
+  r = $db.Find("kb_card_assignees", "board_id = &1 AND card_id = &2 AND username = &3", boardId, cardId, username)
+  Return r.Available
+End
+
+Public Function Assignees(boardId As Integer, cardId As Integer) As String[]
+  Dim names As New String[]
+  Dim r As Result
+  RequireCard(boardId, cardId)
+  r = $db.Find("kb_cards", "board_id = &1 AND id = &2", boardId, cardId)
+  If r!assignee Then names.Add(r!assignee)
+  r = $db.Find("kb_card_assignees", "board_id = &1 AND card_id = &2 ORDER BY username", boardId, cardId)
+  For Each r
+    If names.Find(r!username) < 0 Then names.Add(r!username)
+  Next
+  Return names
+End
+
+Public Sub SetAssignees(boardId As Integer, cardId As Integer, names As String[])
+  Dim previous As String[]
+  Dim username As String
+  RequireCard(boardId, cardId)
+  If Not Can(boardId, "write") Then
+    If Role(boardId) <> "worker" Then Error.Raise("Board permission denied")
+    previous = Assignees(boardId, cardId)
+    For Each username In previous
+      If username <> WebIdentity.Username And names.Find(username) < 0 Then Error.Raise("Workers may change only their own assignment")
+    Next
+    For Each username In names
+      If username <> WebIdentity.Username And previous.Find(username) < 0 Then Error.Raise("Workers may change only their own assignment")
+    Next
+  Endif
+  For Each username In names
+    If Not RoleOf(boardId, username) Then Error.Raise("Assignee must be an active board member")
+  Next
+  WriteAssignees(boardId, cardId, names)
+End
+
+Public Sub CopyAssignees(sourceBoard As Integer, sourceCard As Integer, targetBoard As Integer, targetCard As Integer)
+  Dim names As String[] = Assignees(sourceBoard, sourceCard)
+  Require(targetBoard, "write")
+  RequireCard(targetBoard, targetCard)
+  WriteAssignees(targetBoard, targetCard, names)
+End
+
+Public Sub RestoreAssignees(boardId As Integer, cardId As Integer, names As String[])
+  Require(boardId, "manageBoard")
+  RequireCard(boardId, cardId)
+  WriteAssignees(boardId, cardId, names)
+End
+
+Private Sub WriteAssignees(boardId As Integer, cardId As Integer, names As String[])
+  Dim r As Result
+  Dim username As String
+  Dim unique As New String[]
+  Dim transaction As Boolean
+  Dim failure As String
+  For Each username In names
+    If Not username Or String.Len(username) > 255 Then Error.Raise("Invalid assignee")
+    If unique.Find(username) < 0 Then unique.Add(username)
+  Next
+  WorkspaceStore.OpenStore()
+  $db.Begin()
+  transaction = True
+  KanbanStore.Activity(boardId, "Changed card assignments", "card", cardId)
+  $db.Delete("kb_card_assignees", "board_id = &1 AND card_id = &2", boardId, cardId)
+  For Each username In unique
+    r = $db.Create("kb_card_assignees")
+    r["board_id"] = boardId
+    r["card_id"] = cardId
+    r["username"] = username
+    r.Update()
+  Next
+  r = $db.Edit("kb_cards", "board_id = &1 AND id = &2", boardId, cardId)
+  r["assignee"] = ""
+  If unique.Count Then r["assignee"] = unique[0]
+  r.Update()
+  $db.Commit()
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try $db.Rollback()
+  Error.Raise(failure)
 End

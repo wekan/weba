@@ -61,6 +61,7 @@ Public Sub Move(boardId As Integer, kind As String, itemId As Integer, targetBoa
   Dim cardId As Integer
   Dim listId As Integer
   Dim failure As String
+  BoardAccess.RequireContainer(boardId, kind, itemId)
   BoardAccess.Require(boardId, "write")
   BoardAccess.Require(targetBoard, "write")
   Prepare(boardId)
@@ -110,6 +111,7 @@ Public Sub Move(boardId As Integer, kind As String, itemId As Integer, targetBoa
     r["board_id"] = targetBoard
     r["list_id"] = listId
     r.Update()
+    TransferRows("kb_card_assignees", boardId, targetBoard, cardId, "card_id")
     TransferRows("kb_entries", boardId, targetBoard, cardId, "card_id")
     TransferRows("kb_files", boardId, targetBoard, cardId, "card_id")
     TransferMeta(boardId, targetBoard, "card", cardId)
@@ -152,6 +154,7 @@ Public Sub DeleteArchived(boardId As Integer, kind As String, itemId As Integer,
   Dim listId As Integer
   Dim tableName As String
   Dim failure As String
+  BoardAccess.RequireContainer(boardId, kind, itemId)
   BoardAccess.Require(boardId, If(kind = "board", "manageBoard", "write"))
   Prepare(boardId)
   source = WorkspaceStore.Record(boardId, kind, itemId)
@@ -168,13 +171,14 @@ Public Sub DeleteArchived(boardId As Integer, kind As String, itemId As Integer,
   Endif
   $db.Begin()
   If kind = "board" Then
-    For Each tableName In ["kb_entries", "kb_files", "kb_card_lists", "kb_cards", "kb_lists", "kb_lanes", "kb_meta", "kb_history", "kb_order", "kb_activity", "kb_members", "kb_user_meta"]
+    For Each tableName In ["kb_entries", "kb_files", "kb_card_lists", "kb_cards", "kb_lists", "kb_lanes", "kb_meta", "kb_history", "kb_order", "kb_activity", "kb_members", "kb_user_meta", "kb_card_assignees"]
       $db.Delete(tableName, "board_id = &1", boardId)
     Next
     $db.Delete("kb_boards", "id = &1", boardId)
   Else
     For Each cardId In ids
       $db.Delete("kb_entries", "board_id = &1 AND (card_id = &2 OR ((kind = &3 OR kind = &4) AND amount = &2))", boardId, cardId, "dependency", "subtask")
+      $db.Delete("kb_card_assignees", "board_id = &1 AND card_id = &2", boardId, cardId)
       $db.Delete("kb_files", "board_id = &1 AND card_id = &2", boardId, cardId)
       $db.Delete("kb_card_lists", "board_id = &1 AND card_id = &2", boardId, cardId)
       $db.Delete("kb_cards", "board_id = &1 AND id = &2", boardId, cardId)

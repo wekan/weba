@@ -36,9 +36,17 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   can retain existing comments without granting new comment authoring. Personal
   stars/watch flags do not alter another member's preferences. SQLite negative
   tests cover reader/editor/comment/admin boundaries and membership removal.
-- In progress: assigned-only/Worker card restrictions, native member controls
-  and remaining REST membership/card/container contracts. Unsupported role keys
-  currently fail closed, including on reads; no unrestricted partial role is exposed.
+- Completed: all nine built-in role definitions, including assigned-only scopes
+  across lists/direct reads, related entries, attachments, history/order/export.
+  Assigned-only container copying/transfers are denied. Multiple assignees are
+  retained across copies/imports/moves; Workers can move within a board, comment
+  and change only their own assignment. Hidden WIP occupants are counted by the
+  server. Store tests include negative cases and late import rollback.
+- In progress: native member controls, role-aware actions and REST membership/
+  card/container contracts. Custom roles, list-level exceptions, ownership
+  transfer and public/instance board visibility are still pending.
+- Follow-up security work: account deletion must not allow a re-registered
+  username to inherit old ownership, author privileges or assignee links.
   Email/LDAP/2FA login, configurable token lifetime, native-login throttling,
   registration policy, parallel first-API schema initialization, and the original
   WeKan fixture/browser suites remain pending.

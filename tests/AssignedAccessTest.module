@@ -1,0 +1,125 @@
+Public Sub Main()
+  Dim stage As String
+  Dim boardId As Integer
+  Dim listId As Integer
+  Dim otherList As Integer
+  Dim one As Integer
+  Dim two As Integer
+  Dim relation As Integer
+  Dim comment As Integer
+  Dim fileId As Integer
+  Dim copied As Integer
+  Dim r As Result
+  Dim username As String
+  Dim denied As Boolean
+  Dim exportData As String
+  Dim assignees As String[]
+  stage = "setup"
+  For Each username In ["assigned-owner", "assigned-normal", "assigned-comment", "assigned-read", "assigned-worker"]
+    WebDatabase.Register(username, "x")
+  Next
+  Session["username"] = "assigned-owner"
+  boardId = KanbanStore.AddBoard("Scoped")
+  r = KanbanStore.Lanes(boardId)
+  r = KanbanStore.Lists(boardId, "Default")
+  listId = r!id
+  r.MoveNext()
+  otherList = r!id
+  one = KanbanStore.SaveCard(boardId, 0, "Visible card", "Public to assignees", "Default", "Todo", "assigned-normal", "", "", listId)
+  two = KanbanStore.SaveCard(boardId, 0, "HIDDEN-CARD-CANARY", "HIDDEN-BODY-CANARY", "Default", "Todo", "assigned-owner", "", "", listId)
+  BoardAccess.SetMember(boardId, "assigned-normal", "normal-assigned-only")
+  BoardAccess.SetMember(boardId, "assigned-comment", "comment-assigned-only")
+  BoardAccess.SetMember(boardId, "assigned-read", "read-assigned-only")
+  BoardAccess.SetMember(boardId, "assigned-worker", "worker")
+  BoardAccess.SetAssignees(boardId, one, ["assigned-owner", "assigned-normal", "assigned-comment", "assigned-read"])
+  relation = CardContent.Save(boardId, one, 0, "dependency", "", "", 0, False, two)
+  comment = CardContent.Save(boardId, two, 0, "comment", "", "HIDDEN-COMMENT-CANARY", 0, False, 0)
+  fileId = CardContent.AddFile(boardId, two, "hidden.txt", "HIDDEN-FILE-CANARY")
+  WorkspaceStore.SetSetting(boardId, "list", listId, "wip", "2")
+  WorkspaceStore.SetSetting(boardId, "list", listId, "wip_strict", "1")
+  stage = "assigned reads"
+  For Each username In ["assigned-normal", "assigned-comment", "assigned-read"]
+    Session["username"] = username
+    r = KanbanStore.Cards(boardId)
+    If r.Count <> 1 Or r!id <> one Then Error.Raise("Assigned-only list leaked hidden cards")
+    Try WorkspaceStore.Record(boardId, "card", two)
+    denied = Error
+    If Not denied Then Error.Raise("Assigned-only direct card read accepted")
+    Try KanbanStore.CardListId(boardId, two)
+    denied = Error
+    If Not denied Then Error.Raise("Assigned-only hidden card/list pointer leaked")
+    Try CardContent.Entry(boardId, two, comment)
+    denied = Error
+    If Not denied Then Error.Raise("Assigned-only hidden comment leaked")
+    Try CardContent.FileRecord(boardId, two, fileId)
+    denied = Error
+    If Not denied Then Error.Raise("Assigned-only hidden attachment leaked")
+    r = CardContent.Entries(boardId, one, "dependency")
+    If r.Count Then Error.Raise("Relationship leaked invisible target title")
+    Try CardContent.Entry(boardId, one, relation)
+    denied = Error
+    If Not denied Then Error.Raise("Direct relationship target leaked")
+    Try WorkspaceStore.ExportData(boardId, "board", boardId)
+    denied = Error
+    If Not denied Then Error.Raise("Assigned-only board export accepted")
+    exportData = WorkspaceStore.ExportData(boardId, "card", one)
+    If InStr(exportData, "HIDDEN-") Then Error.Raise("Card export leaked hidden content")
+    r = KanbanStore.Activities(boardId)
+    For Each r
+      If InStr(r!message, "HIDDEN-") Then Error.Raise("Board history leaked a hidden card")
+    Next
+  Next
+  stage = "assigned normal mutations"
+  Session["username"] = "assigned-normal"
+  Try KanbanStore.SaveCard(boardId, two, "Denied", "", "Default", "Todo", "assigned-owner", "", "", listId)
+  denied = Error
+  If Not denied Then Error.Raise("Assigned normal edited hidden card")
+  Try KanbanStore.SaveCard(boardId, 0, "WIP denied", "", "Default", "Todo", "assigned-normal", "", "", listId)
+  denied = Error
+  If Not denied Then Error.Raise("Assigned-only WIP ignored hidden occupants")
+  Try WorkspaceStore.Copy(boardId, "list", listId, "Denied")
+  denied = Error
+  If Not denied Then Error.Raise("Assigned-only container copy accepted")
+  stage = "edit visible"
+  KanbanStore.SaveCard(boardId, one, "Edited visible", "Body", "Default", "Todo", "assigned-owner", "", "", listId)
+  stage = "move visible"
+  KanbanStore.MoveCard(boardId, one, "Default", "#" & CStr(otherList), 0)
+  stage = "copy visible"
+  copied = WorkspaceStore.Copy(boardId, "card", one, "Visible copy")
+  If Not BoardAccess.IsAssigned(boardId, copied, "assigned-normal") Then Error.Raise("Assigned copy lost its readable assignment")
+  If BoardAccess.Assignees(boardId, copied).Find("assigned-owner") < 0 Then Error.Raise("Assigned copy lost another assignee")
+  r = CardContent.Entries(boardId, copied, "dependency")
+  If r.Count Then Error.Raise("Copied relationship leaked hidden target")
+  stage = "assigned comments"
+  Session["username"] = "assigned-comment"
+  CardContent.Save(boardId, one, 0, "comment", "", "Assigned comment", 0, False, 0)
+  Try KanbanStore.MoveCard(boardId, one, "Default", "#" & CStr(otherList), 0)
+  denied = Error
+  If Not denied Then Error.Raise("Comment-assigned moved a card")
+  Session["username"] = "assigned-read"
+  Try CardContent.Save(boardId, one, 0, "comment", "", "Denied", 0, False, 0)
+  denied = Error
+  If Not denied Then Error.Raise("Read-assigned commented")
+  stage = "worker"
+  Session["username"] = "assigned-worker"
+  KanbanStore.MoveCard(boardId, two, "Default", "#" & CStr(otherList), 0)
+  BoardAccess.SetAssignees(boardId, two, ["assigned-owner", "assigned-worker"])
+  assignees = BoardAccess.Assignees(boardId, two)
+  If assignees.Find("assigned-owner") < 0 Or assignees.Find("assigned-worker") < 0 Then Error.Raise("Worker self-assignment lost another assignee")
+  Try BoardAccess.SetAssignees(boardId, two, ["assigned-worker"])
+  denied = Error
+  If Not denied Then Error.Raise("Worker removed another assignee")
+  Try KanbanStore.SaveCard(boardId, two, "Denied", "", "Default", "Todo", "assigned-worker", "", "", listId)
+  denied = Error
+  If Not denied Then Error.Raise("Worker edited arbitrary card fields")
+  Try WorkspaceStore.SetSetting(boardId, "card", two, "color", "#123456")
+  denied = Error
+  If Not denied Then Error.Raise("Worker changed card color")
+  CardContent.Save(boardId, two, 0, "comment", "", "Worker comment", 0, False, 0)
+  BoardAccess.SetAssignees(boardId, two, ["assigned-owner"])
+  If BoardAccess.IsAssigned(boardId, two, "assigned-worker") Then Error.Raise("Worker self-unassignment failed")
+  Print "Assigned-only scopes, hidden relationships/history/export, WIP and Worker move/self-assignment/comment boundaries passed"
+Catch
+  Print "Failed stage: "; stage
+  Error.Propagate()
+End

@@ -2,6 +2,14 @@
 
 This work adds the following features and fixes:
 
+- Enable all nine built-in WeKan roles with assigned-only card scopes on lists,
+  direct reads, comments/files, relationships, history, card ordering and export.
+  Reject assigned-only container copies/transfers and retain only readable
+  relationship targets. Add multiple assignees, Worker-only self-assignment and
+  within-board moves; preserve other assignees and refuse arbitrary Worker edits.
+  Retain assignments through copy/import/move, count hidden occupants for WIP
+  enforcement and verify nested-import rollback. Add SQLite role/negative tests.
+  Thanks to xet7.
 - Add shared private-board membership and server-side capability checks for
   board-admin, normal, no-comments, comment-only and read-only roles. Cover
   card/container mutations, comments and authorship, uploads, timers, cross-board

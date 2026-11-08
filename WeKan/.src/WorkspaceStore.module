@@ -76,6 +76,7 @@ Public Function Record(boardId As Integer, kind As String, itemId As Integer) As
     r = $db.Find(tableName, "id = &1 AND board_id = &2", itemId, boardId)
   Endif
   If Not r.Available Then Error.Raise("Item not accessible")
+  If kind = "card" Then BoardAccess.RequireCard(boardId, itemId)
   Return r
 End
 
@@ -254,7 +255,10 @@ End
 Private Function CloneCard(sourceBoard As Integer, cardId As Integer, targetBoard As Integer, listId As Integer, lane As String, listTitle As String, title As String) As Integer
   Dim r As Result = Record(sourceBoard, "card", cardId)
   Dim id As Integer
-  id = KanbanStore.SaveCard(targetBoard, 0, title, r!description, lane, listTitle, r!assignee, r!labels, r!due_day, listId)
+  Dim assignee As String = r!assignee
+  If Not BoardAccess.Can(targetBoard, "seesAllCards") Then assignee = WebIdentity.Username
+  id = KanbanStore.SaveCard(targetBoard, 0, title, r!description, lane, listTitle, assignee, r!labels, r!due_day, listId)
+  BoardAccess.CopyAssignees(sourceBoard, cardId, targetBoard, id)
   $copyMap[CStr(cardId)] = id
   CardContent.CopyRecords(sourceBoard, cardId, targetBoard, id)
   CopySettings(sourceBoard, "card", cardId, targetBoard, id)
@@ -274,6 +278,7 @@ Public Function Copy(boardId As Integer, kind As String, itemId As Integer, titl
   Dim targetId As Integer
   Dim targetBoard As Integer
   source = Record(boardId, kind, itemId)
+  BoardAccess.RequireContainer(boardId, kind, itemId)
   If kind <> "board" Then BoardAccess.Require(boardId, "write")
   title = Trim(title)
   If Not title Or String.Len(title) > If(kind = "list", 32, 255) Then Error.Raise("Enter a valid copy title")
@@ -399,6 +404,7 @@ Public Function ListCount(boardId As Integer, listId As Integer) As Integer
 End
 
 Public Sub RequireCapacity(boardId As Integer, listId As Integer, cardId As Integer)
+  Dim r As Result
   Dim limit As Integer
   If Setting(boardId, "list", listId, "wip_strict", "0") <> "1" Then Return
   limit = CInt(Setting(boardId, "list", listId, "wip", "0"))
@@ -406,5 +412,7 @@ Public Sub RequireCapacity(boardId As Integer, listId As Integer, cardId As Inte
   If cardId Then
     If KanbanStore.CardListId(boardId, cardId) = listId Then Return
   Endif
-  If ListCount(boardId, listId) >= limit Then Error.Raise("List WIP limit reached")
+  KanbanStore.PrimeCardLinks(boardId)
+  r = $db.Exec("SELECT COUNT(*) AS total FROM kb_cards INNER JOIN kb_card_lists ON kb_cards.id = kb_card_lists.card_id WHERE kb_cards.board_id = &1 AND kb_card_lists.list_id = &2 AND kb_cards.archived = &3", boardId, listId, False)
+  If r!total >= limit Then Error.Raise("List WIP limit reached")
 End

@@ -27,6 +27,7 @@ Public Function ExportData(boardId As Integer, kind As String, itemId As Integer
   Dim item As Collection
   Dim listId As Integer
   Dim include As Boolean
+  BoardAccess.RequireContainer(boardId, kind, itemId)
   source = WorkspaceStore.Record(boardId, kind, itemId)
   CardContent.OpenStore()
   $db = WebDatabase.OpenConnection()
@@ -34,13 +35,14 @@ Public Function ExportData(boardId As Integer, kind As String, itemId As Integer
   data["format"] = "weba-2"
   data["kind"] = kind
   data["title"] = source!title
-  r = $db.Find("kb_cards", "board_id = &1 ORDER BY id", boardId)
+  r = BoardAccess.CardRows(boardId)
   For Each r
     listId = KanbanStore.CardListId(boardId, r!id)
     If kind = "card" And r!id <> itemId Then Continue
     If kind = "list" And listId <> itemId Then Continue
     If kind = "lane" And r!lane <> source!title And Not (source!title = "Default" And Not r!lane) Then Continue
     item = Row(r, ["id", "title", "description", "lane", "status", "assignee", "labels", "due_day", "archived"])
+    item["assignees"] = BoardAccess.Assignees(boardId, r!id)
     item["list_id"] = listId
     item["sort_order"] = KanbanStore.ItemOrder(boardId, "card", CStr(r!id), r!id)
     cards.Add(item)
@@ -171,6 +173,7 @@ Public Function ImportData(text As String, title As String) As Integer
     If r!lane <> item["lane"] Or r!title <> item["status"] Then Error.Raise("Exported card/list mismatch")
     If String.Len(item["title"]) > 255 Then Error.Raise("Invalid exported card title")
     id = KanbanStore.SaveCard(boardId, 0, item["title"], item["description"], item["lane"], item["status"], item["assignee"], item["labels"], item["due_day"], listMap[CStr(item["list_id"])])
+    If item.Exist("assignees") Then BoardAccess.RestoreAssignees(boardId, id, item["assignees"])
     cardMap[oldId] = id
     r = $db.Create("kb_order")
     r["board_id"] = boardId

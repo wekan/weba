@@ -61,6 +61,17 @@ Public Sub Main()
   If Not denied Then Error.Raise("Missing list accepted")
   r = KanbanStore.Boards(False)
   If r.Count <> count Then Error.Raise("Failed import left partial board")
+  data = BoardTransfer.ReadData(text)
+  item = New Collection
+  item["card_id"] = -99
+  item["filename"] = "invalid.txt"
+  item["base64"] = ""
+  data["files"].Add(item)
+  Try BoardTransfer.ImportData(JSON.Encode(data), "Invalid late file")
+  denied = Error
+  If Not denied Then Error.Raise("Invalid late import accepted")
+  r = KanbanStore.Boards(False)
+  If r.Count <> count Then Error.Raise("Nested assignment writes committed a partial import")
   Try BoardTransfer.ImportData("{}", "Invalid")
   denied = Error
   If Not denied Then Error.Raise("Unknown format accepted")

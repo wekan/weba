@@ -1,4 +1,7 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Assigned/Worker roles: Scope every card read and relationship/history/export
+  path, support multiple assignees and restrict Workers to moves/self-assignment/
+  comments. Retain assignments in copies/imports/moves and test hidden WIP counts.
 - Shared board permissions: Add member/admin/write/comment/read-only checks
   throughout native stores, transactional membership changes and personal stars/
   watch preferences; verify negative operations and current WeKan capabilities.

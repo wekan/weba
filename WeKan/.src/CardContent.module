@@ -45,6 +45,9 @@ End
 
 Public Function Entries(boardId As Integer, cardId As Integer, kind As String) As Result
   RequireCard(boardId, cardId)
+  If kind = "subtask" Or kind = "dependency" Then
+    If Not BoardAccess.Can(boardId, "seesAllCards") Then Return $db.Find("kb_entries", "board_id = &1 AND card_id = &2 AND kind = &3 AND amount IN (SELECT id FROM kb_cards WHERE board_id = &1 AND (assignee = &4 OR id IN (SELECT card_id FROM kb_card_assignees WHERE board_id = &1 AND username = &4))) ORDER BY id", boardId, cardId, kind, WebIdentity.Username)
+  Endif
   Return $db.Find("kb_entries", "board_id = &1 AND card_id = &2 AND kind = &3 ORDER BY id", boardId, cardId, kind)
 End
 
@@ -53,6 +56,7 @@ Public Function Entry(boardId As Integer, cardId As Integer, entryId As Integer)
   RequireCard(boardId, cardId)
   r = $db.Find("kb_entries", "board_id = &1 AND card_id = &2 AND id = &3", boardId, cardId, entryId)
   If Not r.Available Then Error.Raise("Card entry not accessible")
+  If r!kind = "subtask" Or r!kind = "dependency" Then BoardAccess.RequireCard(boardId, CInt(r!amount))
   Return r
 End
 
