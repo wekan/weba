@@ -1,4 +1,7 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Explain raw assigned-only write restrictions and canonical
+  role/site-admin controls, late-injection rollback and 256 source-backed active
+  flag combinations; preserve native/custom-role/list-exception parity gaps.
 - REST write security: Refuse each raw assigned-only flag even when canonical
   role precedence selects board-admin. Check before mutation and under locks,
   preserving source site-admin/non-scope behavior. Verify the prior 200 bypass,

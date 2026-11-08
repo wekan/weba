@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Document raw assigned-only REST write restrictions, canonical non-scope/admin
+  controls, late-injection rollback and the 256 active boolean flag matrix against
+  original source functions and persisted data. Keep native/custom-role/list
+  exception and full-suite gaps explicit. Thanks to xet7.
+
 - Fix combined board-admin/assigned-only flags bypassing general card REST
   writes. Check all three raw assigned-only flags before mutation and again under
   locks for PUT and member/assignee merge/pull routes; retain the explicit site

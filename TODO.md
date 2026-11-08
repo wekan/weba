@@ -267,6 +267,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   Verify all 256 active built-in boolean flag combinations using actual source
   roleCan/memberRoleOf/isAssignedOnlyMember and persisted HTTP descriptions.
   Source/archive and full local tests pass; original spec 17 remains 10/30.
+- Documented the raw assigned-only REST write restriction, source-compatible
+  non-scope/admin controls, late-injection rollback and 256 active boolean flag
+  comparisons. Keep native combined-scope/custom-role/list-exception gaps explicit.
 - In progress: archive/unarchive REST source contract review. Implement endpoints,
   archivedAt persistence and child cascades with the corrected write boundary.
   Native visibility for raw combined assigned-only flags, custom roles/list

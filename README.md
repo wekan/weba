@@ -335,10 +335,15 @@ board access or assigned-only card visibility; assignees remain the separate
 assignment field. Members and people order survive copy, cross-board move and
 weba JSON exchange, with account/card/board deletion cleaning their references.
 
-These REST writes require a writing role with full-card scope, or a site
-administrator acting through the explicit scoped mutation. Assigned-only roles
-and Workers cannot use these general REST writes; their supported native card
-operations have separate checks. A foreign list/card combination or archived
+These REST writes require the source canonical write capability and full-card
+scope, or a site administrator acting through the explicit scoped mutation.
+Each raw `isNormalAssignedOnly`, `isCommentAssignedOnly` and
+`isReadAssignedOnly` flag independently refuses general REST writes, including
+when role precedence selects Board Admin. Check this before mutation and again
+after locking the user/board/card rows. A canonical Worker has separate native
+self-assignment operations. Non-scope combinations such as Admin + Worker or
+Admin + No Comments follow the source canonical write capability; whole-board
+reads have their own source-defined exclusions. A foreign list/card combination or archived
 card returns 404. A site-admin mutation clears its temporary scope afterward;
 independent REST read checks still apply. Changes, order and audit history commit together; failures
 return a sanitized 500 and roll back.
@@ -501,6 +506,17 @@ and combined flags, inactive members, global administration, archives, negative/
 zero ordering, text, dates and missing targets. A same-process injected SQL failure
 verifies sanitized errors and authority reset before retry. Packaged Chromium
 reads the actual PUT results through GET before reopening the native editor.
+
+REST write-scope regression tests reproduce the former combined admin/assigned
+flag PUT bypass, then verify text/date/people PUT and member/assignee merge/pull
+return 403 without data/history/clock writes for every raw assigned-only flag.
+A trigger injects each flag at the first board write to verify the later check
+and full rollback. All 256 active built-in boolean role-flag combinations are
+compared with the actual source `memberRoleOf`, `roleCan` and
+`isAssignedOnlyMember`, including independent persisted description reads. This
+runs through both source and packaged CGI paths. Custom roles, per-list exceptions
+and native visibility for raw combined flags still require separate parity work;
+this matrix does not establish complete UI/API/security coverage.
 
 Single-card tests compare both actual GET responses against the original
 `cardWithChecklists` serializer for implemented fields, using independent SQLite
