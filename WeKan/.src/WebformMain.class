@@ -31,6 +31,10 @@ Private $draft As Collection
 Private $detailState As String
 Private $entryBaseline As Collection
 Private $detailFormBase As Collection
+Private $catalogData As Collection
+Private $catalogSort As String = "custom"
+Private $catalogPage As Integer = 1
+Private $catalogTotal As Integer
 Private $overviewState As String
 Private $peopleState As String
 Private $membersState As String
@@ -65,6 +69,8 @@ Public Sub WebForm_Open()
     Return
   Endif
   Status.Text = "Todo"
+  $catalogSort = BoardCatalog.SortBy()
+  UpdateCatalogSort()
   AccountToggle.Text = WebIdentity.Username
   Admin.Visible = WebDatabase.GetIsAdmin(WebIdentity.Username)
   RefreshTree()
@@ -109,6 +115,7 @@ Private Sub RefreshTree()
   Next
   UpdateHeader()
   UpdateCardActions()
+  If IsOverview() Then $catalogData = LoadBoardOverview()
   Visual.Refresh()
   If IsOverview() Then $overviewState = overviewSnapshot
 End
@@ -125,6 +132,12 @@ Public Sub BoardPoll_Timer()
       If state <> $liveState Then RefreshTree()
     Endif
   Else If IsOverview() Then
+    If BoardCatalog.SortBy() <> $catalogSort Then
+      $catalogSort = BoardCatalog.SortBy()
+      $catalogPage = 1
+      UpdateCatalogSort()
+      RefreshTree()
+    Endif
     state = BoardLive.Overview($archive)
     If state <> $overviewState Then RefreshTree()
   Endif
@@ -295,6 +308,109 @@ Public Sub Logout_Click()
   WebForm.Goto(WebformLogin)
 End
 
+Private Function LoadBoardOverview() As Collection
+  Dim params As New Collection
+  Dim data As Collection
+  Dim lastPage As Integer
+  params.Add(BoardSearch.Text, "search")
+  params["sortBy"] = $catalogSort
+  params["menu"] = If($view = "Starred", "starred", "remaining")
+  params["page"] = $catalogPage
+  If $catalogSort = "custom" Then
+    data = BoardCatalog.Unpaged(params, $archive)
+  Else
+    data = BoardCatalog.Page(params, $archive)
+    lastPage = Max(1, Int((data["total"] + 24) / 25))
+    If $catalogPage > lastPage Then
+      $catalogPage = lastPage
+      params["page"] = $catalogPage
+      data = BoardCatalog.Page(params, $archive)
+    Endif
+  Endif
+  $catalogTotal = data["total"]
+  lastPage = Max(1, Int(($catalogTotal + 24) / 25))
+  BoardPageLabel.Text = Str($catalogPage) & " / " & Str(lastPage) & " · " & Str($catalogTotal)
+  PreviousBoardPage.Enabled = $catalogPage > 1
+  NextBoardPage.Enabled = $catalogPage < lastPage
+  BoardPagination.Visible = IsOverview() And $catalogSort <> "custom"
+  Return data
+End
+
+Private Sub UpdateCatalogSort()
+  SortCustom.Class = "fa fa-arrows" & If($catalogSort = "custom", " weba-active active", "")
+  SortTitleAsc.Class = "fa fa-sort-alpha-asc" & If($catalogSort = "title-asc", " weba-active active", "")
+  SortTitleDesc.Class = "fa fa-sort-alpha-desc" & If($catalogSort = "title-desc", " weba-active active", "")
+End
+
+Private Sub ChooseCatalogSort(value As String)
+  BoardCatalog.SetSortBy(value)
+  $catalogSort = value
+  $catalogPage = 1
+  UpdateCatalogSort()
+  BoardSortMenu.Hide()
+  RefreshTree()
+End
+
+Public Sub SortBoards_Click()
+  If Not IsOverview() Then Return
+  BoardSortMenu.Visible = Not BoardSortMenu.Visible
+  Views.Hide()
+  AccountMenu.Hide()
+End
+
+Public Sub CloseBoardSort_Click()
+  BoardSortMenu.Hide()
+End
+
+Public Sub SortCustom_Click()
+  ChooseCatalogSort("custom")
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub SortTitleAsc_Click()
+  ChooseCatalogSort("title-asc")
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub SortTitleDesc_Click()
+  ChooseCatalogSort("title-desc")
+Catch
+  Notice.Text = Error.Text
+End
+
+Private Sub RefreshCatalogVisual()
+  If IsOverview() Then $catalogData = LoadBoardOverview()
+  Visual.Refresh()
+End
+
+Public Sub BoardSearch_Change()
+  If Not IsOverview() Then Return
+  $catalogPage = 1
+  RefreshCatalogVisual()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub ClearBoardSearch_Click()
+  BoardSearch.Text = ""
+  $catalogPage = 1
+  RefreshCatalogVisual()
+End
+
+Public Sub PreviousBoardPage_Click()
+  If Not IsOverview() Then Return
+  If $catalogPage > 1 Then Dec $catalogPage
+  RefreshCatalogVisual()
+End
+
+Public Sub NextBoardPage_Click()
+  If Not IsOverview() Then Return
+  If $catalogPage < Max(1, Int(($catalogTotal + 24) / 25)) Then Inc $catalogPage
+  RefreshCatalogVisual()
+End
+
 Public Sub Search_Click()
   Visual.Refresh()
 End
@@ -327,6 +443,7 @@ Public Sub Home_Click()
   $archive = False
   $board = 0
   $view = "Boards"
+  $catalogPage = 1
   RefreshTree()
 End
 
@@ -342,6 +459,7 @@ Public Sub Archive_Click()
   $archive = True
   $board = 0
   $view = "Archive"
+  $catalogPage = 1
   RefreshTree()
 End
 
@@ -352,6 +470,8 @@ Public Sub Visual_Render()
   Dim text As String
   Dim lane As Result
   Dim list As Result
+  Dim overviewData As Collection
+  Dim overviewIds As Integer[]
   Dim boardColor As String = "#2980b9"
   If Not WebIdentity.Username Then Return
   ' Capture before rendering: a concurrent mutation after this read must be
@@ -378,7 +498,11 @@ Public Sub Visual_Render()
       Print "<p>" & Html(Str(a!created_at)) & " · " & Html(a!actor) & " · " & Html(a!message) & "</p>"
     Next
   Else
-    b = KanbanStore.Boards($archive)
+    If IsOverview() Then
+      overviewData = $catalogData
+      overviewIds = overviewData["ids"]
+    Endif
+    b = KanbanStore.Boards($archive, IsOverview() And $catalogSort = "title-desc")
     If $board Then
       Print "<div class=\"weba-layout\" hidden>"
       lane = KanbanStore.Lanes($board)
@@ -397,7 +521,11 @@ Public Sub Visual_Render()
     Print "<div class=\"weba-data\">"
     For Each b
       If $board And b!id <> $board Then Continue
-      If $view = "Starred" And WorkspaceStore.Setting(b!id, "board", b!id, "star") <> "1" Then Continue
+      If IsOverview() Then
+        If overviewIds.Find(b!id) < 0 Then Continue
+      Else If $view = "Starred" Then
+        If WorkspaceStore.Setting(b!id, "board", b!id, "star") <> "1" Then Continue
+      Endif
       If Not $board And ($view = "Boards" Or $view = "Archive" Or $view = "Starred") Then
         Print "<div class=\"weba-board-tile-group\"><button style=\"background-color:" & Html(WorkspaceStore.Setting(b!id, "board", b!id, "color", "#2980b9")) & "\" type=\"button\" class=\"weba-board-tile\" data-board-key=\"b" & Str(b!id) & "\"><strong>" & Html(b!title) & "</strong></button><button class=\"weba-board-context fa fa-bars\" data-context-kind=\"board\" data-context-id=\"" & Str(b!id) & "\" aria-label=\"Board menu\"></button></div>"
         Continue
@@ -563,6 +691,13 @@ Private Sub UpdateHeader()
   BoardNavigation.Visible = $view <> "Admin panel"
   AdminNavigation.Visible = $view = "Admin panel"
   OverviewActions.Visible = overview And Not $archive
+  SortBoards.Visible = overview
+  BoardSearchPanel.Visible = overview
+  SearchTitle.Visible = Not overview
+  Filter.Visible = Not overview
+  Search.Visible = Not overview
+  BoardPagination.Visible = overview And $catalogSort <> "custom"
+  If Not overview Then BoardSortMenu.Hide()
   ContentRow.Expand = Not overview
   PaneTitle.Text = If($view = "Boards", "Remaining", $view)
   PageTitle.Text = If($view = "Boards", "All Boards", $view)
@@ -617,7 +752,11 @@ End
 
 Public Sub HeaderSearch_Click()
   PageSidebar.Show()
-  Filter.SetFocus()
+  If IsOverview() Then
+    BoardSearch.SetFocus()
+  Else
+    Filter.SetFocus()
+  Endif
 End
 
 Public Sub AdminUsers_Click()

@@ -39,6 +39,10 @@
       Class = "weba-icon-only fa fa-search"
       Tooltip = ("Search")
     }
+    { SortBoards WebButton
+      Class = "weba-icon-only fa fa-sort"
+      Tooltip = ("Sort boards")
+    }
     { ViewMenu WebButton
       Class = "weba-native-caret"
       Text = ("View")
@@ -50,6 +54,25 @@
     { SidebarToggle WebButton
       Class = "weba-icon-only fa fa-bars"
       Tooltip = ("Show or hide page sidebar")
+    }
+  }
+  { BoardSortMenu WebContainer
+    Class = "weba-view-options weba-board-sort"
+    Arrangement = Arrange.Vertical
+    Visible = False
+    Ignore = True
+    { CloseBoardSort WebButton
+      Class = "weba-icon-only weba-popup-close fa fa-times-thin"
+      Tooltip = ("Close")
+    }
+    { SortCustom WebButton
+      Text = ("Custom")
+    }
+    { SortTitleAsc WebButton
+      Text = ("Title (A → Z)")
+    }
+    { SortTitleDesc WebButton
+      Text = ("Title (Z → A)")
     }
   }
   { Views WebContainer
@@ -467,6 +490,23 @@
       { PaneTitle WebLabel
         Text = ("Remaining")
       }
+      { BoardPagination WebContainer
+        Class = "boards-pagination"
+        Arrangement = Arrange.Horizontal
+        Visible = False
+        Spacing = True
+        { PreviousBoardPage WebButton
+          Class = "weba-icon-only fa fa-chevron-left"
+          Tooltip = ("Previous Page")
+        }
+        { BoardPageLabel WebLabel
+          Tooltip = ("Page")
+        }
+        { NextBoardPage WebButton
+          Class = "weba-icon-only fa fa-chevron-right"
+          Tooltip = ("Next Page")
+        }
+      }
       { ContentRow WebContainer
         Class = "weba-content-row"
         Arrangement = Arrange.Horizontal
@@ -652,6 +692,20 @@
         }
         { NewCard WebButton
           Text = ("New card")
+        }
+        { BoardSearchPanel WebContainer
+          Arrangement = Arrange.Vertical
+          Spacing = True
+          { BoardSearchLabel WebLabel
+            Text = ("Search boards")
+          }
+          { BoardSearch WebTextBox
+            Tooltip = ("Search boards")
+          }
+          { ClearBoardSearch WebButton
+            Class = "weba-icon-only fa fa-times"
+            Tooltip = ("Clear search")
+          }
         }
         { SearchTitle WebLabel
           Text = ("Search")

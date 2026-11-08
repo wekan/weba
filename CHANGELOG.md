@@ -2,6 +2,14 @@
 
 This work adds the following features and fixes:
 
+- Wire native board sort/search/paging controls to BoardCatalog: saved A-Z/Z-A
+  choices, visible active state, live name search/clear, 25-result pages, external
+  preference changes and page clamping. Keep Custom unpaged with title fallback;
+  manual drag order remains pending. Update controls before rendering and import
+  matching WeKan labels across 237 catalogs. Verify source/packaged native browser
+  privacy, reload, paging, mobile/Finnish and existing live/layout regressions;
+  full local tests pass. Workspace/original-suite gaps remain. Thanks to xet7.
+
 - Document the native board catalog service, effective principal, bounded
   results, UTF-8 search and preference cleanup. Describe the 54-case original
   method comparison and its SQL adapter, plus pending UI, raw-JSON, custom order,

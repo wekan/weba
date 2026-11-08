@@ -158,6 +158,8 @@ Private Sub CheckLimits()
   params["perPage"] = 1000
   data = BoardCatalog.Page(params)
   If data["total"] <> 205 Or data["ids"].Count <> 200 Then Error.Raise("Maximum page size was not enforced")
+  data = BoardCatalog.Unpaged(params)
+  If data["total"] <> 205 Or data["ids"].Count <> 205 Then Error.Raise("Custom view silently paginated its boards")
   params["page"] = 2
   data = BoardCatalog.Page(params)
   If data["total"] <> 205 Or data["ids"].Count <> 5 Then Error.Raise("Last page count is wrong")

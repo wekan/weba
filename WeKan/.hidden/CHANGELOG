@@ -1,4 +1,9 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Native catalog UI: Add saved sort choices, visible selection, live board-name
+  search/clear and 25-result pages with external preference/page-clamp updates.
+  Keep Custom unpaged with title fallback; import matching WeKan labels and
+  verify native source/packaged, mobile/Finnish and live/layout regressions.
+  Manual order, workspaces and original-suite execution remain pending.
 - Documentation: Explain board catalog scope/paging/preferences and source
   comparison evidence; retain UI, raw-JSON, custom order, workspace/facet and
   full original-suite gaps.

@@ -6,6 +6,16 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Current UI/API/security work
 
+- Completed native All Boards sort popup, live board-name search/clear and
+  25-result paging, wired to scoped BoardCatalog data. Persist per-user A-Z/Z-A
+  choices, show the active choice, preserve unpaged Custom fallback and update
+  page/controls before rendering. Verify 25/5 pages, reload/user isolation,
+  Unicode/private search, external sort changes, archive-induced page clamping,
+  mobile controls and Finnish labels on real source/packaged browsers. Import
+  current matching WeKan texts across 237 catalogs. Full local test/test-live and
+  existing desktop/mobile layout regressions pass. Custom drag order, workspaces
+  and unchanged original spec 39 callbacks remain pending.
+
 - Documented the native catalog service, principal and result bounds, UTF-8
   search and account preference cleanup. Recorded the 54-case source-method
   adapter and explicit UI/raw-JSON/custom-order/workspace/facet limitations.
@@ -31,17 +41,16 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   deletion/recreation preference cleanup. Compare 54 actual native results with
   the original getAllBoardsPage body on independent SQL rows. Full local tests
   (28 Python tests/20 card-update COMMIT phases) and source/packaged test-live pass.
-  This is the service layer, not completed UI or a new public HTTP endpoint.
-- In progress: original spec 39 All Boards parity. Wire the native sorting,
-  board-name search and paging controls; implement custom drag order and workspace
-  categories. JSON callers must preserve explicit null keys before validation:
-  ordinary Gambas decode drops them. Native explicit-null rejection is covered,
-  but a raw-JSON request contract is not established for this service. Connect
-  the saved sort preference to native controls and extend category/search/count
-  semantics when workspaces/templates are implemented. Original six callbacks,
-  including Latin
-  workspace navigation/creation translations, remain unexecuted. Other open-view
-  navigation reactivity and efficient idle/background polling are still pending.
+  Native controls are now wired for the implemented modes; there is no new
+  public HTTP endpoint.
+- In progress: remaining original spec 39 All Boards parity: persist manual
+  Custom drag order and implement workspace/category semantics and translated
+  workspace creation/navigation. Original six callbacks remain unexecuted; native
+  browser tests and source-method comparison are separate evidence. Raw JSON
+  callers must preserve explicit null keys before validation; this service has
+  no raw-JSON endpoint contract. Efficient SQL count/paging and other open-view
+  navigation reactivity/idle polling remain pending. New Custom/Clear search
+  captions have no exact imported source lookup and remain in translation follow-up.
 
 - Documented private live people snapshots, home roster polling, identity-based
   selection preservation, vanished-target cleanup and current role controls.

@@ -58,6 +58,14 @@ Catch
 End
 
 Public Function Page(params As Collection, Optional archived As Boolean) As Collection
+  Return SelectBoards(params, archived, True)
+End
+
+Public Function Unpaged(params As Collection, Optional archived As Boolean) As Collection
+  Return SelectBoards(params, archived, False)
+End
+
+Private Function SelectBoards(params As Collection, archived As Boolean, paged As Boolean) As Collection
   Dim data As New Collection
   Dim ids As New Integer[]
   Dim r As Result
@@ -110,7 +118,11 @@ Public Function Page(params As Collection, Optional archived As Boolean) As Coll
       include = WorkspaceStore.Setting(r!id, "board", r!id, "star") = "1"
     Endif
     If Not include Then Continue
-    If total >= offset And ids.Count < perPage Then ids.Add(r!id)
+    If Not paged Then
+      ids.Add(r!id)
+    Else If total >= offset And ids.Count < perPage Then
+      ids.Add(r!id)
+    Endif
     Inc total
   Next
   data["total"] = total

@@ -164,3 +164,7 @@
 
 /* Leave room for the action dialog top offset on short/mobile viewports. */
 .weba-action-panel{max-height:calc(100dvh - 80px)}
+
+/* Make the native selected sort visible as well as exposing its active class. */
+.weba-board-sort .gw-button.active{background:#2878a8;color:#fff}
+.boards-pagination{align-items:center;gap:8px;padding:4px 8px;flex-wrap:wrap}
