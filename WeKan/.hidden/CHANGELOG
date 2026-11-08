@@ -1,4 +1,7 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Describe list/card clock semantics, UTC/null/lifecycle rules,
+  original reducer comparison, four time zones, eight native rollback paths,
+  clock-aware COMMIT snapshots and packaged Chromium verification.
 - List change times (#5251): Persist independent UTC list/card clocks and
   return newest archived-inclusive card time or null for empty/untimed data.
   Cover lifecycle/user cleanup/relation cascades without copying source clocks

@@ -223,7 +223,7 @@ The first implemented REST contracts use JSON request/response bodies:
 | `DELETE /api/users/:userId` | Site administrator only; return the deleted `{_id}` after commit, or 404 for a missing user |
 | `GET /api/users/:username/boards` | List active boards owned by or shared with the authenticated user |
 | `GET /api/boards/:id` | Read implemented board metadata/member flags with whole-board REST permissions; denied 403, missing 404 |
-| `GET /api/boards/:id/lists` | Active list IDs/titles; activity timestamps currently null pending tracking |
+| `GET /api/boards/:id/lists` | Active list IDs/titles with independent `modifiedAt` and `cardsModifiedAt` UTC times |
 | `GET /api/boards/:id/swimlanes` | Active swimlane IDs/titles |
 | `GET /api/boards/:id/cards_count` | Return `board_cards_count` for nonarchived cards |
 | `GET /api/boards/:id/lists/:listId/cards` | Ordered active cards with text, swimlane, assignees, sort and UTC dates |
@@ -248,8 +248,23 @@ List/card results filter their own archived state. Card lists preserve exact tex
 including empty strings, ordered assignees/duplicates, native integer ordering and
 stored UTC date precision. A nonexistent/foreign list produces an empty card list
 or zero count, matching the source selector. Full board/card documents, single-card
-routes, fractional sort and list `modifiedAt`/`cardsModifiedAt` tracking remain
-pending. List timestamps are currently null because weba has no stored equivalent.
+routes and fractional sort remain pending.
+
+Each list exposes two independent #5251 timestamps: `modifiedAt` tracks the list
+itself (creation, title, order, shared settings or archive), while
+`cardsModifiedAt` is the newest known change time among its current cards,
+including archived cards. Editing/adding/archiving a card changes the second
+value without touching the list document's time. Empty lists and legacy rows
+without a recorded time return null. Reading never invents a current timestamp;
+when the last timed card leaves a list, its card-change answer becomes null.
+
+Clocks use portable Long millisecond fields in `kb_item_changes`, with UTC dates
+on the wire. Copy/import creates fresh destination clocks while preserving the
+source clocks; moves transfer scope, and permanent removal cleans clock rows.
+Account reference cleanup and removed relationships update affected surviving
+cards. Personal star/watch preferences do not modify the list document's clock.
+Content, file, timer, archive and shared-setting writes commit their clocks with
+their data/history changes, with permission checks repeated under locks.
 
 User deletion requires a site administrator; a board administrator alone is
 refused. It removes account/session/token and current/historical privilege
@@ -464,6 +479,17 @@ and combined flags, inactive members, global administration, archives, negative/
 zero ordering, text, dates and missing targets. A same-process injected SQL failure
 verifies sanitized errors and authority reset before retry. Packaged Chromium
 reads the actual PUT results through GET before reopening the native editor.
+
+List-change tests compare actual HTTP results and independent SQLite inputs with
+WeKan's unchanged `newestCardChangeByList`, including an archived dated card and
+untimed legacy cards. Store tests cover separate clocks, copy/rename/move/import/
+settings, account cleanup, relationship cascades and nulls. The real Gambas clock
+is checked against UTC in four time zones (UTC, Helsinki, New York, Kathmandu),
+including the older Gambas 3.20 date encoding. Eight injected native clock-write
+failures verify full rollback of comments, detail deletion, timer start/stop,
+file add/delete, archive and list settings. The twelve real card-update COMMIT
+failure/retry phases also snapshot the clock table. Packaged Chromium verifies
+actual list times plus member/assignee/editor/content/timer/file workflows.
 
 Date conformance executes 44 supported UTC/offset/epoch cases against the actual
 reference date helpers. Description HTTP tests cover both escaped JSON and

@@ -205,7 +205,7 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   verifies the existing native multiple-assignee/member/date workflows.
 - Documented whole-board read routes, source role/combined/global-admin checks,
   independent scope reset, empty text and archive/order/date behavior. Update
-  current original callback coverage to 10/30 and retain full document/timestamp/
+  current original callback coverage to 10/30 and retain full document/
   fractional-sort and complete-suite gaps.
 - Completed list/card change tracking (#5251): portable Long UTC clocks in
   kb_item_changes; list modifiedAt changes on list document writes, while
@@ -223,9 +223,12 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   eight injected native clock-write rollback paths, existing twelve real card
   COMMIT rollback/retry phases with clock snapshots and packaged Chromium member/
   assignee/content/timer/file flows. Original spec 17 coverage stays 10/30.
+- Documented independent list/card change times, legacy/empty nulls, UTC Long
+  storage and lifecycle/transaction semantics. Describe source-reducer comparison,
+  four-zone clock checks, eight native write-failure rollbacks, timestamp-aware
+  COMMIT snapshots and packaged Chromium verification.
 - Pending read parity: complete board/card documents and single-card GET routes,
-  legacy timestamps absent from old rows remain null, full fractional sort
-  support, custom roles, legacy lane mapping,
+  full fractional sort support, custom roles, legacy lane mapping,
   public/instance visibility and complete original UI/API/security suites.
 - Next card-person work: remaining card PUT fields, reads, creation/bulk routes
   and complete original UI/API/security suites.

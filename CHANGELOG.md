@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Document #5251 list/card clock semantics, UTC storage, legacy/empty nulls,
+  lifecycle and transactional writes. Describe source-reducer/SQL/HTTP comparison,
+  four-zone clock verification, eight native write-failure rollback paths,
+  timestamp-aware COMMIT snapshots and packaged Chromium coverage. Thanks to xet7.
+
 - Track independent list/card UTC modification times for #5251 using portable
   Long fields. Return list modifiedAt and newest cardsModifiedAt, including
   archived cards; preserve null for empty/untimed legacy data. Cover creation,
