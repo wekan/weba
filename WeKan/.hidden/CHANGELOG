@@ -1,4 +1,6 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Build: Discover shared Gambas tools from the new .tools/w/weba layout; test
+  standalone/legacy/nested layouts, spaces and explicit tool overrides.
 - REST authentication: Add login/logout, expiring hashed Bearer tokens, scoped
   board reads, all/presented-token revocation and password-reset invalidation.
   Separate API/browser identity, throttle peer login attempts, honor WITH_API

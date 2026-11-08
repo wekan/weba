@@ -2,6 +2,10 @@
 
 This work adds the following features and fixes:
 
+- Discover the shared tool area from both .tools/weba and .tools/w/weba
+  companion checkouts while keeping standalone defaults and explicit overrides.
+  Test doctor resolution with paths containing spaces in all layouts.
+  Thanks to xet7.
 - Add Gambas REST login/logout and owner-scoped board reads with independent
   Bearer identity, 256-bit random tokens stored only as SHA-256 digests, expiry,
   presented/all-token logout and password-change/reset revocation. Rate-limit

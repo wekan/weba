@@ -4,7 +4,15 @@ ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT"
 # Standalone clone and parent WeKan checkout both keep scratch under .tools.
 TOOLS="${WEBA_TOOLS_DIR:-$ROOT/.tools}"
-if [[ -d "$ROOT/../bin" && -f "$ROOT/../../AGENTS.md" ]]; then TOOLS="${WEBA_TOOLS_DIR:-$(cd "$ROOT/.." && pwd)}"; fi
+if [[ -z "${WEBA_TOOLS_DIR:-}" ]]; then
+  # Companion clones live in either .tools/weba or .tools/w/weba.
+  for tools_parent in "$ROOT/.." "$ROOT/../.."; do
+    if [[ -d "$tools_parent/bin" && -f "$tools_parent/../AGENTS.md" ]]; then
+      TOOLS="$(cd "$tools_parent" && pwd)"
+      break
+    fi
+  done
+fi
 export TMPDIR="${TMPDIR:-$TOOLS/tmp}"
 mkdir -p "$TMPDIR"
 GAMBAS_PREFIX="${GAMBAS_PREFIX:-$TOOLS/bin/gambas}"

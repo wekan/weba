@@ -1,5 +1,8 @@
 import importlib.util
 import io
+import os
+import shutil
+import subprocess
 from pathlib import Path
 import sys
 import tarfile
@@ -12,6 +15,42 @@ import release
 import package
 spec = importlib.util.spec_from_file_location('copy_gambas', ROOT / 'releases/copy-gambas.py')
 copy_gambas = importlib.util.module_from_spec(spec); spec.loader.exec_module(copy_gambas)
+
+
+class BuildToolDiscoveryTest(unittest.TestCase):
+    def test_standalone_legacy_and_w_companion_layouts_and_explicit_override(self):
+        for layout in ['standalone', 'legacy', 'w', 'override']:
+            with self.subTest(layout=layout), tempfile.TemporaryDirectory() as work:
+                checkout = Path(work) / 'parent checkout'
+                checkout.mkdir()
+                (checkout / 'AGENTS.md').write_text('Fixture parent instructions')
+                if layout == 'standalone':
+                    app = checkout / 'weba'
+                    tools = app / '.tools'
+                elif layout == 'legacy':
+                    app = checkout / '.tools/weba'
+                    tools = checkout / '.tools'
+                else:
+                    app = checkout / '.tools/w/weba'
+                    tools = checkout / '.tools'
+                if layout == 'override':
+                    tools = checkout / 'explicit tools'
+                app.mkdir(parents=True)
+                shutil.copy2(ROOT / 'build.sh', app / 'build.sh')
+                prefix = tools / 'bin/gambas'
+                for name in ['gbc3', 'gbx3', 'gba3', 'gbr3']:
+                    package.write(prefix / 'usr/bin' / name, '#!/bin/sh\nprintf "fixture-tool\\n"\n', True)
+                env = os.environ.copy()
+                for key in ['GBC', 'GBX', 'GBA', 'GBR', 'GAMBAS_PREFIX', 'GAMBAS_ROOT',
+                            'GB_PATH', 'LD_LIBRARY_PATH', 'WEBA_TOOLS_DIR', 'TMPDIR']:
+                    env.pop(key, None)
+                if layout == 'override':
+                    env['WEBA_TOOLS_DIR'] = str(tools)
+                result = subprocess.run([str(app / 'build.sh'), 'doctor'], env=env,
+                                        capture_output=True, text=True, check=True)
+                self.assertIn('Gambas prefix: ' + str(prefix), result.stdout)
+                self.assertIn('Temporary files: ' + str(tools / 'tmp'), result.stdout)
+                self.assertEqual(result.stdout.count('fixture-tool'), 4)
 
 
 class ReleaseToolsTest(unittest.TestCase):

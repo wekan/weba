@@ -26,6 +26,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   per-peer window and unknown-account password checks; WITH_API gates data routes.
 - `build.sh test` now includes real REST tests for source and archive, alongside
   native sessions, store tests, runtime security cases and JS transport guards.
+- Completed: build.sh finds the shared tool area from .tools/w/weba as well
+  as the legacy/standalone layouts; doctor fixture checks include path spaces
+  and explicit overrides.
 - In progress: remaining REST contracts and shared-board roles/permissions.
   Email/LDAP/2FA login, configurable token lifetime, native-login throttling,
   registration policy, parallel first-API schema initialization, and the original
