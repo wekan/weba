@@ -16,6 +16,21 @@ import subprocess
 import urllib.parse
 
 
+def run_application(command, *, input, env, timeout=30):
+    """A CGI descendant must not hold capture pipes open after a timeout.
+
+    TemporaryFile is private/unlinked on supported Linux runtimes. File-backed
+    output allows subprocess.run to kill/wait only for the direct process,
+    without a descendant keeping communicate() blocked on inherited stdout.
+    """
+    with tempfile.TemporaryFile(dir=env.get('TMPDIR')) as output, tempfile.TemporaryFile(dir=env.get('TMPDIR')) as errors:
+        result = subprocess.run(command, input=input, env=env, stdout=output, stderr=errors, timeout=timeout)
+        output.seek(0)
+        result.stdout = output.read()
+        # CGI stderr can contain sensitive runtime diagnostics. Do not log it.
+        return result
+
+
 class LoginThrottle:
     """Bounded per-peer login window; forwarded identity headers are untrusted."""
     def __init__(self, clock=time.monotonic, limit=5, window=60, capacity=4096):
@@ -201,11 +216,11 @@ def handler(application, runner, environment):
                         env['QUERY_STRING'] = urllib.parse.urlencode({
                             'c': '["update",null,"weba-large-update",null,true]'
                         }, quote_via=urllib.parse.quote)
-                        result = subprocess.run(command, input=body, env=env, capture_output=True, timeout=30)
+                        result = run_application(command, input=body, env=env, timeout=30)
                 else:
                     if command_text is not None:
                         env['QUERY_STRING'] = command_text
-                    result = subprocess.run(command, input=body, env=env, capture_output=True, timeout=30)
+                    result = run_application(command, input=body, env=env, timeout=30)
                 headers, separator, body = result.stdout.partition(b'\r\n\r\n')
                 if not separator: headers, separator, body = result.stdout.partition(b'\n\n')
                 if result.returncode or not separator: raise RuntimeError('CGI failed')

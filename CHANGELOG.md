@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Bound CGI process deadlines even when a descendant inherits output handles.
+  Capture output in private temporary files instead of pipes so timeout cleanup
+  does not wait indefinitely for descendants; never log CGI stderr. Test a real
+  spawned descendant and actual CGI output, plus host failure handling.
+  Thanks to xet7.
 - Document the runtime origin/development-route boundary, reverse-proxy origin
   configuration, native POST/large-text protocol, initial Bearer REST routes,
   token/throttle behavior and verified source/archive contracts. Keep remaining

@@ -4,6 +4,8 @@ import io
 import json
 import os
 import stat
+import signal
+import time
 import tempfile
 from types import SimpleNamespace
 from unittest.mock import Mock
@@ -59,6 +61,38 @@ class ServerPortTest(unittest.TestCase):
             with self.assertRaises(PermissionError):
                 server.bind_server('127.0.0.1', None, PortHandler)
             constructor.assert_called_once()
+
+
+class CgiDeadlineTest(unittest.TestCase):
+    def test_timeout_does_not_wait_for_descendant_inherited_output(self):
+        with tempfile.TemporaryDirectory() as work:
+            pid_file = Path(work) / 'child.pid'
+            script = (
+                'import subprocess,sys,time; '
+                'child=subprocess.Popen([sys.executable,"-c","import time; time.sleep(60)"]); '
+                'open(sys.argv[1],"w").write(str(child.pid)); '
+                'time.sleep(60)'
+            )
+            started = time.monotonic()
+            try:
+                with self.assertRaises(server.subprocess.TimeoutExpired):
+                    server.run_application([sys.executable, '-c', script, str(pid_file)],
+                                           input=b'', env={**os.environ, 'TMPDIR': work}, timeout=1)
+                self.assertTrue(pid_file.exists(), 'the descendant must actually have started')
+                self.assertLess(time.monotonic() - started, 5,
+                                'inherited output must not extend the process deadline')
+            finally:
+                if pid_file.exists():
+                    try:
+                        os.kill(int(pid_file.read_text()), signal.SIGTERM)
+                    except ProcessLookupError:
+                        pass
+
+    def test_success_returns_actual_cgi_output(self):
+        result = server.run_application([sys.executable, '-c', 'print("Content-Type: text/plain\\r\\n\\r\\nOK",end="")'],
+                                        input=b'', env=os.environ.copy(), timeout=5)
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.stdout, b'Content-Type: text/plain\r\n\r\nOK')
 
 
 class LoginThrottleTest(unittest.TestCase):
@@ -122,7 +156,7 @@ class NativeOriginTest(unittest.TestCase):
         for method, path, headers, status in cases:
             with self.subTest(method=method, path=path, headers=headers):
                 request = self.request(method, path, headers)
-                with patch.object(server.subprocess, 'run') as runner:
+                with patch.object(server, 'run_application') as runner:
                     request._run_cgi()
                 self.assertEqual(request.send_error.call_args.args[0], status)
                 runner.assert_not_called()
@@ -155,7 +189,7 @@ class NativeOriginTest(unittest.TestCase):
                         raise server.subprocess.TimeoutExpired(args[0], 30)
                     return SimpleNamespace(returncode=0, stdout=b'Content-Type: text/plain\r\n\r\nOK')
 
-                with patch.object(server.subprocess, 'run', side_effect=run):
+                with patch.object(server, 'run_application', side_effect=run):
                     request._run_cgi()
                 self.assertTrue(paths)
                 self.assertTrue(all(not path.exists() for path in paths))
@@ -175,7 +209,7 @@ class NativeOriginTest(unittest.TestCase):
         request.send_header = Mock()
         request.end_headers = Mock()
         result = SimpleNamespace(returncode=0, stdout=b'Content-Type: text/plain\r\n\r\nOK')
-        with patch.object(server.subprocess, 'run', return_value=result) as runner:
+        with patch.object(server, 'run_application', return_value=result) as runner:
             request._run_cgi()
         env = runner.call_args.kwargs['env']
         self.assertEqual(server.urllib.parse.parse_qs(env['QUERY_STRING'])['c'], [command])
@@ -201,7 +235,7 @@ class DevelopmentRouteTest(unittest.TestCase):
                 request = object.__new__(cls)
                 request.path = path
                 request.send_error = Mock()
-                with patch.object(server.subprocess, 'run') as runner:
+                with patch.object(server, 'run_application') as runner:
                     request._run_cgi()
                 request.send_error.assert_called_once_with(404)
                 runner.assert_not_called()
@@ -225,7 +259,7 @@ class DisconnectedClientTest(unittest.TestCase):
         request.send_error = Mock(side_effect=write_error if cgi_failure else None)
         result = SimpleNamespace(returncode=1 if cgi_failure else 0,
                                  stdout=b'Content-Type: text/plain\r\n\r\nOK')
-        with patch.object(server.subprocess, 'run', return_value=result):
+        with patch.object(server, 'run_application', return_value=result):
             request.run_cgi()
         self.assertTrue(request.close_connection)
         return request

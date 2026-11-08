@@ -37,6 +37,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   through private per-request files and a short native event. Independent SQLite
   checks verify the full Unicode description; unit tests verify mode 0600,
   cleanup on success/timeout and rejection of arbitrary large event payloads.
+- Completed: CGI timeouts no longer wait for descendants holding inherited
+  stdout/stderr pipes. Test a real spawned descendant, actual CGI output and
+  error handling; diagnostic stderr is not logged.
 - Next: expand REST API contracts and shared board access/role boundaries;
   remaining feature work below is still pending.
 
