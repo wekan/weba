@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Document REST user deletion, site-admin/self-delete policy, committed
+  responses, retained content, rollback verification and exact original-test
+  adapter coverage. Record packaged native deletion regression verification.
+  Thanks to xet7.
+
 - Add site-admin-only REST user deletion with an authoritative committed result,
   deleted-ID reply and repeat/missing 404 responses. Reuse atomic privilege and
   session/token cleanup while preserving attributed content; retain native

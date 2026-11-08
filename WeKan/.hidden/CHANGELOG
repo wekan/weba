@@ -1,4 +1,7 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Describe REST user-deletion authorization/results, retained
+  content, rollback tests and four-of-thirty original callback coverage; record
+  the packaged native deletion regression check.
 - REST user deletion: Require site administrator, return the committed deleted
   ID or missing 404, revoke credentials and retain attributed content. Preserve
   native self-delete guard and match REST self deletion. Verify denied/failed

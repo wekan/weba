@@ -220,11 +220,22 @@ The first implemented REST contracts use JSON request/response bodies:
 | --- | --- |
 | `POST /users/login` | Accept username/password strings; return `id`, `token`, `tokenExpires` |
 | `POST /users/logout` | Revoke the presented Bearer token; optional boolean `all` revokes all the user's tokens |
+| `DELETE /api/users/:userId` | Site administrator only; return the deleted `{_id}` after commit, or 404 for a missing user |
 | `GET /api/users/:username/boards` | List active boards owned by or shared with the authenticated user |
 | `GET /api/boards/:id` | Read an accessible board and its active/inactive member flags; inaccessible boards return 404 |
 | `POST /api/boards/:id/members/:userId/add` | Add an existing account with `action: "add"` and optional role/flags; an active member is unchanged |
 | `POST /api/boards/:id/members/:userId` | Change an active or inactive member's role/flags without changing activation |
 | `POST /api/boards/:id/members/:userId/remove` | Remove with `action: "remove"`; the final administrator remains active |
+
+User deletion requires a site administrator; a board administrator alone is
+refused. It removes account/session/token and current/historical privilege
+references together, retaining board/card content, files, history and display-only
+author attribution. A database failure rolls back and returns a sanitized 500;
+the response never reports a deletion merely because the ID was supplied.
+As in the original REST route, site administrators may delete their own account;
+that Bearer token is then invalid. Native administration keeps its self-delete
+guard. Stable opaque IDs, concurrent site-administrator lifecycle policies and
+complete account administration remain tracked in `TODO.md`.
 
 Member mutations require a board administrator or a site administrator.
 A site administrator can explicitly recover a known orphan-board ID by adding
@@ -292,11 +303,19 @@ explicit reactivation. Independent SQLite readers force real failed-COMMIT
 rollback/retry for active role changes, removal, inactive role changes and
 reactivation, checking roles, flags and audit history after each failure.
 
-When the parent WeKan checkout is available, `--members` also executes three
-original `#5998` spec 17 callbacks unchanged, using actual Playwright assertions
-and a documented SQLite fixture adapter. The other 27 callbacks in that file
-are explicitly reported as unexecuted by this adapter; the full original
-UI/API/security suites have not passed against weba. The reference checkout's
+User-deletion tests inspect independent SQLite snapshots after denied requests
+and a real database failure partway through cleanup, then verify successful
+cleanup, retained content and credential revocation. The native deletion UI is
+also checked with the packaged Chromium workflow (`WEBA_DELETION_ONLY=1`).
+
+When the parent WeKan checkout is available, `--members` executes three original
+`#5998` spec 17 callbacks unchanged, and `--api` executes its user-deletion callback
+unchanged. Both use actual Playwright assertions and explicit SQLite fixture
+adapters. User fixtures are created through the real Gambas account store;
+post-delete checks read SQLite independently of the HTTP response. Each adapter
+reports which callbacks it did not execute. Together they cover four of the
+file's 30 callbacks; the other 26 and the complete original UI/API/security
+suites have not passed against weba. The reference checkout's
 `tests/playwright/package.json` dependencies must be installed. A standalone
 weba checkout can select the reference with `WEKAN_SOURCE=/absolute/path/to/wekan`.
 Without a reference checkout, the original-callback check reports an explicit

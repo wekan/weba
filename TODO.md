@@ -81,6 +81,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   four forced-COMMIT rollback/retry phases and packaged browser re-invitation.
 - Documented active/inactive roster semantics, explicit re-invitation, retained
   preferences, identity cleanup and the four real failed-COMMIT test phases.
+- Documented REST user deletion, site-admin/self-delete behavior, authoritative
+  responses, rollback/content guarantees and four-of-thirty original callback
+  coverage. Native deletion cancel/confirm and session revocation still pass in
+  packaged Chromium after sharing the deletion implementation with REST.
 - In progress: REST cards/containers and full API identity/data parity, including
   stable IDs and complete source roster metadata. Custom roles, list-level
   exceptions and public/instance board visibility remain pending.
