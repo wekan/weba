@@ -332,10 +332,27 @@ locking the target user, board and card. Unknown users, unrelated accounts and
 removed members are rejected without creating a card/lane or changing history.
 An unchanged historical assignee can remain when editing other fields, and the
 field can be cleared. Authorized copy/import paths restore historical values,
-including legacy exports with only the scalar assignee. Active-roster picker UI
-and complete multiple-assignee editing remain pending. Store tests cover denial,
+including legacy exports with only the scalar assignee. New-card roster picking,
+avatars and complete WeKan assignee workflow parity remain pending. Store tests cover denial,
 reactivation and stale copy/import; packaged Chromium checks a forged native edit
 and confirms the saved assignment remains unchanged.
+
+For a saved card, choose the Assignee button below the scalar field or Assignee
+in the card menu. The Gambas tree shows current assignees once per person; the
+picker offers active board members who are not assigned yet. Add applies
+immediately; selecting a row and removing it also removes all duplicate stored
+occurrences. Removed board members can still be removed from the card. These
+changes do not change card members. The scalar field follows the primary assignee
+so a later Save does not reintroduce a removed primary.
+
+Readers can inspect assignments; general assignment edits require write access
+to that visible card, rechecked under user/board/card locks. Workers retain the
+separate Assign myself action. When an assigned-only writer removes their own
+last assignment, the picker and card details close and the card disappears from
+their view. The same popup supports mobile viewports, X and existing translations.
+Packaged Chromium tests verify multiple assignments, save/reopen, reader forgery,
+assigned-only self-removal and mobile menu placement. These checks do not replace
+the complete original WeKan UI suite.
 
 To edit card members in the native UI, open a saved card and choose Members
 (before Assignee), or use Members in the card menu. The Gambas tree shows
@@ -394,7 +411,8 @@ COMMIT failures and successful same-process retries. Two more phases force a
 combined PUT replacement and clear to fail COMMIT, then verify exact sequences,
 normalized relations and successful same-connection retries. Two additional
 combined people/date/description replacement and clear phases bring card-update COMMIT
-coverage to ten phases. A separate HTTP
+coverage to ten phases. Native assignee editor add/remove COMMIT failures and
+same-connection retries bring the total to twelve phases. A separate HTTP
 failure in the second field verifies that the first field and audit history also
 roll back. Native store tests cover ordering, copy/move/JSON, invalid-import
 rollback, assigned-only denial and deletion cleanup.

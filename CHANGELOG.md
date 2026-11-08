@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Document the native multiple-assignee entry points, active/stale choices,
+  immediate changes, primary synchronization, reader/Worker rules and assigned-
+  only self-removal. Record twelve COMMIT phases and packaged Chromium/mobile
+  evidence while preserving new-card/avatar/original-suite gaps. Thanks to xet7.
+
 - Add a native Gambas multiple-assignee editor from saved cards and card menus,
   reusing the member tree, active-member picker, anchored mobile popup, X and
   translated captions. Add/remove atomically with permission/card checks under

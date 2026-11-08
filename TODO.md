@@ -186,6 +186,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   twelve. Full local tests pass (28 Python tests), and packaged two-user Chromium
   verifies add/remove/save/reopen, forged reader writes, self-removal and mobile
   menu placement/X. Original callbacks remain 7/30; complete suites remain open.
+- Documented saved-card multi-assignee controls, stale removal/duplicates,
+  primary synchronization, role/self-removal behavior, twelve COMMIT phases and
+  packaged Chromium/mobile evidence with original-suite gaps explicit.
 - Pending assignee UI: active roster selection before first card save, avatars,
   full WeKan menu/keyboard/accessibility parity and complete original UI suites.
 - Next card-person work: remaining card PUT fields, reads, creation/bulk routes

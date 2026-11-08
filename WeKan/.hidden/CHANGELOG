@@ -1,4 +1,7 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Describe native multiple-assignee controls and scope changes,
+  primary synchronization, twelve COMMIT phases and browser/mobile checks;
+  retain new-card picker, avatar and complete original-suite gaps.
 - Native multi-assignee editor: Add saved-card/menu picker and current tree,
   atomic add/remove with active roster and scoped write checks, independent
   members, duplicate grouping/removal and synchronized scalar primary. Close
