@@ -63,6 +63,7 @@ for command in [['raise', None, 'open', [], False],
         headers={'Content-Type': 'application/x-www-form-urlencoded', 'X-WeBa-Request': '1'})
     client.open(request, timeout=15).read()
 assert call('/api/users/rest-owner/boards')[0] == 401, 'Native cookie must not authenticate REST'
+assert call('/api/users/rest-other', 'DELETE')[0] == 401, 'Native cookie must not authorize REST deletion'
 assert call('/users/login', 'POST', raw=b'[')[0] == 400
 assert call('/users/login', 'POST', data=[])[0] == 400
 wrong = call('/users/login', 'POST', {'username': 'rest-owner', 'password': 'wrong'})

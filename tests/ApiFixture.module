@@ -2,6 +2,7 @@
 Public Sub Main()
   Dim boardId As Integer
   Dim otherId As Integer
+  Dim cardId As Integer
   Dim r As Result
   Dim db As Connection
   Dim deadline As Float
@@ -10,6 +11,30 @@ Public Sub Main()
   Dim memberOperation As String
   Dim data As New Collection
   If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
+  If Env["WEBA_TEST_MODE"] = "delete-content" Then
+    Session["username"] = Env["WEBA_TEST_USER"]
+    Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
+    boardId = KanbanStore.AddBoard("REST deletion retained board")
+    cardId = KanbanStore.SaveCard(boardId, 0, "REST retained card", "REST retained body", "Default", "Todo", Session["username"], "", "")
+    BoardAccess.SetMember(boardId, "rest-other", "board-admin")
+    BoardAccess.SetAssignees(boardId, cardId, [Session["username"], "rest-other"])
+    CardContent.Save(boardId, cardId, 0, "comment", "", "REST retained comment", 0, False, 0)
+    CardContent.AddFile(boardId, cardId, "retained.bin", "retained" & Chr(0) & "bytes")
+    CardContent.StartTimer(boardId, cardId)
+    WorkspaceStore.SetSetting(boardId, "board", boardId, "star", "1")
+    data["boardId"] = boardId
+    data["cardId"] = cardId
+    Print JSON.Encode(data)
+    Return
+  Endif
+  If Env["WEBA_TEST_MODE"] = "seed-user" Then
+    Session["username"] = "rest-owner"
+    Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
+    WebDatabase.NewUser(Env["WEBA_TEST_USER"], Env["WEBA_TEST_PASSWORD"], Env["WEBA_TEST_ADMIN"] = "1")
+    data["id"] = Env["WEBA_TEST_USER"]
+    Print JSON.Encode(data)
+    Return
+  Endif
   If Env["WEBA_TEST_MODE"] = "reset" Then
     Session["username"] = "rest-owner"
     Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])

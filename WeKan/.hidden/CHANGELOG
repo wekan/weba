@@ -1,4 +1,8 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- REST user deletion: Require site administrator, return the committed deleted
+  ID or missing 404, revoke credentials and retain attributed content. Preserve
+  native self-delete guard and match REST self deletion. Verify denied/failed
+  HTTP snapshots, source/archive contracts and original spec 17 callback.
 - Documentation: Describe inactive API rows, activation rules, native
   re-invitation, identity cleanup, four-phase rollback tests and remaining gaps.
 - Inactive membership: Retain removed member flags without authority, exclude

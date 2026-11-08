@@ -294,13 +294,23 @@ Catch
   Error.Raise(failure)
 End
 
-Public Sub DeleteUser(username As String)
+Public Function DeleteUser(username As String) As Boolean
+  Return DeleteAccount(username, False)
+End
+
+Public Function DeleteApiUser(username As String) As Boolean
+  If Env["WEBA_API_REQUEST"] <> "1" Then Error.Raise("API context required")
+  ' The original REST route permits a site admin to delete their own account.
+  Return DeleteAccount(username, True)
+End
+
+Private Function DeleteAccount(username As String, allowSelf As Boolean) As Boolean
   Dim transaction As Boolean
   Dim failure As String
   Init()
   AdminRequired()
   If Not username Or Len(username) > 255 Then Error.Raise("Choose a user")
-  If username = WebIdentity.Username Then Error.Raise("Cannot delete your own account")
+  If Not allowSelf And username = WebIdentity.Username Then Error.Raise("Cannot delete your own account")
   ApiTokens.PrepareStore()
   RetiredAuthors.OpenStore()
   DatabaseTransactions.Begin($hConn)
@@ -310,7 +320,7 @@ Public Sub DeleteUser(username As String)
   If Not UserExists(username) Then
     DatabaseTransactions.Rollback($hConn)
     transaction = False
-    Return
+    Return False
   Endif
   CleanupUserReferences(username)
   $hConn.Delete("users", "username = &1", username)
@@ -318,6 +328,7 @@ Public Sub DeleteUser(username As String)
   $hConn.Delete("account_sessions", "username = &1", username)
   DatabaseTransactions.Commit($hConn)
   transaction = False
+  Return True
 Catch
   failure = Error.Text
   If transaction Then Try DatabaseTransactions.Rollback($hConn)

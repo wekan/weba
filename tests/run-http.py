@@ -63,6 +63,8 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
         elif '--sessions' in sys.argv:
             subprocess.run([sys.executable, str(root / 'tests/sessions.test.py')], check=True, env=env)
         elif '--api' in sys.argv:
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/wekan-users.test.cjs')], check=True, env=env)
+            subprocess.run([sys.executable, str(root / 'tests/api-user-delete.test.py')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/api.test.py')], check=True, env=env)
         elif '--browser' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/layout.browser.cjs')], check=True, env=env)

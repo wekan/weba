@@ -11,6 +11,7 @@ Public Sub Main()
   Dim boardId As Integer
   Dim action As String
   Dim outcome As Collection
+  Dim removed As Boolean
   If Env["WEBA_API_REQUEST"] <> "1" Then
     Reply(403, ErrorData("API host required"))
     Return
@@ -127,6 +128,33 @@ Public Sub Main()
     Endif
   Endif
   If fields.Count = 3 Then
+    If fields[0] = "api" And fields[1] = "users" Then
+      If Request.Method <> "DELETE" Then
+        Reply(405, ErrorData("Method not allowed"))
+        Return
+      Endif
+      If Not WebDatabase.GetIsAdmin(username) Then
+        Reply(403, ErrorData("Forbidden"))
+        Return
+      Endif
+      If Not fields[2] Or Len(fields[2]) > 255 Then
+        Reply(404, ErrorData("User not found"))
+        Return
+      Endif
+      Try removed = WebDatabase.DeleteApiUser(fields[2])
+      If Error Then
+        Reply(500, ErrorData("User deletion failed"))
+        Return
+      Endif
+      If Not removed Then
+        Reply(404, ErrorData("User not found"))
+        Return
+      Endif
+      item = New Collection
+      item["_id"] = fields[2]
+      Reply(200, item)
+      Return
+    Endif
     If fields[0] = "api" And fields[1] = "boards" And Request.Method = "GET" Then
       Try KanbanStore.RequireBoard(PositiveId(fields[2]))
       If Error Then

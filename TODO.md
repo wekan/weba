@@ -7,10 +7,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 ## Current UI/API/security work
 
 - Full scope remains all items below and the current WeKan UI/API/security test
-  contracts. Complete original suites have not passed against weba. Three spec 17
-  membership callbacks now run unchanged with actual Playwright assertions and
-  an explicit SQLite fixture adapter; its other 27 callbacks remain unexecuted
-  by that adapter. Preserve original assertions as execution adapters expand.
+  contracts. Complete original suites have not passed against weba. Four spec 17
+  callbacks (three membership, one user deletion) now run unchanged with actual
+  Playwright assertions and explicit SQLite fixture adapters; the other 26
+  callbacks remain unexecuted. Preserve original assertions as execution adapters expand.
 - Completed: remove login initializer request/query/user-agent logging and the
   unused shared temporary logfile sink. Guard sources against reintroducing
   request payload logging; validate registration through real CGI sessions.
@@ -25,6 +25,15 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   are stored, and expiry/logout/all/password-reset revocation are verified.
   Native browser cookies cannot authenticate REST. Login attempts use a bounded
   per-peer window and unknown-account password checks; WITH_API gates data routes.
+- Completed REST user deletion: site-admin-only DELETE /api/users/:userId uses
+  the committed removal result, returns the deleted ID, and reports repeat or
+  missing users as 404. Preserve native self-delete protection; REST site-admin
+  self deletion follows the original route and revokes its credentials. Reuse
+  atomic reference cleanup, token/session revocation and display-only attribution.
+  Verify no mutation for anonymous/forged/cookie/board-admin requests, retained
+  cards/files/history and other administrators, sanitized database failures with
+  independent full-table rollback snapshots, and the unchanged original spec 17
+  deletion callback. Stable user IDs and full original suite parity remain open.
 - `build.sh test` now includes real REST tests for source and archive, alongside
   native sessions, store tests, runtime security cases and JS transport guards.
 - Completed: build.sh finds the shared tool area from .tools/w/weba as well

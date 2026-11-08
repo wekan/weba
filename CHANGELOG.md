@@ -2,6 +2,14 @@
 
 This work adds the following features and fixes:
 
+- Add site-admin-only REST user deletion with an authoritative committed result,
+  deleted-ID reply and repeat/missing 404 responses. Reuse atomic privilege and
+  session/token cleanup while preserving attributed content; retain native
+  self-delete protection and match REST administrator self deletion. Verify
+  denied-request snapshots, real HTTP database-error rollback/sanitization,
+  source/archive contracts and the unchanged original spec 17 deletion callback.
+  Full original UI/API/security suites remain pending. Thanks to xet7.
+
 - Document inactive member API rows, activation rules, native re-invitation,
   preferences/identity cleanup and four-phase transaction failure tests. Keep
   stable identity, complete roster metadata and full-suite gaps explicit.
