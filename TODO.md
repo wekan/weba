@@ -142,6 +142,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   failed-COMMIT/retry phases. Full local test command passes, including 27 Python
   tests. Original spec 17 coverage totals seven of thirty callbacks across the
   adapters; the complete original UI/API/security suites remain unverified.
+- Documented: date PUT inputs/clears, numeric precision, UTC native projection,
+  seven original callbacks, 44 helper cases and ten COMMIT phases. Packaged
+  Chromium verifies actual PUT plus native unchanged/change/clear and preserved
+  milliseconds/other dates.
 - Pending dates: local-time/unqualified and freeform V8 date parsing, complete
   native controls for all four fields and time zones, and expanded-year day UI.
 - Next card-person work: remaining card PUT fields, reads, creation/bulk routes

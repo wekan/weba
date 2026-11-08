@@ -1,4 +1,7 @@
 * Sun Nov 08 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Describe date PUT, UTC storage/native projection and remaining
+  controls/parser gaps; record seven original callbacks, 44 helper cases,
+  ten COMMIT phases and packaged Chromium date verification.
 - Card dates: Add four UTC PUT fields, exact milliseconds, clears/invalid skips
   and atomic people/date writes. Preserve native day edits and lifecycle data;
   prevent numeric JSON precision loss. Verify 44 original-helper cases, #5846,

@@ -228,7 +228,7 @@ The first implemented REST contracts use JSON request/response bodies:
 | `POST /api/boards/:id/members/:userId/remove` | Remove with `action: "remove"`; the final administrator remains active |
 | `POST` / `DELETE /api/boards/:id/lists/:listId/cards/:cardId/members/:userId` | Add/remove one card member, preserving other members and the separate assignees |
 | `POST` / `DELETE /api/boards/:id/lists/:listId/cards/:cardId/assignees/:userId` | Add/remove one assignee, preserving other assignees and the separate members |
-| `PUT /api/boards/:id/lists/:listId/cards/:cardId` | Replace provided `members`/`assignees` fields; other card fields are still pending |
+| `PUT /api/boards/:id/lists/:listId/cards/:cardId` | Replace provided people fields and four UTC dates; other card fields are pending |
 
 User deletion requires a site administrator; a board administrator alone is
 refused. It removes account/session/token and current/historical privilege
@@ -285,7 +285,7 @@ card returns 404. A site-admin mutation does not enable general private-board
 reads afterward. Changes, order and audit history commit together; failures
 return a sanitized 500 and roll back.
 
-Card PUT currently implements the `members` and `assignees` fields, returning
+Card PUT implements `members`, `assignees` and the four date fields below, returning
 `{_id}` after commit. Omitted fields remain unchanged. A string becomes one ID;
 arrays keep nonempty string IDs; explicit `null`, an empty string, non-array
 objects, numbers and booleans clear to `[]`. Unknown/inactive board members are
@@ -295,13 +295,29 @@ Merge additions avoid introducing a new duplicate and removals clear every
 occurrence. Copies, moves, JSON exchange and account cleanup preserve or remove
 the sequence consistently; existing data retains its legacy read fallback.
 
-The legacy PUT accepts archived-card people payloads and returns the ID without
+The legacy PUT accepts archived-card people/date payloads and returns the ID without
 changing them, matching the current WeKan route; merge routes instead return
 404 for archived cards. An empty PUT object returns 404 with `{message:"Error"}`.
 Unsupported card fields currently return an explicit 400, including when mixed
 with supported fields, so an unimplemented update cannot appear successful.
 Other card PUT fields, creation/bulk endpoints and full API data parity remain
 pending.
+
+Date fields `receivedAt`, `startAt`, `dueAt` and `endAt` store integer UTC
+milliseconds independently of the legacy day editor. Supported inputs include
+numeric epochs, integer epoch strings, ISO dates and explicit UTC/offset times.
+Empty strings, JSON null and the string `"null"` clear a date; invalid dates are
+skipped. A request with no valid supported change returns the legacy 404.
+People and dates in one request commit together. The runtime canonicalizes
+numeric date JSON before Gambas decoding to avoid millisecond rounding at large
+epochs, while preserving the original request-size limit.
+
+An unchanged native due day preserves the exact API instant. Changing that day
+sets dueAt to UTC midnight; clearing it removes dueAt and preserves other dates.
+Copy/move/JSON exchange retain all four instants. Local-time/unqualified and
+freeform V8 date parsing, complete native date/time/time-zone controls and
+expanded-year day editing remain pending; the current day field is a UTC
+projection, not a complete WeKan date editor.
 
 To edit card members in the native UI, open a saved card and choose Members
 (before Assignee), or use Members in the card menu. The Gambas tree shows
@@ -358,7 +374,9 @@ then retry on the same Gambas connection and verify that scoped authority did
 not survive. The same independent snapshots also force native editor add/remove
 COMMIT failures and successful same-process retries. Two more phases force a
 combined PUT replacement and clear to fail COMMIT, then verify exact sequences,
-normalized relations and successful same-connection retries. A separate HTTP
+normalized relations and successful same-connection retries. Two additional
+combined people/date replacement and clear phases bring card-update COMMIT
+coverage to ten phases. A separate HTTP
 failure in the second field verifies that the first field and audit history also
 roll back. Native store tests cover ordering, copy/move/JSON, invalid-import
 rollback, assigned-only denial and deletion cleanup.
@@ -370,17 +388,22 @@ also checked with the packaged Chromium workflow (`WEBA_DELETION_ONLY=1`).
 
 When the parent WeKan checkout is available, `--members` executes four original
 `#5998` spec 17 callbacks unchanged (three board-member, one card-member), plus
-the original `#3697` people-clear callback. `--api` executes its user-deletion callback
+the original `#3697` people-clear and `#5846` due-date callbacks. `--api` executes its user-deletion callback
 unchanged. Both use actual Playwright assertions and explicit SQLite fixture
 adapters. User fixtures are created through the real Gambas account store;
 post-delete checks read SQLite independently of the HTTP response. Each adapter
-reports which callbacks it did not execute. Together they cover six of the
-file's 30 callbacks; the other 24 and the complete original UI/API/security
+reports which callbacks it did not execute. Together they cover seven of the
+file's 30 callbacks; the other 23 and the complete original UI/API/security
 suites have not passed against weba. The reference checkout's
 `tests/playwright/package.json` dependencies must be installed. A standalone
 weba checkout can select the reference with `WEKAN_SOURCE=/absolute/path/to/wekan`.
 Without a reference checkout, the original-callback check reports an explicit
 skip; weba's independent contract/rollback checks still run.
+
+Date conformance executes 44 supported UTC/offset/epoch cases against the actual
+reference date helpers. Packaged Chromium tests (`WITH_API=true` and
+`WEBA_MEMBERS_ONLY=1`) verify actual PUT, native unchanged/change/clear and
+exported millisecond precision without clearing the other dates.
 
 ## Native component layout
 

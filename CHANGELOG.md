@@ -2,6 +2,12 @@
 
 This work adds the following features and fixes:
 
+- Document four card date fields, clears/invalid skips, atomic people/date
+  writes, numeric precision handling, UTC native day projection and remaining
+  date-editor/parser gaps. Record seven-of-thirty original callbacks, 44 source
+  helper cases, ten COMMIT phases and packaged Chromium verification.
+  Thanks to xet7.
+
 - Add card PUT receivedAt/startAt/dueAt/endAt UTC instants with millisecond
   precision, explicit clears, invalid-date skips and atomic people/date changes.
   Preserve instants through native day edits, copy/move/JSON and deletion;
