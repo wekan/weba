@@ -479,7 +479,7 @@ forged requests and external order refresh, and compares stored mappings with
 original WeKan reorder helpers and the user-model merge method. Repeated keyboard
 moves retain focus when the expected new order arrives, without stealing focus
 from another active field. These checks supplement the original callback counts;
-multiselection, workspace drops and complete original UI/API/security suites
+multiselection, multi-board workspace drops and complete original UI/API/security suites
 remain separate work.
 
 The native Sort, View and Account header popups exclude one another. Home,
@@ -873,7 +873,7 @@ runner above, covering persisted values, invalid hex input and mobile placement.
 
 The login page and signed-in account menu have a language selector. The selected
 language is saved in this browser; a new browser starts with its preferred language
-when available. The imported WeKan catalog currently provides 124 matching interface
+when available. The imported WeKan catalog currently provides 125 matching interface
 keys for 237 languages, including their native language names and RTL metadata.
 Only the selected catalog is fetched, from local application assets. No external
 translation service is used. Labels and report/calendar headings are translated;
@@ -1007,10 +1007,11 @@ it for source and packaged apps. Run it separately with the documented Gambas
 and Chromium environment using `python3 tests/run-http.py --workspaces`, adding
 `--archive` for the package.
 
-Board workspace drops, complete form semantics and original All Boards
-callbacks remain open. Native Latin
+Multi-board drops, complete form semantics and original All Boards callbacks
+remain open. Single-board drops are described below. Native Latin
 checks are separate from running the original callback unchanged. Imported
-workspace and collapse labels now bring the local selection to 124 keys in 237 catalogs;
+workspace, collapse and archive-confirmation labels now bring the local selection
+to 125 keys in 237 catalogs;
 user workspace names and destination paths are never translated.
 
 
@@ -1058,7 +1059,8 @@ native update. A folded target stays folded; if the moved row becomes hidden,
 keyboard focus returns to that target's handle. A later gesture or another
 keyboard drag kind clears the previous focus request. Workspace ordering is
 available in All Boards categories, including Archive, and does not archive a
-board or change assignments/fold state. Board-to-menu drops are separate work.
+board or change assignments/fold state. Single board-to-menu drops are described
+below; multi-board drops remain separate work.
 
 `BoardSpaces.Drop` resolves the target parent and next sibling inside the user
 transaction. It rejects foreign/self/descendant moves and skips unchanged rank
@@ -1074,4 +1076,41 @@ It runs in test-live for source/packages; run separately with the documented
 toolchain/CDP environment using `python3 tests/run-http.py --workspace-order`,
 adding `--archive` for the package. This does not run all original workspace
 UI callbacks unchanged or implement their full desktop-handle preferences,
-multiselection, board drop targets or Markdown icons.
+multiselection, multi-board drop targets or Markdown icons.
+
+
+### Single-board drop targets
+
+Drag a board to a workspace to set your personal placement, or to Remaining to
+remove that placement. Starred adds a missing personal star without moving the
+board or removing an existing star. This add-star gesture accepts a board from
+Remaining or a workspace. Existing stars and other users' placements/stars stay
+independent. Active-board personal organization needs read access.
+
+Archive asks for confirmation and requires board management permission. Drag an
+archived board to Remaining or a workspace to restore it; this also requires
+management permission and commits the archive/activity and personal placement
+changes together. A failed placement cannot leave the board partly restored.
+Global Archive includes assigned archived boards so these targets stay reachable.
+
+Native board handles are available in sorted and Archive modes for placement;
+only Custom supports grid/keyboard reordering. Sorted handles use the Move
+caption. Mouse surfaces and touch handles use the shared gesture engine, while
+ordinary touch remains scrolling. The server rechecks the current visible page,
+read/manage rights, archive state and owned target; reserved fields and foreign/
+private/stale commands cannot bypass those checks.
+
+`BoardDropTest` injects placement/unassignment/activity failures and late access,
+role, workspace-owner and archive-state changes. A separate 52-case comparator
+executes unchanged original workspace/menu/archive callback bodies with explicit
+DOM/dataTransfer/Meteor adapters and compares their supported single-board
+outcomes with native SQL results. It does not exercise the whole original UI
+fixture or authorization/rollback behavior, which have separate native tests.
+
+The real two-user `board-drops.browser.cjs` checks sorted mouse/trusted CDP touch,
+confirmation/cancel, readonly denial, assigned Archive visibility, restoration,
+independent SQL placements/stars, reload and forged private/foreign/reserved
+commands. It runs in source/packaged test-live; use
+`python3 tests/run-http.py --board-drops` (add `--archive` for the package) with
+the documented local toolchain/CDP environment. Multi-board selection, Home/group
+targets, complete original UI/API/security suites and other drivers remain open.

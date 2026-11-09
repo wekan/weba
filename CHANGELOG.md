@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Document single-board drop targets, sorted placement, atomic restoration and
+  scope guards, with native failure/late checks, 52 original callback outcomes
+  and source/packaged browser evidence. Retain multi/Home/full-suite limits.
+  Thanks to xet7.
+
 - Add single-board workspace/Remaining/add-only Starred/Archive drops with
   sorted-mode placement handles, confirmation and atomic restore+placement.
   Recheck read/manage, archive state and target ownership under locks; preserve

@@ -279,7 +279,7 @@ Native failure-injection tests verify late membership/mode guards and full
 rollback/retry. The row-write failure is an UPDATE
 failure test, not a new physical COMMIT phase. Real source/packaged Chromium tests
 use trusted touch events and compare actual stored maps with original helpers and
-setBoardSortIndexes. Original UI callbacks, multiselection/workspace transfers,
+setBoardSortIndexes. Original UI callbacks, multiselection workspace transfers,
 locale/driver-wide collation and efficient polling remain unverified/pending.
 
 
@@ -364,7 +364,7 @@ a hidden stale native Save after revocation and checks unchanged assignments.
 Source/packaged test-live includes the case after the existing live regressions.
 The native Latin checks do not run original spec 39's callback unchanged: that
 callback requires actual form/submit/required semantics still to be aligned.
-Markdown icons, board workspace drops and broader original UI/API/security
+Markdown icons, multi-board workspace drops and broader original UI/API/security
 suites remain explicit TODO requirements. Folding/counts and native tree
 gestures are described below.
 
@@ -438,5 +438,47 @@ unchanged original immutable move helper. The DOM test separately compares the
 quarter-row classifier and checks cancellation/scroll/menu/cycle/replacement/RTL
 wire rules. The real browser checks SQL AND the visible tree before another
 gesture, because a commit may precede the native DOM response. Source/packaged
-trusted touch/focus tests add evidence; original UI callbacks, board drop
+trusted touch/focus tests add evidence; original UI callbacks, multi-board drop
 targets, desktop-handle preferences and multiselection remain open.
+
+
+## Single-board drops and archive transactions
+
+`BoardSpaces.DropBoard` accepts board ID, target enum/owned workspace and source
+category. The native handler derives source from its server-side view state,
+checks the board belongs to the freshly loaded visible page and rejects a
+nonempty reserved field before mutation. Client source attributes are hints,
+not authority. Home/groups/multi-board commands are not provided by this step.
+
+Validate source/target pairs and current archive state before and after locking
+the account and board. Require read for every drop and manageBoard for archive
+or restoration. Recheck target ownership under the lock. `AssignWithin` is a
+private primitive shared with Assign; only its guarded callers may invoke it.
+Star drops write only a missing current-principal star, honoring the existing
+legacy fallback, and do not toggle or unassign.
+
+Restore plus assignment/unassignment and activity share the outer transaction.
+Use the existing board archive mutation inside that transaction; avoid separate
+commits or nested public assignment calls. Trigger fixtures prove activity and
+archive rollback after placement failure, with retry and late membership/role/
+workspace-owner/archive-state guards. These SQLite triggers are test-only;
+production operations still use portable Gambas DB APIs.
+
+Archive overview requests the native archived `archive` menu, which bypasses
+personal assignment filtering after normal visibility checks. Explicit archived
+workspace categories remain available to native callers. The original active
+page-method comparator is unchanged; no new public HTTP contract is claimed.
+
+The common pointer engine prioritizes workspace/menu targets before grid
+reordering and emits a distinct board-drop tuple. Sorted/Archive handles may
+place a board, while keyboard/grid reordering still requires Custom. Archive
+confirmation uses the copied source catalog. DOM cancellation and invalid source
+limits, native late/rollback tests and actual source/packaged browser behavior
+have separate evidence.
+
+The 52-case source comparator runs original callback bodies with explicit
+DOM/dataTransfer and Meteor-call effect adapters. It compares supported final
+state, not original permission checks, asynchronous race behavior, multi-board
+callbacks or the full original Playwright fixture. The real browser exports
+independent archived/star/assignment SQL rows, so UI completion and persistence
+are both checked. Remaining broad parity requirements stay in TODO.md.

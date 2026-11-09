@@ -1,4 +1,6 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Explain single-board targets, atomic restore and permission
+  rechecks with native/source/browser evidence; retain multi/Home/full parity.
 - Board drops: Add single-board workspace/Remaining/add-only Starred/Archive
   targets and sorted-mode handles, confirmed archive and atomic restoration.
   Recheck read/manage/state/target scope under locks and include assigned boards

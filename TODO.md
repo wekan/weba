@@ -6,6 +6,11 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Current UI/API/security work
 
+- Documented single-board targets, sorted placement versus Custom reordering,
+  atomic restore/activity/placement, server-derived source and fresh scope guards.
+  Recorded native/source/browser evidence and kept multi/Home/groups and full
+  original-suite requirements open.
+
 - Documented locked workspace drop resolution, private native metadata, pointer/
   keyboard/focus behavior and 196-case source plus real browser evidence. Kept
   board drop targets, handle preferences and original callbacks explicit.
