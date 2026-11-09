@@ -1146,3 +1146,34 @@ The original callback comparator now checks 156 single/multi/mixed final states;
 permission and atomic-failure coverage are separate native evidence. Existing
 single-board source/package browser regressions also pass. These results do not
 prove a multi-selection UI or unchanged full original suites.
+
+
+### Native board selection
+
+The header Multi-Selection control enables native per-form selection and opens
+its sidebar. Checkboxes select individual visible boards; Select all adds the
+current page and Select none clears the retained set. Selection survives search,
+page and category navigation within that form. Turning the mode off or reloading
+clears it. Search can open its sidebar while selection remains active.
+
+Dragging a selected board to a supported workspace/menu target moves the retained
+set, including selected boards outside the current filter/page. The ghost shows
+the selected count. An unselected board still uses the single-board path. Grouped
+boards do not reorder the Custom grid. The browser sends one visible selected
+origin and the revision captured at gesture start; the server supplies the ID
+list from private state. Stale revisions, private/off-page origins, disabled
+mode and single-drop attempts on selected origins are rejected. DropBoards
+rechecks every retained board's current access and commits the set atomically.
+Remaining and Archive clear selection after success; workspace and Starred retain
+it. Board batch sidebar actions, Home/group targets and original UI callbacks
+remain separate work; no new public HTTP endpoint is introduced.
+
+BoardSelectionTest exercises native principal/session/form isolation, visible-only
+selection, retained ordering and revisions. The gesture test checks captured
+revisions, ghost count, cancellation and group reorder exclusion. The real
+board-selection.browser.cjs test checks native controls, filtered and 25+5-page
+selection, mouse and trusted mobile touch, private/stale/single-drop bypass
+denial, off-page access revocation with no partial placement, clear/disable and
+reload/form isolation. It runs in test-live for source and packaged apps, or with
+`python3 tests/run-http.py --board-selection` (add `--archive`). This coverage
+does not establish that all unchanged original WeKan suites pass.

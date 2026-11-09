@@ -12,7 +12,7 @@ and in the [README](../README.md), rather than in duplicate instruction files.
 | Login and registration | `WeKan/.src/WebformLogin.class` and `.webform` |
 | Native navigation, editors and live board checks | `WeKan/.src/WebformMain.class`, `.webform`, `BoardLive.module`, `CardDraft.module`, `DetailLive.module`, `EntryDraft.module`, `PeopleLive.module` |
 | Accounts, sessions and connection | `WeKan/.src/WebDatabase.module`, `WebIdentity.module`, `ApiTokens.module` |
-| Board/card persistence and permissions | `KanbanStore.module`, `BoardAccess.module`, `ApiMemberRoles.module`, `BoardCatalog.module`, `BoardOrder.module`, `BoardSpaces.module` |
+| Board/card persistence and permissions | `KanbanStore.module`, `BoardAccess.module`, `ApiMemberRoles.module`, `BoardCatalog.module`, `BoardOrder.module`, `BoardSpaces.module`, `BoardSelection.module` |
 | REST routing and projections | `RestApi.module`, `BoardRestData.module` |
 | UTC dates, archive history and change clocks | `CardDates.module`, `CardArchive.module`, `ItemChanges.module` |
 | Workspace menus, transfer and rich content | `WorkspaceStore.module`, `WorkspaceActions.module`, `BoardTransfer.module`, `CardContent.module` |
@@ -525,3 +525,20 @@ Meteor publication timing or original per-call failure semantics. The native
 transaction adds all-or-none failure handling. Existing single-board real UI
 regressions protect the shared primitive; no native multi-selection browser
 coverage is claimed before its actual controls and transport are implemented.
+
+
+## Native board selection transport
+
+BoardSelection owns a private Collection per WebformMain instance, bound to the
+current principal and account generation. ID getters return copies. Visible-only
+toggle/add validates the entire candidate set before mutating; no browser ID list
+can replace the retained set. Changes increment a revision. DropIds checks active
+mode, captured revision and visible selected origin, then returns the server set
+to the atomic BoardSpaces.DropBoards service. That service reauthorizes retained
+off-page members. Single-drop transport rejects selected origins during active
+mode; neither grouped mouse nor keyboard paths fall back to Custom reordering.
+
+The source/package test-live runner includes board-selection.browser.cjs; the
+isolated --board-selection mode also exercises paging and late off-page access
+revocation. SQL fixtures and native service tests cover storage/authorization
+separately. No unchanged full original selection callback suite is claimed.

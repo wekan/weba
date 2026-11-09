@@ -1,0 +1,76 @@
+Public Sub Main()
+  Dim a As Integer
+  Dim b As Integer
+  Dim hidden As Integer
+  Dim state As Collection
+  Dim another As Collection
+  Dim original As String
+  Dim ids As Integer[]
+  Dim visible As Integer[]
+  Dim revision As Long
+  Dim denied As Boolean
+  WebDatabase.Register("selection-owner", "x")
+  WebDatabase.Register("selection-other", "x")
+  SignIn("selection-other")
+  hidden = KanbanStore.AddBoard("Other private")
+  SignIn("selection-owner")
+  a = KanbanStore.AddBoard("Selection Alpha")
+  b = KanbanStore.AddBoard("Selection Bravo")
+  state = BoardSelection.NewState()
+  another = BoardSelection.NewState()
+  If BoardSelection.Active(state) Or BoardSelection.Count(state) Or BoardSelection.Revision(state) Then Error.Raise("New selection inherited state")
+  Try BoardSelection.Toggle(state, a, [a])
+  denied = Error
+  If Not denied Then Error.Raise("Inactive selection accepted toggle")
+  BoardSelection.SetActive(state, True)
+  BoardSelection.AddVisible(state, [a])
+  revision = BoardSelection.Revision(state)
+  BoardSelection.AddVisible(state, [a])
+  If BoardSelection.Revision(state) <> revision Or BoardSelection.Count(state) <> 1 Then Error.Raise("Select All was not idempotent")
+  original = JSON.Encode(state)
+  Try BoardSelection.Toggle(state, b, [a])
+  denied = Error
+  If Not denied Or JSON.Encode(state) <> original Then Error.Raise("Off-page toggle mutated state")
+  BoardSelection.AddVisible(state, [b])
+  If BoardSelection.Count(state) <> 2 Or BoardSelection.Ids(state)[0] <> a Or BoardSelection.Ids(state)[1] <> b Then Error.Raise("Page append lost selection/order")
+  If BoardSelection.Count(another) Or BoardSelection.Active(another) Then Error.Raise("Separate form inherited selection")
+  ids = BoardSelection.Ids(state)
+  ids.Clear()
+  If BoardSelection.Count(state) <> 2 Then Error.Raise("ID getter exposed mutable state")
+  revision = BoardSelection.Revision(state)
+  ids = BoardSelection.DropIds(state, b, revision, [b])
+  If ids.Count <> 2 Then Error.Raise("Drop lost retained off-page selection")
+  BoardSelection.Toggle(state, a, [a])
+  Try BoardSelection.DropIds(state, b, revision, [b])
+  denied = Error
+  If Not denied Then Error.Raise("Stale selection revision accepted")
+  Try BoardSelection.DropIds(state, a, BoardSelection.Revision(state), [a])
+  denied = Error
+  If Not denied Then Error.Raise("Unselected origin became a group")
+  BoardSelection.Clear(state)
+  If Not BoardSelection.Active(state) Or BoardSelection.Count(state) Then Error.Raise("Select None disabled mode or retained IDs")
+  original = JSON.Encode(state)
+  Try BoardSelection.AddVisible(state, [a, hidden])
+  denied = Error
+  If Not denied Or JSON.Encode(state) <> original Then Error.Raise("Foreign candidate left partial selection")
+  BoardSelection.AddVisible(state, [a, b])
+  BoardSelection.SetActive(state, False)
+  If BoardSelection.Active(state) Or BoardSelection.Count(state) Then Error.Raise("Disable retained selection")
+  BoardSelection.SetActive(state, True)
+  BoardSelection.AddVisible(state, [a])
+  SignIn("selection-other")
+  Try BoardSelection.Ids(state)
+  denied = Error
+  If Not denied Then Error.Raise("Selection crossed principal")
+  SignIn("selection-owner")
+  Session["auth_generation"] = 0
+  Try BoardSelection.Clear(state)
+  denied = Error
+  If Not denied Then Error.Raise("Stale session changed selection")
+  Print "Board selection: principal/form isolation, active mode, visible-only toggle/add, retained page order, copy isolation, revision/selected-origin guards and foreign/stale denial passed"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

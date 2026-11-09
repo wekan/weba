@@ -31,6 +31,8 @@ Private $draft As Collection
 Private $detailState As String
 Private $entryBaseline As Collection
 Private $detailFormBase As Collection
+Private $boardSelection As Collection
+Private $overviewSidebar As String = "search"
 Private $catalogData As Collection
 Private $catalogSort As String = "custom"
 Private $catalogPage As Integer = 1
@@ -81,6 +83,7 @@ Public Sub WebForm_Open()
     WebForm.Goto(WebformLogin)
     Return
   Endif
+  $boardSelection = BoardSelection.NewState()
   Status.Text = "Todo"
   $catalogSort = BoardCatalog.SortBy()
   UpdateCatalogSort()
@@ -407,6 +410,7 @@ Catch
 End
 
 Private Sub RefreshCatalogVisual()
+  UpdateSelectionControls()
   If IsOverview() Then $catalogData = LoadBoardOverview()
   Visual.Refresh()
 End
@@ -517,7 +521,7 @@ Public Sub Visual_Render()
   If $board Then $liveState = BoardLive.State($board, $archive)
   Print "<script>" & File.Load(".public/kanban.js") & "</script>"
   If $board Then boardColor = WorkspaceStore.Setting($board, "board", $board, "color", "#2980b9")
-  Print "<section data-board-drop=\"" & If(IsOverview(), "true", "false") & "\" data-board-source=\"" & If($archive, "archive", If($view = "Starred", "starred", If($spaceMenu > 0, "workspace", "remaining"))) & "\" data-workspace-reorder=\"" & If(IsOverview(), "true", "false") & "\" data-board-reorder=\"" & If(IsOverview() And Not $archive And $catalogSort = "custom", "true", "false") & "\" data-board-color=\"" & Html(boardColor) & "\" data-context=\"" & Html(ContextAction.Name) & "\" data-drag=\"" & Html(DragAction.Name) & "\" data-board=\"" & Str($board) & "\" data-action=\"" & Html(BoardAction.Name) & "\" data-card-move=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "moveCard"), "true", "false") & "\" data-editable=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "write"), "true", "false") & "\" class=\"weba-content\" data-tree=\"" & Html(Boards.Name) & "\" data-view=\"" & Html($view) & "\">"
+  Print "<section data-multi-active=\"" & If(IsOverview() And BoardSelection.Active(SelectionState()), "true", "false") & "\" data-selection-count=\"" & Str(BoardSelection.Count(SelectionState())) & "\" data-selection-revision=\"" & Str(BoardSelection.Revision(SelectionState())) & "\" data-selection-action=\"" & Html(BoardSelectionAction.Name) & "\" data-board-drop=\"" & If(IsOverview(), "true", "false") & "\" data-board-source=\"" & If($archive, "archive", If($view = "Starred", "starred", If($spaceMenu > 0, "workspace", "remaining"))) & "\" data-workspace-reorder=\"" & If(IsOverview(), "true", "false") & "\" data-board-reorder=\"" & If(IsOverview() And Not $archive And $catalogSort = "custom", "true", "false") & "\" data-board-color=\"" & Html(boardColor) & "\" data-context=\"" & Html(ContextAction.Name) & "\" data-drag=\"" & Html(DragAction.Name) & "\" data-board=\"" & Str($board) & "\" data-action=\"" & Html(BoardAction.Name) & "\" data-card-move=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "moveCard"), "true", "false") & "\" data-editable=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "write"), "true", "false") & "\" class=\"weba-content\" data-tree=\"" & Html(Boards.Name) & "\" data-view=\"" & Html($view) & "\">"
   If $view = "Profile" Then
     Print "<p>Signed in as " & Html(WebIdentity.Username) & "</p>"
   Else If $view = "Admin panel" Then
@@ -563,7 +567,7 @@ Public Sub Visual_Render()
         If WorkspaceStore.Setting(b!id, "board", b!id, "star") <> "1" Then Continue
       Endif
       If Not $board And ($view = "Boards" Or $view = "Archive" Or $view = "Starred") Then
-        tiles[CStr(b!id)] = "<div class=\"weba-board-tile-group\" data-board-id=\"" & Str(b!id) & "\">" & If(IsOverview(), "<button type=\"button\" class=\"weba-drag-handle weba-board-drag fa fa-arrows\" data-drag-kind=\"board\" aria-label=\"Sort boards\"></button>", "") & "<button style=\"background-color:" & Html(WorkspaceStore.Setting(b!id, "board", b!id, "color", "#2980b9")) & "\" type=\"button\" class=\"weba-board-tile\" data-board-key=\"b" & Str(b!id) & "\"><strong>" & Html(b!title) & "</strong></button><button class=\"weba-board-context fa fa-bars\" data-context-kind=\"board\" data-context-id=\"" & Str(b!id) & "\" aria-label=\"Board menu\"></button></div>"
+        tiles[CStr(b!id)] = "<div data-selected=\"" & If(BoardSelection.IsSelected(SelectionState(), b!id), "true", "false") & "\" class=\"weba-board-tile-group\" data-board-id=\"" & Str(b!id) & "\">" & If(IsOverview(), "<button type=\"button\" class=\"weba-drag-handle weba-board-drag fa fa-arrows\" data-drag-kind=\"board\" aria-label=\"Sort boards\"></button>", "") & "<button style=\"background-color:" & Html(WorkspaceStore.Setting(b!id, "board", b!id, "color", "#2980b9")) & "\" type=\"button\" class=\"weba-board-tile\" data-board-key=\"b" & Str(b!id) & "\"><strong>" & Html(b!title) & "</strong></button><button class=\"weba-board-context fa fa-bars\" data-context-kind=\"board\" data-context-id=\"" & Str(b!id) & "\" aria-label=\"Board menu\"></button></div>"
         Continue
       Endif
       Print "<h3>" & Html(b!title) & "</h3>"
@@ -733,7 +737,8 @@ Private Sub UpdateHeader()
   AdminNavigation.Visible = $view = "Admin panel"
   OverviewActions.Visible = overview And Not $archive
   SortBoards.Visible = overview
-  BoardSearchPanel.Visible = overview
+  BoardSearchPanel.Visible = overview And ($overviewSidebar <> "selection" Or Not BoardSelection.Active(SelectionState()))
+  UpdateSelectionControls()
   SearchTitle.Visible = Not overview
   Filter.Visible = Not overview
   Search.Visible = Not overview
@@ -800,6 +805,8 @@ Public Sub AddBoardTile_Click()
 End
 
 Public Sub HeaderSearch_Click()
+  $overviewSidebar = "search"
+  UpdateSelectionControls()
   PageSidebar.Show()
   If IsOverview() Then
     BoardSearch.SetFocus()
@@ -896,7 +903,23 @@ Private Sub DropCatalogBoard(boardId As Integer, target As String, spaceId As In
   ids = data["ids"]
   If ids.Find(boardId) < 0 Then Error.Raise("Invalid board drop")
   source = If($archive, "archive", If($view = "Starred", "starred", If($spaceMenu > 0, "workspace", "remaining")))
+  If BoardSelection.Active(SelectionState()) And BoardSelection.IsSelected(SelectionState(), boardId) Then Error.Raise("Board selection changed")
   BoardSpaces.DropBoard(boardId, target, spaceId, source)
+  RefreshTree()
+End
+
+Private Sub DropSelectedBoards(boardId As Integer, target As String, spaceId As Integer, revision As Long)
+  Dim data As Collection
+  Dim ids As Integer[]
+  Dim visible As Integer[]
+  Dim source As String
+  If Not IsOverview() Then Error.Raise("Select All Boards first")
+  data = LoadBoardOverview()
+  visible = data["ids"]
+  ids = BoardSelection.DropIds(SelectionState(), boardId, revision, visible)
+  source = If($archive, "archive", If($view = "Starred", "starred", If($spaceMenu > 0, "workspace", "remaining")))
+  BoardSpaces.DropBoards(ids, target, spaceId, source)
+  If target = "remaining" Or target = "archive" Then BoardSelection.Clear(SelectionState())
   RefreshTree()
 End
 
@@ -908,6 +931,10 @@ Public Sub DragAction_Change()
   DragAction.Text = ""
   fields = Split(wire, "|")
   If fields.Count <> 5 Then Error.Raise("Invalid drag action")
+  If fields[0] = "board-multi-drop" Then
+    DropSelectedBoards(CInt(UnBase64(fields[1])), UnBase64(fields[2]), CInt(UnBase64(fields[3])), CLong(UnBase64(fields[4])))
+    Return
+  Endif
   If fields[0] = "board-drop" Then
     If UnBase64(fields[4]) <> "" Then Error.Raise("Invalid board drop")
     DropCatalogBoard(CInt(UnBase64(fields[1])), UnBase64(fields[2]), CInt(UnBase64(fields[3])))
@@ -2507,4 +2534,84 @@ End
 
 Public Sub CloseBoardWorkspace_Click()
   BoardWorkspacePanel.Hide()
+End
+
+
+Private Function SelectionState() As Collection
+  If Not $boardSelection Then $boardSelection = BoardSelection.NewState()
+  Return $boardSelection
+End
+
+Private Sub UpdateSelectionControls()
+  Dim active As Boolean = BoardSelection.Active(SelectionState())
+  MultiBoards.Visible = IsOverview()
+  MultiBoards.Class = "weba-icon-only fa fa-check-square-o" & If(active, " weba-active", "")
+  MultiBoards.Tooltip = "Multi-Selection"
+  If active Then MultiBoards.Tooltip = "Multi-Selection is on"
+  CloseMultiBoards.Visible = IsOverview() And active
+  BoardSelectionControls.Visible = IsOverview() And active
+  BoardSelectionPanel.Visible = IsOverview() And active And $overviewSidebar = "selection"
+  BoardSearchPanel.Visible = IsOverview() And Not BoardSelectionPanel.Visible
+  SelectedBoardsCount.Text = Str(BoardSelection.Count(SelectionState()))
+End
+
+Public Sub MultiBoards_Click()
+  If Not IsOverview() Then Return
+  If BoardSelection.Active(SelectionState()) Then
+    CloseMultiBoards_Click()
+    Return
+  Endif
+  BoardSelection.SetActive(SelectionState(), True)
+  $overviewSidebar = "selection"
+  PageSidebar.Show()
+  CloseHeaderMenus()
+  RefreshCatalogVisual()
+End
+
+Public Sub CloseMultiBoards_Click()
+  BoardSelection.SetActive(SelectionState(), False)
+  $overviewSidebar = "search"
+  BoardSelectionPanel.Hide()
+  PageSidebar.Hide()
+  RefreshCatalogVisual()
+End
+
+Public Sub SelectAllBoards_Click()
+  Dim data As Collection
+  Dim ids As Integer[]
+  If Not IsOverview() Then Error.Raise("Select All Boards first")
+  data = LoadBoardOverview()
+  ids = data["ids"]
+  BoardSelection.AddVisible(SelectionState(), ids)
+  RefreshCatalogVisual()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub SelectNoBoards_Click()
+  If Not IsOverview() Then Error.Raise("Select All Boards first")
+  BoardSelection.Clear(SelectionState())
+  RefreshCatalogVisual()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub BoardSelectionAction_Change()
+  Dim wire As String
+  Dim fields As String[]
+  Dim data As Collection
+  Dim ids As Integer[]
+  If Not BoardSelectionAction.Text Then Return
+  wire = BoardSelectionAction.Text
+  BoardSelectionAction.Text = ""
+  If Not IsOverview() Then Error.Raise("Select All Boards first")
+  fields = Split(wire, "|")
+  If fields.Count <> 2 Or fields[0] <> "toggle" Then Error.Raise("Invalid board selection")
+  data = LoadBoardOverview()
+  ids = data["ids"]
+  BoardSelection.Toggle(SelectionState(), CInt(UnBase64(fields[1])), ids)
+  RefreshCatalogVisual()
+Catch
+  Notice.Text = Error.Text
+  RefreshCatalogVisual()
 End

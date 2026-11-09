@@ -1,0 +1,114 @@
+ ' Private per-form selection state. Never accept this object or an ID list from the browser.
+Export
+
+Public Function NewState() As Collection
+  Dim username As String = WebIdentity.Username
+  Dim data As New Collection
+  If Not username Then Error.Raise("Sign in required")
+  data["username"] = username
+  data["generation"] = WebDatabase.SessionGeneration(username)
+  data["active"] = False
+  data["revision"] = CLong(0)
+  data["ids"] = New Integer[]
+  Return data
+End
+
+Private Sub Check(state As Collection, Optional requireActive As Boolean)
+  Dim username As String = WebIdentity.Username
+  If Not state Then Error.Raise("Invalid board selection")
+  If username = "" Or CStr(state["username"]) <> username Then Error.Raise("Sign in required")
+  If CLong(state["generation"]) <> WebDatabase.SessionGeneration(username) Then Error.Raise("Sign in required")
+  If requireActive And Not CBool(state["active"]) Then Error.Raise("Activate multi-selection first")
+End
+
+Public Function Active(state As Collection) As Boolean
+  Check(state)
+  Return state["active"]
+End
+
+Public Function Revision(state As Collection) As Long
+  Check(state)
+  Return state["revision"]
+End
+
+Public Function Ids(state As Collection) As Integer[]
+  Dim values As Integer[]
+  Check(state)
+  values = state["ids"]
+  Return values.Copy()
+End
+
+Public Function Count(state As Collection) As Integer
+  Dim values As Integer[]
+  Check(state)
+  values = state["ids"]
+  Return values.Count
+End
+
+Public Function IsSelected(state As Collection, boardId As Integer) As Boolean
+  Dim values As Integer[]
+  Check(state)
+  values = state["ids"]
+  Return values.Find(boardId) >= 0
+End
+
+Public Sub SetActive(state As Collection, value As Boolean)
+  Check(state)
+  If CBool(state["active"]) = value Then Return
+  state["active"] = value
+  If Not value Then state["ids"] = New Integer[]
+  state["revision"] = CLong(state["revision"]) + 1
+End
+
+Public Sub Clear(state As Collection)
+  Check(state, True)
+  If BoardSelection.Count(state) = 0 Then Return
+  state["ids"] = New Integer[]
+  state["revision"] = CLong(state["revision"]) + 1
+End
+
+Private Sub CheckVisible(boardId As Integer, visible As Integer[])
+  If Not visible Then Error.Raise("Invalid board selection")
+  If boardId <= 0 Or visible.Find(boardId) < 0 Then Error.Raise("Invalid board selection")
+  BoardAccess.RequireRead(boardId)
+End
+
+Public Sub Toggle(state As Collection, boardId As Integer, visible As Integer[])
+  Dim values As Integer[]
+  Dim at As Integer
+  Check(state, True)
+  CheckVisible(boardId, visible)
+  values = state["ids"]
+  at = values.Find(boardId)
+  If at >= 0 Then
+    values.Remove(at)
+  Else
+    values.Add(boardId)
+  Endif
+  state["revision"] = CLong(state["revision"]) + 1
+End
+
+Public Sub AddVisible(state As Collection, visible As Integer[])
+  Dim values As Integer[]
+  Dim boardId As Integer
+  Dim changed As Boolean
+  Check(state, True)
+  If Not visible Then Error.Raise("Invalid board selection")
+  For Each boardId In visible
+    CheckVisible(boardId, visible)
+  Next
+  values = state["ids"]
+  For Each boardId In visible
+    If values.Find(boardId) >= 0 Then Continue
+    values.Add(boardId)
+    changed = True
+  Next
+  If changed Then state["revision"] = CLong(state["revision"]) + 1
+End
+
+Public Function DropIds(state As Collection, draggedId As Integer, revision As Long, visible As Integer[]) As Integer[]
+  Check(state, True)
+  If revision <> BoardSelection.Revision(state) Or Not IsSelected(state, draggedId) Then Error.Raise("Board selection changed")
+  CheckVisible(draggedId, visible)
+  Return BoardSelection.Ids(state)
+End

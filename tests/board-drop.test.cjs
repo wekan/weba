@@ -23,5 +23,16 @@ drop(0);assert.deepEqual(decoded(),['101','workspace','7','']);drop(1);assert.de
 const beforeCancel=calls.length;drop(0,true);event('pointerdown',handle,315,125);event('pointermove',d,-20,20);event('pointerup',d,-20,20);assert.equal(calls.length,beforeCancel,'cancel/outside do not send');
 handle.dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowUp',bubbles:true,cancelable:true}));assert.equal(calls.length,beforeCancel,'sorted keyboard does not reorder');
 event('pointerdown',handle,315,125);event('pointermove',d,400,70);event('pointerup',d,400,70);assert.equal(calls.length,beforeCancel,'sorted grid has no reorder target');
-section.dataset.boardDrop='false';assert.equal(w.webaDrag.identify(handle,'touch'),null);w.close();
+section.dataset.boardSource='remaining';section.dataset.multiActive='true';section.dataset.selectionRevision='12';section.dataset.selectionCount='3';group.dataset.selected='true';
+assert.deepEqual({...w.webaDrag.identify(handle,'touch').group},{revision:'12',count:'3'});
+event('pointerdown',handle,315,125);event('pointermove',d,80,20);
+assert.equal(d.querySelector('.weba-multidrag-count').textContent,'3');
+// A concurrent refresh cannot silently replace the captured revision.
+section.dataset.selectionRevision='13';event('pointerup',d,80,20);
+let multi=calls.at(-1)[2].split('|');assert.equal(multi.shift(),'board-multi-drop');assert.deepEqual(multi.map(value=>Buffer.from(value,'base64').toString()),['101','workspace','7','12']);
+section.dataset.boardReorder='true';const grouped=calls.length;
+event('pointerdown',handle,315,125);event('pointermove',d,400,70);event('pointerup',d,400,70);
+handle.dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowUp',bubbles:true,cancelable:true}));assert.equal(calls.length,grouped,'group cannot fall back to grid reorder');
+group.dataset.selected='false';drop(0);assert.deepEqual(decoded(),['101','workspace','7','']);
+section.dataset.boardReorder='false';section.dataset.boardDrop='false';assert.equal(w.webaDrag.identify(handle,'touch'),null);w.close();
 console.log('Board drop gestures: sorted workspace/Remaining/Starred/Archive wire, add-star source limits, restore targets, archive confirmation, scroll/cancel/outside and no sorted reorder passed');

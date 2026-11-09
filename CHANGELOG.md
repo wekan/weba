@@ -2,6 +2,15 @@
 
 This work adds the following features and fixes:
 
+- Add native per-form board multi-selection controls and visible-page Select All,
+  retaining selection across filtering, paging and categories. Use revisioned
+  server-owned IDs for multi-drop transport; reject stale/private/off-page and
+  selected-origin single-drop bypasses. Show group counts and prevent group grid
+  reordering. Verify principal/session/form isolation, native mouse and trusted
+  mobile touch, 25+5 paging and atomic denial after off-page access revocation.
+  Batch sidebar actions, Home/group targets and complete original suites remain
+  open. Thanks to xet7.
+
 - Document the native mixed-state batch transaction and lock/scope/rollback
   evidence, including 156 original callback outcomes. Keep selection controls,
   authoritative native selection transport and full original suites open.

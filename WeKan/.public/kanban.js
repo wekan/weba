@@ -12,6 +12,26 @@
       if (!data || !report) return;
       report.replaceChildren(); data.hidden = false;
       data.querySelectorAll('[data-drag-kind="board"]').forEach(handle=>{const label=t(section.dataset.boardReorder==='true'?'Sort boards':'Move')+': '+(handle.closest('.weba-board-tile-group')?.querySelector('strong')?.textContent||'');handle.title=label;handle.setAttribute('aria-label',label);});
+      data.querySelectorAll('.weba-board-tile-group').forEach(group=>{
+        const active=section.dataset.multiActive==='true';
+        group.classList.toggle('weba-board-selected',active&&group.dataset.selected==='true');
+        let input=group.querySelector('.weba-board-select');
+        if(active&&!input){input=document.createElement('input');input.type='checkbox';input.className='weba-board-select';group.prepend(input);}
+        if(!active){input?.remove();return;}
+        input.checked=group.dataset.selected==='true';
+        const label=t('Multi-Selection')+': '+(group.querySelector('strong')?.textContent||'');input.title=label;input.setAttribute('aria-label',label);
+        input.onchange=()=>{
+          if(!root.gw||!section.dataset.selectionAction)return;
+          root.webaSelectionFocus={id:group.dataset.boardId,revision:Number(section.dataset.selectionRevision)+1,checked:input.checked,expires:Date.now()+5000};
+          root.gw.update(section.dataset.selectionAction,'text','toggle|'+btoa(group.dataset.boardId),null);
+        };
+      });
+      const selectionFocus=root.webaSelectionFocus;
+      if(selectionFocus&&Date.now()>selectionFocus.expires)root.webaSelectionFocus=null;
+      else if(selectionFocus&&Number(section.dataset.selectionRevision)>=selectionFocus.revision){
+        const group=[...data.querySelectorAll('.weba-board-tile-group')].find(group=>group.dataset.boardId===selectionFocus.id),input=group?.querySelector('.weba-board-select');
+        if(input&&input.checked===selectionFocus.checked){root.webaSelectionFocus=null;root.requestAnimationFrame(()=>{if(input.isConnected&&document.activeElement===document.body)input.focus({preventScroll:true});});}
+      }
       data.querySelectorAll('[data-board-key]').forEach(tile => {
         tile.onclick = () => {
           if (root.gw && section.dataset.tree) root.gw.update(section.dataset.tree, '$' + btoa(tile.dataset.boardKey), null);

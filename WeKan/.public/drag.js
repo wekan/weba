@@ -7,7 +7,7 @@
   const t=text=>root.webaI18n?.t(text)||text;
   const visible=e=>e && !e.hidden && e.getBoundingClientRect().width>0 && e.getBoundingClientRect().height>0;
   function encode(text){return btoa(Array.from(new TextEncoder().encode(String(text)),byte=>String.fromCharCode(byte)).join(''));}
-  function enabled(section,kind){return kind==='workspace'?section.dataset.workspaceReorder==='true':kind==='board-drop'?section.dataset.boardDrop==='true':kind==='board'?section.dataset.boardReorder==='true'||section.dataset.boardDrop==='true':kind==='card'?section.dataset.cardMove==='true'||section.dataset.editable==='true':section.dataset.editable==='true';}
+  function enabled(section,kind){return kind==='workspace'?section.dataset.workspaceReorder==='true':(kind==='board-drop'||kind==='board-multi-drop')?section.dataset.boardDrop==='true':kind==='board'?section.dataset.boardReorder==='true'||section.dataset.boardDrop==='true':kind==='card'?section.dataset.cardMove==='true'||section.dataset.editable==='true':section.dataset.editable==='true';}
   function send(section,kind,values){
     if(!enabled(section,kind)||!section.dataset.drag||!root.gw)return;
     root.gw.update(section.dataset.drag,'text',[kind,...values.map(encode)].join('|'),null);
@@ -26,7 +26,9 @@
     const section=kind==='workspace'?document.querySelector('.weba-content'):element?.closest('.weba-content');
     if(!element||!section||!section.dataset.drag)return null;
     if(!enabled(section,kind))return null;
-    return {kind,element,section,handle};
+    const group=kind==='board'&&section.dataset.multiActive==='true'&&element.dataset.selected==='true'
+      ?{revision:section.dataset.selectionRevision,count:section.dataset.selectionCount}:null;
+    return {kind,element,section,handle,group};
   }
   function reset(){
     if(frame)root.cancelAnimationFrame(frame);frame=0;
@@ -40,6 +42,7 @@
     const ghost=state.element.cloneNode(true);ghost.removeAttribute('id');ghost.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));
     ghost.classList.add('weba-drag-ghost');ghost.setAttribute('aria-hidden','true');
     Object.assign(ghost.style,{width:rect.width+'px',height:Math.min(rect.height,200)+'px',left:rect.left+'px',top:rect.top+'px'});
+    if(state.group){const badge=document.createElement('span');badge.className='weba-multidrag-count';badge.textContent=state.group.count;ghost.append(badge);}
     document.body.append(ghost);
     const placeholder=document.createElement('div');placeholder.className='weba-drop-placeholder';
     placeholder.style.height=Math.min(rect.height,200)+'px';placeholder.style.width=rect.width+'px';
@@ -104,7 +107,7 @@
         drag.placeholder.remove();drag.target={drop:target,id};return;
       }
       clearWorkspaceMark();
-      if(drag.section.dataset.boardReorder!=='true'){drag.target=null;drag.placeholder.remove();return;}
+      if(drag.group||drag.section.dataset.boardReorder!=='true'){drag.target=null;drag.placeholder.remove();return;}
     }
     if(!hit||hit.closest('.weba-content')!==drag.section){drag.target=null;drag.placeholder.remove();return;}
     let parent,items,before,lane;
@@ -166,7 +169,7 @@
     if(state.kind==='workspace')send(state.section,'workspace',[state.element.dataset.workspaceId,target.id,target.position,'']);
     else if(state.kind==='board'&&target.drop){
       if(target.drop==='archive'&&!root.confirm(t('Are you sure you want to archive this board?')))return;
-      send(state.section,'board-drop',[state.element.dataset.boardId,target.drop,target.id,'']);
+      send(state.section,state.group?'board-multi-drop':'board-drop',[state.element.dataset.boardId,target.drop,target.id,state.group?state.group.revision:'']);
     }
     else if(state.kind==='board')send(state.section,'board',[state.element.dataset.boardId,'','',target.before]);
     else if(state.kind==='card')send(state.section,'card',[state.element.dataset.cardId,target.lane,target.list,target.before]);
@@ -213,7 +216,7 @@
       workspaceKeyboardFocus={id:state.element.dataset.workspaceId,target:target.dataset.workspaceId,position,expires:Date.now()+5000};
       send(state.section,'workspace',[state.element.dataset.workspaceId,target.dataset.workspaceId,position,'']);
     }else if(state.kind==='board'){
-      if(state.section.dataset.boardReorder!=='true')return;
+      if(state.group||state.section.dataset.boardReorder!=='true')return;
       const rows=[...state.element.parentElement.querySelectorAll(':scope>.weba-board-tile-group')],index=rows.indexOf(state.element),rtl=getComputedStyle(state.element).direction==='rtl';
       const backward=event.key==='ArrowUp'||event.key===(rtl?'ArrowRight':'ArrowLeft');
       if(backward&&index===0||!backward&&index===rows.length-1)return;

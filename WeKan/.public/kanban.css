@@ -194,3 +194,10 @@
 @media(pointer:coarse){.weba-space-row .weba-space-drag{min-height:40px}}
 
 .weba-board-drop-target{outline:2px solid #218838!important;outline-offset:-2px;background:#d8f2df!important}
+
+.weba-board-selection-controls{padding:8px 16px;gap:8px;align-items:center;flex-wrap:wrap;flex-shrink:0!important}
+.weba-board-select{position:absolute;inset-inline-start:8px;top:8px;width:20px;height:20px;z-index:4;cursor:pointer;accent-color:#2878a8}
+.weba-board-tile-group:has(.weba-board-select) .weba-board-tile{padding-inline-start:36px}
+.weba-board-selected{outline:3px solid #2878a8;outline-offset:2px}
+.weba-topbar .weba-active{background:#ffffff45}
+.weba-multidrag-count{position:absolute;right:4px;top:4px;padding:4px 8px;background:#2878a8;color:#fff;border-radius:12px;font-weight:bold}

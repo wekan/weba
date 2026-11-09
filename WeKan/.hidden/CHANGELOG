@@ -1,4 +1,8 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Native board selection: Add isolated revisioned per-form selections, visible
+  Select All, retained page/filter state and authoritative group-drop transport.
+  Verify private/stale/bypass denial, mouse/touch, 25+5 paging and atomic denial
+  after off-page membership loss. Batch sidebar actions/full suites remain open.
 - Documentation: Explain native batch transactions, mixed roles/states and final
   scope checks with SQL/source tests; selection controls/transport remain open.
 - Native board batch service: Add mixed active/archive all-or-none drops with

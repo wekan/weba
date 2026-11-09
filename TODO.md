@@ -80,9 +80,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   Original callback outcome comparisons expand from 52 to 156 single/multi/mixed
   cases. This service is not yet connected to native selection controls or a new
   public HTTP route; existing single-board browser regressions remain separate.
-- In progress: native board multi-selection controls, visible-page Select All,
-  retained selection and authoritative multi-drop transport, followed by batch
-  sidebar actions, Home/group targets, Markdown icons and original UI callbacks.
+- Next: batch sidebar actions, Home/group targets, Markdown icons and original
+  UI callbacks. Native multi-selection controls, retained visible-page selection
+  and revisioned authoritative multi-drop transport are recorded in CHANGELOG.md.
   Native form tests do not execute the original Latin callback unchanged.
 
 - Documented header menu lifecycle and stable shared styles, delayed stylesheet/

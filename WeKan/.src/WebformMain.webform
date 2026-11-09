@@ -43,6 +43,15 @@
       Class = "weba-icon-only fa fa-sort"
       Tooltip = ("Sort boards")
     }
+    { MultiBoards WebButton
+      Class = "weba-icon-only fa fa-check-square-o"
+      Tooltip = ("Multi-Selection")
+    }
+    { CloseMultiBoards WebButton
+      Class = "weba-icon-only fa fa-times-thin"
+      Tooltip = ("Turn Multi-Selection off")
+      Visible = False
+    }
     { ViewMenu WebButton
       Class = "weba-native-caret"
       Text = ("View")
@@ -500,6 +509,9 @@
   { DragAction WebTextBox
     Visible = False
   }
+  { BoardSelectionAction WebTextBox
+    Visible = False
+  }
   { BoardAction WebTextBox
     Visible = False
   }
@@ -575,6 +587,23 @@
       Expand = True
       { PaneTitle WebLabel
         Text = ("Remaining")
+      }
+      { BoardSelectionControls WebContainer
+        Class = "weba-board-selection-controls"
+        Arrangement = Arrange.Horizontal
+        Spacing = True
+        Visible = False
+        { SelectAllBoards WebButton
+          Text = ("Select all")
+        }
+        { SelectNoBoards WebButton
+          Text = ("Select none")
+        }
+        { SelectedBoardsCaption WebLabel
+          Text = ("Selected:")
+        }
+        { SelectedBoardsCount WebLabel
+        }
       }
       { BoardPagination WebContainer
         Class = "boards-pagination"
@@ -791,6 +820,13 @@
           { ClearBoardSearch WebButton
             Class = "weba-icon-only fa fa-times"
             Tooltip = ("Clear search")
+          }
+        }
+        { BoardSelectionPanel WebContainer
+          Arrangement = Arrange.Vertical
+          Visible = False
+          { BoardSelectionHint WebLabel
+            Text = ("Click checkboxes to select boards")
           }
         }
         { SearchTitle WebLabel
