@@ -85,6 +85,7 @@
   "edit": "Upravit",
   "enable-permanent-delete": "Povolit trvalé odstranění globálnímu správci",
   "enable-permanent-delete-description": "Povolit globálním správcům trvale odstranit obsah označený jako odstraněný. Samotné povolení tohoto nastavení nic neodstraní.",
+  "export": "Exportovat",
   "filter-no-due-date": "Bez termínu",
   "font-size-default": "Výchozí",
   "friday": "Pátek",

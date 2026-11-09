@@ -339,6 +339,10 @@
     { DetailRestoreAttachment WebButton
       Text = ("Restore")
     }
+    { DetailExport WebButton
+      Text = ("Export")
+      Visible = False
+    }
     { DetailDownload WebButton
       Text = ("Download attachment")
     }

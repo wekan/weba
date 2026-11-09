@@ -85,6 +85,7 @@
   "edit": "Edita",
   "enable-permanent-delete": "Activa la supressió permanent per a l'administrador global",
   "enable-permanent-delete-description": "Permet que els administradors globals suprimeixin permanentment el contingut suprimit de manera lògica. Activar aquesta configuració no suprimeix res per si mateixa.",
+  "export": "Exporta",
   "filter-no-due-date": "Sense data de venciment",
   "font-size-default": "Per defecte",
   "friday": "divendres",

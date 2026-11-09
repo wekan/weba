@@ -85,6 +85,7 @@
   "edit": "Editar",
   "enable-permanent-delete": "Ativar exclusão permanente para o administrador global",
   "enable-permanent-delete-description": "Permitir que administradores globais excluam permanentemente o conteúdo marcado como excluído. Ativar esta configuração não exclui nada por si só.",
+  "export": "Exportar",
   "filter-no-due-date": "Sem prazo final",
   "font-size-default": "Padrão",
   "friday": "Sexta",

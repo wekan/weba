@@ -85,6 +85,7 @@
   "edit": "Editează",
   "enable-permanent-delete": "Activează ștergerea permanentă pentru administratorul global",
   "enable-permanent-delete-description": "Permite administratorilor globali să șteargă permanent conținutul șters logic. Activarea acestei setări nu șterge nimic de la sine.",
+  "export": "Exportă",
   "filter-no-due-date": "Fără termen",
   "font-size-default": "Implicit",
   "friday": "Vineri",

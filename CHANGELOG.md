@@ -2,6 +2,15 @@
 
 This work adds the following features and fixes:
 
+- Add native selected-attachment JSON export with readonly/full-board access,
+  session generation and board/card/file binding. Share guarded serialization
+  while preserving API token/cookie separation and independent native download
+  limits. Hide denied/deleted/history actions and refuse stale/forged clicks.
+  Verify native late-scope/session rollback, real exact/empty/binary-safe Unicode
+  downloads without token issuance, live policies, cookie/API isolation and mobile/
+  translated keyboard controls. Keep original UI/public/storage/field models and
+  broader formats pending. Thanks to xet7.
+
 - Add private single-attachment JSON export with source response/auth ordering,
   live-file/full-board scope, exact Unicode/binary/zero-byte fields and safe
   errors. Accept scoped query credentials through host-side hashing/scrubbing;

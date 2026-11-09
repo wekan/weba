@@ -85,6 +85,7 @@
   "edit": "Szerkesztés",
   "enable-permanent-delete": "Végleges törlés engedélyezése a globális adminisztrátornak",
   "enable-permanent-delete-description": "A globális adminisztrátorok véglegesen törölhetik a helyreállíthatóan törölt tartalmat. A beállítás engedélyezése önmagában nem töröl semmit.",
+  "export": "Exportálás",
   "filter-no-due-date": "Nincs lejártati idő",
   "font-size-default": "Alapértelmezett",
   "friday": "péntek",

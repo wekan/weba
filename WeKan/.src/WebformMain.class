@@ -1850,6 +1850,7 @@ Private Sub UpdateDetailControls()
   DetailUpload.Visible = editable And kind = "file" And Not $attachmentHistory And Not TransferPolicy.Blocked("attachmentsUpload") And WorkspaceStore.Setting($detailsBoard, "board", $detailsBoard, "allowsAttachments", "1") = "1"
   DetailDownload.Visible = kind = "file" And Not $attachmentHistory
   DetailDownload.Enabled = $fileId > 0 And Not TransferPolicy.Blocked("attachmentsDownload")
+  UpdateAttachmentExportControl()
   DetailAttachmentHistory.Visible = kind = "file" And Not $attachmentHistory
   DetailLiveAttachments.Visible = kind = "file" And $attachmentHistory
   DetailRestoreAttachment.Visible = False
@@ -1975,6 +1976,35 @@ Public Sub DetailUpload_Finish()
 Catch
   Notice.Text = Error.Text
 End
+Public Sub DetailExport_Click()
+  Dim outcome As Collection
+  Dim data As Collection
+  Dim text As String
+  ImportExportPolicy.RequireExport()
+  If Not DetailsPanel.Visible Then Error.Raise("Select attachment first")
+  If DetailCode() <> "file" Or $attachmentHistory Or $fileId <= 0 Then Error.Raise("Select attachment first")
+  outcome = AttachmentExport.ReadNative($detailsBoard, $detailsCard, CStr($fileId))
+  If outcome["status"] <> 200 Then Error.Raise(outcome["data"]["error"])
+  data = outcome["data"]
+  text = JSON.Encode(data)
+  WebForm.Exec("(function(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([" & JS(text) & "],{type:'application/json'}));a.download='wekan-attachment.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);})();")
+Catch
+  Notice.Text = Error.Text
+End
+
+Private Sub UpdateAttachmentExportControl()
+  Dim available As Boolean
+  Dim enabled As Boolean
+  If DetailsPanel.Visible Then
+    If DetailCode() = "file" And Not $attachmentHistory And $fileId > 0 Then
+      available = ImportExportPolicy.ExportAllowed() And BoardAccess.Can($detailsBoard, "seesAllCards")
+    Endif
+  Endif
+  If available Then enabled = Not TransferPolicy.Blocked("attachmentsDownload")
+  DetailExport.Visible = available
+  DetailExport.Enabled = enabled
+End
+
 Public Sub DetailDownload_Click()
   Dim r As Result = CardContent.DownloadFile($detailsBoard, $detailsCard, $fileId)
   Dim data As String = Base64(r!content.Data)
@@ -3548,4 +3578,5 @@ Private Sub ValidateImportExportPolicy()
     Endif
   Endif
   If ContextMenu.Visible Then ContextExport.Visible = ImportExportPolicy.ExportAllowed() And ($contextKind = "card" Or BoardAccess.Can($contextBoard, "seesAllCards"))
+  UpdateAttachmentExportControl()
 End

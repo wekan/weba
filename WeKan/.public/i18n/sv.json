@@ -85,6 +85,7 @@
   "edit": "Redigera",
   "enable-permanent-delete": "Aktivera permanent borttagning för global administratör",
   "enable-permanent-delete-description": "Tillåt globala administratörer att permanent ta bort mjukraderat innehåll. Att aktivera inställningen tar inte bort något i sig.",
+  "export": "Exportera",
   "filter-no-due-date": "Inget förfallodatum",
   "font-size-default": "Standard",
   "friday": "Fredag",

@@ -85,6 +85,7 @@
   "edit": "Wijzig",
   "enable-permanent-delete": "Permanent verwijderen voor de Globale Beheerder inschakelen",
   "enable-permanent-delete-description": "Laat Globale Beheerders zacht verwijderde inhoud permanent verwijderen. Deze instelling inschakelen verwijdert uit zichzelf niets.",
+  "export": "Exporteren",
   "filter-no-due-date": "Geen vervaldatum",
   "font-size-default": "Standaard",
   "friday": "Vrijdag",

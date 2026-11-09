@@ -85,6 +85,7 @@
   "edit": "Edytuj",
   "enable-permanent-delete": "Włącz trwałe usuwanie dla administratora globalnego",
   "enable-permanent-delete-description": "Zezwól administratorom globalnym na trwałe usuwanie treści oznaczonych jako usunięte. Samo włączenie tego ustawienia niczego nie usuwa.",
+  "export": "Eksportuj",
   "filter-no-due-date": "Brak terminu",
   "font-size-default": "Domyślny",
   "friday": "Piątek",

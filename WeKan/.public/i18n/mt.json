@@ -85,6 +85,7 @@
   "edit": "Editja",
   "enable-permanent-delete": "Attiva permanent delete għal Global Amministratur",
   "enable-permanent-delete-description": "Allow Global Admins għal permanently delete soft-ħassar content. Enabling dan setting does mhux delete anything by itself.",
+  "export": "Esporta",
   "filter-no-due-date": "Le due date",
   "font-size-default": "Predefinit",
   "friday": "Il-Ġimgħa",

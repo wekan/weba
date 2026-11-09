@@ -33,7 +33,31 @@ Private Function Result(status As Integer, message As String) As Collection
 End
 
 Public Function Read(boardId As Integer, reference As String) As Collection
+  If Env["WEBA_API_REQUEST"] <> "1" Then Return Result(403, "Forbidden")
+  Return Build(boardId, reference, True, 0)
+End
+
+Public Function ReadNative(boardId As Integer, cardId As Integer, reference As String) As Collection
+  Dim outcome As Collection
+  If Env["WEBA_API_REQUEST"] = "1" Then Return Result(403, "Forbidden")
+  If cardId <= 0 Then Return Result(404, "Attachment not accessible")
+  outcome = Build(boardId, reference, False, cardId)
+  If outcome["status"] = 200 Then
+    If Not outcome["data"].Exist("_id") Then Return Result(404, "Attachment not accessible")
+  Endif
+  Return outcome
+End
+
+Private Function IdentityValid(actor As String, generation As Long, apiContext As Boolean) As Boolean
+  If WebIdentity.Username <> actor Then Return False
+  If apiContext Then Return ApiTokens.Authenticate() = actor
+  Return WebDatabase.SessionGeneration(actor) = generation
+End
+
+Private Function Build(boardId As Integer, reference As String, apiContext As Boolean, expectedCard As Integer) As Collection
   Dim actor As String = WebIdentity.Username
+  Dim generation As Long
+  Dim transfer As String = If(apiContext, "apiDownload", "attachmentsDownload")
   Dim db As Connection
   Dim r As Result
   Dim metadata As Result
@@ -45,26 +69,29 @@ Public Function Read(boardId As Integer, reference As String) As Collection
   Dim outcome As New Collection
   Dim transaction As Boolean
   Dim failure As String
-  If Env["WEBA_API_REQUEST"] <> "1" Then Return Result(403, "Forbidden")
+  If apiContext <> (Env["WEBA_API_REQUEST"] = "1") Then Return Result(403, "Forbidden")
   ImportExportPolicy.RequireExport()
-  If Not actor Then Return Result(401, "Invalid token")
+  If Not actor Then Return Result(401, If(apiContext, "Invalid token", "Sign in required"))
+  generation = WebDatabase.SessionGeneration(actor)
   If Not BoardAccess.Can(boardId, "seesAllCards") Then Return Result(403, "Forbidden")
+  If expectedCard > 0 Then BoardAccess.RequireCard(boardId, expectedCard)
   CardContent.OpenStore()
-  AttachmentData.ApiDownloadLimit()
+  TransferPolicy.Limit(transfer)
   db = WebDatabase.OpenConnection()
   DatabaseTransactions.Begin(db)
   transaction = True
   db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
-  db.Exec("UPDATE api_tokens SET digest=digest WHERE digest=&1 AND username=&2", Env["WEBA_API_TOKEN_DIGEST"], actor)
+  If apiContext Then db.Exec("UPDATE api_tokens SET digest=digest WHERE digest=&1 AND username=&2", Env["WEBA_API_TOKEN_DIGEST"], actor)
   ImportExportPolicy.Lock()
   ImportExportPolicy.RequireExport()
   TransferPolicy.Lock()
   db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
-  If ApiTokens.Authenticate() <> actor Or WebIdentity.Username <> actor Then Error.Raise("Invalid token")
+  If Not IdentityValid(actor, generation, apiContext) Then Error.Raise(If(apiContext, "Invalid token", "Sign in required"))
   BoardAccess.RequireContainer(boardId, "board", boardId)
-  r = db.Exec("SELECT id,card_id,filename,COALESCE(LENGTH(content),0) AS size FROM kb_files WHERE board_id=&1 AND id=&2 AND " & AttachmentLifecycle.LiveSql("kb_files"), boardId, fileId)
+  If expectedCard > 0 Then BoardAccess.RequireCard(boardId, expectedCard)
+  r = db.Exec("SELECT id,card_id,filename,COALESCE(LENGTH(content),0) AS size FROM kb_files WHERE board_id=&1 AND id=&2 AND (&3=0 OR card_id=&3) AND " & AttachmentLifecycle.LiveSql("kb_files"), boardId, fileId, expectedCard)
   If r.Available Then
-    TransferPolicy.RequireTransfer("apiDownload", r!size)
+    TransferPolicy.RequireTransfer(transfer, r!size)
     cardId = r!card_id
     data["_id"] = CStr(r!id)
     data["cardId"] = CStr(cardId)
@@ -77,13 +104,14 @@ Public Function Read(boardId As Integer, reference As String) As Collection
     r = db.Find("kb_files", "board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, fileId)
     If Not r.Available Then Error.Raise("Attachment export failed")
     bytes = r!content.Data
-    TransferPolicy.RequireTransfer("apiDownload", Len(bytes))
+    TransferPolicy.RequireTransfer(transfer, Len(bytes))
     data.Add(Base64(bytes), "file")
   Endif
-  If ApiTokens.Authenticate() <> actor Or WebIdentity.Username <> actor Then Error.Raise("Invalid token")
+  If Not IdentityValid(actor, generation, apiContext) Then Error.Raise(If(apiContext, "Invalid token", "Sign in required"))
   BoardAccess.RequireContainer(boardId, "board", boardId)
+  If expectedCard > 0 Then BoardAccess.RequireCard(boardId, expectedCard)
   ImportExportPolicy.RequireExport()
-  If data.Count Then TransferPolicy.RequireTransfer("apiDownload", Len(bytes))
+  If data.Count Then TransferPolicy.RequireTransfer(transfer, Len(bytes))
   DatabaseTransactions.Commit(db)
   transaction = False
   outcome["status"] = 200
@@ -94,16 +122,16 @@ Catch
   If transaction Then Try DatabaseTransactions.Rollback(db)
   Select failure
     Case "Invalid token", "Sign in required"
-      Return Result(401, "Invalid token")
-    Case "Board not accessible", "Board permission denied", "Assigned-only members cannot copy, export or transfer containers"
+      Return Result(401, If(apiContext, "Invalid token", "Sign in required"))
+    Case "Board not accessible", "Card not accessible", "Board permission denied", "Assigned-only members cannot copy, export or transfer containers"
       Return Result(403, "Forbidden")
     Case "Export is disabled by the administrator."
       outcome = Result(403, failure)
       outcome["plain"] = True
       Return outcome
-    Case "API downloads are disabled by administrator"
+    Case "API downloads are disabled by administrator", "Attachment downloads are disabled by administrator"
       Return Result(403, failure)
-    Case "Attachment exceeds API download limit"
+    Case "Attachment exceeds API download limit", "Attachment exceeds download limit"
       Return Result(413, failure)
     Case Else
       Return Result(500, "Attachment export failed")

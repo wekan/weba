@@ -85,6 +85,7 @@
   "edit": "Düzenle",
   "enable-permanent-delete": "Genel Yönetici için kalıcı silmeyi etkinleştir",
   "enable-permanent-delete-description": "Genel Yöneticilerin geçici olarak silinmiş içeriği kalıcı olarak silmesine izin ver. Bu ayarı etkinleştirmek tek başına hiçbir şeyi silmez.",
+  "export": "Dışa aktar",
   "filter-no-due-date": "Son tarih yok",
   "font-size-default": "Varsayılan",
   "friday": "Cuma",

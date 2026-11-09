@@ -1,4 +1,9 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Native attachment export: Add selected-live-file JSON download with session/
+  card binding and separate API context guards. Respect native limits, full-board
+  scope and global policy; refuse stale/history clicks. Verify native rollback,
+  no-token/cookie-API boundary and exact mobile/translated browser downloads.
+
 - Attachment JSON export: Add source-shaped private-board endpoint with scoped
   query token hashing/scrubbing, full-board/live-file guards and final locked
   auth/policy/size checks. Preserve empty/binary fields and opaque failures.

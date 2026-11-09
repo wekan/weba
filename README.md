@@ -1894,5 +1894,48 @@ Focused mode: tests/run-http.py --attachment-export-api; add --archive for the
 packaged app. Both checks are part of full members source/package runs. Public/
 instance boards, anonymous/Sandstorm/impersonation, board-defined admin-only
 custom fields, background/source models, alternate storage and complete original
-UI/API/DDP/security suites remain pending. The native dedicated attachment-export
-button, whole-board source formats and batch export also remain pending.
+UI/API/DDP/security suites remain pending. Whole-board source formats and batch
+export also remain pending. The native attachment-export action is described below.
+
+### Native single-attachment export action
+
+A selected live attachment now has an Export button in the native details pane.
+It downloads wekan-attachment.json with the same five-field source JSON as the
+attachment-export API, preserving exact bytes, empty data and literal Unicode
+metadata. The button uses the existing native icon/keyboard controls and source
+Export caption (161 keys across 237 catalogs). Owner and readonly full-board
+members can export; assigned-only members cannot, even when raw flags also make
+them board administrators.
+
+The API and native entry points share metadata/byte serialization and final
+policy/scope checks, with separate context guards. The native path binds the
+selected board/card/file and current session generation; the API path retains
+its token checks and whole-board source response semantics. API requests cannot
+enter the session exporter, and native cookies cannot enter the API exporter.
+Native exports neither prepare the API token store nor issue credentials. The
+browser regression verifies that a real signed-in cookie still gets 403 from
+the API endpoint without a token.
+
+Native export follows the native attachment download block/size policy. API
+limits remain independent. Hide export on global disable or scope loss; disable
+it for a native download block. Closed panes, missing selections, other detail
+kinds and history entries refuse forged actions. A stale/deleted selected file
+cannot be replaced by another card's file or an automatic first-row fallback.
+Native live Download keeps its existing behavior, and retained bytes remain for
+the separate read/history services.
+
+Native tests cover exact/empty data, context separation, source/card substitution,
+readonly/assigned roles, transfer independence, the global gate, late assignment/
+session changes with rollback/retry and retained deletion. Browser tests inspect
+actual owner/readonly/keyboard downloads, quoted/HTML-looking Unicode filenames
+without script execution, no token issuance, real cookie/API isolation, live
+raw-admin assignment/global/policy changes, disabled/limited/stale/history refusal,
+retained bytes and mobile/Finnish controls. Download event accounting catches
+unexpected exports throughout the test. Focused mode: tests/run-http.py
+--attachment-export; add --archive for the packaged application. Both test-live
+phases include it. Full members API checks retain the 126 unchanged source route/
+serializer comparisons after sharing the reader.
+
+This completes the current native attachment-export action. Full original UI
+callbacks, public/instance/Sandstorm/impersonation and board-defined field/storage
+models, whole-board source formats and batch export remain pending.

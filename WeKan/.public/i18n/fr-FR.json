@@ -85,6 +85,7 @@
   "edit": "Modifier",
   "enable-permanent-delete": "Activer la suppression définitive pour l'administrateur global",
   "enable-permanent-delete-description": "Autoriser les administrateurs globaux à supprimer définitivement le contenu marqué comme supprimé. L'activation de ce paramètre ne supprime rien à elle seule.",
+  "export": "Exporter",
   "filter-no-due-date": "Pas de date d'échéance",
   "font-size-default": "Défaut",
   "friday": "Vendredi",

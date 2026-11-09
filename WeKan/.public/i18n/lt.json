@@ -85,6 +85,7 @@
   "edit": "Redaguoti",
   "enable-permanent-delete": "Įjungti visuotinį šalinimą visuotiniam administratoriui",
   "enable-permanent-delete-description": "Leisti visuotiniams administratoriams visam laikui pašalinti laikinai pašalintą turinį. Įjungus šią nuostatą savaime niekas nepašalinama.",
+  "export": "Eksportuoti",
   "filter-no-due-date": "Nėra termino",
   "font-size-default": "Numatytoji",
   "friday": "penktadienis",

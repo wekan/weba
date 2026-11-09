@@ -85,6 +85,7 @@
   "edit": "Muokkaa",
   "enable-permanent-delete": "Ota pysyvä poistaminen käyttöön pääylläpitäjälle",
   "enable-permanent-delete-description": "Salli pääylläpitäjien poistaa pehmeästi poistetut sisällöt pysyvästi. Tämän asetuksen käyttöönotto ei itsessään poista mitään.",
+  "export": "Vie",
   "filter-no-due-date": "Ei eräpäivää",
   "font-size-default": "Oletus",
   "friday": "Perjantai",

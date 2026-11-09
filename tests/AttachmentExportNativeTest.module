@@ -1,0 +1,166 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim otherId As Integer
+  Dim fileId As Integer
+  Dim emptyId As Integer
+  Dim bytes As String = "exact" & Chr(0) & Chr(255)
+  Dim outcome As Collection
+  Dim limits As Collection
+  Dim db As Connection
+  Dim before As String
+  Dim r As Result
+  Dim denied As Boolean
+  If Env["WEBA_TEST_EXPORT_API"] = "1" Then
+    WebIdentity.AuthenticateApi("native-export-owner")
+    outcome = AttachmentExport.ReadNative(1, 1, "1")
+    If outcome["status"] <> 403 Then Error.Raise("API principal entered native-session exporter")
+    Print "Attachment export context: API principal cannot enter native-session exporter"
+    Return
+  Endif
+  WebDatabase.Register("native-export-global", "x")
+  WebDatabase.Register("native-export-owner", "x")
+  WebDatabase.Register("native-export-reader", "x")
+  SignIn("native-export-global")
+  ImportExportPolicy.Save(False, False)
+  limits = Defaults()
+  TransferPolicy.Save(limits)
+  SignIn("native-export-owner")
+  boardId = KanbanStore.AddBoard("Native export source")
+  BoardAccess.SetMember(boardId, "native-export-reader", "read-only")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Card", "Body", "Default", "Todo", "native-export-reader", "", "")
+  otherId = KanbanStore.SaveCard(boardId, 0, "Other", "", "Default", "Todo", "", "", "")
+  fileId = CardContent.AddFile(boardId, cardId, "literal <file>.bin", bytes)
+  emptyId = CardContent.AddFile(boardId, cardId, "empty.bin", "")
+  db = WebDatabase.OpenConnection()
+  before = Frame()
+  outcome = AttachmentExport.Read(boardId, CStr(fileId))
+  If outcome["status"] <> 403 Or Frame() <> before Then Error.Raise("Native cookie entered API exporter")
+  outcome = AttachmentExport.ReadNative(boardId, cardId, CStr(fileId))
+  If outcome["status"] <> 200 Or outcome["data"]["file"] <> Base64(bytes) Or outcome["data"]["name"] <> "literal <file>.bin" Or Frame() <> before Then Error.Raise("Native export changed data or lost bytes/metadata")
+  If db.Tables.Exist("api_tokens") Then Error.Raise("Native export prepared API credentials")
+  outcome = AttachmentExport.ReadNative(boardId, cardId, CStr(emptyId))
+  If outcome["status"] <> 200 Or Not outcome["data"].Exist("file") Or outcome["data"]["file"] <> "" Then Error.Raise("Native empty-file field lost")
+  outcome = AttachmentExport.ReadNative(boardId, otherId, CStr(fileId))
+  If outcome["status"] <> 404 Or Frame() <> before Then Error.Raise("Native pane substituted a different card")
+  outcome = AttachmentExport.ReadNative(boardId, cardId, "0" & CStr(fileId))
+  If outcome["status"] <> 404 Or Frame() <> before Then Error.Raise("Native pane accepted file alias")
+  SignIn("native-export-reader")
+  outcome = AttachmentExport.ReadNative(boardId, cardId, CStr(fileId))
+  If outcome["status"] <> 200 Then Error.Raise("Readonly native export denied")
+  SignIn("native-export-owner")
+  BoardAccess.SetMember(boardId, "native-export-reader", "read-assigned-only")
+  SignIn("native-export-reader")
+  outcome = AttachmentExport.ReadNative(boardId, cardId, CStr(fileId))
+  If outcome["status"] <> 403 Then Error.Raise("Assigned native member exported container data")
+  r = CardContent.DownloadFile(boardId, cardId, fileId)
+  If r!content.Data <> bytes Then Error.Raise("Native export scope broke assigned retained reads")
+  SignIn("native-export-global")
+  limits["apiDownloadBlocked"] = True
+  TransferPolicy.Save(limits)
+  SignIn("native-export-owner")
+  outcome = AttachmentExport.ReadNative(boardId, cardId, CStr(fileId))
+  If outcome["status"] <> 200 Then Error.Raise("API block affected native export")
+  SignIn("native-export-global")
+  limits["attachmentsDownloadBlocked"] = True
+  TransferPolicy.Save(limits)
+  SignIn("native-export-owner")
+  before = Frame()
+  outcome = AttachmentExport.ReadNative(boardId, cardId, CStr(fileId))
+  If outcome["status"] <> 403 Or Frame() <> before Then Error.Raise("Native download block bypassed")
+  SignIn("native-export-global")
+  limits["attachmentsDownloadBlocked"] = False
+  limits["attachmentsDownloadMaxBytes"] = 2
+  TransferPolicy.Save(limits)
+  SignIn("native-export-owner")
+  outcome = AttachmentExport.ReadNative(boardId, cardId, CStr(fileId))
+  If outcome["status"] <> 413 Then Error.Raise("Native export size limit bypassed")
+  SignIn("native-export-global")
+  TransferPolicy.Save(Defaults())
+  ImportExportPolicy.Save(False, True)
+  SignIn("native-export-owner")
+  before = Frame()
+  outcome = AttachmentExport.ReadNative(boardId, cardId, CStr(fileId))
+  If outcome["status"] <> 403 Or outcome["data"]["error"] <> "Export is disabled by the administrator." Or Frame() <> before Then Error.Raise("Native export switch bypassed")
+  SignIn("native-export-global")
+  ImportExportPolicy.Save(False, False)
+  SignIn("native-export-owner")
+  BoardAccess.SetMember(boardId, "native-export-reader", "read-only")
+  SignIn("native-export-reader")
+  before = Frame()
+  db.Exec("CREATE TRIGGER native_export_scope AFTER UPDATE OF title ON kb_boards BEGIN INSERT INTO kb_member_flags (board_id,username,flag) VALUES (NEW.id,'native-export-reader','isReadAssignedOnly'); END")
+  outcome = AttachmentExport.ReadNative(boardId, cardId, CStr(fileId))
+  If outcome["status"] <> 403 Or Frame() <> before Then Error.Raise("Native export accepted late assigned scope")
+  db.Exec("DROP TRIGGER native_export_scope")
+  outcome = AttachmentExport.ReadNative(boardId, cardId, CStr(fileId))
+  If outcome["status"] <> 200 Then Error.Raise("Native export retry failed after scope rollback")
+  SignIn("native-export-owner")
+  before = Frame()
+  db.Exec("CREATE TRIGGER native_export_generation AFTER UPDATE OF title ON kb_boards BEGIN UPDATE account_sessions SET generation=generation+1 WHERE username='native-export-owner'; END")
+  outcome = AttachmentExport.ReadNative(boardId, cardId, CStr(fileId))
+  If outcome["status"] <> 401 Or Frame() <> before Then Error.Raise("Native export accepted late session rotation")
+  db.Exec("DROP TRIGGER native_export_generation")
+  outcome = AttachmentExport.ReadNative(boardId, cardId, CStr(fileId))
+  If outcome["status"] <> 200 Then Error.Raise("Native export retry failed after generation rollback")
+  AttachmentLifecycle.Delete(boardId, cardId, fileId)
+  before = Frame()
+  outcome = AttachmentExport.ReadNative(boardId, cardId, CStr(fileId))
+  If outcome["status"] <> 404 Or Frame() <> before Then Error.Raise("Native export included retained deleted file")
+  Try r = CardContent.DownloadFile(boardId, cardId, fileId)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Native live download included deleted file")
+  r = db.Find("kb_files", "board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, fileId)
+  If Not r.Available Then Error.Raise("Native export removed retained file")
+  If r!content.Data <> bytes Then Error.Raise("Native export deleted retained bytes")
+  Print "Native attachment export: session/API context separation, exact/empty bytes, source/card binding, readonly/assigned scope, native/API policy independence, global gate, late generation rollback/retry and retained deletion passed"
+End
+
+Private Function Defaults() As Collection
+  Dim data As New Collection
+  Dim field As String
+  For Each field In ["attachmentsUploadMaxBytes", "attachmentsDownloadMaxBytes", "apiUploadMaxBytes", "apiDownloadMaxBytes"]
+    data[field] = 0
+  Next
+  For Each field In ["attachmentsUploadBlocked", "attachmentsDownloadBlocked", "apiUploadBlocked", "apiDownloadBlocked", "avatarsUploadBlocked"]
+    data[field] = False
+  Next
+  Return data
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End
+
+Private Function Frame() As String
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim tables As New String[]
+  Dim table As Table
+  Dim tableName As String
+  Dim r As Result
+  Dim row As New Collection
+  Dim rows As Variant[]
+  Dim data As New Variant[]
+  Dim field As ResultField
+  For Each table In db.Tables
+    If Left(table.Name, 3) = "kb_" Or table.Name = "users" Or table.Name = "account_sessions" Or table.Name = "attachment_transfer_settings" Or table.Name = "board_creation_settings" Or table.Name = "import_export_settings" Then tables.Add(table.Name)
+  Next
+  tables.Sort()
+  For Each tableName In tables
+    rows = New Variant[]
+    r = db.Find(tableName)
+    For Each r
+      row = New Collection
+      For Each field In r.Fields
+        If field.Name = "content" Then
+          row.Add(Base64(r!content.Data), field.Name)
+        Else
+          row.Add(r[field.Name], field.Name)
+        Endif
+      Next
+      rows.Add(row)
+    Next
+    data.Add(rows)
+  Next
+  Return JSON.Encode(data)
+End

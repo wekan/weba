@@ -85,6 +85,7 @@
   "edit": "Wijzig",
   "enable-permanent-delete": "Permanent verwijderen voor globale beheerder inschakelen",
   "enable-permanent-delete-description": "Sta globale beheerders toe om als verwijderd gemarkeerde inhoud permanent te verwijderen. Het inschakelen van deze instelling verwijdert op zichzelf niets.",
+  "export": "Exporteren",
   "filter-no-due-date": "Geen vervaldatum",
   "font-size-default": "Standaard",
   "friday": "Vrijdag",

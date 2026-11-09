@@ -93,8 +93,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   copy retry are also recorded there; original formats/APIs, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded
-  in CHANGELOG.md; public/alternate storage/field models and its native UI action
-  remain open. Rules/integrations/scrum, board-defined labels/custom fields,
+  in CHANGELOG.md. Its native selected-file action, session/API separation and
+  live scope/policy/retention controls are recorded there too; public/alternate
+  storage/field models and full original callbacks remain open. Rules/integrations/scrum, board-defined labels/custom fields,
   actual source routing/subscription integration, destination placement/order,
   missing board content and full original callbacks remain open.
   Native multi-selection controls, retained visible-page selection

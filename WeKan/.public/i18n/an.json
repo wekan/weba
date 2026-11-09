@@ -85,6 +85,7 @@
   "edit": "Editar",
   "enable-permanent-delete": "Activar la eliminación permanente ta el administrador global",
   "enable-permanent-delete-description": "Permitir que os administradors globals borren definitivament o conteniu marcau como borrau. Activar iste achuste no borra cosa por sí mesmo.",
+  "export": "Exportar",
   "filter-no-due-date": "Sin calendata de vencimiento",
   "font-size-default": "Por defecto",
   "friday": "Viernes",

@@ -85,6 +85,7 @@
   "edit": "Modificar",
   "enable-permanent-delete": "Activar la supression permanenta per l'administrator global",
   "enable-permanent-delete-description": "Permetre als administrators globals de suprimir definitivament lo contengut suprimit logicament. Activar aqueste reglatge suprimís pas res d'esperel.",
+  "export": "Exportar",
   "filter-no-due-date": "Pas de data de termin",
   "font-size-default": "Per defaut",
   "friday": "Divendres",

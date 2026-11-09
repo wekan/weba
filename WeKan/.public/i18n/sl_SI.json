@@ -85,6 +85,7 @@
   "edit": "Uredi",
   "enable-permanent-delete": "Omogoči trajno brisanje za globalnega skrbnika",
   "enable-permanent-delete-description": "Globalnim skrbnikom dovoli trajno brisanje začasno izbrisane vsebine. Vklop te nastavitve sam po sebi ničesar ne izbriše.",
+  "export": "Izvozi",
   "filter-no-due-date": "Brez roka",
   "font-size-default": "Privzeto",
   "friday": "Petek",

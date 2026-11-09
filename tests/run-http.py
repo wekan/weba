@@ -7,7 +7,7 @@ root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(root / 'runtime'))
 from server import handler
 
-if any(mode in sys.argv for mode in ('--live', '--overview-live', '--catalog', '--board-order', '--workspaces', '--workspace-order', '--board-drops', '--board-selection', '--selection-archive', '--board-purge', '--list-delete-api', '--list-deletion', '--attachment-lifecycle', '--attachment-delete-api', '--attachment-upload-api', '--attachment-upload', '--attachment-reads-api', '--attachment-reads', '--transfer-policy-api', '--transfer-policy', '--board-allowance', '--board-copy', '--selected-copy', '--copy-options', '--board-creation', '--single-copy', '--import-export-policy', '--attachment-export-api')) and '--members' not in sys.argv:
+if any(mode in sys.argv for mode in ('--live', '--overview-live', '--catalog', '--board-order', '--workspaces', '--workspace-order', '--board-drops', '--board-selection', '--selection-archive', '--board-purge', '--list-delete-api', '--list-deletion', '--attachment-lifecycle', '--attachment-delete-api', '--attachment-upload-api', '--attachment-upload', '--attachment-reads-api', '--attachment-reads', '--transfer-policy-api', '--transfer-policy', '--board-allowance', '--board-copy', '--selected-copy', '--copy-options', '--board-creation', '--single-copy', '--import-export-policy', '--attachment-export-api', '--attachment-export')) and '--members' not in sys.argv:
     sys.argv.append('--members')
 
 base_env = os.environ.copy()
@@ -31,6 +31,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
         shutil.copy2(root / 'tests/BoardCopiesFixture.module', project / '.src/BoardCopiesFixture.module')
         shutil.copy2(root / 'tests/BoardCreationFixture.module', project / '.src/BoardCreationFixture.module')
         shutil.copy2(root / 'tests/ImportExportPolicyFixture.module', project / '.src/ImportExportPolicyFixture.module')
+        shutil.copy2(root / 'tests/AttachmentExportFixture.module', project / '.src/AttachmentExportFixture.module')
         shutil.copy2(root / 'tests/CardDatesConformance.module', project / '.src/CardDatesConformance.module')
         shutil.copy2(root / 'tests/ArchiveFixture.module', project / '.src/ArchiveFixture.module')
     subprocess.run([base_env.get('GBC', 'gbc3'), '-j', '1', '-a', str(project)], check=True, env=base_env)
@@ -75,7 +76,9 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
         env['WEBA_TEST_URL'] = 'http://127.0.0.1:' + str(server.server_port)
         env['WEBA_TEST_RUNNER'] = runner
         env['WEBA_TEST_APPLICATION'] = str(application)
-        if '--attachment-export-api' in sys.argv:
+        if '--attachment-export' in sys.argv:
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/attachment-export.browser.cjs')], check=True, env=env)
+        elif '--attachment-export-api' in sys.argv:
             subprocess.run([sys.executable, str(root / 'tests/api-attachment-export.test.py')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/attachment-export-conformance.test.cjs')], check=True, env=env)
         elif '--import-export-policy' in sys.argv:
@@ -139,6 +142,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/attachment-lifecycle.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/attachment-upload.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/attachment-reads.browser.cjs')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/attachment-export.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/transfer-policy.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-allowance.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-copy-authorization.browser.cjs')], check=True, env=env)

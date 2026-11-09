@@ -85,6 +85,7 @@
   "edit": "Labot",
   "enable-permanent-delete": "Iespējot pastāvīgu dzēšanu globālajam administratoram",
   "enable-permanent-delete-description": "Atļaut globālajiem administratoriem neatgriezeniski dzēst mīksti dzēstu saturu. Šī iestatījuma iespējošana pati par sevi neko neizdzēš.",
+  "export": "Eksportēt",
   "filter-no-due-date": "Bez termiņa",
   "font-size-default": "Noklusēts",
   "friday": "Piektdiena",

@@ -85,6 +85,7 @@
   "edit": "Breyta",
   "enable-permanent-delete": "Virkja varanlega eyðingu fyrir yfirkerfisstjóra",
   "enable-permanent-delete-description": "Leyfa yfirkerfisstjórum að eyða endanlega efni sem hefur verið merkt sem eytt. Þessi stilling eyðir engu ein og sér.",
+  "export": "Flytja út",
   "filter-no-due-date": "Enginn skiladagur",
   "font-size-default": "Sjálfgefið",
   "friday": "Föstudagur",

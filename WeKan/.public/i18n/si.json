@@ -85,6 +85,7 @@
   "edit": "සංස්කරණය",
   "enable-permanent-delete": "Global Admin සඳහා ස්ථිර මකා දැමීම සක්‍රිය කරන්න",
   "enable-permanent-delete-description": "මෘදු ලෙස මකා දැමූ අන්තර්ගතය ස්ථිරව මකා දැමීමට Global Admin වරුන්ට ඉඩ දෙන්න. මෙම සැකසුම සක්‍රිය කිරීමෙන් පමණක් කිසිවක් මකා නොදමයි.",
+  "export": "නිර්යාත කරන්න",
   "filter-no-due-date": "නියමිත දිනයක් නැත",
   "font-size-default": "පෙරනිමි",
   "friday": "සිකුරාදා",

@@ -85,6 +85,7 @@
   "edit": "編輯",
   "enable-permanent-delete": "為全域管理員啟用永久刪除",
   "enable-permanent-delete-description": "允許全域管理員永久刪除已軟刪除的內容。啟用此設定本身不會刪除任何內容。",
+  "export": "匯出",
   "filter-no-due-date": "無截止日期",
   "font-size-default": "預設",
   "friday": "星期五",

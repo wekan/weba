@@ -85,6 +85,7 @@
   "edit": "編集",
   "enable-permanent-delete": "グローバル管理者の完全削除を有効にする",
   "enable-permanent-delete-description": "グローバル管理者が論理削除されたコンテンツを完全に削除できるようにします。この設定を有効にするだけでは、何も削除されません。",
+  "export": "エクスポート",
   "filter-no-due-date": "期限なし",
   "font-size-default": "デフォルト",
   "friday": "金曜",

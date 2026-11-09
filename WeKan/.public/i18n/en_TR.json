@@ -85,6 +85,7 @@
   "edit": "Edit",
   "enable-permanent-delete": "Enable permanent delete for Global Admin",
   "enable-permanent-delete-description": "Allow Global Admins to permanently delete soft-deleted content. Enabling this setting does not delete anything by itself.",
+  "export": "Export",
   "filter-no-due-date": "No due date",
   "font-size-default": "Default",
   "friday": "Friday",

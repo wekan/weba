@@ -85,6 +85,7 @@
   "edit": "编辑",
   "enable-permanent-delete": "为全局管理员启用永久删除",
   "enable-permanent-delete-description": "允许全局管理员永久删脱已经软删除个内容。打开搿个设置本身勿会删脱任何内容。",
+  "export": "导出",
   "filter-no-due-date": "呒没截止日期",
   "font-size-default": "默认",
   "friday": "礼拜五",

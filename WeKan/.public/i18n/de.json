@@ -85,6 +85,7 @@
   "edit": "Bearbeiten",
   "enable-permanent-delete": "Dauerhaftes Löschen für globale Administratoren aktivieren",
   "enable-permanent-delete-description": "Erlaubt globalen Administratoren, als gelöscht markierte Inhalte dauerhaft zu löschen. Durch das Aktivieren dieser Einstellung allein werden keine Inhalte gelöscht.",
+  "export": "Exportieren",
   "filter-no-due-date": "Kein Fälligkeitsdatum",
   "font-size-default": "Standard",
   "friday": "Freitag",

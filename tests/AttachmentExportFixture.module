@@ -1,0 +1,71 @@
+Public Sub Main()
+  Dim mode As String = Env["WEBA_NATIVE_EXPORT_MODE"]
+  Dim target As Collection = JSON.Decode(If(Env["WEBA_NATIVE_EXPORT_DATA"], Env["WEBA_NATIVE_EXPORT_DATA"], "{}"))
+  Dim boardId As Integer = target["boardId"]
+  Dim cardId As Integer = target["cardId"]
+  Dim fileId As Integer = target["fileId"]
+  Dim data As New Collection
+  Dim limits As Collection
+  Dim flags As Collection
+  Dim r As Result
+  Dim field As String
+  Dim name As String = "Export " & Chr(34) & "quoted" & Chr(34) & " + <img src=x onerror=window.webaAttachmentExportCanary=1> 🚀.html"
+  If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
+  Session["username"] = "rest-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("rest-owner")
+  If mode = "reset" Then
+    ImportExportPolicy.Save(False, False)
+    TransferPolicy.OpenStore()
+    For Each field In ["attachmentsUploadMaxBytes", "attachmentsDownloadMaxBytes", "apiUploadMaxBytes", "apiDownloadMaxBytes", "attachmentsUploadBlocked", "attachmentsDownloadBlocked", "apiUploadBlocked", "apiDownloadBlocked", "avatarsUploadBlocked", "actor", "changed_ms"]
+      WebDatabase.OpenConnection().Exec("UPDATE attachment_transfer_settings SET " & field & "=NULL WHERE id=1")
+    Next
+  Endif
+  If mode = "export-off" Then ImportExportPolicy.Save(False, True)
+  If mode = "native-block" Or mode = "native-limit" Or mode = "api-block" Then
+    limits = Defaults()
+    If mode = "native-block" Then limits["attachmentsDownloadBlocked"] = True
+    If mode = "native-limit" Then limits["attachmentsDownloadMaxBytes"] = 2
+    If mode = "api-block" Then limits["apiDownloadBlocked"] = True
+    TransferPolicy.Save(limits)
+  Endif
+  Session["username"] = "rest-other"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+  If mode = "prepare" Then
+    fileId = CardContent.UploadFile(boardId, cardId, name, "exact" & Chr(0) & Chr(255), "text/html")
+    data["fileId"] = fileId
+    data["name"] = name
+    data["type"] = "text/html"
+    r = WebDatabase.OpenConnection().Find("kb_files", "id=&1", fileId)
+    data["bytes"] = Base64(r!content.Data)
+  Endif
+  If mode = "full-assigned" Then BoardAccess.SetMember(boardId, "rest-file-assigned", "read-only")
+  If mode = "raw-assigned" Then
+    BoardAccess.SetMember(boardId, "rest-file-assigned", "board-admin")
+    flags = ApiMemberRoles.FlagsFor("board-admin")
+    flags["isReadAssignedOnly"] = True
+    ApiMemberRoles.Save(boardId, "rest-file-assigned", flags)
+  Endif
+  If mode = "delete" Then AttachmentLifecycle.Delete(boardId, cardId, fileId)
+  data["tokenCount"] = 0
+  If WebDatabase.OpenConnection().Tables.Exist("api_tokens") Then
+    r = WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS n FROM api_tokens")
+    data["tokenCount"] = r!n
+  Endif
+  If fileId > 0 Then
+    r = WebDatabase.OpenConnection().Find("kb_files", "id=&1", fileId)
+    If r.Available Then data["retainedBytes"] = Base64(r!content.Data)
+  Endif
+  Print JSON.Encode(data)
+End
+
+Private Function Defaults() As Collection
+  Dim data As New Collection
+  Dim field As String
+  For Each field In ["attachmentsUploadMaxBytes", "attachmentsDownloadMaxBytes", "apiUploadMaxBytes", "apiDownloadMaxBytes"]
+    data[field] = 0
+  Next
+  For Each field In ["attachmentsUploadBlocked", "attachmentsDownloadBlocked", "apiUploadBlocked", "apiDownloadBlocked", "avatarsUploadBlocked"]
+    data[field] = False
+  Next
+  Return data
+End

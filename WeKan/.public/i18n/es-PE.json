@@ -85,6 +85,7 @@
   "edit": "Editar",
   "enable-permanent-delete": "Activar la eliminación permanente para el administrador global",
   "enable-permanent-delete-description": "Permitir que los administradores globales eliminen permanentemente el contenido marcado como eliminado. Activar esta opción no elimina nada por sí solo.",
+  "export": "Exportar",
   "filter-no-due-date": "Sin fecha de vencimiento",
   "font-size-default": "Por defecto",
   "friday": "viernes",

@@ -85,6 +85,7 @@
   "edit": "Redigér",
   "enable-permanent-delete": "Aktivér permanent sletning for global administrator",
   "enable-permanent-delete-description": "Tillad globale administratorer at slette blødt slettet indhold permanent. Aktivering af denne indstilling sletter ikke noget i sig selv.",
+  "export": "Eksportér",
   "filter-no-due-date": "Ingen forfaldsdato",
   "font-size-default": "Standard",
   "friday": "Fredag",
