@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Ограничувања на големината на датотеки за прилози и API",
   "attachment-upload-limit-label": "Максимална големина на датотека за прикачување прилози",
   "attachments": "Прикачени датотеки",
+  "automatic-linked-url-schemes": "Приспособени URL-шеми кои треба автоматски да може да се кликнат. Една URL-шема по ред",
   "blockly-COPY_SHORTCUT": "Копирај",
   "board-admin": "Администратор на таблата",
   "board-creation-admin-only": "Само администраторите можат да создаваат табли",

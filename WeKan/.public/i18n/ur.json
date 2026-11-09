@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "منسلکہ اور API فائل سائز کی حدیں",
   "attachment-upload-limit-label": "منسلکات اپ لوڈ کی زیادہ سے زیادہ فائل سائز",
   "attachments": "منسلکات",
+  "automatic-linked-url-schemes": "حسب ضرورت URL اسکیمیں جن پر خودکار طور پر کلک کیا جا سکے۔ ہر سطر میں ایک URL اسکیم",
   "blockly-COPY_SHORTCUT": "نقل کریں",
   "board-admin": "بورڈ منتظم",
   "board-creation-admin-only": "صرف منتظمین بورڈ بنا سکتے ہیں",

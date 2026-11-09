@@ -16,7 +16,12 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),asse
   assert.deepEqual(fs.readFileSync(path.join(__dirname,'../vendor/wekan-markdown',name)),content);
  }
  assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(publicDir,'workspace-markdown.js'))).digest('hex'),manifest.bundleSha256);
+ const parserSource=fs.readFileSync(path.join(source,'models/lib/urlSchemeAllowlist.js'));
+ assert.deepEqual(fs.readFileSync(path.join(__dirname,'../vendor/wekan-markdown/urlSchemeAllowlist.js')),parserSource);
+ assert.equal(crypto.createHash('sha256').update(parserSource).digest('hex'),manifest.urlSchemeParserSha256);
  bundled.window.eval(fs.readFileSync(path.join(publicDir,'workspace-markdown.js'),'utf8'));
+ const sourceParse=req(path.join(source,'models/lib/urlSchemeAllowlist.js')).parseAllowedUrlSchemes;
+ for(const input of [null,0,'','THUNDERLINK:, file://; OnEnOtE: file javascript: data: search-ms: telnet: https:', 'a+b a.b a-b 1bad '+'x'.repeat(33),Array.from({length:70},(_,i)=>'scheme'+i).join(',')])assert.deepEqual(Array.from(bundled.window.webaWorkspaceMarkdown.parseUrlSchemes(input)),sourceParse(input));
  let helper;const context={DOMPurify:req('dompurify')(original.window),MarkdownIt:req('markdown-it'),markdownItEmoji:req('markdown-it-emoji'),
   markdownItMath:(await import(pathToFileURL(req.resolve('markdown-it-math/no-default-renderer')).href)).default,temml:req('temml'),hljs:req('highlight.js/lib/common'),
   window:original.window,document:original.window.document,URL:original.window.URL,console,

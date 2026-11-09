@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "첨부 파일 및 API 파일 크기 제한",
   "attachment-upload-limit-label": "첨부 파일 업로드 최대 파일 크기",
   "attachments": "첨부 파일",
+  "automatic-linked-url-schemes": "자동으로 클릭 가능하게 할 사용자 지정 URL 스킴. 한 줄에 하나씩",
   "blockly-COPY_SHORTCUT": "복사",
   "board-admin": "보드 관리자",
   "board-creation-admin-only": "관리자만 보드를 만들 수 있습니다",

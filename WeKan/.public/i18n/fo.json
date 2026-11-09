@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Støddarmørk fyri viðheft og API-fílur",
   "attachment-upload-limit-label": "Størsta fílustødd fyri upplegging av viðheftum",
   "attachments": "Viðheft",
+  "automatic-linked-url-schemes": "Egin URL-snið, sum sjálvvirkandi skulu kunna trýstast á. Eitt URL-snið á hvørjari reglu",
   "blockly-COPY_SHORTCUT": "Avrita",
   "board-admin": "Talvuumsitari",
   "board-creation-admin-only": "Bert umsitarar kunnu stovna nýggjar tavlur",

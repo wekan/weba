@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Teorainneacha Méide Comhaid Ceangaltán agus API",
   "attachment-upload-limit-label": "Uasmhéid comhaid uaslódála ceangaltán",
   "attachments": "Ceangaltáin",
+  "automatic-linked-url-schemes": "Scéimeanna URL saincheaptha ar cheart a bheith inchliceáilte go huathoibríoch. Scéim URL amháin in aghaidh na líne",
   "blockly-COPY_SHORTCUT": "Cóipeáil",
   "board-admin": "Riarthóir an Chláir",
   "board-creation-admin-only": "Ní féidir ach le riarthóirí cláir a chruthú",

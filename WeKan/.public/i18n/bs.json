@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Ograničenja veličine datoteka za privitke i API",
   "attachment-upload-limit-label": "Najveća veličina datoteke za prijenos privitaka",
   "attachments": "Prilozi",
+  "automatic-linked-url-schemes": "Prilagođene URL sheme koje automatski trebaju biti poveznice na koje se može kliknuti. Jedna URL shema po redu",
   "blockly-COPY_SHORTCUT": "Kopiraj",
   "board-admin": "Administrator table",
   "board-creation-admin-only": "Samo administratori mogu kreirati table",

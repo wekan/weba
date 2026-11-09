@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Όρια Μεγέθους Αρχείων Συνημμένων και API",
   "attachment-upload-limit-label": "Μέγιστο μέγεθος αρχείου μεταφόρτωσης συνημμένων",
   "attachments": "Συνημμένα",
+  "automatic-linked-url-schemes": "Προσαρμοσμένα σχήματα URL που πρέπει να γίνονται αυτόματα κλικαρίσιμα. Ένα σχήμα ανά γραμμή",
   "blockly-COPY_SHORTCUT": "Αντιγραφή",
   "board-admin": "Διαχειριστής Πίνακα",
   "board-creation-admin-only": "Μόνο οι διαχειριστές μπορούν να δημιουργήσουν πίνακες",

@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "قوشۇمچە ۋە API ھۆججەت چوڭلۇقى چەكلىمىلىرى",
   "attachment-upload-limit-label": "قوشۇمچە يۈكلەش ئەڭ چوڭ ھۆججەت چوڭلۇقى",
   "attachments": "قوشۇمچە ھۆججەتلەر",
+  "automatic-linked-url-schemes": "ئاپتوماتىك چېكىشكە بولىدىغان URL لايىھەلىرى. ھەر بىر قۇرغا بىر URL لايىھىسى",
   "blockly-COPY_SHORTCUT": "كۆچۈرۈڭ",
   "board-admin": "تاختا باشقۇرغۇچىسى",
   "board-creation-admin-only": "پەقەت باشقۇرغۇچىلارلا تاختا قۇرالايدۇ",

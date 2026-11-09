@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Limity veľkosti súborov príloh a API",
   "attachment-upload-limit-label": "Maximálna veľkosť súboru pri nahrávaní príloh",
   "attachments": "Prílohy",
+  "automatic-linked-url-schemes": "Vlastné schémy URL, ktoré majú byť automaticky klikateľné. Jedna schéma URL na riadok",
   "blockly-COPY_SHORTCUT": "Kopírovať",
   "board-admin": "Administrátor nástenky",
   "board-creation-admin-only": "Iba administrátori môžu vytvárať nástenky",

@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "添付ファイルと API のファイルサイズ制限",
   "attachment-upload-limit-label": "添付ファイルのアップロード最大サイズ",
   "attachments": "添付ファイル",
+  "automatic-linked-url-schemes": "自動的にクリック可能になるカスタムURLスキーム。 1行につき1件のURLスキーム",
   "blockly-COPY_SHORTCUT": "コピー",
   "board-admin": "ボード管理者",
   "board-creation-admin-only": "管理者のみがボードを作成できます",

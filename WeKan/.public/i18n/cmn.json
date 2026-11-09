@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "附件和 API 文件大小限制",
   "attachment-upload-limit-label": "附件上传最大文件大小",
   "attachments": "附件",
+  "automatic-linked-url-schemes": "应自动可点击的自定义 URL 方案。每行一个 URL 方案",
   "blockly-COPY_SHORTCUT": "复制",
   "board-admin": "看板管理员",
   "board-creation-admin-only": "只有管理员可以创建看板",

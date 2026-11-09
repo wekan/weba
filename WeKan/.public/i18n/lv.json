@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Pielikumu un API failu izmēra ierobežojumi",
   "attachment-upload-limit-label": "Pielikumu augšupielādes maksimālais failu izmērs",
   "attachments": "Faili",
+  "automatic-linked-url-schemes": "Pielāgotās URL shēmas, kurām automātiski jākļūst klikšķināmām. Viena URL shēma katrā rindā",
   "blockly-COPY_SHORTCUT": "Kopēt",
   "board-admin": "Dēļa administrators",
   "board-creation-admin-only": "Tikai administratori var izveidot dēļus",

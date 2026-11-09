@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Attachment And API File Size Limits",
   "attachment-upload-limit-label": "Attachments upload max file size",
   "attachments": "Attachments",
+  "automatic-linked-url-schemes": "Custom URL Schemes which should automatically be clickable. One URL Scheme per line",
   "blockly-COPY_SHORTCUT": "Copy",
   "board-admin": "Board Admin",
   "board-creation-admin-only": "Only admins can create boards",

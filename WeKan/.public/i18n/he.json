@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "מגבלות גודל קובץ לצרופות ול־API",
   "attachment-upload-limit-label": "גודל קובץ מרבי להעלאת צרופות",
   "attachments": "קבצים מצורפים",
+  "automatic-linked-url-schemes": "סכמות כתובות בהתאמה אישית שיהפכו ללחיצות אוטומטית. סכמת כתובת אחת בשורה",
   "blockly-COPY_SHORTCUT": "העתקה",
   "board-admin": "ניהול לוח",
   "board-creation-admin-only": "רק מנהלי מערכת יכולים ליצור לוחות",

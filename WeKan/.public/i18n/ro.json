@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Limite de dimensiune a fișierelor pentru atașamente și API",
   "attachment-upload-limit-label": "Dimensiunea maximă a fișierelor la încărcarea atașamentelor",
   "attachments": "Atașamente",
+  "automatic-linked-url-schemes": "Scheme URL personalizate care ar trebui să devină automat legături pe care se poate face clic. O schemă URL pe linie",
   "blockly-COPY_SHORTCUT": "Copiază",
   "board-admin": "Administrator de panou",
   "board-creation-admin-only": "Numai administratorii pot crea panouri",

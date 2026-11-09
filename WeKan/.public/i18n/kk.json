@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Тіркеме және API файл өлшемінің шектері",
   "attachment-upload-limit-label": "Тіркемелерді жүктеудегі файлдың ең үлкен өлшемі",
   "attachments": "Тіркемелер",
+  "automatic-linked-url-schemes": "Автоматты басылатын арнайы URL схемалары. Әр жолға бір URL схемасы",
   "blockly-COPY_SHORTCUT": "Көшіру",
   "board-admin": "Тақта әкімшісі",
   "board-creation-admin-only": "Тек әкімшілер ғана тақта жасай алады",

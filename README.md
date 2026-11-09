@@ -541,11 +541,27 @@ identity and locked/final rechecks, rolling back data/audit after write or late
 role/session/value failures. A hidden read-only boolean snapshot updates the
 source renderer live; a reader reload starts with the persisted policy. Settings
 fields refresh when clean and retain drafts; losing admin access hides/clears the
-panel and forged saves fail. Labels use 165 imported keys across 237 catalogs.
+panel and forged saves fail. Labels use 166 imported keys across 237 catalogs.
 `MarkdownPolicyTest` and `markdown-policy.browser.cjs` cover defaults, private
 audit, denied/failed writes, retry, two-session raw/rendered updates, reload,
 external refresh, dirty drafts, demotion, mobile layout and Finnish controls.
 Run `python3 tests/run-http.py --markdown-policy [--archive]`, or `test-live`.
+
+The same panel offers a separate Save for **Automatic linked URL schemes**.
+`markdown_url_settings` stores the exact source text and a private actor/time
+audit; empty/null means no extra schemes. Typed text saves use the same locked
+admin/session/final-value guards and rollback discipline. Public readers receive
+only the text, parsed by the unchanged `models/lib/urlSchemeAllowlist.js` bundled
+with the viewer: whitespace/comma/semicolon separators, case normalization,
+deduplication, sorted names and a 50-scheme cap match the source. Built-in schemes
+need no entry; executable/hidden-content and unsafe OS handlers stay forbidden
+even when listed. JSON snapshot transport escapes spaces and line breaks before
+Gambas label rendering, preserving exact source text and one-scheme-per-line
+separators. Live changes update existing icons and reloads. Clean fields
+refresh, dirty text survives external updates, and demotion clears the field.
+Native tests cover typed/private/write/late role/session/value failures; real
+browser tests cover exact persistence, custom/forbidden links, live/reload/draft
+updates, forged saves, demotion and translated accessible mobile controls.
 
 `BoardOrderTest` covers per-user readonly access, filtered rank merge, invalid/
 foreign/revoked/archive/mode rejection, injected write rollback/retry and account/
@@ -1981,7 +1997,7 @@ A selected live attachment now has an Export button in the native details pane.
 It downloads wekan-attachment.json with the same five-field source JSON as the
 attachment-export API, preserving exact bytes, empty data and literal Unicode
 metadata. The button uses the existing native icon/keyboard controls and source
-Export caption (now included in 165 keys across 237 catalogs). Owner and readonly full-board
+Export caption (now included in 166 keys across 237 catalogs). Owner and readonly full-board
 members can export; assigned-only members cannot, even when raw flags also make
 them board administrators.
 

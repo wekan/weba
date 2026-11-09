@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Ліміты памеру файлаў укладанняў і API",
   "attachment-upload-limit-label": "Максімальны памер файла для загрузкі ўкладанняў",
   "attachments": "Укладанні",
+  "automatic-linked-url-schemes": "Карыстальніцкія схемы URL, якія павінны аўтаматычна станавіцца націскальнымі. Адна схема URL на радок",
   "blockly-COPY_SHORTCUT": "Капіяваць",
   "board-admin": "Адміністратар дошкі",
   "board-creation-admin-only": "Толькі адміністратары могуць ствараць дошкі",

@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Ličtusiden i API failoiden surusen rajad",
   "attachment-upload-limit-label": "Ličtusiden päleladindan surin failan suruz",
   "attachments": "Tartutadud failad",
+  "automatic-linked-url-schemes": "Kävutajan märitud URL shemad, miččid voib avtomatižesti paina. Üks' URL shem rives.",
   "blockly-COPY_SHORTCUT": "Kopiruida",
   "board-admin": "Laudan administrator",
   "board-creation-admin-only": "Vhalanguli fhedzi vha nga sika mabodo",

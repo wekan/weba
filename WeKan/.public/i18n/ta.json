@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "இணைப்பு மற்றும் API கோப்பு அளவு வரம்புகள்",
   "attachment-upload-limit-label": "இணைப்புகள் பதிவேற்ற அதிகபட்ச கோப்பு அளவு",
   "attachments": "இணைப்புகள்",
+  "automatic-linked-url-schemes": "தானாகச் சொடுக்கக்கூடியதாக இருக்க வேண்டிய தனிப்பயன் URL திட்டங்கள். ஒரு வரிக்கு ஒரு திட்டம்",
   "blockly-COPY_SHORTCUT": "நகலெடு",
   "board-admin": "பலகை நிர்வாகி",
   "board-creation-admin-only": "நிர்வாகிகள் மட்டுமே பலகைகளை உருவாக்க முடியும்",

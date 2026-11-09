@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Ограничения размера файлов вложений и API",
   "attachment-upload-limit-label": "Максимальный размер файла загрузки вложений",
   "attachments": "Вложения",
+  "automatic-linked-url-schemes": "Пользовательская URL схема, которая должна быть кликабельной. Одна схема в каждой строке.",
   "blockly-COPY_SHORTCUT": "Копировать",
   "board-admin": "Администратор доски",
   "board-creation-admin-only": "Только администраторы могут создавать доски",

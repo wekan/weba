@@ -2,6 +2,17 @@
 
 This work adds the following features and fixes:
 
+- Persist automaticLinkedUrlSchemes as exact typed admin-only text with private
+  actor/time audit, locked/final identity/role/value checks and rollback/retry.
+  Add translated accessible Security textarea with separate Save, live public
+  snapshots with lossless multiline JSON encoding, clean-field refresh, dirty
+  draft retention and demotion clearing.
+  Bundle the unchanged source allowlist parser; preserve forbidden handler rules,
+  normalization and 50-scheme cap. Test native write/late role/session/value
+  failures and real two-session custom/forbidden links, reload, forged denial,
+  mobile/Finnish controls (166 keys/237 catalogs). External-link settings,
+  card-title/iconColor and full production transport remain pending. Thanks to xet7.
+
 - Persist source-default-false alwaysShowCodeAsText with typed admin-only audited
   saves and actor/session/role/value transaction rechecks. Add Global Admin /
   Security controls and a live reader boolean snapshot applied before rendering.

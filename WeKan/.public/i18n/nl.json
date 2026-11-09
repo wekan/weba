@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Bijlage en API bestandsgrootte limieten.",
   "attachment-upload-limit-label": "Maximale upload bestandsgrootte",
   "attachments": "Bijlagen",
+  "automatic-linked-url-schemes": "Maatwerk URL-schema's die automatisch klikbaar zouden moeten zijn. Een URL per regel.",
   "blockly-COPY_SHORTCUT": "Kopiëren",
   "board-admin": "Bord Beheerder",
   "board-creation-admin-only": "Alleen beheerders kunnen borden aanmaken",

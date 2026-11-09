@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Límites de tamaño de ficheiro de anexos e da API",
   "attachment-upload-limit-label": "Tamaño máximo de ficheiro para subir anexos",
   "attachments": "Anexos",
+  "automatic-linked-url-schemes": "Esquemas de URL personalizados que deben ser clicables automaticamente. Un esquema de URL por liña",
   "blockly-COPY_SHORTCUT": "Copiar",
   "board-admin": "Administrador do taboleiro",
   "board-creation-admin-only": "Só os administradores poden crear taboleiros",

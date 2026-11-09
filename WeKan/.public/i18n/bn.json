@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "সংযুক্তি ও API ফাইলের আকারসীমা",
   "attachment-upload-limit-label": "সংযুক্তি আপলোডের সর্বোচ্চ ফাইল আকার",
   "attachments": "সংযুক্তিসমূহ",
+  "automatic-linked-url-schemes": "স্বয়ংক্রিয়ভাবে ক্লিকযোগ্য কাস্টম URL স্কিম। প্রতি লাইনে একটি URL স্কিম",
   "blockly-COPY_SHORTCUT": "কপি করুন",
   "board-admin": "বোর্ড প্রশাসক",
   "board-creation-admin-only": "শুধুমাত্র অ্যাডমিনরা বোর্ড তৈরি করতে পারবেন",

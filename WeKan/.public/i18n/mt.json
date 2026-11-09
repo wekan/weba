@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Mehmuż And API Fajl Size Limits",
   "attachment-upload-limit-label": "Daqs massimu tal-fajl għat-tlugħ ta’ annessi",
   "attachments": "Mehmużin",
+  "automatic-linked-url-schemes": "Personalizzat URL Schemes which should automatically be clickable. One URL Scheme per line",
   "blockly-COPY_SHORTCUT": "Ikkopja",
   "board-admin": "Bord Amministratur",
   "board-creation-admin-only": "Biss l-amministraturi jistgħu joħolqu boards ġodda",

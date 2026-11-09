@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "संलग्नक आणि API फाइल आकार मर्यादा",
   "attachment-upload-limit-label": "संलग्नक अपलोड कमाल फाइल आकार",
   "attachments": "संलग्नके",
+  "automatic-linked-url-schemes": "स्वयंचलितपणे क्लिक करण्यायोग्य असाव्यात अशा सानुकूल URL योजना. प्रत्येक ओळीत एक URL योजना",
   "blockly-COPY_SHORTCUT": "प्रत करा",
   "board-admin": "फलक प्रशासक",
   "board-creation-admin-only": "फक्त प्रशासक बोर्ड तयार करू शकतात",

@@ -65,6 +65,7 @@ Private $spaceCollapsed As Collection
 Private $spaceCounts As Collection
 Private $spaceNames As New Collection
 Private $markdownRawBase As Boolean
+Private $markdownSchemesBase As String
 Private $workspaceRevision As Long
 Private $workspaceActor As String
 Private $workspaceGeneration As Long
@@ -3667,6 +3668,9 @@ Public Sub MarkdownSettings_Click()
   Dim data As Collection = MarkdownPolicy.Settings()
   AlwaysShowCodeAsText.Value = data["alwaysShowCodeAsText"]
   $markdownRawBase = AlwaysShowCodeAsText.Value
+  data = MarkdownPolicy.UrlSettings()
+  MarkdownSchemes.Text = data["automaticLinkedUrlSchemes"]
+  $markdownSchemesBase = MarkdownSchemes.Text
   ContentRow.Hide()
   BoardCreationPanel.Hide()
   PasswordPolicyPanel.Hide()
@@ -3694,6 +3698,14 @@ Private Sub ValidateMarkdownPolicy()
   Dim value As Boolean = MarkdownPolicy.AlwaysRaw()
   MarkdownSettings.Visible = admin
   MarkdownPolicySnapshot.Text = If(value, "1", "0")
+  MarkdownUrlSnapshot.Text = Replace(JSON.Encode(MarkdownPolicy.UrlSchemes()), " ", "\\u0020")
+  If Not admin Then
+    MarkdownSchemes.Text = ""
+    $markdownSchemesBase = ""
+  Else If MarkdownPanel.Visible And MarkdownSchemes.Text = $markdownSchemesBase Then
+    MarkdownSchemes.Text = MarkdownPolicy.UrlSchemes()
+    $markdownSchemesBase = MarkdownSchemes.Text
+  Endif
   If Not admin Then
     MarkdownPanel.Hide()
     AlwaysShowCodeAsText.Value = False
@@ -3702,4 +3714,13 @@ Private Sub ValidateMarkdownPolicy()
     AlwaysShowCodeAsText.Value = value
     $markdownRawBase = value
   Endif
+End
+
+Public Sub SaveMarkdownSchemes_Click()
+  MarkdownPolicy.SaveUrlSchemes(MarkdownSchemes.Text)
+  $markdownSchemesBase = MarkdownSchemes.Text
+  Notice.Text = "Saved"
+  ValidateMarkdownPolicy()
+Catch
+  Notice.Text = Error.Text
 End

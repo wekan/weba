@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Meedi ya boholo ba diphuthelwana le difaele tsa API",
   "attachment-upload-limit-label": "Boholo bo phahameng ba faele ya ho kenya diphuthelwana",
   "attachments": "Tse kopantsoeng",
+  "automatic-linked-url-schemes": "Mefuta e ikgethileng ya URL e lokelang ho etswa mahokelo a ka tobetsoang ka boiketsetso. Mofuta o le mong wa URL moleng ka mong",
   "blockly-COPY_SHORTCUT": "Kopitsa",
   "board-admin": "Molaodi wa boto",
   "board-creation-admin-only": "Batsamaisi feela ba ka theha diboto tse ncha",

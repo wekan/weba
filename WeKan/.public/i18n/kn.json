@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "ಲಗತ್ತು ಮತ್ತು API ಕಡತದ ಗಾತ್ರ ಮಿತಿಗಳು",
   "attachment-upload-limit-label": "ಲಗತ್ತುಗಳ ಅಪ್‌ಲೋಡ್ ಗರಿಷ್ಠ ಕಡತ ಗಾತ್ರ",
   "attachments": "ಲಗತ್ತುಗಳು",
+  "automatic-linked-url-schemes": "ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಕ್ಲಿಕ್ ಮಾಡಬಹುದಾದ ಕಸ್ಟಮ್ URL ಸ್ಕೀಮ್‌ಗಳು. ಪ್ರತಿ ಸಾಲಿಗೆ ಒಂದು URL ಸ್ಕೀಮ್",
   "blockly-COPY_SHORTCUT": "ನಕಲಿಸು",
   "board-admin": "ಫಲಕದ ನಿರ್ವಾಹಕ",
   "board-creation-admin-only": "ಆಡಳಿತಗಾರರು ಮಾತ್ರ ಬೋರ್ಡ್‌ಗಳನ್ನು ರಚಿಸಬಹುದು",

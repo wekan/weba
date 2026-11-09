@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "അറ്റാച്ച്മെന്റിന്റെയും API-യുടെയും ഫയൽ വലുപ്പ പരിധികൾ",
   "attachment-upload-limit-label": "അറ്റാച്ച്മെന്റ് അപ്‌ലോഡിന്റെ പരമാവധി ഫയൽ വലുപ്പം",
   "attachments": "അറ്റാച്ച്‌മെന്റുകൾ",
+  "automatic-linked-url-schemes": "സ്വയമേവ ക്ലിക്ക് ചെയ്യാവുന്ന ഇഷ്ടാനുസൃത URL സ്കീമുകൾ. ഓരോ വരിയിലും ഒരു URL സ്കീം",
   "blockly-COPY_SHORTCUT": "പകർത്തുക",
   "board-admin": "ബോർഡ് അഡ്മിൻ",
   "board-creation-admin-only": "അഡ്മിനുകൾക്ക് മാത്രമേ ബോർഡുകൾ സൃഷ്ടിക്കാൻ കഴിയൂ",

@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "محدودیت‌های اندازه فایل ضمیمه و API",
   "attachment-upload-limit-label": "حداکثر اندازه فایل بارگذاری ضمیمه‌ها",
   "attachments": "ضمائم",
+  "automatic-linked-url-schemes": "طرح‌های URL سفارشی که باید به‌طور خودکار قابل کلیک باشند. هر طرح URL در یک خط",
   "blockly-COPY_SHORTCUT": "رونویسی",
   "board-admin": "مدیر برد",
   "board-creation-admin-only": "فقط مدیران می‌توانند تخته ایجاد کنند",

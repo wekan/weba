@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "سنووری قەبارەی فایلی هاوپێچ و API",
   "attachment-upload-limit-label": "زۆرترین قەبارەی فایلی بارکردنی هاوپێچەکان",
   "attachments": "هاوپێچەکان",
+  "automatic-linked-url-schemes": "شێوازە تایبەتییەکانی URL کە دەبێت خۆکارانە کرتەیان لێبکرێت. هەر دێڕێک یەک شێوازی URL",
   "blockly-COPY_SHORTCUT": "کۆپی بکە",
   "board-admin": "بەڕێوەبەری تەختە",
   "board-creation-admin-only": "تەنها ئەدمینەکان دەتوانن تەختە دروست بکەن",

@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "apkatata ukat API qillqa-wayaqa jachʼa tupu Limits",
   "attachment-upload-limit-label": "Attachments apkataña max qillqa-wayaqa jachʼa tupu",
   "attachments": "Chikachatanaka",
+  "automatic-linked-url-schemes": "Aymar aruna: Custom URL Schemes which should automatically be clickable. One URL Scheme per line",
   "blockly-COPY_SHORTCUT": "Qillqaqaña",
   "board-admin": "pirqa Admin",
   "board-creation-admin-only": "Amtir jaqinakakiw tablasa luraskaspa",

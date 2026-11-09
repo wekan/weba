@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Limites magnitudinis adiunctorum et fasciculorum API",
   "attachment-upload-limit-label": "Maxima magnitudo adiuncti immittendi",
   "attachments": "Adiuncta",
+  "automatic-linked-url-schemes": "Schemata URL propria quae automatice premi possint. Unum schema URL in quaque linea",
   "blockly-COPY_SHORTCUT": "Describe",
   "board-admin": "Administrator tabulae",
   "board-creation-admin-only": "Soli administratores tabulas creare possunt",

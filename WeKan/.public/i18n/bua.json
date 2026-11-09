@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Хабсаргалта ба API файлай хэмжээнэй хизаарнууд",
   "attachment-upload-limit-label": "Хабсаргалта ашаалгын файлай эгээн ехэ хэмжээн",
   "attachments": "Хабсаргалтанууд",
+  "automatic-linked-url-schemes": "Автоматаар дарагдадаг болохо тусхай URL схемэнүүд. Мүр бүхэндэ нэгэ URL схемэ",
   "blockly-COPY_SHORTCUT": "Хуулаха",
   "board-admin": "Самбарай захирагша",
   "board-creation-admin-only": "Зөвхөн администраторнууд шэнэ хуудаhа үүсхэжэ шадаха",

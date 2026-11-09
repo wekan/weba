@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Límites di tamaño di archibo di adhuntos i API",
   "attachment-upload-limit-label": "Tamaño máximo di archibo pa subir adhuntos",
   "attachments": "Adhuntonan",
+  "automatic-linked-url-schemes": "Eskemas di URL personalizados ku deberían ser clicables automáticamente. Un eskema di URL pa línea.",
   "blockly-COPY_SHORTCUT": "Kopiá",
   "board-admin": "Atministradó di e tabla",
   "board-creation-admin-only": "Solamente administradónan por krea tablanan",

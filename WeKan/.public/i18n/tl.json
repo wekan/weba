@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "kalakip At API Talaksan Laki Mga limitasyon",
   "attachment-upload-limit-label": "kalakips i-upload pinakamataas talaksan laki",
   "attachments": "Mga kalakip",
+  "automatic-linked-url-schemes": "Pasadya URL Schemes which dapat awtomatiko maging clickable. One URL Scheme per line",
   "blockly-COPY_SHORTCUT": "Kopyahin",
   "board-admin": "pisara Tagapangasiwa",
   "board-creation-admin-only": "Ang mga admin lamang ang maaaring gumawa ng mga board",

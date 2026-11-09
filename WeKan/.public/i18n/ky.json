@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Тиркемелердин жана API файлдарынын өлчөм чектери",
   "attachment-upload-limit-label": "Тиркемелерди жүктөөдө файлдын эң чоң өлчөмү",
   "attachments": "Тиркемелер",
+  "automatic-linked-url-schemes": "Автоматтык түрдө басылуучу ыңгайлаштырылган URL схемалары. Ар бир сапка бир URL схемасы",
   "blockly-COPY_SHORTCUT": "Көчүрүү",
   "board-admin": "Тактанын администратору",
   "board-creation-admin-only": "Бир гана администраторлор доска түзө алат",

@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Ҳадди андозаи файлҳои замима ва API",
   "attachment-upload-limit-label": "Ҳадди аксари андозаи файли воридшавандаи замимаҳо",
   "attachments": "Замимаҳо",
+  "automatic-linked-url-schemes": "Нақшаҳои фармоишии URL, ки бояд худкор пахшшаванда бошанд. Як нақшаи URL дар ҳар сатр",
   "blockly-COPY_SHORTCUT": "Нусхабардорӣ",
   "board-admin": "Маъмури тахта",
   "board-creation-admin-only": "Танҳо маъмурон метавонанд тахта эҷод кунанд",

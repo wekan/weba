@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Ограничења величине датотека за прилоге и API",
   "attachment-upload-limit-label": "Максимална величина датотеке за отпремање прилога",
   "attachments": "Предметна грађа",
+  "automatic-linked-url-schemes": "Група места на Интернету која би могла да се посете. Једна група по линији",
   "blockly-COPY_SHORTCUT": "Копирај",
   "board-admin": "Водећи сарадник",
   "board-creation-admin-only": "Само администратори могу да праве табле",

@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Bilagor och API-filstorleksgränser",
   "attachment-upload-limit-label": "Maximal filstorlek för uppladdning av bilagor",
   "attachments": "Bilagor",
+  "automatic-linked-url-schemes": "Anpassade URL-scheman som ska vara klickbara automatiskt. Ett URL-schema per rad",
   "blockly-COPY_SHORTCUT": "Kopiera",
   "board-admin": "Taveladmin",
   "board-creation-admin-only": "Endast administratörer kan skapa tavlor",

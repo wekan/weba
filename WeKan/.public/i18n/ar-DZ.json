@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "حدود حجم ملفات المرفقات وواجهة API",
   "attachment-upload-limit-label": "الحد الأقصى لحجم ملف رفع المرفقات",
   "attachments": "المرفقات",
+  "automatic-linked-url-schemes": "مخططات URL المخصصة التي يجب أن تكون قابلة للنقر تلقائياً. مخطط URL واحد لكل سطر",
   "blockly-COPY_SHORTCUT": "نسخ",
   "board-admin": "مشرف اللوحة",
   "board-creation-admin-only": "يمكن للمسؤولين فقط إنشاء اللوحات",

@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Terfynau Maint Ffeil Ymlyniadau ac API",
   "attachment-upload-limit-label": "Maint ffeil uchaf llwytho ymlyniadau i fyny",
   "attachments": "Ymlyniadau",
+  "automatic-linked-url-schemes": "Cynlluniau URL personol y dylid eu clicio'n awtomatig. Un Cynllun URL fesul llinell",
   "blockly-COPY_SHORTCUT": "Copïo",
   "board-admin": "Gweinyddwr Bwrdd",
   "board-creation-admin-only": "Dim ond gweinyddwyr all greu byrddau",

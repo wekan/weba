@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Limity velikosti souborů příloh a API",
   "attachment-upload-limit-label": "Maximální velikost souboru pro nahrávání příloh",
   "attachments": "Přílohy",
+  "automatic-linked-url-schemes": "Vlastní URL schémata, která by automaticky měla být klikatelná.\nJedno schéma na řádek",
   "blockly-COPY_SHORTCUT": "Kopírovat",
   "board-admin": "Administrátor tabla",
   "board-creation-admin-only": "Pouze administrátoři mohou vytvářet nástěnky",

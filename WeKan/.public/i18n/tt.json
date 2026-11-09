@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Беркетмәләр һәм API файлларының зурлык чикләүләре",
   "attachment-upload-limit-label": "Йөкләнә торган беркетмә файлының иң зур күләме",
   "attachments": "Кушымталар",
+  "automatic-linked-url-schemes": "Автоматик рәвештә басып була торган махсус URL схемалары. Һәр юлда бер URL схемасы",
   "blockly-COPY_SHORTCUT": "Күчереп алу",
   "board-admin": "Такта администраторы",
   "board-creation-admin-only": "Бары тик администраторлар гына яңа такта булдыра ала",

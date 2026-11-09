@@ -442,8 +442,24 @@ clearing denied panels. `ui.js` applies a changed snapshot before rendering icon
 so new/reloaded readers honor the persisted flag. The synchronous source adapter
 is reused; no source code changes or new HTTP setting route are introduced.
 Native and two-browser tests cover the transaction and live/control boundaries.
-165 source caption keys are copied verbatim across all 237 catalogs.
-Remaining Markdown settings/card resolver/icon-color bridges and broader original
+166 source caption keys are copied verbatim across all 237 catalogs.
+`markdown_url_settings` is a separate typed singleton for the exact
+`automaticLinkedUrlSchemes` text, actor and UTC milliseconds. It is created
+additively for existing stores. `UrlSettings` protects its audit; `UrlSchemes`
+exposes only the nonsecret text, with empty/null equivalent to source defaults.
+`SaveUrlSchemes` locks actor/settings and rechecks identity/admin/value before
+commit. Independent native triggers prove write, late role/session/value failures
+roll back audit and data together. The Security textarea has a translated
+accessible label and separate Save. Polling refreshes its hidden public snapshot
+and clean editor, retains dirty text and clears it after demotion. The snapshot
+is JSON with spaces escaped as Unicode, so Gambas label HTML cannot join lines
+or replace spaces in the parser input. A direct browser assertion checks exact
+decoded multiline text. `ui.js` feeds
+the snapshot through the unchanged vendored source parser before configuring the
+viewer. Parser source/hash and output comparisons cover normalization, invalid/
+forbidden names and the 50-entry cap; real browser tests verify transitions,
+reload, dirty fields, denial, demotion and mobile/Finnish labels.
+Remaining external-link settings/card resolver/icon-color bridges and broader original
 UI/API/security suites remain explicit TODO requirements. Folding/counts and native tree
 gestures are described below.
 
@@ -1161,7 +1177,7 @@ A selected live attachment now has an Export button in the native details pane.
 It downloads wekan-attachment.json with the same five-field source JSON as the
 attachment-export API, preserving exact bytes, empty data and literal Unicode
 metadata. The button uses the existing native icon/keyboard controls and source
-Export caption (now included in 165 keys across 237 catalogs). Owner and readonly full-board
+Export caption (now included in 166 keys across 237 catalogs). Owner and readonly full-board
 members can export; assigned-only members cannot, even when raw flags also make
 them board administrators.
 

@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "সংলগ্নক আৰু API ফাইল আকাৰৰ সীমা",
   "attachment-upload-limit-label": "সংলগ্নক আপল'ডৰ সৰ্বাধিক ফাইল আকাৰ",
   "attachments": "সংলগ্নসমূহ",
+  "automatic-linked-url-schemes": "স্বয়ংক্ৰিয়ভাৱে ক্লিক কৰিব পৰা স্বনিৰ্বাচিত URL আঁচনি। প্ৰতি শাৰীত এটা URL আঁচনি",
   "blockly-COPY_SHORTCUT": "কপি কৰক",
   "board-admin": "বৰ্ড এডমিন",
   "board-creation-admin-only": "কেৱল প্ৰশাসকসকলে নতুন বৰ্ড সৃষ্টি কৰিব পাৰে",

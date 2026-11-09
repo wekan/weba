@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "የአባሪና API ፋይል መጠን ገደቦች",
   "attachment-upload-limit-label": "ከፍተኛ የአባሪ መስቀያ ፋይል መጠን",
   "attachments": "አባሪዎች",
+  "automatic-linked-url-schemes": "በራስ-ሰር ሊጫኑ የሚገባቸው ብጁ የURL መርሃግብሮች። በእያንዳንዱ መስመር አንድ የURL መርሃግብር",
   "blockly-COPY_SHORTCUT": "ቅዳ",
   "board-admin": "የሰሌዳ አስተዳዳሪ",
   "board-creation-admin-only": "አስተዳዳሪዎች ብቻ ሰሌዳዎችን መፍጠር ይችላሉ",

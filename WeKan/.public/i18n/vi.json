@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Giới hạn kích thước tệp đính kèm và API",
   "attachment-upload-limit-label": "Kích thước tệp tối đa khi tải lên tệp đính kèm",
   "attachments": "Tệp Đính Kèm",
+  "automatic-linked-url-schemes": "Lược đồ URL tùy chỉnh sẽ tự động có thể nhấp được. Một Lược đồ URL trên mỗi dòng",
   "blockly-COPY_SHORTCUT": "Sao chép",
   "board-admin": "Quản trị viên bảng",
   "board-creation-admin-only": "Chỉ quản trị viên mới có thể tạo bảng",

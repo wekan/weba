@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "ขีดจำกัดขนาดไฟล์ของไฟล์แนบและ API",
   "attachment-upload-limit-label": "ขนาดไฟล์สูงสุดในการอัปโหลดไฟล์แนบ",
   "attachments": "สิ่งที่แนบมา",
+  "automatic-linked-url-schemes": "รูปแบบ URL ที่กำหนดเองซึ่งควรคลิกได้โดยอัตโนมัติ หนึ่งรูปแบบต่อหนึ่งบรรทัด",
   "blockly-COPY_SHORTCUT": "คัดลอก",
   "board-admin": "ผู้ดูแลบอร์ด",
   "board-creation-admin-only": "เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถสร้างบอร์ดได้",

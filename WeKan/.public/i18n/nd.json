@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Imikhawulo yobukhulu befayela lokunamathiselweyo le-API",
   "attachment-upload-limit-label": "Ubukhulu obuphezulu befayela lokulayisha okunamathiselweyo",
   "attachments": "Okunamathiselweyo",
+  "automatic-linked-url-schemes": "Izikimu ze-URL ezenziwe ngokwezifiso okumele zichofozeke ngokuzenzakalela. Isikimu se-URL esisodwa emgqeni ngamunye",
   "blockly-COPY_SHORTCUT": "Kopa",
   "board-admin": "Umphathi webhodi",
   "board-creation-admin-only": "Ngabaphathi kuphela abangenza amabhodi amatsha",

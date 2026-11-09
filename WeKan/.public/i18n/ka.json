@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "დანართის და API ფაილის ზომის ლიმიტები",
   "attachment-upload-limit-label": "დანართების ატვირთვის მაქს. ფაილის ზომა",
   "attachments": "მიბმული ფაილები",
+  "automatic-linked-url-schemes": "URL სქემები, რომლებიც ავტომატურად უნდა გახდეს დაწკაპუნებადი. თითო სქემა ცალკე ხაზზე",
   "blockly-COPY_SHORTCUT": "კოპირება",
   "board-admin": "დაფის ადმინი",
   "board-creation-admin-only": "მხოლოდ ადმინისტრატორებს შეუძლიათ დაფების შექმნა",

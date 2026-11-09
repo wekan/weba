@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Limoj de dosiergrando por aldonaĵoj kaj API",
   "attachment-upload-limit-label": "Maks. dosiergrando por alŝuto de aldonaĵoj",
   "attachments": "Aldonaĵoj",
+  "automatic-linked-url-schemes": "Propraj URL-skemoj, kiuj estu aŭtomate alklakeblaj. Unu URL-skemo por linio",
   "blockly-COPY_SHORTCUT": "Kopii",
   "board-admin": "Tabuladministranto",
   "board-creation-admin-only": "Nur administrantoj povas krei tabulojn",

@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Limites de tamanho de ficheiro de anexos e da API",
   "attachment-upload-limit-label": "Tamanho máximo de ficheiro no envio de anexos",
   "attachments": "Anexos",
+  "automatic-linked-url-schemes": "Esquema de URL personalizado que deve ser clicável automaticamente. Um Esquema de URL por linha",
   "blockly-COPY_SHORTCUT": "Copiar",
   "board-admin": "Administrador do quadro",
   "board-creation-admin-only": "Apenas os administradores podem criar quadros",

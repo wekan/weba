@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Vikomo vya Ukubwa wa Faili za Viambatisho na API",
   "attachment-upload-limit-label": "Ukubwa wa juu wa faili wa upakiaji wa viambatisho",
   "attachments": "Viambatisho",
+  "automatic-linked-url-schemes": "Mipango ya URL Maalum ambayo inapaswa kubofya kiotomatiki. Mpango wa URL moja kwa kila mstari",
   "blockly-COPY_SHORTCUT": "Nakili",
   "board-admin": "Msimamizi wa Bodi",
   "board-creation-admin-only": "Wasimamizi pekee ndio wanaweza kuunda bodi",

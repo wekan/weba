@@ -7,8 +7,10 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
  const {chromium,expect}=createRequire(path.join(source,'tests/playwright/fixtures.js'))('@playwright/test');
  const fixture=(mode,raw=false,space='')=>JSON.parse(execFileSync(process.env.GBX,['-s','MarkdownPolicyFixture',process.env.WEBA_TEST_PROJECT],{encoding:'utf8',env:{...process.env,WEBA_API_REQUEST:'0',WEBA_MARKDOWN_MODE:mode,WEBA_MARKDOWN_RAW:raw?'1':'0',WEBA_MARKDOWN_SPACE:String(space)}}));
  fixture('save',false);const seeded=fixture('seed');
+ const schemesFixture=(mode,text='',icon='')=>JSON.parse(execFileSync(process.env.GBX,['-s','MarkdownPolicyFixture',process.env.WEBA_TEST_PROJECT],{encoding:'utf8',env:{...process.env,WEBA_API_REQUEST:'0',WEBA_MARKDOWN_MODE:mode,WEBA_MARKDOWN_SCHEMES:text,WEBA_MARKDOWN_ICON:icon,WEBA_MARKDOWN_SPACE:String(seeded.id)}}));
+ schemesFixture('schemes');
  const browser=await chromium.connectOverCDP(process.env.WEBA_BROWSER_URL),contexts=[],errors=[];
- const control=n=>`[id$=".${n}"]`,entry=n=>`[id$=".${n}:entry"]`,settle=p=>p.waitForFunction(()=>window.gw&&gw.commands.length===0);
+ const control=n=>`[id$=".${n}"]`,entry=n=>`[id$=".${n}:entry"],textarea[id$=".${n}"]`,settle=p=>p.waitForFunction(()=>window.gw&&gw.commands.length===0);
  const click=async(p,n)=>{await settle(p);await p.locator(control(n)).click();await settle(p);};
  const forge=async(p,n)=>{await p.evaluate(n=>gw.raise(document.querySelector(`[id$=".${n}"]`).id,'click',[]),n);await settle(p);};
  try{
@@ -24,7 +26,22 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   await flag.check();await settle(admin);fixture('save',false);await expect(flag).toBeChecked();expect(fixture('read').raw).toBe(false);await click(admin,'SaveMarkdown');await expect(icon.locator('pre')).toHaveText('**Policy bold**');
   await admin.setViewportSize({width:390,height:844});if(await admin.locator(control('PageSidebar')).isVisible())await click(admin,'CloseSidebar');if(await admin.locator(control('LeftNavigation')).isVisible())await click(admin,'ToggleNavigation');await expect(admin.locator(control('SaveMarkdown'))).toBeVisible();expect((await admin.locator(control('MarkdownPanel')).boundingBox()).width).toBeLessThanOrEqual(390);
   const fi=JSON.parse(fs.readFileSync(path.join(source,'imports/i18n/data/fi.i18n.json'),'utf8'));await admin.evaluate(()=>webaI18n.setLanguage('fi'));await expect(admin.locator(control('AlwaysShowCodeAsText'))).toContainText(fi['always-show-code-as-text']);await admin.evaluate(()=>webaI18n.setLanguage('en'));
-  const beforeDemote=fixture('read');fixture('demote');await expect(admin.locator(control('MarkdownPanel'))).toBeHidden();await expect(flag).not.toBeChecked();await forge(admin,'SaveMarkdown');await expect(admin.locator(control('Notice'))).toContainText('Administrator required');expect(fixture('read')).toEqual(beforeDemote);await expect(icon.locator('pre')).toHaveText('**Policy bold**');expect(errors).toEqual([]);
-  console.log('Markdown policy browser: admin-only audited save/forged denial, live reader raw/rendered transitions and reload, clean-field refresh/dirty preservation, demotion clearing/refusal with no audit writes, Finnish/mobile controls passed');
- }finally{try{fixture('promote');fixture('save',false);fixture('cleanup',false,seeded.id);}finally{for(const c of contexts)await c.close();await browser.close();}}
+  fixture('save',false);await expect(icon.locator('strong')).toHaveText('Policy bold');
+  const schemes=admin.locator(entry('MarkdownSchemes'));
+  await expect(schemes).toHaveValue('');await expect(schemes).toHaveAccessibleName(/Custom\s+URL\s+Schemes\s+which\s+should\s+automatically\s+be\s+clickable\.\s+One\s+URL\s+Scheme\s+per\s+line/);
+  await forge(reader,'SaveMarkdownSchemes');await expect(reader.locator(control('Notice'))).toContainText('Administrator required');expect(fixture('read').schemes||'').toBe('');
+  await admin.evaluate(()=>webaI18n.setLanguage('fi'));await expect(admin.locator(control('MarkdownSchemesHeading'))).toContainText(fi['automatic-linked-url-schemes']);await admin.evaluate(()=>webaI18n.setLanguage('en'));
+  schemesFixture('icon','','[custom](thunderlink://abc) [bad](javascript:alert(1)) [handler](search-ms:query)');
+  await expect(icon.locator('a[href^="thunderlink:"]')).toHaveCount(0);
+  const custom='THUNDERLINK:\nfile://; javascript: data: search-ms: telnet: onenote';
+  await schemes.fill(custom);await settle(admin);await click(admin,'SaveMarkdownSchemes');expect(fixture('read').schemes).toBe(custom);
+  await expect(icon.locator('a[href="thunderlink://abc"]')).toHaveCount(1);expect(JSON.parse(await reader.locator(control('MarkdownUrlSnapshot')).textContent())).toBe(custom);await expect(icon.locator('a[href^="javascript:"],a[href^="search-ms:"]')).toHaveCount(0);
+  await reader.reload();await expect(icon.locator('a[href="thunderlink://abc"]')).toHaveCount(1);
+  schemesFixture('schemes','onenote');await expect(schemes).toHaveValue('onenote');await expect(icon.locator('a[href^="thunderlink:"]')).toHaveCount(0);
+  await schemes.fill('file');await settle(admin);schemesFixture('schemes','thunderlink');await expect(icon.locator('a[href="thunderlink://abc"]')).toHaveCount(1);await expect(schemes).toHaveValue('file');
+  await click(admin,'SaveMarkdownSchemes');await expect(icon.locator('a[href^="thunderlink:"]')).toHaveCount(0);expect(fixture('read').schemes).toBe('file');
+  fixture('save',true);await expect(icon.locator('pre')).toContainText('thunderlink');
+  const beforeDemote=fixture('read');fixture('demote');await expect(admin.locator(control('MarkdownPanel'))).toBeHidden();await expect(flag).not.toBeChecked();await forge(admin,'SaveMarkdown');await expect(admin.locator(control('Notice'))).toContainText('Administrator required');expect(fixture('read')).toEqual(beforeDemote);await expect(schemes).toHaveValue('');await forge(admin,'SaveMarkdownSchemes');expect(fixture('read')).toEqual(beforeDemote);await expect(icon.locator('pre')).toContainText('thunderlink');expect(errors).toEqual([]);
+  console.log('Markdown policy browser: admin-only audited save/forged denial, live reader raw/rendered transitions and reload, clean-field refresh/dirty preservation, demotion clearing/refusal with no audit writes, Finnish/mobile controls plus persisted scheme exact text, forbidden handlers, two-reader transitions/reload, clean/dirty refresh, forgery and demotion clearing passed');
+ }finally{try{fixture('promote');fixture('save',false);schemesFixture('schemes');fixture('cleanup',false,seeded.id);}finally{for(const c of contexts)await c.close();await browser.close();}}
 })().catch(error=>{let message=error.stack||String(error);if(process.env.WEBA_TEST_PASSWORD)message=message.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(message);process.exitCode=1;});

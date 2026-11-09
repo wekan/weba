@@ -53,6 +53,7 @@ Public Sub Main()
   db.Exec("DROP TRIGGER markdown_late_value")
   MarkdownPolicy.Save(True)
   If Not MarkdownPolicy.AlwaysRaw() Then Error.Raise("Retry failed")
+  UrlPolicy()
   Print "Markdown policy: false/null defaults, typed admin-only audited writes, public boolean/no audit leak, write failure and late role/session/value rollback/retry passed"
 End
 
@@ -76,4 +77,56 @@ Private Function Frame() As String
   rows.Add(CBool(r!admin))
   rows.Add(WebDatabase.SessionGeneration("markdown-admin"))
   Return JSON.Encode(rows)
+End
+
+Private Sub UrlPolicy()
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim before As String
+  Dim denied As Boolean
+  Dim data As Collection
+  Dim value As Variant
+  Dim trigger As String
+  SignIn("markdown-normal")
+  If MarkdownPolicy.UrlSchemes() <> "" Then Error.Raise("URL schemes default changed")
+  before = UrlFrame()
+  Try MarkdownPolicy.SaveUrlSchemes("file")
+  denied = Error
+  If Not denied Or UrlFrame() <> before Then Error.Raise("Normal user changed URL schemes")
+  Try data = MarkdownPolicy.UrlSettings()
+  denied = Error
+  If Not denied Then Error.Raise("URL scheme audit leaked")
+  SignIn("markdown-admin")
+  For Each value In [Null, True, 0]
+    Try MarkdownPolicy.SaveUrlSchemes(value)
+    denied = Error
+    If Not denied Or UrlFrame() <> before Then Error.Raise("Untyped schemes accepted")
+  Next
+  MarkdownPolicy.SaveUrlSchemes("THUNDERLINK:, file://; javascript: data: search-ms: 東京")
+  data = MarkdownPolicy.UrlSettings()
+  If data["actor"] <> "markdown-admin" Or data["changedMs"] <= 0 Then Error.Raise("URL audit missing")
+  SignIn("markdown-normal")
+  If MarkdownPolicy.UrlSchemes() <> "THUNDERLINK:, file://; javascript: data: search-ms: 東京" Then Error.Raise("Public URL setting was rewritten")
+  SignIn("markdown-admin")
+  before = UrlFrame()
+  For Each trigger In ["BEFORE UPDATE ON markdown_url_settings BEGIN SELECT RAISE(ABORT,'injected'); END", "AFTER UPDATE OF schemes ON markdown_url_settings BEGIN UPDATE users SET admin=0 WHERE username='markdown-admin'; END", "AFTER UPDATE OF schemes ON markdown_url_settings BEGIN UPDATE account_sessions SET generation=generation+1 WHERE username='markdown-admin'; END", "AFTER UPDATE OF schemes ON markdown_url_settings WHEN NEW.schemes='onenote' BEGIN UPDATE markdown_url_settings SET schemes='file' WHERE id=1; END"]
+    db.Exec("CREATE TRIGGER markdown_url_failure " & trigger)
+    Try MarkdownPolicy.SaveUrlSchemes("onenote")
+    denied = Error
+    If Not denied Or UrlFrame() <> before Then Error.Raise("URL policy failure did not roll back")
+    db.Exec("DROP TRIGGER markdown_url_failure")
+  Next
+  MarkdownPolicy.SaveUrlSchemes("")
+  If MarkdownPolicy.UrlSchemes() <> "" Then Error.Raise("URL policy clear/retry failed")
+  Print "URL schemes policy: empty default, typed text, private audit, exact public text, write/role/session/value rollback and clear/retry passed"
+End
+
+Private Function UrlFrame() As String
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim r As Result = db.Find("markdown_url_settings", "id=1")
+  Dim row As New Collection
+  row.Add(r!schemes, "schemes")
+  row.Add(r!actor, "actor")
+  row.Add(r!changed_ms, "changed")
+  row["rawFrame"] = Frame()
+  Return JSON.Encode(row)
 End

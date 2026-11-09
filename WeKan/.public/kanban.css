@@ -217,3 +217,5 @@ ul.weba-data{list-style:none;margin:0;padding:0}
 .weba-space-open .workspace-icon-value,.weba-space-open .workspace-icon-value p{display:inline;margin:0}
 .weba-space-open .workspace-icon img{max-width:32px;max-height:24px}
 .weba-space-open .workspace-name{overflow:hidden;text-overflow:ellipsis}
+
+.weba-markdown-schemes-label{white-space:normal!important;min-height:64px;overflow-wrap:anywhere}

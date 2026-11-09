@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Filstørrelsesgrænser for vedhæftninger og API",
   "attachment-upload-limit-label": "Maks. filstørrelse for upload af vedhæftede filer",
   "attachments": "Vedhæftninger",
+  "automatic-linked-url-schemes": "Brugerdefinerede URL-skemaer, som automatisk skal være klikbare. Ét URL-skema pr. linje",
   "blockly-COPY_SHORTCUT": "Kopier",
   "board-admin": "Tavle administrator",
   "board-creation-admin-only": "Kun administratorer kan oprette tavler",

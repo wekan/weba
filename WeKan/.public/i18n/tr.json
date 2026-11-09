@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Eklenti ve API Dosya Boyutu Sınırları",
   "attachment-upload-limit-label": "Eklenti yükleme maksimum dosya boyutu",
   "attachments": "Ekler",
+  "automatic-linked-url-schemes": "Otomatik olarak tıklanabilir olması gereken Özel URL Şemaları. Satır başına bir URL Şeması",
   "blockly-COPY_SHORTCUT": "Kopyala",
   "board-admin": "Pano Yöneticisi",
   "board-creation-admin-only": "Sadece yöneticiler pano oluşturabilir",

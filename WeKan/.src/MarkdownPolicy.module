@@ -15,6 +15,21 @@ Public Sub OpenStore()
     t.PrimaryKey = ["id"]
     t.Update()
   Endif
+  If Not $db.Tables.Exist("markdown_url_settings") Then
+    t = $db.Tables.Add("markdown_url_settings")
+    t.Fields.Add("id", db.Integer)
+    t.Fields.Add("schemes", db.String)
+    t.Fields.Add("actor", db.String, 255)
+    t.Fields.Add("changed_ms", db.Long)
+    t.PrimaryKey = ["id"]
+    t.Update()
+  Endif
+  If Not $db.Find("markdown_url_settings", "id=1").Available Then
+    Try $db.Exec("INSERT INTO markdown_url_settings (id) SELECT 1 WHERE NOT EXISTS (SELECT 1 FROM markdown_url_settings WHERE id=1)")
+    If Error Then
+      If Not $db.Find("markdown_url_settings", "id=1").Available Then Error.Propagate()
+    Endif
+  Endif
   If Not $db.Find("markdown_settings", "id=1").Available Then
     Try $db.Exec("INSERT INTO markdown_settings (id) SELECT 1 WHERE NOT EXISTS (SELECT 1 FROM markdown_settings WHERE id=1)")
     If Error Then
@@ -68,6 +83,56 @@ Public Sub Save(value As Variant)
   If WebIdentity.Username <> actor Then Error.Raise("Administrator required")
   RecoveryStore.RequireAdmin()
   If AlwaysRaw() <> value Then Error.Raise("Markdown setting changed")
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+' Public source setting text, never its administrative audit.
+Public Function UrlSchemes() As String
+  Dim r As Result
+  OpenStore()
+  r = $db.Find("markdown_url_settings", "id=1")
+  Return r!schemes
+End
+
+Public Function UrlSettings() As Collection
+  Dim data As New Collection
+  Dim r As Result
+  RecoveryStore.RequireAdmin()
+  OpenStore()
+  r = $db.Find("markdown_url_settings", "id=1")
+  data["automaticLinkedUrlSchemes"] = UrlSchemes()
+  data.Add(r!actor, "actor")
+  data.Add(r!changed_ms, "changedMs")
+  Return data
+End
+
+Public Sub SaveUrlSchemes(value As Variant)
+  Dim actor As String = WebIdentity.Username
+  Dim r As Result
+  Dim transaction As Boolean
+  Dim failure As String
+  RecoveryStore.RequireAdmin()
+  If TypeOf(value) <> gb.String Then Error.Raise("Expected text setting")
+  OpenStore()
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  $db.Exec("UPDATE markdown_url_settings SET id=id WHERE id=1")
+  If WebIdentity.Username <> actor Then Error.Raise("Administrator required")
+  RecoveryStore.RequireAdmin()
+  r = $db.Edit("markdown_url_settings", "id=1")
+  r["schemes"] = value
+  r["actor"] = actor
+  r["changed_ms"] = ItemChanges.UtcNow()
+  r.Update()
+  If WebIdentity.Username <> actor Then Error.Raise("Administrator required")
+  RecoveryStore.RequireAdmin()
+  If UrlSchemes() <> value Then Error.Raise("Markdown setting changed")
   DatabaseTransactions.Commit($db)
   transaction = False
 Catch

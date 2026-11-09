@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Mga Limit ha Kadaku han Attachment ngan API File",
   "attachment-upload-limit-label": "Pinakadaku nga kadaku han file ha upload han attachment",
   "attachments": "Mga Attachment",
+  "automatic-linked-url-schemes": "Custom nga mga URL Scheme nga sadang awtomatiko nga ma-klik. Usa nga URL Scheme kada linya",
   "blockly-COPY_SHORTCUT": "Kopyaha",
   "board-admin": "Admin han Board",
   "board-creation-admin-only": "Mga admin la an mahimo maghimo hin mga board",

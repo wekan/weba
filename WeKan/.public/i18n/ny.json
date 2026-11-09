@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Malire a kukula kwa mafayilo olumikizidwa ndi API",
   "attachment-upload-limit-label": "Kukula kwakukulu kwa fayilo yolumikizidwa yokwezedwa",
   "attachments": "Zolumikizidwa",
+  "automatic-linked-url-schemes": "Mitundu yapadera ya URL yomwe iyenera kudinika yokha. Mtundu umodzi wa URL pa mzere",
   "blockly-COPY_SHORTCUT": "Koperani",
   "board-admin": "Woyang'anira bolodi",
   "board-creation-admin-only": "Owongolera okha ndiwo angathe kupanga bolodi",

@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Կցորդի և API ֆայլի չափի սահմանափակումներ",
   "attachment-upload-limit-label": "Կցորդների վերբեռնման ֆայլի առավելագույն չափ",
   "attachments": "Կցորդներ",
+  "automatic-linked-url-schemes": "Պատվերով URL-ների սխեմաներ, որոնք պետք է ավտոմատ կերպով սեղմվեն: Մեկ URL սխեման յուրաքանչյուր տողի համար",
   "blockly-COPY_SHORTCUT": "Պատճենել",
   "board-admin": "Տախտակի ադմին",
   "board-creation-admin-only": "Միայն ադմինիստրատորները կարող են ստեղծել գրատախտակներ",

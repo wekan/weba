@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "ඇමුණුම් සහ API ගොනු ප්‍රමාණ සීමා",
   "attachment-upload-limit-label": "ඇමුණුම් උඩුගත කිරීමේ උපරිම ගොනු ප්‍රමාණය",
   "attachments": "ඇමුණුම්",
+  "automatic-linked-url-schemes": "ස්වයංක්‍රීයව ක්ලික් කළ හැකි අභිරුචි URL Schemes. එක් පේළියකට එක් URL Scheme එකක්",
   "blockly-COPY_SHORTCUT": "පිටපත් කරන්න",
   "board-admin": "පුවරු පරිපාලක",
   "board-creation-admin-only": "පරිපාලකයින්ට පමණක් පුවරු සෑදිය හැක",

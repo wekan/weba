@@ -1035,6 +1035,10 @@
         Class = "weba-user-text"
         Visible = False
       }
+      { MarkdownUrlSnapshot WebLabel
+        Class = "weba-user-text"
+        Visible = False
+      }
       { MarkdownPanel WebContainer
         Arrangement = Arrange.Vertical
         Visible = False
@@ -1044,6 +1048,16 @@
         }
         { AlwaysShowCodeAsText WebCheckBox
           Text = ("Always show all code as plain text")
+        }
+        { MarkdownSchemesHeading WebLabel
+          Class = "weba-markdown-schemes-label"
+          Text = ("Custom URL Schemes which should automatically be clickable. One URL Scheme per line")
+        }
+        { MarkdownSchemes WebTextArea
+          Height = 100
+        }
+        { SaveMarkdownSchemes WebButton
+          Text = ("Save")
         }
         { SaveMarkdown WebButton
           Text = ("Save")

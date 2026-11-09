@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Limiti di dimensione dei file per allegati e API",
   "attachment-upload-limit-label": "Dimensione massima file per il caricamento degli allegati",
   "attachments": "Allegati",
+  "automatic-linked-url-schemes": "Schemi URL personalizzati che devono essere automaticamente cliccabili. Uno schema URL per riga",
   "blockly-COPY_SHORTCUT": "Copia",
   "board-admin": "Amministratore della bacheca",
   "board-creation-admin-only": "Solo gli amministratori possono creare bacheche",

@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "د ضميمې او API فايل د کچې حدونه",
   "attachment-upload-limit-label": "د ضميمو د پورته کولو د فايل ډېره کچه",
   "attachments": "ضميمې",
+  "automatic-linked-url-schemes": "دوديز URL Scheme چې بايد په اوتومات ډول د ټک وړ وي. په هره کرښه کې يو URL Scheme",
   "blockly-COPY_SHORTCUT": "نقل",
   "board-admin": "د تختې مدير",
   "board-creation-admin-only": "یوازې مدیران کولی شي بورډونه جوړ کړي",

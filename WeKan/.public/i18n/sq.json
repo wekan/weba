@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Kufijtë e madhësisë së bashkëngjitjeve dhe skedarëve API",
   "attachment-upload-limit-label": "Madhësia maksimale e ngarkimit të bashkëngjitjeve",
   "attachments": "Bashkëngjitjet",
+  "automatic-linked-url-schemes": "Skemat e personalizuara URL që duhet të bëhen automatikisht të klikueshme. Një skemë URL për rresht",
   "blockly-COPY_SHORTCUT": "Kopjo",
   "board-admin": "Administratori i tabelës",
   "board-creation-admin-only": "Vetëm administratorët mund të krijojnë panele",

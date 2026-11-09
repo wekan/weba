@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "ပူးတွဲဖိုင်နှင့် API ဖိုင်အရွယ် ကန့်သတ်ချက်များ",
   "attachment-upload-limit-label": "ပူးတွဲဖိုင်တင်ခြင်း အများဆုံးဖိုင်အရွယ်",
   "attachments": "ပူးတွဲဖိုင်များ",
+  "automatic-linked-url-schemes": "အလိုအလျောက် နှိပ်နိုင်ရမည့် စိတ်ကြိုက် URL Scheme များ။ တစ်ကြောင်းလျှင် URL Scheme တစ်ခု",
   "blockly-COPY_SHORTCUT": "ကူးရန်",
   "board-admin": "ဘုတ်စီမံသူ",
   "board-creation-admin-only": "အက်ဒမင်များသာလျှင် ဘုတ်များကို ဖန်တီးနိုင်သည်",

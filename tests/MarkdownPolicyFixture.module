@@ -10,6 +10,12 @@ Public Sub Main()
   db = WebDatabase.OpenConnection()
   MarkdownPolicy.OpenStore()
   If mode = "demote" Or mode = "promote" Then db.Exec("UPDATE users SET admin=&1 WHERE username='rest-owner'", mode = "promote")
+  If mode = "icon" Then
+    Session["username"] = "rest-member"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("rest-member")
+    BoardSpaces.Edit(CInt(Env["WEBA_MARKDOWN_SPACE"]), "Markdown policy workspace", Env["WEBA_MARKDOWN_ICON"])
+  Endif
+  If mode = "schemes" Then MarkdownPolicy.SaveUrlSchemes(Env["WEBA_MARKDOWN_SCHEMES"])
   If mode = "save" Then MarkdownPolicy.Save(Env["WEBA_MARKDOWN_RAW"] = "1")
   If mode = "cleanup" Then
     Session["username"] = "rest-member"
@@ -26,5 +32,6 @@ Public Sub Main()
   data.Add(r!always_raw, "raw")
   data.Add(r!actor, "actor")
   data.Add(r!changed_ms, "changed")
+  data.Add(MarkdownPolicy.UrlSchemes(), "schemes")
   Print JSON.Encode(data)
 End

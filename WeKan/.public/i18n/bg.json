@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Ограничения за размера на файловете на прикачени файлове и API",
   "attachment-upload-limit-label": "Максимален размер на файл при качване на прикачени файлове",
   "attachments": "Прикачени файлове",
+  "automatic-linked-url-schemes": "Персонализирани URL схеми, които автоматично стават активни връзки. По една URL схема на ред",
   "blockly-COPY_SHORTCUT": "Копиране",
   "board-admin": "Администратор на таблото",
   "board-creation-admin-only": "Само администраторите могат да създават дъски",

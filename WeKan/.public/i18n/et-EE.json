@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Manuste ja API failisuuruse piirangud",
   "attachment-upload-limit-label": "Manuste üleslaadimise maksimaalne failisuurus",
   "attachments": "Lisad",
+  "automatic-linked-url-schemes": "Kohandatud URL-skeemid, mis peaksid olema automaatselt klõpsatavad. Üks URL-skeem rea kohta",
   "blockly-COPY_SHORTCUT": "Kopeeri",
   "board-admin": "Tahvli administraator",
   "board-creation-admin-only": "Ainult administraatorid saavad tahvleid luua",

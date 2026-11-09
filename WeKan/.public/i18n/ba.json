@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Ҡушымта һәм API файл үлсәме сикләүҙәре",
   "attachment-upload-limit-label": "Ҡушымталарҙы йөкләү өсөн иң ҙур файл үлсәме",
   "attachments": "Ҡушымталар",
+  "automatic-linked-url-schemes": "Автоматик баҫыла торған махсус URL схемалары. Һәр юлға бер URL схемаһы",
   "blockly-COPY_SHORTCUT": "Күсереп алырға",
   "board-admin": "Таҡта администраторы",
   "board-creation-admin-only": "Тик администраторҙар ғына яңы таҡта булдыра ала",

@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Хавсралт болон API файлын хэмжээний хязгаарлалт",
   "attachment-upload-limit-label": "Хавсралт байршуулах файлын дээд хэмжээ",
   "attachments": "Хавсралтууд",
+  "automatic-linked-url-schemes": "Автоматаар дарагдах боломжтой байх тусгай URL схемүүд. Мөр бүрд нэг URL схем",
   "blockly-COPY_SHORTCUT": "Хуулах",
   "board-admin": "Самбарын админ",
   "board-creation-admin-only": "Зөвхөн админууд самбар үүсгэж чадна",

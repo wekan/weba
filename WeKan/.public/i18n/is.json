@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Stærðarmörk viðhengja og API-skráa",
   "attachment-upload-limit-label": "Hámarksstærð viðhengja við upphleðslu",
   "attachments": "Viðhengi",
+  "automatic-linked-url-schemes": "Sérsniðin URL-skemu sem eiga sjálfkrafa að verða smellanleg. Eitt URL-skema í hverri línu",
   "blockly-COPY_SHORTCUT": "Afrita",
   "board-admin": "Stjórnandi töflu",
   "board-creation-admin-only": "Aðeins stjórnendur geta búið til töflur",

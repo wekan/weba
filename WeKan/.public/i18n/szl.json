@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Limity rozmiaru plikōw przidŏwkōw i API",
   "attachment-upload-limit-label": "Maksymalny rozmiar pliku przesyłanego przidŏwka",
   "attachments": "Przidŏwki",
+  "automatic-linked-url-schemes": "Schematy adresów URL, kere powinny być automatycznie przekształcane we aktywne. Wpisz jeden schemat URL we każdej linii",
   "blockly-COPY_SHORTCUT": "Kopiyruj",
   "board-admin": "Administrator tabule",
   "board-creation-admin-only": "Ino administratory mogōm tworzić tafle",

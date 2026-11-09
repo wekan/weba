@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Batas Ukuran File Lampiran Dan API",
   "attachment-upload-limit-label": "Ukuran file maksimum unggah lampiran",
   "attachments": "Daftar Lampiran",
+  "automatic-linked-url-schemes": "Skema URL khusus yang harus dapat diklik secara otomatis. Satu skema URL per baris",
   "blockly-COPY_SHORTCUT": "Salin",
   "board-admin": "Admin Papan",
   "board-creation-admin-only": "Hanya admin yang dapat membuat papan",

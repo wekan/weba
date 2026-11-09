@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Limit gwosè fichye pou pyès atache ak API",
   "attachment-upload-limit-label": "Gwosè maksimòm fichye pou voye pyès atache",
   "attachments": "Pyès atache",
+  "automatic-linked-url-schemes": "Chema URL pèsonalize ki dwe vin lyen ou ka klike otomatikman. Yon chema URL sou chak liy",
   "blockly-COPY_SHORTCUT": "Kopye",
   "board-admin": "Administratè tablo",
   "board-creation-admin-only": "Se sèlman administratè yo ki ka kreye tablo",

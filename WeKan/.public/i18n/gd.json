@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Crìochan Meud Faidhle Ceanglachan agus API",
   "attachment-upload-limit-label": "Meud faidhle as motha airson ceanglachain a luchdadh suas",
   "attachments": "Ceanglachain",
+  "automatic-linked-url-schemes": "Sgeamaichean URL Gnàthaichte a bu chòir a bhith inchliogte gu fèin-obrachail. Aon Sgeama URL gach loidhne",
   "blockly-COPY_SHORTCUT": "Dèan lethbhreac",
   "board-admin": "Rianaire Bùird",
   "board-creation-admin-only": "Chan urrainn ach do rianairean bùird a chruthachadh",

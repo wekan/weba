@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "chinamatidzwa uye API faira Size Limits",
   "attachment-upload-limit-label": "Attachments rodha max faira size",
   "attachments": "Zvakabatanidzwa",
+  "automatic-linked-url-schemes": "Custom URL Schemes which anofanira automatically iva clickable. One URL Scheme per line",
   "blockly-COPY_SHORTCUT": "Kopa",
   "board-admin": "bhodhi mukuru",
   "board-creation-admin-only": "Vatariri chete vanogona kugadzira bhodhi",

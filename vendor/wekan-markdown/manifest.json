@@ -5,13 +5,14 @@
     "node": "26.13.0"
   },
   "adapters": {
-    "entry.js": "be6b6475e23ef535d17387fb4e829af20e9797599abe870b7d082f641393224b",
+    "entry.js": "e0d81eff2c6f10a45e1d683364f3f4f0530fad3586b23f8c54c3ad50db504134",
     "meteor-adapter.js": "7f3bc58aa07bc9688ff8f043368ec6c0c13a69ed1ffc7c707ec08b176b3a9fdc"
   },
   "sourceFiles": {
     "template-integration.js": "d5778c6026d9d93531f9dd1ee8d5534600889cf5796e335434224824e1adfed6",
     "secureDOMPurify.js": "c0e6ea11da2f95d291c4a1cb58fb9996dc02640dbac0a2a6e1fc2876ed9b62f3"
   },
+  "urlSchemeParserSha256": "db05494b8d9460a1463472c5a9468bd9c11e56f8b0e67656c95bbec6089f849d",
   "packages": {
     "dompurify": "3.4.17",
     "entities": "8.1.0",
@@ -25,5 +26,5 @@
     "temml": "0.14.0",
     "uc.micro": "3.0.0"
   },
-  "bundleSha256": "00df1eba00c5b86f740743a79637b8304dae3d4abfc86eef7972fd096a194eac"
+  "bundleSha256": "2ff5cbaa19b564baad01df6abc775ebed9e2b9c403714cbb24e220f2a4d41600"
 }

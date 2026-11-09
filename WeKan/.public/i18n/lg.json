@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Ekiyungiddwa Ne API Fayiro Bunene Limits",
   "attachment-upload-limit-label": "Ebiyungiddwa tikka max fayiro bunene",
   "attachments": "Ebiyungiddwako",
+  "automatic-linked-url-schemes": "Custom URL Schemes ki should kyokka ba clickable. One URL Scheme per line",
   "blockly-COPY_SHORTCUT": "Koppa",
   "board-admin": "Lubaawo Omuddukanya",
   "board-creation-admin-only": "Bakulembeza bokka be basobola okutonda embaawo",

@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Aanhangsel- en API-lêergrootte-limiete",
   "attachment-upload-limit-label": "Aanhangsels oplaai maksimum lêergrootte",
   "attachments": "Aanhangsels",
+  "automatic-linked-url-schemes": "Pasgemaakte URL-skemas wat outomaties klikbaar moet wees. Een URL-skema per reël",
   "blockly-COPY_SHORTCUT": "Kopieer",
   "board-admin": "Bordadministrateur",
   "board-creation-admin-only": "Slegs administrateurs kan borde skep",

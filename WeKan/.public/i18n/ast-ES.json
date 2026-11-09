@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Llímites de tamañu de ficheru pa adjuntos y API",
   "attachment-upload-limit-label": "Tamañu máximu de ficheru pa xubir adjuntos",
   "attachments": "Adjuntos",
+  "automatic-linked-url-schemes": "Esquemes d’URL personalizaos que tienen de poder calcase automáticamente. Un esquema d’URL per llinia.",
   "blockly-COPY_SHORTCUT": "Copiar",
   "board-admin": "Alministrador del tablero",
   "board-creation-admin-only": "Namás los alministradores puen crear tableros",

@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Liite- ja API-tiedostojen kokorajoitukset",
   "attachment-upload-limit-label": "Liitteiden lähetyksen enimmäiskoko",
   "attachments": "Liitetiedostot",
+  "automatic-linked-url-schemes": "Mukautetut URL-mallit, joiden pitäisi olla automaattisesti klikattavissa. Yksi URL-malli riviä kohden",
   "blockly-COPY_SHORTCUT": "Kopioi",
   "board-admin": "Taulu ylläpitäjä",
   "board-creation-admin-only": "Vain ylläpitäjät voivat luoda tauluja",

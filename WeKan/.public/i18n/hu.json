@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Melléklet és API fájlméret korlátok",
   "attachment-upload-limit-label": "Mellékletek feltöltésének maximális fájlmérete",
   "attachments": "Mellékletek",
+  "automatic-linked-url-schemes": "Egyedi URL sémák, melyek automatikusan kattinthatóak. Soronként egy URL per séma.",
   "blockly-COPY_SHORTCUT": "Másolás",
   "board-admin": "Tábla adminisztrátor",
   "board-creation-admin-only": "Csak adminisztrátorok hozhatnak létre táblákat",

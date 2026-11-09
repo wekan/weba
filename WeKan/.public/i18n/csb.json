@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Ògrańczenia miarë lopków przëłączników i API",
   "attachment-upload-limit-label": "Nôwiãkszô miara wgrywónégò lopka przëłącznika",
   "attachments": "Załączniczi",
+  "automatic-linked-url-schemes": "Schematy adresòw URL, ktòre powinny być automatycznié przekształcane w aktywne. Wpisz jeden schemat URL w każdej linii",
   "blockly-COPY_SHORTCUT": "Kòpiérëjë",
   "board-admin": "Administrator tôblëcë",
   "board-creation-admin-only": "Blós admini mogą ùtwòrzëc nowé tafle",

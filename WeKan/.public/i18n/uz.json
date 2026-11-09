@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Biriktirma va API fayl hajmi cheklovlari",
   "attachment-upload-limit-label": "Biriktirmalarni yuklash maksimal fayl hajmi",
   "attachments": "Qo'shimchalar",
+  "automatic-linked-url-schemes": "Avtomatik ravishda bosilishi kerak bo'lgan maxsus URL sxemalari. Har bir satrda bitta URL sxemasi",
   "blockly-COPY_SHORTCUT": "Nusxalash",
   "board-admin": "Taxta admini",
   "board-creation-admin-only": "Faqat administratorlar yangi doska yarata oladi",

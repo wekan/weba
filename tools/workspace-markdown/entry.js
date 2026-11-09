@@ -8,3 +8,7 @@ export function configure(options={}){
     Markdown[key].set(value);
   }
 }
+
+// Exact source parser; administrators cannot enable forbidden handlers.
+import {parseAllowedUrlSchemes} from '../../vendor/wekan-markdown/urlSchemeAllowlist.js';
+export const parseUrlSchemes=parseAllowedUrlSchemes;

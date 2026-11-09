@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Limity rozmiaru plików załączników i API",
   "attachment-upload-limit-label": "Maksymalny rozmiar pliku przesyłanego załącznika",
   "attachments": "Załączniki",
+  "automatic-linked-url-schemes": "Schematy adresów URL, które powinny być automatycznie przekształcane w aktywne. Wpisz jeden schemat URL w każdej linii",
   "blockly-COPY_SHORTCUT": "Kopiuj",
   "board-admin": "Administrator tablicy",
   "board-creation-admin-only": "Tylko administratorzy mogą tworzyć tablice",

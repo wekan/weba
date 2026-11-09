@@ -43,6 +43,7 @@
   "attachment-transfer-limits-title": "Wates Ukuran Berkas Lampiran lan API",
   "attachment-upload-limit-label": "Ukuran berkas paling gedhe kanggo unggahan lampiran",
   "attachments": "Lampiran",
+  "automatic-linked-url-schemes": "Skema URL Kustom sing kudu bisa diklik kanthi otomatis. Siji Skema URL saben larik",
   "blockly-COPY_SHORTCUT": "Salin",
   "board-admin": "Admin Papan",
   "board-creation-admin-only": "Mung admin sing bisa nggawe papan",
