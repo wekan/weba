@@ -15,8 +15,16 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   account/board cleanup. Native tests cover readonly personal organization,
   rollback/retry, late parent/membership changes, stable IDs and recreation.
   Original getAllBoardsPage comparison now covers 75 cases on raw SQL fixtures.
-- In progress: native workspace tree navigation, create/rename/delete and board
-  assignment controls, followed by workspace drag gestures and original callbacks.
+- Completed native nested workspace rows and per-row menus, create/subworkspace,
+  name/literal-icon edits, confirmed subtree deletion and board placement forms.
+  Readonly members can organize their own readable boards. Category/search and
+  Remaining transitions, reload/user isolation, live assignment/name/deletion
+  changes, dirty form preservation, revoked-pane cleanup/forged stale Save denial,
+  mobile popup/Escape and Finnish/Latin labels have real browser coverage.
+  Import 10 additional source keys (123 total) for all 237 local catalogs.
+- In progress: workspace drag/drop and collapse/count controls, Markdown icon
+  rendering and complete original All Boards workspace/UI callbacks. The new
+  native form tests do not execute the original Latin callback unchanged.
 
 - Documented header menu lifecycle and stable shared styles, delayed stylesheet/
   font placement and safe teardown. Recorded the new real browser/unit evidence;
@@ -30,9 +38,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   drafts and clickable close controls. Delayed-width/async-error tests, full
   local/test-live and existing layout regressions pass. Original suite counts
   remain unchanged.
-- Next workspace UI: expose the implemented personal tree/assignment service
-  through native Gambas components and verify live navigation, category counts
-  and the Latin workspace form before claiming its original UI callback.
+- Next workspace parity: add persisted collapse/visible counts and tree/board
+  drag gestures, then align form semantics and run the unchanged original Latin
+  callback with explicit native transport/fixture adapters.
 
 - Documented personal rank merging, readonly/sorted/archive boundaries, fresh
   transaction checks, cleanup, expected-order focus and trusted browser evidence.

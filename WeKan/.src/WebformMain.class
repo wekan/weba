@@ -35,6 +35,15 @@ Private $catalogData As Collection
 Private $catalogSort As String = "custom"
 Private $catalogPage As Integer = 1
 Private $catalogTotal As Integer
+Private $spaceMenu As Integer
+Private $spacesState As String
+Private $spaceRows As New WebContainer[]
+Private $spaceButtons As New Collection
+Private $spaceNames As New Collection
+Private $workspaceEdit As Integer
+Private $workspaceParent As Integer
+Private $workspaceBoard As Integer
+Private $workspaceChoices As New Integer[]
 Private $overviewState As String
 Private $peopleState As String
 Private $membersState As String
@@ -101,6 +110,7 @@ Private Sub RefreshTree()
       ActionPanel.Hide()
     Endif
   Endif
+  RefreshSpaces()
   ValidateOpenCards()
   If IsOverview() Then overviewSnapshot = BoardLive.Overview($archive)
   Boards.Clear()
@@ -122,6 +132,7 @@ End
 
 Public Sub BoardPoll_Timer()
   Dim state As String
+  If RefreshSpaces() And IsOverview() Then RefreshTree()
   If $board > 0 Then
     If $view <> "Profile" And $view <> "Admin panel" Then
       If Not BoardAccess.Role($board) Then
@@ -153,6 +164,15 @@ Private Function IsOverview() As Boolean
 End
 
 Private Sub ValidateOpenCards()
+  If $workspaceBoard > 0 And BoardWorkspacePanel.Visible Then
+    If Not BoardAccess.Role($workspaceBoard) Then
+      BoardWorkspacePanel.Hide()
+      BoardWorkspaceName.Text = ""
+      WorkspaceDestination.Clear()
+      $workspaceChoices.Clear()
+      $workspaceBoard = 0
+    Endif
+  Endif
   If $card > 0 Then
     If Not BoardLive.Visible($board, $card, $archive) Then
       $card = 0
@@ -315,6 +335,7 @@ Private Function LoadBoardOverview() As Collection
   params.Add(BoardSearch.Text, "search")
   params["sortBy"] = $catalogSort
   params["menu"] = If($view = "Starred", "starred", "remaining")
+  If $view <> "Starred" And $spaceMenu > 0 Then params["menu"] = CStr($spaceMenu)
   params["page"] = $catalogPage
   If $catalogSort = "custom" Then
     data = BoardCatalog.Unpaged(params, $archive)
@@ -441,12 +462,15 @@ Public Sub Home_Click()
   ContentRow.Show()
   PageActions.Show()
   CloseHeaderMenus()
+  WorkspacePanel.Hide()
+  BoardWorkspacePanel.Hide()
   AccountPanel.Hide()
   AdminPanel.Hide()
   PasswordPolicyPanel.Hide()
   $archive = False
   $board = 0
   $view = "Boards"
+  $spaceMenu = 0
   $catalogPage = 1
   RefreshTree()
 End
@@ -456,12 +480,15 @@ Public Sub Archive_Click()
   ContentRow.Show()
   PageActions.Show()
   CloseHeaderMenus()
+  WorkspacePanel.Hide()
+  BoardWorkspacePanel.Hide()
   AccountPanel.Hide()
   AdminPanel.Hide()
   PasswordPolicyPanel.Hide()
   $archive = True
   $board = 0
   $view = "Archive"
+  $spaceMenu = 0
   $catalogPage = 1
   RefreshTree()
 End
@@ -695,7 +722,7 @@ Private Sub UpdateHeader()
   ViewMenu.Visible = $view <> "Profile" And $view <> "Admin panel"
   AddBoard.Visible = ViewMenu.Visible
   HeaderSearch.Visible = ViewMenu.Visible
-  Remaining.Class = If($view = "Boards", "weba-active", "")
+  Remaining.Class = If($view = "Boards" And $spaceMenu = 0, "weba-active", "")
   Archive.Class = If($view = "Archive", "weba-active", "")
   BoardNavigation.Visible = $view <> "Admin panel"
   AdminNavigation.Visible = $view = "Admin panel"
@@ -709,6 +736,12 @@ Private Sub UpdateHeader()
   If Not overview Then BoardSortMenu.Hide()
   ContentRow.Expand = Not overview
   PaneTitle.Text = If($view = "Boards", "Remaining", $view)
+  PaneTitle.Class = ""
+  If overview And $view = "Boards" And $spaceMenu > 0 And $spaceNames.Exist(CStr($spaceMenu)) Then
+    PaneTitle.Class = "weba-user-text"
+    PaneTitle.Text = $spaceNames[CStr($spaceMenu)]
+  Endif
+  UpdateSpaceSelection()
   PageTitle.Text = If($view = "Boards", "All Boards", $view)
   If $board And $view <> "Profile" And $view <> "Admin panel" Then
     b = KanbanStore.Boards($archive)
@@ -906,6 +939,7 @@ Private Sub OpenContext(kind As String, itemId As Integer, boardId As Integer)
   $contextId = itemId
   ContextTitle.Text = r!title
   ContextMenu.Show()
+  ContextWorkspace.Visible = kind = "board"
   ContextMembers.Visible = kind = "board" Or kind = "card"
   ContextAssignees.Visible = kind = "card"
   ContextAssignSelf.Visible = kind = "card" And BoardAccess.Can(boardId, "moveCard")
@@ -2184,4 +2218,210 @@ Public Sub ContextAssignSelf_Click()
   RefreshTree()
 Catch
   Notice.Text = Error.Text
+End
+
+
+' Personal workspace controls; names/icons are user text, never HTML.
+Private Function RefreshSpaces() As Boolean
+  Dim tree As Variant[] = BoardSpaces.Tree()
+  Dim state As String = JSON.Encode(tree) & JSON.Encode(BoardSpaces.Assignments())
+  Dim row As WebContainer
+  If state = $spacesState Then Return False
+  For Each row In $spaceRows
+    row.Delete()
+  Next
+  $spaceRows.Clear()
+  $spaceButtons.Clear()
+  $spaceNames.Clear()
+  AddSpaceRows(tree, 0)
+  If $spaceMenu > 0 And Not $spaceNames.Exist(CStr($spaceMenu)) Then
+    $spaceMenu = 0
+    $catalogPage = 1
+  Endif
+  If $workspaceEdit > 0 And Not $spaceNames.Exist(CStr($workspaceEdit)) Then WorkspacePanel.Hide()
+  If $workspaceParent > 0 And Not $spaceNames.Exist(CStr($workspaceParent)) Then WorkspacePanel.Hide()
+  UpdateSpaceSelection()
+  $spacesState = state
+  Return True
+End
+
+Private Sub AddSpaceRows(nodes As Variant[], depth As Integer)
+  Dim node As Collection
+  Dim row As WebContainer
+  Dim indent As WebContainer
+  Dim button As WebButton
+  Dim menu As WebButton
+  Dim caption As String
+  For Each node In nodes
+    row = New WebContainer(WorkspaceRows)
+    row.Arrangement = Arrange.Horizontal
+    row.Class = "weba-space-row"
+    $spaceRows.Add(row)
+    If depth > 0 Then
+      indent = New WebContainer(row)
+      indent.Width = Str(Min(depth, 8) * 12) & "px"
+      indent.Class = "weba-space-indent"
+    Endif
+    caption = CStr(node["name"])
+    If CStr(node["icon"]) Then caption = CStr(node["icon"]) & " " & caption
+    button = New WebButton(row) As "OpenPersonalWorkspace"
+    button.Text = caption
+    button.Tooltip = CStr(node["name"])
+    button.Tag = CInt(node["id"])
+    button.Class = "weba-space-open weba-user-text"
+    button.Expand = True
+    $spaceButtons[node["id"]] = button
+    $spaceNames[node["id"]] = CStr(node["name"])
+    menu = New WebButton(row) As "PersonalWorkspaceMenu"
+    menu.Tag = CInt(node["id"])
+    menu.Class = "weba-icon-only fa fa-bars weba-space-menu"
+    menu.Tooltip = "Workspace menu"
+    AddSpaceRows(node["children"], depth + 1)
+  Next
+End
+
+Private Sub UpdateSpaceSelection()
+  Dim key As String
+  Dim button As WebButton
+  For Each key In $spaceButtons.Keys
+    button = $spaceButtons[key]
+    button.Class = "weba-space-open weba-user-text" & If(IsOverview() And $view = "Boards" And CInt(key) = $spaceMenu, " weba-active", "")
+  Next
+End
+
+Public Sub OpenPersonalWorkspace_Click()
+  Dim id As Integer = Last.Tag
+  BoardSpaces.Record(id)
+  Home_Click()
+  $spaceMenu = id
+  $catalogPage = 1
+  RefreshTree()
+Catch
+  Notice.Text = Error.Text
+End
+
+Private Sub ShowWorkspaceEditor(editId As Integer, parentId As Integer)
+  Dim record As Collection
+  CloseHeaderMenus()
+  ContextMenu.Hide()
+  BoardWorkspacePanel.Hide()
+  $workspaceEdit = editId
+  $workspaceParent = parentId
+  WorkspaceName.Text = ""
+  WorkspaceIcon.Text = ""
+  If editId > 0 Then
+    record = BoardSpaces.Record(editId)
+    WorkspaceName.Text = record["name"]
+    WorkspaceIcon.Text = record["icon"]
+  Else If parentId > 0 Then
+    BoardSpaces.Record(parentId)
+  Endif
+  WorkspaceHeading.Text = If(editId > 0, "Edit workspace", "Add Workspace")
+  SaveWorkspace.Text = "Save"
+  If editId = 0 Then SaveWorkspace.Text = If(parentId > 0, "Add Subworkspace", "Add Workspace")
+  WorkspaceIcon.Visible = editId > 0
+  WorkspaceIconLabel.Visible = editId > 0
+  AddSubworkspace.Visible = editId > 0
+  WorkspaceDeleteLabel.Visible = editId > 0
+  ConfirmWorkspaceDelete.Visible = editId > 0
+  ConfirmWorkspaceDelete.Value = False
+  DeleteWorkspace.Visible = editId > 0
+  WorkspacePanel.Show()
+  WorkspaceName.SetFocus()
+End
+
+Public Sub AddWorkspace_Click()
+  ShowWorkspaceEditor(0, 0)
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub PersonalWorkspaceMenu_Click()
+  ShowWorkspaceEditor(Last.Tag, 0)
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub AddSubworkspace_Click()
+  If $workspaceEdit <= 0 Then Error.Raise("Workspace not found")
+  ShowWorkspaceEditor(0, $workspaceEdit)
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub SaveWorkspace_Click()
+  If Trim(WorkspaceName.Text) = "" Then
+    WorkspaceName.SetFocus()
+    Return
+  Endif
+  If $workspaceEdit > 0 Then
+    BoardSpaces.Edit($workspaceEdit, WorkspaceName.Text, WorkspaceIcon.Text)
+  Else
+    BoardSpaces.Add(WorkspaceName.Text, $workspaceParent)
+  Endif
+  WorkspacePanel.Hide()
+  RefreshTree()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub DeleteWorkspace_Click()
+  If $workspaceEdit <= 0 Then Error.Raise("Workspace not found")
+  If Not ConfirmWorkspaceDelete.Value Then Return
+  BoardSpaces.Remove($workspaceEdit)
+  WorkspacePanel.Hide()
+  RefreshTree()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub CloseWorkspace_Click()
+  WorkspacePanel.Hide()
+End
+
+Private Sub AddWorkspaceChoices(nodes As Variant[], prefix As String)
+  Dim node As Collection
+  Dim caption As String
+  For Each node In nodes
+    caption = prefix & CStr(node["name"])
+    WorkspaceDestination.Add(caption)
+    $workspaceChoices.Add(CInt(node["id"]))
+    AddWorkspaceChoices(node["children"], caption & " / ")
+  Next
+End
+
+Public Sub ContextWorkspace_Click()
+  Dim assignments As Collection
+  Dim selected As Integer
+  If $contextKind <> "board" Then Error.Raise("Select a board first")
+  BoardAccess.RequireRead($contextBoard)
+  $workspaceBoard = $contextBoard
+  BoardWorkspaceName.Text = WorkspaceStore.Record($workspaceBoard, "board", $workspaceBoard)!title
+  WorkspaceDestination.Clear()
+  WorkspaceDestination.Add("Remaining")
+  $workspaceChoices.Clear()
+  $workspaceChoices.Add(0)
+  AddWorkspaceChoices(BoardSpaces.Tree(), "")
+  assignments = BoardSpaces.Assignments()
+  If assignments.Exist(CStr($workspaceBoard)) Then selected = CInt(assignments[CStr($workspaceBoard)])
+  WorkspaceDestination.Index = Max(0, $workspaceChoices.Find(selected))
+  CloseHeaderMenus()
+  ContextMenu.Hide()
+  WorkspacePanel.Hide()
+  BoardWorkspacePanel.Show()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub SaveBoardWorkspace_Click()
+  If WorkspaceDestination.Index < 0 Or WorkspaceDestination.Index >= $workspaceChoices.Count Then Error.Raise("Workspace not found")
+  BoardSpaces.Assign($workspaceBoard, $workspaceChoices[WorkspaceDestination.Index])
+  BoardWorkspacePanel.Hide()
+  RefreshTree()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub CloseBoardWorkspace_Click()
+  BoardWorkspacePanel.Hide()
 End

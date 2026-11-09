@@ -172,3 +172,13 @@
 .weba-board-drag{position:absolute;inset-inline-start:4px;bottom:4px;z-index:2;touch-action:none}
 
 .weba-content[data-board-reorder="true"] .weba-board-tile{padding-block-end:52px}
+
+/* Personal workspaces use native Gambas buttons; captions remain user text. */
+.workspaces-header{align-items:center;margin-top:12px;padding-top:8px;border-top:1px solid #d9dee4;font-weight:600}
+.workspaces-header [id$=".WorkspacesHeading"]{padding:8px 4px}
+.workspaces-header [id$=".WorkspacesIcon"]{padding:0;margin-inline-start:8px}
+.weba-space-row{align-items:center;min-height:38px;flex-shrink:0!important}
+.weba-space-row .weba-space-open{min-width:0!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:8px 4px}
+.weba-space-row .weba-space-menu{width:30px!important;min-width:30px!important;padding:6px!important;flex-shrink:0!important}
+.weba-space-indent{flex-shrink:0!important}
+.weba-space-panel textarea{box-sizing:border-box;width:100%;background:#fff;color:#111;border:1px solid #bbb;padding:8px}

@@ -14,6 +14,12 @@ source = args.wekan / 'imports/i18n'
 english = json.loads((source / 'data/en.i18n.json').read_text())
 # Explicit equivalents where weba and WeKan use different English captions.
 aliases = {
+    'Workspaces': 'allboards.workspaces', 'Add Workspace': 'allboards.add-workspace',
+    'Workspace name': 'allboards.add-workspace-prompt',
+    'Workspace icon (markdown)': 'allboards.edit-workspace-icon',
+    'Add Subworkspace': 'allboards.add-subworkspace', 'Edit workspace': 'allboards.edit-workspace',
+    'Are you sure you want to delete this workspace?': 'allboards.delete-workspace-confirm',
+    'Confirm workspace deletion': 'allboards.delete-workspace-confirm-check',
     'Board administrator': 'board-admin', 'Save member': 'save',
     'Role': 'roles-status-role',
     'Normal (assigned cards only)': 'normal-assigned-only',

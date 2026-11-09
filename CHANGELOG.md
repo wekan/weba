@@ -2,6 +2,16 @@
 
 This work adds the following features and fixes:
 
+- Add native nested workspace navigation and per-row menus, workspace/subspace
+  creation, name/literal-icon edits, confirmed deletion and personal board
+  placement including Remaining. Preserve dirty workspace drafts during external
+  tree updates, refresh category placement and close revoked/stale panels; deny
+  stale Save events. Import workspace labels into all 237 catalogs and protect
+  user names from translation. Verify real source/packaged browser persistence,
+  readonly isolation, live changes, Finnish/Latin labels and mobile popup/Escape.
+  Original workspace callbacks, collapse/counts and drag parity remain pending.
+  Thanks to xet7.
+
 - Document the personal workspace service, private category semantics, stable
   IDs, transaction rechecks and cleanup evidence. Update page-method comparison
   coverage to 75 cases and retain native UI/gesture/original-suite limitations.

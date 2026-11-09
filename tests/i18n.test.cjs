@@ -9,6 +9,9 @@ const dom = new JSDOM(`<div id="@1.LanguageSelector"><select data-weba-language>
 <div id="@1.MemberBoardName">Members</div><div id="@1.MembersTree" class="gw-tree">Normal</div><div id="@1.MemberRole"><select><option value="Read only">Read only</option></select></div>
 <div id="@1.CardPeopleHeading">Members</div><div id="@1.CardPeopleName">Members</div><div id="@1.CardPeopleTree" class="gw-tree">Normal</div>
 <div id="@1.CardPersonChoice"><select><option value="Normal">Normal</option></select></div><button id="@1.AddCardPerson">Add</button>
+<div id="@1.PaneTitle" class="weba-user-text">Members</div>
+<button class="weba-space-open weba-user-text">Members</button><button class="weba-space-menu" title="Workspace menu"></button>
+<div id="@1.WorkspaceDestination"><select><option value="0">Remaining</option><option value="1">Members</option></select></div>
 <article class="weba-card"><strong>Username</strong></article>`,{url:'http://localhost',runScripts:'outside-only'});
 const {window}=dom;
 window.fetch=async url=>({ok:true,json:async()=>JSON.parse(fs.readFileSync(path.join(publicDir,url),'utf8'))});
@@ -37,6 +40,14 @@ window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
   assert.equal(doc.querySelector('select').options.length,237);
   assert.equal(doc.querySelector('input').value,'Username','user input remains unchanged');
   assert.equal(doc.querySelector('.weba-card strong').textContent,'Username','card content remains unchanged');
+  assert.equal(doc.getElementById('@1.PaneTitle').textContent,'Members','selected workspace title is literal');
+  assert.equal(doc.querySelector('.weba-space-open').textContent,'Members','dynamic workspace name is literal');
+  assert.equal(doc.querySelector('.weba-space-menu').title,api.t('Workspace menu'),'dynamic workspace menu is translated');
+  const options=doc.querySelectorAll('[id="@1.WorkspaceDestination"] option');
+  assert.equal(options[0].textContent,api.t('Remaining'),'only the explicit Remaining destination is translated');
+  assert.equal(options[0].value,'0','translated destination preserves native wire value');
+  assert.equal(options[1].textContent,'Members','workspace destination name is literal');
+
   assert.equal(doc.getElementById('@1.PageTitle').textContent,'Boards','board title remains unchanged');
   for(const name of ['ContextTitle','ActionTitle','DetailsTitle'])assert.equal(doc.getElementById('@1.'+name).textContent,'Boards','popup titles preserve user content');
   doc.getElementById('@1.WebButtonLogin').textContent='Register';

@@ -11,7 +11,7 @@
     return language !== 'en' && key && messages[key] ? messages[key] : text;
   };
   const controls = new Set(catalog.controls);
-  const excluded = 'input,textarea,script,style,.weba-card,.weba-board-tile,.gw-tree';
+  const excluded = 'input,textarea,script,style,.weba-card,.weba-board-tile,.gw-tree,.weba-user-text';
   function apply() {
     if (!root.document) return;
     document.querySelectorAll('[id]').forEach(control => {
@@ -37,6 +37,17 @@
         if (value !== translated) control.setAttribute(attr, translated);
         state[attr] = {source,translated}; attributes.set(control,state);
       }
+    });
+    // Dynamic workspace rows have generated native IDs; translate only their
+    // fixed menu tooltip and the explicit Remaining choice, never user names.
+    document.querySelectorAll('.weba-space-menu').forEach(button => {
+      const caption = translate('Workspace menu');
+      if (button.title !== caption) button.title = caption;
+      if (button.getAttribute('aria-label') !== caption) button.setAttribute('aria-label',caption);
+    });
+    document.querySelectorAll('[id$=".WorkspaceDestination"] option:first-child').forEach(option => {
+      const caption = translate('Remaining');
+      if (option.textContent !== caption) option.textContent = caption;
     });
     document.querySelectorAll('[data-weba-language]').forEach(select => {
       if (!select.options.length) {

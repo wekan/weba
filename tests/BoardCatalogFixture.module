@@ -6,6 +6,8 @@ Public Sub Main()
   Dim ids As New Integer[]
   Dim boardId As Integer
   Dim title As String
+  Dim raw As New Variant[]
+  Dim row As Collection
   If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
   Session["username"] = If(Env["WEBA_TEST_USER"], Env["WEBA_TEST_USER"], "rest-other")
   Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
@@ -45,6 +47,32 @@ Public Sub Main()
     Next
     BoardOrder.Save(ids)
   Endif
+  If Env["WEBA_CATALOG_MODE"] = "seed-spaces" Then
+    For Each title In ["Workspace Alpha", "Workspace Bravo"]
+      boardId = KanbanStore.AddBoard(title)
+      BoardAccess.SetMember(boardId, "rest-member", "read-only")
+      ids.Add(boardId)
+    Next
+    data["ids"] = ids
+  Endif
+  If Env["WEBA_CATALOG_MODE"] = "create-space" Then data["spaceId"] = BoardSpaces.Add(Env["WEBA_SPACE_NAME"])
+  If Env["WEBA_CATALOG_MODE"] = "rename-space" Then BoardSpaces.Edit(CInt(Env["WEBA_SPACE_ID"]), Env["WEBA_SPACE_NAME"])
+  If Env["WEBA_CATALOG_MODE"] = "delete-space" Then BoardSpaces.Remove(CInt(Env["WEBA_SPACE_ID"]))
+  If Env["WEBA_CATALOG_MODE"] = "assign-space" Then BoardSpaces.Assign(CInt(Env["WEBA_SPACE_BOARD"]), CInt(Env["WEBA_SPACE_ID"]))
+  If Env["WEBA_CATALOG_MODE"] = "revoke-space-board" Then BoardAccess.RemoveMember(CInt(Env["WEBA_SPACE_BOARD"]), "rest-member")
+  If Env["WEBA_CATALOG_MODE"] = "grant-space-board" Then BoardAccess.SetMember(CInt(Env["WEBA_SPACE_BOARD"]), "rest-member", "read-only")
+  data["tree"] = BoardSpaces.Tree()
+  data["assignments"] = BoardSpaces.Assignments()
+  r = WebDatabase.OpenConnection().Find("kb_board_spaces", "username=&1 ORDER BY id", Session["username"])
+  For Each r
+    row = New Collection
+    row["id"] = r!id
+    row["parentId"] = r!parent_id
+    row.Add(CStr(r!name), "name")
+    row.Add(CStr(r!icon), "icon")
+    raw.Add(row)
+  Next
+  data["rawSpaces"] = raw
   data["positions"] = BoardOrder.Positions()
   data["sortBy"] = BoardCatalog.SortBy()
   Print JSON.Encode(data)

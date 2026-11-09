@@ -56,6 +56,70 @@
       Tooltip = ("Show or hide page sidebar")
     }
   }
+  { WorkspacePanel WebContainer
+    Class = "weba-action-panel weba-space-panel"
+    Arrangement = Arrange.Vertical
+    Width = "340px"
+    Visible = False
+    Ignore = True
+    Spacing = True
+    { CloseWorkspace WebButton
+      Class = "weba-icon-only weba-popup-close fa fa-times-thin"
+      Tooltip = ("Close")
+    }
+    { WorkspaceHeading WebLabel
+      Text = ("Edit workspace")
+    }
+    { WorkspaceNameLabel WebLabel
+      Text = ("Workspace name")
+    }
+    { WorkspaceName WebTextArea
+      Height = "68px"
+    }
+    { WorkspaceIconLabel WebLabel
+      Text = ("Workspace icon (markdown)")
+    }
+    { WorkspaceIcon WebTextBox
+    }
+    { SaveWorkspace WebButton
+      Text = ("Add Workspace")
+    }
+    { AddSubworkspace WebButton
+      Text = ("Add Subworkspace")
+    }
+    { WorkspaceDeleteLabel WebLabel
+      Text = ("Are you sure you want to delete this workspace?")
+    }
+    { ConfirmWorkspaceDelete WebCheckBox
+      Text = ("Confirm workspace deletion")
+    }
+    { DeleteWorkspace WebButton
+      Text = ("Delete")
+    }
+  }
+  { BoardWorkspacePanel WebContainer
+    Class = "weba-action-panel"
+    Arrangement = Arrange.Vertical
+    Width = "340px"
+    Visible = False
+    Ignore = True
+    Spacing = True
+    { CloseBoardWorkspace WebButton
+      Class = "weba-icon-only weba-popup-close fa fa-times-thin"
+      Tooltip = ("Close")
+    }
+    { BoardWorkspaceHeading WebLabel
+      Text = ("Workspaces")
+    }
+    { BoardWorkspaceName WebLabel
+      Class = "weba-user-text"
+    }
+    { WorkspaceDestination WebComboBox
+    }
+    { SaveBoardWorkspace WebButton
+      Text = ("Save")
+    }
+  }
   { BoardSortMenu WebContainer
     Class = "weba-view-options weba-board-sort"
     Arrangement = Arrange.Vertical
@@ -278,6 +342,9 @@
     { ContextMembers WebButton
       Text = ("Members")
     }
+    { ContextWorkspace WebButton
+      Text = ("Workspaces")
+    }
     { ContextAssignees WebButton
       Text = ("Assignee")
     }
@@ -453,6 +520,25 @@
         }
         { Remaining WebButton
           Text = ("Remaining")
+        }
+        { WorkspacesHeader WebContainer
+          Class = "workspaces-header"
+          Arrangement = Arrange.Horizontal
+          { WorkspacesIcon WebLabel
+            Class = "fa fa-folder-open"
+            Width = "18px"
+          }
+          { WorkspacesHeading WebLabel
+            Text = ("Workspaces")
+            Expand = True
+          }
+          { AddWorkspace WebButton
+            Class = "weba-icon-only fa fa-plus js-add-workspace"
+            Tooltip = ("Add Workspace")
+          }
+        }
+        { WorkspaceRows WebContainer
+          Arrangement = Arrange.Vertical
         }
         { Archive WebButton
           Text = ("Archive")
