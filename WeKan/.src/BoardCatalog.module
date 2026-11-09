@@ -113,6 +113,8 @@ Private Function SelectBoards(params As Collection, archived As Boolean, paged A
     include = True
     If search Then
       include = InStr(String.LCase(CStr(r!title)), search) > 0
+    Else If menu = "archive" And archived Then
+      include = True
     Else If menu = "starred" Then
       include = WorkspaceStore.Setting(r!id, "board", r!id, "star") = "1"
     Else If menu = "remaining" Then

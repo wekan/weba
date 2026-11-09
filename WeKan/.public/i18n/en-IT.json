@@ -22,6 +22,7 @@
   "api-import-password": "Password",
   "api-import-username": "Username",
   "archive-board": "Move Board to Archive",
+  "archive-board-confirm": "Are you sure you want to archive this board?",
   "archived-items": "Archive",
   "attachments": "Attachments",
   "blockly-COPY_SHORTCUT": "Copy",

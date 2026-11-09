@@ -22,6 +22,7 @@
   "api-import-password": "Пароль",
   "api-import-username": "Ім'я користувача",
   "archive-board": "Перенести дошку до архіву",
+  "archive-board-confirm": "Ви впевнені, що хочете перенести цю дошку до архіву?",
   "archived-items": "Архів",
   "attachments": "Додатки",
   "blockly-COPY_SHORTCUT": "Копіювати",

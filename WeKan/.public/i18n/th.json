@@ -22,6 +22,7 @@
   "api-import-password": "รหัสผ่าน",
   "api-import-username": "ชื่อผู้ใช้งาน",
   "archive-board": "ย้ายบอร์ดไปยังคลังเก็บ",
+  "archive-board-confirm": "คุณแน่ใจหรือไม่ว่าต้องการเก็บบอร์ดนี้เข้าคลัง?",
   "archived-items": "เอกสารที่เก็บไว้",
   "attachments": "สิ่งที่แนบมา",
   "blockly-COPY_SHORTCUT": "คัดลอก",

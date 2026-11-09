@@ -53,10 +53,18 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   original workspacesTree comparisons pass. Real source/packaged browser cases
   cover mouse/keyboard/trusted touch, collapsed-target focus, reload/isolation,
   Archive ordering and forged cycle/foreign/profile commands.
-- In progress: board drop targets (workspace/Remaining/Starred/Archive), then
-  Markdown icon rendering and complete original All Boards workspace/UI
-  callbacks. Native form tests do not execute the original Latin callback
-  unchanged.
+- Completed single-board drops to workspace/Remaining/add-only Starred/Archive,
+  including sorted-mode placement handles and confirmed archive, without sorted
+  reordering. Verify fresh read/manage/archive-state/owned-target guards under
+  account/board locks and atomic restore+placement/unassignment/activity rollback.
+  Preserve other users' placements/stars and keep starred placement independent.
+  Global Archive now includes assigned archived boards. Native failure/late-role/
+  late-owner/state tests, 52 original callback-body outcome comparisons and real
+  source/packaged mouse/trusted touch, readonly/cancel/private/reserved/reload
+  browser checks cover the implemented single-board path.
+- In progress: multi-board selection and drops, Home/group targets, Markdown
+  icon rendering and complete original All Boards workspace/UI callbacks.
+  Native form tests do not execute the original Latin callback unchanged.
 
 - Documented header menu lifecycle and stable shared styles, delayed stylesheet/
   font placement and safe teardown. Recorded the new real browser/unit evidence;
@@ -70,9 +78,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   drafts and clickable close controls. Delayed-width/async-error tests, full
   local/test-live and existing layout regressions pass. Original suite counts
   remain unchanged.
-- Next workspace parity: add board drop targets, then align form semantics and
-  run the unchanged original Latin callback with explicit native transport/
-  fixture adapters.
+- Next workspace parity: multi-board selection/drop semantics, then align form
+  semantics and run the unchanged original Latin callback with explicit native
+  transport/fixture adapters.
 
 - Documented personal rank merging, readonly/sorted/archive boundaries, fresh
   transaction checks, cleanup, expected-order focus and trusted browser evidence.

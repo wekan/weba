@@ -22,6 +22,7 @@
   "api-import-password": "كلمة المرور",
   "api-import-username": "اسم المستخدم",
   "archive-board": "نقل اللوح الى الارشيف",
+  "archive-board-confirm": "هل أنت متأكد أنك تريد أرشفة هذه اللوحة؟",
   "archived-items": "أرشيف",
   "attachments": "المرفقات",
   "blockly-COPY_SHORTCUT": "نسخ",

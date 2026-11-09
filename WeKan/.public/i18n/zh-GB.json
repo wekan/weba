@@ -22,6 +22,7 @@
   "api-import-password": "密码",
   "api-import-username": "用户名",
   "archive-board": "将看板归档",
+  "archive-board-confirm": "确定要归档此看板吗？",
   "archived-items": "归档",
   "attachments": "附件",
   "blockly-COPY_SHORTCUT": "复制",

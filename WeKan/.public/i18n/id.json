@@ -22,6 +22,7 @@
   "api-import-password": "Kata sandi",
   "api-import-username": "Nama pengguna",
   "archive-board": "Pindahkan Papan ke Arsip",
+  "archive-board-confirm": "Anda yakin ingin mengarsipkan papan ini?",
   "archived-items": "Arsip",
   "attachments": "Daftar Lampiran",
   "blockly-COPY_SHORTCUT": "Salin",

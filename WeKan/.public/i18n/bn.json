@@ -22,6 +22,7 @@
   "api-import-password": "পাসওয়ার্ড",
   "api-import-username": "ব্যবহারকারীর নাম",
   "archive-board": "বোর্ড সংরক্ষণাগারে সরান",
+  "archive-board-confirm": "আপনি কি নিশ্চিত যে এই বোর্ড সংরক্ষণাগারে নিতে চান?",
   "archived-items": "সংরক্ষণাগার",
   "attachments": "সংযুক্তিসমূহ",
   "blockly-COPY_SHORTCUT": "কপি করুন",

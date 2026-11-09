@@ -22,6 +22,7 @@
   "api-import-password": "Lozinka",
   "api-import-username": "Korisničko ime",
   "archive-board": "Preseli ploču u arhivu",
+  "archive-board-confirm": "Jeste li sigurni da želite arhivirati ovu ploču?",
   "archived-items": "Arhiva",
   "attachments": "Privitci",
   "blockly-COPY_SHORTCUT": "Kopiraj",

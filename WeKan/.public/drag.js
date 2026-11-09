@@ -7,7 +7,7 @@
   const t=text=>root.webaI18n?.t(text)||text;
   const visible=e=>e && !e.hidden && e.getBoundingClientRect().width>0 && e.getBoundingClientRect().height>0;
   function encode(text){return btoa(Array.from(new TextEncoder().encode(String(text)),byte=>String.fromCharCode(byte)).join(''));}
-  function enabled(section,kind){return kind==='workspace'?section.dataset.workspaceReorder==='true':kind==='board'?section.dataset.boardReorder==='true':kind==='card'?section.dataset.cardMove==='true'||section.dataset.editable==='true':section.dataset.editable==='true';}
+  function enabled(section,kind){return kind==='workspace'?section.dataset.workspaceReorder==='true':kind==='board-drop'?section.dataset.boardDrop==='true':kind==='board'?section.dataset.boardReorder==='true'||section.dataset.boardDrop==='true':kind==='card'?section.dataset.cardMove==='true'||section.dataset.editable==='true':section.dataset.editable==='true';}
   function send(section,kind,values){
     if(!enabled(section,kind)||!section.dataset.drag||!root.gw)return;
     root.gw.update(section.dataset.drag,'text',[kind,...values.map(encode)].join('|'),null);
@@ -61,7 +61,7 @@
     return 'inside';
   }
   function clearWorkspaceMark(){
-    if(drag?.marked){drag.marked.classList.remove('weba-space-drop-before','weba-space-drop-after','weba-space-drop-inside');drag.marked=null;}
+    if(drag?.marked){drag.marked.classList.remove('weba-space-drop-before','weba-space-drop-after','weba-space-drop-inside','weba-board-drop-target');drag.marked=null;}
   }
   function validWorkspaceTarget(rows,source,target){
     const byId=new Map(rows.map(row=>[row.dataset.workspaceId,row]));
@@ -87,6 +87,24 @@
       const cls='weba-space-drop-'+position;
       if(drag.marked!==row||!row.classList.contains(cls)){clearWorkspaceMark();row.classList.add(cls);drag.marked=row;}
       drag.target={id:row.dataset.workspaceId,position};return;
+    }
+    if(drag.kind==='board'&&drag.section.dataset.boardDrop==='true'){
+      const row=hit?.closest('.weba-space-row');
+      const menu=hit?.closest('[id$=".Remaining"],[id$=".Starred"],[id$=".Archive"]');
+      let target,id='0';
+      if(row&&workspaceRows(drag.section).includes(row)){target='workspace';id=row.dataset.workspaceId;}
+      else if(menu){
+        target=menu.id.endsWith('.Remaining')?'remaining':menu.id.endsWith('.Starred')?'starred':'archive';
+        const source=drag.section.dataset.boardSource;
+        if(target==='starred'&&!['remaining','workspace'].includes(source)||target==='archive'&&source==='archive')target=null;
+      }
+      if(target){
+        const node=row||menu,cls='weba-board-drop-target';
+        if(drag.marked!==node||!node.classList.contains(cls)){clearWorkspaceMark();node.classList.add(cls);drag.marked=node;}
+        drag.placeholder.remove();drag.target={drop:target,id};return;
+      }
+      clearWorkspaceMark();
+      if(drag.section.dataset.boardReorder!=='true'){drag.target=null;drag.placeholder.remove();return;}
     }
     if(!hit||hit.closest('.weba-content')!==drag.section){drag.target=null;drag.placeholder.remove();return;}
     let parent,items,before,lane;
@@ -146,6 +164,10 @@
     suppressUntil=Date.now()+700;reset();
     if(cancel||!target)return;
     if(state.kind==='workspace')send(state.section,'workspace',[state.element.dataset.workspaceId,target.id,target.position,'']);
+    else if(state.kind==='board'&&target.drop){
+      if(target.drop==='archive'&&!root.confirm(t('Are you sure you want to archive this board?')))return;
+      send(state.section,'board-drop',[state.element.dataset.boardId,target.drop,target.id,'']);
+    }
     else if(state.kind==='board')send(state.section,'board',[state.element.dataset.boardId,'','',target.before]);
     else if(state.kind==='card')send(state.section,'card',[state.element.dataset.cardId,target.lane,target.list,target.before]);
     else if(state.kind==='lane')send(state.section,'lane',[state.element.dataset.lane,'','',target.before]);
@@ -191,6 +213,7 @@
       workspaceKeyboardFocus={id:state.element.dataset.workspaceId,target:target.dataset.workspaceId,position,expires:Date.now()+5000};
       send(state.section,'workspace',[state.element.dataset.workspaceId,target.dataset.workspaceId,position,'']);
     }else if(state.kind==='board'){
+      if(state.section.dataset.boardReorder!=='true')return;
       const rows=[...state.element.parentElement.querySelectorAll(':scope>.weba-board-tile-group')],index=rows.indexOf(state.element),rtl=getComputedStyle(state.element).direction==='rtl';
       const backward=event.key==='ArrowUp'||event.key===(rtl?'ArrowRight':'ArrowLeft');
       if(backward&&index===0||!backward&&index===rows.length-1)return;

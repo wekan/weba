@@ -37,7 +37,7 @@ const secrets=[process.env.WEBA_TEST_PASSWORD];
   const saved=fixture('read').positions;expect(saved).toEqual(clean(helpers.computeSortIndexMapping([a,c,b])));
   await other.bringToFront();await expect.poll(()=>names(other)).toEqual(['Order Alpha','Order Bravo','Order Charlie']);expect(fixture('read','rest-other').positions).toEqual(otherBefore);
   await page.bringToFront();await page.reload();await expect(page.locator(control('SortBoards'))).toBeVisible();await click(page,'HeaderSearch');await page.locator(input('BoardSearch')).fill('Order ');await expect.poll(()=>names(page)).toEqual(['Order Alpha','Order Charlie','Order Bravo']);await click(page,'CloseSidebar');
-  await click(page,'SortBoards');await click(page,'SortTitleAsc');await expect(page.locator('.weba-board-drag')).toHaveCount(0);
+  await click(page,'SortBoards');await click(page,'SortTitleAsc');await expect(page.locator('.weba-board-drag')).toHaveCount(3);
   await page.evaluate(value=>gw.update(document.querySelector('[id$=".DragAction"]').id,'text',value),wire(c,a));await settle(page);
   await expect(page.locator(control('Notice'))).toContainText('Select Custom board sort');expect(fixture('read').positions).toEqual(saved);
   await click(page,'SortBoards');await click(page,'SortCustom');await expect(page.locator(handle(c))).toBeVisible();

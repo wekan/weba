@@ -55,6 +55,7 @@ tests() {
   "${NODE:-node}" tests/transport.test.cjs
   "${NODE:-node}" tests/drag.test.cjs
   "${NODE:-node}" tests/workspace-drag.test.cjs
+  "${NODE:-node}" tests/board-drop.test.cjs
 }
 release() {
   local workflow="$1" version="${2:-v$(sed -n 's/^Version=//p' WeKan/.project)}"

@@ -22,6 +22,7 @@
   "api-import-password": "Senha",
   "api-import-username": "Nome de usuário",
   "archive-board": "Mover Quadro para o Arquivo morto",
+  "archive-board-confirm": "Tem certeza de que deseja excluir este quadro?",
   "archived-items": "Arquivos morto",
   "attachments": "Anexos",
   "blockly-COPY_SHORTCUT": "Copiar",

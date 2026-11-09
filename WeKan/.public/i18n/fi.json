@@ -22,6 +22,7 @@
   "api-import-password": "Salasana",
   "api-import-username": "Käyttäjätunnus",
   "archive-board": "Siirrä taulu Arkistoon",
+  "archive-board-confirm": "Oletko varma että haluat arkistoida tämän taulun?",
   "archived-items": "Arkisto",
   "attachments": "Liitetiedostot",
   "blockly-COPY_SHORTCUT": "Kopioi",

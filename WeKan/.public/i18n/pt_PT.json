@@ -22,6 +22,7 @@
   "api-import-password": "Senha",
   "api-import-username": "Nome de utilizador",
   "archive-board": "Mover o Quadro para o Arquivo",
+  "archive-board-confirm": "Tem certeza de que deseja excluir este quadro?",
   "archived-items": "Arquivo",
   "attachments": "Anexos",
   "blockly-COPY_SHORTCUT": "Copiar",

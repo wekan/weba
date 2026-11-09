@@ -1,0 +1,153 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim privateId As Integer
+  Dim ownSpace As Integer
+  Dim secondSpace As Integer
+  Dim readerSpace As Integer
+  Dim foreignSpace As Integer
+  Dim db As Connection
+  Dim r As Result
+  Dim data As Collection
+  Dim params As New Collection
+  Dim denied As Boolean
+  Dim before As String
+  WebDatabase.Register("drop-owner", "x")
+  WebDatabase.Register("drop-reader", "x")
+  WebDatabase.Register("drop-stranger", "x")
+  SignIn("drop-stranger")
+  privateId = KanbanStore.AddBoard("Private unrelated")
+  foreignSpace = BoardSpaces.Add("Foreign target")
+  SignIn("drop-owner")
+  boardId = KanbanStore.AddBoard("Shared Drop Board")
+  BoardAccess.SetMember(boardId, "drop-reader", "read-only")
+  ownSpace = BoardSpaces.Add("Owner workspace")
+  secondSpace = BoardSpaces.Add("Second owner workspace")
+  BoardSpaces.Assign(boardId, ownSpace)
+  Try BoardSpaces.DropBoard(privateId, "workspace", ownSpace, "remaining")
+  denied = Error
+  If Not denied Then Error.Raise("Site admin dropped an unreadable board")
+  Try BoardSpaces.DropBoard(boardId, "workspace", foreignSpace, "workspace")
+  denied = Error
+  If Not denied Then Error.Raise("Foreign target accepted")
+  SignIn("drop-reader")
+  readerSpace = BoardSpaces.Add("Reader workspace")
+  BoardSpaces.DropBoard(boardId, "workspace", readerSpace, "remaining")
+  BoardSpaces.DropBoard(boardId, "starred", 0, "workspace")
+  If WorkspaceStore.Setting(boardId, "board", boardId, "star") <> "1" Or BoardSpaces.Assignments()[CStr(boardId)] <> CStr(readerSpace) Then Error.Raise("Star drop moved or unstared placement")
+  db = WebDatabase.OpenConnection()
+  db.Exec("CREATE TRIGGER reject_repeat_star BEFORE UPDATE ON kb_user_meta BEGIN SELECT RAISE(ABORT,'repeat star wrote'); END")
+  BoardSpaces.DropBoard(boardId, "starred", 0, "workspace")
+  db.Exec("DROP TRIGGER reject_repeat_star")
+  BoardSpaces.DropBoard(boardId, "remaining", 0, "workspace")
+  If BoardSpaces.Assignments().Exist(CStr(boardId)) Or WorkspaceStore.Setting(boardId, "board", boardId, "star") <> "1" Then Error.Raise("Remaining drop changed star or retained placement")
+  Try BoardSpaces.DropBoard(boardId, "archive", 0, "remaining")
+  denied = Error
+  If Not denied Or WorkspaceStore.Archived(boardId, "board", boardId) Then Error.Raise("Readonly archive bypass")
+  Try BoardSpaces.DropBoard(boardId, "starred", 0, "starred")
+  denied = Error
+  If Not denied Then Error.Raise("Invalid source category accepted")
+  BoardSpaces.DropBoard(boardId, "workspace", readerSpace, "remaining")
+  SignIn("drop-owner")
+  If BoardSpaces.Assignments()[CStr(boardId)] <> CStr(ownSpace) Or WorkspaceStore.Setting(boardId, "board", boardId, "star") = "1" Then Error.Raise("Personal drop crossed user boundary")
+  BoardSpaces.DropBoard(boardId, "archive", 0, "workspace")
+  If Not WorkspaceStore.Archived(boardId, "board", boardId) Then Error.Raise("Archive failed")
+  params["menu"] = "archive"
+  data = BoardCatalog.Page(params, True)
+  If data["ids"].Find(boardId) < 0 Then Error.Raise("Assigned archived board missing from global Archive")
+  SignIn("drop-reader")
+  before = JSON.Encode(BoardSpaces.Assignments())
+  Try BoardSpaces.DropBoard(boardId, "remaining", 0, "archive")
+  denied = Error
+  If Not denied Or JSON.Encode(BoardSpaces.Assignments()) <> before Or Not WorkspaceStore.Archived(boardId, "board", boardId) Then Error.Raise("Readonly restore partly changed board/placement")
+  SignIn("drop-owner")
+  CheckRestoreRollback(boardId, ownSpace, secondSpace)
+  BoardSpaces.DropBoard(boardId, "archive", 0, "workspace")
+  BoardSpaces.DropBoard(boardId, "remaining", 0, "archive")
+  If WorkspaceStore.Archived(boardId, "board", boardId) Or BoardSpaces.Assignments().Exist(CStr(boardId)) Then Error.Raise("Restore to Remaining failed")
+  CheckArchiveRollback(boardId)
+  CheckLateAccess(boardId, readerSpace)
+  SignIn("drop-reader")
+  If BoardSpaces.Assignments()[CStr(boardId)] <> CStr(readerSpace) Or WorkspaceStore.Setting(boardId, "board", boardId, "star") <> "1" Then Error.Raise("Owner archive/restore changed another user's personal state")
+  Try BoardSpaces.DropBoard(boardId, "remaining", 0, "archive")
+  denied = Error
+  If Not denied Then Error.Raise("Stale archived source accepted")
+  Session["auth_generation"] = 0
+  Try BoardSpaces.DropBoard(boardId, "remaining", 0, "workspace")
+  denied = Error
+  If Not denied Then Error.Raise("Stale session wrote board drop")
+  Print "Board drops: readonly personal workspace/Remaining/add-only star, user isolation, managed archive/atomic restore, global Archive visibility, SQL failure rollback/retry, late access checks and foreign/stale denial passed"
+End
+
+Private Sub CheckRestoreRollback(boardId As Integer, oldSpace As Integer, newSpace As Integer)
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim r As Result = db.Find("kb_activity")
+  Dim activity As Integer = r.Count
+  Dim denied As Boolean
+  db.Exec("CREATE TRIGGER fail_restore_placement BEFORE UPDATE ON kb_board_space_assignments BEGIN SELECT RAISE(ABORT,'injected placement failure'); END")
+  Try BoardSpaces.DropBoard(boardId, "workspace", newSpace, "archive")
+  denied = Error
+  If Not denied Or Not WorkspaceStore.Archived(boardId, "board", boardId) Or BoardSpaces.Assignments()[CStr(boardId)] <> CStr(oldSpace) Then Error.Raise("Failed restore/placement was partial")
+  r = db.Find("kb_activity")
+  If r.Count <> activity Then Error.Raise("Failed restore retained activity")
+  db.Exec("DROP TRIGGER fail_restore_placement")
+  db.Exec("CREATE TRIGGER fail_restore_unassign BEFORE DELETE ON kb_board_space_assignments BEGIN SELECT RAISE(ABORT,'injected unassign failure'); END")
+  Try BoardSpaces.DropBoard(boardId, "remaining", 0, "archive")
+  denied = Error
+  If Not denied Or Not WorkspaceStore.Archived(boardId, "board", boardId) Or BoardSpaces.Assignments()[CStr(boardId)] <> CStr(oldSpace) Then Error.Raise("Failed restore/unassign was partial")
+  db.Exec("DROP TRIGGER fail_restore_unassign")
+  db.Exec("CREATE TRIGGER late_restore_target AFTER UPDATE ON users WHEN NEW.username='drop-owner' BEGIN UPDATE kb_board_spaces SET username='drop-stranger' WHERE id=" & CStr(newSpace) & "; END")
+  Try BoardSpaces.DropBoard(boardId, "workspace", newSpace, "archive")
+  denied = Error
+  If Not denied Or Not WorkspaceStore.Archived(boardId, "board", boardId) Or BoardSpaces.Assignments()[CStr(boardId)] <> CStr(oldSpace) Then Error.Raise("Late foreign restore target bypassed guard")
+  db.Exec("DROP TRIGGER late_restore_target")
+  BoardSpaces.Record(newSpace)
+  db.Exec("CREATE TRIGGER late_restore_state AFTER UPDATE ON users WHEN NEW.username='drop-owner' BEGIN UPDATE kb_boards SET archived=0 WHERE id=" & CStr(boardId) & "; END")
+  Try BoardSpaces.DropBoard(boardId, "workspace", newSpace, "archive")
+  denied = Error
+  If Not denied Or Not WorkspaceStore.Archived(boardId, "board", boardId) Then Error.Raise("Late archive-state change bypassed guard")
+  db.Exec("DROP TRIGGER late_restore_state")
+  BoardSpaces.DropBoard(boardId, "workspace", newSpace, "archive")
+  If WorkspaceStore.Archived(boardId, "board", boardId) Or BoardSpaces.Assignments()[CStr(boardId)] <> CStr(newSpace) Then Error.Raise("Restore placement retry failed")
+End
+
+Private Sub CheckArchiveRollback(boardId As Integer)
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim denied As Boolean
+  db.Exec("CREATE TRIGGER fail_drop_activity BEFORE INSERT ON kb_activity BEGIN SELECT RAISE(ABORT,'injected archive activity failure'); END")
+  Try BoardSpaces.DropBoard(boardId, "archive", 0, "remaining")
+  denied = Error
+  If Not denied Or WorkspaceStore.Archived(boardId, "board", boardId) Then Error.Raise("Failed archive activity left archived board")
+  db.Exec("DROP TRIGGER fail_drop_activity")
+  BoardSpaces.DropBoard(boardId, "archive", 0, "remaining")
+  BoardSpaces.DropBoard(boardId, "remaining", 0, "archive")
+End
+
+Private Sub CheckLateAccess(boardId As Integer, readerSpace As Integer)
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim before As String
+  Dim denied As Boolean
+  SignIn("drop-reader")
+  before = JSON.Encode(BoardSpaces.Assignments())
+  db.Exec("CREATE TRIGGER late_drop_access AFTER UPDATE ON kb_boards WHEN NEW.id=" & CStr(boardId) & " BEGIN INSERT INTO kb_removed_members(board_id,username,role) VALUES(NEW.id,'drop-reader','read-only'); END")
+  Try BoardSpaces.DropBoard(boardId, "remaining", 0, "workspace")
+  denied = Error
+  If Not denied Or JSON.Encode(BoardSpaces.Assignments()) <> before Then Error.Raise("Late membership bypassed personal drop")
+  db.Exec("DROP TRIGGER late_drop_access")
+  BoardAccess.RequireRead(boardId)
+  SignIn("drop-owner")
+  BoardAccess.SetMember(boardId, "drop-reader", "board-admin")
+  db.Exec("CREATE TRIGGER late_drop_role AFTER UPDATE ON kb_boards WHEN NEW.id=" & CStr(boardId) & " BEGIN UPDATE kb_members SET role='read-only' WHERE board_id=NEW.id AND username='drop-reader'; END")
+  SignIn("drop-reader")
+  Try BoardSpaces.DropBoard(boardId, "archive", 0, "workspace")
+  denied = Error
+  If Not denied Or WorkspaceStore.Archived(boardId, "board", boardId) Then Error.Raise("Late role bypassed archive guard")
+  db.Exec("DROP TRIGGER late_drop_role")
+  BoardAccess.Require(boardId, "manageBoard")
+  SignIn("drop-owner")
+  BoardAccess.SetMember(boardId, "drop-reader", "read-only")
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

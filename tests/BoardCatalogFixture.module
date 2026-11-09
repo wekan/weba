@@ -47,6 +47,13 @@ Public Sub Main()
     Next
     BoardOrder.Save(ids)
   Endif
+  If Env["WEBA_CATALOG_MODE"] = "private-drop-board" Then data["privateDropBoard"] = KanbanStore.AddBoard("Drop Private Unreadable")
+  If Env["WEBA_CATALOG_MODE"] = "seed-board-drops" Then
+    data["dropBoard"] = KanbanStore.AddBoard("Drop Board Alpha")
+    BoardAccess.SetMember(CInt(data["dropBoard"]), "rest-member", "read-only")
+    data["ownerSpace"] = BoardSpaces.Add("Drop Owner Workspace")
+  Endif
+  If Env["WEBA_CATALOG_MODE"] = "grant-drop-manager" Then BoardAccess.SetMember(CInt(Env["WEBA_SPACE_BOARD"]), "rest-member", "board-admin")
   If Env["WEBA_CATALOG_MODE"] = "seed-workspace-order" Then
     row = New Collection
     row["a"] = BoardSpaces.Add("Drag Alpha")
@@ -87,6 +94,24 @@ Public Sub Main()
     raw.Add(row)
   Next
   data["rawSpaces"] = raw
+  row = New Collection
+  r = WebDatabase.OpenConnection().Find("kb_boards", "id>0 ORDER BY id")
+  For Each r
+    row[CStr(r!id)] = CBool(r!archived)
+  Next
+  data["rawArchived"] = row
+  row = New Collection
+  r = WebDatabase.OpenConnection().Find("kb_user_meta", "username=&1 AND kind=&2 AND setting=&3 ORDER BY board_id", Session["username"], "board", "star")
+  For Each r
+    row.Add(CStr(r!value), CStr(r!board_id))
+  Next
+  data["rawStars"] = row
+  row = New Collection
+  r = WebDatabase.OpenConnection().Find("kb_board_space_assignments", "username=&1 ORDER BY board_id", Session["username"])
+  For Each r
+    row.Add(CStr(r!space_id), CStr(r!board_id))
+  Next
+  data["rawAssignments"] = row
   data["positions"] = BoardOrder.Positions()
   data["sortBy"] = BoardCatalog.SortBy()
   Print JSON.Encode(data)

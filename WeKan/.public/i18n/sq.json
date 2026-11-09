@@ -22,6 +22,7 @@
   "api-import-password": "Fjalëkalimi",
   "api-import-username": "Emri i përdoruesit",
   "archive-board": "Zhvendos tabelën në arkiv",
+  "archive-board-confirm": "Je i sigurt që dëshiron ta zhvendosësh këtë tabelë në arkiv?",
   "archived-items": "Arkivi",
   "attachments": "Bashkëngjitjet",
   "blockly-COPY_SHORTCUT": "Kopjo",

@@ -11,7 +11,7 @@
       const data = section.querySelector('.weba-data'), report = section.querySelector('.weba-report');
       if (!data || !report) return;
       report.replaceChildren(); data.hidden = false;
-      data.querySelectorAll('[data-drag-kind="board"]').forEach(handle=>{const label=t('Sort boards')+': '+(handle.closest('.weba-board-tile-group')?.querySelector('strong')?.textContent||'');handle.title=label;handle.setAttribute('aria-label',label);});
+      data.querySelectorAll('[data-drag-kind="board"]').forEach(handle=>{const label=t(section.dataset.boardReorder==='true'?'Sort boards':'Move')+': '+(handle.closest('.weba-board-tile-group')?.querySelector('strong')?.textContent||'');handle.title=label;handle.setAttribute('aria-label',label);});
       data.querySelectorAll('[data-board-key]').forEach(tile => {
         tile.onclick = () => {
           if (root.gw && section.dataset.tree) root.gw.update(section.dataset.tree, '$' + btoa(tile.dataset.boardKey), null);

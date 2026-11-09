@@ -22,6 +22,7 @@
   "api-import-password": "Clau de paso",
   "api-import-username": "Nombre d'usuario",
   "archive-board": "Mover o tablero a l'archivo",
+  "archive-board-confirm": "¿Estás seguro que quieres archivar iste tablero?",
   "archived-items": "Fichero",
   "attachments": "Adchuntos",
   "blockly-COPY_SHORTCUT": "Copiar",

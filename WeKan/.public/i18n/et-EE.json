@@ -22,6 +22,7 @@
   "api-import-password": "Parool",
   "api-import-username": "Kasutajanimi",
   "archive-board": "Liiguta tahvel arhiivi",
+  "archive-board-confirm": "Kas oled kindel, et soovid selle tahvli arhiveerida?",
   "archived-items": "Arhiiv",
   "attachments": "Lisad",
   "blockly-COPY_SHORTCUT": "Kopeeri",

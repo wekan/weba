@@ -22,6 +22,7 @@
   "api-import-password": "パスワード",
   "api-import-username": "ユーザー名",
   "archive-board": "ボードをアーカイブする",
+  "archive-board-confirm": "このボードをアーカイブしてもよろしいですか?",
   "archived-items": "アーカイブ",
   "attachments": "添付ファイル",
   "blockly-COPY_SHORTCUT": "コピー",

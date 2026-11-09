@@ -22,6 +22,7 @@
   "api-import-password": "Parola d'ordine",
   "api-import-username": "Nomme d'utente",
   "archive-board": "Sposta 'a tavula int'a ll'archivio",
+  "archive-board-confirm": "Sei sicuro di voler spostare chesta tavula nell'archivio?",
   "archived-items": "Archivio",
   "attachments": "Allegate",
   "blockly-COPY_SHORTCUT": "Cupià",

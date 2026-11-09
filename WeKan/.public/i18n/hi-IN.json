@@ -22,6 +22,7 @@
   "api-import-password": "पासवर्ड",
   "api-import-username": "उपयोगकर्ता नाम",
   "archive-board": "संग्रह करने के लिए बोर्ड ले जाएँ",
+  "archive-board-confirm": "क्या आप वाकई इस बोर्ड को संग्रह में ले जाना चाहते हैं?",
   "archived-items": "पुरालेख",
   "attachments": "संलग्नक",
   "blockly-COPY_SHORTCUT": "कॉपी करें",

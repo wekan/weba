@@ -22,6 +22,7 @@
   "api-import-password": "Mot de passe",
   "api-import-username": "Nom d'utilisateur",
   "archive-board": "Archiver le tableau",
+  "archive-board-confirm": "Êtes-vous sûr de vouloir archiver ce tableau ?",
   "archived-items": "Archives",
   "attachments": "Pièces jointes",
   "blockly-COPY_SHORTCUT": "Copier",

@@ -22,6 +22,7 @@
   "api-import-password": "Lykilorð",
   "api-import-username": "Notandanafn",
   "archive-board": "Færa töflu í safn",
+  "archive-board-confirm": "Ertu viss um að þú viljir færa þessa töflu í safn?",
   "archived-items": "Safn",
   "attachments": "Viðhengi",
   "blockly-COPY_SHORTCUT": "Afrita",

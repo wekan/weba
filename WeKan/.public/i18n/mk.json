@@ -22,6 +22,7 @@
   "api-import-password": "Лозинка",
   "api-import-username": "Корисничко име",
   "archive-board": "Премести Таблото во Архива",
+  "archive-board-confirm": "Дали сте сигурни дека сакате да ја архивирате оваа табла?",
   "archived-items": "Архива",
   "attachments": "Прикачени датотеки",
   "blockly-COPY_SHORTCUT": "Копирај",

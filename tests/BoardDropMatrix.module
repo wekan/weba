@@ -1,0 +1,35 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim firstSpace As Integer
+  Dim targetSpace As Integer
+  Dim results As New Variant[]
+  Dim testCase As Collection
+  Dim row As Collection
+  WebDatabase.Register("board-drop-matrix", "x")
+  Session["username"] = "board-drop-matrix"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
+  boardId = KanbanStore.AddBoard("Drop matrix board")
+  firstSpace = BoardSpaces.Add("Original placement")
+  targetSpace = BoardSpaces.Add("Drop target")
+  For Each testCase In JSON.Decode(File.Load(".public/board-drop-cases.json"))
+    BoardSpaces.Assign(boardId, If(testCase["assigned"], firstSpace, 0))
+    WorkspaceStore.SetSetting(boardId, "board", boardId, "star", If(testCase["starred"], "1", "0"))
+    WorkspaceStore.SetArchived(boardId, "board", boardId, testCase["source"] = "archive")
+    row = New Collection
+    row["boardId"] = CStr(boardId)
+    row["spaceId"] = CStr(targetSpace)
+    row["before"] = Snapshot(boardId)
+    BoardSpaces.DropBoard(boardId, testCase["target"], If(testCase["target"] = "workspace", targetSpace, 0), testCase["source"])
+    row["after"] = Snapshot(boardId)
+    results.Add(row)
+  Next
+  Print JSON.Encode(results)
+End
+
+Private Function Snapshot(boardId As Integer) As Collection
+  Dim row As New Collection
+  row["archived"] = WorkspaceStore.Archived(boardId, "board", boardId)
+  row["starred"] = WorkspaceStore.Setting(boardId, "board", boardId, "star") = "1"
+  row.Add(CStr(BoardSpaces.Assignments()[CStr(boardId)]), "assignment")
+  Return row
+End

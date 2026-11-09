@@ -2,6 +2,16 @@
 
 This work adds the following features and fixes:
 
+- Add single-board workspace/Remaining/add-only Starred/Archive drops with
+  sorted-mode placement handles, confirmation and atomic restore+placement.
+  Recheck read/manage, archive state and target ownership under locks; preserve
+  personal isolation and roll back activity/global changes with failed placement.
+  Keep assigned archived boards reachable in global Archive. Verify native SQL
+  failures/late guards, 52 original callback-body outcomes and real source/packaged
+  mouse/trusted touch, readonly/cancel/reload and private/reserved forgery checks.
+  Multi-board/Home/group targets and full original suites remain pending.
+  Thanks to xet7.
+
 - Document native workspace pointer/keyboard ordering, transaction resolution,
   no-op/ownership guards, focus and 196-case source/real browser verification.
   Retain board drops, handle preferences and full original-suite limitations.

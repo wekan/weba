@@ -22,6 +22,7 @@
   "api-import-password": "Parola d'accesso",
   "api-import-username": "Nome utente",
   "archive-board": "Sposta la bacheca nell'archivio",
+  "archive-board-confirm": "Sei sicuro di voler spostare questa bacheca nell'archivio?",
   "archived-items": "Archivio",
   "attachments": "Allegati",
   "blockly-COPY_SHORTCUT": "Copia",

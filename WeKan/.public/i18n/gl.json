@@ -22,6 +22,7 @@
   "api-import-password": "Contrasinal",
   "api-import-username": "Nome de usuario",
   "archive-board": "Mover o taboleiro ao Arquivo",
+  "archive-board-confirm": "Seguro que queres arquivar este taboleiro?",
   "archived-items": "Arquivar",
   "attachments": "Anexos",
   "blockly-COPY_SHORTCUT": "Copiar",

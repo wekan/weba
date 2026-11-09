@@ -1,4 +1,9 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Board drops: Add single-board workspace/Remaining/add-only Starred/Archive
+  targets and sorted-mode handles, confirmed archive and atomic restoration.
+  Recheck read/manage/state/target scope under locks and include assigned boards
+  in Archive. Verify rollback/late guards, 52 original callback-body comparisons
+  and real mouse/touch/isolation/forgery checks. Multi-board/full parity is open.
 - Documentation: Explain native workspace drops, guarded transactions, pointer/
   keyboard focus and source/browser evidence; retain board/original UI gaps.
 - Workspace ordering: Resolve before/after/inside drops under the account lock;

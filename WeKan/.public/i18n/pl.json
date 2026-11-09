@@ -22,6 +22,7 @@
   "api-import-password": "Hasło",
   "api-import-username": "Nazwa użytkownika",
   "archive-board": "Przenieś tablicę do Archiwum",
+  "archive-board-confirm": "Czy na pewno chcesz zarchiwizować tę tablicę?",
   "archived-items": "Archiwum",
   "attachments": "Załączniki",
   "blockly-COPY_SHORTCUT": "Kopiuj",

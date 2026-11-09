@@ -22,6 +22,7 @@
   "api-import-password": "Passord",
   "api-import-username": "Brukernavn",
   "archive-board": "Flytt Tavle til Arkiv",
+  "archive-board-confirm": "Er du sikker på at du vil arkivere denne tavlen?",
   "archived-items": "Arkiv",
   "attachments": "Vedlegg",
   "blockly-COPY_SHORTCUT": "Kopier",

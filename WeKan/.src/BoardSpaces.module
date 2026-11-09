@@ -285,24 +285,96 @@ Public Sub Assign(boardId As Integer, Optional spaceId As Integer)
     $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
     BoardAccess.RequireRead(boardId)
     Node(spaceId, username)
-    r = $db.Edit("kb_board_space_assignments", "username=&1 AND board_id=&2", username, boardId)
-    If Not r.Available Then
-      r = $db.Create("kb_board_space_assignments")
-      r["username"] = username
-      r["board_id"] = boardId
-    Endif
-    r["space_id"] = spaceId
-    r.Update()
-  Else
-    ' Removing a stale personal assignment needs no current board access.
-    $db.Delete("kb_board_space_assignments", "username=&1 AND board_id=&2", username, boardId)
   Endif
+  AssignWithin(username, boardId, spaceId)
   DatabaseTransactions.Commit($db)
   transaction = False
 Catch
   failure = Error.Text
   If transaction Then Try DatabaseTransactions.Rollback($db)
   Error.Raise(failure)
+End
+
+Private Sub AssignWithin(username As String, boardId As Integer, spaceId As Integer)
+  Dim r As Result
+  If spaceId = 0 Then
+    $db.Delete("kb_board_space_assignments", "username=&1 AND board_id=&2", username, boardId)
+    Return
+  Endif
+  r = $db.Edit("kb_board_space_assignments", "username=&1 AND board_id=&2", username, boardId)
+  If r.Available Then
+    If CInt(r!space_id) = spaceId Then Return
+  Else
+    r = $db.Create("kb_board_space_assignments")
+    r["username"] = username
+    r["board_id"] = boardId
+  Endif
+  r["space_id"] = spaceId
+  r.Update()
+End
+
+Public Sub DropBoard(boardId As Integer, target As String, spaceId As Integer, source As String)
+  Dim username As String = Principal()
+  Dim board As Result
+  Dim r As Result
+  Dim transaction As Boolean
+  Dim failure As String
+  If boardId <= 0 Or spaceId < 0 Then Error.Raise("Invalid board drop")
+  If target <> "workspace" And target <> "remaining" And target <> "starred" And target <> "archive" Then Error.Raise("Invalid board drop")
+  If source <> "workspace" And source <> "remaining" And source <> "starred" And source <> "archive" Then Error.Raise("Invalid board drop")
+  If target = "workspace" Then
+    If spaceId <= 0 Then Error.Raise("Invalid board drop")
+    Node(spaceId, username)
+  Else If spaceId <> 0 Then
+    Error.Raise("Invalid board drop")
+  Endif
+  If target = "starred" And source <> "remaining" And source <> "workspace" Then Error.Raise("Invalid board drop")
+  If target = "archive" And source = "archive" Then Error.Raise("Invalid board drop")
+  WorkspaceStore.OpenStore()
+  BoardAccess.OpenStore()
+  CheckBoardDrop(boardId, target, source)
+  username = BeginChange()
+  transaction = True
+  $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+  board = CheckBoardDrop(boardId, target, source)
+  If target = "workspace" Then Node(spaceId, username)
+  Select target
+    Case "archive"
+      KanbanStore.ArchiveBoard(boardId, True)
+    Case "workspace", "remaining"
+      If source = "archive" Then KanbanStore.ArchiveBoard(boardId, False)
+      AssignWithin(username, boardId, spaceId)
+    Case "starred"
+      If WorkspaceStore.Setting(boardId, "board", boardId, "star") <> "1" Then
+        r = $db.Edit("kb_user_meta", "board_id=&1 AND kind=&2 AND item_id=&1 AND username=&3 AND setting=&4", boardId, "board", username, "star")
+        If Not r.Available Then
+          r = $db.Create("kb_user_meta")
+          r["board_id"] = boardId
+          r["kind"] = "board"
+          r["item_id"] = boardId
+          r["username"] = username
+          r["setting"] = "star"
+        Endif
+        r["value"] = "1"
+        r.Update()
+      Endif
+  End Select
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+Private Function CheckBoardDrop(boardId As Integer, target As String, source As String) As Result
+  Dim board As Result
+  BoardAccess.RequireRead(boardId)
+  board = $db.Find("kb_boards", "id=&1", boardId)
+  If Not board.Available Then Error.Raise("Board not accessible")
+  If CBool(board!archived) <> (source = "archive") Then Error.Raise("Board archive state changed")
+  If target = "archive" Or source = "archive" Then BoardAccess.Require(boardId, "manageBoard")
+  Return board
 End
 
 Public Sub Move(spaceId As Integer, parentId As Integer, Optional beforeId As Integer)

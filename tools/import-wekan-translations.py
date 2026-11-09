@@ -62,6 +62,7 @@ texts.update(['Todo', 'Doing', 'Done', 'Card', 'Status', 'Swimlane', 'Due date',
               'No due date', 'Previous month', 'Next month', 'Default', 'All cards',
               'Add card', 'Add list', 'Add swimlane', 'Collapse', 'Uncollapse', 'Close', 'Save', 'Cards',
               'Move card', 'Move list', 'Move swimlane',
+              'Are you sure you want to archive this board?',
               'Move this list and all its cards to the other swimlane?'])
 lookup = {}
 for text in sorted(texts):

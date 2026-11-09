@@ -340,6 +340,7 @@ Private Function LoadBoardOverview() As Collection
   params["sortBy"] = $catalogSort
   params["menu"] = If($view = "Starred", "starred", "remaining")
   If $view <> "Starred" And $spaceMenu > 0 Then params["menu"] = CStr($spaceMenu)
+  If $view = "Archive" Then params["menu"] = "archive"
   params["page"] = $catalogPage
   If $catalogSort = "custom" Then
     data = BoardCatalog.Unpaged(params, $archive)
@@ -516,7 +517,7 @@ Public Sub Visual_Render()
   If $board Then $liveState = BoardLive.State($board, $archive)
   Print "<script>" & File.Load(".public/kanban.js") & "</script>"
   If $board Then boardColor = WorkspaceStore.Setting($board, "board", $board, "color", "#2980b9")
-  Print "<section data-workspace-reorder=\"" & If(IsOverview(), "true", "false") & "\" data-board-reorder=\"" & If(IsOverview() And Not $archive And $catalogSort = "custom", "true", "false") & "\" data-board-color=\"" & Html(boardColor) & "\" data-context=\"" & Html(ContextAction.Name) & "\" data-drag=\"" & Html(DragAction.Name) & "\" data-board=\"" & Str($board) & "\" data-action=\"" & Html(BoardAction.Name) & "\" data-card-move=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "moveCard"), "true", "false") & "\" data-editable=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "write"), "true", "false") & "\" class=\"weba-content\" data-tree=\"" & Html(Boards.Name) & "\" data-view=\"" & Html($view) & "\">"
+  Print "<section data-board-drop=\"" & If(IsOverview(), "true", "false") & "\" data-board-source=\"" & If($archive, "archive", If($view = "Starred", "starred", If($spaceMenu > 0, "workspace", "remaining"))) & "\" data-workspace-reorder=\"" & If(IsOverview(), "true", "false") & "\" data-board-reorder=\"" & If(IsOverview() And Not $archive And $catalogSort = "custom", "true", "false") & "\" data-board-color=\"" & Html(boardColor) & "\" data-context=\"" & Html(ContextAction.Name) & "\" data-drag=\"" & Html(DragAction.Name) & "\" data-board=\"" & Str($board) & "\" data-action=\"" & Html(BoardAction.Name) & "\" data-card-move=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "moveCard"), "true", "false") & "\" data-editable=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "write"), "true", "false") & "\" class=\"weba-content\" data-tree=\"" & Html(Boards.Name) & "\" data-view=\"" & Html($view) & "\">"
   If $view = "Profile" Then
     Print "<p>Signed in as " & Html(WebIdentity.Username) & "</p>"
   Else If $view = "Admin panel" Then
@@ -562,7 +563,7 @@ Public Sub Visual_Render()
         If WorkspaceStore.Setting(b!id, "board", b!id, "star") <> "1" Then Continue
       Endif
       If Not $board And ($view = "Boards" Or $view = "Archive" Or $view = "Starred") Then
-        tiles[CStr(b!id)] = "<div class=\"weba-board-tile-group\" data-board-id=\"" & Str(b!id) & "\">" & If(Not $archive And $catalogSort = "custom", "<button type=\"button\" class=\"weba-drag-handle weba-board-drag fa fa-arrows\" data-drag-kind=\"board\" aria-label=\"Sort boards\"></button>", "") & "<button style=\"background-color:" & Html(WorkspaceStore.Setting(b!id, "board", b!id, "color", "#2980b9")) & "\" type=\"button\" class=\"weba-board-tile\" data-board-key=\"b" & Str(b!id) & "\"><strong>" & Html(b!title) & "</strong></button><button class=\"weba-board-context fa fa-bars\" data-context-kind=\"board\" data-context-id=\"" & Str(b!id) & "\" aria-label=\"Board menu\"></button></div>"
+        tiles[CStr(b!id)] = "<div class=\"weba-board-tile-group\" data-board-id=\"" & Str(b!id) & "\">" & If(IsOverview(), "<button type=\"button\" class=\"weba-drag-handle weba-board-drag fa fa-arrows\" data-drag-kind=\"board\" aria-label=\"Sort boards\"></button>", "") & "<button style=\"background-color:" & Html(WorkspaceStore.Setting(b!id, "board", b!id, "color", "#2980b9")) & "\" type=\"button\" class=\"weba-board-tile\" data-board-key=\"b" & Str(b!id) & "\"><strong>" & Html(b!title) & "</strong></button><button class=\"weba-board-context fa fa-bars\" data-context-kind=\"board\" data-context-id=\"" & Str(b!id) & "\" aria-label=\"Board menu\"></button></div>"
         Continue
       Endif
       Print "<h3>" & Html(b!title) & "</h3>"
@@ -886,6 +887,19 @@ Private Sub ReorderCatalog(boardId As Integer, beforeId As Integer)
   RefreshTree()
 End
 
+Private Sub DropCatalogBoard(boardId As Integer, target As String, spaceId As Integer)
+  Dim data As Collection
+  Dim ids As Integer[]
+  Dim source As String
+  If Not IsOverview() Then Error.Raise("Select All Boards first")
+  data = LoadBoardOverview()
+  ids = data["ids"]
+  If ids.Find(boardId) < 0 Then Error.Raise("Invalid board drop")
+  source = If($archive, "archive", If($view = "Starred", "starred", If($spaceMenu > 0, "workspace", "remaining")))
+  BoardSpaces.DropBoard(boardId, target, spaceId, source)
+  RefreshTree()
+End
+
 Public Sub DragAction_Change()
   Dim wire As String
   Dim fields As String[]
@@ -894,6 +908,11 @@ Public Sub DragAction_Change()
   DragAction.Text = ""
   fields = Split(wire, "|")
   If fields.Count <> 5 Then Error.Raise("Invalid drag action")
+  If fields[0] = "board-drop" Then
+    If UnBase64(fields[4]) <> "" Then Error.Raise("Invalid board drop")
+    DropCatalogBoard(CInt(UnBase64(fields[1])), UnBase64(fields[2]), CInt(UnBase64(fields[3])))
+    Return
+  Endif
   If fields[0] = "workspace" Then
     If Not IsOverview() Then Error.Raise("Select All Boards first")
     If UnBase64(fields[4]) <> "" Then Error.Raise("Invalid workspace drop")

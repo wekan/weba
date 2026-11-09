@@ -22,6 +22,7 @@
   "api-import-password": "Lösenord",
   "api-import-username": "Användarnamn",
   "archive-board": "Flytta Tavla till Arkiv",
+  "archive-board-confirm": " Är du säker på att du vill arkivera den här tavlan?",
   "archived-items": "Arkiv",
   "attachments": "Bilagor",
   "blockly-COPY_SHORTCUT": "Kopiera",

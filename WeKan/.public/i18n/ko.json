@@ -22,6 +22,7 @@
   "api-import-password": "암호",
   "api-import-username": "아이디",
   "archive-board": "게시판을 저장소로 이동",
+  "archive-board-confirm": "이 보드를 보관하시겠습니까?",
   "archived-items": "보관",
   "attachments": "첨부 파일",
   "blockly-COPY_SHORTCUT": "복사",

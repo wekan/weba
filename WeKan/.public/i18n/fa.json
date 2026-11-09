@@ -22,6 +22,7 @@
   "api-import-password": "کلمه عبور",
   "api-import-username": "نام کاربری",
   "archive-board": "انتقال برد به آرشیو",
+  "archive-board-confirm": "آیا مطمئن هستید که می‌خواهید این برد را آرشیو کنید؟",
   "archived-items": "آرشیو",
   "attachments": "ضمائم",
   "blockly-COPY_SHORTCUT": "رونویسی",

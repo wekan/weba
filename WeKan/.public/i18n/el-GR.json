@@ -22,6 +22,7 @@
   "api-import-password": "Κωδικός",
   "api-import-username": "Όνομα Χρήστη",
   "archive-board": "Μετακίνηση Πίνακα στο Αρχείο",
+  "archive-board-confirm": "Είστε βέβαιοι ότι θέλετε να αρχειοθετήσετε αυτόν τον πίνακα;",
   "archived-items": "Αρχείο",
   "attachments": "Συνημμένα",
   "blockly-COPY_SHORTCUT": "Αντιγραφή",
