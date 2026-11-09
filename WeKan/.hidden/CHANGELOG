@@ -1,4 +1,8 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Attachment read APIs: Add live listings, retained authorized info/JSON/raw
+  downloads and the legacy board alias with member/assigned scope and byte caps.
+  Force safe Unicode disposition and sandbox headers; preserve embedded binary
+  CGI delimiters. Verify 192 source-handler outcomes and real HTTP/browser safety.
 - Workspace browser synchronization: Wait for rendered IDs/parents as well as
   labels before successive keys. Keep delayed-reply regression coverage and
   await interception teardown; source/package hierarchy/focus checks pass.

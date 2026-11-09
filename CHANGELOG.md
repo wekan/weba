@@ -2,6 +2,18 @@
 
 This work adds the following features and fixes:
 
+- Add attachment list/info/JSON and raw download APIs plus the legacy board-list
+  alias. Match source membership and raw assigned-card scope, including global
+  nonmember read denial and retained-file direct history reads. Keep listings
+  live-only; return metadata/versions, exact bytes, zero/legacy values and UTC
+  times with configured download bounds. Force safe Unicode-named downloads
+  with sandbox/nosniff/no-store headers and private host-only filename metadata.
+  Preserve binary CGI separator bytes across LF/CRLF header formats and match
+  strict raw-query flags. Verify 192 unchanged source-handler outcomes, actual
+  source/package HTTP and browser HTML non-execution/revocation, and host failure
+  regressions. Streaming/storage/global-policy/DDP/eventlog parity stays open.
+  Thanks to xet7.
+
 - Make workspace keyboard browser checks wait for rendered IDs and parentage,
   including hierarchy changes whose visible name order stays the same. Reproduce
   the former dropped-next-key test race with delayed native replies after SQL

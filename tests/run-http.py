@@ -7,7 +7,7 @@ root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(root / 'runtime'))
 from server import handler
 
-if any(mode in sys.argv for mode in ('--live', '--overview-live', '--catalog', '--board-order', '--workspaces', '--workspace-order', '--board-drops', '--board-selection', '--selection-archive', '--board-purge', '--list-delete-api', '--list-deletion', '--attachment-lifecycle', '--attachment-delete-api', '--attachment-upload-api', '--attachment-upload')) and '--members' not in sys.argv:
+if any(mode in sys.argv for mode in ('--live', '--overview-live', '--catalog', '--board-order', '--workspaces', '--workspace-order', '--board-drops', '--board-selection', '--selection-archive', '--board-purge', '--list-delete-api', '--list-deletion', '--attachment-lifecycle', '--attachment-delete-api', '--attachment-upload-api', '--attachment-upload', '--attachment-reads-api', '--attachment-reads')) and '--members' not in sys.argv:
     sys.argv.append('--members')
 
 base_env = os.environ.copy()
@@ -36,7 +36,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
         runner = base_env.get('GBR', 'gbr3')
     base_env.update(WEBA_DB_TYPE='sqlite3', WEBA_DB_HOST=str(project), WEBA_DB_NAME='database.db', WEBA_DB_USER='', WEBA_DB_PASSWORD='')
     if any(mode in sys.argv for mode in ('--api', '--sessions', '--members')):
-        base_env.update(ATTACHMENT_API_MAX_UPLOAD_BYTES='1024', WITH_API='true', WEBA_TEST_FIXTURE='1', WEBA_TEST_PASSWORD=secrets.token_urlsafe(24), WEBA_TEST_MEMBERS='1' if '--members' in sys.argv else '0')
+        base_env.update(ATTACHMENT_API_MAX_DOWNLOAD_BYTES='512', ATTACHMENT_API_MAX_UPLOAD_BYTES='1024', WITH_API='true', WEBA_TEST_FIXTURE='1', WEBA_TEST_PASSWORD=secrets.token_urlsafe(24), WEBA_TEST_MEMBERS='1' if '--members' in sys.argv else '0')
         fixture = subprocess.run([base_env.get('GBX', 'gbx3'), '-s', 'ApiFixture', str(project)],
                                  env=base_env, capture_output=True, text=True)
         if fixture.returncode:
@@ -50,7 +50,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             disabled_thread = threading.Thread(target=disabled.serve_forever, daemon=True)
             disabled_thread.start()
             try:
-                for route in ['/api/users/rest-owner/boards', '/%61pi/users/rest-owner/boards', '/API/users/rest-owner/boards', '/api/boards/1/lists', '/api/boards/1/swimlanes', '/api/boards/1/cards_count', '/api/boards/1/lists/1/cards', '/api/cards/1', '/api/boards/1/lists/1/cards/1', '/api/boards/1/lists/1/cards/1/archive']:
+                for route in ['/api/users/rest-owner/boards', '/%61pi/users/rest-owner/boards', '/API/users/rest-owner/boards', '/api/boards/1/lists', '/api/boards/1/swimlanes', '/api/boards/1/cards_count', '/api/boards/1/lists/1/cards', '/api/cards/1', '/api/boards/1/lists/1/cards/1', '/api/boards/1/lists/1/cards/1/archive', '/api/attachment/list/1', '/api/attachment/info/1', '/api/attachment/download/1?raw=1', '/api/boards/1/attachments', '/api/attachment/upload']:
                     try:
                         urllib.request.urlopen('http://127.0.0.1:' + str(disabled.server_port) + route, timeout=10)
                     except urllib.error.HTTPError as error:
@@ -69,7 +69,12 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
         env['WEBA_TEST_URL'] = 'http://127.0.0.1:' + str(server.server_port)
         env['WEBA_TEST_RUNNER'] = runner
         env['WEBA_TEST_APPLICATION'] = str(application)
-        if '--attachment-upload' in sys.argv:
+        if '--attachment-reads' in sys.argv:
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/attachment-reads.browser.cjs')], check=True, env=env)
+        elif '--attachment-reads-api' in sys.argv:
+            subprocess.run([sys.executable, str(root / 'tests/api-attachment-reads.test.py')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/attachment-reads-conformance.test.cjs')], check=True, env=env)
+        elif '--attachment-upload' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/attachment-upload.browser.cjs')], check=True, env=env)
         elif '--attachment-upload-api' in sys.argv:
             subprocess.run([sys.executable, str(root / 'tests/api-attachment-upload.test.py')], check=True, env=env)
@@ -106,6 +111,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/details-live.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/attachment-lifecycle.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/attachment-upload.browser.cjs')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/attachment-reads.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/people-live.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/overview-live.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/catalog.browser.cjs')], check=True, env=env)
@@ -130,6 +136,8 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             subprocess.run([sys.executable, str(root / 'tests/api-list-delete.test.py')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/api-attachment-delete.test.py')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/api-attachment-upload.test.py')], check=True, env=env)
+            subprocess.run([sys.executable, str(root / 'tests/api-attachment-reads.test.py')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/attachment-reads-conformance.test.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/attachment-upload-conformance.test.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/list-times-conformance.test.cjs')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/api-single-card.test.py')], check=True, env=env)

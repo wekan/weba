@@ -86,9 +86,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   and revisioned authoritative multi-drop transport are recorded in CHANGELOG.md.
   Native form tests do not execute the original Latin callback unchanged.
   Native retained attachment deletion/restore, bearer raw/JSON uploads with
-  MIME/time metadata and source target guards, and the DELETE API are recorded in
+  MIME/time metadata and source target guards, list/info/base64/raw download APIs,
+  and the DELETE API are recorded in
   CHANGELOG.md. Card/swimlane/discussion deletion, full generic history/undo,
-  attachment list/info/download API schemas, streamed uploads, global transfer/
+  streamed uploads/downloads, global transfer/
   storage settings and board allowance controls, linked-card/background/map
   permissions, storage/retention, security eventlog/Problems reporting and visual
   cover selection,

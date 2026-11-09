@@ -645,3 +645,32 @@ bodies before CGI. API uploads are still buffered and database-backed; report
 that backend honestly and retain streaming/multiple-backend requirements in TODO.
 The source helper comparator uses unchanged function bodies with explicit storage/
 ID and no-op security-log adapters; it is not the full original security callback.
+
+
+## Attachment read APIs
+
+AttachmentReads uses ordinary current board membership, never the write API's
+scoped site-admin exception. BoardAccess wrappers reset that private scope. Raw
+active assigned-only flags apply through canonical seesAllCards and actual card
+assignment checks; final guards recheck scope before returning data. List filters
+use source null/unknown/foreign semantics. Query only names, attributes, sizes and
+container IDs for metadata; fetch the blob only after download scope/size checks.
+Legacy metadata falls back to its stored date/octet-stream without backfilling.
+
+Read the original route/cache bodies before changing deletion filters. Source
+listings apply liveAttachments; direct info/download retrieve retained files and
+apply fresh membership/assigned-card permission. The native gallery's FileRecord
+live guard serves a different source UI path. Do not accidentally call it from
+these retained API reads or grant global nonmember read access. Parent deletion
+marks are not part of these source attachment selectors. Actual container purge
+still removes the file and its attributes.
+
+Raw CGI output carries X-WeBa-Download-Name as private base64 metadata; the host
+accepts it only on attachment download GETs and replaces it with the source safe
+Content-Disposition. Never forward that internal header. Split CGI headers at the earliest supported
+blank-line boundary so delimiter bytes inside a binary body stay intact. Keep explicit empty
+base64/false/zero fields with Collection.Add. Preserve sandbox/nosniff/no-store
+and byte bounds; raw output remains buffered until streaming storage is added.
+The 192-case comparator executes unchanged source handlers with explicit SQL-ID,
+time, database stream, transfer policy and no-op security logger adapters. Full
+source storage, DDP, eventlog and original UI callbacks remain separate work.

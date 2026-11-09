@@ -1,3 +1,4 @@
+import base64
 import errno
 from email.message import Message
 import io
@@ -178,6 +179,66 @@ class AttachmentUploadTransportTest(unittest.TestCase):
     def test_malformed_and_unrelated_json_are_unchanged(self):
         for body in (b'{', b'[]', b'{"fileData":"YQ=="}', b'{"fileName":null}'):
             self.assertEqual(server.canonical_upload_unicode(body), body)
+
+
+class AttachmentDownloadTransportTest(unittest.TestCase):
+    def test_download_metadata_is_private_and_filename_headers_cannot_inject(self):
+        filename = 'Résumé "quote"\r\nInjected: value.html'
+        encoded = base64.b64encode(filename.encode()).decode()
+        result = SimpleNamespace(returncode=0, stdout=(f"Status: 200\r\nContent-Type: text/html\r\nX-WeBa-Download-Name: {encoded}\r\n\r\n".encode() + b'\x00\xff<script>never run</script>'))
+        for route in ('/api/attachment/download/1?raw=1','/api/attachment/info/1','/'):
+            request = NativeOriginTest().request('GET', route)
+            request.rfile = io.BytesIO()
+            request.wfile = io.BytesIO()
+            request.client_address = ('127.0.0.1',12345)
+            request.send_response = Mock()
+            request.send_header = Mock()
+            request.end_headers = Mock()
+            with patch.object(server, 'run_application', return_value=result):
+                request._run_cgi()
+            headers = [call.args for call in request.send_header.call_args_list]
+            self.assertFalse(any(key.lower()=='x-weba-download-name' for key,value in headers))
+            if '/download/' in route:
+                request.send_error.assert_not_called()
+                disposition = dict(headers)['Content-Disposition']
+                self.assertEqual(disposition, server.attachment_disposition(filename))
+                self.assertNotIn('\r', disposition)
+                self.assertNotIn('\n', disposition)
+                self.assertEqual(request.wfile.getvalue(), b'\x00\xff<script>never run</script>')
+            else:
+                request.send_error.assert_called_once_with(500,'Gambas request failed')
+                self.assertEqual(request.wfile.getvalue(), b'')
+
+    def test_binary_body_delimiters_do_not_replace_the_real_cgi_header_boundary(self):
+        body = b'\x00\xffbinary\r\n\r\nembedded\n\nbytes'
+        for newline in (b'\n', b'\r\n'):
+            request = NativeOriginTest().request('GET','/api/attachment/download/1?raw=1')
+            request.rfile = io.BytesIO()
+            request.wfile = io.BytesIO()
+            request.client_address = ('127.0.0.1',12345)
+            request.send_response = Mock()
+            request.send_header = Mock()
+            request.end_headers = Mock()
+            result = SimpleNamespace(returncode=0,stdout=newline.join([b'Status: 200',b'Content-Type: application/octet-stream',b'X-WeBa-Download-Name: ZmlsZS5iaW4=',b'',b''])+body)
+            with patch.object(server,'run_application',return_value=result):
+                request._run_cgi()
+            request.send_error.assert_not_called()
+            self.assertEqual(request.wfile.getvalue(), body)
+
+    def test_malformed_download_metadata_does_not_reach_client(self):
+        for encoded in ('not base64', base64.b64encode(b'\xff').decode()):
+            request = NativeOriginTest().request('GET','/api/attachment/download/1?raw=1')
+            request.rfile = io.BytesIO()
+            request.wfile = io.BytesIO()
+            request.client_address = ('127.0.0.1',12345)
+            request.send_response = Mock()
+            request.send_header = Mock()
+            request.end_headers = Mock()
+            result = SimpleNamespace(returncode=0,stdout=f'Status: 200\r\nX-WeBa-Download-Name: {encoded}\r\n\r\nprivate'.encode())
+            with patch.object(server,'run_application',return_value=result):
+                request._run_cgi()
+            request.send_error.assert_called_once_with(500,'Gambas request failed')
+            self.assertEqual(request.wfile.getvalue(), b'')
 
 
 class CardDateTransportTest(unittest.TestCase):

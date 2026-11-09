@@ -1334,3 +1334,13 @@ Private Function AttachmentUploadFailure(status As Integer, message As String) A
   data.Add(message, "error")
   Return ApiAnswer(status, data)
 End
+
+Public Function ReadApiAttachment(reference As String, download As Boolean, raw As Boolean) As Collection
+  $apiMemberBoard = 0
+  Return AttachmentReads.ReadFile(reference, download, raw)
+End
+
+Public Function ListApiAttachments(board As String, lane As String, list As String, card As String) As Collection
+  $apiMemberBoard = 0
+  Return AttachmentReads.ListFiles(board, lane, list, card)
+End

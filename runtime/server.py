@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Local Gambas CGI host preserving runtime and database environment settings."""
 import argparse
+import base64
+import unicodedata
 import errno
 import ipaddress
 import hashlib
@@ -63,6 +65,14 @@ def canonical_upload_unicode(body):
     except (ValueError, UnicodeError, OverflowError, RecursionError):
         pass
     return body
+
+
+def attachment_disposition(filename):
+    """ASCII fallback plus the source RFC 5987 UTF-8 filename."""
+    ascii_name = ''.join(char for char in unicodedata.normalize('NFKD', filename)
+                         if 32 <= ord(char) <= 126).replace('\\', '-').replace('"', '-') or 'export'
+    encoded = urllib.parse.quote(filename, safe="~!*'()-._")
+    return f"attachment; filename=\"{ascii_name}\"; filename*=UTF-8''{encoded}"
 
 
 def run_application(command, *, input, env, timeout=30):
@@ -341,15 +351,31 @@ def handler(application, runner, environment):
                     if command_text is not None:
                         env['QUERY_STRING'] = command_text
                     result = run_application(command, input=body, env=env, timeout=30)
-                headers, separator, body = result.stdout.partition(b'\r\n\r\n')
-                if not separator: headers, separator, body = result.stdout.partition(b'\n\n')
-                if result.returncode or not separator: raise RuntimeError('CGI failed')
+                boundaries = [(result.stdout.find(separator), separator)
+                              for separator in (b'\r\n\r\n', b'\n\n')
+                              if result.stdout.find(separator) >= 0]
+                if result.returncode or not boundaries:
+                    raise RuntimeError('CGI failed')
+                # The first blank line ends headers. A later delimiter may be
+                # arbitrary binary file content, including the other EOL form.
+                offset, separator = min(boundaries, key=lambda item: item[0])
+                headers = result.stdout[:offset]
+                body = result.stdout[offset + len(separator):]
                 parsed = []
                 status = 200
                 for header in headers.splitlines():
                     if b':' not in header: continue
                     key, value = header.decode().split(':', 1)
                     if key.lower() == 'status': status = int(value.strip().split()[0])
+                    elif key.lower() == 'x-weba-download-name':
+                        # Internal CGI metadata never reaches the client. Only a
+                        # genuine raw attachment response may name a download.
+                        pieces = decoded_path.strip('/').split('/')
+                        if not (api and self.command == 'GET' and len(pieces) == 4
+                                and pieces[:3] == ['api', 'attachment', 'download']):
+                            raise RuntimeError('Invalid download metadata')
+                        filename = base64.b64decode(value.strip(), validate=True).decode('utf-8')
+                        parsed.append(('Content-Disposition', attachment_disposition(filename)))
                     elif key.lower() not in ['content-length', 'connection', 'transfer-encoding']:
                         parsed.append((key, value.strip()))
                 if login and status == 200:

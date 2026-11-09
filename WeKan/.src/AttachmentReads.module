@@ -1,0 +1,170 @@
+ ' Bearer attachment reads: live listings and authorized retained-file downloads.
+Export
+Private $db As Connection
+
+Private Sub OpenStore()
+  If Env["WEBA_API_REQUEST"] <> "1" Then Error.Raise("API context required")
+  If Not WebIdentity.Username Then Error.Raise("Sign in required")
+  CardContent.OpenStore()
+  $db = WebDatabase.OpenConnection()
+End
+
+Private Function Id(reference As String) As Integer
+  Dim value As Integer
+  Try value = CInt(reference)
+  If Error Then Return 0
+  If value <= 0 Or Str(value) <> reference Then Return 0
+  Return value
+End
+
+Private Function Scoped(boardId As Integer) As Boolean
+  Return BoardAccess.Role(boardId) <> ""
+End
+
+Private Function CardVisible(boardId As Integer, cardId As Integer) As Boolean
+  Dim r As Result
+  If Not Scoped(boardId) Then Return False
+  If BoardAccess.Can(boardId, "seesAllCards") Then Return True
+  r = $db.Find("kb_cards", "board_id=&1 AND id=&2 AND (assignee=&3 OR id IN (SELECT card_id FROM kb_card_assignees WHERE board_id=&1 AND username=&3))", boardId, cardId, WebIdentity.Username)
+  Return r.Available
+End
+
+Private Function Query(boardId As Integer, Optional fileId As Integer) As Result
+  Dim sql As String
+  sql = "SELECT f.id,f.board_id,f.card_id,f.filename,f.created_at,COALESCE(LENGTH(f.content),0) AS file_size,d.mime,d.uploaded_ms,c.lane,cl.list_id,l.id AS lane_id FROM kb_files f LEFT JOIN kb_attachment_data d ON d.file_id=f.id AND d.board_id=f.board_id AND d.card_id=f.card_id LEFT JOIN kb_cards c ON c.id=f.card_id AND c.board_id=f.board_id LEFT JOIN kb_card_lists cl ON cl.card_id=c.id AND cl.board_id=c.board_id LEFT JOIN kb_lanes l ON l.board_id=c.board_id AND l.title=c.lane WHERE f.board_id=&1"
+  If fileId > 0 Then
+    Return $db.Exec(sql & " AND f.id=&2", boardId, fileId)
+  Endif
+  Return $db.Exec(sql & " AND " & AttachmentLifecycle.LiveSql("f") & " ORDER BY f.id", boardId)
+End
+
+Private Function Metadata(r As Result) As Collection
+  Dim data As New Collection
+  Dim mime As String = r!mime
+  If Not mime Then mime = "application/octet-stream"
+  data.Add(CStr(r!id), "attachmentId")
+  data.Add(CStr(r!filename), "fileName")
+  data.Add(CLong(r!file_size), "fileSize")
+  data.Add(mime, "fileType")
+  data.Add("database", "storageBackend")
+  data.Add(CStr(r!board_id), "boardId")
+  data.Add(CStr(r!card_id), "cardId")
+  data.Add(If(IsNull(r!lane_id), JSON.Null, CStr(r!lane_id)), "swimlaneId")
+  data.Add(If(IsNull(r!list_id), JSON.Null, CStr(r!list_id)), "listId")
+  data.Add(JSON.Null, "createdAt")
+  If Not IsNull(r!uploaded_ms) Then
+    data["createdAt"] = CardDates.Iso(r!uploaded_ms)
+  Else If Not IsNull(r!created_at) Then
+    data["createdAt"] = CardDates.Iso(ItemChanges.Epoch(r!created_at))
+  Endif
+  data.Add(Left(LCase(mime), 6) = "image/", "isImage")
+  Return data
+End
+
+Public Function ListFiles(boardRef As String, Optional laneRef As String, Optional listRef As String, Optional cardRef As String) As Collection
+  Dim boardId As Integer = Id(boardRef)
+  Dim cardId As Integer
+  Dim r As Result
+  Dim rows As New Variant[]
+  Dim data As New Collection
+  Dim item As Collection
+  OpenStore()
+  If Not Scoped(boardId) Then Return Failure(403, "You do not have permission to access this board")
+  If cardRef And cardRef <> "null" Then
+    cardId = Id(cardRef)
+    r = $db.Find("kb_cards", "board_id=&1 AND id=&2", boardId, cardId)
+    If Not r.Available Then Return Failure(404, "Card not found or does not belong to the specified board")
+  Endif
+  r = Query(boardId)
+  For Each r
+    If Not CardVisible(boardId, r!card_id) Then Continue
+    If laneRef And laneRef <> "null" Then
+      If CStr(r!lane_id) <> laneRef Then Continue
+    Endif
+    If listRef And listRef <> "null" Then
+      If CStr(r!list_id) <> listRef Then Continue
+    Endif
+    If cardId > 0 And r!card_id <> cardId Then Continue
+    rows.Add(Metadata(r))
+  Next
+  ' A read never promotes global admin to board membership.
+  If Not Scoped(boardId) Then Return Failure(403, "You do not have permission to access this board")
+  For Each item In rows
+    If Not CardVisible(boardId, Id(item["cardId"])) Then Return Failure(403, "You do not have permission to access this board")
+  Next
+  data.Add(True, "success")
+  data.Add(rows, "attachments")
+  data.Add(rows.Count, "count")
+  Return Answer(200, data)
+Catch
+  Return Failure(500, "Attachment listing failed")
+End
+
+Public Function ReadFile(reference As String, download As Boolean, raw As Boolean) As Collection
+  Dim fileId As Integer = Id(reference)
+  Dim r As Result
+  Dim blob As Result
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim data As Collection
+  Dim outcome As Collection
+  Dim version As New Collection
+  Dim versions As New Variant[]
+  Dim bytes As String
+  Dim field As String
+  OpenStore()
+  r = $db.Exec("SELECT board_id,card_id FROM kb_files WHERE id=&1", fileId)
+  If Not r.Available Then Return Failure(404, "Attachment not found")
+  boardId = r!board_id
+  cardId = r!card_id
+  If Not CardVisible(boardId, cardId) Then Return Failure(403, "You do not have permission to access this attachment")
+  r = Query(boardId, fileId)
+  If Not r.Available Then Return Failure(404, "Attachment not found")
+  data = Metadata(r)
+  If download Then
+    If data["fileSize"] > AttachmentData.ApiDownloadLimit() Then Return Failure(413, "Attachment exceeds API download limit")
+    blob = $db.Find("kb_files", "id=&1 AND board_id=&2 AND card_id=&3", fileId, boardId, cardId)
+    If Not blob.Available Then Return Failure(404, "Attachment not found")
+    bytes = blob!content.Data
+    If Len(bytes) > AttachmentData.ApiDownloadLimit() Then Return Failure(413, "Attachment exceeds API download limit")
+    If Len(bytes) <> data["fileSize"] Then Return Failure(500, "Attachment changed during download")
+    If Not CardVisible(boardId, cardId) Then Return Failure(403, "You do not have permission to access this attachment")
+    If raw Then
+      outcome = Answer(200, data)
+      outcome.Add(True, "raw")
+      outcome.Add(bytes, "bytes")
+      Return outcome
+    Endif
+    For Each field In ["boardId", "cardId", "swimlaneId", "listId", "createdAt", "isImage"]
+      data.Remove(field)
+    Next
+    ' Explicit Add preserves an empty base64 value on Gambas 3.20.
+    data.Add(Base64(bytes), "base64Data")
+  Else
+    version.Add("original", "versionName")
+    version.Add("database", "storage")
+    version.Add(data["fileSize"], "size")
+    version.Add(data["fileType"], "type")
+    versions.Add(version)
+    data.Add(versions, "versions")
+  Endif
+  If Not CardVisible(boardId, cardId) Then Return Failure(403, "You do not have permission to access this attachment")
+  data.Add(True, "success")
+  Return Answer(200, data)
+Catch
+  Return Failure(500, "Attachment read failed")
+End
+
+Private Function Failure(status As Integer, message As String) As Collection
+  Dim data As New Collection
+  data.Add(False, "success")
+  data.Add(message, "error")
+  Return Answer(status, data)
+End
+
+Private Function Answer(status As Integer, data As Collection) As Collection
+  Dim answer As New Collection
+  answer.Add(status, "status")
+  answer.Add(data, "data")
+  Return answer
+End

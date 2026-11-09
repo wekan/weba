@@ -1342,7 +1342,7 @@ UI/API/security suites and non-SQLite drivers still require further work.
 Ordinary native attachment Delete and `DELETE /api/attachment/delete/:id` keep
 stored file bytes and author attribution. A separate tombstone records the actual
 actor, UTC milliseconds and attachment batch. Repeated deletion keeps that batch
-and writes no duplicate activity/history. Card-facing file summaries, downloads,
+and writes no duplicate activity/history. Native card-facing file summaries and downloads,
 copies and JSON exports include only live files. Deleting the current cover clears
 it; restoring the bytes never puts that cover back or changes another cover.
 
@@ -1377,7 +1377,7 @@ HTTP tests inspect SQL bytes, cover state and rollback (focused mode
 coverage uses `tests/run-http.py --attachment-lifecycle` (plus `--archive` for the
 packaged app). The standard local/browser suites include these checks.
 
-Attachment list/info/download API DTOs, streamed uploads, storage backends, board-level
+Streamed uploads/downloads, global transfer policy, storage backends, board-level
 background/map files, linked-card permissions, retention jobs, visual cover
 selection, security eventlog/Problems reporting and original complete UI/API/
 security suites remain open in TODO.md. The unchanged UnassignedAttachBleed
@@ -1434,6 +1434,64 @@ scope functions; native ID/backend and no-op security-event adapters are explici
 `attachment-upload.browser.cjs` verifies live panes, actual native binary download
 and assignment-revocation cleanup. Focused modes are `--attachment-upload-api`
 and `--attachment-upload`, with `--archive` for the packaged application. Standard
-local/browser suites include these tests. Info/list/download API routes, streaming,
-background/map/linked-card scope, DDP, Problems/eventlog and the original complete
+local/browser suites include these tests. Streaming, background/map/linked-card
+scope, DDP, Problems/eventlog and the original complete
 UnassignedAttachBleed callback remain open.
+
+
+### Attachment API listings, info and downloads
+
+`GET /api/attachment/list/:boardId[/:swimlaneId[/:listId[/:cardId]]]` returns
+`success`, `attachments` and `count`. The literal `null` skips an optional path
+filter. The legacy `GET /api/boards/:boardId/attachments` returns the same board
+listing. Each item has attachment ID, name, byte size, MIME, actual `database`
+backend, board/lane/list/card IDs, UTC creation time and image flag. Listings
+exclude soft-deleted attachments. Metadata queries return lengths and attributes
+without loading file bytes into the native metadata result.
+
+`GET /api/attachment/info/:attachmentId` adds `success` and the `versions` array
+with the stored original version's backend, size and MIME. Legacy files use their
+stored creation date and an octet-stream MIME fallback. All read routes require
+current active board membership: a global site administrator needs membership
+too. Active raw assigned-only flags narrow even board/site administrators to
+files on their assigned cards. Missing/foreign card filters follow the original
+404 contract; an authorized unknown lane/list filter returns an empty listing.
+
+`GET /api/attachment/download/:attachmentId` returns the source JSON success
+fields and `base64Data`, including an explicit empty string for zero-byte files.
+Add `?raw=1` for the exact binary response. Raw answers force attachment download
+with the source ASCII fallback and RFC 5987 Unicode filename, native MIME (or safe
+binary fallback for invalid header characters), `nosniff`, sandbox CSP and no-store.
+The host derives disposition from private CGI filename metadata, which is never
+forwarded to the client. `ATTACHMENT_API_MAX_DOWNLOAD_BYTES` uses the source
+positive-byte normalization and 64 MiB cap; zero/unset uses that cap. Info/list
+metadata remains accessible when a file exceeds the download byte limit.
+
+The actual source keeps direct authorized info/download access to retained
+soft-deleted files for history/recovery; only listings apply the attachment-live
+selector. The cache and route bodies were inspected to verify this distinction.
+These direct APIs use current board and assigned-card scope independently of the
+native card gallery's live-file guard. Revoking membership or assignment refuses
+later requests, including reads of retained files. Physical container purge
+removes the retained file and its metadata. Parent entity soft-delete selectors
+are separate from the attachment API's source selectors.
+
+`api-attachment-reads.test.py` verifies actual source/package HTTP and SQL for
+DTOs, exact base64/raw bytes, header safety, zero/legacy files, membership/assignment
+loss, raw assigned flags, retained-file behavior, size bounds and sanitized no-write
+failures. `attachment-reads-conformance.test.cjs` compares 192 real HTTP outcomes
+with unchanged source list/info/JSON-download/legacy route and read-scope bodies.
+SQL identity/time/database storage, transfer-policy and no-op security-log adapters
+are explicit. The host disposition also matches the unchanged source helper on
+Unicode/control/quote cases. `attachment-reads.browser.cjs` verifies that stored
+HTML downloads with exact bytes and Unicode name without executing its script,
+then checks deletion/list behavior and active-context assignment/member revocation.
+Host tests reject malformed or out-of-route private download metadata and preserve
+embedded CGI separator bytes with both LF and CRLF header formats.
+
+Focused test modes are `--attachment-reads-api` and `--attachment-reads`, adding
+`--archive` for the packaged app; standard local/browser suites include them. Raw
+responses are still buffered by the database/CGI/host architecture. Source streaming,
+other storage/version backends, global download blocking/settings UI, board-level
+background/map and linked-card behavior, ordinary Meteor-Files URL/range routes,
+DDP, security eventlog/Problems and original complete callbacks remain open.

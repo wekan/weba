@@ -46,7 +46,15 @@ Public Function Mime(boardId As Integer, cardId As Integer, fileId As Integer) A
 End
 
 Public Function ApiUploadLimit() As Integer
-  Dim value As String = Trim(Env["ATTACHMENT_API_MAX_UPLOAD_BYTES"])
+  Return ApiLimit("ATTACHMENT_API_MAX_UPLOAD_BYTES")
+End
+
+Public Function ApiDownloadLimit() As Integer
+  Return ApiLimit("ATTACHMENT_API_MAX_DOWNLOAD_BYTES")
+End
+
+Private Function ApiLimit(setting As String) As Integer
+  Dim value As String = Trim(Env[setting])
   Dim digits As String
   Dim i As Integer
   Dim number As Float
