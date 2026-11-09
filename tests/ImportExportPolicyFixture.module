@@ -1,0 +1,41 @@
+Public Sub Main()
+  Dim mode As String = Env["WEBA_EXCHANGE_MODE"]
+  Dim options As Collection
+  Dim data As New Collection
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim fileId As Integer
+  Dim r As Result
+  If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
+  Session["username"] = "rest-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("rest-owner")
+  ImportExportPolicy.OpenStore()
+  If mode = "restore-global" Or mode = "demote-global" Then WebDatabase.OpenConnection().Exec("UPDATE users SET admin=&1 WHERE username='rest-owner'", mode = "restore-global")
+  If mode = "save" Then
+    options = JSON.Decode(Env["WEBA_EXCHANGE_FLAGS"])
+    ImportExportPolicy.Save(options["import"], options["export"])
+  Endif
+  If mode = "seed" Then
+    Session["username"] = "rest-other"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+    boardId = KanbanStore.AddBoard("Exchange policy source")
+    cardId = KanbanStore.SaveCard(boardId, 0, "Exchange card", "Literal <body>", "Default", "Todo", "", "", "")
+    fileId = CardContent.AddFile(boardId, cardId, "policy-export.bin", "exact" & Chr(0))
+    data["boardId"] = boardId
+    data["cardId"] = cardId
+    data["fileId"] = fileId
+    data["text"] = BoardTransfer.ExportData(boardId, "board", boardId)
+    Print JSON.Encode(data)
+    Return
+  Endif
+  r = WebDatabase.OpenConnection().Find("import_export_settings", "id=1")
+  data["disableImport"] = r!disable_import
+  data["disableExport"] = r!disable_export
+  data.Add(r!actor, "actor")
+  data.Add(r!changed_ms, "changedMs")
+  r = WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS n FROM kb_boards")
+  data["boards"] = r!n
+  r = WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS n FROM kb_files")
+  data["files"] = r!n
+  Print JSON.Encode(data)
+End

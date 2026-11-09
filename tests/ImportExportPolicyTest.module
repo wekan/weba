@@ -1,0 +1,161 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim resultId As Integer
+  Dim fileId As Integer
+  Dim db As Connection
+  Dim data As Collection
+  Dim text As String
+  Dim exported As String
+  Dim before As String
+  Dim denied As Boolean
+  Dim disableImport As Boolean
+  Dim disableExport As Boolean
+  Dim value As Variant
+  Dim selection As Collection
+  Dim batch As Collection
+  Dim state As Collection
+  WebDatabase.Register("exchange-global", "x")
+  WebDatabase.Register("exchange-owner", "x")
+  SignIn("exchange-owner")
+  If Not ImportExportPolicy.ImportAllowed() Or Not ImportExportPolicy.ExportAllowed() Then Error.Raise("Default transfer disabled")
+  boardId = KanbanStore.AddBoard("Exchange source")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Card", "Body", "Default", "Todo", "", "", "")
+  fileId = CardContent.AddFile(boardId, cardId, "exchange.bin", "exact" & Chr(0))
+  text = BoardTransfer.ExportData(boardId, "board", boardId)
+  db = WebDatabase.OpenConnection()
+  before = Frame()
+  Try ImportExportPolicy.Save(True, True)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Board owner changed global transfer settings")
+  Try data = ImportExportPolicy.Settings()
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Board owner read policy audit")
+  For Each disableImport In [False, True]
+    For Each disableExport In [False, True]
+      SignIn("exchange-global")
+      ImportExportPolicy.Save(disableImport, disableExport)
+      data = ImportExportPolicy.Settings()
+      If data["disableAllImport"] <> disableImport Or data["disableAllExport"] <> disableExport Or data["actor"] <> "exchange-global" Or data["changedMs"] <= 0 Then Error.Raise("Setting values/audit lost")
+      SignIn("exchange-owner")
+      before = Frame()
+      exported = ""
+      Try exported = BoardTransfer.ExportData(boardId, "board", boardId)
+      denied = Error
+      If denied <> disableExport Then Error.Raise("Export did not follow its independent switch")
+      If disableExport And (exported Or Frame() <> before) Then Error.Raise("Denied export returned data or wrote")
+      If Not disableExport And InStr(exported, "exchange.bin") = 0 Then Error.Raise("Allowed export lost file")
+      before = Frame()
+      Try resultId = BoardTransfer.ImportData(text, "Allowed import")
+      denied = Error
+      If denied <> disableImport Then Error.Raise("Import did not follow its independent switch")
+      If disableImport And Frame() <> before Then Error.Raise("Denied import wrote")
+    Next
+  Next
+  SignIn("exchange-global")
+  before = Frame()
+  For Each value In [Null, "true", 0]
+    Try ImportExportPolicy.Save(value, False)
+    denied = Error
+    If Not denied Or Frame() <> before Then Error.Raise("Invalid import flag accepted")
+    Try ImportExportPolicy.Save(False, value)
+    denied = Error
+    If Not denied Or Frame() <> before Then Error.Raise("Invalid export flag accepted")
+  Next
+  ImportExportPolicy.Save(False, False)
+  SignIn("exchange-owner")
+  state = SingleBoardCopy.NewState(boardId)
+  selection = BoardSelection.NewState()
+  BoardSelection.SetActive(selection, True)
+  BoardSelection.AddVisible(selection, [boardId])
+  batch = BoardCopies.NewBatch(selection)
+  SignIn("exchange-global")
+  ImportExportPolicy.Save(True, True)
+  before = Frame()
+  Try resultId = BoardTransfer.ImportData("not JSON", "Denied global")
+  denied = Error
+  If Not denied Or Error.Text <> "Import is disabled by the administrator." Or Frame() <> before Then Error.Raise("Admin bypassed import or parsed denied input")
+  SignIn("exchange-owner")
+  Try resultId = WorkspaceStore.Copy(boardId, "board", boardId, "Denied board copy")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Board copy bypassed disabled import")
+  Try resultId = SingleBoardCopy.Copy(state, boardId, "Denied stale copy")
+  denied = Error
+  If Not denied Or state["done"] Or state["busy"] Or Frame() <> before Then Error.Raise("Stale single copy bypassed disabled import")
+  Try BoardCopies.Run(batch, selection)
+  denied = Error
+  If Not denied Or BoardCopies.Completed(batch) Or BoardCopies.Remaining(batch) <> 1 Or batch["busy"] Or Frame() <> before Then Error.Raise("Selected copy bypassed disabled import")
+  If CardContent.DownloadFile(boardId, cardId, fileId)!content.Data <> "exact" & Chr(0) Then Error.Raise("Transfer switch blocked existing file read")
+  resultId = WorkspaceStore.Copy(boardId, "card", cardId, "Local card copy")
+  SignIn("exchange-global")
+  ImportExportPolicy.Save(False, False)
+  before = Frame()
+  db.Exec("CREATE TRIGGER exchange_demote AFTER UPDATE OF disable_import ON import_export_settings BEGIN UPDATE users SET admin=0 WHERE username='exchange-global'; END")
+  Try ImportExportPolicy.Save(True, False)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Late admin loss survived setting save")
+  db.Exec("DROP TRIGGER exchange_demote")
+  SignIn("exchange-owner")
+  before = Frame()
+  db.Exec("CREATE TRIGGER exchange_late_import AFTER INSERT ON kb_boards WHEN NEW.title='Late import' BEGIN UPDATE import_export_settings SET disable_import=1 WHERE id=1; END")
+  Try resultId = BoardTransfer.ImportData(text, "Late import")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Late import disable did not roll back hierarchy/policy")
+  db.Exec("DROP TRIGGER exchange_late_import")
+  resultId = BoardTransfer.ImportData(text, "Late import")
+  before = Frame()
+  db.Exec("CREATE TRIGGER exchange_late_copy AFTER INSERT ON kb_boards WHEN NEW.title='Late copy' BEGIN UPDATE import_export_settings SET disable_import=1 WHERE id=1; END")
+  Try resultId = SingleBoardCopy.Copy(state, boardId, "Late copy")
+  denied = Error
+  If Not denied Or state["done"] Or state["busy"] Or Frame() <> before Then Error.Raise("Late copy disable survived transaction or consumed operation")
+  db.Exec("DROP TRIGGER exchange_late_copy")
+  resultId = SingleBoardCopy.Copy(state, boardId, "Late copy")
+  before = Frame()
+  db.Exec("CREATE TRIGGER exchange_late_export AFTER UPDATE OF id ON import_export_settings BEGIN UPDATE import_export_settings SET disable_export=1 WHERE id=1; END")
+  exported = ""
+  Try exported = BoardTransfer.ExportData(boardId, "board", boardId)
+  denied = Error
+  If Not denied Or exported Or Frame() <> before Then Error.Raise("Locked export gate leaked data or writes")
+  db.Exec("DROP TRIGGER exchange_late_export")
+  exported = BoardTransfer.ExportData(boardId, "board", boardId)
+  If Not exported Then Error.Raise("Export retry failed")
+  Print "Import/export policy: default/independent gates, admin-only typed audited saves, denied/no-write/native-copy guards, retained reads, late admin/import/copy/export rollback and retry passed"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End
+
+Private Function Frame() As String
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim tables As New String[]
+  Dim table As Table
+  Dim tableName As String
+  Dim r As Result
+  Dim row As New Collection
+  Dim rows As Variant[]
+  Dim data As New Variant[]
+  Dim field As ResultField
+  For Each table In db.Tables
+    If Left(table.Name, 3) = "kb_" Or table.Name = "users" Or table.Name = "account_sessions" Or table.Name = "attachment_transfer_settings" Or table.Name = "board_creation_settings" Or table.Name = "import_export_settings" Then tables.Add(table.Name)
+  Next
+  tables.Sort()
+  For Each tableName In tables
+    rows = New Variant[]
+    r = db.Find(tableName)
+    For Each r
+      row = New Collection
+      For Each field In r.Fields
+        If field.Name = "content" Then
+          row.Add(Base64(r!content.Data), field.Name)
+        Else
+          row.Add(r[field.Name], field.Name)
+        Endif
+      Next
+      rows.Add(row)
+    Next
+    data.Add(rows)
+  Next
+  Return JSON.Encode(data)
+End

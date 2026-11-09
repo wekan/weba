@@ -88,7 +88,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   private single-form source/session/replay guards, source-style single-clone
   title generation/native destination navigation and the global
   creation policy across current native paths are recorded in
-  CHANGELOG.md. Rules/integrations/scrum, board-defined labels/custom fields,
+  CHANGELOG.md. Native admin import/export disable switches, current JSON and
+  whole-board-copy gates, locked transfer checks, stale form cleanup and retained
+  copy retry are also recorded there; original formats/APIs, avatar exclusions,
+  identity anonymization and security event reporting remain pending. Rules/integrations/scrum, board-defined labels/custom fields,
   actual source routing/subscription integration, destination placement/order,
   missing board content and full original callbacks remain open.
   Native multi-selection controls, retained visible-page selection

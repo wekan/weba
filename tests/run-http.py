@@ -7,7 +7,7 @@ root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(root / 'runtime'))
 from server import handler
 
-if any(mode in sys.argv for mode in ('--live', '--overview-live', '--catalog', '--board-order', '--workspaces', '--workspace-order', '--board-drops', '--board-selection', '--selection-archive', '--board-purge', '--list-delete-api', '--list-deletion', '--attachment-lifecycle', '--attachment-delete-api', '--attachment-upload-api', '--attachment-upload', '--attachment-reads-api', '--attachment-reads', '--transfer-policy-api', '--transfer-policy', '--board-allowance', '--board-copy', '--selected-copy', '--copy-options', '--board-creation', '--single-copy')) and '--members' not in sys.argv:
+if any(mode in sys.argv for mode in ('--live', '--overview-live', '--catalog', '--board-order', '--workspaces', '--workspace-order', '--board-drops', '--board-selection', '--selection-archive', '--board-purge', '--list-delete-api', '--list-deletion', '--attachment-lifecycle', '--attachment-delete-api', '--attachment-upload-api', '--attachment-upload', '--attachment-reads-api', '--attachment-reads', '--transfer-policy-api', '--transfer-policy', '--board-allowance', '--board-copy', '--selected-copy', '--copy-options', '--board-creation', '--single-copy', '--import-export-policy')) and '--members' not in sys.argv:
     sys.argv.append('--members')
 
 base_env = os.environ.copy()
@@ -30,6 +30,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
         shutil.copy2(root / 'tests/BoardCopyFixture.module', project / '.src/BoardCopyFixture.module')
         shutil.copy2(root / 'tests/BoardCopiesFixture.module', project / '.src/BoardCopiesFixture.module')
         shutil.copy2(root / 'tests/BoardCreationFixture.module', project / '.src/BoardCreationFixture.module')
+        shutil.copy2(root / 'tests/ImportExportPolicyFixture.module', project / '.src/ImportExportPolicyFixture.module')
         shutil.copy2(root / 'tests/CardDatesConformance.module', project / '.src/CardDatesConformance.module')
         shutil.copy2(root / 'tests/ArchiveFixture.module', project / '.src/ArchiveFixture.module')
     subprocess.run([base_env.get('GBC', 'gbc3'), '-j', '1', '-a', str(project)], check=True, env=base_env)
@@ -74,7 +75,9 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
         env['WEBA_TEST_URL'] = 'http://127.0.0.1:' + str(server.server_port)
         env['WEBA_TEST_RUNNER'] = runner
         env['WEBA_TEST_APPLICATION'] = str(application)
-        if '--single-copy' in sys.argv:
+        if '--import-export-policy' in sys.argv:
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/import-export-policy.browser.cjs')], check=True, env=env)
+        elif '--single-copy' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/single-copy-options.browser.cjs')], check=True, env=env)
         elif '--board-creation' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-creation.browser.cjs')], check=True, env=env)
@@ -140,6 +143,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/copy-options.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-creation.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/single-copy-options.browser.cjs')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/import-export-policy.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/people-live.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/overview-live.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/catalog.browser.cjs')], check=True, env=env)

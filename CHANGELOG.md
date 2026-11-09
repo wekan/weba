@@ -2,6 +2,16 @@
 
 This work adds the following features and fixes:
 
+- Add independent default-off Global Admin import/export disable switches with
+  typed/audited locked saves and live clean-field refresh/draft preservation.
+  Gate native JSON transfers and whole-board copies with fresh policy/scope
+  checks, clear stale forms and retain pending-copy retry. Hide denied actions
+  and guard forged events. Verify native no-write/late-change rollback, nine
+  unchanged source helper outcomes and real exact-download/upload/copy/mobile/
+  translated/admin-loss browser flows. Keep avatars/anonymization, missing source
+  formats/APIs, streaming, event reporting and full original suites open.
+  Thanks to xet7.
+
 - Generate source-style numbered single-copy titles inside the locked copy
   transaction and navigate to the destination only after commit. Preserve edited
   bases, failed-save source/form state and retry after child or late session

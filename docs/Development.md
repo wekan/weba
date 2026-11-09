@@ -971,3 +971,54 @@ behavior. The
 source sort argument is inspected, but native destination rank/placement is not
 claimed. Full original UI/API/DDP/security suites, actual routing/subscriptions,
 non-SQLite concurrency and missing content models remain pending.
+
+### Native import/export policy
+
+Global Admin now has Import / Export settings with independent Disable all import
+and Disable all export switches, both default off. Persist typed booleans with
+actor/time metadata under account and policy locks, rechecking authority and saved
+values before commit. Normal board administrators cannot read the audit settings
+or forge saves. A demoted admin's pane closes and its checkbox values clear.
+Refresh each clean checkbox from external changes while preserving an unsaved
+change to the other checkbox. Use three additional source captions (160 keys
+across 237 catalogs), including the Finnish/mobile regression.
+
+Disable export gates every current native board/card/list/swimlane JSON export in
+BoardTransfer, including direct service calls and forged menu events. Lock the
+policy and source while building the result, then recheck actor, session, scope
+and policy before committing and returning text. A denied or failed export returns
+no document. Hide the native Export action when disabled.
+
+Disable import gates JSON upload preparation and the import transaction before
+parsing, after locks and before commit. It also gates native whole-board copies
+through the shared copy service and private single/selected wrappers, following
+the source disable-all-import description's board-cloning scope. Keep account,
+creation-policy, import-policy and source lock ordering consistent. Hide import
+and duplication actions and close/clear stale prepared forms; retain selected
+copy progress for pending-only retry after re-enabling. Ordinary new boards,
+local card/list/swimlane copies and authorized attachment reads retain their
+existing behavior. The dedicated source attachment-export endpoint is still
+missing; ordinary native downloads are attachment reads.
+
+ImportExportPolicyTest covers independent/default flags, typed/admin audited
+settings, refused transfers without writes, stale single/selected copies, retained
+file reads, late admin loss and import/copy/export policy injection with
+rollback/retry.
+Nine native SQL boolean/null combinations match the unchanged source settings,
+import/export assertion and HTTP-refusal helpers with explicit Settings/Meteor
+error/security-log adapters. This comparison covers those helpers; full original
+copy/import/export callbacks and security event reporting remain open.
+
+Actual browser tests download and inspect exact binary content in native JSON,
+prepare a real file import and single/selected copies, disable them in another
+session, verify cleared/retained states and forged no-write/no-download refusal,
+then resume pending duplication. They also cover independent switches, external
+clean refresh/dirty checkbox preservation, mobile/Finnish labels and demotion.
+Focused mode: tests/run-http.py --import-export-policy; add --archive for the
+packaged app. It is included in both test-live phases.
+
+These switches cover current native paths. Avatar exclusions/anonymization,
+missing original multi-format import/export and attachment-export HTTP routes,
+streaming, security eventlog/Problems reporting, non-SQLite concurrency and full
+original UI/API/DDP/security suites remain pending. No controls for unsupported
+formats or privacy transformations are shown.

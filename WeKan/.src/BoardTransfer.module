@@ -12,6 +12,37 @@ Private Function Row(r As Result, fields As String[]) As Collection
 End
 
 Public Function ExportData(boardId As Integer, kind As String, itemId As Integer) As String
+  Dim actor As String = WebIdentity.Username
+  Dim generation As Long
+  Dim text As String
+  Dim transaction As Boolean
+  Dim failure As String
+  ImportExportPolicy.RequireExport()
+  BoardAccess.RequireContainer(boardId, kind, itemId)
+  generation = WebDatabase.SessionGeneration(actor)
+  CardContent.OpenStore()
+  $db = WebDatabase.OpenConnection()
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  ImportExportPolicy.Lock()
+  ImportExportPolicy.RequireExport()
+  $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+  BoardAccess.RequireContainer(boardId, kind, itemId)
+  text = BuildExport(boardId, kind, itemId)
+  If WebIdentity.Username <> actor Or WebDatabase.SessionGeneration(actor) <> generation Then Error.Raise("Sign in required")
+  BoardAccess.RequireContainer(boardId, kind, itemId)
+  ImportExportPolicy.RequireExport()
+  DatabaseTransactions.Commit($db)
+  transaction = False
+  Return text
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+Private Function BuildExport(boardId As Integer, kind As String, itemId As Integer) As String
   Dim data As New Collection
   Dim lanes As New Variant[]
   Dim lists As New Variant[]
@@ -150,6 +181,7 @@ Public Function ImportData(text As String, title As String) As Integer
   Dim maxFileBytes As Long
   Dim transaction As Boolean
   BoardCreation.Require()
+  ImportExportPolicy.RequireImport()
   data = ReadData(text)
   If Not Trim(title) Or String.Len(title) > 255 Then Error.Raise("Enter a valid board title")
   CardContent.OpenStore()
@@ -159,6 +191,8 @@ Public Function ImportData(text As String, title As String) As Integer
   $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
   BoardCreation.Lock()
   BoardCreation.Require()
+  ImportExportPolicy.Lock()
+  ImportExportPolicy.RequireImport()
   TransferPolicy.Lock()
   boardId = KanbanStore.AddBoard(title)
   For Each item In data["lanes"]
@@ -291,6 +325,7 @@ Public Function ImportData(text As String, title As String) As Integer
   If WebIdentity.Username <> actor Then Error.Raise("Sign in required")
   BoardAccess.Require(boardId, "write")
   BoardCreation.Require()
+  ImportExportPolicy.RequireImport()
   DatabaseTransactions.Commit($db)
   transaction = False
   Return boardId

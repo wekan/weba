@@ -1,0 +1,101 @@
+' Global source disableAllImport/disableAllExport switches for native paths.
+Export
+Private $db As Connection
+
+Public Sub OpenStore()
+  Dim t As Table
+  If $db Then Return
+  $db = WebDatabase.OpenConnection()
+  If Not $db.Tables.Exist("import_export_settings") Then
+    t = $db.Tables.Add("import_export_settings")
+    t.Fields.Add("id", db.Integer)
+    t.Fields.Add("disable_import", db.Boolean)
+    t.Fields.Add("disable_export", db.Boolean)
+    t.Fields.Add("actor", db.String, 255)
+    t.Fields.Add("changed_ms", db.Long)
+    t.PrimaryKey = ["id"]
+    t.Update()
+  Endif
+  If Not $db.Find("import_export_settings", "id=1").Available Then
+    Try $db.Exec("INSERT INTO import_export_settings (id) SELECT 1 WHERE NOT EXISTS (SELECT 1 FROM import_export_settings WHERE id=1)")
+    If Error Then
+      If Not $db.Find("import_export_settings", "id=1").Available Then Error.Propagate()
+    Endif
+  Endif
+Catch
+  $db = Null
+  Error.Propagate()
+End
+
+Public Function ImportAllowed() As Boolean
+  Dim r As Result
+  OpenStore()
+  r = $db.Find("import_export_settings", "id=1")
+  If IsNull(r!disable_import) Then Return True
+  Return Not r!disable_import
+End
+
+Public Function ExportAllowed() As Boolean
+  Dim r As Result
+  OpenStore()
+  r = $db.Find("import_export_settings", "id=1")
+  If IsNull(r!disable_export) Then Return True
+  Return Not r!disable_export
+End
+
+Public Sub RequireImport()
+  If Not ImportAllowed() Then Error.Raise("Import is disabled by the administrator.")
+End
+
+Public Sub RequireExport()
+  If Not ExportAllowed() Then Error.Raise("Export is disabled by the administrator.")
+End
+
+Public Sub Lock()
+  OpenStore()
+  $db.Exec("UPDATE import_export_settings SET id=id WHERE id=1")
+End
+
+Public Function Settings() As Collection
+  Dim data As New Collection
+  Dim r As Result
+  RecoveryStore.RequireAdmin()
+  OpenStore()
+  r = $db.Find("import_export_settings", "id=1")
+  data["disableAllImport"] = Not ImportAllowed()
+  data["disableAllExport"] = Not ExportAllowed()
+  data.Add(r!actor, "actor")
+  data.Add(r!changed_ms, "changedMs")
+  Return data
+End
+
+Public Sub Save(disableImport As Variant, disableExport As Variant)
+  Dim actor As String = WebIdentity.Username
+  Dim r As Result
+  Dim transaction As Boolean
+  Dim failure As String
+  RecoveryStore.RequireAdmin()
+  If TypeOf(disableImport) <> gb.Boolean Or TypeOf(disableExport) <> gb.Boolean Then Error.Raise("Expected boolean settings")
+  OpenStore()
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  Lock()
+  If WebIdentity.Username <> actor Then Error.Raise("Administrator required")
+  RecoveryStore.RequireAdmin()
+  r = $db.Edit("import_export_settings", "id=1")
+  r["disable_import"] = disableImport
+  r["disable_export"] = disableExport
+  r["actor"] = actor
+  r["changed_ms"] = ItemChanges.UtcNow()
+  r.Update()
+  If WebIdentity.Username <> actor Then Error.Raise("Administrator required")
+  RecoveryStore.RequireAdmin()
+  If ImportAllowed() = disableImport Or ExportAllowed() = disableExport Then Error.Raise("Import/export settings changed")
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End

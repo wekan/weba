@@ -696,6 +696,9 @@
           Text = ("Visibility")
           Tooltip = ("Only admins can create boards")
         }
+        { ImportExportSettings WebButton
+          Text = ("Import / Export")
+        }
         { AttachmentTransferSettings WebButton
           Text = ("Attachments")
           Tooltip = ("Attachment And API File Size Limits")
@@ -1010,6 +1013,23 @@
         }
         { RecoveryTree WebTree
           Class = "weba-user-text"
+        }
+      }
+      { ImportExportPanel WebContainer
+        Arrangement = Arrange.Vertical
+        Visible = False
+        Class = "weba-settings-panel"
+        { ImportExportHeading WebLabel
+          Text = ("Import / Export")
+        }
+        { DisableAllImport WebCheckBox
+          Text = ("Disable all import")
+        }
+        { DisableAllExport WebCheckBox
+          Text = ("Disable all export")
+        }
+        { SaveImportExport WebButton
+          Text = ("Save")
         }
       }
       { BoardCreationPanel WebContainer

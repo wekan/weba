@@ -1,4 +1,10 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Import/export switches: Add persisted admin-only independent disable flags and
+  native JSON/board-copy gates with locked final checks. Clear revoked forms,
+  preserve pending copies and dirty setting changes. Verify native rollback,
+  nine source helper outcomes and real download/upload/forgery/retry/mobile/
+  translated/admin-loss controls; keep format/API/privacy/eventlog gaps open.
+
 - Single clone destination: Generate numbered titles under copy locks/transaction;
   navigate only after commit and retain failed-save source/forms. Verify numbered
   retry, late session rollback and repeated with/without-card browser copies with

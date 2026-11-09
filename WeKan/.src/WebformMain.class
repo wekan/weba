@@ -10,6 +10,8 @@ Private $peopleAssignees As Boolean
 Private $board As Integer
 Private $loadingDetails As Boolean
 Private $creationBase As Boolean
+Private $exchangeImportBase As Boolean
+Private $exchangeExportBase As Boolean
 Private $loadingTransfer As Boolean
 Private $loadingDestinations As Boolean
 Private $detailsBoard As Integer
@@ -160,6 +162,7 @@ Public Sub BoardPoll_Timer()
   ValidateRecoveryPanels()
   ValidateTransferPanel()
   ValidateBoardCreation()
+  ValidateImportExportPolicy()
   ValidateAttachmentAllowance()
   ValidateBoardCopy()
   ValidateDeleteListPanel()
@@ -265,6 +268,7 @@ Public Sub Boards_Select()
   AccountPanel.Hide()
   PasswordPolicyPanel.Hide()
   BoardCreationPanel.Hide()
+  ImportExportPanel.Hide()
   TransferLimitsPanel.Hide()
   PermanentDeletePanel.Hide()
   RecoveryPanel.Hide()
@@ -488,6 +492,7 @@ Private Sub ShowView(view As String)
   AdminPanel.Visible = False
   PasswordPolicyPanel.Hide()
   BoardCreationPanel.Hide()
+  ImportExportPanel.Hide()
   TransferLimitsPanel.Hide()
   PermanentDeletePanel.Hide()
   RecoveryPanel.Hide()
@@ -513,6 +518,7 @@ Public Sub Home_Click()
   AdminPanel.Hide()
   PasswordPolicyPanel.Hide()
   BoardCreationPanel.Hide()
+  ImportExportPanel.Hide()
   TransferLimitsPanel.Hide()
   PermanentDeletePanel.Hide()
   RecoveryPanel.Hide()
@@ -535,6 +541,7 @@ Public Sub Archive_Click()
   AdminPanel.Hide()
   PasswordPolicyPanel.Hide()
   BoardCreationPanel.Hide()
+  ImportExportPanel.Hide()
   TransferLimitsPanel.Hide()
   PermanentDeletePanel.Hide()
   RecoveryPanel.Hide()
@@ -752,6 +759,7 @@ End
 
 Public Sub PasswordLength_Click()
   BoardCreationPanel.Hide()
+  ImportExportPanel.Hide()
   If Not WebDatabase.GetIsAdmin(WebIdentity.Username) Then Error.Raise("Administrator required")
   PolicyEnforce.Value = WebDatabase.PasswordLengthEnforced()
   PolicyMinimum.Text = Str(WebDatabase.PasswordMinLength())
@@ -812,6 +820,7 @@ Private Sub UpdateHeader()
   PageTitle.Tooltip = PageTitle.Text
   ViewMenu.Text = If($view = "Boards", "View", $view)
   ValidateBoardCreation()
+  ValidateImportExportPolicy()
 End
 
 Public Sub Remaining_Click()
@@ -1066,13 +1075,13 @@ Private Sub OpenContext(kind As String, itemId As Integer, boardId As Integer)
   ContextRestore.Visible = archived And change
   ContextDelete.Visible = If(kind = "list", writable, archived And change And kind <> "board" And RecoveryStore.CanPurge())
   ContextRename.Visible = Not archived And change
-  ContextCopy.Visible = (kind = "board" And manager And BoardCreation.Allowed() And BoardAccess.Can(boardId, "seesAllCards")) Or (kind <> "board" And writable)
+  ContextCopy.Visible = (kind = "board" And manager And BoardCreation.Allowed() And ImportExportPolicy.ImportAllowed() And BoardAccess.Can(boardId, "seesAllCards")) Or (kind <> "board" And writable)
   ContextAddCard.Visible = writable And Not archived And kind <> "card"
   ContextAddList.Visible = writable And Not archived And kind <> "card"
   ContextAddLane.Visible = writable And Not archived And (kind = "lane" Or kind = "board")
   ContextMove.Visible = Not archived And kind <> "board" And (writable Or (kind = "card" And BoardAccess.Can(boardId, "moveCard")))
   ContextColor.Visible = change
-  ContextExport.Visible = kind = "card" Or BoardAccess.Can(boardId, "seesAllCards")
+  ContextExport.Visible = ImportExportPolicy.ExportAllowed() And (kind = "card" Or BoardAccess.Can(boardId, "seesAllCards"))
   ContextComments.Visible = kind = "card"
   ContextChecklists.Visible = kind = "card"
   ContextChecklistItems.Visible = kind = "card"
@@ -1109,6 +1118,7 @@ End
 
 Public Sub ImportBoard_Click()
   BoardCreation.Require()
+  ImportExportPolicy.RequireImport()
   ImportBoard.Upload()
 Catch
   Notice.Text = Error.Text
@@ -1117,6 +1127,7 @@ End
 Public Sub ImportBoard_Finish()
   Dim data As Collection
   BoardCreation.Require()
+  ImportExportPolicy.RequireImport()
   If Not ImportBoard.Path Then Return
   If Stat(ImportBoard.Path).Size > 20 * 1024 * 1024 Then Error.Raise("Import JSON exceeds 20 MiB")
   ClearSingleCopy()
@@ -1412,6 +1423,7 @@ Public Sub ActionConfirm_Click()
       If $contextKind = "board" Then
         BoardAccess.Require($contextBoard, "manageBoard")
         BoardCreation.Require()
+        ImportExportPolicy.RequireImport()
         If Not ActionPanel.Visible Then Error.Raise("Copy form changed")
         destination = SingleBoardCopy.Copy($singleCopy, $contextBoard, ActionText.Text)
         $board = destination
@@ -2714,7 +2726,7 @@ Private Sub UpdateSelectionControls()
   If Not IsOverview() Or Not $archive Or Not active Or Not $purgeAllowed Or $selectedPurgeRevision <> BoardSelection.Revision(SelectionState()) Then CancelSelectedPurge_Click()
   ArchiveSelectedBoards.Visible = IsOverview() And Not $archive And active
   If Not IsOverview() Or $archive Or Not active Or $selectedArchiveRevision <> BoardSelection.Revision(SelectionState()) Then CancelSelectedArchive_Click()
-  DuplicateSelectedBoards.Visible = IsOverview() And Not $archive And active And BoardCreation.Allowed()
+  DuplicateSelectedBoards.Visible = IsOverview() And Not $archive And active And BoardCreation.Allowed() And ImportExportPolicy.ImportAllowed()
   If $selectedCopy Then
     If Not IsOverview() Or $archive Or Not active Or $selectedCopy["revision"] <> BoardSelection.Revision(SelectionState()) Then CancelSelectedCopy_Click()
   Endif
@@ -2839,6 +2851,7 @@ Public Sub PermanentDeleteSettings_Click()
   ContentRow.Hide()
   PasswordPolicyPanel.Hide()
   BoardCreationPanel.Hide()
+  ImportExportPanel.Hide()
   TransferLimitsPanel.Hide()
   RecoveryPanel.Hide()
   PermanentDeletePanel.Show()
@@ -2859,6 +2872,7 @@ Public Sub RecoveryEvents_Click()
   ContentRow.Hide()
   PasswordPolicyPanel.Hide()
   BoardCreationPanel.Hide()
+  ImportExportPanel.Hide()
   TransferLimitsPanel.Hide()
   PermanentDeletePanel.Hide()
   RecoveryTree.Clear()
@@ -3133,6 +3147,7 @@ Public Sub AttachmentTransferSettings_Click()
   ContentRow.Hide()
   PasswordPolicyPanel.Hide()
   BoardCreationPanel.Hide()
+  ImportExportPanel.Hide()
   PermanentDeletePanel.Hide()
   RecoveryPanel.Hide()
   TransferLimitsPanel.Show()
@@ -3240,7 +3255,7 @@ End
 
 Private Sub ValidateBoardCopy()
   If $contextKind <> "board" Then Return
-  If BoardAccess.Can($contextBoard, "manageBoard") And BoardAccess.Can($contextBoard, "seesAllCards") And BoardCreation.Allowed() Then Return
+  If BoardAccess.Can($contextBoard, "manageBoard") And BoardAccess.Can($contextBoard, "seesAllCards") And BoardCreation.Allowed() And ImportExportPolicy.ImportAllowed() Then Return
   ContextCopy.Hide()
   ClearSingleCopy()
   If $action = "Copy" And ActionPanel.Visible Then
@@ -3252,6 +3267,7 @@ End
 Public Sub DuplicateSelectedBoards_Click()
   If Not IsOverview() Or $archive Then Error.Raise("Select active boards first")
   BoardCreation.Require()
+  ImportExportPolicy.RequireImport()
   BoardSelection.ActionIds(SelectionState())
   If Not $selectedCopy Then $selectedCopy = BoardCopies.NewBatch(SelectionState())
   UpdateSelectedCopyProgress()
@@ -3275,6 +3291,7 @@ End
 Public Sub ConfirmSelectedCopy_Click()
   If Not IsOverview() Or $archive Then Error.Raise("Select active boards first")
   BoardCreation.Require()
+  ImportExportPolicy.RequireImport()
   BoardCopies.Run($selectedCopy, SelectionState())
   BoardSelection.Clear(SelectionState())
   CancelSelectedCopy_Click()
@@ -3364,6 +3381,7 @@ Public Sub BoardCreationSettings_Click()
   TransferLimitsPanel.Hide()
   PermanentDeletePanel.Hide()
   RecoveryPanel.Hide()
+  ImportExportPanel.Hide()
   BoardCreationPanel.Show()
   PaneTitle.Text = "Visibility"
 Catch
@@ -3375,16 +3393,19 @@ Public Sub SaveBoardCreation_Click()
   $creationBase = CreationAdminOnly.Value
   Notice.Text = "Saved"
   ValidateBoardCreation()
+  ValidateImportExportPolicy()
 Catch
   Notice.Text = Error.Text
 End
 
 Private Sub ValidateBoardCreation()
   Dim allowed As Boolean = BoardCreation.Allowed()
+  Dim canImport As Boolean = ImportExportPolicy.ImportAllowed()
   Dim admin As Boolean = WebDatabase.GetIsAdmin(WebIdentity.Username)
   BoardCreationSettings.Visible = admin
   If Not admin And BoardCreationPanel.Visible Then
     BoardCreationPanel.Hide()
+    ImportExportPanel.Hide()
     CreationAdminOnly.Value = False
     $creationBase = False
   Endif
@@ -3396,11 +3417,11 @@ Private Sub ValidateBoardCreation()
   AddBoardTile.Visible = allowed
   NewBoard.Visible = allowed
   BoardTitle.Visible = allowed
-  ImportBoard.Visible = allowed
-  DuplicateSelectedBoards.Visible = IsOverview() And Not $archive And BoardSelection.Active(SelectionState()) And allowed
-  If ContextMenu.Visible And $contextKind = "board" Then ContextCopy.Visible = allowed And BoardAccess.Can($contextBoard, "manageBoard") And BoardAccess.Can($contextBoard, "seesAllCards")
-  If allowed Then Return
-  BoardTitle.Text = ""
+  ImportBoard.Visible = allowed And canImport
+  DuplicateSelectedBoards.Visible = IsOverview() And Not $archive And BoardSelection.Active(SelectionState()) And allowed And canImport
+  If ContextMenu.Visible And $contextKind = "board" Then ContextCopy.Visible = allowed And canImport And BoardAccess.Can($contextBoard, "manageBoard") And BoardAccess.Can($contextBoard, "seesAllCards")
+  If Not allowed Then BoardTitle.Text = ""
+  If allowed And canImport Then Return
   SelectedCopyPanel.Hide()
   If ActionPanel.Visible And ($action = "Import" Or ($action = "Copy" And $contextKind = "board")) Then
     ActionPanel.Hide()
@@ -3474,4 +3495,57 @@ End
 
 Public Sub SingleCopyAttachments_Click()
   ToggleSingleCopyOption("attachments")
+End
+
+Public Sub ImportExportSettings_Click()
+  Dim data As Collection = ImportExportPolicy.Settings()
+  DisableAllImport.Value = data["disableAllImport"]
+  DisableAllExport.Value = data["disableAllExport"]
+  $exchangeImportBase = DisableAllImport.Value
+  $exchangeExportBase = DisableAllExport.Value
+  ContentRow.Hide()
+  BoardCreationPanel.Hide()
+  PasswordPolicyPanel.Hide()
+  TransferLimitsPanel.Hide()
+  PermanentDeletePanel.Hide()
+  RecoveryPanel.Hide()
+  ImportExportPanel.Show()
+  PaneTitle.Text = "Import / Export"
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub SaveImportExport_Click()
+  ImportExportPolicy.Save(DisableAllImport.Value, DisableAllExport.Value)
+  $exchangeImportBase = DisableAllImport.Value
+  $exchangeExportBase = DisableAllExport.Value
+  Notice.Text = "Saved"
+  ValidateBoardCreation()
+  ValidateImportExportPolicy()
+  ValidateBoardCopy()
+Catch
+  Notice.Text = Error.Text
+End
+
+Private Sub ValidateImportExportPolicy()
+  Dim admin As Boolean = WebDatabase.GetIsAdmin(WebIdentity.Username)
+  ImportExportSettings.Visible = admin
+  If Not admin Then
+    ImportExportPanel.Hide()
+    DisableAllImport.Value = False
+    DisableAllExport.Value = False
+    $exchangeImportBase = False
+    $exchangeExportBase = False
+  Endif
+  If admin And ImportExportPanel.Visible Then
+    If DisableAllImport.Value = $exchangeImportBase Then
+      DisableAllImport.Value = Not ImportExportPolicy.ImportAllowed()
+      $exchangeImportBase = DisableAllImport.Value
+    Endif
+    If DisableAllExport.Value = $exchangeExportBase Then
+      DisableAllExport.Value = Not ImportExportPolicy.ExportAllowed()
+      $exchangeExportBase = DisableAllExport.Value
+    Endif
+  Endif
+  If ContextMenu.Visible Then ContextExport.Visible = ImportExportPolicy.ExportAllowed() And ($contextKind = "card" Or BoardAccess.Can($contextBoard, "seesAllCards"))
 End
