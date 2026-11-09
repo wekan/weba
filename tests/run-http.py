@@ -7,7 +7,7 @@ root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(root / 'runtime'))
 from server import handler
 
-if any(mode in sys.argv for mode in ('--live', '--overview-live', '--catalog', '--board-order', '--workspaces', '--workspace-order', '--board-drops', '--board-selection', '--selection-archive', '--board-purge', '--list-delete-api', '--list-deletion', '--attachment-lifecycle', '--attachment-delete-api', '--attachment-upload-api', '--attachment-upload', '--attachment-reads-api', '--attachment-reads', '--transfer-policy-api', '--transfer-policy', '--board-allowance', '--board-copy', '--selected-copy')) and '--members' not in sys.argv:
+if any(mode in sys.argv for mode in ('--live', '--overview-live', '--catalog', '--board-order', '--workspaces', '--workspace-order', '--board-drops', '--board-selection', '--selection-archive', '--board-purge', '--list-delete-api', '--list-deletion', '--attachment-lifecycle', '--attachment-delete-api', '--attachment-upload-api', '--attachment-upload', '--attachment-reads-api', '--attachment-reads', '--transfer-policy-api', '--transfer-policy', '--board-allowance', '--board-copy', '--selected-copy', '--copy-options')) and '--members' not in sys.argv:
     sys.argv.append('--members')
 
 base_env = os.environ.copy()
@@ -73,7 +73,9 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
         env['WEBA_TEST_URL'] = 'http://127.0.0.1:' + str(server.server_port)
         env['WEBA_TEST_RUNNER'] = runner
         env['WEBA_TEST_APPLICATION'] = str(application)
-        if '--selected-copy' in sys.argv:
+        if '--copy-options' in sys.argv:
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/copy-options.browser.cjs')], check=True, env=env)
+        elif '--selected-copy' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/selected-copy.browser.cjs')], check=True, env=env)
         elif '--board-copy' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-copy-authorization.browser.cjs')], check=True, env=env)
@@ -130,6 +132,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-allowance.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-copy-authorization.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/selected-copy.browser.cjs')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/copy-options.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/people-live.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/overview-live.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/catalog.browser.cjs')], check=True, env=env)

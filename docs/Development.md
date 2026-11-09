@@ -762,8 +762,8 @@ covers readonly forgery, successful manager copying and stale-save denial after
 live demotion. Focused mode: tests/run-http.py --board-copy, plus --archive for
 the packaged application.
 
-Per-field copy options, board-creation policy, unimplemented board content and
-full original UI/API/security suites remain open. Existing single native copy
+Remaining per-field models/controls, board-creation policy, unimplemented board
+content and full original UI/API/security suites remain open. Existing single native copy
 titles are supplied by the user; selected-copy queue and title behavior follow below.
 
 ### Selected-board duplication
@@ -805,8 +805,53 @@ Finnish captions and Archive rejection. Focused mode: tests/run-http.py
 imported verbatim for all 237 catalogs (155 imported keys).
 
 This flow duplicates the content supported by the existing native copy service.
-Source per-field copy options, board creation policy, destination placement/order,
+Remaining source copy-option models, board creation policy, destination placement/order,
 unsupported rules/integrations/
 scrum and other missing board data, complete original UI/DDP/API/security suites
 and durable request-level batch recovery remain open. The queue comparison does
 not claim those behaviors or replace the unchanged backend copy method.
+
+### Selected-copy content options
+
+The selected-duplication panel offers Select all/none and eight functional checkbox
+buttons: Swimlanes, Lists, Cards, Labels, Custom fields, Checklists, Comments and
+Attachments. Labels and custom fields currently mean native card label text and
+typed card-field values; source board-defined label/field models remain pending.
+Buttons expose checkbox roles/checked state, work with the keyboard and use
+existing source translations. The two-column layout fits the mobile sidebar.
+
+Disabling a parent clears its children: swimlanes → lists → cards → checklists,
+comments and attachments. Enabling a child enables every required parent.
+Independent labels/custom-field choices remain independent, matching the source.
+The internal eleven-key schema also validates rules/integrations/scrum and the
+customFields → scrum dependency; those three models/controls are not implemented.
+
+Options are copied/normalized on read and write, reject unknown or nonboolean
+values and cannot change a busy or stale batch. Choices can change after a handled
+partial failure: retry uses them only for unfinished boards; completed copies are
+preserved. The guarded copy service applies filters before cloning each category,
+skips source card-link preparation when cards are omitted, clears omitted labels,
+remaps retained checklist parents/relationships and carries exact retained bytes,
+MIME and cover references only when attachments are selected. Existing copy callers
+retain their defaults; stopped time, dates, assignees and other supported card data
+remain independent of these content choices. A new empty board can still create
+its own native default layout when opened; omitted source layout is not cloned.
+
+CopyOptionsTest checks 256 actual native content selections and source-content
+preservation. BoardCopiesTest verifies changing attachment options before retry
+without recopying/deleting completed bytes. The conformance test compares 2,104
+native outcomes with unchanged source option helpers, including every one of 2,048
+boolean combinations, parent-chain toggles and malformed values. Typed JSON,
+explicit null-member retention (Gambas JSON decode drops null members), and default
+argument adapters are documented in the test. This is helper/schema evidence,
+not an assertion that a raw copy-options API endpoint exists.
+
+The real mobile browser checks checkbox/keyboard semantics, all/none, translated
+captions, dependent toggles, partial failure with changed-options retry, omitted
+remaining details/labels/files/cover and preserved completed bytes. Focused mode:
+tests/run-http.py --copy-options, adding --archive for the packaged application.
+
+Rules, integrations, scrum, source board-defined labels/custom-field definitions,
+source creation policy, destination placement/order, single-copy option controls,
+complete original backend/UI/API/DDP/security callbacks and durable request-level
+batch recovery remain open.

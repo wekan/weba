@@ -3,6 +3,11 @@ Public Sub Main()
   Dim ids As Integer[]
   Dim id As Integer
   Dim cardId As Integer
+  Dim checklist As Integer
+  Dim fileId As Integer
+  Dim field As ResultField
+  Dim tableName As String
+  Dim prefix As String = Env["WEBA_COPIES_PREFIX"]
   Dim r As Result
   Dim data As New Collection
   Dim rows As New Variant[]
@@ -11,12 +16,18 @@ Public Sub Main()
   If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
   Session["username"] = "rest-other"
   Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+  If Not prefix Then prefix = "Batch copy"
   If mode = "seed" Then
     ids = New Integer[]
     For Each mode In ["Alpha", "Bravo"]
-      id = KanbanStore.AddBoard("Batch copy " & mode)
-      cardId = KanbanStore.SaveCard(id, 0, mode & " card", "Body", "Default", "Todo", "", "", "")
-      CardContent.AddFile(id, cardId, "batch-" & mode & ".bin", mode & Chr(0))
+      id = KanbanStore.AddBoard(prefix & " " & mode)
+      cardId = KanbanStore.SaveCard(id, 0, mode & " card", "Body", "Default", "Todo", "", "SourceLabel", "")
+      fileId = CardContent.AddFile(id, cardId, "batch-" & mode & ".bin", mode & Chr(0))
+      AttachmentLifecycle.SetCover(id, cardId, fileId)
+      CardContent.Save(id, cardId, 0, "comment", "", "Comment " & mode, 0, False, 0)
+      checklist = CardContent.Save(id, cardId, 0, "checklist", "Checklist", "", 0, False, 0)
+      CardContent.Save(id, cardId, 0, "checkitem", "Task", "", checklist, True, 0)
+      CardContent.Save(id, cardId, 0, "custom", "Estimate", "3", 0, False, 0, "number")
       BoardAccess.SetMember(id, "rest-member", "read-only")
       ids.Add(id)
     Next
@@ -55,5 +66,19 @@ Public Sub Main()
     rows.Add(item)
   Next
   data["files"] = rows
+  If mode = "inspect" Then
+    For Each tableName In ["kb_cards", "kb_entries", "kb_meta", "kb_lanes", "kb_lists"]
+      rows = New Variant[]
+      r = db.Find(tableName, "TRUE ORDER BY board_id")
+      For Each r
+        item = New Collection
+        For Each field In r.Fields
+          item.Add(r[field.Name], field.Name)
+        Next
+        rows.Add(item)
+      Next
+      data[tableName] = rows
+    Next
+  Endif
   Print JSON.Encode(data)
 End

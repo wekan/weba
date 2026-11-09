@@ -80,13 +80,14 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   Original callback outcome comparisons expand from 52 to 156 single/multi/mixed
   cases. Native selection and confirmed sidebar actions now use this service;
   no new public HTTP route is exposed. Original full callbacks remain open.
-- Next: per-field duplication options and remaining batch multi-format export,
+- Next: remaining copy-option models/controls and batch multi-format export,
   Home/group targets, Markdown icons and original
   UI callbacks. Whole-board copy authorization and late actor/source/destination
   guards, selected native duplication with pending-only retry and source-style
-  title numbering are recorded in CHANGELOG.md. Per-field options, creation
-  policy, destination placement/order, missing board content and full original
-  callbacks remain open.
+  title numbering and eight native content-option controls are recorded in
+  CHANGELOG.md. Rules/integrations/scrum, board-defined labels/custom fields,
+  single-copy option controls, creation policy, destination placement/order,
+  missing board content and full original callbacks remain open.
   Native multi-selection controls, retained visible-page selection
   and revisioned authoritative multi-drop transport are recorded in CHANGELOG.md.
   Native form tests do not execute the original Latin callback unchanged.

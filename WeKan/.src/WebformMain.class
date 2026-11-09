@@ -3202,6 +3202,7 @@ Public Sub DuplicateSelectedBoards_Click()
   If Not $selectedCopy Then $selectedCopy = BoardCopies.NewBatch(SelectionState())
   UpdateSelectedCopyProgress()
   SelectedCopyPanel.Show()
+  LoadCopyOptions()
 Catch
   Notice.Text = Error.Text
 End
@@ -3236,4 +3237,63 @@ Public Sub SelectedBoardsCaption_Click()
   PageSidebar.Show()
 Catch
   Notice.Text = Error.Text
+End
+
+Private Sub LoadCopyOptions()
+  Dim options As Collection = BoardCopies.Options($selectedCopy)
+  Dim fields As String[] = ["swimlanes", "lists", "cards", "labels", "customFields", "checklists", "comments", "attachments"]
+  Dim buttons As WebButton[] = [CopySwimlanes, CopyLists, CopyCards, CopyLabels, CopyFields, CopyChecklists, CopyComments, CopyAttachments]
+  Dim i As Integer
+  Dim button As WebButton
+  For i = 0 To fields.Max
+    button = buttons[i]
+    button.Class = "weba-copy-option fa " & If(options[fields[i]], "fa-check-square-o weba-active", "fa-square-o")
+    WebForm.Exec("(function(){const el=document.getElementById(" & JS(button.Name) & ");if(el){el.setAttribute('role','checkbox');el.setAttribute('aria-checked'," & JS(If(options[fields[i]], "true", "false")) & ");}})();")
+  Next
+End
+
+Private Sub ToggleCopyOption(field As String)
+  BoardCopies.SetOptions($selectedCopy, SelectionState(), CopyOptions.Toggle(BoardCopies.Options($selectedCopy), field))
+  LoadCopyOptions()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub CopySelectAll_Click()
+  BoardCopies.SetOptions($selectedCopy, SelectionState(), CopyOptions.Defaults())
+  LoadCopyOptions()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub CopySelectNone_Click()
+  BoardCopies.SetOptions($selectedCopy, SelectionState(), CopyOptions.Defaults(False))
+  LoadCopyOptions()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub CopySwimlanes_Click()
+  ToggleCopyOption("swimlanes")
+End
+Public Sub CopyLists_Click()
+  ToggleCopyOption("lists")
+End
+Public Sub CopyCards_Click()
+  ToggleCopyOption("cards")
+End
+Public Sub CopyLabels_Click()
+  ToggleCopyOption("labels")
+End
+Public Sub CopyFields_Click()
+  ToggleCopyOption("customFields")
+End
+Public Sub CopyChecklists_Click()
+  ToggleCopyOption("checklists")
+End
+Public Sub CopyComments_Click()
+  ToggleCopyOption("comments")
+End
+Public Sub CopyAttachments_Click()
+  ToggleCopyOption("attachments")
 End

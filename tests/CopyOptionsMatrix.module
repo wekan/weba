@@ -1,0 +1,39 @@
+Public Sub Main()
+  Dim test As Collection
+  Dim row As Collection
+  Dim incoming As Collection
+  Dim data As Collection
+  Dim rows As New Variant[]
+  Dim field As String
+  Dim denied As Boolean
+  For Each test In JSON.Decode(File.Load(".public/copy-option-cases.json"))
+    row = New Collection
+    data = Null
+    incoming = Null
+    If test["op"] = "defaults" Then
+      data = CopyOptions.Defaults(test["value"])
+      denied = False
+    Else
+      Try incoming = test["input"]
+      denied = Error
+      If Not denied Then
+        If incoming Then
+          For Each field In test["nullFields"]
+            incoming.Add(Null, field)
+          Next
+        Endif
+        If test["op"] = "toggle" Then
+          Try data = CopyOptions.Toggle(incoming, test["key"])
+          denied = Error
+        Else
+          Try data = CopyOptions.Normalize(incoming)
+          denied = Error
+        Endif
+      Endif
+    Endif
+    row["ok"] = Not denied
+    If Not denied Then row["data"] = data
+    rows.Add(row)
+  Next
+  Print JSON.Encode(rows)
+End

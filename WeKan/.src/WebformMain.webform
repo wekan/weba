@@ -1077,6 +1077,40 @@
             Visible = False
             { SelectedCopyProgress WebLabel
             }
+            { CopySelectAll WebButton
+              Text = ("Select all")
+            }
+            { CopySelectNone WebButton
+              Text = ("Select none")
+            }
+            { CopyOptionFields WebContainer
+              Class = "weba-copy-options"
+              Arrangement = Arrange.Vertical
+              { CopySwimlanes WebButton
+                Text = ("Swimlanes")
+              }
+              { CopyLists WebButton
+                Text = ("Lists")
+              }
+              { CopyCards WebButton
+                Text = ("Cards")
+              }
+              { CopyLabels WebButton
+                Text = ("Labels")
+              }
+              { CopyFields WebButton
+                Text = ("Custom fields")
+              }
+              { CopyChecklists WebButton
+                Text = ("Checklists")
+              }
+              { CopyComments WebButton
+                Text = ("Comments")
+              }
+              { CopyAttachments WebButton
+                Text = ("Attachments")
+              }
+            }
             { ConfirmSelectedCopy WebButton
               Text = ("Duplicate Board")
             }

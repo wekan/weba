@@ -11,6 +11,7 @@ Public Function NewBatch(selection As Collection) As Collection
   data["remaining"] = ids.Copy()
   data["copies"] = New Integer[]
   data["busy"] = False
+  data["options"] = CopyOptions.Defaults()
   Return data
 End
 
@@ -51,7 +52,7 @@ Public Sub Run(batch As Collection, selection As Collection)
   done = batch["copies"]
   While pending.Count
     Check(batch, selection)
-    copied = CopyOne(pending[0])
+    copied = CopyOne(pending[0], Options(batch))
     done.Add(copied)
     pending.Remove(0)
   Wend
@@ -63,7 +64,7 @@ Catch
   Error.Raise(failure)
 End
 
-Private Function CopyOne(boardId As Integer) As Integer
+Private Function CopyOne(boardId As Integer, options As Collection) As Integer
   Dim actor As String = WebIdentity.Username
   Dim db As Connection = WebDatabase.OpenConnection()
   Dim source As Result
@@ -81,7 +82,7 @@ Private Function CopyOne(boardId As Integer) As Integer
   source = WorkspaceStore.Record(boardId, "board", boardId)
   If source!archived Then Error.Raise("Select active boards first")
   title = UniqueTitle(source!title)
-  id = WorkspaceStore.Copy(boardId, "board", boardId, title)
+  id = WorkspaceStore.Copy(boardId, "board", boardId, title, "", options)
   If WebIdentity.Username <> actor Then Error.Raise("Copy identity changed")
   BoardAccess.Require(boardId, "manageBoard")
   If WorkspaceStore.Archived(boardId, "board", boardId) Then Error.Raise("Select active boards first")
@@ -157,4 +158,15 @@ Public Function UniqueTitle(title As String) As String
   title = source["base"] & " [" & CStr(CLong(number) + CLong(1)) & "]"
   If String.Len(title) > 255 Then Error.Raise("Enter a valid copy title")
   Return title
+End
+
+Public Function Options(batch As Collection) As Collection
+  If Not batch Then Error.Raise("Board selection changed")
+  Return CopyOptions.Normalize(batch["options"])
+End
+
+Public Sub SetOptions(batch As Collection, selection As Collection, options As Collection)
+  Check(batch, selection)
+  If batch["busy"] Then Error.Raise("Board copy is already running")
+  batch["options"] = CopyOptions.Normalize(options)
 End

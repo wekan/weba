@@ -279,22 +279,28 @@ Catch
   Error.Raise(failure)
 End
 
-Private Function CloneCard(sourceBoard As Integer, cardId As Integer, targetBoard As Integer, listId As Integer, lane As String, listTitle As String, title As String) As Integer
+Private Function CloneCard(sourceBoard As Integer, cardId As Integer, targetBoard As Integer, listId As Integer, lane As String, listTitle As String, title As String, Optional options As Collection) As Integer
+  Dim fields As Collection
+  Dim labels As String
   Dim r As Result = Record(sourceBoard, "card", cardId)
   Dim id As Integer
   Dim assignee As String
+  If Not options Then options = CopyOptions.Defaults()
+  fields = CopyOptions.Normalize(options)
+  If fields["labels"] Then labels = r!labels
   If Not BoardAccess.Can(targetBoard, "seesAllCards") Then assignee = WebIdentity.Username
-  id = KanbanStore.SaveCard(targetBoard, 0, title, r!description, lane, listTitle, assignee, r!labels, r!due_day, listId)
+  id = KanbanStore.SaveCard(targetBoard, 0, title, r!description, lane, listTitle, assignee, labels, r!due_day, listId)
   BoardAccess.CopyAssignees(sourceBoard, cardId, targetBoard, id)
   BoardAccess.CopyCardMembers(sourceBoard, cardId, targetBoard, id)
   CardDates.CopyDates(sourceBoard, cardId, targetBoard, id)
   $copyMap[CStr(cardId)] = id
-  CardContent.CopyRecords(sourceBoard, cardId, targetBoard, id)
+  CardContent.CopyRecords(sourceBoard, cardId, targetBoard, id, fields)
   CopySettings(sourceBoard, "card", cardId, targetBoard, id)
   Return id
 End
 
-Public Function Copy(boardId As Integer, kind As String, itemId As Integer, title As String, Optional targetLane As String) As Integer
+Public Function Copy(boardId As Integer, kind As String, itemId As Integer, title As String, Optional targetLane As String, Optional options As Collection) As Integer
+  Dim fields As Collection
   Dim actor As String = WebIdentity.Username
   Dim transaction As Boolean
   Dim sourceArchived As Boolean
@@ -312,6 +318,9 @@ Public Function Copy(boardId As Integer, kind As String, itemId As Integer, titl
   Dim relations As Result
   Dim targetId As Integer
   Dim targetBoard As Integer
+  If options And kind <> "board" Then Error.Raise("Board copy options required")
+  If Not options Then options = CopyOptions.Defaults()
+  fields = CopyOptions.Normalize(options)
   source = Record(boardId, kind, itemId)
   BoardAccess.RequireContainer(boardId, kind, itemId)
   BoardAccess.Require(boardId, If(kind = "board", "manageBoard", "write"))
@@ -336,18 +345,20 @@ Public Function Copy(boardId As Integer, kind As String, itemId As Integer, titl
     sourceTitle = source!title
     sourceOwner = source!owner
   Endif
-  KanbanStore.PrimeCardLinks(boardId)
+  If kind <> "board" Or fields["cards"] Then KanbanStore.PrimeCardLinks(boardId)
   Select kind
     Case "card"
       listId = KanbanStore.CardListId(boardId, itemId)
       newId = CloneCard(boardId, itemId, boardId, listId, source!lane, source!status, title)
     Case "board"
       newId = KanbanStore.AddBoard(title)
-      laneRows = KanbanStore.Lanes(boardId)
-      For Each laneRows
-        If Archived(boardId, "lane", laneRows!id) Then Continue
-        CloneLane(boardId, laneRows!id, newId, laneRows!title)
-      Next
+      If fields["swimlanes"] Then
+        laneRows = KanbanStore.Lanes(boardId)
+        For Each laneRows
+          If Archived(boardId, "lane", laneRows!id) Then Continue
+          CloneLane(boardId, laneRows!id, newId, laneRows!title, fields)
+        Next
+      Endif
     Case "lane"
       newId = CloneLane(boardId, itemId, boardId, title)
     Case "list"
@@ -399,7 +410,7 @@ Private Sub CopySettings(sourceBoard As Integer, kind As String, sourceId As Int
   Next
 End
 
-Private Function CloneLane(sourceBoard As Integer, laneId As Integer, targetBoard As Integer, title As String) As Integer
+Private Function CloneLane(sourceBoard As Integer, laneId As Integer, targetBoard As Integer, title As String, Optional options As Collection) As Integer
   Dim source As Result = Record(sourceBoard, "lane", laneId)
   Dim r As Result
   Dim lists As Result
@@ -411,16 +422,19 @@ Private Function CloneLane(sourceBoard As Integer, laneId As Integer, targetBoar
   r["title"] = title
   r.Update()
   id = $db.LastInsertId
-  lists = KanbanStore.Lists(sourceBoard, source!title)
-  For Each lists
-    If Archived(sourceBoard, "list", lists!id) Then Continue
-    CloneList(sourceBoard, lists!id, targetBoard, title, lists!title)
-  Next
+  If Not options Then options = CopyOptions.Defaults()
+  If options["lists"] Then
+    lists = KanbanStore.Lists(sourceBoard, source!title)
+    For Each lists
+      If Archived(sourceBoard, "list", lists!id) Then Continue
+      CloneList(sourceBoard, lists!id, targetBoard, title, lists!title, options)
+    Next
+  Endif
   CopySettings(sourceBoard, "lane", laneId, targetBoard, id)
   Return id
 End
 
-Private Function CloneList(sourceBoard As Integer, listId As Integer, targetBoard As Integer, lane As String, title As String) As Integer
+Private Function CloneList(sourceBoard As Integer, listId As Integer, targetBoard As Integer, lane As String, title As String, Optional options As Collection) As Integer
   Dim r As Result
   Dim source As Result = Record(sourceBoard, "list", listId)
   Dim cards As Result
@@ -437,11 +451,14 @@ Private Function CloneList(sourceBoard As Integer, listId As Integer, targetBoar
   r.Update()
   id = $db.LastInsertId
   ItemChanges.Mark(targetBoard, "list", id)
-  cards = $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND archived = &2", sourceBoard, False)
-  For Each cards
-    If KanbanStore.CardListId(sourceBoard, cards!id) <> listId Then Continue
-    CloneCard(sourceBoard, cards!id, targetBoard, id, lane, title, cards!title)
-  Next
+  If Not options Then options = CopyOptions.Defaults()
+  If options["cards"] Then
+    cards = $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND archived = &2", sourceBoard, False)
+    For Each cards
+      If KanbanStore.CardListId(sourceBoard, cards!id) <> listId Then Continue
+      CloneCard(sourceBoard, cards!id, targetBoard, id, lane, title, cards!title, options)
+    Next
+  Endif
   CopySettings(sourceBoard, "list", listId, targetBoard, id)
   Return id
 End

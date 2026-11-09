@@ -2,6 +2,17 @@
 
 This work adds the following features and fixes:
 
+- Add eight selected-copy content controls with Select all/none, source parent
+  dependencies, checkbox/keyboard semantics, mobile layout and source captions.
+  Filter native layout/cards/labels/custom fields/checklists/comments/attachments
+  before cloning; preserve independent card data, mapped parents/MIME/covers and
+  completed copies when changing choices for pending-only retry. Validate/copy
+  option objects and guard busy/stale changes. Verify 256 native content cases,
+  2,104 unchanged source helper outcomes and mobile partial-retry browser behavior.
+  Keep rules/integrations/scrum, board-defined label/field models, single-copy
+  controls, creation/placement policy and full original suites open.
+  Thanks to xet7.
+
 - Add selected native board duplication with a private revision/account-bound
   per-form queue. Commit each board independently; retain successes and retry only
   unfinished boards after failure. Show progress, cancel and clear on completion;

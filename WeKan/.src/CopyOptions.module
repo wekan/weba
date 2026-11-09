@@ -1,0 +1,47 @@
+' Source board-copy schema and ordered parent dependencies.
+Export
+Private $fields As String[] = ["swimlanes", "lists", "labels", "customFields", "rules", "integrations", "cards", "checklists", "comments", "attachments", "scrum"]
+Private $parents As String[] = ["", "swimlanes", "", "", "", "", "lists", "cards", "cards", "cards", "customFields"]
+
+Public Function Defaults(Optional value As Boolean = True) As Collection
+  Dim data As New Collection
+  Dim field As String
+  For Each field In $fields
+    data[field] = value
+  Next
+  Return data
+End
+
+Public Function Normalize(incoming As Collection) As Collection
+  Dim data As Collection = Defaults()
+  Dim field As String
+  Dim index As Integer
+  If Not incoming Then Error.Raise("Invalid copy options")
+  For Each field In incoming.Keys
+    If $fields.Find(field) < 0 Then Error.Raise("Invalid copy option")
+    If TypeOf(incoming[field]) <> gb.Boolean Then Error.Raise("Invalid copy option")
+    data[field] = incoming[field]
+  Next
+  For index = 0 To $fields.Max
+    If $parents[index] Then
+      If Not data[$parents[index]] Then data[$fields[index]] = False
+    Endif
+  Next
+  Return data
+End
+
+Public Function Toggle(incoming As Collection, field As String) As Collection
+  Dim data As Collection = Normalize(incoming)
+  Dim at As Integer = $fields.Find(field)
+  Dim parent As String
+  If at < 0 Then Error.Raise("Invalid copy option")
+  data[field] = Not CBool(data[field])
+  If data[field] Then
+    parent = $parents[at]
+    While parent
+      data[parent] = True
+      parent = $parents[$fields.Find(parent)]
+    Wend
+  Endif
+  Return Normalize(data)
+End

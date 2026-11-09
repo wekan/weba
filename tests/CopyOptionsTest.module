@@ -1,0 +1,100 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim one As Integer
+  Dim two As Integer
+  Dim checklist As Integer
+  Dim fileId As Integer
+  Dim copied As Integer
+  Dim targetOne As Integer
+  Dim targetTwo As Integer
+  Dim mask As Integer
+  Dim i As Integer
+  Dim sourceLists As Integer
+  Dim options As Collection
+  Dim denied As Boolean
+  Dim r As Result
+  Dim db As Connection
+  Dim snapshot As String
+  Dim fields As String[] = ["swimlanes", "lists", "cards", "labels", "customFields", "checklists", "comments", "attachments"]
+  WebDatabase.Register("options-owner", "x")
+  Session["username"] = "options-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("options-owner")
+  boardId = KanbanStore.AddBoard("Option source")
+  one = KanbanStore.SaveCard(boardId, 0, "One", "Body", "Default", "Todo", "", "Tag", "")
+  two = KanbanStore.SaveCard(boardId, 0, "Two", "", "Default", "Todo", "", "Tag", "")
+  checklist = CardContent.Save(boardId, one, 0, "checklist", "Checklist", "", 0, False, 0)
+  CardContent.Save(boardId, one, 0, "checkitem", "Task", "", checklist, True, 0)
+  CardContent.Save(boardId, one, 0, "comment", "", "<literal>", 0, False, 0)
+  CardContent.Save(boardId, one, 0, "custom", "Estimate", "12.5", 0, False, 0, "number")
+  CardContent.Save(boardId, one, 0, "time", "Stopped", "", 0, True, 10)
+  CardContent.Save(boardId, one, 0, "dependency", "", "", 0, False, two)
+  fileId = CardContent.AddFile(boardId, one, "options.bin", "exact" & Chr(0), "text/plain")
+  AttachmentLifecycle.SetCover(boardId, one, fileId)
+  db = WebDatabase.OpenConnection()
+  sourceLists = CountRows("kb_lists", boardId)
+  snapshot = BoardTransfer.ExportData(boardId, "board", boardId)
+  For mask = 0 To 255
+    options = CopyOptions.Defaults(False)
+    For i = 0 To fields.Max
+      options[fields[i]] = (mask And Shl(1, i)) <> 0
+    Next
+    options = CopyOptions.Normalize(options)
+    copied = WorkspaceStore.Copy(boardId, "board", boardId, "Options " & Str(mask), "", options)
+    If CountRows("kb_lanes", copied) <> If(options["swimlanes"], 1, 0) Then Error.Raise("Lane option mismatch")
+    If CountRows("kb_lists", copied) <> If(options["lists"], sourceLists, 0) Then Error.Raise("List option mismatch")
+    If CountRows("kb_cards", copied) <> If(options["cards"], 2, 0) Then Error.Raise("Card option mismatch")
+    If Not options["cards"] Then
+      If CountRows("kb_entries", copied) Or CountRows("kb_files", copied) Then Error.Raise("Omitted cards left content")
+      Continue
+    Endif
+    r = db.Find("kb_cards", "board_id=&1 AND title='One'", copied)
+    targetOne = r!id
+    If r!labels <> If(options["labels"], "Tag", "") Then Error.Raise("Label option mismatch")
+    r = db.Find("kb_cards", "board_id=&1 AND title='Two'", copied)
+    targetTwo = r!id
+    r = db.Find("kb_entries", "board_id=&1 AND kind='dependency'", copied)
+    For Each r
+      If r!amount <> targetTwo Then Error.Raise("Dependency not remapped")
+    Next
+    If CountEntries(copied, "checklist") <> If(options["checklists"], 1, 0) Or CountEntries(copied, "checkitem") <> If(options["checklists"], 1, 0) Then Error.Raise("Checklist option mismatch")
+    If options["checklists"] Then
+      r = db.Find("kb_entries", "board_id=&1 AND kind='checkitem'", copied)
+      If r!parent_id = checklist Or Not db.Find("kb_entries", "board_id=&1 AND kind='checklist' AND id=&2", copied, r!parent_id).Available Then Error.Raise("Checklist parent not remapped")
+    Endif
+    If CountEntries(copied, "comment") <> If(options["comments"], 1, 0) Then Error.Raise("Comment option mismatch")
+    If CountEntries(copied, "custom") <> If(options["customFields"], 1, 0) Then Error.Raise("Custom option mismatch")
+    If CountEntries(copied, "time") <> 1 Or CountEntries(copied, "dependency") <> 1 Then Error.Raise("Independent card data lost")
+    If CountRows("kb_files", copied) <> If(options["attachments"], 1, 0) Then Error.Raise("Attachment option mismatch")
+    If options["attachments"] Then
+      r = db.Find("kb_files", "board_id=&1", copied)
+      If r!content.Data <> "exact" & Chr(0) Or AttachmentData.Mime(copied, targetOne, r!id) <> "text/plain" Or AttachmentLifecycle.CoverId(copied, targetOne) <> r!id Then Error.Raise("Bytes/MIME/cover not copied")
+    Else If AttachmentLifecycle.CoverId(copied, targetOne) Then
+      Error.Raise("Omitted attachment retained cover")
+    Endif
+  Next
+  If BoardTransfer.ExportData(boardId, "board", boardId) <> snapshot Then Error.Raise("Options mutated source content")
+  options = New Collection
+  options["unknown"] = True
+  Try copied = WorkspaceStore.Copy(boardId, "board", boardId, "Bad", "", options)
+  denied = Error
+  If Not denied Then Error.Raise("Unknown option accepted")
+  options = New Collection
+  options["cards"] = "false"
+  Try copied = WorkspaceStore.Copy(boardId, "board", boardId, "Bad type", "", options)
+  denied = Error
+  If Not denied Then Error.Raise("String option accepted")
+  Try options = CopyOptions.Normalize(Null)
+  denied = Error
+  If Not denied Then Error.Raise("Null option object accepted")
+  Print "Copy options: 256 actual content selections preserve dependencies/bytes/MIME/cover and unrelated time data, omit selected categories, keep source content and reject unknown/string/null options passed"
+End
+
+Private Function CountRows(tableName As String, boardId As Integer) As Integer
+  Dim r As Result = WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS n FROM " & tableName & " WHERE board_id=&1", boardId)
+  Return r!n
+End
+
+Private Function CountEntries(boardId As Integer, kind As String) As Integer
+  Dim r As Result = WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS n FROM kb_entries WHERE board_id=&1 AND kind=&2", boardId, kind)
+  Return r!n
+End

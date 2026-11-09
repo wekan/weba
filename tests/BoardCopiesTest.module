@@ -4,6 +4,7 @@ Public Sub Main()
   Dim cardId As Integer
   Dim selection As Collection
   Dim batch As Collection
+  Dim choices As Collection
   Dim fresh As Collection
   Dim copies As Integer[]
   Dim db As Connection
@@ -41,12 +42,19 @@ Public Sub Main()
   If r.Count <> 1 Or r!content.Data <> "A" & Chr(0) Then Error.Raise("Completed copy lost exact bytes")
   copies.Clear()
   If BoardCopies.Completed(batch) <> 1 Then Error.Raise("Getter exposed queue state")
-  db.Exec("DROP TRIGGER copy_batch_fail")
+  choices = BoardCopies.Options(batch)
+  choices["attachments"] = False
+  BoardCopies.SetOptions(batch, selection, choices)
+  choices["attachments"] = True
+  If BoardCopies.Options(batch)["attachments"] Then Error.Raise("Option setter exposed mutable state")
   BoardCopies.Run(batch, selection)
+  db.Exec("DROP TRIGGER copy_batch_fail")
   If BoardCopies.Completed(batch) <> 2 Or BoardCopies.Remaining(batch) Then Error.Raise("Retry did not finish only pending board")
   copies = BoardCopies.Copies(batch)
   r = WorkspaceStore.Record(copies[1], "board", copies[1])
   If r!title <> "Batch B [1]" Then Error.Raise("Failed title was consumed")
+  If db.Find("kb_files", "board_id=&1", copies[1]).Count Then Error.Raise("Pending retry ignored changed attachment option")
+  If db.Find("kb_files", "board_id=&1", copies[0]).Count <> 1 Then Error.Raise("Changed option altered completed copy")
   before = Frame()
   BoardCopies.Run(batch, selection)
   If Frame() <> before Then Error.Raise("Completed batch duplicated work on repeat")
@@ -55,12 +63,20 @@ Public Sub Main()
   Try BoardCopies.Run(fresh, selection)
   denied = Error
   If Not denied Or Not fresh["busy"] Or Frame() <> before Then Error.Raise("Reentrant call unlocked running batch")
+  choices = BoardCopies.Options(fresh)
+  choices["comments"] = False
+  Try BoardCopies.SetOptions(fresh, selection, choices)
+  denied = Error
+  If Not denied Or Not fresh["busy"] Or Not BoardCopies.Options(fresh)["comments"] Then Error.Raise("Busy option mutation accepted")
   fresh["busy"] = False
   BoardSelection.Toggle(selection, b, [a, b])
   BoardSelection.Toggle(selection, b, [a, b])
   Try BoardCopies.Run(fresh, selection)
   denied = Error
   If Not denied Or Frame() <> before Then Error.Raise("Stale revision copied boards")
+  Try BoardCopies.SetOptions(fresh, selection, CopyOptions.Defaults(False))
+  denied = Error
+  If Not denied Or Not BoardCopies.Options(fresh)["comments"] Then Error.Raise("Stale option mutation accepted")
   fresh = BoardCopies.NewBatch(selection)
   SignIn("batch-other")
   Try BoardCopies.Run(fresh, selection)

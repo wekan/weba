@@ -1,4 +1,8 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Copy options: Add eight real content controls, all/none, dependent keyboard
+  toggles and mobile layout. Filter cloned content and apply changed choices only
+  to unfinished copies. Verify 256 SQL content cases, 2,104 source helper outcomes
+  and mobile retry/bytes/omission/translation checks; retain unsupported models.
 - Selected board copies: Add per-form revision-bound duplication/progress and
   pending-only retry after per-board commits. Retain off-page selection and reopen
   actions after search. Enforce fresh admin/scope and source-style bounded titles.

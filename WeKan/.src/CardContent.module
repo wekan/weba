@@ -382,7 +382,8 @@ Public Sub DeleteFile(boardId As Integer, cardId As Integer, fileId As Integer)
   AttachmentLifecycle.Delete(boardId, cardId, fileId)
 End
 
-Public Sub CopyRecords(sourceBoard As Integer, sourceCard As Integer, targetBoard As Integer, targetCard As Integer)
+Public Sub CopyRecords(sourceBoard As Integer, sourceCard As Integer, targetBoard As Integer, targetCard As Integer, Optional options As Collection)
+  Dim fields As Collection
   Dim r As Result
   Dim kind As String
   Dim parents As New Collection
@@ -392,7 +393,12 @@ Public Sub CopyRecords(sourceBoard As Integer, sourceCard As Integer, targetBoar
   RequireCard(sourceBoard, sourceCard)
   RequireCard(targetBoard, targetCard)
   BoardAccess.Require(targetBoard, "write")
+  If Not options Then options = CopyOptions.Defaults()
+  fields = CopyOptions.Normalize(options)
   For Each kind In ["checklist", "checkitem", "comment", "custom", "time"]
+    If (kind = "checklist" Or kind = "checkitem") And Not fields["checklists"] Then Continue
+    If kind = "comment" And Not fields["comments"] Then Continue
+    If kind = "custom" And Not fields["customFields"] Then Continue
     r = Entries(sourceBoard, sourceCard, kind)
     For Each r
       If kind = "time" And Not r!done Then Continue
@@ -406,6 +412,7 @@ Public Sub CopyRecords(sourceBoard As Integer, sourceCard As Integer, targetBoar
       If kind = "checklist" Then parents[CStr(r!id)] = id
     Next
   Next
+  If Not fields["attachments"] Then Return
   cover = AttachmentLifecycle.CoverId(sourceBoard, sourceCard)
   r = Files(sourceBoard, sourceCard)
   For Each r
