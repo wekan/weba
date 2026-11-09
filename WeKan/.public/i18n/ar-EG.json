@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "تأكيد حذف مساحة العمل",
   "allboards.edit-workspace": "تعديل مساحة العمل",
   "allboards.edit-workspace-icon": "أيقونة مساحة العمل (markdown)",
+  "allboards.edit-workspace-name": "اسم مساحة العمل",
   "allboards.remaining": "المتبقية",
   "allboards.starred": "المميزة بنجمة",
   "allboards.workspace-color": "اللون",

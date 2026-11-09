@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "பணியிட நீக்கத்தை உறுதிப்படுத்து",
   "allboards.edit-workspace": "பணியிடத்தைத் திருத்து",
   "allboards.edit-workspace-icon": "பணியிடச் சின்னம் (markdown)",
+  "allboards.edit-workspace-name": "பணியிடத்தின் பெயர்",
   "allboards.remaining": "மீதமுள்ளவை",
   "allboards.starred": "நட்சத்திரமிட்டவை",
   "allboards.workspace-color": "நிறம்",

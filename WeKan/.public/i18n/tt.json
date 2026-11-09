@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Эш мәйданын бетерүне раслау",
   "allboards.edit-workspace": "Эш мәйданын үзгәртү",
   "allboards.edit-workspace-icon": "Эш мәйданы тамгачыгы (Markdown)",
+  "allboards.edit-workspace-name": "Эш мәйданы исеме",
   "allboards.remaining": "Калганнары",
   "allboards.starred": "Йолдызлы",
   "allboards.workspace-color": "төс",

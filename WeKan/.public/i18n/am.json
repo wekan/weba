@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "የሥራ ቦታ መሰረዝን አረጋግጥ",
   "allboards.edit-workspace": "የሥራ ቦታን አርትዕ",
   "allboards.edit-workspace-icon": "የሥራ ቦታ አዶ (markdown)",
+  "allboards.edit-workspace-name": "የሥራ ቦታ ስም",
   "allboards.remaining": "የቀሩ",
   "allboards.starred": "በኮከብ የተለዩ",
   "allboards.workspace-color": "የሥራ ቦታ ቀለም",

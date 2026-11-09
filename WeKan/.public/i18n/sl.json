@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Potrdi brisanje delovnega prostora",
   "allboards.edit-workspace": "Uredi delovni prostor",
   "allboards.edit-workspace-icon": "Ikona delovnega prostora (Markdown)",
+  "allboards.edit-workspace-name": "Ime delovnega prostora",
   "allboards.remaining": "Preostalo",
   "allboards.starred": "Z zvezdico",
   "allboards.workspace-color": "Barva",

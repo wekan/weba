@@ -100,6 +100,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   missing board content and full original callbacks remain open.
   Native multi-selection controls, retained visible-page selection
   and revisioned authoritative multi-drop transport are recorded in CHANGELOG.md.
+  Workspace edit form semantics, bound name/icon submissions and forged/stale
+  refusal are recorded in CHANGELOG.md; inline subworkspace forms remain open.
   Workspace creation form semantics and the unchanged original Latin callback
   (1/6 spec 39 callbacks, explicit native-session/locale adapters) are recorded
   in CHANGELOG.md. All six original spec 39 callbacks now run unchanged with
@@ -129,7 +131,7 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   drafts and clickable close controls. Delayed-width/async-error tests, full
   local/test-live and existing layout regressions pass. Original suite counts
   remain unchanged.
-- Next workspace parity: complete edit-form semantics, Markdown icons and the
+- Next workspace parity: inline subworkspace form semantics, Markdown icons and the
   actual production transport/routing beyond the six adapter-backed spec 39 callbacks.
 
 - Documented personal rank merging, readonly/sorted/archive boundaries, fresh

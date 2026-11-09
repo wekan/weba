@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "სამუშაო სივრცის წაშლის დადასტურება",
   "allboards.edit-workspace": "სამუშაო სივრცის შესწორება",
   "allboards.edit-workspace-icon": "სამუშაო სივრცის ხატულა (markdown)",
+  "allboards.edit-workspace-name": "სამუშაო სივრცის სახელი",
   "allboards.remaining": "დარჩენილი",
   "allboards.starred": "მონიშნული ვარსკვლავით",
   "allboards.workspace-color": "ფერი",

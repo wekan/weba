@@ -2640,8 +2640,8 @@ Private Sub ShowWorkspaceEditor(editId As Integer, parentId As Integer)
   ConfirmWorkspaceDelete.Visible = editId > 0
   ConfirmWorkspaceDelete.Value = False
   DeleteWorkspace.Visible = editId > 0
-  WorkspacePanel.Class = "weba-action-panel weba-space-panel weba-workspace-revision-" & CStr($workspaceRevision) & If(editId = 0, " weba-workspace-create", "")
-  SaveWorkspace.Visible = editId > 0
+  WorkspacePanel.Class = "weba-action-panel weba-space-panel weba-workspace-revision-" & CStr($workspaceRevision) & If(editId = 0, " weba-workspace-create", " weba-workspace-edit weba-workspace-id-" & CStr(editId))
+  SaveWorkspace.Visible = False
   WorkspacePanel.Show()
   WorkspaceName.SetFocus()
 End
@@ -2666,14 +2666,7 @@ Catch
 End
 
 Public Sub SaveWorkspace_Click()
-  If $workspaceEdit <= 0 Then Error.Raise("Use workspace creation form")
-  If Trim(WorkspaceName.Text) = "" Then
-    WorkspaceName.SetFocus()
-    Return
-  Endif
-  BoardSpaces.Edit($workspaceEdit, WorkspaceName.Text, WorkspaceIcon.Text)
-  WorkspacePanel.Hide()
-  RefreshTree()
+  Error.Raise("Use workspace form")
 Catch
   Notice.Text = Error.Text
 End
@@ -2682,9 +2675,15 @@ Public Sub WorkspaceCreateAction_Change()
   Dim fields As String[] = Split(WorkspaceCreateAction.Text, "|")
   Dim revision As Long
   Dim name As String
-  If fields.Count <> 3 Then Error.Raise("Workspace form changed")
-  If fields[0] <> "create" Then Error.Raise("Workspace form changed")
-  If Not WorkspacePanel.Visible Or $workspaceEdit <> 0 Then Error.Raise("Workspace form changed")
+  If fields.Count < 3 Then Error.Raise("Workspace form changed")
+  If fields[0] = "create" Then
+    If fields.Count <> 3 Or $workspaceEdit <> 0 Then Error.Raise("Workspace form changed")
+  Else If fields[0] = "edit" Then
+    If fields.Count <> 4 Or $workspaceEdit <= 0 Then Error.Raise("Workspace form changed")
+  Else
+    Error.Raise("Workspace form changed")
+  Endif
+  If Not WorkspacePanel.Visible Then Error.Raise("Workspace form changed")
   revision = CLong(fields[1])
   If CStr(revision) <> fields[1] Or revision <> $workspaceRevision Then Error.Raise("Workspace form changed")
   If WebIdentity.Username <> $workspaceActor Or WebDatabase.SessionGeneration($workspaceActor) <> $workspaceGeneration Then Error.Raise("Sign in required")
@@ -2693,7 +2692,11 @@ Public Sub WorkspaceCreateAction_Change()
     WorkspaceName.SetFocus()
     Return
   Endif
-  BoardSpaces.Add(name, $workspaceParent)
+  If fields[0] = "edit" Then
+    BoardSpaces.Edit($workspaceEdit, name, UnBase64(fields[3]))
+  Else
+    BoardSpaces.Add(name, $workspaceParent)
+  Endif
   Inc $workspaceRevision
   WorkspacePanel.Hide()
   RefreshTree()

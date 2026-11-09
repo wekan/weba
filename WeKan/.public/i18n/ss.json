@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Cinisekisa kususwa kwendzawo yekusebenta",
   "allboards.edit-workspace": "Hlela indzawo yekusebenta",
   "allboards.edit-workspace-icon": "Sifanekiso sendzawo yekusebenta (markdown)",
+  "allboards.edit-workspace-name": "Ligama lendzawo yekusebenta",
   "allboards.remaining": "Lokusele",
   "allboards.starred": "Lokunenkhanyeti",
   "allboards.workspace-color": "Umbala",

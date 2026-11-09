@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Confirmar la eliminación d'o espacio de trabajo",
   "allboards.edit-workspace": "Editar o espacio de treballo",
   "allboards.edit-workspace-icon": "Icono d'o espacio de trabajo (markdown)",
+  "allboards.edit-workspace-name": "Nombre d'o espacio de trabajo",
   "allboards.remaining": "Restantes",
   "allboards.starred": "Destacados",
   "allboards.workspace-color": "Color d'o espacio de trabajo",

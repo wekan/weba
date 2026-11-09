@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "လုပ်ငန်းနေရာ ဖျက်ခြင်းကို အတည်ပြုပါ",
   "allboards.edit-workspace": "လုပ်ငန်းနေရာကို ပြင်ရန်",
   "allboards.edit-workspace-icon": "လုပ်ငန်းနေရာသင်္ကေတ (markdown)",
+  "allboards.edit-workspace-name": "လုပ်ငန်းနေရာအမည်",
   "allboards.remaining": "ကျန်ရှိသည်",
   "allboards.starred": "ကြယ်ပွင့်တပ်ထားသည်",
   "allboards.workspace-color": "အရောင်",

@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Varmista työtilan poisto",
   "allboards.edit-workspace": "Muokkaa työtilaa",
   "allboards.edit-workspace-icon": "Työtilan ikoni (markdown)",
+  "allboards.edit-workspace-name": "Työtilan nimi",
   "allboards.remaining": "Jäljellä",
   "allboards.starred": "Suosikki",
   "allboards.workspace-color": "Väri",

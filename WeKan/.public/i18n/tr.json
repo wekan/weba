@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Çalışma alanı silme işlemini onayla",
   "allboards.edit-workspace": "Çalışma alanını düzenle",
   "allboards.edit-workspace-icon": "Çalışma alanı simgesi (markdown)",
+  "allboards.edit-workspace-name": "Çalışma alanı adı",
   "allboards.remaining": "Kalanlar",
   "allboards.starred": "Yıldızlı",
   "allboards.workspace-color": "Renk",

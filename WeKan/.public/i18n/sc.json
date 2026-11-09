@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Cunfirma sa cantzelladura de s'ispàtziu de traballu",
   "allboards.edit-workspace": "Modìfica s'ispàtziu de traballu",
   "allboards.edit-workspace-icon": "Icona de s'ispàtziu de traballu (markdown)",
+  "allboards.edit-workspace-name": "Nùmene de s'ispàtziu de traballu",
   "allboards.remaining": "Àteras",
   "allboards.starred": "Preferidas",
   "allboards.workspace-color": "Colore",

@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Berretsi lan-eremuaren ezabatzea",
   "allboards.edit-workspace": "Editatu laneko area",
   "allboards.edit-workspace-icon": "Laneko arearen ikonoa (markdown)",
+  "allboards.edit-workspace-name": "Laneko arearen izena",
   "allboards.remaining": "Faltan",
   "allboards.starred": "Izarduna",
   "allboards.workspace-color": "Kolorea",

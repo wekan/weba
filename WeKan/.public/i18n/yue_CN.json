@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "確認工作區刪除",
   "allboards.edit-workspace": "編輯工作區",
   "allboards.edit-workspace-icon": "工作區圖示（降價）",
+  "allboards.edit-workspace-name": "工作區名稱",
   "allboards.remaining": "其餘的",
   "allboards.starred": "已加星標",
   "allboards.workspace-color": "顏色",

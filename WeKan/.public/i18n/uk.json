@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Підтвердити видалення робочого простору",
   "allboards.edit-workspace": "Редагувати робочий простір",
   "allboards.edit-workspace-icon": "Іконка робочого простору (markdown)",
+  "allboards.edit-workspace-name": "Назва робочого простору",
   "allboards.remaining": "Решта",
   "allboards.starred": "Обрані",
   "allboards.workspace-color": "Колір",

@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Konfirmasi penghapusan ruang kerja",
   "allboards.edit-workspace": "Ubah ruang kerja",
   "allboards.edit-workspace-icon": "Ikon ruang-kerja (markdown)",
+  "allboards.edit-workspace-name": "Nama ruang kerja",
   "allboards.remaining": "Tersisa",
   "allboards.starred": "Bertanda",
   "allboards.workspace-color": "Warna",

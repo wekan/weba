@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Netefatsa ho hlakolwa ha sebaka sa mosebetsi",
   "allboards.edit-workspace": "Hlophisa sebaka sa mosebetsi",
   "allboards.edit-workspace-icon": "Letshwao la sebaka sa mosebetsi (markdown)",
+  "allboards.edit-workspace-name": "Lebitso la sebaka sa mosebetsi",
   "allboards.remaining": "Tse setseng",
   "allboards.starred": "Tse tshwailweng ka naledi",
   "allboards.workspace-color": "Mmala",

@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "ยืนยันการลบเวิร์กสเปซ",
   "allboards.edit-workspace": "แก้ไขเวิร์กสเปซ",
   "allboards.edit-workspace-icon": "ไอคอนเวิร์กสเปซ (markdown)",
+  "allboards.edit-workspace-name": "ชื่อเวิร์กสเปซ",
   "allboards.remaining": "ที่เหลือ",
   "allboards.starred": "ติดดาว",
   "allboards.workspace-color": "สี",

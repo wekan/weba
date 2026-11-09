@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Potvrdit smazání pracovního prostoru",
   "allboards.edit-workspace": "Upravit pracovní prostor",
   "allboards.edit-workspace-icon": "Ikona pracovního prostoru (markdown)",
+  "allboards.edit-workspace-name": "Název pracovního prostoru",
   "allboards.remaining": "Zbývající",
   "allboards.starred": "Oblíbené",
   "allboards.workspace-color": "Barva",

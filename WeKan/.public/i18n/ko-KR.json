@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "워크스페이스 삭제 확인",
   "allboards.edit-workspace": "작업 공간 편집",
   "allboards.edit-workspace-icon": "작업 공간 아이콘 (마크다운)",
+  "allboards.edit-workspace-name": "작업 공간 이름",
   "allboards.remaining": "나머지",
   "allboards.starred": "즐겨찾기",
   "allboards.workspace-color": "색상",

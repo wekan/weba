@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Potvrdi brisanje radnog prostora",
   "allboards.edit-workspace": "Uredi radni prostor",
   "allboards.edit-workspace-icon": "Ikona radnog prostora (markdown)",
+  "allboards.edit-workspace-name": "Naziv radnog prostora",
   "allboards.remaining": "Neraspoređene",
   "allboards.starred": "Označene zvjezdicom",
   "allboards.workspace-color": "Boja",

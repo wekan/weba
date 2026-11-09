@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "د کاري ځای ړنګول تاييد کړئ",
   "allboards.edit-workspace": "کاري ځای سم کړئ",
   "allboards.edit-workspace-icon": "د کاري ځای نښان (markdown)",
+  "allboards.edit-workspace-name": "د کاري ځای نوم",
   "allboards.remaining": "پاتې",
   "allboards.starred": "ستوري لرونکي",
   "allboards.workspace-color": "رنګ",

@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Иш мейкиндигин өчүрүүнү ырастоо",
   "allboards.edit-workspace": "Иш мейкиндигин өзгөртүү",
   "allboards.edit-workspace-icon": "Иш мейкиндигинин сүрөтчөсү (markdown)",
+  "allboards.edit-workspace-name": "Иш мейкиндигинин аталышы",
   "allboards.remaining": "Калгандары",
   "allboards.starred": "Жылдызчалуу",
   "allboards.workspace-color": "Түс",

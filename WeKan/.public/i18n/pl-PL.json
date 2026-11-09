@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Potwierdź usunięcie przestrzeni roboczej",
   "allboards.edit-workspace": "Edytuj przestrzeń roboczą",
   "allboards.edit-workspace-icon": "Ikona przestrzeni roboczej (markdown)",
+  "allboards.edit-workspace-name": "Nazwa przestrzeni roboczej",
   "allboards.remaining": "Pozostałe",
   "allboards.starred": "Ulubione",
   "allboards.workspace-color": "Kolor",

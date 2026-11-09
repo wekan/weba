@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Konfirmo fshirjen e hapësirës së punës",
   "allboards.edit-workspace": "Redakto hapësirën e punës",
   "allboards.edit-workspace-icon": "Ikona e hapësirës së punës (markdown)",
+  "allboards.edit-workspace-name": "Emri i hapësirës së punës",
   "allboards.remaining": "Të mbetura",
   "allboards.starred": "Me yll",
   "allboards.workspace-color": "Ngjyra",

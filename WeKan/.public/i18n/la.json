@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Confirma deletionem spatii laboris",
   "allboards.edit-workspace": "Muta spatium laboris",
   "allboards.edit-workspace-icon": "Icon spatii laboris (Markdown)",
+  "allboards.edit-workspace-name": "Nomen spatii laboris",
   "allboards.remaining": "Reliquae",
   "allboards.starred": "Stella notatae",
   "allboards.workspace-color": "Color",

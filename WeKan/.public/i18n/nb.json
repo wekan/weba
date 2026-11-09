@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Bekreft sletting av arbeidsområde",
   "allboards.edit-workspace": "Rediger arbeidsområde",
   "allboards.edit-workspace-icon": "Ikon for arbeidsområde (markdown)",
+  "allboards.edit-workspace-name": "Navn på arbeidsområde",
   "allboards.remaining": "Gjenstående",
   "allboards.starred": "Stjernemerket",
   "allboards.workspace-color": "Farge",

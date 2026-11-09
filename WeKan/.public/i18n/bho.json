@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "कार्यस्थान मेटावल पक्का करीं",
   "allboards.edit-workspace": "कार्यस्थान बदलीं",
   "allboards.edit-workspace-icon": "कार्यस्थान चिन्ह (Markdown)",
+  "allboards.edit-workspace-name": "कार्यस्थान के नाम",
   "allboards.remaining": "बाकी",
   "allboards.starred": "तारांकित",
   "allboards.workspace-color": "रंग",

@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Confirmar exclusão da área de trabalho",
   "allboards.edit-workspace": "Editar Área de trabalho",
   "allboards.edit-workspace-icon": "Ícone da Área de trabalho (markdown)",
+  "allboards.edit-workspace-name": "Nome da Área de trabalho",
   "allboards.remaining": "Restante",
   "allboards.starred": "Favoritado",
   "allboards.workspace-color": "Cor",

@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Confirmă ștergerea spațiului de lucru",
   "allboards.edit-workspace": "Editează spațiul de lucru",
   "allboards.edit-workspace-icon": "Pictograma spațiului de lucru (markdown)",
+  "allboards.edit-workspace-name": "Numele spațiului de lucru",
   "allboards.remaining": "Rămase",
   "allboards.starred": "Favorite",
   "allboards.workspace-color": "Culoare",

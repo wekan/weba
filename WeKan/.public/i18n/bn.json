@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "কর্মক্ষেত্র মোছা নিশ্চিত করুন",
   "allboards.edit-workspace": "কর্মক্ষেত্র সম্পাদনা করুন",
   "allboards.edit-workspace-icon": "কর্মক্ষেত্রের আইকন (markdown)",
+  "allboards.edit-workspace-name": "কর্মক্ষেত্রের নাম",
   "allboards.remaining": "অবশিষ্ট",
   "allboards.starred": "তারকাচিহ্নিত",
   "allboards.workspace-color": "রং",

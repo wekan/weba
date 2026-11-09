@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Жұмыс кеңістігін жоюды растау",
   "allboards.edit-workspace": "Жұмыс кеңістігін өзгерту",
   "allboards.edit-workspace-icon": "Жұмыс кеңістігінің белгішесі (markdown)",
+  "allboards.edit-workspace-name": "Жұмыс кеңістігінің атауы",
   "allboards.remaining": "Қалғандары",
   "allboards.starred": "Таңдаулы",
   "allboards.workspace-color": "Түс",

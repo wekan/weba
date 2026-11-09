@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Эш киңлеген юйыуҙы раҫларға",
   "allboards.edit-workspace": "Эш киңлеген үҙгәртергә",
   "allboards.edit-workspace-icon": "Эш киңлеге билдәһе (markdown)",
+  "allboards.edit-workspace-name": "Эш киңлегенең исеме",
   "allboards.remaining": "Ҡалғандары",
   "allboards.starred": "Һайланғандар",
   "allboards.workspace-color": "Төҫ",

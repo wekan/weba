@@ -42,23 +42,36 @@
     const label=document.querySelector('[id$=".WorkspaceNameLabel"]'),control=document.querySelector('[id$=".WorkspaceName"]'),save=document.querySelector('[id$=".SaveWorkspace"]');
     if(!label||!control||!save)return;
     const textarea=control.matches('textarea')?control:control.querySelector('textarea');if(!textarea)return;
-    let form=panel.querySelector('.js-add-workspace-form');
-    if(!panel.classList.contains('weba-workspace-create')){
-      if(form){panel.insertBefore(label,form);panel.insertBefore(control,form);form.remove();}
-      textarea.required=false;return;
+    const editing=panel.classList.contains('weba-workspace-edit');
+    const iconLabel=document.querySelector('[id$=".WorkspaceIconLabel"]'),iconControl=document.querySelector('[id$=".WorkspaceIcon"]');
+    const icon=iconControl?.matches('input')?iconControl:iconControl?.querySelector('input');
+    const mode=editing?'edit':'create',selector=editing?'js-workspace-actions-form':'js-add-workspace-form';
+    let form=panel.querySelector('form.weba-workspace-form');
+    if(form&&form.dataset.mode!==mode){
+      for(const node of [label,control,iconLabel,iconControl])if(node&&form.contains(node))panel.insertBefore(node,form);
+      form.remove();form=null;
     }
+    if(!editing&&!panel.classList.contains('weba-workspace-create'))return;
     if(!form){
-      form=document.createElement('form');form.className='js-add-workspace-form weba-workspace-create-form';
+      form=document.createElement('form');form.className=selector+' weba-workspace-form';form.dataset.mode=mode;
       form.style.cssText='display:flex;flex-direction:column;gap:6px;width:100%';
       panel.insertBefore(form,label);form.append(label,control);
+      if(editing&&iconLabel&&iconControl)form.append(iconLabel,iconControl);
       const submit=document.createElement('input');submit.type='submit';submit.className='gw-button';form.append(submit);
       form.addEventListener('submit',event=>{
         event.preventDefault();if(!form.reportValidity())return;
         const target=document.querySelector('[id$=".WorkspaceCreateAction"]');if(!target)return;
-        const encoded=btoa(String.fromCharCode(...new TextEncoder().encode(textarea.value)));
-        root.gw.update(target.id,'text','create|'+form.dataset.revision+'|'+encoded);
+        const encode=value=>{let binary='';for(const byte of new TextEncoder().encode(value))binary+=String.fromCharCode(byte);return btoa(binary);};
+        const fields=[mode,form.dataset.revision,encode(textarea.value)];if(editing)fields.push(encode(icon?.value||''));
+        root.gw.update(target.id,'text',fields.join('|'));
       });
     }
+    for(const [name,enabled] of [['js-workspace-name',editing],['js-new-workspace-name',!editing]])if(textarea.classList.contains(name)!==enabled)textarea.classList.toggle(name,enabled);
+    if(icon&&!icon.classList.contains('js-workspace-icon'))icon.classList.add('js-workspace-icon');
+    const workspaceId=[...panel.classList].find(value=>value.startsWith('weba-workspace-id-'))?.slice('weba-workspace-id-'.length)||'';
+    if(form.dataset.id!==workspaceId)form.dataset.id=workspaceId;
+    if(textarea.getAttribute('aria-labelledby')!==label.id)textarea.setAttribute('aria-labelledby',label.id);
+    if(icon&&iconLabel&&icon.getAttribute('aria-labelledby')!==iconLabel.id)icon.setAttribute('aria-labelledby',iconLabel.id);
     textarea.required=true;
     const revision=[...panel.classList].find(value=>value.startsWith('weba-workspace-revision-'))?.slice('weba-workspace-revision-'.length)||'';
     const changed=form.dataset.revision!==revision;form.dataset.revision=revision;

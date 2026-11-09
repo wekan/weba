@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Vahvištoita tötilan heittand",
   "allboards.edit-workspace": "Vajehta tötila",
   "allboards.edit-workspace-icon": "Tötilan ikon (markdown)",
+  "allboards.edit-workspace-name": "Tötilan nimi",
   "allboards.remaining": "Jäliž",
   "allboards.starred": "Tähtaižed",
   "allboards.workspace-color": "Muja",

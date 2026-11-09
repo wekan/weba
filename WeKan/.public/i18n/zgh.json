@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "ⵙⵙⵉⴷⴷ ⵜⵓⴽⴽⵙⴰ ⵏ ⵓⵙⴰⵢⵔⴰⵔ",
   "allboards.edit-workspace": "ⵙⵏⴼⵍ ⴰⵙⴰⵢⵔⴰⵔ",
   "allboards.edit-workspace-icon": "ⵜⵉⴳⵏⵉⵜ ⵏ ⵓⵙⴰⵢⵔⴰⵔ (markdown)",
+  "allboards.edit-workspace-name": "ⵉⵙⵎ ⵏ ⵓⵙⴰⵢⵔⴰⵔ",
   "allboards.remaining": "ⴰⴽⵓⴷ ⵉⵇⵇⵉⵎⵏ",
   "allboards.starred": "ⵙ ⵢⵉⵜⵔⵉ",
   "allboards.workspace-color": "ⵉⵏⵉ",

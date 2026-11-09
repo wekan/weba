@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Deimhnigh scriosadh an spáis oibre",
   "allboards.edit-workspace": "Cuir spás oibre in eagar",
   "allboards.edit-workspace-icon": "Deilbhín spáis oibre (markdown)",
+  "allboards.edit-workspace-name": "Ainm an spáis oibre",
   "allboards.remaining": "Fágtha",
   "allboards.starred": "Le réiltín",
   "allboards.workspace-color": "Dath",

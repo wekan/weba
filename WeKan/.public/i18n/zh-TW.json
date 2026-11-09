@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "確認刪除工作空間",
   "allboards.edit-workspace": "編輯工作空間",
   "allboards.edit-workspace-icon": "工作空間圖示 (markdown)",
+  "allboards.edit-workspace-name": "工作空間名稱",
   "allboards.remaining": "剩餘",
   "allboards.starred": "已加星號",
   "allboards.workspace-color": "顏色",

@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Aymar aruna: Confirm workspace deletion",
   "allboards.edit-workspace": "askichaña workspace",
   "allboards.edit-workspace-icon": "Aymar aruna: Workspace icon (markdown)",
+  "allboards.edit-workspace-name": "Workspace suti",
   "allboards.remaining": "Aymar aruna: Remaining",
   "allboards.starred": "Aymar aruna: Starred",
   "allboards.workspace-color": "Sami",

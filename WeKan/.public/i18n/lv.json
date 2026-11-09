@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Apstiprināt darbvietas dzēšanu",
   "allboards.edit-workspace": "Labot darbvietu",
   "allboards.edit-workspace-icon": "Darbvietas ikona (Markdown)",
+  "allboards.edit-workspace-name": "Darbvietas nosaukums",
   "allboards.remaining": "Pārējie",
   "allboards.starred": "Atzīmētie ar zvaigzni",
   "allboards.workspace-color": "Spalva",

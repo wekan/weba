@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "പ്രവർത്തനസ്ഥലം ഇല്ലാതാക്കുന്നത് സ്ഥിരീകരിക്കുക",
   "allboards.edit-workspace": "പ്രവർത്തനസ്ഥലം തിരുത്തുക",
   "allboards.edit-workspace-icon": "പ്രവർത്തനസ്ഥലത്തിന്റെ ഐക്കൺ (markdown)",
+  "allboards.edit-workspace-name": "പ്രവർത്തനസ്ഥലത്തിന്റെ പേര്",
   "allboards.remaining": "ശേഷിക്കുന്നവ",
   "allboards.starred": "നക്ഷത്രമിട്ടവ",
   "allboards.workspace-color": "നിറം",

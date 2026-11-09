@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Potwierdź usunięcie placu roboty",
   "allboards.edit-workspace": "Edytuj przestrzyń roboczŏ",
   "allboards.edit-workspace-icon": "Ikona placu roboty (markdown)",
+  "allboards.edit-workspace-name": "Miano placu roboty",
   "allboards.remaining": "Pozostałe",
   "allboards.starred": "Ulubione",
   "allboards.workspace-color": "Farba",

@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "වැඩබිම මකා දැමීම තහවුරු කරන්න",
   "allboards.edit-workspace": "වැඩබිම සංස්කරණය කරන්න",
   "allboards.edit-workspace-icon": "වැඩබිම් නිරූපකය (markdown)",
+  "allboards.edit-workspace-name": "වැඩබිමේ නම",
   "allboards.remaining": "ඉතිරි",
   "allboards.starred": "තරු යෙදූ",
   "allboards.workspace-color": "වර්ණය",

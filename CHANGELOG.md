@@ -2,6 +2,14 @@
 
 This work adds the following features and fixes:
 
+- Add native workspace edit form/required name/icon/submit semantics with source
+  selectors, translated labels and preserved native drafts. Bind captured values
+  to the open revision, actor/session and private target; refuse forged legacy
+  Save events and stale, closed or completed packets. Preserve separate creation
+  flows. Import the contextual edit-label key across 237 catalogs (162 total).
+  Keep inline subworkspace forms, rendered Markdown icons, actual transport and
+  full original suites pending. Thanks to xet7.
+
 - Align native sort anchors, source data/active selectors and visible-only paging
   selector while preserving native events, text updates and layout. Support
   Enter/Space without fragment navigation. Execute the unchanged original sort

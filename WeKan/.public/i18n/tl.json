@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Kumpirmahin workspace deletion",
   "allboards.edit-workspace": "I-i-edit ang workspace",
   "allboards.edit-workspace-icon": "workspace simbolo (markdown)",
+  "allboards.edit-workspace-name": "workspace pangalan",
   "allboards.remaining": "Natitira",
   "allboards.starred": "May bituin",
   "allboards.workspace-color": "Kulay",

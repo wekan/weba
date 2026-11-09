@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Munkaterület törlésének megerősítése",
   "allboards.edit-workspace": "Munkaterület szerkesztése",
   "allboards.edit-workspace-icon": "Munkaterület ikonja (markdown)",
+  "allboards.edit-workspace-name": "Munkaterület neve",
   "allboards.remaining": "Fennmaradó",
   "allboards.starred": "Csillagozott",
   "allboards.workspace-color": "Szín",

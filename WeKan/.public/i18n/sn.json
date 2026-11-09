@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "simbisa nzvimbo yebasa deletion",
   "allboards.edit-workspace": "gadzirisa nzvimbo yebasa",
   "allboards.edit-workspace-icon": "nzvimbo yebasa icon (markdown)",
+  "allboards.edit-workspace-name": "nzvimbo yebasa zita",
   "allboards.remaining": "zvasara",
   "allboards.starred": "Zvakaiswa nyeredzi",
   "allboards.workspace-color": "ruvara",

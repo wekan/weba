@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "ワークスペースの削除を確認",
   "allboards.edit-workspace": "ワークスペースを編集",
   "allboards.edit-workspace-icon": "ワークスペースアイコン(マークダウン)",
+  "allboards.edit-workspace-name": "ワークスペース名",
   "allboards.remaining": "残り",
   "allboards.starred": "スター",
   "allboards.workspace-color": "色",

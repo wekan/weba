@@ -392,6 +392,18 @@ and child nodes. Class/text updates still target those same IDs. Enter and Space
 activate once without fragment navigation; disabled aria state refuses clicks.
 The source `.boards-pagination` class exists only for visible sorted paging,
 with a separate stable native layout class.
+Workspace edit mode uses `.js-workspace-actions-form[data-id]`, required
+`.js-workspace-name`, `.js-workspace-icon` and a translated submit input. Native
+edit controls live inside that form; switching creation/edit modes unwraps and
+rewraps the same controls, retaining existing native events and draft behavior.
+The shared native form command accepts captured name/icon values only for the
+current open revision, actor and session generation; the server's private ID
+selects the target, never the DOM's `data-id`. The former Save click refuses
+writes. Source/packaged workspace tests exercise blank/whitespace names, stale
+root-to-child packets, completed-form replay, forged old Save, literal Unicode/
+icon values, translated controls and create/edit transitions. The edit label
+uses its own imported source key (162 keys/237 catalogs). Inline subworkspace
+forms and rendered Markdown icons remain pending.
 Markdown icons, multi-board workspace drops and broader original UI/API/security
 suites remain explicit TODO requirements. Folding/counts and native tree
 gestures are described below.
@@ -1110,7 +1122,7 @@ A selected live attachment now has an Export button in the native details pane.
 It downloads wekan-attachment.json with the same five-field source JSON as the
 attachment-export API, preserving exact bytes, empty data and literal Unicode
 metadata. The button uses the existing native icon/keyboard controls and source
-Export caption (161 keys across 237 catalogs). Owner and readonly full-board
+Export caption (now included in 162 keys across 237 catalogs). Owner and readonly full-board
 members can export; assigned-only members cannot, even when raw flags also make
 them board administrators.
 

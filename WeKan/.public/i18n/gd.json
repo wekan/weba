@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Dearbhaich sguabadh às an àite-obrach",
   "allboards.edit-workspace": "Deasaich àite-obrach",
   "allboards.edit-workspace-icon": "Ìomhaigheag àite-obrach (Markdown)",
+  "allboards.edit-workspace-name": "Ainm an àite-obrach",
   "allboards.remaining": "Air fhàgail",
   "allboards.starred": "Le rionnag",
   "allboards.workspace-color": "Dath",

@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Kinnita tööruumi kustutamine",
   "allboards.edit-workspace": "Muuda tööruumi",
   "allboards.edit-workspace-icon": "Tööruumi ikoon (markdown)",
+  "allboards.edit-workspace-name": "Tööruumi nimi",
   "allboards.remaining": "Ülejäänud",
   "allboards.starred": "Tähega",
   "allboards.workspace-color": "Värv",

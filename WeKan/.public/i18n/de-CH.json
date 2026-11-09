@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Löschen des Arbeitsplatzes bestätigen",
   "allboards.edit-workspace": "Arbeitsplatz ändern",
   "allboards.edit-workspace-icon": "Arbeitsplatzsymbol (markdown)",
+  "allboards.edit-workspace-name": "Name des Arbeitsplatzes",
   "allboards.remaining": "Verbleibend",
   "allboards.starred": "Markiert",
   "allboards.workspace-color": "Farbe",

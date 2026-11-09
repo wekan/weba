@@ -39,11 +39,24 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   await page.locator(control('WorkspaceCreateAction')).evaluate((target,packet)=>gw.update(target.id,'text',packet+' '),createPacket);await settle();expect(spaces()).toHaveLength(1);
   let root=spaces().find(row=>row.name==='Members');expect(root.parentId).toBe(0);
   await space('Members').locator('.weba-space-menu').click();await expect(page.locator(entry('WorkspaceName'))).toHaveValue('Members');
-  await fill('WorkspaceName','Root <literal>');await fill('WorkspaceIcon','📁');await click('SaveWorkspace');
+  const editForm=page.locator('form.js-workspace-actions-form');await expect(editForm).toHaveAttribute('data-id',String(root.id));
+  await expect(editForm.locator('textarea.js-workspace-name')).toHaveAttribute('required','');await expect(editForm.locator('input.js-workspace-icon')).toHaveValue('');
+  await expect(editForm.locator('input[type=submit]')).toHaveValue('Save');
+  await expect(editForm.locator('textarea.js-workspace-name')).toHaveAccessibleName('Workspace name');await expect(editForm.locator('input.js-workspace-icon')).toHaveAccessibleName('Workspace icon (markdown)');
+  await page.locator(control('SaveWorkspace')).evaluate(button=>button.click());await settle();await expect(page.locator(control('Notice'))).toHaveText('Use workspace form');expect(spaces().find(row=>row.id===root.id).name).toBe('Members');
+  await fill('WorkspaceName','');await editForm.locator('input[type=submit]').click();await settle();expect(spaces().find(row=>row.id===root.id).name).toBe('Members');
+  await fill('WorkspaceName','   ');await editForm.locator('input[type=submit]').click();await settle();expect(spaces().find(row=>row.id===root.id).name).toBe('Members');
+  const staleEditPacket=await editForm.evaluate(form=>'edit|'+form.dataset.revision+'|'+btoa('Stale overwrite')+'|'+btoa('forged'));
+  await fill('WorkspaceName','Root <literal>');await fill('WorkspaceIcon','📁');await page.locator('form.js-workspace-actions-form input[type=submit]').click();await settle();
   await expect(page.locator('.weba-space-open')).toHaveText(['📁 Root <literal>']);
   expect(spaces().find(row=>row.id===root.id).icon).toBe('📁');
+  const afterEdit=spaces();await page.locator(control('WorkspaceCreateAction')).evaluate((target,packet)=>gw.update(target.id,'text',packet),staleEditPacket);await settle();await expect(page.locator(control('Notice'))).toHaveText('Workspace form changed');expect(spaces()).toEqual(afterEdit);
   await space('Root <literal>').locator('.weba-space-menu').click();await click('AddSubworkspace');await fill('WorkspaceName','Child');await submitWorkspace();
   const child=spaces().find(row=>row.name==='Child');expect(child.parentId).toBe(root.id);
+  await space('Child').locator('.weba-space-menu').click();const beforeStaleEdit=spaces();
+  await page.locator(control('WorkspaceCreateAction')).evaluate((target,packet)=>gw.update(target.id,'text',packet),staleEditPacket);await settle();await expect(page.locator(control('Notice'))).toHaveText('Workspace form changed');expect(spaces()).toEqual(beforeStaleEdit);
+  await click('CloseWorkspace');
+
   await expect(page.locator('.weba-space-open')).toHaveText(['📁 Root <literal>','Child']);
   await expect(space('Root <literal>').locator('.weba-space-count')).toHaveText('0');
   await expect(space('Child').locator('.weba-space-count')).toHaveText('0');
@@ -95,14 +108,14 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   await expect(page.locator('.weba-space-open')).toContainText(['External child']);
   await expect(page.locator(entry('WorkspaceName'))).toHaveValue('Unsaved child draft');await click('CloseWorkspace');
   // A workspace named like an interface caption stays literal in another language.
-  await space('External child').locator('.weba-space-menu').click();await fill('WorkspaceName','Members');await click('SaveWorkspace');
+  await space('External child').locator('.weba-space-menu').click();await fill('WorkspaceName','Members');await page.locator('form.js-workspace-actions-form input[type=submit]').click();await settle();
   await space('Members').locator('.weba-space-open').click();
   await page.evaluate(()=>webaI18n.setLanguage('fi'));await expect(page.locator('.weba-space-open')).toContainText(['Members']);await expect(page.locator(control('PaneTitle'))).toHaveText('Members');
   const fi=JSON.parse(fs.readFileSync(path.join(source,'imports/i18n/data/fi.i18n.json'),'utf8'));
   await expect(page.locator(control('WorkspacesHeading'))).toHaveText(fi['allboards.workspaces']);
   await expect(caret()).toHaveAttribute('aria-label',fi.collapse+': Root <literal>');
   await space('Members').locator('.weba-space-menu').click();
-  await expect(page.locator(control('WorkspaceHeading'))).toHaveText(fi['allboards.edit-workspace']);await click('CloseWorkspace');
+  await expect(page.locator(control('WorkspaceHeading'))).toHaveText(fi['allboards.edit-workspace']);await expect(page.locator(control('WorkspaceNameLabel'))).toHaveText(fi['allboards.edit-workspace-name']);await expect(editForm.locator('input[type=submit]')).toHaveValue(fi.save);await click('CloseWorkspace');
   await page.evaluate(()=>webaI18n.setLanguage('la'));
   const latin=JSON.parse(fs.readFileSync(path.join(source,'imports/i18n/data/la.i18n.json'),'utf8'));
   await expect(page.locator(control('WorkspacesHeading'))).toHaveText(latin['allboards.workspaces']);
@@ -134,7 +147,7 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   await expect(space('Root <literal>').locator('.weba-space-count')).toHaveText('0');
   await click('AddWorkspace');const box=await page.locator(control('WorkspacePanel')).boundingBox();expect(box.x).toBeGreaterThanOrEqual(0);expect(box.x+box.width).toBeLessThanOrEqual(390);expect(box.y+box.height).toBeLessThanOrEqual(844);
   await page.keyboard.press('Escape');await expect(page.locator(control('WorkspacePanel'))).toBeHidden();
-  await space('Root <literal>').locator('.weba-space-menu').click();fixture('delete-space','rest-member',{WEBA_SPACE_ID:String(root.id)});await expect(page.locator(control('WorkspacePanel'))).toBeHidden();await expect(page.locator('.weba-space-open')).toHaveCount(0);
+  await space('Root <literal>').locator('.weba-space-menu').click();await expect(page.locator(control('WorkspacePanel'))).toBeVisible();const editBox=await page.locator(control('WorkspacePanel')).boundingBox();expect(editBox.x).toBeGreaterThanOrEqual(0);expect(editBox.x+editBox.width).toBeLessThanOrEqual(390);expect(editBox.y+editBox.height).toBeLessThanOrEqual(844);fixture('delete-space','rest-member',{WEBA_SPACE_ID:String(root.id)});await expect(page.locator(control('WorkspacePanel'))).toBeHidden();await expect(page.locator('.weba-space-open')).toHaveCount(0);
   expect(errors).toEqual([]);
   console.log('Native workspace browser: nested create/edit/confirmed delete, literal Unicode/icon persistence, readonly personal assignment, category/search, private persisted mouse/keyboard folding, direct active counts, reload/isolation, live placement/draft/deletion and revoked-save guards, translated labels and mobile popup/Escape passed');
  }finally{if(otherContext)await otherContext.close();if(context)await context.close();if(browser)await browser.close();}

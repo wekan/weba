@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Bekräfta borttagning av arbetsyta",
   "allboards.edit-workspace": "Redigera arbetsyta",
   "allboards.edit-workspace-icon": "Arbetsytans ikon (markdown)",
+  "allboards.edit-workspace-name": "Arbetsytans namn",
   "allboards.remaining": "Återstående",
   "allboards.starred": " Stjärnmärkt",
   "allboards.workspace-color": "Färg",

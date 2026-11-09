@@ -89,7 +89,7 @@ for line in (source / 'languages.js').read_text().splitlines():
 metadata = list({m['code']:m for m in metadata}.values())
 output = root / 'WeKan/.public/i18n'
 output.mkdir(exist_ok=True)
-keys = sorted(set(lookup.values()))
+keys = sorted(set(lookup.values()) | {'allboards.edit-workspace-name'})
 for language in metadata:
     data = json.loads((source / 'data' / (language['code'] + '.i18n.json')).read_text())
     subset = {key:data[key] for key in keys if data.get(key)}

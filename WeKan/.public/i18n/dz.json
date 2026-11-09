@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "ལཱ་གི་ས་སྒོ་བཏོན་ནི་ངེས་དཔྱད་འབད།",
   "allboards.edit-workspace": "ལཱ་གི་ས་སྒོ་ཞུན་དག་འབད།",
   "allboards.edit-workspace-icon": "ལཱ་གི་ས་སྒོའི་ངོས་རྟགས་ (markdown)",
+  "allboards.edit-workspace-name": "ལཱ་གི་ས་སྒོའི་མིང་།",
   "allboards.remaining": "ལྷག་ལུས།",
   "allboards.starred": "སྐར་རྟགས་བཀལ་ཡོད།",
   "allboards.workspace-color": "ཚོས་གཞི།",

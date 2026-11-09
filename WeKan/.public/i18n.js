@@ -17,6 +17,13 @@
     document.querySelectorAll('[id]').forEach(control => {
       const name = control.id.split('.').pop();
       if (!controls.has(name) || control.matches(excluded)) return;
+      if(name==='WorkspaceNameLabel'){
+        const editing=control.closest('.weba-workspace-edit');
+        const key=editing?'allboards.edit-workspace-name':'allboards.add-workspace-prompt';
+        const caption=messages[key]||catalog.english[key];
+        if(caption&&control.textContent!==caption)control.textContent=caption;
+        return;
+      }
       const walker = document.createTreeWalker(control, NodeFilter.SHOW_TEXT);
       let node;
       while ((node = walker.nextNode())) {

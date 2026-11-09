@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "Confirm workspace deletion",
   "allboards.edit-workspace": "Edit workspace",
   "allboards.edit-workspace-icon": "Workspace icon (markdown)",
+  "allboards.edit-workspace-name": "Workspace name",
   "allboards.remaining": "Remaining",
   "allboards.starred": "Starred",
   "allboards.workspace-color": "Color",

@@ -14,6 +14,7 @@
   "allboards.delete-workspace-confirm-check": "ምስራዝ ቦታ ስራሕ ኣረጋግጽ",
   "allboards.edit-workspace": "ቦታ ስራሕ ቀይር",
   "allboards.edit-workspace-icon": "ምልክት ቦታ ስራሕ (markdown)",
+  "allboards.edit-workspace-name": "ስም ቦታ ስራሕ",
   "allboards.remaining": "ዝተረፉ",
   "allboards.starred": "ኮኾብ ዝተገብረሎም",
   "allboards.workspace-color": "ሕብሪ",
