@@ -38,7 +38,13 @@ assert.ok(late.getBoundingClientRect().left+lateWidth>390,'fixture reproduces st
 sheet.dispatchEvent(new window.Event('load'));
 await frames();
 assert.ok(late.getBoundingClientRect().left+lateWidth<=382,'loaded stylesheet repositions to actual width');
+// The native reply may reveal a popup by class after the click frame completed.
+const delayed=window.document.createElement('div');delayed.id='fixture.BoardSortMenu';delayed.className='gw-hidden';delayed.style.left='350px';window.document.body.append(delayed);
+delayed.getBoundingClientRect=()=>({left:parseFloat(delayed.style.left)||0,top:parseFloat(delayed.style.top)||0,width:delayed.classList.contains('gw-hidden')?0:210,height:delayed.classList.contains('gw-hidden')?0:180});
+window.webaPopup.near(delayed,trigger);await frames();
+delayed.classList.remove('gw-hidden');await frames();
+assert.ok(delayed.getBoundingClientRect().left+210<=382,'class-only native reveal must position after delayed response');
 window.close();await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(errors,[],'popup teardown must not emit async errors');
-console.log('Popup placement: anchored desktop, viewport edges, mobile/landscape, visual viewport, late stylesheet, async teardown and close actions passed');
+console.log('Popup placement: anchored desktop, viewport edges, mobile/landscape, visual viewport, late stylesheet/class-only native reveal, async teardown and close actions passed');
 
 })().catch(error=>{console.error(error.stack||String(error));process.exitCode=1;});

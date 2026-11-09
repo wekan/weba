@@ -2,6 +2,17 @@
 
 This work adds the following features and fixes:
 
+- Add the board-manager Attachments allowance checkbox with persisted default-on
+  state, live native upload controls and existing bearer enforcement. Retain
+  downloads/metadata/internal copies. Lock actor/board and recheck permission and
+  saved value; roll back late role/value changes and SQL failures. Cover native
+  role/schema negatives and real mobile/reload/API/stale-save browser flows.
+  Anchor its shared popup; reposition class-only delayed native reveals and
+  wait for mobile positioning before geometry assertions. Reproduce the observer
+  defect with a failing-then-passing unit regression. Keep minicard/other board
+  settings and original DDP/full-suite work open.
+  Thanks to xet7.
+
 - Add persisted Global Admin native/API upload/download controls with Unlimited,
   Maximum file size and Blocked modes and source GB/MB/Bytes conversions. Enforce
   fresh limits on native/API bytes and JSON exchange with atomic late-change

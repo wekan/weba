@@ -492,6 +492,9 @@
     { ContextWip WebButton
       Text = ("Work in progress limit")
     }
+    { ContextAllowsAttachments WebButton
+      Text = ("Attachments")
+    }
     { ContextDescription WebButton
       Text = ("Description")
     }

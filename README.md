@@ -1411,7 +1411,7 @@ scope before/after upload under account/board/card locks. Global site-admin writ
 retain active raw assigned-only restrictions. A board's `allowsAttachments=0`
 setting blocks API uploads, including global administrators; native board-setting
 writes require manageBoard and copies/exchange preserve the policy. Its settings
-UI remains pending. Late role, assignment, target or allowance changes roll back
+UI is implemented in Board settings → Attachments. Late role, assignment, target or allowance changes roll back
 the file, attributes, clocks and activity. Unexpected errors return sanitized JSON.
 
 `ATTACHMENT_API_MAX_UPLOAD_BYTES` follows the source positive-byte configuration
@@ -1525,7 +1525,32 @@ labels and admin revocation. Focused modes: --transfer-policy-api and
 --transfer-policy, with --archive for packaged checks.
 
 Avatar upload controls/integration, storage/cloud settings, streaming beyond the
-buffered ceiling, full version/retention behavior, board allowance editing,
+buffered ceiling, full version/retention behavior, remaining board settings,
 DDP, security eventlog/Problems reporting and complete original UI/API/security
 suites remain pending. This implements the four transfer controls, not the full
 source attachment-storage settings schema or its failure fallback behavior.
+
+### Board attachment allowance
+
+Board settings → Attachments opens a persisted checkbox for board managers.
+The default is enabled. Disabling it prevents native and bearer uploads while
+preserving existing file metadata, downloads and internal copies. Global transfer
+blocks and byte limits remain independent and take precedence on their paths.
+
+The server validates the board context, boolean value and current manageBoard
+permission. It locks actor then board, checks permission again after writing and
+checks the committed candidate value. Late role loss, value replacement and SQL
+failure roll back the change. Permission loss hides the open control/form;
+forged stale saves still pass through the server guards. Shared popup anchoring
+observes class-only native reveals; viewport checks wait for scheduled placement
+while retaining strict bounds. A regression reproduces the delayed-reveal defect.
+The native test covers
+normal, readonly, comment, worker and assigned-only denial plus manager retry.
+The browser test covers real manager/owner controls, reader and stale-manager
+forgery, mobile form bounds, reload persistence, live upload changes, bearer
+refusal and exact retained download. Run tests/run-http.py --board-allowance,
+adding --archive for the packaged application.
+
+This control implements allowsAttachments only. Minicard display preferences,
+background/map files, linked-card permissions, full board settings and original
+DDP/UI/security callbacks remain separate TODO work.

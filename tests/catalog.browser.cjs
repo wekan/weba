@@ -67,6 +67,7 @@ const secrets=[process.env.WEBA_TEST_PASSWORD];
   if(await page.locator(control('PageSidebar')).isVisible())await click('CloseSidebar');
   await menuTransitions();
   await click('SortBoards');
+  await expect.poll(async()=>{const r=await page.locator(control('BoardSortMenu')).boundingBox();return !!r&&r.x>=0&&r.x+r.width<=390&&r.y+r.height<=844;}).toBe(true);
   const box=await page.locator(control('BoardSortMenu')).boundingBox();expect(box.x).toBeGreaterThanOrEqual(0);expect(box.x+box.width).toBeLessThanOrEqual(390);expect(box.y+box.height).toBeLessThanOrEqual(844);
   await click('SortTitleAsc');await expect(page.locator(control('BoardPagination'))).toBeVisible();
   for(const name of ['SortBoards','PreviousBoardPage','NextBoardPage']){const rect=await page.locator(control(name)).boundingBox();expect(rect.x,name+' left').toBeGreaterThanOrEqual(0);expect(rect.x+rect.width,name+' right').toBeLessThanOrEqual(390);}

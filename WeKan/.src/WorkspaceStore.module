@@ -97,6 +97,7 @@ Public Function Setting(boardId As Integer, kind As String, itemId As Integer, n
 End
 
 Public Sub SetSetting(boardId As Integer, kind As String, itemId As Integer, name As String, value As String)
+  Dim actor As String = WebIdentity.Username
   Dim r As Result
   Dim index As Integer
   Dim tableName As String = "kb_meta"
@@ -130,6 +131,7 @@ Public Sub SetSetting(boardId As Integer, kind As String, itemId As Integer, nam
   Endif
   DatabaseTransactions.Begin($db)
   transaction = True
+  If name = "allowsAttachments" Then $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
   $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
   If kind = "card" Then $db.Exec("UPDATE kb_cards SET title=title WHERE board_id=&1 AND id=&2", boardId, itemId)
   Record(boardId, kind, itemId)
@@ -153,8 +155,10 @@ Public Sub SetSetting(boardId As Integer, kind As String, itemId As Integer, nam
   r.Update()
   If tableName <> "kb_user_meta" And (kind = "list" Or kind = "card") Then ItemChanges.Mark(boardId, kind, itemId)
   If name = "allowsAttachments" Then
+    If WebIdentity.Username <> actor Then Error.Raise("Board setting identity changed")
     Record(boardId, kind, itemId)
     BoardAccess.Require(boardId, "manageBoard")
+    If Setting(boardId, kind, itemId, name) <> value Then Error.Raise("Board setting changed")
   Endif
   DatabaseTransactions.Commit($db)
   transaction = False

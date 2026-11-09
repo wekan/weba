@@ -87,10 +87,11 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   Native form tests do not execute the original Latin callback unchanged.
   Native retained attachment deletion/restore, bearer raw/JSON uploads with
   MIME/time metadata and source target guards, list/info/base64/raw download APIs,
-  the DELETE API and four persisted Global Admin transfer controls are recorded in
+  the DELETE API, four persisted Global Admin transfer controls and board
+  attachment allowance editing are recorded in
   CHANGELOG.md. Card/swimlane/discussion deletion, full generic history/undo,
   streamed uploads/downloads, avatar upload integration, full storage/cloud
-  settings and board allowance controls, linked-card/background/map
+  settings and remaining board controls, linked-card/background/map
   permissions, storage/retention, security eventlog/Problems reporting and visual
   cover selection,
   deleted-list local caption translations, full Recovery schema/report/filter parity and non-SQLite driver verification

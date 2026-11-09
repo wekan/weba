@@ -1,0 +1,16 @@
+Public Sub Main()
+  Dim boardId As Integer = CInt(Env["WEBA_ALLOWANCE_BOARD"])
+  Dim mode As String = Env["WEBA_ALLOWANCE_MODE"]
+  Dim r As Result
+  Dim data As New Collection
+  If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
+  Session["username"] = "rest-other"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+  If mode = "manager" Then BoardAccess.SetMember(boardId, "rest-member", "board-admin")
+  If mode = "demote" Then BoardAccess.SetMember(boardId, "rest-member", "normal")
+  If mode = "reset" Then WorkspaceStore.SetSetting(boardId, "board", boardId, "allowsAttachments", "1")
+  data["allowsAttachments"] = WorkspaceStore.Setting(boardId, "board", boardId, "allowsAttachments", "1") = "1"
+  r = WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS n FROM kb_files WHERE board_id=&1", boardId)
+  data["files"] = r!n
+  Print JSON.Encode(data)
+End

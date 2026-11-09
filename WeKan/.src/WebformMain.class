@@ -156,6 +156,7 @@ Public Sub BoardPoll_Timer()
   Dim state As String
   ValidateRecoveryPanels()
   ValidateTransferPanel()
+  ValidateAttachmentAllowance()
   ValidateDeleteListPanel()
   RefreshDeletedListPanel()
   If IsOverview() And $archive Then
@@ -1060,6 +1061,7 @@ Private Sub OpenContext(kind As String, itemId As Integer, boardId As Integer)
   ContextTime.Visible = kind = "card"
   ContextAttachments.Visible = kind = "card"
   ContextWip.Visible = kind = "list" And writable
+  ContextAllowsAttachments.Visible = kind = "board" And manager
   ContextDescription.Visible = kind = "board" And manager
   ContextStar.Class = If(WorkspaceStore.Setting(boardId, kind, itemId, "star") = "1", "weba-starred", "")
   ContextWatch.Class = If(WorkspaceStore.Setting(boardId, kind, itemId, "watch") = "1", "weba-watched", "")
@@ -1121,10 +1123,16 @@ Private Sub BeginAction(action As String)
   DestinationBoardLabel.Visible = DestinationBoard.Visible
   ActionTitle.Text = action & ": " & r!title
   ActionText.Text = r!title
-  ActionFlag.Visible = action = "WIP"
+  ActionFlag.Visible = action = "WIP" Or action = "Allow attachments"
+  ActionFlag.Text = If(action = "Allow attachments", "Attachments", "Prevent exceeding limit")
   ActionFlag.Value = False
+  If action = "Allow attachments" Then
+    If $contextKind <> "board" Then Error.Raise("Board setting required")
+    BoardAccess.Require($contextBoard, "manageBoard")
+    ActionFlag.Value = WorkspaceStore.Setting($contextBoard, "board", $contextBoard, "allowsAttachments", "1") = "1"
+  Endif
   If action = "WIP" Then ActionFlag.Value = WorkspaceStore.Setting($contextBoard, $contextKind, $contextId, "wip_strict", "0") = "1"
-  ActionText.Visible = action <> "Move"
+  ActionText.Visible = action <> "Move" And action <> "Allow attachments"
   If action = "Add list" Or action = "Add swimlane" Then ActionText.Text = ""
   DestinationLane.Visible = action = "Move" Or action = "Add list" Or (action = "Copy" And $contextKind = "list")
   DestinationLaneLabel.Visible = DestinationLane.Visible
@@ -1307,6 +1315,14 @@ Public Sub ContextWip_Click()
 Catch
   Notice.Text = Error.Text
 End
+Public Sub ContextAllowsAttachments_Click()
+  If $contextKind <> "board" Then Error.Raise("Board setting required")
+  BoardAccess.Require($contextBoard, "manageBoard")
+  BeginAction("Allow attachments")
+Catch
+  Notice.Text = Error.Text
+End
+
 Public Sub ContextDescription_Click()
   BeginAction("Description")
 Catch
@@ -1362,6 +1378,9 @@ Public Sub ActionConfirm_Click()
     Case "WIP"
       WorkspaceStore.SetSetting($contextBoard, $contextKind, $contextId, "wip", ActionText.Text)
       WorkspaceStore.SetSetting($contextBoard, $contextKind, $contextId, "wip_strict", If(ActionFlag.Value, "1", "0"))
+    Case "Allow attachments"
+      If $contextKind <> "board" Then Error.Raise("Board setting required")
+      WorkspaceStore.SetSetting($contextBoard, "board", $contextBoard, "allowsAttachments", If(ActionFlag.Value, "1", "0"))
     Case "Description"
       WorkspaceStore.SetSetting($contextBoard, $contextKind, $contextId, "description", ActionText.Text)
     Case "Move"
@@ -3147,4 +3166,15 @@ Private Sub ValidateTransferPanel()
   ApiUploadValue.Text = ""
   ApiDownloadValue.Text = ""
   $loadingTransfer = False
+End
+
+Private Sub ValidateAttachmentAllowance()
+  If ContextMenu.Visible And $contextKind = "board" Then ContextAllowsAttachments.Visible = BoardAccess.Can($contextBoard, "manageBoard")
+  If $action <> "Allow attachments" Then Return
+  If BoardAccess.Can($contextBoard, "manageBoard") Then Return
+  ContextAllowsAttachments.Hide()
+  If ActionPanel.Visible Then
+    ActionPanel.Hide()
+    ActionFlag.Value = False
+  Endif
 End

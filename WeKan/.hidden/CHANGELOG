@@ -1,4 +1,9 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Board attachment allowance: Add manager checkbox with fresh locked saves,
+  live upload hiding and preserved downloads. Test role/value/SQL rollback,
+  mobile/reload persistence, bearer refusal and forged stale saves. Anchor the
+  shared popup and observe class-only delayed reveals; retain strict mobile bounds
+  after scheduled placement and cover the observer defect with a regression.
 - Transfer limits: Add four persisted Global Admin native/API controls, source
   units/modes, live revocation and fresh atomic byte/JSON exchange guards.
   Verify 234 source cases, rollback, HTTP and mobile/translated browser flows;

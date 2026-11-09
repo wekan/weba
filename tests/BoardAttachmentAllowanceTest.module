@@ -1,0 +1,100 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim fileId As Integer
+  Dim role As String
+  Dim before As String
+  Dim failure As String
+  Dim denied As Boolean
+  Dim db As Connection
+  Dim result As Result
+  WebDatabase.Register("allow-global", "x")
+  WebDatabase.Register("allow-owner", "x")
+  WebDatabase.Register("allow-member", "x")
+  SignIn("allow-owner")
+  boardId = KanbanStore.AddBoard("Allowance")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Files", "", "Default", "Todo", "", "", "")
+  fileId = CardContent.UploadFile(boardId, cardId, "kept.bin", "exact" & Chr(0) & "bytes")
+  db = WebDatabase.OpenConnection()
+  If WorkspaceStore.Setting(boardId, "board", boardId, "allowsAttachments", "1") <> "1" Then Error.Raise("Default allowance lost")
+  For Each role In ["normal", "read-only", "comment-only", "worker", "normal-assigned-only"]
+    SignIn("allow-owner")
+    BoardAccess.SetMember(boardId, "allow-member", role)
+    SignIn("allow-member")
+    before = Frame()
+    Try WorkspaceStore.SetSetting(boardId, "board", boardId, "allowsAttachments", "0")
+    denied = Error
+    If Not denied Or Frame() <> before Then Error.Raise("Member changed board allowance: " & role)
+  Next
+  SignIn("allow-owner")
+  BoardAccess.SetMember(boardId, "allow-member", "board-admin")
+  SignIn("allow-member")
+  WorkspaceStore.SetSetting(boardId, "board", boardId, "allowsAttachments", "0")
+  If Not DetailLive.Read(boardId, cardId, "file")["uploadsBlocked"] Then Error.Raise("Live upload allowance missing")
+  before = Frame()
+  Try CardContent.UploadFile(boardId, cardId, "blocked.bin", "x")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Disallowed native upload wrote")
+  result = CardContent.DownloadFile(boardId, cardId, fileId)
+  If result!content.Data <> "exact" & Chr(0) & "bytes" Then Error.Raise("Allowance hid existing bytes")
+  Try WorkspaceStore.SetSetting(boardId, "card", cardId, "allowsAttachments", "1")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Card setting accepted board allowance")
+  Try WorkspaceStore.SetSetting(boardId, "board", boardId, "allowsAttachments", "true")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Nonboolean allowance accepted")
+  db.Exec("CREATE TRIGGER allowance_late_role AFTER UPDATE OF value ON kb_meta WHEN NEW.setting='allowsAttachments' BEGIN UPDATE kb_members SET role='read-only' WHERE username='allow-member'; END")
+  Try WorkspaceStore.SetSetting(boardId, "board", boardId, "allowsAttachments", "1")
+  denied = Error
+  failure = Error.Text
+  If Not denied Or failure <> "Board permission denied" Or Frame() <> before Then Error.Raise("Late manager loss did not roll back: " & failure)
+  db.Exec("DROP TRIGGER allowance_late_role")
+  db.Exec("CREATE TRIGGER allowance_late_value AFTER UPDATE OF value ON kb_meta WHEN NEW.setting='allowsAttachments' BEGIN UPDATE kb_meta SET value='0' WHERE board_id=NEW.board_id AND setting=NEW.setting; END")
+  Try WorkspaceStore.SetSetting(boardId, "board", boardId, "allowsAttachments", "1")
+  denied = Error
+  failure = Error.Text
+  If Not denied Or failure <> "Board setting changed" Or Frame() <> before Then Error.Raise("Late value replacement committed: " & failure)
+  db.Exec("DROP TRIGGER allowance_late_value")
+  db.Exec("CREATE TRIGGER allowance_sql BEFORE UPDATE OF value ON kb_meta WHEN NEW.setting='allowsAttachments' BEGIN SELECT RAISE(ABORT,'test'); END")
+  Try WorkspaceStore.SetSetting(boardId, "board", boardId, "allowsAttachments", "1")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Failed allowance write changed state")
+  db.Exec("DROP TRIGGER allowance_sql")
+  WorkspaceStore.SetSetting(boardId, "board", boardId, "allowsAttachments", "1")
+  CardContent.UploadFile(boardId, cardId, "retry.bin", "retry")
+  If DetailLive.Read(boardId, cardId, "file")["uploadsBlocked"] Then Error.Raise("Reenabled native upload stayed blocked")
+  Print "Board attachment allowance: default/manager permissions, native upload denial with retained reads, kind/value validation, late role/value and SQL rollback/retry passed"
+End
+
+Private Function Frame() As String
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim tables As String[] = ["users", "kb_boards", "kb_lanes", "kb_lists", "kb_card_lists", "kb_order", "kb_history", "kb_entries", "kb_members", "kb_cards", "kb_files", "kb_attachment_data", "kb_attachment_history", "kb_attachment_deletions", "kb_activity", "kb_item_changes", "kb_meta", "attachment_transfer_settings"]
+  Dim tableName As String
+  Dim r As Result
+  Dim row As New Collection
+  Dim rows As Variant[]
+  Dim data As New Variant[]
+  Dim field As ResultField
+  For Each tableName In tables
+    rows = New Variant[]
+    r = db.Find(tableName)
+    For Each r
+      row = New Collection
+      For Each field In r.Fields
+        If field.Name = "content" Then
+          row.Add(Base64(r!content.Data), field.Name)
+        Else
+          row.Add(r[field.Name], field.Name)
+        Endif
+      Next
+      rows.Add(row)
+    Next
+    data.Add(rows)
+  Next
+  Return JSON.Encode(data)
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

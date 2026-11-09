@@ -114,7 +114,7 @@
       if(!target)return;
       if(target.matches('.weba-space-menu')){const panel=document.querySelector('[id$=".WorkspacePanel"]');if(panel)near(panel,target);}
       if(target.matches('.weba-add-card-top,.weba-add-card-bottom,[id$=".NewCard"],.weba-card'))rememberEditor(target);
-      for(const [button,panel] of [['ContextDelete','DeleteListPanel'],['DeletedLists','DeletedListsPanel'],['AddWorkspace','WorkspacePanel'],['AddSubworkspace','WorkspacePanel'],['ContextWorkspace','BoardWorkspacePanel'],['SortBoards','BoardSortMenu'],['ViewMenu','Views'],['AccountToggle','AccountMenu'],['ContextRename','ActionPanel'],['ContextCopy','ActionPanel'],['ContextMove','ActionPanel'],['ContextColor','ActionPanel'],['ContextWip','ActionPanel'],['ContextDescription','ActionPanel'],['ContextAddList','ActionPanel'],['ContextAddLane','ActionPanel'],['ContextMembers','MembersPanel'],['ContextMembers','CardPeoplePanel'],['CardMembersButton','CardPeoplePanel'],['ContextHistory','ItemBrowser'],['ArchivedItems','ItemBrowser'],['BoardSettings','ContextMenu'],...['Comments','Checklists','ChecklistItems','Subtasks','Dependencies','Fields','Time','Attachments'].flatMap(name=>[['Context'+name,'DetailsPanel'],['Card'+name,'DetailsPanel']])]){
+      for(const [button,panel] of [['ContextDelete','DeleteListPanel'],['DeletedLists','DeletedListsPanel'],['AddWorkspace','WorkspacePanel'],['AddSubworkspace','WorkspacePanel'],['ContextWorkspace','BoardWorkspacePanel'],['SortBoards','BoardSortMenu'],['ViewMenu','Views'],['AccountToggle','AccountMenu'],['ContextRename','ActionPanel'],['ContextCopy','ActionPanel'],['ContextMove','ActionPanel'],['ContextColor','ActionPanel'],['ContextWip','ActionPanel'],['ContextAllowsAttachments','ActionPanel'],['ContextDescription','ActionPanel'],['ContextAddList','ActionPanel'],['ContextAddLane','ActionPanel'],['ContextMembers','MembersPanel'],['ContextMembers','CardPeoplePanel'],['CardMembersButton','CardPeoplePanel'],['ContextHistory','ItemBrowser'],['ArchivedItems','ItemBrowser'],['BoardSettings','ContextMenu'],...['Comments','Checklists','ChecklistItems','Subtasks','Dependencies','Fields','Time','Attachments'].flatMap(name=>[['Context'+name,'DetailsPanel'],['Card'+name,'DetailsPanel']])]){
         if(target.id.endsWith('.'+button)){
           const popup=document.querySelector(`[id$=".${panel}"]`);
           if(popup)near(popup,target);
@@ -129,7 +129,7 @@
         if(visible(document.querySelector(`[id$=".${panel}"]`))){document.querySelector(`[id$=".${close}"]`)?.click();event.preventDefault();break;}
       }
     });
-    new MutationObserver(records=>{syncFocus();if(records.some(record=>record.target.id!=='gw-focus'))schedule();}).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['style','hidden']});
+    new MutationObserver(records=>{syncFocus();if(records.some(record=>record.target.id!=='gw-focus'))schedule();}).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['style','hidden','class']});
     document.addEventListener('load',event=>{if(event.target.tagName==='LINK'&&event.target.relList?.contains('stylesheet'))schedule();},true);
     document.fonts?.ready.then(schedule);
     document.fonts?.addEventListener?.('loadingdone',schedule);

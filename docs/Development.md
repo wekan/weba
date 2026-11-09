@@ -632,7 +632,8 @@ site-admin write access, clear that scope before the independent final guard,
 and roll back all file/metadata/activity/clock changes on late permission or
 allowsAttachments changes. The board allowance is a boolean native board setting
 requiring manageBoard with a final guard and is included in board copy/exchange.
-Its UI and global admin transfer/storage policy remain future work.
+Its manager checkbox and four Global Admin transfer controls are implemented below;
+full storage policy remains future work.
 
 RestApi parses the original encoded query so form '+' spaces and escaped '%2B'
 remain distinct; never repair Request.Get output after it has lost that distinction.
@@ -705,7 +706,32 @@ labels and admin revocation. Focused modes: --transfer-policy-api and
 --transfer-policy, with --archive for packaged checks.
 
 Avatar upload controls/integration, storage/cloud settings, streaming beyond the
-buffered ceiling, full version/retention behavior, board allowance editing,
+buffered ceiling, full version/retention behavior, remaining board settings,
 DDP, security eventlog/Problems reporting and complete original UI/API/security
 suites remain pending. This implements the four transfer controls, not the full
 source attachment-storage settings schema or its failure fallback behavior.
+
+### Board attachment allowance
+
+Board settings → Attachments opens a persisted checkbox for board managers.
+The default is enabled. Disabling it prevents native and bearer uploads while
+preserving existing file metadata, downloads and internal copies. Global transfer
+blocks and byte limits remain independent and take precedence on their paths.
+
+The server validates the board context, boolean value and current manageBoard
+permission. It locks actor then board, checks permission again after writing and
+checks the committed candidate value. Late role loss, value replacement and SQL
+failure roll back the change. Permission loss hides the open control/form;
+forged stale saves still pass through the server guards. Shared popup anchoring
+observes class-only native reveals; viewport checks wait for scheduled placement
+while retaining strict bounds. A regression reproduces the delayed-reveal defect.
+The native test covers
+normal, readonly, comment, worker and assigned-only denial plus manager retry.
+The browser test covers real manager/owner controls, reader and stale-manager
+forgery, mobile form bounds, reload persistence, live upload changes, bearer
+refusal and exact retained download. Run tests/run-http.py --board-allowance,
+adding --archive for the packaged application.
+
+This control implements allowsAttachments only. Minicard display preferences,
+background/map files, linked-card permissions, full board settings and original
+DDP/UI/security callbacks remain separate TODO work.
