@@ -28,7 +28,6 @@
   "board-admin": "Lövhə Admini",
   "board-title": "İdarə Heyətinin Başlığı",
   "board-view-cal": "Təqvim",
-  "board-view-collapse": "Yıxılma",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Siyahılar",
   "board-view-swimlanes": "Üzgüçülük zolaqları",
@@ -48,6 +47,7 @@
   "checklist": "Yoxlama siyahısı",
   "checklists": "Yoxlama siyahıları",
   "close": "Bağlayın",
+  "collapse": "Yıxılma",
   "comment-assigned-only": "Yalnız Təyin edilmiş Şərh",
   "comment-only": "Yalnız şərh",
   "comments": "Şərhlər",
@@ -119,6 +119,7 @@
   "text-note-title": "Başlıq",
   "thursday": "cümə axşamı",
   "tuesday": "çərşənbə axşamı",
+  "uncollapse": "Açmaq",
   "view": "Baxın",
   "wednesday": "çərşənbə",
   "worker": "işçi"

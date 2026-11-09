@@ -28,7 +28,6 @@
   "board-admin": "የሰሌዳ አስተዳዳሪ",
   "board-title": "የቦርድ ርዕስ",
   "board-view-cal": "የቀን መቁጠሪያ",
-  "board-view-collapse": "ሰብስብ",
   "board-view-gantt": "Gantt",
   "board-view-lists": "ዝርዝሮች",
   "board-view-swimlanes": "መስመሮች",
@@ -48,6 +47,7 @@
   "checklist": "የማረጋገጫ ዝርዝር",
   "checklists": "የማረጋገጫ ዝርዝሮች",
   "close": "ዝጋ",
+  "collapse": "ሰብስብ",
   "comment-assigned-only": "በተመደቡ ላይ ብቻ አስተያየት",
   "comment-only": "አስተያየት ብቻ",
   "comments": "አስተያየቶች",
@@ -119,6 +119,7 @@
   "text-note-title": "ርዕስ",
   "thursday": "ሐሙስ",
   "tuesday": "ማክሰኞ",
+  "uncollapse": "ዘርጋ",
   "view": "እይታ",
   "wednesday": "ረቡዕ",
   "worker": "ሠራተኛ"

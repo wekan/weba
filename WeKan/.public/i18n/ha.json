@@ -28,7 +28,6 @@
   "board-admin": "Mai gudanar da allo",
   "board-title": "Taken allo",
   "board-view-cal": "Kalanda",
-  "board-view-collapse": "Naɗe",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Jerin abubuwa",
   "board-view-swimlanes": "Layuka",
@@ -48,6 +47,7 @@
   "checklist": "Jerin dubawa",
   "checklists": "Jerin dubawa",
   "close": "Rufe",
+  "collapse": "Naɗe",
   "comment-assigned-only": "Sharhin waɗanda aka ba kawai",
   "comment-only": "Sharhi kawai",
   "comments": "Sharhuna",
@@ -119,6 +119,7 @@
   "text-note-title": "Take",
   "thursday": "Alhamis",
   "tuesday": "Talata",
+  "uncollapse": "Warware naɗewa",
   "view": "Duba",
   "wednesday": "Laraba",
   "worker": "Ma'aikaci"

@@ -1,4 +1,8 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Workspace folding/counts: Persist private true-only fold state with locked
+  ownership checks and cleanup; add native keyboard/focus carets, named aria
+  labels and direct readable active/helper-filtered counts. Preserve hidden
+  selection and verify rollback, lifecycle, original helper and browser behavior.
 - Documentation: Explain native workspace controls, live/draft/revocation and
   translation boundaries, browser evidence and remaining original UI gaps.
 - Native workspace UI: Add nested navigation, create/edit/confirmed delete and

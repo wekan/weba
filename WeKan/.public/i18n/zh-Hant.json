@@ -28,7 +28,6 @@
   "board-admin": "看板管理員",
   "board-title": "看板標題",
   "board-view-cal": "日曆",
-  "board-view-collapse": "折疊",
   "board-view-gantt": "甘特圖",
   "board-view-lists": "清單",
   "board-view-swimlanes": "泳道",
@@ -48,6 +47,7 @@
   "checklist": "待辦清單",
   "checklists": "待辦清單",
   "close": "關閉",
+  "collapse": "折疊",
   "comment-assigned-only": "僅能留言（限指定卡片）",
   "comment-only": "僅能留言",
   "comments": "留言",
@@ -119,6 +119,7 @@
   "text-note-title": "標題",
   "thursday": "週四",
   "tuesday": "週二",
+  "uncollapse": "展開",
   "view": "檢視",
   "wednesday": "週三",
   "worker": "員工"

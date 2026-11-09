@@ -28,7 +28,6 @@
   "board-admin": "Admin Papan",
   "board-title": "Judul Papan",
   "board-view-cal": "Kalendar",
-  "board-view-collapse": "Buka",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Senarai",
   "board-view-swimlanes": "Aliran Renang",
@@ -48,6 +47,7 @@
   "checklist": "Senarai semak",
   "checklists": "Senarai semak",
   "close": "Tutup",
+  "collapse": "Buka",
   "comment-assigned-only": "Hanya peruntukkan komen",
   "comment-only": "hanya komen",
   "comments": "Komen",
@@ -119,6 +119,7 @@
   "text-note-title": "Tajuk",
   "thursday": "Khamis",
   "tuesday": "Selasa",
+  "uncollapse": "Kembangkan",
   "view": "Lihat",
   "wednesday": "Rabu",
   "worker": "Pekerja"

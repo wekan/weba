@@ -28,7 +28,6 @@
   "board-admin": "bhodhi mukuru",
   "board-title": "bhodhi musoro",
   "board-view-cal": "Karenda",
-  "board-view-collapse": "Peta",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Marondedzero",
   "board-view-swimlanes": "Migwagwa",
@@ -48,6 +47,7 @@
   "checklist": "Rondedzero yekuongorora",
   "checklists": "Marondedzero ekuongorora",
   "close": "Vhara",
+  "collapse": "Peta",
   "comment-assigned-only": "chete Assigned chirevo",
   "comment-only": "chirevo chete",
   "comments": "Mhinduro",
@@ -119,6 +119,7 @@
   "text-note-title": "Musoro",
   "thursday": "China",
   "tuesday": "Chipiri",
+  "uncollapse": "Vhura zvakapetwa",
   "view": "Ona",
   "wednesday": "Chitatu",
   "worker": "Mushandi"

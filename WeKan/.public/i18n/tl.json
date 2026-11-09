@@ -28,7 +28,6 @@
   "board-admin": "pisara Tagapangasiwa",
   "board-title": "pisara Pamagat",
   "board-view-cal": "Kalendaryo",
-  "board-view-collapse": "Itiklop",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Mga listahan",
   "board-view-swimlanes": "Mga daanan",
@@ -48,6 +47,7 @@
   "checklist": "Tsek-listahan",
   "checklists": "Mga tsek-listahan",
   "close": "Isara",
+  "collapse": "Itiklop",
   "comment-assigned-only": "Lamang Itinalaga komento",
   "comment-only": "komento lamang",
   "comments": "Mga komento",
@@ -119,6 +119,7 @@
   "text-note-title": "Pamagat",
   "thursday": "Huwebes",
   "tuesday": "Martes",
+  "uncollapse": "Ibuka",
   "view": "Tingnan",
   "wednesday": "Miyerkules",
   "worker": "Manggagawa"

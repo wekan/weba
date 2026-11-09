@@ -28,7 +28,6 @@
   "board-admin": "Διαχειριστής Πίνακα",
   "board-title": "Τίτλος πίνακα",
   "board-view-cal": "Ημερολόγιο",
-  "board-view-collapse": "Σύμπτυξη",
   "board-view-gantt": "Διάγραμμα Gantt",
   "board-view-lists": "Λίστες",
   "board-view-swimlanes": "Λωρίδες",
@@ -48,6 +47,7 @@
   "checklist": "Check-list",
   "checklists": "Λίστες Ελέγχου - Checklists",
   "close": "Κλείσιμο",
+  "collapse": "Σύμπτυξη",
   "comment-assigned-only": "Σχόλια μόνο στις ανατεθειμένες",
   "comment-only": "Μόνο σχόλιο",
   "comments": "Σχόλια",
@@ -119,6 +119,7 @@
   "text-note-title": "Τίτλος",
   "thursday": "Πέμπτη",
   "tuesday": "Τρίτη",
+  "uncollapse": "Ανάπτυξη",
   "view": "Vue",
   "wednesday": "Τετάρτη",
   "worker": "Εργαζόμενος"

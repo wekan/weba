@@ -28,7 +28,6 @@
   "board-admin": "Taveladmin",
   "board-title": "Tavlans titel",
   "board-view-cal": "Kalender",
-  "board-view-collapse": "Fäll ihop",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Listor",
   "board-view-swimlanes": "Simbanor",
@@ -48,6 +47,7 @@
   "checklist": "Checklista",
   "checklists": "Checklistor",
   "close": "Stäng",
+  "collapse": "Fäll ihop",
   "comment-assigned-only": "Endast tilldelad kommentar",
   "comment-only": "Kommentera endast",
   "comments": "Kommentarer",
@@ -119,6 +119,7 @@
   "text-note-title": "Titel",
   "thursday": "Torsdag",
   "tuesday": "Tisdag",
+  "uncollapse": "Expandera",
   "view": "Visa",
   "wednesday": "Onsdag",
   "worker": "Arbetare"

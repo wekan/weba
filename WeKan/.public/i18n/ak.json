@@ -28,7 +28,6 @@
   "board-admin": "Bɔɔd Sodifo",
   "board-title": "Bɔɔd Ti asɛm",
   "board-view-cal": "Kalenda",
-  "board-view-collapse": "Kyerɛ ade yi",
   "board-view-gantt": "Kyerɛ ade yi",
   "board-view-lists": "Nhwɛso ahodoɔ",
   "board-view-swimlanes": "Akwan",
@@ -48,6 +47,7 @@
   "checklist": "Nhwehwɛmu nhwɛso",
   "checklists": "Nhwehwɛmu nhwɛso",
   "close": "To mu",
+  "collapse": "Mia so",
   "comment-assigned-only": "Kyerɛ adwene wɔ nea wɔde ahyɛ wo nsa nkutoo ho",
   "comment-only": "Adwenkyerɛ nko ara",
   "comments": "Nsusuiɛ",
@@ -119,6 +119,7 @@
   "text-note-title": "Asɛmti",
   "thursday": "Yawda",
   "tuesday": "Benada",
+  "uncollapse": "Trɛw mu",
   "view": "Kyerɛ ade yi",
   "wednesday": "Wukuda",
   "worker": "Adwumayɛfo"

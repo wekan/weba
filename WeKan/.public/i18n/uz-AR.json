@@ -28,7 +28,6 @@
   "board-admin": "تخته ادمینی",
   "board-title": "تخته نامی",
   "board-view-cal": "تقویم",
-  "board-view-collapse": "ییغیش",
   "board-view-gantt": "Gantt",
   "board-view-lists": "رۉیخت‌لر",
   "board-view-swimlanes": "ایش یۉلک‌لری",
@@ -48,6 +47,7 @@
   "checklist": "تیکشیروو رۉیختی",
   "checklists": "تیکشیریش رۉیختلری",
   "close": "یاپیش",
+  "collapse": "ییقیلیش",
   "comment-assigned-only": "فقط تعیینلنگن ایضاح",
   "comment-only": "فقط فکر بیلدیریش",
   "comments": "فکرلر",
@@ -119,6 +119,7 @@
   "text-note-title": "سرلوحه",
   "thursday": "پنجشنبه",
   "tuesday": "سه‌شنبه",
+  "uncollapse": "ییچیش",
   "view": "کۉریش",
   "wednesday": "چهارشنبه",
   "worker": "ایشچی"

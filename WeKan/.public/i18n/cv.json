@@ -28,7 +28,6 @@
   "board-admin": "Хӑма администраторӗ",
   "board-title": "Хӑма ячӗ",
   "board-view-cal": "Календарь",
-  "board-view-collapse": "Пӗчӗклетес",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Спискӑсем",
   "board-view-swimlanes": "Ҫулсем",
@@ -48,6 +47,7 @@
   "checklist": "Тӗрӗслев списокӗ",
   "checklists": "Тӗрӗслев спискисем",
   "close": "Хупас",
+  "collapse": "Хуплас",
   "comment-assigned-only": "Палӑртнӑ карточкӑсенче кӑна хушса калама",
   "comment-only": "Хушса калама кӑна",
   "comments": "Хушса калани",
@@ -119,6 +119,7 @@
   "text-note-title": "Ят",
   "thursday": "Кӗҫнерни кун",
   "tuesday": "Ытлари кун",
+  "uncollapse": "Сарӑлтарас",
   "view": "Курӑм",
   "wednesday": "Юнкун",
   "worker": "Ӗҫҫын"

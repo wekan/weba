@@ -28,7 +28,6 @@
   "board-admin": "Администратор доски",
   "board-title": "Название доски",
   "board-view-cal": "Календарь",
-  "board-view-collapse": "Свернуть",
   "board-view-gantt": "Диаграмма Ганта",
   "board-view-lists": "Списки",
   "board-view-swimlanes": "Дорожки",
@@ -48,6 +47,7 @@
   "checklist": "Чек-лист",
   "checklists": "Контрольные списки",
   "close": "Закрыть",
+  "collapse": "Свернуть",
   "comment-assigned-only": "Только назначенные, комментарии",
   "comment-only": "Только комментирование",
   "comments": "Комментарии",
@@ -119,6 +119,7 @@
   "text-note-title": "Название",
   "thursday": "Четверг",
   "tuesday": "Вторник",
+  "uncollapse": "Развернуть",
   "view": "Вид",
   "wednesday": "Среда",
   "worker": "Исполнитель"

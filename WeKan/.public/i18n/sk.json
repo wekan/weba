@@ -28,7 +28,6 @@
   "board-admin": "Administrátor nástenky",
   "board-title": "Názov nástenky",
   "board-view-cal": "Kalendár",
-  "board-view-collapse": "Zbaliť",
   "board-view-gantt": "Gannt",
   "board-view-lists": "Zoznamy",
   "board-view-swimlanes": "Dráhy",
@@ -48,6 +47,7 @@
   "checklist": "Kontrolný zoznam",
   "checklists": "Checklisty",
   "close": "Zavrieť",
+  "collapse": "Zbaliť",
   "comment-assigned-only": "Iba priradené – komentovanie",
   "comment-only": "Iba komentáre",
   "comments": "Komentáre",
@@ -119,6 +119,7 @@
   "text-note-title": "Názov",
   "thursday": "štvrtok",
   "tuesday": "utorok",
+  "uncollapse": "Rozbaliť",
   "view": "Zobraziť",
   "wednesday": "streda",
   "worker": "Pracovník"

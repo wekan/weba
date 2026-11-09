@@ -28,7 +28,6 @@
   "board-admin": "Umphathi webhodi",
   "board-title": "Isihloko sebhodi",
   "board-view-cal": "Ikhalenda",
-  "board-view-collapse": "Goqa",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Izinhlu",
   "board-view-swimlanes": "Imizila",
@@ -48,6 +47,7 @@
   "checklist": "Uluhlu lokuhlola",
   "checklists": "Izinhlu zokuhlola",
   "close": "Vala",
+  "collapse": "Goqa",
   "comment-assigned-only": "Amazwana kokwabelweyo kuphela",
   "comment-only": "Amazwana kuphela",
   "comments": "Imibono",
@@ -119,6 +119,7 @@
   "text-note-title": "Isihloko",
   "thursday": "ULwesine",
   "tuesday": "ULwesibili",
+  "uncollapse": "Vula ukugoqa",
   "view": "Buka",
   "wednesday": "ULwesithathu",
   "worker": "Isisebenzi"

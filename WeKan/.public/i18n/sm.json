@@ -28,7 +28,6 @@
   "board-admin": "Pule o le Laupapa",
   "board-title": "Ulutala o le Laupapa",
   "board-view-cal": "Kalena",
-  "board-view-collapse": "Faapupuu",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Lisi",
   "board-view-swimlanes": "Ala",
@@ -48,6 +47,7 @@
   "checklist": "Lisi siaki",
   "checklists": "Lisi siaki",
   "close": "Tapuni",
+  "collapse": "Faaitiitia",
   "comment-assigned-only": "Na o Faamatalaga i Mea Tofia",
   "comment-only": "Na o faamatalaga",
   "comments": "Faamatalaga",
@@ -119,6 +119,7 @@
   "text-note-title": "Ulutala",
   "thursday": "Aso Tofi",
   "tuesday": "Aso Lua",
+  "uncollapse": "Toe faalautele",
   "view": "Vaaiga",
   "wednesday": "Aso Lulu",
   "worker": "Tagata Galuega"

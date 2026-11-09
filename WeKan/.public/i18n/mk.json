@@ -28,7 +28,6 @@
   "board-admin": "Администратор на таблата",
   "board-title": "Деловодни број",
   "board-view-cal": "Календар",
-  "board-view-collapse": "Собери",
   "board-view-gantt": "План",
   "board-view-lists": "Листи",
   "board-view-swimlanes": "Коридори",
@@ -48,6 +47,7 @@
   "checklist": "Список со задачи",
   "checklists": "Контролни списоци",
   "close": "Затвори",
+  "collapse": "Собери",
   "comment-assigned-only": "Спољни стручни саветник",
   "comment-only": "Само коментари",
   "comments": "Расправа",
@@ -119,6 +119,7 @@
   "text-note-title": "Заглавие",
   "thursday": "Четврток",
   "tuesday": "Вторник",
+  "uncollapse": "Рашири",
   "view": "Поглед",
   "wednesday": "Сряда",
   "worker": "Работник"

@@ -28,7 +28,6 @@
   "board-admin": "Taulu ylläpitäjä",
   "board-title": "Taulun otsikko",
   "board-view-cal": "Kalenteri",
-  "board-view-collapse": "Pienennä",
   "board-view-gantt": "Gantt-näkymä",
   "board-view-lists": "Listat",
   "board-view-swimlanes": "Uimaradat",
@@ -48,6 +47,7 @@
   "checklist": "Tarkistuslista",
   "checklists": "Tarkistuslistat",
   "close": "Sulje",
+  "collapse": "Pienennä",
   "comment-assigned-only": "Vain käsittelijän kommentti",
   "comment-only": "Vain kommentointi",
   "comments": "Kommentit",
@@ -119,6 +119,7 @@
   "text-note-title": "Otsikko",
   "thursday": "Torstai",
   "tuesday": "Tiistai",
+  "uncollapse": "Suurenna",
   "view": "Näkymä",
   "wednesday": "Keskiviikko",
   "worker": "Työntekijä"

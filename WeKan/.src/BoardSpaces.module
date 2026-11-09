@@ -24,6 +24,13 @@ Private Sub OpenStore()
     t.PrimaryKey = ["id"]
     t.Update()
   Endif
+  If Not $db.Tables.Exist("kb_board_space_collapsed") Then
+    t = $db.Tables.Add("kb_board_space_collapsed")
+    t.Fields.Add("username", db.String, 255)
+    t.Fields.Add("space_id", db.Integer)
+    t.PrimaryKey = ["username", "space_id"]
+    t.Update()
+  Endif
   If Not $db.Tables.Exist("kb_board_space_assignments") Then
     t = $db.Tables.Add("kb_board_space_assignments")
     t.Fields.Add("username", db.String, 255)
@@ -135,6 +142,69 @@ Public Function Assignments() As Collection
     data.Add(CStr(r!space_id), CStr(r!board_id))
   Next
   Return data
+End
+
+Public Function Collapsed() As Collection
+  Dim username As String = Principal()
+  Dim data As New Collection
+  Dim r As Result = $db.Find("kb_board_space_collapsed", "username=&1 ORDER BY space_id", username)
+  For Each r
+    data[CStr(r!space_id)] = True
+  Next
+  Return data
+End
+
+Public Sub SetCollapsed(spaceId As Integer, collapsed As Boolean)
+  Dim username As String = Principal()
+  Dim r As Result
+  Dim transaction As Boolean
+  Dim failure As String
+  Node(spaceId, username)
+  username = BeginChange()
+  transaction = True
+  Node(spaceId, username)
+  If collapsed Then
+    r = $db.Find("kb_board_space_collapsed", "username=&1 AND space_id=&2", username, spaceId)
+    If Not r.Available Then
+      r = $db.Create("kb_board_space_collapsed")
+      r["username"] = username
+      r["space_id"] = spaceId
+      r.Update()
+    Endif
+  Else
+    $db.Delete("kb_board_space_collapsed", "username=&1 AND space_id=&2", username, spaceId)
+  Endif
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+Public Function Counts() As Collection
+  Dim username As String = Principal()
+  Dim data As New Collection
+  Dim assignments As Collection = BoardSpaces.Assignments()
+  Dim r As Result = $db.Find("kb_board_spaces", "username=&1 ORDER BY id", username)
+  Dim spaceId As String
+  For Each r
+    data[CStr(r!id)] = 0
+  Next
+  r = KanbanStore.Boards(False)
+  For Each r
+    If IsHelperTitle(CStr(r!title)) Then Continue
+    If Not assignments.Exist(CStr(r!id)) Then Continue
+    spaceId = assignments[CStr(r!id)]
+    If data.Exist(spaceId) Then data[spaceId] = CInt(data[spaceId]) + 1
+  Next
+  Return data
+End
+
+Private Function IsHelperTitle(title As String) As Boolean
+  ' Same line-terminator exclusions as models/lib/helperBoards.js's dot pattern.
+  If Len(title) < 2 Or Left(title) <> "^" Or Right(title) <> "^" Then Return False
+  Return InStr(title, "\n") = 0 And InStr(title, "\r") = 0 And InStr(title, " ") = 0 And InStr(title, " ") = 0
 End
 
 Private Function NextOrder(username As String, parentId As Integer) As Integer
@@ -307,6 +377,7 @@ Public Sub Remove(spaceId As Integer)
   Wend
   For cursor = ids.Max To 0 Step -1
     $db.Delete("kb_board_space_assignments", "username=&1 AND space_id=&2", username, ids[cursor])
+    $db.Delete("kb_board_space_collapsed", "username=&1 AND space_id=&2", username, ids[cursor])
     $db.Delete("kb_board_spaces", "username=&1 AND id=&2", username, ids[cursor])
   Next
   DatabaseTransactions.Commit($db)

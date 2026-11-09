@@ -28,7 +28,6 @@
   "board-admin": "Amministratore di a tavula",
   "board-title": "Titulu tavula",
   "board-view-cal": "Calendariu",
-  "board-view-collapse": "Ripiegà",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Liste",
   "board-view-swimlanes": "Curridori",
@@ -48,6 +47,7 @@
   "checklist": "Lista di cuntrollu",
   "checklists": "Liste di cuntrollu",
   "close": "Chjode",
+  "collapse": "Ripiegà",
   "comment-assigned-only": "Cummentà solu e carte assignate",
   "comment-only": "Solu cummenti",
   "comments": "Cummenti",
@@ -119,6 +119,7 @@
   "text-note-title": "Titulu",
   "thursday": "Ghjovi",
   "tuesday": "Marti",
+  "uncollapse": "Spiegà",
   "view": "Vista",
   "wednesday": "Mercuri",
   "worker": "Travagliadore"

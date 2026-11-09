@@ -28,7 +28,6 @@
   "board-admin": "Aministradëur dla tofl",
   "board-title": "Titul dla tofl",
   "board-view-cal": "Calendario",
-  "board-view-collapse": "Stlù adum",
   "board-view-gantt": "Diagram de Gantt",
   "board-view-lists": "Listes",
   "board-view-swimlanes": "Stredes",
@@ -48,6 +47,7 @@
   "checklist": "Lista de control",
   "checklists": "Listes de control",
   "close": "Stlù",
+  "collapse": "Stlù adum",
   "comment-assigned-only": "Mé comënc sun ciartes dates",
   "comment-only": "Mé comënc",
   "comments": "Comënc",
@@ -119,6 +119,7 @@
   "text-note-title": "Titul",
   "thursday": "Giovedì",
   "tuesday": "Martedì",
+  "uncollapse": "Giaurì",
   "view": "Vijion",
   "wednesday": "Mercoledì",
   "worker": "Lauradëur"

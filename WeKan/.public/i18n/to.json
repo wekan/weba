@@ -28,7 +28,6 @@
   "board-admin": "Pule ʻo e Papa",
   "board-title": "Kaveinga ʻo e papa",
   "board-view-cal": "Kalena",
-  "board-view-collapse": "Fakafōkisi",
   "board-view-gantt": "Fakatātā Gantt",
   "board-view-lists": "Ngaahi lisi",
   "board-view-swimlanes": "Ngaahi hala",
@@ -48,6 +47,7 @@
   "checklist": "Lisi sivi",
   "checklists": "Ngaahi lisi sivi",
   "close": "Tāpuni",
+  "collapse": "Fakafaʻo",
   "comment-assigned-only": "Fakamatala ʻi he vaheʻi pē",
   "comment-only": "Fakamatala pē",
   "comments": "Ngaahi fakamatala",
@@ -119,6 +119,7 @@
   "text-note-title": "Kaveinga",
   "thursday": "Tuʻapulelulu",
   "tuesday": "Tūsite",
+  "uncollapse": "Toe fakaava",
   "view": "Vīsone",
   "wednesday": "Pulelulu",
   "worker": "Tokotaha ngāue"

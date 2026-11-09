@@ -28,7 +28,6 @@
   "board-admin": "පුවරු පරිපාලක",
   "board-title": "පුවරු මාතෘකාව",
   "board-view-cal": "දින දර්ශනය",
-  "board-view-collapse": "හකුළන්න",
   "board-view-gantt": "Gantt",
   "board-view-lists": "ලැයිස්තු",
   "board-view-swimlanes": "පථ",
@@ -48,6 +47,7 @@
   "checklist": "පිරික්සුම් ලැයිස්තුව",
   "checklists": "පිරික්සුම් ලැයිස්තු",
   "close": "වසන්න",
+  "collapse": "හකුළන්න",
   "comment-assigned-only": "පවරා ඇති ඒවාට පමණක් අදහස්",
   "comment-only": "අදහස් පමණි",
   "comments": "අදහස්",
@@ -119,6 +119,7 @@
   "text-note-title": "මාතෘකාව",
   "thursday": "බ්‍රහස්පතින්දා",
   "tuesday": "අඟහරුවාදා",
+  "uncollapse": "දිගහරින්න",
   "view": "දසුන",
   "wednesday": "බදාදා",
   "worker": "සේවකයා"

@@ -28,7 +28,6 @@
   "board-admin": "ಫಲಕದ ನಿರ್ವಾಹಕ",
   "board-title": "ಫಲಕದ ಶೀರ್ಷಿಕೆ",
   "board-view-cal": "ಕ್ಯಾಲೆಂಡರ್",
-  "board-view-collapse": "ಕುಗ್ಗಿಸಿ",
   "board-view-gantt": "Gantt",
   "board-view-lists": "ಪಟ್ಟಿಗಳು",
   "board-view-swimlanes": "ಪಥಗಳು",
@@ -48,6 +47,7 @@
   "checklist": "ಪರಿಶೀಲನಾ ಪಟ್ಟಿ",
   "checklists": "ಪರಿಶೀಲನಾ ಪಟ್ಟಿಗಳು",
   "close": "ಮುಚ್ಚಿ",
+  "collapse": "ಕುಗ್ಗಿಸಿ",
   "comment-assigned-only": "ನಿಯೋಜಿತ ಕಾರ್ಡ್‌ಗಳಿಗೆ ಮಾತ್ರ ಕಾಮೆಂಟ್",
   "comment-only": "ಕಾಮೆಂಟ್ ಮಾತ್ರ",
   "comments": "ಕಾಮೆಂಟ್‌ಗಳು",
@@ -119,6 +119,7 @@
   "text-note-title": "ಶೀರ್ಷಿಕೆ",
   "thursday": "ಗುರುವಾರ",
   "tuesday": "ಮಂಗಳವಾರ",
+  "uncollapse": "ವಿಸ್ತರಿಸಿ",
   "view": "ವೀಕ್ಷಿಸಿ",
   "wednesday": "ಬುಧವಾರ",
   "worker": "ಕೆಲಸಗಾರ"

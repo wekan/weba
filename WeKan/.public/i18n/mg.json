@@ -28,7 +28,6 @@
   "board-admin": "Mpitantana solaitra",
   "board-title": "Lohatenin'ny solaitra",
   "board-view-cal": "Kalandrie",
-  "board-view-collapse": "Aforeto",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Lisitra",
   "board-view-swimlanes": "Lalana",
@@ -48,6 +47,7 @@
   "checklist": "Lisitra fanamarinana",
   "checklists": "Lisitra fanamarinana",
   "close": "Hidio",
+  "collapse": "Aforeto",
   "comment-assigned-only": "Fanamarihana amin'ny voatendry ihany",
   "comment-only": "Fanamarihana ihany",
   "comments": "Fanamarihana",
@@ -119,6 +119,7 @@
   "text-note-title": "Lohateny",
   "thursday": "Alakamisy",
   "tuesday": "Talata",
+  "uncollapse": "Velaro",
   "view": "Jereo",
   "wednesday": "Alarobia",
   "worker": "Mpiasa"

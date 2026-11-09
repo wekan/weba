@@ -182,3 +182,7 @@
 .weba-space-row .weba-space-menu{width:30px!important;min-width:30px!important;padding:6px!important;flex-shrink:0!important}
 .weba-space-indent{flex-shrink:0!important}
 .weba-space-panel textarea{box-sizing:border-box;width:100%;background:#fff;color:#111;border:1px solid #bbb;padding:8px}
+
+.weba-space-row .weba-space-collapse,.weba-space-collapse-spacer{width:22px!important;min-width:22px!important;flex-shrink:0!important;padding:4px!important;box-sizing:border-box}
+.weba-space-count{min-width:18px;text-align:center;color:#65717c;font-size:12px;flex-shrink:0!important}
+@media(pointer:coarse){.weba-space-row .weba-space-collapse{min-height:40px}}

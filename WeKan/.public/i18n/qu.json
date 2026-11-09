@@ -28,7 +28,6 @@
   "board-admin": "Pirqap kamachiqnin",
   "board-title": "Pirqapa uma sutin",
   "board-view-cal": "Watanqillqa",
-  "board-view-collapse": "Huñuy",
   "board-view-gantt": "Gantt siq'i",
   "board-view-lists": "Sutisuyukuna",
   "board-view-swimlanes": "Ñankuna",
@@ -48,6 +47,7 @@
   "checklist": "Qhawana sutisuyu",
   "checklists": "Qhaway sutisuyukuna",
   "close": "Wichqay",
+  "collapse": "Pakay",
   "comment-assigned-only": "Churasqapi rimaylla",
   "comment-only": "Rimaylla",
   "comments": "Rimaykuna",
@@ -119,6 +119,7 @@
   "text-note-title": "Sutichay",
   "thursday": "Illapachaw",
   "tuesday": "Atipachaw",
+  "uncollapse": "Mast'ay",
   "view": "Qhaway",
   "wednesday": "Quyllurchaw",
   "worker": "Llamkaq"

@@ -28,7 +28,6 @@
   "board-admin": "papa luna hoʻokele",
   "board-title": "papa inoa",
   "board-view-cal": "ʻalemanaka",
-  "board-view-collapse": "kolalapake",
   "board-view-gantt": "kanakaka",
   "board-view-lists": "Nā papa inoa",
   "board-view-swimlanes": "Nā ala",
@@ -48,6 +47,7 @@
   "checklist": "Papa nānā",
   "checklists": "Nā papa nānā",
   "close": "Pani",
+  "collapse": "kolalapake",
   "comment-assigned-only": "wale nō akakikaneka manaʻo",
   "comment-only": "manaʻo wale nō",
   "comments": "Nā manaʻo",
@@ -119,6 +119,7 @@
   "text-note-title": "Poʻomanaʻo",
   "thursday": "kulakakawa",
   "tuesday": "kuekakawa",
+  "uncollapse": "unakolalapake",
   "view": "nānā",
   "wednesday": "wekanekakawa",
   "worker": "wolakela"

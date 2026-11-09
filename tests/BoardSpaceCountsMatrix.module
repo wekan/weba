@@ -1,0 +1,24 @@
+Public Sub Main()
+  Dim spaceId As Integer
+  Dim boardId As Integer
+  Dim title As String
+  Dim row As Collection
+  Dim results As New Variant[]
+  Dim db As Connection
+  WebDatabase.Register("space-count-matrix", "x")
+  Session["username"] = "space-count-matrix"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
+  spaceId = BoardSpaces.Add("Matrix")
+  boardId = KanbanStore.AddBoard("Matrix board")
+  BoardSpaces.Assign(boardId, spaceId)
+  db = WebDatabase.OpenConnection()
+  For Each title In JSON.Decode(File.Load(".public/space-count-titles.json"))
+    ' Write raw titles so legacy trailing line terminators are not trimmed.
+    db.Exec("UPDATE kb_boards SET title=&1 WHERE id=&2", title, boardId)
+    row = New Collection
+    row.Add(title, "title")
+    row["count"] = BoardSpaces.Counts()[CStr(spaceId)]
+    results.Add(row)
+  Next
+  Print JSON.Encode(results)
+End

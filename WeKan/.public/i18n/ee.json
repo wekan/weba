@@ -28,7 +28,6 @@
   "board-admin": "Kpekpeɖeŋu ƒe dziɖula",
   "board-title": "Kpekpeɖeŋu ƒe ŋkɔ",
   "board-view-cal": "Kalenda",
-  "board-view-collapse": "Fa ƒu",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Xexlẽdzesiwo",
   "board-view-swimlanes": "Mɔwo",
@@ -48,6 +47,7 @@
   "checklist": "Dodokpɔ xexlẽdzesi",
   "checklists": "Dodokpɔ xexlẽdzesiwo",
   "close": "Tu",
+  "collapse": "Fa ƒu",
   "comment-assigned-only": "Dɔdeasi ƒe nyaŋuɖoɖo ko",
   "comment-only": "Nyaŋuɖoɖo ko",
   "comments": "Nuŋɔŋlɔwo",
@@ -119,6 +119,7 @@
   "text-note-title": "Tanya",
   "thursday": "Yawoɖa",
   "tuesday": "Blaɖa",
+  "uncollapse": "Gbugbɔ kaka",
   "view": "Kpɔ",
   "wednesday": "Kuɖa",
   "worker": "Dɔwɔla"

@@ -28,7 +28,6 @@
   "board-admin": "Administrator del tablèu",
   "board-title": "Títol del tablèu",
   "board-view-cal": "Calendièr",
-  "board-view-collapse": "Colapsar",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Tièras",
   "board-view-swimlanes": "Corredor",
@@ -48,6 +47,7 @@
   "checklist": "Lista de verificacion",
   "checklists": "Listas de verificacion",
   "close": "Tampar",
+  "collapse": "Replegar",
   "comment-assigned-only": "Comentaris solament sus las cartas assignadas",
   "comment-only": "Comentari únic",
   "comments": "Comentaris",
@@ -119,6 +119,7 @@
   "text-note-title": "Títol",
   "thursday": "Dijòus",
   "tuesday": "Dimars",
+  "uncollapse": "Desplegar",
   "view": "Vèire",
   "wednesday": "Dimècres",
   "worker": "Travallador"

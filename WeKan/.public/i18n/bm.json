@@ -28,7 +28,6 @@
   "board-admin": "Tabali baarakɛla kuntigi",
   "board-title": "Tabali tɔgɔ",
   "board-view-cal": "Donw kalandiriye",
-  "board-view-collapse": "A dun",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Sɛbɛnw",
   "board-view-swimlanes": "Siraw",
@@ -48,6 +47,7 @@
   "checklist": "Sɛgɛsɛgɛli sɛbɛn",
   "checklists": "Sɛgɛsɛgɛli sɛbɛnw",
   "close": "A datugu",
+  "collapse": "A dun",
   "comment-assigned-only": "Baara dilen kuma dɔrɔn",
   "comment-only": "Kuma dɔrɔn",
   "comments": "Hakilinaw",
@@ -119,6 +119,7 @@
   "text-note-title": "Tolo",
   "thursday": "Alamisa",
   "tuesday": "Tarata",
+  "uncollapse": "A dayɛlɛ",
   "view": "Jira",
   "wednesday": "Araba",
   "worker": "Baarakɛla"

@@ -28,7 +28,6 @@
   "board-admin": "Tábla adminisztrátor",
   "board-title": "Tábla címe",
   "board-view-cal": "Naptár",
-  "board-view-collapse": "Összecsukás",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Listák",
   "board-view-swimlanes": "Úszósávok",
@@ -48,6 +47,7 @@
   "checklist": "Ellenőrzőlista",
   "checklists": "Ellenőrző-listák",
   "close": "Bezárás",
+  "collapse": "Összecsukás",
   "comment-assigned-only": "Csak hozzárendelt megjegyzés",
   "comment-only": "Csak megjegyzés",
   "comments": "Megjegyzések",
@@ -119,6 +119,7 @@
   "text-note-title": "Cím",
   "thursday": "csütörtök",
   "tuesday": "kedd",
+  "uncollapse": "Kibontás",
   "view": "Nézet",
   "wednesday": "szerda",
   "worker": "Dolgozó"

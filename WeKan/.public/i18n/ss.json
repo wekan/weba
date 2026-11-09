@@ -28,7 +28,6 @@
   "board-admin": "Umphatsi Welibhodi",
   "board-title": "Sihloko Selibhodi",
   "board-view-cal": "Likhalenda",
-  "board-view-collapse": "Goca",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Tinhla",
   "board-view-swimlanes": "Imitsandvo",
@@ -48,6 +47,7 @@
   "checklist": "Luhla lwekuhlola",
   "checklists": "Tinhla tekuhlola",
   "close": "Vala",
+  "collapse": "Finyeta",
   "comment-assigned-only": "Kuphawula Kulokwabelwe Kuphela",
   "comment-only": "Kuphawula kuphela",
   "comments": "Imibono",
@@ -119,6 +119,7 @@
   "text-note-title": "Sihloko",
   "thursday": "Lesine",
   "tuesday": "Lesibili",
+  "uncollapse": "Vula kufinyeta",
   "view": "Buka",
   "wednesday": "Lesitsatfu",
   "worker": "Sisebenti"

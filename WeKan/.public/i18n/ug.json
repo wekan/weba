@@ -28,7 +28,6 @@
   "board-admin": "تاختا باشقۇرغۇچىسى",
   "board-title": "تاختا ماۋزۇسى",
   "board-view-cal": "كالېندار",
-  "board-view-collapse": "يىمىرىلىش",
   "board-view-gantt": "Gantt",
   "board-view-lists": "تىزىملىك",
   "board-view-swimlanes": "سۇ ئۈزۈش",
@@ -48,6 +47,7 @@
   "checklist": "تەكشۈرۈش تىزىملىكى",
   "checklists": "تەكشۈرۈش تىزىملىكى",
   "close": "تاقاش",
+  "collapse": "يىمىرىلىش",
   "comment-assigned-only": "پەقەت بېكىتىلگەن باھا",
   "comment-only": "پەقەت باھا",
   "comments": "باھا",
@@ -119,6 +119,7 @@
   "text-note-title": "ماۋزۇ",
   "thursday": "پەيشەنبە",
   "tuesday": "سەيشەنبە",
+  "uncollapse": "يېيىش",
   "view": "كۆرۈش",
   "wednesday": "چارشەنبە",
   "worker": "ئىشلەمچى"

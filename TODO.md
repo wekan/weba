@@ -27,9 +27,18 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   changes, dirty form preservation, revoked-pane cleanup/forged stale Save denial,
   mobile popup/Escape and Finnish/Latin labels have real browser coverage.
   Import 10 additional source keys (123 total) for all 237 local catalogs.
-- In progress: workspace drag/drop and collapse/count controls, Markdown icon
-  rendering and complete original All Boards workspace/UI callbacks. The new
-  native form tests do not execute the original Latin callback unchanged.
+- Completed private persisted workspace folding with native caret buttons,
+  Enter/Space, retained focus, translated named aria labels and live/reload state.
+  Index hidden descendants separately so folding preserves the selected child.
+  Show direct readable active board counts, excluding internal helper titles;
+  update counts on placement, archive/restore and membership changes. Native
+  tests cover idempotent true-only storage, foreign/stale/late-owner denial,
+  rollback/retry and subtree/account cleanup. A 25-case original helper function
+  comparison covers Unicode/line terminators. Real source/packaged workspace
+  tests exercise mouse/keyboard folding, hidden selection and live counts.
+- In progress: workspace/board drag/drop, Markdown icon rendering and complete
+  original All Boards workspace/UI callbacks. The new native form tests do not
+  execute the original Latin callback unchanged.
 
 - Documented header menu lifecycle and stable shared styles, delayed stylesheet/
   font placement and safe teardown. Recorded the new real browser/unit evidence;
@@ -43,9 +52,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   drafts and clickable close controls. Delayed-width/async-error tests, full
   local/test-live and existing layout regressions pass. Original suite counts
   remain unchanged.
-- Next workspace parity: add persisted collapse/visible counts and tree/board
-  drag gestures, then align form semantics and run the unchanged original Latin
-  callback with explicit native transport/fixture adapters.
+- Next workspace parity: add tree/board drag gestures, then align form semantics
+  and run the unchanged original Latin callback with explicit native transport/
+  fixture adapters.
 
 - Documented personal rank merging, readonly/sorted/archive boundaries, fresh
   transaction checks, cleanup, expected-order focus and trusted browser evidence.

@@ -10,7 +10,7 @@ const dom = new JSDOM(`<div id="@1.LanguageSelector"><select data-weba-language>
 <div id="@1.CardPeopleHeading">Members</div><div id="@1.CardPeopleName">Members</div><div id="@1.CardPeopleTree" class="gw-tree">Normal</div>
 <div id="@1.CardPersonChoice"><select><option value="Normal">Normal</option></select></div><button id="@1.AddCardPerson">Add</button>
 <div id="@1.PaneTitle" class="weba-user-text">Members</div>
-<button class="weba-space-open weba-user-text">Members</button><button class="weba-space-menu" title="Workspace menu"></button>
+<div class="weba-space-row"><button class="weba-space-open weba-user-text" title="Members">Members</button><button class="weba-space-collapse fa-caret-down" title="Collapse"></button></div><button class="weba-space-menu" title="Workspace menu"></button>
 <div id="@1.WorkspaceDestination"><select><option value="0">Remaining</option><option value="1">Members</option></select></div>
 <article class="weba-card"><strong>Username</strong></article>`,{url:'http://localhost',runScripts:'outside-only'});
 const {window}=dom;
@@ -43,6 +43,12 @@ window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
   assert.equal(doc.getElementById('@1.PaneTitle').textContent,'Members','selected workspace title is literal');
   assert.equal(doc.querySelector('.weba-space-open').textContent,'Members','dynamic workspace name is literal');
   assert.equal(doc.querySelector('.weba-space-menu').title,api.t('Workspace menu'),'dynamic workspace menu is translated');
+  const caret=doc.querySelector('.weba-space-collapse');
+  assert.equal(caret.title,api.t('Collapse')+': Members','caret translates only the action');
+  assert.equal(caret.getAttribute('aria-expanded'),'true','open caret announces expanded');
+  caret.classList.replace('fa-caret-down','fa-caret-right');await api.setLanguage('fi');
+  assert.equal(caret.title,api.t('Uncollapse')+': Members','folded caret action changes');
+  assert.equal(caret.getAttribute('aria-expanded'),'false','folded caret announces collapsed');
   const options=doc.querySelectorAll('[id="@1.WorkspaceDestination"] option');
   assert.equal(options[0].textContent,api.t('Remaining'),'only the explicit Remaining destination is translated');
   assert.equal(options[0].value,'0','translated destination preserves native wire value');

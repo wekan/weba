@@ -28,7 +28,6 @@
   "board-admin": "pirqa Admin",
   "board-title": "pirqa pʼiqiñcha",
   "board-view-cal": "Aymar aruna: Calendar",
-  "board-view-collapse": "Aymar aruna: Collapse",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Sutinakaxa",
   "board-view-swimlanes": "Thakhinaka",
@@ -48,6 +47,7 @@
   "checklist": "Uñakipaña sutinaka",
   "checklists": "Uñakipaña sutinaka",
   "close": "Jist'antaña",
+  "collapse": "Aymar aruna: Collapse",
   "comment-assigned-only": "akiwa Assigned amuytʼawi",
   "comment-only": "amuytʼawi akiwa",
   "comments": "Arxatanaka",
@@ -119,6 +119,7 @@
   "text-note-title": "Sutipa",
   "thursday": "Aymar aruna: Thursday",
   "tuesday": "Aymar aruna: Tuesday",
+  "uncollapse": "Aymar aruna: Uncollapse",
   "view": "uñjaña",
   "wednesday": "Aymar aruna: Wednesday",
   "worker": "Aymar aruna: Worker"

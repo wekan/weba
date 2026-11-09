@@ -28,7 +28,6 @@
   "board-admin": "დაფის ადმინი",
   "board-title": "დაფის სათაური",
   "board-view-cal": "კალენდარი",
-  "board-view-collapse": "ჩაკეცვა",
   "board-view-gantt": "განტის დიაგრამა",
   "board-view-lists": "ჩამონათვალი",
   "board-view-swimlanes": "ბილიკები",
@@ -48,6 +47,7 @@
   "checklist": "საკონტროლო სია",
   "checklists": "კატალოგი",
   "close": "დახურვა",
+  "collapse": "ჩაკეცვა",
   "comment-assigned-only": "მხოლოდ პასუხისმგებელი, კომენტარით",
   "comment-only": "მხოლოდ კომენტარები",
   "comments": "კომენტარები",
@@ -119,6 +119,7 @@
   "text-note-title": "სათაური",
   "thursday": "ხუთშაბათი",
   "tuesday": "სამშაბათი",
+  "uncollapse": "გაშლა",
   "view": "ხედი",
   "wednesday": "ოთხშაბათი",
   "worker": "შემსრულებელი"

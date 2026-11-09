@@ -28,7 +28,6 @@
   "board-admin": "Amministraturi dâ tàvula",
   "board-title": "Tìtulu tàvula",
   "board-view-cal": "Calendario",
-  "board-view-collapse": "Comprimi",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Listi",
   "board-view-swimlanes": "Cursevi",
@@ -48,6 +47,7 @@
   "checklist": "Lista di cuntrollu",
   "checklists": "Listi di cuntrollu",
   "close": "Chiuiri",
+  "collapse": "Comprimi",
   "comment-assigned-only": "Solu cummentu assegnato",
   "comment-only": "Solu commenti",
   "comments": "Cummenti",
@@ -119,6 +119,7 @@
   "text-note-title": "Tìtulu",
   "thursday": "Giovedì",
   "tuesday": "Martedì",
+  "uncollapse": "Nnu collassare",
   "view": "Vista",
   "wednesday": "Mercoledì",
   "worker": "Lavoratore"

@@ -28,7 +28,6 @@
   "board-admin": "Pano Yöneticisi",
   "board-title": "Pano Başlığı",
   "board-view-cal": "Takvim",
-  "board-view-collapse": "Katla",
   "board-view-gantt": "Gant Şeması",
   "board-view-lists": "Listeler",
   "board-view-swimlanes": "Kulvarlar",
@@ -48,6 +47,7 @@
   "checklist": "Kontrol listesi",
   "checklists": "Yapılacak Listeleri",
   "close": "Kapat",
+  "collapse": "Katla",
   "comment-assigned-only": "Yalnızca Atanan Yorumu",
   "comment-only": "Sadece yorum",
   "comments": "Yorumlar",
@@ -119,6 +119,7 @@
   "text-note-title": "Başlık",
   "thursday": "Perşembe",
   "tuesday": "Salı",
+  "uncollapse": "Genişlet",
   "view": "Görünüm",
   "wednesday": "Çarşamba",
   "worker": "Çalışan"

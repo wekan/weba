@@ -1,0 +1,153 @@
+Public Sub Main()
+  Dim rootId As Integer
+  Dim childId As Integer
+  Dim otherId As Integer
+  Dim a As Integer
+  Dim b As Integer
+  Dim db As Connection
+  Dim r As Result
+  Dim data As Collection
+  Dim history As Integer
+  Dim activity As Integer
+  Dim tree As String
+  Dim assignments As String
+  Dim denied As Boolean
+  WebDatabase.Register("space-display-owner", "x")
+  WebDatabase.Register("space-display-other", "x")
+  SignIn("space-display-owner")
+  rootId = BoardSpaces.Add("Parent")
+  childId = BoardSpaces.Add("Child", rootId)
+  a = KanbanStore.AddBoard("Visible Alpha")
+  b = KanbanStore.AddBoard("Visible Bravo")
+  BoardSpaces.Assign(a, rootId)
+  BoardSpaces.Assign(b, childId)
+  data = BoardSpaces.Counts()
+  If data[CStr(rootId)] <> 1 Or data[CStr(childId)] <> 1 Then Error.Raise("Workspace count included descendants or lost direct boards")
+  WorkspaceStore.OpenStore()
+  db = WebDatabase.OpenConnection()
+  r = db.Find("kb_history")
+  history = r.Count
+  r = db.Find("kb_activity")
+  activity = r.Count
+  tree = JSON.Encode(BoardSpaces.Tree())
+  assignments = JSON.Encode(BoardSpaces.Assignments())
+  If BoardSpaces.Collapsed().Count Then Error.Raise("New workspace folded by default")
+  BoardSpaces.SetCollapsed(rootId, True)
+  BoardSpaces.SetCollapsed(rootId, True)
+  If BoardSpaces.Collapsed().Count <> 1 Or Not BoardSpaces.Collapsed().Exist(CStr(rootId)) Then Error.Raise("Collapse was not idempotent")
+  r = db.Find("kb_board_space_collapsed", "username=&1", "space-display-owner")
+  If r.Count <> 1 Then Error.Raise("Collapse stored duplicate state")
+  BoardSpaces.SetCollapsed(rootId, False)
+  If BoardSpaces.Collapsed().Count Then Error.Raise("Expand retained collapse key")
+  r = db.Find("kb_board_space_collapsed", "username=&1", "space-display-owner")
+  If r.Count Then Error.Raise("Expand stored false instead of removing row")
+  If JSON.Encode(BoardSpaces.Tree()) <> tree Or JSON.Encode(BoardSpaces.Assignments()) <> assignments Then Error.Raise("Folding changed workspace tree or assignments")
+  r = db.Find("kb_history")
+  If r.Count <> history Then Error.Raise("Folding wrote shared history")
+  r = db.Find("kb_activity")
+  If r.Count <> activity Then Error.Raise("Folding wrote shared activity")
+  CheckRollback(rootId, childId)
+  CheckHelperCounts(rootId)
+  WorkspaceStore.SetArchived(b, "board", b, True)
+  If BoardSpaces.Counts()[CStr(childId)] <> 0 Then Error.Raise("Archived board included in workspace count")
+  WorkspaceStore.SetArchived(b, "board", b, False)
+  If BoardSpaces.Counts()[CStr(childId)] <> 1 Then Error.Raise("Restored board missing in workspace count")
+  BoardAccess.SetMember(a, "space-display-other", "read-only")
+  SignIn("space-display-other")
+  otherId = BoardSpaces.Add("Other personal")
+  BoardSpaces.Assign(a, otherId)
+  BoardSpaces.SetCollapsed(otherId, True)
+  If BoardSpaces.Counts()[CStr(otherId)] <> 1 Then Error.Raise("Readonly personal count lost board")
+  Try BoardSpaces.SetCollapsed(rootId, True)
+  denied = Error
+  If Not denied Then Error.Raise("Foreign collapse accepted")
+  SignIn("space-display-owner")
+  Try BoardSpaces.SetCollapsed(otherId, False)
+  denied = Error
+  If Not denied Then Error.Raise("Site admin changed foreign collapse")
+  If BoardSpaces.Collapsed().Exist(CStr(otherId)) Or BoardSpaces.Counts().Exist(CStr(otherId)) Then Error.Raise("Other user's presentation leaked")
+  BoardAccess.RemoveMember(a, "space-display-other")
+  SignIn("space-display-other")
+  If BoardSpaces.Counts()[CStr(otherId)] <> 0 Then Error.Raise("Revoked board leaked through count")
+  If Not BoardSpaces.Assignments().Exist(CStr(a)) Then Error.Raise("Count removed a stale personal assignment")
+  SignIn("space-display-owner")
+  CheckDelete(rootId, childId)
+  WebDatabase.DeleteUser("space-display-other")
+  r = db.Find("kb_board_space_collapsed", "username=&1", "space-display-other")
+  If r.Count Then Error.Raise("Deleted account retained collapse state")
+  WebDatabase.NewUser("space-display-other", "x", False)
+  SignIn("space-display-other")
+  If BoardSpaces.Collapsed().Count Or BoardSpaces.Counts().Count Then Error.Raise("Recreated account inherited workspace presentation")
+  Session["auth_generation"] = 0
+  Try BoardSpaces.SetCollapsed(otherId, True)
+  denied = Error
+  If Not denied Then Error.Raise("Stale session changed collapse state")
+  Try BoardSpaces.Counts()
+  denied = Error
+  If Not denied Then Error.Raise("Stale session read workspace counts")
+  Print "Workspace presentation: private idempotent fold/unfold, direct visible active/helper counts, archive/revocation isolation, transaction failure/late guard rollback, subtree/account cleanup and stale denial passed"
+End
+
+Private Sub CheckRollback(rootId As Integer, childId As Integer)
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim before As String = JSON.Encode(BoardSpaces.Collapsed())
+  Dim denied As Boolean
+  db.Exec("CREATE TRIGGER fail_fold BEFORE INSERT ON kb_board_space_collapsed BEGIN SELECT RAISE(ABORT,'injected fold failure'); END")
+  Try BoardSpaces.SetCollapsed(childId, True)
+  denied = Error
+  If Not denied Or JSON.Encode(BoardSpaces.Collapsed()) <> before Then Error.Raise("Failed fold wrote state")
+  db.Exec("DROP TRIGGER fail_fold")
+  BoardSpaces.SetCollapsed(childId, True)
+  db.Exec("CREATE TRIGGER fail_unfold BEFORE DELETE ON kb_board_space_collapsed BEGIN SELECT RAISE(ABORT,'injected unfold failure'); END")
+  Try BoardSpaces.SetCollapsed(childId, False)
+  denied = Error
+  If Not denied Or Not BoardSpaces.Collapsed().Exist(CStr(childId)) Then Error.Raise("Failed unfold lost state")
+  db.Exec("DROP TRIGGER fail_unfold")
+  BoardSpaces.SetCollapsed(childId, False)
+  db.Exec("CREATE TRIGGER late_fold_owner AFTER UPDATE ON users WHEN NEW.username='space-display-owner' BEGIN UPDATE kb_board_spaces SET username='space-display-other' WHERE id=" & CStr(rootId) & "; END")
+  Try BoardSpaces.SetCollapsed(rootId, True)
+  denied = Error
+  If Not denied Or JSON.Encode(BoardSpaces.Collapsed()) <> before Then Error.Raise("Late foreign owner bypassed fold guard")
+  db.Exec("DROP TRIGGER late_fold_owner")
+  BoardSpaces.Record(rootId)
+End
+
+Private Sub CheckHelperCounts(rootId As Integer)
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim boardId As Integer = KanbanStore.AddBoard("Helper fixture")
+  Dim title As String
+  Dim before As Integer = BoardSpaces.Counts()[CStr(rootId)]
+  Dim expected As Integer
+  BoardSpaces.Assign(boardId, rootId)
+  For Each title In ["^internal^", "^^", "^line\nbreak^", "^trailing^\n", "^trailing^\r\n", "^line break^", "^line break^", "Plain", "^Leading", "Trailing^"]
+    db.Exec("UPDATE kb_boards SET title=&1 WHERE id=&2", title, boardId)
+    expected = before + 1
+    If title = "^internal^" Or title = "^^" Then expected = before
+    If BoardSpaces.Counts()[CStr(rootId)] <> expected Then Error.Raise("Helper board count classification wrong: " & title)
+  Next
+  BoardSpaces.Assign(boardId)
+End
+
+Private Sub CheckDelete(rootId As Integer, childId As Integer)
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim before As String
+  Dim r As Result
+  Dim denied As Boolean
+  BoardSpaces.SetCollapsed(rootId, True)
+  BoardSpaces.SetCollapsed(childId, True)
+  before = JSON.Encode(BoardSpaces.Collapsed())
+  db.Exec("CREATE TRIGGER fail_fold_subtree BEFORE DELETE ON kb_board_spaces WHEN OLD.id=" & CStr(rootId) & " BEGIN SELECT RAISE(ABORT,'injected subtree failure'); END")
+  Try BoardSpaces.Remove(rootId)
+  denied = Error
+  If Not denied Or JSON.Encode(BoardSpaces.Collapsed()) <> before Then Error.Raise("Subtree failure lost collapse state")
+  db.Exec("DROP TRIGGER fail_fold_subtree")
+  BoardSpaces.Remove(rootId)
+  If BoardSpaces.Collapsed().Count Then Error.Raise("Deleted subtree retained collapse state")
+  r = db.Find("kb_board_space_collapsed", "username=&1", "space-display-owner")
+  If r.Count Then Error.Raise("Subtree cleanup removed no stored rows")
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

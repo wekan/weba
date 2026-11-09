@@ -28,7 +28,6 @@
   "board-admin": "Տախտակի ադմին",
   "board-title": "Վարչության անվանումը",
   "board-view-cal": "Օրացույց",
-  "board-view-collapse": "Փլուզվել",
   "board-view-gantt": "Գանտ",
   "board-view-lists": "Ցուցակներ",
   "board-view-swimlanes": "Լողավազաններ",
@@ -48,6 +47,7 @@
   "checklist": "Ստուգաթերթիկ",
   "checklists": "Ստուգաթերթեր",
   "close": "Փակել",
+  "collapse": "Փլուզվել",
   "comment-assigned-only": "Միայն նշանակված մեկնաբանություն",
   "comment-only": "Միայն մեկնաբանություն",
   "comments": "Մեկնաբանություններ",
@@ -119,6 +119,7 @@
   "text-note-title": "Վերնագիր",
   "thursday": "հինգշաբթի",
   "tuesday": "Երեքշաբթի",
+  "uncollapse": "Չփլուզվել",
   "view": "Դիտել",
   "wednesday": "չորեքշաբթի",
   "worker": "Աշխատող"

@@ -28,7 +28,6 @@
   "board-admin": "ኣመሓዳሪ ሰሌዳ",
   "board-title": "ኣርእስቲ ሰሌዳ",
   "board-view-cal": "ዓውደ ኣዋርሕ",
-  "board-view-collapse": "ዓጽፍ",
   "board-view-gantt": "Gantt",
   "board-view-lists": "ዝርዝራት",
   "board-view-swimlanes": "መስመራት",
@@ -48,6 +47,7 @@
   "checklist": "ናይ ምርመራ ዝርዝር",
   "checklists": "ናይ ምርመራ ዝርዝራት",
   "close": "ዕጾ",
+  "collapse": "ዓጽፍ",
   "comment-assigned-only": "ኣብ ዝተመደበ ጥራይ ርእይቶ",
   "comment-only": "ርእይቶ ጥራይ",
   "comments": "ርእይቶታት",
@@ -119,6 +119,7 @@
   "text-note-title": "ኣርእስቲ",
   "thursday": "ሓሙስ",
   "tuesday": "ሰሉስ",
+  "uncollapse": "ዘርግሕ",
   "view": "ርኣይ",
   "wednesday": "ረቡዕ",
   "worker": "ሰራሕተኛ"

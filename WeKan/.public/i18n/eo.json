@@ -28,7 +28,6 @@
   "board-admin": "Tabuladministranto",
   "board-title": "Tabula titolo",
   "board-view-cal": "Kalendaro",
-  "board-view-collapse": "Faldi",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Listoj",
   "board-view-swimlanes": "Naĝlinioj",
@@ -48,6 +47,7 @@
   "checklist": "Kontrollisto",
   "checklists": "Kontrollistoj",
   "close": "Fermi",
+  "collapse": "Faldi",
   "comment-assigned-only": "Nur atribuitaj: komenti",
   "comment-only": "Nur komenti",
   "comments": "Komentoj",
@@ -119,6 +119,7 @@
   "text-note-title": "Titolo",
   "thursday": "Ĵaŭdo",
   "tuesday": "Mardo",
+  "uncollapse": "Malfaldi",
   "view": "Vue",
   "wednesday": "Merkredo",
   "worker": "Laboranto"

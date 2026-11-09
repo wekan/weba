@@ -28,7 +28,6 @@
   "board-admin": "Umuyobozi w'Ikibaho",
   "board-title": "Umutwe w'ikibaho",
   "board-view-cal": "Kalendari",
-  "board-view-collapse": "Zinga",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Intonde",
   "board-view-swimlanes": "Imirongo",
@@ -48,6 +47,7 @@
   "checklist": "Urutonde rwo kugenzura",
   "checklists": "Intonde zo kugenzura",
   "close": "Funga",
+  "collapse": "Zinga",
   "comment-assigned-only": "Ibitekerezo ku Byashinzwe Gusa",
   "comment-only": "Ibitekerezo gusa",
   "comments": "Ibitekerezo",
@@ -119,6 +119,7 @@
   "text-note-title": "Umutwe",
   "thursday": "Ku wa Kane",
   "tuesday": "Ku wa Kabiri",
+  "uncollapse": "Rambura",
   "view": "Reba",
   "wednesday": "Ku wa Gatatu",
   "worker": "Umukozi"

@@ -28,7 +28,6 @@
   "board-admin": "Administrador do quadro",
   "board-title": "Título do Quadro",
   "board-view-cal": "Calendário",
-  "board-view-collapse": "Colapsar",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Listas",
   "board-view-swimlanes": "Pistas",
@@ -48,6 +47,7 @@
   "checklist": "Lista de verificação",
   "checklists": "Listas de verificação",
   "close": "Fechar",
+  "collapse": "Colapsar",
   "comment-assigned-only": "Somente Comentário Atribuído",
   "comment-only": "Apenas comentários",
   "comments": "Comentários",
@@ -119,6 +119,7 @@
   "text-note-title": "Título",
   "thursday": "Quinta-feira",
   "tuesday": "Terça-feira",
+  "uncollapse": "Compactar",
   "view": "Visão",
   "wednesday": "Quarta-feira",
   "worker": "Trabalhador"

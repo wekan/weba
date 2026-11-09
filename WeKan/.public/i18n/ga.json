@@ -28,7 +28,6 @@
   "board-admin": "Riarthóir an Chláir",
   "board-title": "Teideal Cláir",
   "board-view-cal": "Féilire",
-  "board-view-collapse": "Laghdaigh",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Liostaí",
   "board-view-swimlanes": "Lánaí",
@@ -48,6 +47,7 @@
   "checklist": "Seicliosta",
   "checklists": "Seicliostaí",
   "close": "Dún",
+  "collapse": "Laghdaigh",
   "comment-assigned-only": "Nótaí ar Chártaí Sannta Amháin",
   "comment-only": "Nótaí amháin",
   "comments": "Nótaí tráchta",
@@ -119,6 +119,7 @@
   "text-note-title": "Teideal",
   "thursday": "Déardaoin",
   "tuesday": "Dé Máirt",
+  "uncollapse": "Leathnaigh",
   "view": "Amharc",
   "wednesday": "Dé Céadaoin",
   "worker": "Oibrí"

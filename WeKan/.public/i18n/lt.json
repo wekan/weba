@@ -28,7 +28,6 @@
   "board-admin": "Lentos administratorius",
   "board-title": "Valdybos pavadinimas",
   "board-view-cal": "Kalendorius",
-  "board-view-collapse": "Sutraukti",
   "board-view-gantt": "Gantas",
   "board-view-lists": "Sąrašai",
   "board-view-swimlanes": "Plaukimo juostos",
@@ -48,6 +47,7 @@
   "checklist": "Kontrolinis sąrašas",
   "checklists": "Kontroliniai sąrašai",
   "close": "Uždaryti",
+  "collapse": "Sutraukti",
   "comment-assigned-only": "Tik priskirtas komentaras",
   "comment-only": "Tik komentaras",
   "comments": "komentarai",
@@ -119,6 +119,7 @@
   "text-note-title": "Pavadinimas",
   "thursday": "ketvirtadienis",
   "tuesday": "antradienis",
+  "uncollapse": "Išskleisti",
   "view": "Žiūrėti",
   "wednesday": "trečiadienį",
   "worker": "Darbininkas"

@@ -28,7 +28,6 @@
   "board-admin": "Amministrador de la bacheca",
   "board-title": "Tìtolo de la bacheca",
   "board-view-cal": "Calendario",
-  "board-view-collapse": "Strenzi",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Liste",
   "board-view-swimlanes": "Swimlane",
@@ -48,6 +47,7 @@
   "checklist": "Lista de controło",
   "checklists": "Checklist",
   "close": "Chiudi",
+  "collapse": "Sara su",
   "comment-assigned-only": "Soło comento asegnà",
   "comment-only": "Solo commenti",
   "comments": "Comenti",
@@ -119,6 +119,7 @@
   "text-note-title": "Titolo",
   "thursday": "Giovedì",
   "tuesday": "Martedì",
+  "uncollapse": "Verzi fora",
   "view": "Vista",
   "wednesday": "Mercoledì",
   "worker": "Łavorador"

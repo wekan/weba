@@ -28,7 +28,6 @@
   "board-admin": "Gweinyddwr Bwrdd",
   "board-title": "Teitl y Bwrdd",
   "board-view-cal": "Calendr",
-  "board-view-collapse": "Cwymp",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Rhestrau",
   "board-view-swimlanes": "Lonydd nofio",
@@ -48,6 +47,7 @@
   "checklist": "Rhestr wirio",
   "checklists": "Rhestrau gwirio",
   "close": "Cau",
+  "collapse": "Cwymp",
   "comment-assigned-only": "Sylw a Neilltuwyd yn unig",
   "comment-only": "Sylw yn unig",
   "comments": "Sylwadau",
@@ -119,6 +119,7 @@
   "text-note-title": "Teitl",
   "thursday": "dydd Iau",
   "tuesday": "Dydd Mawrth",
+  "uncollapse": "Dad-gwymp",
   "view": "Golwg",
   "wednesday": "Mercher",
   "worker": "Gweithiwr"

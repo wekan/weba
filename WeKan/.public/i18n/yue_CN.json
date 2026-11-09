@@ -28,7 +28,6 @@
   "board-admin": "看板管理员",
   "board-title": "董事會標題",
   "board-view-cal": "日曆",
-  "board-view-collapse": "坍塌",
   "board-view-gantt": "甘特圖",
   "board-view-lists": "清單",
   "board-view-swimlanes": "泳道",
@@ -48,6 +47,7 @@
   "checklist": "清單",
   "checklists": "清單",
   "close": "關閉",
+  "collapse": "坍塌",
   "comment-assigned-only": "僅分配的評論",
   "comment-only": "僅供評論",
   "comments": "評論",
@@ -119,6 +119,7 @@
   "text-note-title": "標題",
   "thursday": "週四",
   "tuesday": "週二",
+  "uncollapse": "展開",
   "view": "看法",
   "wednesday": "週三",
   "worker": "勞工"

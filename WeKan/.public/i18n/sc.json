@@ -28,7 +28,6 @@
   "board-admin": "Amministradore de sa tàula",
   "board-title": "Tìtulu de sa tàula",
   "board-view-cal": "Calendàriu",
-  "board-view-collapse": "Cumprimi",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Listas",
   "board-view-swimlanes": "Corsias",
@@ -48,6 +47,7 @@
   "checklist": "Lista de controllu",
   "checklists": "Listas de controllu",
   "close": "Serra",
+  "collapse": "Cumprime",
   "comment-assigned-only": "Petzi cummentos in sas assignadas",
   "comment-only": "Petzi cummentos",
   "comments": "Cummentos",
@@ -119,6 +119,7 @@
   "text-note-title": "Tìtulu",
   "thursday": "Giòbia",
   "tuesday": "Martis",
+  "uncollapse": "Iscumprime",
   "view": "Visualizatzione",
   "wednesday": "Mèrcuris",
   "worker": "Traballadore"

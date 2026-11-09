@@ -28,7 +28,6 @@
   "board-admin": "বৰ্ড এডমিন",
   "board-title": "বৰ্ডৰ শিৰোনাম",
   "board-view-cal": "দিনপঞ্জী",
-  "board-view-collapse": "সংকুচিত কৰক",
   "board-view-gantt": "Gantt",
   "board-view-lists": "তালিকাসমূহ",
   "board-view-swimlanes": "পথসমূহ",
@@ -48,6 +47,7 @@
   "checklist": "পৰীক্ষা তালিকা",
   "checklists": "পৰীক্ষা তালিকাসমূহ",
   "close": "বন্ধ কৰক",
+  "collapse": "সংকুচিত কৰক",
   "comment-assigned-only": "কেৱল নিযুক্ত মন্তব্য",
   "comment-only": "কেৱল মন্তব্য",
   "comments": "মন্তব্যসমূহ",
@@ -119,6 +119,7 @@
   "text-note-title": "শিৰোনাম",
   "thursday": "বৃহস্পতিবাৰ",
   "tuesday": "মঙলবাৰ",
+  "uncollapse": "প্ৰসাৰিত কৰক",
   "view": "দৃশ্য",
   "wednesday": "বুধবাৰ",
   "worker": "কৰ্মী"

@@ -28,7 +28,6 @@
   "board-admin": "फळो प्रशासक",
   "board-title": "फळो माथाळें",
   "board-view-cal": "दिनदर्शिका",
-  "board-view-collapse": "आंकसात",
   "board-view-gantt": "Gantt",
   "board-view-lists": "वळेऱ्यो",
   "board-view-swimlanes": "वाटो",
@@ -48,6 +47,7 @@
   "checklist": "तपासणी वळेरी",
   "checklists": "तपासणी वळेऱ्यो",
   "close": "बंद करचें",
+  "collapse": "आंकसात",
   "comment-assigned-only": "फकत नेमिल्ल्या कार्डांचेर टिप्पणी",
   "comment-only": "फकत टिप्पणी",
   "comments": "टिप्पण्यो",
@@ -119,6 +119,7 @@
   "text-note-title": "मथळो",
   "thursday": "बिरेस्तार",
   "tuesday": "मंगळार",
+  "uncollapse": "परत विस्तारात",
   "view": "पळयात",
   "wednesday": "बुधवार",
   "worker": "कामगार"

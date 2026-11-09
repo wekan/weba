@@ -28,7 +28,6 @@
   "board-admin": "Administrador do taboleiro",
   "board-title": "Título do taboleiro",
   "board-view-cal": "Calendario",
-  "board-view-collapse": "Contraer",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Listas",
   "board-view-swimlanes": "Carrís",
@@ -48,6 +47,7 @@
   "checklist": "Lista de verificación",
   "checklists": "Listas de verificación",
   "close": "Pechar",
+  "collapse": "Contraer",
   "comment-assigned-only": "Só comentar nas asignadas",
   "comment-only": "Só comentarios",
   "comments": "Comentarios",
@@ -119,6 +119,7 @@
   "text-note-title": "Título",
   "thursday": "Xoves",
   "tuesday": "Martes",
+  "uncollapse": "Expandir",
   "view": "Vista",
   "wednesday": "Mércores",
   "worker": "Traballador"

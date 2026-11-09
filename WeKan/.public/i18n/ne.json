@@ -28,7 +28,6 @@
   "board-admin": "बोर्ड प्रशासक",
   "board-title": "बोर्ड शीर्षक",
   "board-view-cal": "पात्रो",
-  "board-view-collapse": "खुम्च्याउनुहोस्",
   "board-view-gantt": "Gantt",
   "board-view-lists": "सूचीहरू",
   "board-view-swimlanes": "मार्गहरू",
@@ -48,6 +47,7 @@
   "checklist": "जाँचसूची",
   "checklists": "जाँचसूचीहरू",
   "close": "बन्द",
+  "collapse": "खुम्च्याउनुहोस्",
   "comment-assigned-only": "तोकिएकोमा मात्र टिप्पणी",
   "comment-only": "टिप्पणी मात्र",
   "comments": "टिप्पणीहरू",
@@ -119,6 +119,7 @@
   "text-note-title": "शीर्षक",
   "thursday": "बिहीबार",
   "tuesday": "मङ्गलबार",
+  "uncollapse": "फैलाउनुहोस्",
   "view": "हेर्नुहोस्",
   "wednesday": "बुधबार",
   "worker": "कामदार"

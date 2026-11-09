@@ -28,7 +28,6 @@
   "board-admin": "Administrator tabulae",
   "board-title": "Titulus tabulae",
   "board-view-cal": "Calendarium",
-  "board-view-collapse": "Contrahe",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Indices",
   "board-view-swimlanes": "Semitae",
@@ -48,6 +47,7 @@
   "checklist": "Index probationis",
   "checklists": "Indices probationis",
   "close": "Claude",
+  "collapse": "Contrahe",
   "comment-assigned-only": "Tantum in chartis assignatis commentari",
   "comment-only": "Tantum commentari",
   "comments": "Commentaria",
@@ -119,6 +119,7 @@
   "text-note-title": "Titulus",
   "thursday": "Dies Iovis",
   "tuesday": "Dies Martis",
+  "uncollapse": "Expande",
   "view": "Prospectus",
   "wednesday": "Dies Mercurii",
   "worker": "Operarius"

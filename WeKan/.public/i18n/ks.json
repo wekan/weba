@@ -28,7 +28,6 @@
   "board-admin": "بورڈ ایڈمن",
   "board-title": "بورڈ ناو",
   "board-view-cal": "کیلنڈر",
-  "board-view-collapse": "سکیوٗڑیو",
   "board-view-gantt": "Gantt",
   "board-view-lists": "فہرست",
   "board-view-swimlanes": "وَتھ",
@@ -48,6 +47,7 @@
   "checklist": "چیک لسٹ",
   "checklists": "جانچ فہرست",
   "close": "بند کریو",
+  "collapse": "سکیڑیو",
   "comment-assigned-only": "صرف مقرر شُدٕ تبصرٕ",
   "comment-only": "صرف تبصرٕ",
   "comments": "تبصرے",
@@ -119,6 +119,7 @@
   "text-note-title": "عنوان",
   "thursday": "جمعرات",
   "tuesday": "منگل",
+  "uncollapse": "پھیلاویو",
   "view": "وُچھِو",
   "wednesday": "بُدھ",
   "worker": "کارکن"

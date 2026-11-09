@@ -28,7 +28,6 @@
   "board-admin": "Msimamizi wa Bodi",
   "board-title": "Kichwa cha Bodi",
   "board-view-cal": "Kalenda",
-  "board-view-collapse": "Kunja",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Orodha",
   "board-view-swimlanes": "Wanaogelea",
@@ -48,6 +47,7 @@
   "checklist": "Orodha ya ukaguzi",
   "checklists": "Orodha za ukaguzi",
   "close": "Funga",
+  "collapse": "Kunja",
   "comment-assigned-only": "Maoni Yaliyokabidhiwa Pekee",
   "comment-only": "Changia pekee",
   "comments": "Maoni",
@@ -119,6 +119,7 @@
   "text-note-title": "Kichwa",
   "thursday": "Alhamisi",
   "tuesday": "Jumanne",
+  "uncollapse": "Tendua",
   "view": "Tazama",
   "wednesday": "Jumatano",
   "worker": "Mfanyakazi"

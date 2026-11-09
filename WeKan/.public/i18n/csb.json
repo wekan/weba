@@ -28,7 +28,6 @@
   "board-admin": "Administrator tôblëcë",
   "board-title": "Tytuł tôblëcë",
   "board-view-cal": "Kalãdôrz",
-  "board-view-collapse": "Zwiń widok",
   "board-view-gantt": "Diagram Gantta",
   "board-view-lists": "Lëstë",
   "board-view-swimlanes": "Stegnë",
@@ -48,6 +47,7 @@
   "checklist": "Kòntrolnô lësta",
   "checklists": "Lëstë kòntrolë",
   "close": "Zamknąc",
+  "collapse": "Zwinie",
   "comment-assigned-only": "Kòmentowanié blós przëpisónëch kôrtów",
   "comment-only": "Blós dopòwiescë",
   "comments": "Kòmentôrze",
@@ -119,6 +119,7 @@
   "text-note-title": "Titel",
   "thursday": "Czwiôrtk",
   "tuesday": "Wtórk",
+  "uncollapse": "Rozwinie",
   "view": "Wëzdrzatk",
   "wednesday": "Strzoda",
   "worker": "Robòtnik"

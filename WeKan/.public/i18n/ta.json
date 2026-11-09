@@ -28,7 +28,6 @@
   "board-admin": "பலகை நிர்வாகி",
   "board-title": "பலகையின் தலைப்பு",
   "board-view-cal": "நாள்காட்டி",
-  "board-view-collapse": "சுருக்கு",
   "board-view-gantt": "கான்ட்",
   "board-view-lists": "பட்டியல்கள்",
   "board-view-swimlanes": "நீச்சல்பாதைகள்",
@@ -48,6 +47,7 @@
   "checklist": "சரிபார்ப்புப் பட்டியல்",
   "checklists": "சரிபார்ப்புப் பட்டியல்கள்",
   "close": "மூடு",
+  "collapse": "சுருக்கு",
   "comment-assigned-only": "ஒப்படைக்கப்பட்டவற்றில் மட்டும் கருத்து",
   "comment-only": "கருத்து மட்டும்",
   "comments": "கருத்துகள்",
@@ -119,6 +119,7 @@
   "text-note-title": "தலைப்பு",
   "thursday": "வியாழன்",
   "tuesday": "செவ்வாய்",
+  "uncollapse": "விரி",
   "view": "பார்",
   "wednesday": "புதன்",
   "worker": "பணியாளர்"

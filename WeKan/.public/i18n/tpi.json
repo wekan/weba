@@ -28,7 +28,6 @@
   "board-admin": "Bot Admin",
   "board-title": "Bot nem",
   "board-view-cal": "Kalenda",
-  "board-view-collapse": "Pasim liklik",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Ol lis",
   "board-view-swimlanes": "Ol rot",
@@ -48,6 +47,7 @@
   "checklist": "Lis bilong sekim",
   "checklists": "Ol seklis",
   "close": "Pasim",
+  "collapse": "Pasim liklik",
   "comment-assigned-only": "Putim tok long ol kat yu kisim wok bilong ol tasol",
   "comment-only": "Tok tasol",
   "comments": "Ol tok",
@@ -119,6 +119,7 @@
   "text-note-title": "Taitol",
   "thursday": "Fonde",
   "tuesday": "Tunde",
+  "uncollapse": "Opim olgeta",
   "view": "Lukim",
   "wednesday": "Trinde",
   "worker": "Wokman"

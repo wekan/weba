@@ -28,7 +28,6 @@
   "board-admin": "Mulanguli wa Bodo",
   "board-title": "Ṱhoho ya bodo",
   "board-view-cal": "Khalenda",
-  "board-view-collapse": "Peta",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Uhlu",
   "board-view-swimlanes": "Dziḽaini",
@@ -48,6 +47,7 @@
   "checklist": "Mutevhe wa u ṱola",
   "checklists": "Mitevhe ya u sedza",
   "close": "Vala",
+  "collapse": "Peta",
   "comment-assigned-only": "Mihumbulo kha zwo avhelwaho fhedzi",
   "comment-only": "Mihumbulo fhedzi",
   "comments": "Mahumbulwa",
@@ -119,6 +119,7 @@
   "text-note-title": "Isihloko",
   "thursday": "Ḽavhuṋa",
   "tuesday": "Ḽavhuvhili",
+  "uncollapse": "Ṱanḓavhudza",
   "view": "Vhona",
   "wednesday": "Ḽavhuraru",
   "worker": "Mushumi"

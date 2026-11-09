@@ -28,7 +28,6 @@
   "board-admin": "Boardadmin",
   "board-title": "Board Titel",
   "board-view-cal": "Kalinder",
-  "board-view-collapse": "Ynstoarte",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Listen",
   "board-view-swimlanes": "Swimbanen",
@@ -48,6 +47,7 @@
   "checklist": "Kontrôlelist",
   "checklists": "Kontrôlelisten",
   "close": "Slute",
+  "collapse": "Ynstoarte",
   "comment-assigned-only": "Allinnich taskreaun opmerking",
   "comment-only": "Allinnich kommentaar",
   "comments": "Opmerkings",
@@ -119,6 +119,7 @@
   "text-note-title": "Titel",
   "thursday": "tongersdei",
   "tuesday": "tiisdei",
+  "uncollapse": "Utklappe",
   "view": "Fisy",
   "wednesday": "woansdei",
   "worker": "Wurkster"

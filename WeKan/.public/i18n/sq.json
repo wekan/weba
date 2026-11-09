@@ -28,7 +28,6 @@
   "board-admin": "Administratori i tabelës",
   "board-title": "Titulli i tabelës",
   "board-view-cal": "Kalendari",
-  "board-view-collapse": "Palos",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Lista",
   "board-view-swimlanes": "Korsi",
@@ -48,6 +47,7 @@
   "checklist": "Listë kontrolli",
   "checklists": "Lista kontrolli",
   "close": "Mbyll",
+  "collapse": "Palos",
   "comment-assigned-only": "Komente vetëm te të caktuarat",
   "comment-only": "Vetëm komente",
   "comments": "Komente",
@@ -119,6 +119,7 @@
   "text-note-title": "Titulli",
   "thursday": "E enjte",
   "tuesday": "E martë",
+  "uncollapse": "Zgjero",
   "view": "Shfaq",
   "wednesday": "E mërkurë",
   "worker": "Punëtor"

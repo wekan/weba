@@ -28,7 +28,6 @@
   "board-admin": "Administrator di tabelã",
   "board-title": "Titlul a tabelãljei",
   "board-view-cal": "Calindar",
-  "board-view-collapse": "Adunã",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Listi",
   "board-view-swimlanes": "Cãljuri",
@@ -48,6 +47,7 @@
   "checklist": "Listã di verificari",
   "checklists": "Listi di verificari",
   "close": "Ncljidi",
+  "collapse": "Adunã",
   "comment-assigned-only": "Comentarii mash la cãrtsãli dati",
   "comment-only": "Mash comentarii",
   "comments": "Comentarii",
@@ -119,6 +119,7 @@
   "text-note-title": "Titlu",
   "thursday": "Giovedì",
   "tuesday": "Martedì",
+  "uncollapse": "Dishcljidi",
   "view": "Videari",
   "wednesday": "Mercoledì",
   "worker": "Lucrãtor"

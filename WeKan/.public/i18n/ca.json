@@ -28,7 +28,6 @@
   "board-admin": "Administrador del tauler",
   "board-title": "Títol del tauler",
   "board-view-cal": "Calendari",
-  "board-view-collapse": "Contraure",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Llistes",
   "board-view-swimlanes": "Carrils",
@@ -48,6 +47,7 @@
   "checklist": "Llista de verificació",
   "checklists": "Llistes de verificació",
   "close": "Tanca",
+  "collapse": "Contraure",
   "comment-assigned-only": "Comentari només si assignat",
   "comment-only": "Només comentaris",
   "comments": "Comentaris",
@@ -119,6 +119,7 @@
   "text-note-title": "Títol",
   "thursday": "dijous",
   "tuesday": "dimarts",
+  "uncollapse": "Desplega",
   "view": "Vista",
   "wednesday": "dimecres",
   "worker": "Treballador"

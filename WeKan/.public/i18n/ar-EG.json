@@ -28,7 +28,6 @@
   "board-admin": "مشرف اللوحة",
   "board-title": "عنوان اللوح",
   "board-view-cal": "التقويم",
-  "board-view-collapse": "انهيار",
   "board-view-gantt": "غانت",
   "board-view-lists": "القائمات",
   "board-view-swimlanes": "خطوط السباحة",
@@ -48,6 +47,7 @@
   "checklist": "قائمة التحقق",
   "checklists": "قوائم التّدقيق",
   "close": "غلق",
+  "collapse": "انهيار",
   "comment-assigned-only": "التعليق على المكلَّف بها فقط",
   "comment-only": "التعليق فقط",
   "comments": "تعليقات",
@@ -119,6 +119,7 @@
   "text-note-title": "عنوان",
   "thursday": "الخميس",
   "tuesday": "الثلاثاء",
+  "uncollapse": "توسيع",
   "view": "عرض",
   "wednesday": "الأربعاء",
   "worker": "عامل"

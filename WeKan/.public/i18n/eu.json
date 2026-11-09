@@ -28,7 +28,6 @@
   "board-admin": "Arbeleko administratzailea",
   "board-title": "Arbelaren titulua",
   "board-view-cal": "Egutegia",
-  "board-view-collapse": "Tolestu",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Zerrendak",
   "board-view-swimlanes": "Errailak",
@@ -48,6 +47,7 @@
   "checklist": "Kontrol-zerrenda",
   "checklists": "Kontrol-zerrendak",
   "close": "Itxi",
+  "collapse": "Tolestu",
   "comment-assigned-only": "Iruzkina esleitutakoetan soilik",
   "comment-only": "Iruzkinak besterik ez",
   "comments": "Iruzkinak",
@@ -119,6 +119,7 @@
   "text-note-title": "Izenburua",
   "thursday": "Osteguna",
   "tuesday": "Asteartea",
+  "uncollapse": "Zabaldu",
   "view": "Ikuspegia",
   "wednesday": "Asteazkena",
   "worker": "Langilea"

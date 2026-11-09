@@ -28,7 +28,6 @@
   "board-admin": "Administratè tablo",
   "board-title": "Tit tablo",
   "board-view-cal": "Kalandriye",
-  "board-view-collapse": "Redui",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Lis yo",
   "board-view-swimlanes": "Kouloir yo",
@@ -48,6 +47,7 @@
   "checklist": "Lis verifikasyon",
   "checklists": "Lis verifikasyon",
   "close": "Fèmen",
+  "collapse": "Ranmase",
   "comment-assigned-only": "Kòmantè sou sa ki asiyen sèlman",
   "comment-only": "Kòmantè sèlman",
   "comments": "Kòmantè yo",
@@ -119,6 +119,7 @@
   "text-note-title": "Tit",
   "thursday": "Jedi",
   "tuesday": "Madi",
+  "uncollapse": "Deplwaye",
   "view": "Gade",
   "wednesday": "Mèkredi",
   "worker": "Travayè"

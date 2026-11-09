@@ -28,7 +28,6 @@
   "board-admin": "Rianaire Bùird",
   "board-title": "Tiotal a' bhùird",
   "board-view-cal": "Mìosachan",
-  "board-view-collapse": "Co-theannaich",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Liostaichean",
   "board-view-swimlanes": "Slighean",
@@ -48,6 +47,7 @@
   "checklist": "Liosta-dearbhaidh",
   "checklists": "Liostaichean-cromaig",
   "close": "Dùin",
+  "collapse": "Paisg",
   "comment-assigned-only": "Beachdan air Cinn Shònraichte a-mhàin",
   "comment-only": "Beachdan a-mhàin",
   "comments": "Beachdan",
@@ -119,6 +119,7 @@
   "text-note-title": "Tiotal",
   "thursday": "Diardaoin",
   "tuesday": "Dimàirt",
+  "uncollapse": "Neo-phaisg",
   "view": "Seall",
   "wednesday": "Diciadain",
   "worker": "Neach-obrach"

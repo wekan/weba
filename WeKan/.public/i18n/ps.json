@@ -28,7 +28,6 @@
   "board-admin": "د تختې مدير",
   "board-title": "د تختې سرليک",
   "board-view-cal": "جنتري",
-  "board-view-collapse": "راټول کړئ",
   "board-view-gantt": "Gantt",
   "board-view-lists": "لړليکونه",
   "board-view-swimlanes": "کرښې",
@@ -48,6 +47,7 @@
   "checklist": "کتنليک",
   "checklists": "کتنليکونه",
   "close": "بندول",
+  "collapse": "راټول کړئ",
   "comment-assigned-only": "يوازې پر ټاکل شويو تبصره",
   "comment-only": "يوازې تبصره",
   "comments": "تبصرې",
@@ -119,6 +119,7 @@
   "text-note-title": "سرلیک",
   "thursday": "پنجشنبه",
   "tuesday": "سې‌شنبه",
+  "uncollapse": "وغځوئ",
   "view": "ليد",
   "wednesday": "چهارشنبه",
   "worker": "کارکوونکی"

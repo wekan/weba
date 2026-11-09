@@ -28,7 +28,6 @@
   "board-admin": "Adminu tablo",
   "board-title": "Turu tablo bi",
   "board-view-cal": "Kaleende",
-  "board-view-collapse": "Goon",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Limu yi",
   "board-view-swimlanes": "Yoon yi",
@@ -48,6 +47,7 @@
   "checklist": "Limu bu seetlu",
   "checklists": "Limu yu seetlu yi",
   "close": "Tëj",
+  "collapse": "Bàyyi",
   "comment-assigned-only": "Bind xalaat ci karta yi ñu sas rekk",
   "comment-only": "Bind xalaat rekk",
   "comments": "Xalaat yi",
@@ -119,6 +119,7 @@
   "text-note-title": "Tëtítre",
   "thursday": "Diyaatu",
   "tuesday": "Dilii",
+  "uncollapse": "Yëkk",
   "view": "Xool",
   "wednesday": "Dilo",
   "worker": "Liggéeykat"

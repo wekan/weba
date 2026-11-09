@@ -28,7 +28,6 @@
   "board-admin": "Vakatulewa ni Vola",
   "board-title": "Ulutaga ni Vola",
   "board-view-cal": "Kaleda",
-  "board-view-collapse": "Lobika",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Lisi",
   "board-view-swimlanes": "Sala",
@@ -48,6 +47,7 @@
   "checklist": "Lisi ni veidikevi",
   "checklists": "Lisi ni vakadinadina",
   "close": "Sogota",
+  "collapse": "Lobika",
   "comment-assigned-only": "Vakasama ena Ka Lesi Ga",
   "comment-only": "Vakasama ga",
   "comments": "Vakasama",
@@ -119,6 +119,7 @@
   "text-note-title": "Ulutaga",
   "thursday": "Lotulevu",
   "tuesday": "Tusiti",
+  "uncollapse": "Dolava",
   "view": "Raica",
   "wednesday": "Vukelulu",
   "worker": "Daucakacaka"

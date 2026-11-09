@@ -28,7 +28,6 @@
   "board-admin": "Administrátor tabla",
   "board-title": "Název tabla",
   "board-view-cal": "Kalendář",
-  "board-view-collapse": "Sbalit",
   "board-view-gantt": "Gannt",
   "board-view-lists": "Sloupce",
   "board-view-swimlanes": "Dráhy",
@@ -48,6 +47,7 @@
   "checklist": "Kontrolní seznam",
   "checklists": "Checklisty",
   "close": "Zavřít",
+  "collapse": "Sbalit",
   "comment-assigned-only": "Pouze komentář u přiřazených",
   "comment-only": "Pouze komentáře",
   "comments": "Komentáře",
@@ -119,6 +119,7 @@
   "text-note-title": "Název",
   "thursday": "Čtvrtek",
   "tuesday": "Úterý",
+  "uncollapse": "Rozbalit",
   "view": "Zobrazit",
   "wednesday": "Středa",
   "worker": "Pracovník"

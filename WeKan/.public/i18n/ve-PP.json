@@ -28,7 +28,6 @@
   "board-admin": "Laudan administrator",
   "board-title": "Laudan nimi",
   "board-view-cal": "Kalendar'",
-  "board-view-collapse": "Penenda",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Lugetišed",
   "board-view-swimlanes": "Ujundšoidud",
@@ -48,6 +47,7 @@
   "checklist": "Kodvindlugetiž",
   "checklists": "Kodvindlugetišed",
   "close": "Saubata",
+  "collapse": "Saubata",
   "comment-assigned-only": "Vaiše märitud, sel’genzoitused",
   "comment-only": "Vaiše sel’genzoitused",
   "comments": "Sel’genzoitused",
@@ -119,6 +119,7 @@
   "text-note-title": "Nimi",
   "thursday": "Nellänzʹpäiv",
   "tuesday": "Tožnarg",
+  "uncollapse": "Levita",
   "view": "Kacu",
   "wednesday": "Koumanzʹpäiv",
   "worker": "Tegii"

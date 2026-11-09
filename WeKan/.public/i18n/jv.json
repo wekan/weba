@@ -28,7 +28,6 @@
   "board-admin": "Admin Papan",
   "board-title": "Judhul Papan",
   "board-view-cal": "Tanggalan",
-  "board-view-collapse": "Ciutake",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Dhaptar-dhaptar",
   "board-view-swimlanes": "Lajur-lajur",
@@ -48,6 +47,7 @@
   "checklist": "Dhaptar priksa",
   "checklists": "Dhaptar priksa",
   "close": "Tutup",
+  "collapse": "Ciutake",
   "comment-assigned-only": "Mung Komentar sing Ditugasake",
   "comment-only": "Mung komentar",
   "comments": "Komentar",
@@ -119,6 +119,7 @@
   "text-note-title": "Judhul",
   "thursday": "Kemis",
   "tuesday": "Selasa",
+  "uncollapse": "Jembarake maneh",
   "view": "Deleng",
   "wednesday": "Rebo",
   "worker": "Buruh"

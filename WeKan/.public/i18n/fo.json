@@ -28,7 +28,6 @@
   "board-admin": "Talvuumsitari",
   "board-title": "Talvuheiti",
   "board-view-cal": "Kalendari",
-  "board-view-collapse": "Leggja saman",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Listar",
   "board-view-swimlanes": "Bein",
@@ -48,6 +47,7 @@
   "checklist": "Eftirkanningarlisti",
   "checklists": "Kanningarlistar",
   "close": "Lat aftur",
+  "collapse": "Fell saman",
   "comment-assigned-only": "Bert viðmerkingar á ásett",
   "comment-only": "Bert viðmerkingar",
   "comments": "Viðmerkingar",
@@ -119,6 +119,7 @@
   "text-note-title": "Yvirskrift",
   "thursday": "Hósdagur",
   "tuesday": "Týsdagur",
+  "uncollapse": "Víðka aftur",
   "view": "Vís",
   "wednesday": "Mikudagur",
   "worker": "Arbeiðari"

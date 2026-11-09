@@ -28,7 +28,6 @@
   "board-admin": "Tagta admini",
   "board-title": "Geňeşiň ady",
   "board-view-cal": "Senenama",
-  "board-view-collapse": "Apseykylmak",
   "board-view-gantt": "Gant",
   "board-view-lists": "Sanawlar",
   "board-view-swimlanes": "Swimüzüjiler",
@@ -48,6 +47,7 @@
   "checklist": "Barlag sanawy",
   "checklists": "Gözegçilik sanawlary",
   "close": ".Akyn",
+  "collapse": "Apseykylmak",
   "comment-assigned-only": "Diňe bellenen teswir",
   "comment-only": "Diňe düşündiriş beriň",
   "comments": "Teswirler",
@@ -119,6 +119,7 @@
   "text-note-title": "Ady",
   "thursday": "Penşenbe",
   "tuesday": "Sişenbe",
+  "uncollapse": "Bölünmek",
   "view": "Gör",
   "wednesday": "Çarşenbe",
   "worker": "Işçi"

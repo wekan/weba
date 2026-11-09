@@ -28,7 +28,6 @@
   "board-admin": "Bulchaa Gabatee",
   "board-title": "Mata Duree Gabatee",
   "board-view-cal": "Kaalaandarii",
-  "board-view-collapse": "Dachaasi",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Tarreewwan",
   "board-view-swimlanes": "Karaalee",
@@ -48,6 +47,7 @@
   "checklist": "Tarree qorannoo",
   "checklists": "Tarreewwan qorannoo",
   "close": "Cufi",
+  "collapse": "Gadi mari",
   "comment-assigned-only": "Yaada Ramadame Qofa",
   "comment-only": "Yaada qofa",
   "comments": "Yaadota",
@@ -119,6 +119,7 @@
   "text-note-title": "Mata duree",
   "thursday": "Kamisa",
   "tuesday": "Kibxata",
+  "uncollapse": "Deebisii bal’isi",
   "view": "Mul’annoo",
   "wednesday": "Roobii",
   "worker": "Hojjetaa"

@@ -28,7 +28,6 @@
   "board-admin": "Admin Bọọdụ",
   "board-title": "Aha osisi",
   "board-view-cal": "Kalenda",
-  "board-view-collapse": "daa",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Ndepụta",
   "board-view-swimlanes": "Ụgbọ mmiri",
@@ -48,6 +47,7 @@
   "checklist": "Ndepụta ndetu",
   "checklists": "Ndepụta ndetu",
   "close": "Mechie",
+  "collapse": "daa",
   "comment-assigned-only": "Naanị nkọwapụta ekenyela",
   "comment-only": "Naanị kwuo okwu",
   "comments": "Okwu",
@@ -119,6 +119,7 @@
   "text-note-title": "Aha",
   "thursday": "Tọzdee",
   "tuesday": "Tuzdee",
+  "uncollapse": "Kwụpụ",
   "view": "Lelee",
   "wednesday": "Wenezde",
   "worker": "Onye ọrụ"

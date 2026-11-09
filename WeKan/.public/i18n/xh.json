@@ -28,7 +28,6 @@
   "board-admin": "uMlawuli weBhodi",
   "board-title": "Isihloko seBhodi",
   "board-view-cal": "Ikhalenda",
-  "board-view-collapse": "Ukuwa",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Uluhlu",
   "board-view-swimlanes": "Iinqwelo zokuqubha",
@@ -48,6 +47,7 @@
   "checklist": "Uluhlu lokukhangela",
   "checklists": "Uluhlu lokutshekisha",
   "close": "Vala",
+  "collapse": "Ukuwa",
   "comment-assigned-only": "Kuphela Kwabelwe Izimvo",
   "comment-only": "Phawula kuphela",
   "comments": "Amagqabantshintshi",
@@ -119,6 +119,7 @@
   "text-note-title": "Isihloko",
   "thursday": "uLwesine",
   "tuesday": "uLwesibini",
+  "uncollapse": "Ukungatshitshili",
   "view": "Jonga",
   "wednesday": "uLwesithathu",
   "worker": "Umsebenzi"

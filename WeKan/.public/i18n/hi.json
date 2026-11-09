@@ -28,7 +28,6 @@
   "board-admin": "बोर्ड एडमिन",
   "board-title": "बोर्ड का शीर्षक",
   "board-view-cal": "तिथि-पत्र",
-  "board-view-collapse": "संक्षिप्त करें",
   "board-view-gantt": "गैंट",
   "board-view-lists": "सूचियाँ",
   "board-view-swimlanes": "तैरना",
@@ -48,6 +47,7 @@
   "checklist": "चेकलिस्ट",
   "checklists": "जांच सूची",
   "close": "बंद करे",
+  "collapse": "संक्षिप्त करें",
   "comment-assigned-only": "केवल सौंपे गए पर टिप्पणी",
   "comment-only": "केवल टिप्पणी करें",
   "comments": "टिप्पणियाँ",
@@ -119,6 +119,7 @@
   "text-note-title": "शीर्षक",
   "thursday": "गुरुवार",
   "tuesday": "मंगलवार",
+  "uncollapse": "असंकुचित करें",
   "view": "देखें",
   "wednesday": "बुधवार",
   "worker": "कामगार"

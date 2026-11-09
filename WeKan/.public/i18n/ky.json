@@ -28,7 +28,6 @@
   "board-admin": "Тактанын администратору",
   "board-title": "Тактанын аталышы",
   "board-view-cal": "Жылнаама",
-  "board-view-collapse": "Жыйноо",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Тизмелер",
   "board-view-swimlanes": "Жолдор",
@@ -48,6 +47,7 @@
   "checklist": "Текшерүү тизмеси",
   "checklists": "Текшерүү тизмелери",
   "close": "Жабуу",
+  "collapse": "Жыйноо",
   "comment-assigned-only": "Дайындалганга гана комментарий",
   "comment-only": "Комментарий гана",
   "comments": "Комментарийлер",
@@ -119,6 +119,7 @@
   "text-note-title": "Аталышы",
   "thursday": "Бейшемби",
   "tuesday": "Шейшемби",
+  "uncollapse": "Жайуу",
   "view": "Көрүү",
   "wednesday": "Шаршемби",
   "worker": "Жумушчу"

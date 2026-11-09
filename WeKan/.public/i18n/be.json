@@ -28,7 +28,6 @@
   "board-admin": "Адміністратар дошкі",
   "board-title": "Назва дошкі",
   "board-view-cal": "Каляндар",
-  "board-view-collapse": "Згарнуць",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Спісы",
   "board-view-swimlanes": "Дарожкі",
@@ -48,6 +47,7 @@
   "checklist": "Кантрольны спіс",
   "checklists": "Кантрольныя спісы",
   "close": "Закрыць",
+  "collapse": "Згарнуць",
   "comment-assigned-only": "Каментарый толькі для прызначаных",
   "comment-only": "Толькі каментарыі",
   "comments": "Каментарыі",
@@ -119,6 +119,7 @@
   "text-note-title": "Назва",
   "thursday": "Чацвер",
   "tuesday": "Аўторак",
+  "uncollapse": "Разгарнуць",
   "view": "Прагляд",
   "wednesday": "Серада",
   "worker": "Работнік"

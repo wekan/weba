@@ -28,7 +28,6 @@
   "board-admin": "Таҡта администраторы",
   "board-title": "Таҡта исеме",
   "board-view-cal": "Календарь",
-  "board-view-collapse": "Йыйырға",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Исемлектәр",
   "board-view-swimlanes": "Юлдар",
@@ -48,6 +47,7 @@
   "checklist": "Тикшереү исемлеге",
   "checklists": "Тикшереү исемлектәре",
   "close": "Ябыу",
+  "collapse": "Йыйырға",
   "comment-assigned-only": "Тик тәғәйенләнгәнгә аңлатма",
   "comment-only": "Тик аңлатма",
   "comments": "Аңлатмалар",
@@ -119,6 +119,7 @@
   "text-note-title": "Исем",
   "thursday": "Кесаҙна",
   "tuesday": "Шишәмбе",
+  "uncollapse": "Йәйергә",
   "view": "Ҡарарға",
   "wednesday": "Шаршамбы",
   "worker": "Эшсе"

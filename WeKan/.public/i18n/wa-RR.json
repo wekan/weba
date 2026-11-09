@@ -28,7 +28,6 @@
   "board-admin": "Admin han Board",
   "board-title": "Titulo han Board",
   "board-view-cal": "Kalendaryo",
-  "board-view-collapse": "I-collapse",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Mga Lista",
   "board-view-swimlanes": "Mga Swimlane",
@@ -48,6 +47,7 @@
   "checklist": "Lista han pagsusi",
   "checklists": "Mga Checklist",
   "close": "Isira",
+  "collapse": "I-collapse",
   "comment-assigned-only": "Komento la ha Gin-asignar",
   "comment-only": "Komento la",
   "comments": "Mga Komento",
@@ -119,6 +119,7 @@
   "text-note-title": "Titulo",
   "thursday": "Huwebes",
   "tuesday": "Martes",
+  "uncollapse": "I-uncollapse",
   "view": "Kitaa",
   "wednesday": "Miyerkoles",
   "worker": "Trabahador"

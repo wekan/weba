@@ -28,7 +28,6 @@
   "board-admin": "Тақта әкімшісі",
   "board-title": "Тақта атауы",
   "board-view-cal": "Күнтізбе",
-  "board-view-collapse": "Жию",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Тізімдер",
   "board-view-swimlanes": "Жолақтар",
@@ -48,6 +47,7 @@
   "checklist": "Тексеру тізімі",
   "checklists": "Тексеру тізімдері",
   "close": "Жабу",
+  "collapse": "Жию",
   "comment-assigned-only": "Тек тағайындалғандарға пікір жазу",
   "comment-only": "Тек пікір жазу",
   "comments": "Пікірлер",
@@ -119,6 +119,7 @@
   "text-note-title": "Тақырып",
   "thursday": "Бейсенбі",
   "tuesday": "Сейсенбі",
+  "uncollapse": "Жаю",
   "view": "Көру",
   "wednesday": "Сәрсенбі",
   "worker": "Жұмысшы"

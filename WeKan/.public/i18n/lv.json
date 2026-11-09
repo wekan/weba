@@ -28,7 +28,6 @@
   "board-admin": "Dēļa administrators",
   "board-title": "Valdybos pavadinimas",
   "board-view-cal": "Kalendārs",
-  "board-view-collapse": "Sakļaut",
   "board-view-gantt": "Gantas",
   "board-view-lists": "Saraksti",
   "board-view-swimlanes": "Joslas",
@@ -48,6 +47,7 @@
   "checklist": "Kontrolsaraksts",
   "checklists": "Kontrolsaraksti",
   "close": "Aizvērt",
+  "collapse": "Sakļaut",
   "comment-assigned-only": "Komentēt tikai piešķirtās kartītes",
   "comment-only": "Tikai komentēt",
   "comments": "komentarai",
@@ -119,6 +119,7 @@
   "text-note-title": "Nosaukums",
   "thursday": "Ceturtdiena",
   "tuesday": "Otrdiena",
+  "uncollapse": "Išskleisti",
   "view": "Skats",
   "wednesday": "Trešdiena",
   "worker": "Darbonis"

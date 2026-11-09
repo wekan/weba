@@ -36,6 +36,19 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   await space('Root <literal>').locator('.weba-space-menu').click();await click('AddSubworkspace');await fill('WorkspaceName','Child');await click('SaveWorkspace');
   const child=spaces().find(row=>row.name==='Child');expect(child.parentId).toBe(root.id);
   await expect(page.locator('.weba-space-open')).toHaveText(['📁 Root <literal>','Child']);
+  await expect(space('Root <literal>').locator('.weba-space-count')).toHaveText('0');
+  await expect(space('Child').locator('.weba-space-count')).toHaveText('0');
+  const caret=()=>space('Root <literal>').locator('.weba-space-collapse');
+  await expect(caret()).toHaveAttribute('aria-expanded','true');
+  await caret().click();await expect(page.locator('.weba-space-open')).toHaveText(['📁 Root <literal>']);
+  expect(fixture('read').collapsed[String(root.id)]).toBe(true);
+  await expect(caret()).toHaveAttribute('aria-expanded','false');
+  await page.reload();await expect(page.locator('.weba-space-open')).toHaveText(['📁 Root <literal>']);
+  await expect(caret()).toHaveAttribute('aria-label','Uncollapse: Root <literal>');
+  await caret().press('Enter');await expect(page.locator('.weba-space-open')).toHaveText(['📁 Root <literal>','Child']);await expect(caret()).toBeFocused();
+  expect(fixture('read').collapsed[String(root.id)]).toBeUndefined();
+  await caret().press('Space');await expect(page.locator('.weba-space-open')).toHaveText(['📁 Root <literal>']);await expect(caret()).toBeFocused();
+  fixture('expand-space','rest-member',{WEBA_SPACE_ID:String(root.id)});await page.bringToFront();await expect(page.locator('.weba-space-open')).toHaveText(['📁 Root <literal>','Child']);
   // Readonly membership still permits personal organization.
   await click('HeaderSearch');await fill('BoardSearch','Workspace Alpha');await expect.poll(names).toEqual(['Workspace Alpha']);
   await page.locator('.weba-board-context').click();await expect(page.locator(control('ContextRename'))).toBeHidden();await click('ContextWorkspace');
@@ -45,8 +58,18 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   await click('ClearBoardSearch');await expect.poll(names).not.toContain('Workspace Alpha');
   await space('Child').locator('.weba-space-open').click();await expect.poll(names).toEqual(['Workspace Alpha']);
   await expect(page.locator(control('PaneTitle'))).toHaveText('Child');
+  await expect(space('Root <literal>').locator('.weba-space-count')).toHaveText('0');
+  await expect(space('Child').locator('.weba-space-count')).toHaveText('1');
+  await caret().click();await expect(page.locator('.weba-space-open')).toHaveText(['📁 Root <literal>']);
+  await expect(page.locator(control('PaneTitle'))).toHaveText('Child');await expect.poll(names).toEqual(['Workspace Alpha']);
+  // Count only direct active boards, regardless of current search/selection.
+  fixture('archive-space-board','rest-other',{WEBA_SPACE_BOARD:String(seeded.ids[0])});await page.bringToFront();await expect.poll(names).toEqual([]);
+  expect(fixture('read').counts[String(child.id)]).toBe(0);
+  fixture('restore-space-board','rest-other',{WEBA_SPACE_BOARD:String(seeded.ids[0])});await expect.poll(names).toEqual(['Workspace Alpha']);
+  await caret().click();await expect(space('Child').locator('.weba-space-count')).toHaveText('1');
   await space('Root <literal>').locator('.weba-space-open').click();await expect.poll(names).toEqual([]);
   fixture('assign-space','rest-member',{WEBA_SPACE_BOARD:String(seeded.ids[0]),WEBA_SPACE_ID:String(root.id)});await page.bringToFront();await expect.poll(names).toEqual(['Workspace Alpha']);
+  await expect(space('Root <literal>').locator('.weba-space-count')).toHaveText('1');await expect(space('Child').locator('.weba-space-count')).toHaveText('0');
   fixture('assign-space','rest-member',{WEBA_SPACE_BOARD:String(seeded.ids[0]),WEBA_SPACE_ID:String(child.id)});await expect.poll(names).toEqual([]);
   await space('Child').locator('.weba-space-open').click();await expect.poll(names).toEqual(['Workspace Alpha']);
   await page.locator('.weba-board-context').click();await click('ContextWorkspace');await page.locator(control('WorkspaceDestination')+' select').selectOption({label:'Remaining'});await click('SaveBoardWorkspace');await expect.poll(names).toEqual([]);
@@ -68,6 +91,7 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   await page.evaluate(()=>webaI18n.setLanguage('fi'));await expect(page.locator('.weba-space-open')).toContainText(['Members']);await expect(page.locator(control('PaneTitle'))).toHaveText('Members');
   const fi=JSON.parse(fs.readFileSync(path.join(source,'imports/i18n/data/fi.i18n.json'),'utf8'));
   await expect(page.locator(control('WorkspacesHeading'))).toHaveText(fi['allboards.workspaces']);
+  await expect(caret()).toHaveAttribute('aria-label',fi.collapse+': Root <literal>');
   await space('Members').locator('.weba-space-menu').click();
   await expect(page.locator(control('WorkspaceHeading'))).toHaveText(fi['allboards.edit-workspace']);await click('CloseWorkspace');
   await page.evaluate(()=>webaI18n.setLanguage('la'));
@@ -98,10 +122,11 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   await page.bringToFront();await page.setViewportSize({width:390,height:844});
   if(await page.locator(control('PageSidebar')).isVisible())await click('CloseSidebar');
   if(!await page.locator(control('LeftNavigation')).isVisible())await click('ToggleNavigation');
+  await expect(space('Root <literal>').locator('.weba-space-count')).toHaveText('0');
   await click('AddWorkspace');const box=await page.locator(control('WorkspacePanel')).boundingBox();expect(box.x).toBeGreaterThanOrEqual(0);expect(box.x+box.width).toBeLessThanOrEqual(390);expect(box.y+box.height).toBeLessThanOrEqual(844);
   await page.keyboard.press('Escape');await expect(page.locator(control('WorkspacePanel'))).toBeHidden();
   await space('Root <literal>').locator('.weba-space-menu').click();fixture('delete-space','rest-member',{WEBA_SPACE_ID:String(root.id)});await expect(page.locator(control('WorkspacePanel'))).toBeHidden();await expect(page.locator('.weba-space-open')).toHaveCount(0);
   expect(errors).toEqual([]);
-  console.log('Native workspace browser: nested create/edit/confirmed delete, literal Unicode/icon persistence, readonly personal assignment, category/search, reload/isolation, live placement/draft/deletion and revoked-save guards, translated labels and mobile popup/Escape passed');
+  console.log('Native workspace browser: nested create/edit/confirmed delete, literal Unicode/icon persistence, readonly personal assignment, category/search, private persisted mouse/keyboard folding, direct active counts, reload/isolation, live placement/draft/deletion and revoked-save guards, translated labels and mobile popup/Escape passed');
  }finally{if(otherContext)await otherContext.close();if(context)await context.close();if(browser)await browser.close();}
 })().catch(error=>{let message=error.stack||String(error);if(process.env.WEBA_TEST_PASSWORD)message=message.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(message);process.exitCode=1;});

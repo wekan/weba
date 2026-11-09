@@ -28,7 +28,6 @@
   "board-admin": "Admin Papan",
   "board-title": "Judul Papan",
   "board-view-cal": "Almanak",
-  "board-view-collapse": "Peuubit",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Dapeuta",
   "board-view-swimlanes": "Mandum Swimlane",
@@ -48,6 +47,7 @@
   "checklist": "Dapeuta peumeriksa",
   "checklists": "Dapeuta peureksa",
   "close": "Tôp",
+  "collapse": "Peuseumpét",
   "comment-assigned-only": "Komen keu nyang geubri buet mantong",
   "comment-only": "Komen mantong",
   "comments": "Komen",
@@ -119,6 +119,7 @@
   "text-note-title": "Judul",
   "thursday": "Hamèh",
   "tuesday": "Seulasa",
+  "uncollapse": "Peubuka",
   "view": "Kalon",
   "wednesday": "Rabu",
   "worker": "Ureueng buet"

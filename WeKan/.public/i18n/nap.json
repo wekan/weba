@@ -28,7 +28,6 @@
   "board-admin": "Amministratore d' 'a tavula",
   "board-title": "Tìtulo tavula",
   "board-view-cal": "Calendario",
-  "board-view-collapse": "Comprimi",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Liste",
   "board-view-swimlanes": "Corsie",
@@ -48,6 +47,7 @@
   "checklist": "Lista 'e controllo",
   "checklists": "Liste 'e cuntrollo",
   "close": "Chiure",
+  "collapse": "Comprimi",
   "comment-assigned-only": "Sulo commento assegnato",
   "comment-only": "Sulo commenti",
   "comments": "Commiente",
@@ -119,6 +119,7 @@
   "text-note-title": "Titolo",
   "thursday": "Giovedì",
   "tuesday": "Martedì",
+  "uncollapse": "Nun collassare",
   "view": "Vista",
   "wednesday": "Mercoledì",
   "worker": "Lavoratore"

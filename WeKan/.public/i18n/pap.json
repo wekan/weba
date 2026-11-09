@@ -28,7 +28,6 @@
   "board-admin": "Atministradó di e tabla",
   "board-title": "Título di e Tabla",
   "board-view-cal": "Calendario",
-  "board-view-collapse": "Contraer",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Listanan",
   "board-view-swimlanes": "Kamindanan",
@@ -48,6 +47,7 @@
   "checklist": "Lista di chèk",
   "checklists": "Listanan di chèk",
   "close": "Sera",
+  "collapse": "Contraer",
   "comment-assigned-only": "Solamente comentar asignadas",
   "comment-only": "Solamente komentarionan",
   "comments": "Komentarionan",
@@ -119,6 +119,7 @@
   "text-note-title": "Titulo",
   "thursday": "Huebes",
   "tuesday": "Martes",
+  "uncollapse": "Expandir",
   "view": "Mira",
   "wednesday": "Miércoles",
   "worker": "Trabahador"

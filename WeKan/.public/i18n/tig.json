@@ -28,7 +28,6 @@
   "board-admin": "ሓክም ምዱድ",
   "board-title": "ኣርእስቲ ምዱድ",
   "board-view-cal": "አምዕል ለልተዐለብ እቱ ወድና አወርሕት",
-  "board-view-collapse": "ኣክብ",
   "board-view-gantt": "Gantt",
   "board-view-lists": "ዝርዝራት",
   "board-view-swimlanes": "መገድታት",
@@ -48,6 +47,7 @@
   "checklist": "ናይ ምርመራ ዝርዝር",
   "checklists": "ናይ ምርመራ ዝርዝራት",
   "close": "ድባእ",
+  "collapse": "ኣክብ",
   "comment-assigned-only": "ኣብ ዝተመደበ ጥራይ ርእይ",
   "comment-only": "ርእይ ጥራይ",
   "comments": "ርእይታት",
@@ -119,6 +119,7 @@
   "text-note-title": "አርእስ",
   "thursday": "ከሚሽ",
   "tuesday": "አተሉት",
+  "uncollapse": "ዘርግሕ",
   "view": "ርአ",
   "wednesday": "አረቡዕ",
   "worker": "ሸቃላይ"

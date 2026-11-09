@@ -28,7 +28,6 @@
   "board-admin": "Molaodi wa Boto",
   "board-title": "Sehlogo sa Boto",
   "board-view-cal": "Khalentara",
-  "board-view-collapse": "Phutha",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Malokelelo",
   "board-view-swimlanes": "Ditsela",
@@ -48,6 +47,7 @@
   "checklist": "Lelokelelo la tlhahlobo",
   "checklists": "Malokelelo a tlhahlobo",
   "close": "Tswalela",
+  "collapse": "Mena",
   "comment-assigned-only": "Tshwayotshwayo go tše di abetšwego feela",
   "comment-only": "Ditshwayotshwayo feela",
   "comments": "Ditshwaotshwao",
@@ -119,6 +119,7 @@
   "text-note-title": "Sehlogo",
   "thursday": "Labone",
   "tuesday": "Labobedi",
+  "uncollapse": "Phutholla",
   "view": "Lebelela",
   "wednesday": "Laboraro",
   "worker": "Mošomi"

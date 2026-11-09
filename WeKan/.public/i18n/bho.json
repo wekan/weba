@@ -28,7 +28,6 @@
   "board-admin": "बोर्ड प्रशासक",
   "board-title": "बोर्ड शीर्षक",
   "board-view-cal": "कैलेंडर",
-  "board-view-collapse": "समेटीं",
   "board-view-gantt": "Gantt",
   "board-view-lists": "सूची",
   "board-view-swimlanes": "रस्ता",
@@ -48,6 +47,7 @@
   "checklist": "जाँच सूची",
   "checklists": "जाँच सूची",
   "close": "बंद करीं",
+  "collapse": "समेटीं",
   "comment-assigned-only": "खाली सौंपल कार्ड पर टिप्पणी",
   "comment-only": "खाली टिप्पणी",
   "comments": "टिप्पणी",
@@ -119,6 +119,7 @@
   "text-note-title": "शीर्षक",
   "thursday": "बिफे",
   "tuesday": "मंगर",
+  "uncollapse": "फइलाईं",
   "view": "देखीं",
   "wednesday": "बुध",
   "worker": "काम करे वाला"

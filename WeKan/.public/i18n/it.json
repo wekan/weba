@@ -28,7 +28,6 @@
   "board-admin": "Amministratore della bacheca",
   "board-title": "Titolo bacheca",
   "board-view-cal": "Calendario",
-  "board-view-collapse": "Comprimi",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Liste",
   "board-view-swimlanes": "Swimlane",
@@ -48,6 +47,7 @@
   "checklist": "Lista di controllo",
   "checklists": "Checklist",
   "close": "Chiudi",
+  "collapse": "Comprimi",
   "comment-assigned-only": "Solo commento assegnato",
   "comment-only": "Solo commenti",
   "comments": "Commenti",
@@ -119,6 +119,7 @@
   "text-note-title": "Titolo",
   "thursday": "Giovedì",
   "tuesday": "Martedì",
+  "uncollapse": "Non collassare",
   "view": "Vista",
   "wednesday": "Mercoledì",
   "worker": "Lavoratore"

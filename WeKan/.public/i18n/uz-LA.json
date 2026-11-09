@@ -28,7 +28,6 @@
   "board-admin": "Taxta admini",
   "board-title": "Taxta nomi",
   "board-view-cal": "Kalendar",
-  "board-view-collapse": "Yiqilish",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Roʻyxatlar",
   "board-view-swimlanes": "Suzish yo'llari",
@@ -48,6 +47,7 @@
   "checklist": "Tekshirish roʻyxati",
   "checklists": "Tekshirish ro'yxatlari",
   "close": "Yopish",
+  "collapse": "Yiqilish",
   "comment-assigned-only": "Faqat tayinlangan izoh",
   "comment-only": "Faqat fikr bildirish",
   "comments": "Fikrlar",
@@ -119,6 +119,7 @@
   "text-note-title": "Sarlavha",
   "thursday": "Payshanba",
   "tuesday": "seshanba",
+  "uncollapse": "Yechish",
   "view": "Ko'rish",
   "wednesday": "chorshanba",
   "worker": "Ishchi"

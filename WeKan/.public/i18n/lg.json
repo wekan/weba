@@ -28,7 +28,6 @@
   "board-admin": "Lubaawo Omuddukanya",
   "board-title": "Lubaawo Mutwe",
   "board-view-cal": "Kalenda",
-  "board-view-collapse": "Funza",
   "board-view-gantt": "Kifaananyi kya Gantt",
   "board-view-lists": "Enkalala",
   "board-view-swimlanes": "Obukubo",
@@ -48,6 +47,7 @@
   "checklist": "Olukalala lw'okukebera",
   "checklists": "Enkalala z'okukebera",
   "close": "Ggalawo",
+  "collapse": "Funza",
   "comment-assigned-only": "Kyokka Assigned Ky'okwogera",
   "comment-only": "Ky'okwogera kyokka",
   "comments": "Endowooza",
@@ -119,6 +119,7 @@
   "text-note-title": "Omutwe",
   "thursday": "Lwakuna",
   "tuesday": "Lwakubiri",
+  "uncollapse": "Gaziya",
   "view": "Laba",
   "wednesday": "Lwakusatu",
   "worker": "Omukozi"

@@ -28,7 +28,6 @@
   "board-admin": "Administrator tablicy",
   "board-title": "Tytuł tablicy",
   "board-view-cal": "Kalendarz",
-  "board-view-collapse": "Zwiń",
   "board-view-gantt": "Wykres Gantta",
   "board-view-lists": "Listy",
   "board-view-swimlanes": "Ścieżki",
@@ -48,6 +47,7 @@
   "checklist": "Checklista",
   "checklists": "Czeklisty",
   "close": "Zamknij",
+  "collapse": "Zwiń",
   "comment-assigned-only": "Komentarz tylko przypisany",
   "comment-only": "Tylko komentowanie",
   "comments": "Komentarze",
@@ -119,6 +119,7 @@
   "text-note-title": "Tytuł",
   "thursday": "Czwartek",
   "tuesday": "Wtorek",
+  "uncollapse": "Rozwiń",
   "view": "Widok",
   "wednesday": "Środa",
   "worker": "Pracownik"

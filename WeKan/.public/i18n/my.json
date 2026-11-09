@@ -28,7 +28,6 @@
   "board-admin": "ဘုတ်စီမံသူ",
   "board-title": "ဘုတ်ခေါင်းစဉ်",
   "board-view-cal": "ပြက္ခဒိန်",
-  "board-view-collapse": "ခေါက်ရန်",
   "board-view-gantt": "Gantt",
   "board-view-lists": "စာရင်းများ",
   "board-view-swimlanes": "လမ်းကြောင်းများ",
@@ -48,6 +47,7 @@
   "checklist": "စစ်ဆေးရန်စာရင်း",
   "checklists": "စစ်ဆေးရန်စာရင်းများ",
   "close": "ပိတ်ရန်",
+  "collapse": "ခေါက်ရန်",
   "comment-assigned-only": "တာဝန်ပေးထားသည်တွင်သာ မှတ်ချက်",
   "comment-only": "မှတ်ချက်သာ",
   "comments": "မှတ်ချက်များ",
@@ -119,6 +119,7 @@
   "text-note-title": "ခေါင်းစဉ်",
   "thursday": "ကြာသပတေး",
   "tuesday": "အင်္ဂါ",
+  "uncollapse": "ပြန်ဖြန့်ရန်",
   "view": "ကြည့်ရန်",
   "wednesday": "ဗုဒ္ဓဟူး",
   "worker": "လုပ်သား"

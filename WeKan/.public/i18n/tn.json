@@ -28,7 +28,6 @@
   "board-admin": "Boto Molaodi",
   "board-title": "Boto Setlhogo",
   "board-view-cal": "Khalendara",
-  "board-view-collapse": "Mena",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Manaane",
   "board-view-swimlanes": "Ditsela",
@@ -48,6 +47,7 @@
   "checklist": "Lenaane la tlhatlhobo",
   "checklists": "Manaane a tlhatlhobo",
   "close": "Tswala",
+  "collapse": "Tshedimosetso: Collapse",
   "comment-assigned-only": "Tshwaelo ya tse di abetsweng fela",
   "comment-only": "Tshwaelo fela",
   "comments": "Dikakgelo",
@@ -119,6 +119,7 @@
   "text-note-title": "Setlhogo",
   "thursday": "Tshedimosetso: Thursday",
   "tuesday": "Tshedimosetso: Tuesday",
+  "uncollapse": "Tshedimosetso: Uncollapse",
   "view": "Leba",
   "wednesday": "Tshedimosetso: Wednesday",
   "worker": "Modiri"

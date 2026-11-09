@@ -28,7 +28,6 @@
   "board-admin": "Reireyder boayrd",
   "board-title": "Ennym boayrd",
   "board-view-cal": "Feaillere",
-  "board-view-collapse": "Co-chur",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Rolleeyn",
   "board-view-swimlanes": "Cassanyn",
@@ -48,6 +47,7 @@
   "checklist": "Rolley scrutaghey",
   "checklists": "Rolleeyn cronnee",
   "close": "Dooney",
+  "collapse": "Co-chur",
   "comment-assigned-only": "Cooish er kaartyn currit da ny lomarcan",
   "comment-only": "Cooish ny lomarcan",
   "comments": "Cooishyn",
@@ -119,6 +119,7 @@
   "text-note-title": "Tidal",
   "thursday": "Jerdein",
   "tuesday": "Jemayrt",
+  "uncollapse": "Sheeyney reesht",
   "view": "Reayrt",
   "wednesday": "Jecrean",
   "worker": "Obbreyder"

@@ -28,7 +28,6 @@
   "board-admin": "বোর্ড প্রশাসক",
   "board-title": "বোর্ডের শিরোনাম",
   "board-view-cal": "পঞ্জিকা",
-  "board-view-collapse": "সংকুচিত",
   "board-view-gantt": "Gantt",
   "board-view-lists": "তালিকাসমূহ",
   "board-view-swimlanes": "সাঁতারপথসমূহ",
@@ -48,6 +47,7 @@
   "checklist": "চেকলিস্ট",
   "checklists": "চেকলিস্টসমূহ",
   "close": "বন্ধ",
+  "collapse": "সংকুচিত করুন",
   "comment-assigned-only": "শুধু অর্পিত কার্ডে মন্তব্য",
   "comment-only": "শুধু মন্তব্য",
   "comments": "মন্তব্যসমূহ",
@@ -119,6 +119,7 @@
   "text-note-title": "শিরোনাম",
   "thursday": "বৃহস্পতিবার",
   "tuesday": "মঙ্গলবার",
+  "uncollapse": "প্রসারিত করুন",
   "view": "দেখুন",
   "wednesday": "বুধবার",
   "worker": "কর্মী"

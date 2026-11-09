@@ -28,7 +28,6 @@
   "board-admin": "Bord Amministratur",
   "board-title": "Bord Titlu",
   "board-view-cal": "Kalendarju",
-  "board-view-collapse": "Ikkollassa",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Listi",
   "board-view-swimlanes": "Korsiji",
@@ -48,6 +47,7 @@
   "checklist": "Lista ta' verifika",
   "checklists": "Listi ta' verifika",
   "close": "Agħlaq",
+  "collapse": "Ikkollassa",
   "comment-assigned-only": "Only Assigned Kumment",
   "comment-only": "Kumment only",
   "comments": "Kummenti",
@@ -119,6 +119,7 @@
   "text-note-title": "Titlu",
   "thursday": "Il-Ħamis",
   "tuesday": "It-Tlieta",
+  "uncollapse": "Espandi",
   "view": "Ara",
   "wednesday": "L-Erbgħa",
   "worker": "Ħaddiem"

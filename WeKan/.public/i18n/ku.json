@@ -28,7 +28,6 @@
   "board-admin": "Rêveberê depoyê",
   "board-title": "Sernavê depoyê",
   "board-view-cal": "Salname",
-  "board-view-collapse": "Bitewîne",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Lîste",
   "board-view-swimlanes": "Rêç",
@@ -48,6 +47,7 @@
   "checklist": "Lîsteya kontrolê",
   "checklists": "Lîsteyên kontrolê",
   "close": "Bigire",
+  "collapse": "Biçikîne",
   "comment-assigned-only": "Tenê şîroveya tayînkirî",
   "comment-only": "Tenê şîrove",
   "comments": "Şîrove",
@@ -119,6 +119,7 @@
   "text-note-title": "Sernav",
   "thursday": "Pêncşem",
   "tuesday": "Sêşem",
+  "uncollapse": "Veke",
   "view": "Dîtin",
   "wednesday": "Çarşem",
   "worker": "Xebatkar"

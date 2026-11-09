@@ -28,7 +28,6 @@
   "board-admin": "Administrator de panou",
   "board-title": "Titlul panoului",
   "board-view-cal": "Calendar",
-  "board-view-collapse": "Restrânge",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Liste",
   "board-view-swimlanes": "Culoare",
@@ -48,6 +47,7 @@
   "checklist": "Listă de verificare",
   "checklists": "Liste de verificare",
   "close": "Închide",
+  "collapse": "Restrânge",
   "comment-assigned-only": "Doar comentarii pe cardurile atribuite",
   "comment-only": "Doar comentarii",
   "comments": "Comentarii",
@@ -119,6 +119,7 @@
   "text-note-title": "Titlu",
   "thursday": "Joi",
   "tuesday": "Marți",
+  "uncollapse": "Extinde",
   "view": "Vizualizare",
   "wednesday": "Miercuri",
   "worker": "Lucrător"

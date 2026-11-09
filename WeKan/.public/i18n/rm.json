@@ -28,7 +28,6 @@
   "board-admin": "Administratur da la tabella",
   "board-title": "Titel da la tabella",
   "board-view-cal": "Chalender",
-  "board-view-collapse": "Reducir",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Glistas",
   "board-view-swimlanes": "Vista da swimlanes",
@@ -48,6 +47,7 @@
   "checklist": "Glista da controlla",
   "checklists": "Glistas da controlla",
   "close": "Serrar",
+  "collapse": "Cumprimer",
   "comment-assigned-only": "Mo commentaris attribuids",
   "comment-only": "Mo commentar",
   "comments": "Commentaris",
@@ -119,6 +119,7 @@
   "text-note-title": "Titel",
   "thursday": "Giovedì",
   "tuesday": "Martedì",
+  "uncollapse": "Extender",
   "view": "Vista",
   "wednesday": "Mercoledì",
   "worker": "Lavurant"

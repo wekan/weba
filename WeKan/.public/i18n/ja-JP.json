@@ -28,7 +28,6 @@
   "board-admin": "ボード管理者",
   "board-title": "ボードのタイトル",
   "board-view-cal": "カレンダー",
-  "board-view-collapse": "折りたたむ",
   "board-view-gantt": "ガント",
   "board-view-lists": "リスト",
   "board-view-swimlanes": "スイムレーン",
@@ -48,6 +47,7 @@
   "checklist": "チェックリスト",
   "checklists": "チェックリスト",
   "close": "閉じる",
+  "collapse": "折りたたむ",
   "comment-assigned-only": "担当分のみコメント可",
   "comment-only": "コメントのみ",
   "comments": "コメント",
@@ -119,6 +119,7 @@
   "text-note-title": "タイトル",
   "thursday": "木曜",
   "tuesday": "火曜",
+  "uncollapse": "展開",
   "view": "ビュー",
   "wednesday": "水曜",
   "worker": "作業者"

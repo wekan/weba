@@ -28,7 +28,6 @@
   "board-admin": "Alakoso Igbimọ",
   "board-title": "Akọle Igbimọ",
   "board-view-cal": "Kalẹnda",
-  "board-view-collapse": "Kọlulẹ",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Awọn akojọ",
   "board-view-swimlanes": "Awọn ọkọ oju-omi kekere",
@@ -48,6 +47,7 @@
   "checklist": "Akojọ ayẹwo",
   "checklists": "Awọn akojọ ayẹwo",
   "close": "Sunmọ",
+  "collapse": "Kọlulẹ",
   "comment-assigned-only": "Ọrọìwòye ti a sọtọ nikan",
   "comment-only": "Ọrọìwòye nikan",
   "comments": "Awọn ọrọìwòye",
@@ -119,6 +119,7 @@
   "text-note-title": "Akọle",
   "thursday": "Ojobo",
   "tuesday": "Ọjọbọ",
+  "uncollapse": "Un Collapse",
   "view": "Wo",
   "wednesday": "Ọjọru",
   "worker": "Osise"

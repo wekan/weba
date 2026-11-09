@@ -28,7 +28,6 @@
   "board-admin": "Quản trị viên bảng",
   "board-title": "Judul Papan",
   "board-view-cal": "Lịch",
-  "board-view-collapse": "Thu gọn",
   "board-view-gantt": "Biểu đồ Gantt",
   "board-view-lists": "Danh sách",
   "board-view-swimlanes": "Làn ngang",
@@ -48,6 +47,7 @@
   "checklist": "Danh sách kiểm tra",
   "checklists": "Danh sách việc cần hoàn thành",
   "close": "Đóng",
+  "collapse": "Thu gọn",
   "comment-assigned-only": "Hanya peruntukkan komen",
   "comment-only": "Chỉ bình luận",
   "comments": "Komen",
@@ -119,6 +119,7 @@
   "text-note-title": "Tiêu đề",
   "thursday": "Thứ năm",
   "tuesday": "Thứ ba",
+  "uncollapse": "Mở rộng",
   "view": "Xem",
   "wednesday": "Thứ tư",
   "worker": "Pekerja"

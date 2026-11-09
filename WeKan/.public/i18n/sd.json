@@ -28,7 +28,6 @@
   "board-admin": "بورڊ منتظم",
   "board-title": "بورڊ جو عنوان",
   "board-view-cal": "ڪئلينڊر",
-  "board-view-collapse": "ويڙهيو",
   "board-view-gantt": "Gantt",
   "board-view-lists": "فهرستون",
   "board-view-swimlanes": "لڪيرون",
@@ -48,6 +47,7 @@
   "checklist": "چڪاس فهرست",
   "checklists": "چڪاس فهرستون",
   "close": "بند ڪريو",
+  "collapse": "سُسڪايو",
   "comment-assigned-only": "رڳو مقرر ٿيل تي تبصرو",
   "comment-only": "رڳو تبصرو",
   "comments": "تبصرا",
@@ -119,6 +119,7 @@
   "text-note-title": "عنوان",
   "thursday": "خميس",
   "tuesday": "اڱارو",
+  "uncollapse": "ٻيهر پکيڙيو",
   "view": "ڏسو",
   "wednesday": "اربع",
   "worker": "ڪارڪن"

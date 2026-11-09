@@ -28,7 +28,6 @@
   "board-admin": "Peteĩcha ñangarekoha",
   "board-title": "Peteĩcha réra",
   "board-view-cal": "Arapapaha",
-  "board-view-collapse": "Emboty mbyky",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Ysajakuéra",
   "board-view-swimlanes": "Tapekuéra",
@@ -48,6 +47,7 @@
   "checklist": "Ysaja ñehesa'ỹijo",
   "checklists": "Ysaja jehechajeyrã",
   "close": "Mboty",
+  "collapse": "Emomichĩ",
   "comment-assigned-only": "Oñeme'ẽva rehe je'epy añoite",
   "comment-only": "Je'epy añoite",
   "comments": "Je'ekuéra",
@@ -119,6 +119,7 @@
   "text-note-title": "Téra",
   "thursday": "Arapo",
   "tuesday": "Araapy",
+  "uncollapse": "Embotuichajey",
   "view": "Ehecha",
   "wednesday": "Ararundy",
   "worker": "Mba'apohára"

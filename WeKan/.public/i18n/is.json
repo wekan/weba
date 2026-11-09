@@ -28,7 +28,6 @@
   "board-admin": "Stjórnandi töflu",
   "board-title": "Heiti töflu",
   "board-view-cal": "Dagatal",
-  "board-view-collapse": "Fella saman",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Listar",
   "board-view-swimlanes": "Sundbrautir",
@@ -48,6 +47,7 @@
   "checklist": "Gátlisti",
   "checklists": "Gátlistar",
   "close": "Loka",
+  "collapse": "Fella saman",
   "comment-assigned-only": "Athugasemdir aðeins á úthlutuðum spjöldum",
   "comment-only": "Aðeins athugasemdir",
   "comments": "Athugasemdir",
@@ -119,6 +119,7 @@
   "text-note-title": "Titill",
   "thursday": "Fimmtudagur",
   "tuesday": "Þriðjudagur",
+  "uncollapse": "Opna aftur",
   "view": "Skoða",
   "wednesday": "Miðvikudagur",
   "worker": "Starfsmaður"

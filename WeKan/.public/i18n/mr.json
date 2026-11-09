@@ -28,7 +28,6 @@
   "board-admin": "फलक प्रशासक",
   "board-title": "फलक शीर्षक",
   "board-view-cal": "दिनदर्शिका",
-  "board-view-collapse": "संक्षिप्त करा",
   "board-view-gantt": "Gantt",
   "board-view-lists": "याद्या",
   "board-view-swimlanes": "मार्गिका",
@@ -48,6 +47,7 @@
   "checklist": "तपासणी यादी",
   "checklists": "तपासणी याद्या",
   "close": "बंद करा",
+  "collapse": "संक्षिप्त करा",
   "comment-assigned-only": "फक्त नियुक्त कार्डावर टिप्पणी",
   "comment-only": "फक्त टिप्पणी",
   "comments": "टिप्पण्या",
@@ -119,6 +119,7 @@
   "text-note-title": "शीर्षक",
   "thursday": "गुरुवार",
   "tuesday": "मंगळवार",
+  "uncollapse": "विस्तृत करा",
   "view": "पहा",
   "wednesday": "बुधवार",
   "worker": "कार्यकर्ता"

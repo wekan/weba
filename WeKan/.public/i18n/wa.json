@@ -28,7 +28,6 @@
   "board-admin": "Manaedjeu do tåvlea",
   "board-title": "Tite du dåvle",
   "board-view-cal": "Calindrî",
-  "board-view-collapse": "Totafwait catchî",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Djivêyes",
   "board-view-swimlanes": "Coridôrs",
@@ -48,6 +47,7 @@
   "checklist": "Djivêye di verifiaedje",
   "checklists": "Djivêyes di verifiaedje",
   "close": "Clôre",
+  "collapse": "Totafwait catchî",
   "comment-assigned-only": "Rimåkes seulmint, cåtes dinêyes seulmint",
   "comment-only": "Coment seul",
   "comments": "Coments",
@@ -119,6 +119,7 @@
   "text-note-title": "Tite",
   "thursday": "Jedi",
   "tuesday": "Mårdi",
+  "uncollapse": "Dësbòndar",
   "view": "Veye",
   "wednesday": "Mecredi",
   "worker": "Travayeur"

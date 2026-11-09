@@ -28,7 +28,6 @@
   "board-admin": "ਬੋਰਡ ਐਡਮਿਨ",
   "board-title": "ਬੋਰਡ ਦਾ ਸਿਰਲੇਖ",
   "board-view-cal": "ਕੈਲੰਡਰ",
-  "board-view-collapse": "ਸਮੇਟਣਾ",
   "board-view-gantt": "ਗੈਂਟ",
   "board-view-lists": "ਸੂਚੀਆਂ",
   "board-view-swimlanes": "ਤੈਰਾਕੀ",
@@ -48,6 +47,7 @@
   "checklist": "ਚੈੱਕਲਿਸਟ",
   "checklists": "ਚੈੱਕਲਿਸਟਸ",
   "close": "ਬੰਦ ਕਰੋ",
+  "collapse": "ਸਮੇਟਣਾ",
   "comment-assigned-only": "ਸਿਰਫ਼ ਅਸਾਈਨ ਕੀਤੀ ਟਿੱਪਣੀ",
   "comment-only": "ਸਿਰਫ਼ ਟਿੱਪਣੀ ਕਰੋ",
   "comments": "ਟਿੱਪਣੀਆਂ",
@@ -119,6 +119,7 @@
   "text-note-title": "ਸਿਰਲੇਖ",
   "thursday": "ਵੀਰਵਾਰ",
   "tuesday": "ਮੰਗਲਵਾਰ",
+  "uncollapse": "ਢਹਿ-ਢੇਰੀ ਕਰੋ",
   "view": "ਦੇਖੋ",
   "wednesday": "ਬੁੱਧਵਾਰ",
   "worker": "ਵਰਕਰ"

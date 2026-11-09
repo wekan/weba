@@ -28,7 +28,6 @@
   "board-admin": "Administrador del tablero",
   "board-title": "Título del Tablero",
   "board-view-cal": "Calendario",
-  "board-view-collapse": "Contraer",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Listas",
   "board-view-swimlanes": "Calles",
@@ -48,6 +47,7 @@
   "checklist": "Lista de tareas",
   "checklists": "Listas de ítems",
   "close": "Cerrar",
+  "collapse": "Contraer",
   "comment-assigned-only": "Solo comentar asignadas",
   "comment-only": "Comentar solamente",
   "comments": "Comentarios",
@@ -119,6 +119,7 @@
   "text-note-title": "Título",
   "thursday": "Jueves",
   "tuesday": "Martes",
+  "uncollapse": "Expandir",
   "view": "Ver",
   "wednesday": "Miércoles",
   "worker": "Trabajador"

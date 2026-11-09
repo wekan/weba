@@ -28,7 +28,6 @@
   "board-admin": "bodo mulawuri",
   "board-title": "bodo nhlokomhaka",
   "board-view-cal": "khalendara",
-  "board-view-collapse": "Pfala",
   "board-view-gantt": "Tchati ya Gantt",
   "board-view-lists": "Minxaxamelo",
   "board-view-swimlanes": "Tindlela",
@@ -48,6 +47,7 @@
   "checklist": "Nxaxamelo wo kambela",
   "checklists": "Minxaxamelo yo kambela",
   "close": "Pfala",
+  "collapse": "Pfunya",
   "comment-assigned-only": "Mbulavulo eka leswi Averiweke Ntsena",
   "comment-only": "nhlamuselo mhaka",
   "comments": "Mimbulavulo",
@@ -119,6 +119,7 @@
   "text-note-title": "Nhloko-mhaka",
   "thursday": "Ravumune",
   "tuesday": "Ravumbirhi",
+  "uncollapse": "Pfunyulula",
   "view": "Langutelo",
   "wednesday": "Ravunharhu",
   "worker": "Mutirhi"

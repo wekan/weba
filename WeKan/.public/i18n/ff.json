@@ -28,7 +28,6 @@
   "board-admin": "Jiiloowo alluwal",
   "board-title": "Hoore alluwal",
   "board-view-cal": "Haatumeere",
-  "board-view-collapse": "Taggu",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Doggi",
   "board-view-swimlanes": "Laabi",
@@ -48,6 +47,7 @@
   "checklist": "Doggol ƴeewndagol",
   "checklists": "Doggi ƴeewndo",
   "close": "Uddu",
+  "collapse": "Taggu",
   "comment-assigned-only": "Yowre halfinaaɗe tan",
   "comment-only": "Yowre tan",
   "comments": "Yowe",
@@ -119,6 +119,7 @@
   "text-note-title": "Tiitoonde",
   "thursday": "Alkamiisa",
   "tuesday": "Talaata",
+  "uncollapse": "Yaajtin",
   "view": "Yiy",
   "wednesday": "Alarba",
   "worker": "Golloowo"

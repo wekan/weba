@@ -28,7 +28,6 @@
   "board-admin": "ברעט־אַדמין",
   "board-title": "ברעט טיטל",
   "board-view-cal": "קאַלענדאַר",
-  "board-view-collapse": "ייַנבראָך",
   "board-view-gantt": "גאַנטט",
   "board-view-lists": "רשימות",
   "board-view-swimlanes": "סווימלאַנעס",
@@ -48,6 +47,7 @@
   "checklist": "טשעקליסט",
   "checklists": "טשעקליסטס",
   "close": "נאָענט",
+  "collapse": "ייַנבראָך",
   "comment-assigned-only": "בלויז אַסיינד באַמערקונג",
   "comment-only": "באַמערקונג בלויז",
   "comments": "באַמערקונגען",
@@ -119,6 +119,7 @@
   "text-note-title": "טיטל",
   "thursday": "דאנערשטאג",
   "tuesday": "דינסטיק",
+  "uncollapse": "ונקאַלאַפּס",
   "view": "מבט",
   "wednesday": "מיטוואך",
   "worker": "אַרבעטער"

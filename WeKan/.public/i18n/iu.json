@@ -28,7 +28,6 @@
   "board-admin": "ᐊᓪᓚᕕᐅᑉ ᐊᐅᓚᑦᓯᔨᖓ",
   "board-title": "ᐊᓪᓚᕕᐅᑉ ᑕᐃᒎᓯᖓ",
   "board-view-cal": "ᐅᓪᓗᖅᓯᐅᑎ",
-  "board-view-collapse": "ᒥᑭᓪᓕᑎᓪᓗᒍ",
   "board-view-gantt": "Gantt",
   "board-view-lists": "ᑎᑎᖅᑲᓕᐊᑦ",
   "board-view-swimlanes": "ᐊᖅᑯᑏᑦ",
@@ -48,6 +47,7 @@
   "checklist": "ᖃᐅᔨᓴᕈᑎ ᑎᑎᖅᑲᓕᐊᖅ",
   "checklists": "ᖃᐅᔨᓴᕈᑏᑦ",
   "close": "ᒪᑐᔭᐅᔪᖅ",
+  "collapse": "ᐃᑭᓪᓕᑎᓪᓗᒍ",
   "comment-assigned-only": "ᑎᓕᔭᐅᓯᒪᔪᓂᑐᐊᖅ ᐅᖃᐅᓯᖃᕐᓂᖅ",
   "comment-only": "ᐅᖃᐅᓯᖅᑕᖃᑐᐃᓐᓇᕐᓗᓂ",
   "comments": "ᐅᖃᐅᓰᑦ",
@@ -119,6 +119,7 @@
   "text-note-title": "ᑎᑎᕋᖅᓯᒪᔫᑉ ᐊᑎᖓ",
   "thursday": "ᓯᑕᒻᒥᖅ",
   "tuesday": "ᐊᐃᑉᐱᖅ",
+  "uncollapse": "ᐊᖏᓕᑎᓪᓗᒍ",
   "view": "ᑕᑯᓗᒍ",
   "wednesday": "ᐱᖓᑦᓯᖅ",
   "worker": "ᓴᓇᔨ"

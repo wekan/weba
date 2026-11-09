@@ -28,7 +28,6 @@
   "board-admin": "Umuyobozi w'Icapa",
   "board-title": "Umutwe w'Icapa",
   "board-view-cal": "Ikirangamisi",
-  "board-view-collapse": "Kwegeranya",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Intonde",
   "board-view-swimlanes": "Imirongo",
@@ -48,6 +47,7 @@
   "checklist": "Urutonde rwo kugenzura",
   "checklists": "Intonde zo kugenzura",
   "close": "Ugara",
+  "collapse": "Zinga",
   "comment-assigned-only": "Ivyiyumviro ku vyashinzwe gusa",
   "comment-only": "Ivyiyumviro gusa",
   "comments": "Ivyiyumviro",
@@ -119,6 +119,7 @@
   "text-note-title": "Umutwe",
   "thursday": "Kuwa kane",
   "tuesday": "Kuwa kabiri",
+  "uncollapse": "Zingurura",
   "view": "Raba",
   "wednesday": "Kuwa gatatu",
   "worker": "Umukozi"

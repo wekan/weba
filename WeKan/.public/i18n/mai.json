@@ -28,7 +28,6 @@
   "board-admin": "बोर्ड प्रशासक",
   "board-title": "बोर्ड शीर्षक",
   "board-view-cal": "कैलेंडर",
-  "board-view-collapse": "समेटू",
   "board-view-gantt": "Gantt",
   "board-view-lists": "सूची",
   "board-view-swimlanes": "मार्ग",
@@ -48,6 +47,7 @@
   "checklist": "जाँच सूची",
   "checklists": "जाँच सूची",
   "close": "बन्न करू",
+  "collapse": "समेटू",
   "comment-assigned-only": "केवल नियुक्त टिप्पणी",
   "comment-only": "केवल टिप्पणी",
   "comments": "टिप्पणी",
@@ -119,6 +119,7 @@
   "text-note-title": "शीर्षक",
   "thursday": "बृहस्पतिवार",
   "tuesday": "मंगलवार",
+  "uncollapse": "पसारू",
   "view": "दृश्य",
   "wednesday": "बुधवार",
   "worker": "कार्यकर्ता"

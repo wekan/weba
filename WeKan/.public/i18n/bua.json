@@ -28,7 +28,6 @@
   "board-admin": "Самбарай захирагша",
   "board-title": "Самбарай нэрэ",
   "board-view-cal": "Хуанли",
-  "board-view-collapse": "Хуряаха",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Жагсаалтанууд",
   "board-view-swimlanes": "Замууд",
@@ -48,6 +47,7 @@
   "checklist": "Шалгалтын жагсаалта",
   "checklists": "Шалгалтын жагсаалтанууд",
   "close": "Хааха",
+  "collapse": "Хуряаха",
   "comment-assigned-only": "Гансал томилогдоһон картада тайлбари",
   "comment-only": "Гансал тайлбари",
   "comments": "Һанамжанууд",
@@ -119,6 +119,7 @@
   "text-note-title": "Гарчаг",
   "thursday": "Пүрбэ гараг",
   "tuesday": "Мягмар гараг",
+  "uncollapse": "Дэлгэхэ",
   "view": "Хараха",
   "wednesday": "Лхагба гараг",
   "worker": "Ажалшан"

@@ -28,7 +28,6 @@
   "board-admin": "Адміністратор дошки",
   "board-title": "Назва дошки",
   "board-view-cal": "Календар",
-  "board-view-collapse": "Згорнути",
   "board-view-gantt": "Гантт",
   "board-view-lists": "Списки",
   "board-view-swimlanes": "Свімлейни",
@@ -48,6 +47,7 @@
   "checklist": "Контрольний список",
   "checklists": "Контрольні списки",
   "close": "Закрити",
+  "collapse": "Згорнути",
   "comment-assigned-only": "Коментування лише призначених",
   "comment-only": "Тільки коментарі",
   "comments": "Коментарі",
@@ -119,6 +119,7 @@
   "text-note-title": "Назва",
   "thursday": "Четвер",
   "tuesday": "Вівторок",
+  "uncollapse": "Розгорнути",
   "view": "Переглянути",
   "wednesday": "Середа",
   "worker": "Робітник"

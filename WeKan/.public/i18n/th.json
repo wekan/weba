@@ -28,7 +28,6 @@
   "board-admin": "ผู้ดูแลบอร์ด",
   "board-title": "ชื่อบอร์ด",
   "board-view-cal": "ปฏิทิน",
-  "board-view-collapse": "ยุบ",
   "board-view-gantt": "แกนต์",
   "board-view-lists": "รายการ",
   "board-view-swimlanes": "สวิมเลน",
@@ -48,6 +47,7 @@
   "checklist": "เช็คลิสต์",
   "checklists": "รายการตรวจสอบ",
   "close": "ปิด",
+  "collapse": "ยุบ",
   "comment-assigned-only": "ความคิดเห็นเฉพาะที่ได้รับมอบหมาย",
   "comment-only": "แสดงความคิดเห็นเท่านั้น",
   "comments": "ความคิดเห็น",
@@ -119,6 +119,7 @@
   "text-note-title": "หัวข้อ",
   "thursday": "วันพฤหัสบดี",
   "tuesday": "วันอังคาร",
+  "uncollapse": "ยกเลิกการยุบ",
   "view": "มุมมอง",
   "wednesday": "วันพุธ",
   "worker": "ผู้ปฏิบัติงาน"

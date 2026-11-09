@@ -28,7 +28,6 @@
   "board-admin": "Administrator tafle",
   "board-title": "Mjeno tabla",
   "board-view-cal": "Protyka",
-  "board-view-collapse": "Zezběrać",
   "board-view-gantt": "Gantt-diagram",
   "board-view-lists": "Lisćiny",
   "board-view-swimlanes": "Dróhi",
@@ -48,6 +47,7 @@
   "checklist": "Kontrolna lisćina",
   "checklists": "Kontrolne lisćiny",
   "close": "Začinić",
+  "collapse": "Zwinyć",
   "comment-assigned-only": "Jenož přirjadowane komentować",
   "comment-only": "Jenož komentować",
   "comments": "Komentary",
@@ -119,6 +119,7 @@
   "text-note-title": "Titul",
   "thursday": "Štwórtk",
   "tuesday": "Wutora",
+  "uncollapse": "Rozwinyć",
   "view": "Pokazać",
   "wednesday": "Srjeda",
   "worker": "Dźěłaćer"

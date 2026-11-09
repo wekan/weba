@@ -28,7 +28,6 @@
   "board-admin": "보드 관리자",
   "board-title": "보드 제목",
   "board-view-cal": "달력",
-  "board-view-collapse": "접기",
   "board-view-gantt": "간트",
   "board-view-lists": "목록들",
   "board-view-swimlanes": "스윔레인",
@@ -48,6 +47,7 @@
   "checklist": "체크리스트",
   "checklists": "체크리스트",
   "close": "닫기",
+  "collapse": "접기",
   "comment-assigned-only": "지정된 카드만 댓글 가능",
   "comment-only": "댓글만 입력 가능",
   "comments": "댓글",
@@ -119,6 +119,7 @@
   "text-note-title": "제목",
   "thursday": "목요일",
   "tuesday": "화요일",
+  "uncollapse": "펴기",
   "view": "보기",
   "wednesday": "수요일",
   "worker": "노동자"

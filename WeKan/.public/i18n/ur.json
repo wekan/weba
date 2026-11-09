@@ -28,7 +28,6 @@
   "board-admin": "بورڈ منتظم",
   "board-title": "بورڈ کا عنوان",
   "board-view-cal": "تقویم",
-  "board-view-collapse": "سمیٹیں",
   "board-view-gantt": "Gantt",
   "board-view-lists": "فہرستیں",
   "board-view-swimlanes": "سویم لینیں",
@@ -48,6 +47,7 @@
   "checklist": "چیک لسٹ",
   "checklists": "چیک لسٹیں",
   "close": "بند کریں",
+  "collapse": "سمیٹیں",
   "comment-assigned-only": "صرف تفویض شدہ پر تبصرہ",
   "comment-only": "صرف تبصرہ",
   "comments": "تبصرے",
@@ -119,6 +119,7 @@
   "text-note-title": "عنوان",
   "thursday": "جمعرات",
   "tuesday": "منگل",
+  "uncollapse": "پھیلائیں",
   "view": "منظر",
   "wednesday": "بدھ",
   "worker": "کارکن"

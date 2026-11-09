@@ -28,7 +28,6 @@
   "board-admin": "Ilisarnaatip aqutsisua",
   "board-title": "Ilisarnaatip qulequtaa",
   "board-view-cal": "Ullorsiut",
-  "board-view-collapse": "Katiguk",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Allattorsimaffiit",
   "board-view-swimlanes": "Aqqutit",
@@ -48,6 +47,7 @@
   "checklist": "Misissuiffiusumik allattorsimaffik",
   "checklists": "Misissuiffiit",
   "close": "Matuguk",
+  "collapse": "Katiguk",
   "comment-assigned-only": "Suliassiissutigineqartuni oqaaseqaannarneq",
   "comment-only": "Oqaaseqaannarneq",
   "comments": "Oqaaseqaatit",
@@ -119,6 +119,7 @@
   "text-note-title": "Qulequtaq",
   "thursday": "Sisamanngorneq",
   "tuesday": "Marlunngorneq",
+  "uncollapse": "Siaartiguk",
   "view": "Takujuk",
   "wednesday": "Pingasunngorneq",
   "worker": "Sulisartoq"

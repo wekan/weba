@@ -28,7 +28,6 @@
   "board-admin": "Woyang'anira bolodi",
   "board-title": "Mutu wa bolodi",
   "board-view-cal": "Kalendala",
-  "board-view-collapse": "Pindani",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Mindandanda",
   "board-view-swimlanes": "Njira",
@@ -48,6 +47,7 @@
   "checklist": "Mndandanda woyang'anira",
   "checklists": "Mindandanda yoyang'anira",
   "close": "Tsekani",
+  "collapse": "Pindani",
   "comment-assigned-only": "Ndemanga pa Zopatsidwa Zokha",
   "comment-only": "Ndemanga zokha",
   "comments": "Ndemanga",
@@ -119,6 +119,7 @@
   "text-note-title": "Mutu",
   "thursday": "Lachinayi",
   "tuesday": "Lachiwiri",
+  "uncollapse": "Futukulani",
   "view": "Onani",
   "wednesday": "Lachitatu",
   "worker": "Wogwira Ntchito"

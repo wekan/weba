@@ -28,7 +28,6 @@
   "board-admin": "Admin blong Bod",
   "board-title": "Taetol blong Bod",
   "board-view-cal": "Kalenda",
-  "board-view-collapse": "Foldem",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Ol lis",
   "board-view-swimlanes": "Ol rod",
@@ -48,6 +47,7 @@
   "checklist": "Lis blong jekem",
   "checklists": "Ol jeklis",
   "close": "Satem",
+  "collapse": "Foldem",
   "comment-assigned-only": "Komen long Kad we oli Givim nomo",
   "comment-only": "Komen nomo",
   "comments": "Ol toktok",
@@ -119,6 +119,7 @@
   "text-note-title": "Taetol",
   "thursday": "Tasde",
   "tuesday": "Tusde",
+  "uncollapse": "Openem bakegen",
   "view": "Lukluk",
   "wednesday": "Wenesde",
   "worker": "Woka"

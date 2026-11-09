@@ -28,7 +28,6 @@
   "board-admin": "بەڕێوەبەری تەختە",
   "board-title": "ناونیشانی تەختە",
   "board-view-cal": "ڕۆژژمێر",
-  "board-view-collapse": "کۆکردنەوە",
   "board-view-gantt": "Gantt",
   "board-view-lists": "لیستەکان",
   "board-view-swimlanes": "ڕێڕەوەکان",
@@ -48,6 +47,7 @@
   "checklist": "لیستی پشکنین",
   "checklists": "لیستی پشکنین",
   "close": "داخستن",
+  "collapse": "کۆبکەرەوە",
   "comment-assigned-only": "تەنها لێدوانی دیاریکراو",
   "comment-only": "تەنها لێدوان",
   "comments": "لێدوانەکان",
@@ -119,6 +119,7 @@
   "text-note-title": "ناونیشان",
   "thursday": "پێنجشەممە",
   "tuesday": "سێشەممە",
+  "uncollapse": "بڵاوبکەرەوە",
   "view": "دیمەن",
   "wednesday": "چوارشەممە",
   "worker": "کرێکار"

@@ -28,7 +28,6 @@
   "board-admin": "Kaiwhakahaere Papa",
   "board-title": "Taitara Papa",
   "board-view-cal": "Maramataka",
-  "board-view-collapse": "Tiango",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Ngā rārangi",
   "board-view-swimlanes": "Ngā ara",
@@ -48,6 +47,7 @@
   "checklist": "Rārangi arowhai",
   "checklists": "Ngā rārangi arowhai",
   "close": "Kati",
+  "collapse": "Tiango",
   "comment-assigned-only": "Tākupu ki ngā Mea Kua Tautapatia Anake",
   "comment-only": "Tākupu anake",
   "comments": "Ngā kōrero",
@@ -119,6 +119,7 @@
   "text-note-title": "Taitara",
   "thursday": "Tāite",
   "tuesday": "Tūrei",
+  "uncollapse": "Whakaroha anō",
   "view": "Tirohanga",
   "wednesday": "Wenerei",
   "worker": "Kaimahi"

@@ -28,7 +28,6 @@
   "board-admin": "Menystrer estyllen",
   "board-title": "Titel estyllen",
   "board-view-cal": "Kalender",
-  "board-view-collapse": "Plega",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Rolyow",
   "board-view-swimlanes": "Hynsyow",
@@ -48,6 +47,7 @@
   "checklist": "Rol checkya",
   "checklists": "Rolyow checkya",
   "close": "Degea",
+  "collapse": "Plega",
   "comment-assigned-only": "Kampoellyans arghadowys hepken",
   "comment-only": "Kampoellyans hepken",
   "comments": "Kampoellyansow",
@@ -119,6 +119,7 @@
   "text-note-title": "Tyle",
   "thursday": "Dy'Yow",
   "tuesday": "Dy'Meurth",
+  "uncollapse": "Disprega",
   "view": "Gwel",
   "wednesday": "Dy'Merher",
   "worker": "Oberer"

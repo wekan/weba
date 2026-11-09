@@ -39,6 +39,9 @@ Private $spaceMenu As Integer
 Private $spacesState As String
 Private $spaceRows As New WebContainer[]
 Private $spaceButtons As New Collection
+Private $spaceCarets As New Collection
+Private $spaceCollapsed As Collection
+Private $spaceCounts As Collection
 Private $spaceNames As New Collection
 Private $workspaceEdit As Integer
 Private $workspaceParent As Integer
@@ -2224,15 +2227,20 @@ End
 ' Personal workspace controls; names/icons are user text, never HTML.
 Private Function RefreshSpaces() As Boolean
   Dim tree As Variant[] = BoardSpaces.Tree()
-  Dim state As String = JSON.Encode(tree) & JSON.Encode(BoardSpaces.Assignments())
+  Dim state As String
   Dim row As WebContainer
+  $spaceCollapsed = BoardSpaces.Collapsed()
+  $spaceCounts = BoardSpaces.Counts()
+  state = JSON.Encode(tree) & JSON.Encode(BoardSpaces.Assignments()) & JSON.Encode($spaceCollapsed) & JSON.Encode($spaceCounts)
   If state = $spacesState Then Return False
   For Each row In $spaceRows
     row.Delete()
   Next
   $spaceRows.Clear()
   $spaceButtons.Clear()
+  $spaceCarets.Clear()
   $spaceNames.Clear()
+  IndexSpaceNames(tree)
   AddSpaceRows(tree, 0)
   If $spaceMenu > 0 And Not $spaceNames.Exist(CStr($spaceMenu)) Then
     $spaceMenu = 0
@@ -2245,6 +2253,27 @@ Private Function RefreshSpaces() As Boolean
   Return True
 End
 
+Private Sub IndexSpaceNames(nodes As Variant[])
+  Dim node As Collection
+  For Each node In nodes
+    $spaceNames[node["id"]] = CStr(node["name"])
+    IndexSpaceNames(node["children"])
+  Next
+End
+
+Public Sub CollapsePersonalWorkspace_Click()
+  Dim id As Integer = Last.Tag
+  Dim caret As WebButton
+  BoardSpaces.SetCollapsed(id, InStr(Last.Class, "fa-caret-down") > 0)
+  RefreshSpaces()
+  If $spaceCarets.Exist(CStr(id)) Then
+    caret = $spaceCarets[CStr(id)]
+    caret.SetFocus()
+  Endif
+Catch
+  Notice.Text = Error.Text
+End
+
 Private Sub AddSpaceRows(nodes As Variant[], depth As Integer)
   Dim node As Collection
   Dim row As WebContainer
@@ -2252,6 +2281,9 @@ Private Sub AddSpaceRows(nodes As Variant[], depth As Integer)
   Dim button As WebButton
   Dim menu As WebButton
   Dim caption As String
+  Dim caret As WebButton
+  Dim count As WebLabel
+  Dim folded As Boolean
   For Each node In nodes
     row = New WebContainer(WorkspaceRows)
     row.Arrangement = Arrange.Horizontal
@@ -2262,6 +2294,17 @@ Private Sub AddSpaceRows(nodes As Variant[], depth As Integer)
       indent.Width = Str(Min(depth, 8) * 12) & "px"
       indent.Class = "weba-space-indent"
     Endif
+    folded = $spaceCollapsed.Exist(CStr(node["id"]))
+    If node["children"].Count > 0 Then
+      caret = New WebButton(row) As "CollapsePersonalWorkspace"
+      caret.Tag = CInt(node["id"])
+      caret.Class = "weba-icon-only weba-space-collapse fa fa-caret-" & If(folded, "right", "down")
+      caret.Tooltip = If(folded, "Uncollapse", "Collapse")
+      $spaceCarets[node["id"]] = caret
+    Else
+      indent = New WebContainer(row)
+      indent.Class = "weba-space-collapse-spacer"
+    Endif
     caption = CStr(node["name"])
     If CStr(node["icon"]) Then caption = CStr(node["icon"]) & " " & caption
     button = New WebButton(row) As "OpenPersonalWorkspace"
@@ -2271,12 +2314,14 @@ Private Sub AddSpaceRows(nodes As Variant[], depth As Integer)
     button.Class = "weba-space-open weba-user-text"
     button.Expand = True
     $spaceButtons[node["id"]] = button
-    $spaceNames[node["id"]] = CStr(node["name"])
     menu = New WebButton(row) As "PersonalWorkspaceMenu"
     menu.Tag = CInt(node["id"])
     menu.Class = "weba-icon-only fa fa-bars weba-space-menu"
     menu.Tooltip = "Workspace menu"
-    AddSpaceRows(node["children"], depth + 1)
+    count = New WebLabel(row)
+    count.Text = Str($spaceCounts[CStr(node["id"])])
+    count.Class = "weba-space-count"
+    If Not folded Then AddSpaceRows(node["children"], depth + 1)
   Next
 End
 

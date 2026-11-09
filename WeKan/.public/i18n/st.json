@@ -28,7 +28,6 @@
   "board-admin": "Molaodi wa boto",
   "board-title": "Sehlooho sa boto",
   "board-view-cal": "Khalendara",
-  "board-view-collapse": "Mena",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Manane",
   "board-view-swimlanes": "Ditsela",
@@ -48,6 +47,7 @@
   "checklist": "Lenane la ho hlahloba",
   "checklists": "Manane a ho hlahloba",
   "close": "Koala",
+  "collapse": "Mena",
   "comment-assigned-only": "Maikutlo ho tse abetsweng feela",
   "comment-only": "Maikutlo feela",
   "comments": "Maikutlo",
@@ -119,6 +119,7 @@
   "text-note-title": "Sehlooho",
   "thursday": "Labone",
   "tuesday": "Labobedi",
+  "uncollapse": "Phutholla",
   "view": "Sheba",
   "wednesday": "Laboraro",
   "worker": "Mosebeletsi"

@@ -28,7 +28,6 @@
   "board-admin": "Admin Papan",
   "board-title": "Judul Papan",
   "board-view-cal": "Kalender",
-  "board-view-collapse": "Ciutkan",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Daftar",
   "board-view-swimlanes": "Jalur",
@@ -48,6 +47,7 @@
   "checklist": "Daftar periksa",
   "checklists": "Daftar Periksa",
   "close": "Tutup",
+  "collapse": "Ciutkan",
   "comment-assigned-only": "Hanya Komentar pada Kartu yang Ditugaskan",
   "comment-only": "Hanya komentar",
   "comments": "Komentar",
@@ -119,6 +119,7 @@
   "text-note-title": "Judul",
   "thursday": "Kamis",
   "tuesday": "Selasa",
+  "uncollapse": "Buka lipatan",
   "view": "Tampilan",
   "wednesday": "Rabu",
   "worker": "Pekerja"

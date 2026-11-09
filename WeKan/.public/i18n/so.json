@@ -28,7 +28,6 @@
   "board-admin": "Maamulaha Sabuuradda",
   "board-title": "Cinwaanka Sabuuradda",
   "board-view-cal": "Kalandar",
-  "board-view-collapse": "Isku Laab",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Liisaska",
   "board-view-swimlanes": "Waddooyin",
@@ -48,6 +47,7 @@
   "checklist": "Liiska hubinta",
   "checklists": "Liisaska hubinta",
   "close": "Xir",
+  "collapse": "Laab",
   "comment-assigned-only": "Faallo Keliya Kuwa Loo Xilsaaray",
   "comment-only": "Faallo oo keliya",
   "comments": "Faallooyin",
@@ -119,6 +119,7 @@
   "text-note-title": "Cinwaan",
   "thursday": "Khamiis",
   "tuesday": "Talaado",
+  "uncollapse": "Ka fur laabka",
   "view": "Muuqaal",
   "wednesday": "Arbaco",
   "worker": "Shaqaale"

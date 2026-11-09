@@ -28,7 +28,6 @@
   "board-admin": "Távvala hálddašeaddji",
   "board-title": "Távvala namahus",
   "board-view-cal": "Kaleanddar",
-  "board-view-collapse": "Geahpedahte",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Listtut",
   "board-view-swimlanes": "Bálgát",
@@ -48,6 +47,7 @@
   "checklist": "Dárkkistanlistu",
   "checklists": "Dárkkistanlisttut",
   "close": "Gidde",
+  "collapse": "Geahped",
   "comment-assigned-only": "Dušše mearriduvvon goarttaid kommenteren",
   "comment-only": "Dušše kommenteren",
   "comments": "Kommeanttat",
@@ -119,6 +119,7 @@
   "text-note-title": "Namahus",
   "thursday": "Duorastat",
   "tuesday": "Maŋŋebárga",
+  "uncollapse": "Viiddit",
   "view": "Čájeheapmi",
   "wednesday": "Gaskavahkku",
   "worker": "Bargi"

@@ -28,7 +28,6 @@
   "board-admin": "ബോർഡ് അഡ്മിൻ",
   "board-title": "ബോർഡ് ശീർഷകം",
   "board-view-cal": "കലണ്ടർ",
-  "board-view-collapse": "ചുരുക്കുക",
   "board-view-gantt": "Gantt",
   "board-view-lists": "പട്ടികകൾ",
   "board-view-swimlanes": "പാതകൾ",
@@ -48,6 +47,7 @@
   "checklist": "പരിശോധനാ പട്ടിക",
   "checklists": "പരിശോധനാ പട്ടികകൾ",
   "close": "അടയ്ക്കുക",
+  "collapse": "ചുരുക്കുക",
   "comment-assigned-only": "നിയോഗിച്ചവയിൽ മാത്രം അഭിപ്രായം",
   "comment-only": "അഭിപ്രായം മാത്രം",
   "comments": "അഭിപ്രായങ്ങൾ",
@@ -119,6 +119,7 @@
   "text-note-title": "ശീർഷകം",
   "thursday": "വ്യാഴാഴ്ച",
   "tuesday": "ചൊവ്വാഴ്ച",
+  "uncollapse": "വികസിപ്പിക്കുക",
   "view": "കാണുക",
   "wednesday": "ബുധനാഴ്ച",
   "worker": "തൊഴിലാളി"

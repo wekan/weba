@@ -28,7 +28,6 @@
   "board-admin": "બોર્ડ એડમિન",
   "board-title": "બોર્ડ શીર્ષક",
   "board-view-cal": "કેલેન્ડર",
-  "board-view-collapse": "સંકુચિત કરો",
   "board-view-gantt": "ગેન્ટ",
   "board-view-lists": "યાદીઓ",
   "board-view-swimlanes": "સ્વિમલેન્સ",
@@ -48,6 +47,7 @@
   "checklist": "ચેકલિસ્ટ",
   "checklists": "ચેકલિસ્ટ્સ",
   "close": "બંધ કરો",
+  "collapse": "સંકુચિત કરો",
   "comment-assigned-only": "માત્ર અસાઇન કરેલી ટિપ્પણી",
   "comment-only": "ફક્ત ટિપ્પણી કરો",
   "comments": "ટિપ્પણીઓ",
@@ -119,6 +119,7 @@
   "text-note-title": "શીર્ષક",
   "thursday": "ગુરુવાર",
   "tuesday": "મંગળવાર",
+  "uncollapse": "અનકલેપ્સ",
   "view": "જુઓ",
   "wednesday": "બુધવાર",
   "worker": "કામદાર"

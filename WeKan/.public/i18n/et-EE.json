@@ -28,7 +28,6 @@
   "board-admin": "Tahvli administraator",
   "board-title": "Tahvli pealkiri",
   "board-view-cal": "Kalender",
-  "board-view-collapse": "Kokkupõrge",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Loetelud",
   "board-view-swimlanes": "Ujumisrajad",
@@ -48,6 +47,7 @@
   "checklist": "Kontrollnimekiri",
   "checklists": "Kontrollnimekirjad",
   "close": "Sulge",
+  "collapse": "Kokkupõrge",
   "comment-assigned-only": "Ainult määratud kommentaar",
   "comment-only": "Ainult kommentaar",
   "comments": "Kommentaarid",
@@ -119,6 +119,7 @@
   "text-note-title": "Pealkiri",
   "thursday": "Neljapäev",
   "tuesday": "Teisipäev",
+  "uncollapse": "Laienda",
   "view": "Vaade",
   "wednesday": "Kolmapäev",
   "worker": "Töötaja"

@@ -28,7 +28,6 @@
   "board-admin": "Board-Administrator",
   "board-title": "Board-Titel",
   "board-view-cal": "Kalender",
-  "board-view-collapse": "Einklappen",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Listen",
   "board-view-swimlanes": "Bahnenansicht",
@@ -48,6 +47,7 @@
   "checklist": "Checkliste",
   "checklists": "Checklisten",
   "close": "Schliessen",
+  "collapse": "Einklappen",
   "comment-assigned-only": "Nur zugewiesener Kommentar",
   "comment-only": "Nur Kommentare",
   "comments": "Kommentare",
@@ -119,6 +119,7 @@
   "text-note-title": "Titel",
   "thursday": "Donnerstag",
   "tuesday": "Dienstag",
+  "uncollapse": "Aufklappen",
   "view": "Ansicht",
   "wednesday": "Mittwoch",
   "worker": "Arbeiter"

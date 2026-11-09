@@ -2,6 +2,15 @@
 
 This work adds the following features and fixes:
 
+- Add private persisted workspace folding with native caret buttons, keyboard/
+  focus support and translated named aria labels. Preserve a selected hidden
+  descendant and show direct active readable board counts with helper exclusion.
+  Refresh counts across placement/archive/access changes. Verify true-only
+  storage, locked ownership checks, rollback/retry, cleanup and 25 comparisons
+  against the original helper; exercise live/reload folding and counts in real
+  source/packaged browsers. Original workspace gestures/callbacks remain open.
+  Thanks to xet7.
+
 - Document native workspace rows/forms, readonly placement, private live state,
   draft/revocation guards and literal user text. Record source/packaged browser
   checks, imported labels and the remaining form/gesture/original-suite gaps.

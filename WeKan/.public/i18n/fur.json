@@ -28,7 +28,6 @@
   "board-admin": "Aministradôr de taule",
   "board-title": "Titul taule",
   "board-view-cal": "Calendari",
-  "board-view-collapse": "Strenç",
   "board-view-gantt": "Diagram di Gantt",
   "board-view-lists": "Listis",
   "board-view-swimlanes": "Corsiis",
@@ -48,6 +47,7 @@
   "checklist": "Liste di control",
   "checklists": "Listis di control",
   "close": "Siere",
+  "collapse": "Strenç",
   "comment-assigned-only": "Dome coments su lis assegnadis",
   "comment-only": "Dome coments",
   "comments": "Coments",
@@ -119,6 +119,7 @@
   "text-note-title": "Titul",
   "thursday": "Joibe",
   "tuesday": "Martars",
+  "uncollapse": "No collassare",
   "view": "Viôt",
   "wednesday": "Miercus",
   "worker": "Lavoristoris"

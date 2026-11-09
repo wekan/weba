@@ -28,7 +28,6 @@
   "board-admin": "مدیر برد",
   "board-title": "عنوان اللوح",
   "board-view-cal": "تقویم",
-  "board-view-collapse": "جمع کردن",
   "board-view-gantt": "گانت",
   "board-view-lists": "لیست‌ها",
   "board-view-swimlanes": "مسیرها",
@@ -48,6 +47,7 @@
   "checklist": "چک‌لیست",
   "checklists": "چک‌لیست‌ها",
   "close": "بستن",
+  "collapse": "جمع کردن",
   "comment-assigned-only": "فقط نظر محول‌شده",
   "comment-only": "فقط نظر",
   "comments": "نظرها",
@@ -119,6 +119,7 @@
   "text-note-title": "عنوان",
   "thursday": "پنجشنبه",
   "tuesday": "سه شنبه",
+  "uncollapse": "إلغاء الانهيار",
   "view": "نما",
   "wednesday": "چهارشنبه",
   "worker": "کارگر"

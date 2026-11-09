@@ -28,7 +28,6 @@
   "board-admin": "Administrator tabule",
   "board-title": "Tytuł tabule",
   "board-view-cal": "Kalendarz",
-  "board-view-collapse": "Zwiń",
   "board-view-gantt": "Wykres Gantta",
   "board-view-lists": "Listy",
   "board-view-swimlanes": "Ślaki",
@@ -48,6 +47,7 @@
   "checklist": "Lista kōntrole",
   "checklists": "Listy kōntrole",
   "close": "Zawrzić",
+  "collapse": "Zwiń",
   "comment-assigned-only": "Kōmyntŏrz ino przypisany",
   "comment-only": "Ino komentowanie",
   "comments": "Kōmyntŏrze",
@@ -119,6 +119,7 @@
   "text-note-title": "Tytuł",
   "thursday": "Czwartek",
   "tuesday": "Wtorek",
+  "uncollapse": "Rozwiń",
   "view": "Widok",
   "wednesday": "Środa",
   "worker": "Pracownik"

@@ -14,6 +14,7 @@ source = args.wekan / 'imports/i18n'
 english = json.loads((source / 'data/en.i18n.json').read_text())
 # Explicit equivalents where weba and WeKan use different English captions.
 aliases = {
+    'Collapse': 'collapse', 'Uncollapse': 'uncollapse',
     'Workspaces': 'allboards.workspaces', 'Add Workspace': 'allboards.add-workspace',
     'Workspace name': 'allboards.add-workspace-prompt',
     'Workspace icon (markdown)': 'allboards.edit-workspace-icon',
@@ -59,7 +60,7 @@ report = (root / 'WeKan/.public/kanban.js').read_text()
 texts.update(re.findall(r"add\([^,]+,\s*'[^']+',\s*'([^']+)'", report))
 texts.update(['Todo', 'Doing', 'Done', 'Card', 'Status', 'Swimlane', 'Due date',
               'No due date', 'Previous month', 'Next month', 'Default', 'All cards',
-              'Add card', 'Add list', 'Add swimlane', 'Collapse', 'Close', 'Save', 'Cards',
+              'Add card', 'Add list', 'Add swimlane', 'Collapse', 'Uncollapse', 'Close', 'Save', 'Cards',
               'Move card', 'Move list', 'Move swimlane',
               'Move this list and all its cards to the other swimlane?'])
 lookup = {}

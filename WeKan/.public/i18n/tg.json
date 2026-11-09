@@ -28,7 +28,6 @@
   "board-admin": "Маъмури тахта",
   "board-title": "Унвони тахта",
   "board-view-cal": "Тақвим",
-  "board-view-collapse": "Ҷамъ кардан",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Рӯйхатҳо",
   "board-view-swimlanes": "Хатҳо",
@@ -48,6 +47,7 @@
   "checklist": "Рӯйхати санҷиш",
   "checklists": "Рӯйхатҳои санҷиш",
   "close": "Пӯшидан",
+  "collapse": "Ҷамъ кардан",
   "comment-assigned-only": "Танҳо шарҳи таъиншуда",
   "comment-only": "Танҳо шарҳ",
   "comments": "Шарҳҳо",
@@ -119,6 +119,7 @@
   "text-note-title": "Сарлавҳа",
   "thursday": "Панҷшанбе",
   "tuesday": "Сешанбе",
+  "uncollapse": "Аз ҷамъшуда баровардан",
   "view": "Намоиш",
   "wednesday": "Чоршанбе",
   "worker": "Корманд"

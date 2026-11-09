@@ -28,7 +28,6 @@
   "board-admin": "Merour an daolenn",
   "board-title": "Titl an daolenn",
   "board-view-cal": "Deiziadur",
-  "board-view-collapse": "Plegañ",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Rolloù",
   "board-view-swimlanes": "Bandennoù",
@@ -48,6 +47,7 @@
   "checklist": "Roll-gwiriañ",
   "checklists": "Liskadurien",
   "close": "Serriñ",
+  "collapse": "Plegañ",
   "comment-assigned-only": "Evezhiadennoù hepken war ar c’hartennoù deverket",
   "comment-only": "Dilun hepken",
   "comments": "Evezhiadennoù",
@@ -119,6 +119,7 @@
   "text-note-title": "Titl",
   "thursday": "Yaou",
   "tuesday": "Meurzh",
+  "uncollapse": "Displegañ",
   "view": "Gwelout",
   "wednesday": "Mercrezh",
   "worker": "Klasker"

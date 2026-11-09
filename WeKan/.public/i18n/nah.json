@@ -28,7 +28,6 @@
   "board-admin": "Huapalli tlayecani",
   "board-title": "Huapalli itoca",
   "board-view-cal": "Tonalamatl",
-  "board-view-collapse": "Xictzicuiltia",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Tocatlahtoltin",
   "board-view-swimlanes": "Ohtin",
@@ -48,6 +47,7 @@
   "checklist": "Tlaixnamiquiliztli tocatlahtolli",
   "checklists": "Tlanextiliztocatlahtolli",
   "close": "Xictzacua",
+  "collapse": "Xictzincui",
   "comment-assigned-only": "Zan tlanahuatilli tlahtolpehualiztli",
   "comment-only": "Zan tlahtolpehualiztli",
   "comments": "Tlahtolpehualiztin",
@@ -119,6 +119,7 @@
   "text-note-title": "Tocaitl",
   "thursday": "Jueves",
   "tuesday": "Martes",
+  "uncollapse": "Xicpatlahua",
   "view": "Xiquitta",
   "wednesday": "Miércoles",
   "worker": "Tequitini"

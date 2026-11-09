@@ -28,7 +28,6 @@
   "board-admin": "Tabaadmin",
   "board-title": "Tiäd taba",
   "board-view-cal": "Kaled",
-  "board-view-collapse": "Nürölön",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Liseds",
   "board-view-swimlanes": "Dil horitätik",
@@ -48,6 +47,7 @@
   "checklist": "Kontrolalised",
   "checklists": "Kontrolaliseds",
   "close": "Färmükön",
+  "collapse": "Nürölön",
   "comment-assigned-only": "Te küpetön kadis pejonidüköl",
   "comment-only": "Te küpetön",
   "comments": "Küpets",
@@ -119,6 +119,7 @@
   "text-note-title": "Titolo",
   "thursday": "Dödel",
   "tuesday": "Tudel",
+  "uncollapse": "Lüükön nürölön",
   "view": "Logön",
   "wednesday": "Vedel",
   "worker": "Voban"

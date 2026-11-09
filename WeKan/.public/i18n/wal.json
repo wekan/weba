@@ -28,7 +28,6 @@
   "board-admin": "Bookkiyaa halaqaa",
   "board-title": "Bookkiyaa huuphe sunttaa",
   "board-view-cal": "Wodiyaa qoodaa",
-  "board-view-collapse": "Shiishsha",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Mazgabata",
   "board-view-swimlanes": "Ogeta",
@@ -48,6 +47,7 @@
   "checklist": "Paccissiya mazgabaa",
   "checklists": "Paaciyaa mazgabata",
   "close": "Gorddana",
+  "collapse": "Guuxissa",
   "comment-assigned-only": "Imettidaageetu bolla qofaa xalaala",
   "comment-only": "Qofaa xalaala",
   "comments": "Qofata",
@@ -119,6 +119,7 @@
   "text-note-title": "Huucco",
   "thursday": "Hamuussiyaa",
   "tuesday": "Maayiyaa",
+  "uncollapse": "Zaarettada dicissa",
   "view": "Xeella",
   "wednesday": "Woruwaa",
   "worker": "Oosanchchaa"

@@ -28,7 +28,6 @@
   "board-admin": "Administrateur du tableau",
   "board-title": "Titre du tableau",
   "board-view-cal": "Calendrier",
-  "board-view-collapse": "Réduire",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Listes",
   "board-view-swimlanes": "Couloirs",
@@ -48,6 +47,7 @@
   "checklist": "Check-list",
   "checklists": "Check-lists",
   "close": "Fermer",
+  "collapse": "Réduire",
   "comment-assigned-only": "Commentaire assigné uniquement",
   "comment-only": "Commentaire uniquement",
   "comments": "Commentaires",
@@ -119,6 +119,7 @@
   "text-note-title": "Titre",
   "thursday": "Jeudi",
   "tuesday": "Mardi",
+  "uncollapse": "Développer",
   "view": "Vue",
   "wednesday": "Mercredi",
   "worker": "Travailleur"

@@ -28,7 +28,6 @@
   "board-admin": "Administrator table",
   "board-title": "Naslov table",
   "board-view-cal": "Kalendar",
-  "board-view-collapse": "Skupi",
   "board-view-gantt": "Gantov dijagram",
   "board-view-lists": "Liste",
   "board-view-swimlanes": "Trake",
@@ -48,6 +47,7 @@
   "checklist": "Kontrolna lista",
   "checklists": "Kontrolne liste",
   "close": "Zatvori",
+  "collapse": "Sklopi",
   "comment-assigned-only": "Samo dodijeljeni komentari",
   "comment-only": "Samo komentari",
   "comments": "Komentari",
@@ -119,6 +119,7 @@
   "text-note-title": "Naslov",
   "thursday": "Četvrtak",
   "tuesday": "Utorak",
+  "uncollapse": "Rasklopi",
   "view": "Prikaz",
   "wednesday": "Srijeda",
   "worker": "Radnik"

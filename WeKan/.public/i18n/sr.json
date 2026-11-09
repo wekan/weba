@@ -28,7 +28,6 @@
   "board-admin": "Водећи сарадник",
   "board-title": "Деловодни број",
   "board-view-cal": "Календар",
-  "board-view-collapse": "Скупи",
   "board-view-gantt": "Гант",
   "board-view-lists": "Деонице",
   "board-view-swimlanes": "Токови",
@@ -48,6 +47,7 @@
   "checklist": "Предметна радња",
   "checklists": "Предметне радње",
   "close": "Заклопи",
+  "collapse": "Скупи",
   "comment-assigned-only": "Саветник",
   "comment-only": "Виши саветник",
   "comments": "Расправа",
@@ -119,6 +119,7 @@
   "text-note-title": "Наслов",
   "thursday": "Четвртак",
   "tuesday": "Уторак",
+  "uncollapse": "Рашири",
   "view": "Поглед",
   "wednesday": "Среда",
   "worker": "Помоћник"

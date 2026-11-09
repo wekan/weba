@@ -28,7 +28,6 @@
   "board-admin": "អ្នកគ្រប់គ្រងក្តារ",
   "board-title": "ចំណងជើងក្តារ",
   "board-view-cal": "ប្រតិទិន",
-  "board-view-collapse": "ដួលរលំ",
   "board-view-gantt": "ហ្គេត",
   "board-view-lists": "បញ្ជី",
   "board-view-swimlanes": "ហែលទឹក",
@@ -48,6 +47,7 @@
   "checklist": "បញ្ជីត្រួតពិនិត្យ",
   "checklists": "បញ្ជីត្រួតពិនិត្យ",
   "close": "បិទ",
+  "collapse": "ដួលរលំ",
   "comment-assigned-only": "មានតែមតិយោបល់ដែលបានកំណត់ប៉ុណ្ណោះ។",
   "comment-only": "មតិតែប៉ុណ្ណោះ",
   "comments": "មតិយោបល់",
@@ -119,6 +119,7 @@
   "text-note-title": "ចំណងជើង",
   "thursday": "ថ្ងៃព្រហស្បតិ៍",
   "tuesday": "ថ្ងៃអង្គារ",
+  "uncollapse": "ពន្លា",
   "view": "មើល",
   "wednesday": "ថ្ងៃពុធ",
   "worker": "កម្មករ"

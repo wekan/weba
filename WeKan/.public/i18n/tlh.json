@@ -28,7 +28,6 @@
   "board-admin": "raS che'wI'",
   "board-title": "raS pong",
   "board-view-cal": "'ISjaH",
-  "board-view-collapse": "So'",
   "board-view-gantt": "Gantt",
   "board-view-lists": "tetlhmey",
   "board-view-swimlanes": "Couloirs",
@@ -48,6 +47,7 @@
   "checklist": "ghItlhHommey tetlh",
   "checklists": "ta'meH tetlhmey",
   "close": "yISoQmoH",
+  "collapse": "machmoH",
   "comment-assigned-only": "lunoblu'bogh 'echletHommeyDaq QInHommey chel neH",
   "comment-only": "QInHommey chel neH",
   "comments": "QInHommey",
@@ -119,6 +119,7 @@
   "text-note-title": "pong",
   "thursday": "loghjaj",
   "tuesday": "povjaj",
+  "uncollapse": "'angqa'",
   "view": "'ang",
   "wednesday": "ghItlhjaj",
   "worker": "Qu' ta'wI'"

@@ -28,7 +28,6 @@
   "board-admin": "Дуоска дьаһабыла",
   "board-title": "Дуоска аата",
   "board-view-cal": "Халандаар",
-  "board-view-collapse": "Кыччат",
   "board-view-gantt": "Gantt",
   "board-view-lists": "Испииһэктэр",
   "board-view-swimlanes": "Суоллар",
@@ -48,6 +47,7 @@
   "checklist": "Бэрэбиэркэ испииһэгэ",
   "checklists": "Бэрэбиэркэ испииһэктэрэ",
   "close": "Сап",
+  "collapse": "Кистээ",
   "comment-assigned-only": "Анаммыт карточкаҕа ырытыы эрэ",
   "comment-only": "Ырытыы эрэ",
   "comments": "Быһаарыылар",
@@ -119,6 +119,7 @@
   "text-note-title": "Ааты",
   "thursday": "Чэппиэр",
   "tuesday": "Оптуорунньук",
+  "uncollapse": "Ас",
   "view": "Көр",
   "wednesday": "Сэрэдэ",
   "worker": "Үлэһит"
