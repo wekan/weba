@@ -12,7 +12,7 @@ and in the [README](../README.md), rather than in duplicate instruction files.
 | Login and registration | `WeKan/.src/WebformLogin.class` and `.webform` |
 | Native navigation, editors and live board checks | `WeKan/.src/WebformMain.class`, `.webform`, `BoardLive.module`, `CardDraft.module`, `DetailLive.module`, `EntryDraft.module`, `PeopleLive.module` |
 | Accounts, sessions and connection | `WeKan/.src/WebDatabase.module`, `WebIdentity.module`, `ApiTokens.module` |
-| Board/card persistence and permissions | `KanbanStore.module`, `BoardAccess.module`, `ApiMemberRoles.module`, `BoardCatalog.module`, `BoardOrder.module` |
+| Board/card persistence and permissions | `KanbanStore.module`, `BoardAccess.module`, `ApiMemberRoles.module`, `BoardCatalog.module`, `BoardOrder.module`, `BoardSpaces.module` |
 | REST routing and projections | `RestApi.module`, `BoardRestData.module` |
 | UTC dates, archive history and change clocks | `CardDates.module`, `CardArchive.module`, `ItemChanges.module` |
 | Workspace menus, transfer and rich content | `WorkspaceStore.module`, `WorkspaceActions.module`, `BoardTransfer.module`, `CardContent.module` |
@@ -225,7 +225,9 @@ actual visibility/facet helpers on independently read native SQL rows. Its
 explicit adapter maps implicit native owners to active document memberships and
 supplies in-memory Mongo query operations for these fixtures. Only valid source
 parameters are compared; Meteor validation, wire/UI callbacks, organizations,
-teams, public templates and workspaces/facets remain open. Personal Custom
+teams, public templates, workspace tree gestures and full facets remain open.
+The 75-case fixture includes private workspace assignments and direct category
+counts, with a numeric-to-string ID adapter preserving tie order. Personal Custom
 ordering has separate native and real-gesture coverage below.
 
 
@@ -301,3 +303,32 @@ mutation, dispatches stylesheet load and verifies the new bounds. It captures
 asynchronous jsdom errors, including teardown, instead of accepting a passing
 exit status with an uncaught callback error. Full original UI callbacks remain
 separate work.
+
+
+## Personal workspace persistence
+
+`BoardSpaces` owns the current principal's `kb_board_spaces` tree and
+`kb_board_space_assignments` mapping. `Tree` emits string IDs and nested children,
+matching the original profile shape; `Record` supplies native editor fields.
+Names are trimmed and required, duplicate captions are valid and empty icons
+are preserved as typed strings. Never accept a principal from the caller.
+
+Writes serialize on the user row and recheck fresh session/ownership under the
+transaction. Assignment additionally locks/rechecks the readable board; removal
+of stale personal assignments is allowed without current board visibility. Move
+validates every ancestor and the target sibling before updating ranks. Remove
+collects descendants and deletes only owned nodes/mappings atomically. Retain
+anonymous `kb_board_space_ids` allocator rows after deletion so stale IDs cannot
+target a later workspace; failed creations roll back their allocator insertion.
+
+Category filtering precedes count/slicing: Remaining excludes current-user
+assignments, a workspace matches its direct assignments, Starred remains
+independent and a nonempty literal search spans categories. Preserve these
+semantics when wiring native forms, tree navigation and drag targets.
+
+`BoardSpacesTest` checks nested edits/moves, foreign/cycle/stale denial, readonly
+organization, shared history isolation, archive distinction, nonreused IDs,
+late parent/membership changes, injected SQL failure rollback/retry and account/
+board cleanup. Failure triggers are SQLite test fixtures, not production schema.
+Original workspace UI callbacks, efficient SQL page counts and other driver
+conformance remain separate requirements.

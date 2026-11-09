@@ -6,6 +6,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Current UI/API/security work
 
+- Documented private workspace schema, stable IDs, transaction rechecks, category
+  semantics and lifecycle tests; native UI/gestures and original callbacks remain
+  in progress.
+
 - Completed personal workspace tree CRUD/reparenting and board assignments,
   category filtering before counts, current-principal/foreign/cycle guards and
   account/board cleanup. Native tests cover readonly personal organization,

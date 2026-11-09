@@ -1,4 +1,6 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Explain private workspace persistence, stable IDs, category
+  counts, guarded transactions and lifecycle tests; retain native UI gaps.
 - Personal workspace service: Add guarded nested CRUD/reparenting, stable IDs,
   private assignments and category-before-pagination filtering. Verify rollback,
   late guards, lifecycle cleanup and 75 original method comparisons. Native UI

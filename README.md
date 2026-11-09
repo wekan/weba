@@ -434,17 +434,19 @@ original test 39 sorting/search/server-pagination requirements remain incomplete
 `BoardCatalog` now supplies a native service for current-user board paging and
 sort preferences. It returns IDs/counts with stable title/ID ordering, literal
 UTF-8 case-insensitive name search, a 25-result default and a 200-result ceiling.
-Search spans the implemented categories; unimplemented workspace/template menus
-return no boards without a search. Account deletion/recreation clears saved sort
+Search spans personal workspace categories and Remaining/Starred. Without search,
+Remaining excludes assigned boards and each workspace includes its direct board
+assignments; template menus remain unimplemented. Account deletion/recreation clears saved sort
 preferences. Page evaluation enumerates authorized titles on the server; it does
 not yet optimize counting/slicing into driver-specific SQL queries.
 
 Native tests cover disjoint pages, 205-board limits, Unicode/literal search,
 identity/invalid-option boundaries and preference isolation/cleanup. An explicit
-SQL-to-document fixture adapter compares 54 results with the original
+SQL-to-document fixture adapter compares 75 results with the original
 getAllBoardsPage method body and actual source visibility/facet helpers. Meteor
-parameter checks, network authentication, UI callbacks and full workspace/facet
-semantics are not established by that comparison. This service has no new public
+parameter checks, network authentication, UI callbacks, workspace tree gestures
+and full organization/team/template facet semantics are not established by that
+comparison. This service has no new public
 HTTP endpoint. Native sort/search/paging controls are now wired for these modes;
 Custom ordering is described below. Raw JSON callers must preserve
 explicit null keys before validation.
@@ -953,3 +955,24 @@ UTF-8 transport and keyboard input. `tests/DragStoreTest.module` runs in the
 isolated store harness. `WEBA_DRAG_ONLY=1` selects the Chromium CDP touch/mouse
 checks in `tests/run-http.py --browser` (also `--archive`). Actual physical touch
 hardware and non-Chromium browsers have not been tested.
+
+
+### Personal workspace service
+
+`BoardSpaces` provides current-user nested workspace creation, literal Unicode
+names/icons, sibling ordering/reparenting, subtree deletion and personal board
+assignments. Duplicate names are allowed; committed IDs are never reused.
+Readonly members may organize boards they can read. Assignment rechecks board
+access after locking; clearing an obsolete personal assignment needs no current
+board access. A site administrator cannot edit another user's workspace tree.
+
+Deleting a subtree clears its assignments so boards return to Remaining.
+Account deletion/recreation clears private nodes/assignments; permanent board
+deletion clears assignments for every user. These operations do not write shared
+board history or activity. Native tests exercise rollback/retry, late parent and
+membership changes, isolation and cleanup on SQLite/Linux ARM64. Schema and
+queries use portable Gambas APIs; other drivers still require verification.
+
+Native workspace navigation/forms, board assignment controls, live tree updates
+and workspace drag gestures remain in progress. No new public workspace API or
+passing original workspace UI callback is claimed by the service tests.

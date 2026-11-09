@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Document the personal workspace service, private category semantics, stable
+  IDs, transaction rechecks and cleanup evidence. Update page-method comparison
+  coverage to 75 cases and retain native UI/gesture/original-suite limitations.
+  Thanks to xet7.
+
 - Add personal nested workspaces with rename/icon edits, cycle-safe moves,
   subtree deletion and private board assignments. Filter categories before page
   counts while preserving cross-category search and stars. Guard current-user
