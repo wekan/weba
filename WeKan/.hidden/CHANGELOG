@@ -1,4 +1,6 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Explain native batch transactions, mixed roles/states and final
+  scope checks with SQL/source tests; selection controls/transport remain open.
 - Native board batch service: Add mixed active/archive all-or-none drops with
   stable lock order and full-set/per-effect/precommit scope checks. Verify SQL
   order, partial failure and last-effect authorization rollback, and 156 original

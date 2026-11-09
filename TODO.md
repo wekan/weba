@@ -6,6 +6,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Current UI/API/security work
 
+- Documented the native batch transaction, mixed roles/states, lock ordering and
+  final authorization guards with SQL/source evidence. Selection UI/transport,
+  batch sidebar actions and full original suites remain open.
+
 - Documented single-board targets, sorted placement versus Custom reordering,
   atomic restore/activity/placement, server-derived source and fresh scope guards.
   Recorded native/source/browser evidence and kept multi/Home/groups and full

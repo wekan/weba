@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Document the native mixed-state batch transaction and lock/scope/rollback
+  evidence, including 156 original callback outcomes. Keep selection controls,
+  authoritative native selection transport and full original suites open.
+  Thanks to xet7.
+
 - Add the native atomic DropBoards service for mixed active/archive selections.
   Preserve input order and acquire sorted board locks; validate the full set,
   each effect and final identity/target/read/manage/state before commit. Share

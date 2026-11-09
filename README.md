@@ -1101,9 +1101,9 @@ read/manage rights, archive state and owned target; reserved fields and foreign/
 private/stale commands cannot bypass those checks.
 
 `BoardDropTest` injects placement/unassignment/activity failures and late access,
-role, workspace-owner and archive-state changes. A separate 52-case comparator
+role, workspace-owner and archive-state changes. A separate 156-case comparator
 executes unchanged original workspace/menu/archive callback bodies with explicit
-DOM/dataTransfer/Meteor adapters and compares their supported single-board
+DOM/dataTransfer/Meteor adapters and compares their supported single/multi/mixed
 outcomes with native SQL results. It does not exercise the whole original UI
 fixture or authorization/rollback behavior, which have separate native tests.
 
@@ -1112,5 +1112,37 @@ confirmation/cancel, readonly denial, assigned Archive visibility, restoration,
 independent SQL placements/stars, reload and forged private/foreign/reserved
 commands. It runs in source/packaged test-live; use
 `python3 tests/run-http.py --board-drops` (add `--archive` for the package) with
-the documented local toolchain/CDP environment. Multi-board selection, Home/group
+the documented local toolchain/CDP environment. Multi-board selection UI/transport, Home/group
 targets, complete original UI/API/security suites and other drivers remain open.
+
+
+### Native board batch service
+
+`BoardSpaces.DropBoards` now provides the transaction behind future native
+selection controls. It accepts a typed unique ID list and the existing supported
+drop target/source context. It is not yet connected to selection checkboxes,
+sidebar batch controls, multi-drag transport or a new public HTTP route.
+
+Retained selections may contain both active and archived boards. Workspace/
+Remaining drops restore only archived members; those restorations require
+management permission, while active personal placement requires read access.
+Add-only Starred leaves archive state unchanged. Archive skips an already
+archived member after checking management authority. Context restrictions still
+apply, including no add-star drop from the Archive origin.
+
+The service preserves caller order, acquires board locks in ascending numeric
+ID order and snapshots archive state. It validates all boards before effects,
+each effect and final identity/target/scope/state before committing. Archive,
+activity and personal changes share the transaction; losing one board or target
+rolls back the entire set. Empty, duplicate, nonpositive, foreign and stale
+inputs are rejected.
+
+The native test traces actual lock update order and injects second-write,
+late-lock, per-effect and final-effect failures, including loss of restore
+management after the last activity. Independent SQL snapshots check all affected
+board/assignment/star/activity/member/workspace fields. A successful mixed-role
+case keeps an active member readonly while authorizing restoration of another.
+The original callback comparator now checks 156 single/multi/mixed final states;
+permission and atomic-failure coverage are separate native evidence. Existing
+single-board source/package browser regressions also pass. These results do not
+prove a multi-selection UI or unchanged full original suites.

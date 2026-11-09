@@ -476,9 +476,52 @@ confirmation uses the copied source catalog. DOM cancellation and invalid source
 limits, native late/rollback tests and actual source/packaged browser behavior
 have separate evidence.
 
-The 52-case source comparator runs original callback bodies with explicit
-DOM/dataTransfer and Meteor-call effect adapters. It compares supported final
-state, not original permission checks, asynchronous race behavior, multi-board
-callbacks or the full original Playwright fixture. The real browser exports
+The 156-case source comparator runs original callback bodies with explicit
+DOM/dataTransfer and Meteor-call effect adapters. It compares supported single,
+multi and mixed final state, not original permission checks, asynchronous race
+behavior or the full original Playwright fixture. The real browser exports
 independent archived/star/assignment SQL rows, so UI completion and persistence
 are both checked. Remaining broad parity requirements stay in TODO.md.
+
+
+## Atomic board batch foundation
+
+`DropBoards` is a native service; selection UI/transport integration remains
+required. Future handlers must derive origin from trusted view state and obtain
+the complete authorized selection from native state, not trust an arbitrary
+client ID array. Select All must add only the current rendered page while
+retained selections may cross pages/categories.
+
+The batch service accepts a nonempty unique positive integer array, validates
+context/owned target and reads each board's archive snapshot/authority. Copy
+and sort only the lock list. Lock the account then boards in stable numeric
+order; recheck the whole set before calling the shared private ApplyBoardDrop
+primitive. Recheck identity, target and the affected board before each effect,
+then validate identity/target/all boards and expected archive state before commit.
+Use the original archive snapshot to retain manageBoard checks for restored
+members even though they are now active.
+
+Mixed selections intentionally do not assume every board shares the dragged
+origin's archive state. Restore archived members only, require read for active
+personal changes and require manageBoard for restoration/archive. Star remains
+a personal add-only operation with no archive transition. The existing single
+DropBoard contract still requires its source archive state exactly; both share
+validated context and mutation primitives. No public loop of individually
+committing DropBoard calls is used for the batch.
+
+`BoardBatchDropTest` traces lock update order in SQLite, preserves reverse caller
+input and compares affected SQL rows across partial failure/rollback. It covers
+empty/null/duplicate/foreign/stale input, mixed states/roles, second placement/
+unassignment/activity failure, late membership during locking/application and
+final target/membership/restore-role loss. The last checks prove pending writes
+cannot commit after authority disappears on the final effect. SQL triggers and
+trace tables are disposable test fixtures, not production migrations or proof
+of all drivers' locking behavior.
+
+The source comparator includes 52 single and 104 multi/mixed contexts, executing
+unchanged original workspace/menu/archive callback bodies. Explicit effects
+adapters compare archive/assignment/star final state; they do not reproduce
+Meteor publication timing or original per-call failure semantics. The native
+transaction adds all-or-none failure handling. Existing single-board real UI
+regressions protect the shared primitive; no native multi-selection browser
+coverage is claimed before its actual controls and transport are implemented.
