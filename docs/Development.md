@@ -225,7 +225,8 @@ actual visibility/facet helpers on independently read native SQL rows. Its
 explicit adapter maps implicit native owners to active document memberships and
 supplies in-memory Mongo query operations for these fixtures. Only valid source
 parameters are compared; Meteor validation, wire/UI callbacks, organizations,
-teams, public templates, workspace tree gestures and full facets remain open.
+teams, public templates, original workspace UI callbacks and full facets remain
+open. Native workspace tree gestures have their own source/browser coverage.
 The 75-case fixture includes private workspace assignments and direct category
 counts, with a numeric-to-string ID adapter preserving tie order. Personal Custom
 ordering has separate native and real-gesture coverage below.
@@ -363,8 +364,9 @@ a hidden stale native Save after revocation and checks unchanged assignments.
 Source/packaged test-live includes the case after the existing live regressions.
 The native Latin checks do not run original spec 39's callback unchanged: that
 callback requires actual form/submit/required semantics still to be aligned.
-Markdown icons, workspace gestures and broader original UI/API/security suites
-remain explicit TODO requirements. Folding/counts are described below.
+Markdown icons, board workspace drops and broader original UI/API/security
+suites remain explicit TODO requirements. Folding/counts and native tree
+gestures are described below.
 
 
 ## Workspace presentation state
@@ -399,3 +401,42 @@ helperBoards export against real native SQL count results; it is a 25-case helpe
 comparison, not an unchanged original workspace UI callback. Real browser tests
 cover Enter/Space/focus, reload/live expansion, hidden selection, direct counts
 and archive/restore updates.
+
+
+## Workspace drops and native transport
+
+`BoardSpaces.Drop(sourceId, targetId, position)` accepts before/after/inside.
+Resolve target parent and its next sibling after acquiring the account lock,
+then use the same `MoveWithin` primitive as native `Move`. Recheck every owned
+ancestor and reject self/descendant targets. Skip unchanged sibling order so a
+no-op does not normalize ranks. All affected updates share one transaction; fold
+and board placement rows are untouched. Native tests inject a late foreign
+parent and a failure after earlier rank updates, then verify rollback/retry.
+
+`DragAction` workspace commands carry source/target/position plus an empty
+reserved field in the existing base64 POST protocol. The handler requires an
+All Boards overview, including its Archive category. Non-overview forged
+commands fail before mutation. This is private tree organization and needs no
+shared board write permission. No whole client tree or caller principal is
+accepted.
+
+Native row classes contain only the visible principal's numeric workspace and
+parent IDs. The common decorator publishes those as drag metadata and registers
+the native handle. The pointer engine uses the original quarter-row rule,
+checks visible ancestor chains and marks before/after/inside without rearranging
+widget-owned DOM. The server retains full ownership/cycle authority. Touch
+starts only on handles; mouse names may start a drag.
+
+Keyboard arrows select a sibling or logical parent/previous sibling. Restore
+focus only after the matching visible parent/order arrives, while focus is on
+the body and the request is within five seconds. Use the target handle when a
+folded target hides the source. Pointer input and another keyboard drag kind
+clear competing requests. Preserve the target's fold state.
+
+`workspace-drop-conformance.test.cjs` executes 196 actual native cases and the
+unchanged original immutable move helper. The DOM test separately compares the
+quarter-row classifier and checks cancellation/scroll/menu/cycle/replacement/RTL
+wire rules. The real browser checks SQL AND the visible tree before another
+gesture, because a commit may precede the native DOM response. Source/packaged
+trusted touch/focus tests add evidence; original UI callbacks, board drop
+targets, desktop-handle preferences and multiselection remain open.

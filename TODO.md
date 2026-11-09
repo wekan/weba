@@ -6,6 +6,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Current UI/API/security work
 
+- Documented locked workspace drop resolution, private native metadata, pointer/
+  keyboard/focus behavior and 196-case source plus real browser evidence. Kept
+  board drop targets, handle preferences and original callbacks explicit.
+
 - Documented private fold persistence, hidden-selection indexing, direct readable
   active/helper-filtered counts, keyboard/focus/aria behavior and rollback/
   lifecycle tests. Kept original workspace callbacks and gestures open.

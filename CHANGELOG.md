@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Document native workspace pointer/keyboard ordering, transaction resolution,
+  no-op/ownership guards, focus and 196-case source/real browser verification.
+  Retain board drops, handle preferences and full original-suite limitations.
+  Thanks to xet7.
+
 - Add native workspace before/after/inside drops with fresh locked ownership,
   sibling and ancestor resolution and no-op rank-write avoidance. Support mouse
   name/handle, touch handle and logical keyboard sibling/indent/outdent moves,

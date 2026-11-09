@@ -974,8 +974,9 @@ membership changes, isolation and cleanup on SQLite/Linux ARM64. Schema and
 queries use portable Gambas APIs; other drivers still require verification.
 
 The native workspace rows/forms and board assignment controls described below
-now use this service. Workspace gestures and complete original UI callbacks
-remain open; no new public workspace API is exposed by the service.
+now use this service. The workspace tree gestures below also use its locked
+operations. Complete original UI callbacks remain open; no new public workspace
+API is exposed by the service.
 
 
 ### Native workspace controls
@@ -1006,8 +1007,8 @@ it for source and packaged apps. Run it separately with the documented Gambas
 and Chromium environment using `python3 tests/run-http.py --workspaces`, adding
 `--archive` for the package.
 
-Workspace tree and board workspace drops, complete form semantics and original
-All Boards callbacks remain open. Native Latin
+Board workspace drops, complete form semantics and original All Boards
+callbacks remain open. Native Latin
 checks are separate from running the original callback unchanged. Imported
 workspace and collapse labels now bring the local selection to 124 keys in 237 catalogs;
 user workspace names and destination paths are never translated.
@@ -1041,3 +1042,36 @@ against the unchanged original helper function, including Unicode and legacy lin
 terminators. The workspace browser test covers persisted mouse/keyboard folding,
 hidden selection, live counts and named translated aria labels on source and
 packaged apps. Other drivers and complete original callbacks remain unverified.
+
+
+### Native workspace ordering
+
+Drag a workspace name with the mouse, or use its native `fa-arrows` handle with
+mouse/touch. The top quarter of a target row inserts before it, the bottom
+quarter inserts after it and the middle half appends inside it. The row shows
+the intended slot. Ordinary touch on a name keeps scrolling; menus/carets do not
+start a sort. Cancel, Escape, outside drops and detached origins do not save.
+
+The handle also accepts Up/Down for sibling order and logical Right/Left for
+indent/outdent (reversed in RTL). Focus follows the moved row after the matching
+native update. A folded target stays folded; if the moved row becomes hidden,
+keyboard focus returns to that target's handle. A later gesture or another
+keyboard drag kind clears the previous focus request. Workspace ordering is
+available in All Boards categories, including Archive, and does not archive a
+board or change assignments/fold state. Board-to-menu drops are separate work.
+
+`BoardSpaces.Drop` resolves the target parent and next sibling inside the user
+transaction. It rejects foreign/self/descendant moves and skips unchanged rank
+updates. Native tests cover partial failure rollback/retry, late foreign parents
+and stale/deleted/session guards. A 196-case comparator checks actual SQL trees
+against the original `workspacesTree.moveWorkspace` helper.
+
+`workspace-order.browser.cjs` uses real mouse, keyboard and trusted CDP touch,
+checks both SQL and the visible native tree and compares outcomes with that
+original helper. It covers nested/root moves, repeated focus, folded targets,
+scroll/cancel/reload/isolation, Archive and forged cycle/foreign/profile commands.
+It runs in test-live for source/packages; run separately with the documented
+toolchain/CDP environment using `python3 tests/run-http.py --workspace-order`,
+adding `--archive` for the package. This does not run all original workspace
+UI callbacks unchanged or implement their full desktop-handle preferences,
+multiselection, board drop targets or Markdown icons.
