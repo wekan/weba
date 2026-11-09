@@ -1,4 +1,7 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Workspace browser synchronization: Wait for rendered IDs/parents as well as
+  labels before successive keys. Keep delayed-reply regression coverage and
+  await interception teardown; source/package hierarchy/focus checks pass.
 - Attachment upload API: Add raw/JSON exact-byte uploads, scoped path/assigned
   guards, board allowance and atomic MIME/time metadata. Preserve attributes on
   copy/exchange/moves and purge cleanup. Bound bytes/body deadlines and sanitize

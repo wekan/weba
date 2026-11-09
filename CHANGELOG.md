@@ -2,6 +2,13 @@
 
 This work adds the following features and fixes:
 
+- Make workspace keyboard browser checks wait for rendered IDs and parentage,
+  including hierarchy changes whose visible name order stays the same. Reproduce
+  the former dropped-next-key test race with delayed native replies after SQL
+  commit; retain the delay and all move/focus/permission assertions. Wait for
+  interception handlers during teardown. Source and packaged checks pass.
+  Thanks to xet7.
+
 - Add raw-byte and JSON/base64 card attachment uploads through the bearer API.
   Validate the canonical board/swimlane/list/card path, current writer/assigned
   scope and board attachment allowance before and after atomic writes. Preserve

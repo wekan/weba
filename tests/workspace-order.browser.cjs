@@ -23,10 +23,11 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   const expected=(dragged,target,position)=>helper.moveWorkspace(tree(),String(dragged),String(target),position);
   async function expectTree(next){
     await expect.poll(tree).toEqual(next);
-    const folded=fixture('read').collapsed,names=[];
-    function visit(nodes){for(const node of nodes){names.push(node.name);if(!folded[node.id])visit(node.children||[]);}}
+    const folded=fixture('read').collapsed,names=[],hierarchy=[];
+    function visit(nodes,parent='0'){for(const node of nodes){names.push(node.name);hierarchy.push({id:String(node.id),parent});if(!folded[node.id])visit(node.children||[],String(node.id));}}
     visit(next);
     await expect(page.locator('.weba-space-row:not(.weba-drag-ghost) .weba-space-open')).toHaveText(names);
+    await expect.poll(()=>page.locator('.weba-space-row:not(.weba-drag-ghost)').evaluateAll(rows=>rows.map(row=>({id:row.dataset.workspaceId,parent:row.dataset.workspaceParent})))).toEqual(hierarchy);
   }
 
   async function mouse(dragged,target,position,fromHandle=false){
@@ -38,12 +39,16 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   await page.goto(process.env.WEBA_TEST_URL);await page.waitForFunction(()=>window.webaI18n);await page.evaluate(()=>webaI18n.setLanguage('en'));
   await page.locator(entry('WebTextName')).fill('rest-member');await page.locator(entry('WebTextPass')).fill(process.env.WEBA_TEST_PASSWORD);await click('WebButtonLogin');
   await expect(handle(ids.c)).toBeVisible();
+  // Make SQL commit visibility precede the native DOM acknowledgement. A
+  // hierarchy change may leave flattened labels unchanged; waits must inspect it.
+  await page.route('**/x',async route=>{const response=await route.fetch();await new Promise(resolve=>setTimeout(resolve,100));await route.fulfill({response});});
   let next=expected(ids.c,ids.a,'before');await mouse(ids.c,ids.a,'before');await expectTree(next);
   next=expected(ids.c,ids.b,'inside');await mouse(ids.c,ids.b,'inside');await expectTree(next);await expect(row(ids.c)).toHaveAttribute('data-workspace-parent',String(ids.b));
   next=expected(ids.c,ids.b,'after');await handle(ids.c).press('ArrowLeft');await expectTree(next);await expect(handle(ids.c)).toBeFocused();
   next=expected(ids.c,ids.b,'before');await page.keyboard.press('ArrowUp');await expectTree(next);await expect(handle(ids.c)).toBeFocused();
   next=expected(ids.c,ids.a,'inside');await page.keyboard.press('ArrowRight');await expectTree(next);await expect(handle(ids.c)).toBeFocused();
   next=expected(ids.c,ids.a,'after');await page.keyboard.press('ArrowLeft');await expectTree(next);await expect(handle(ids.c)).toBeFocused();
+  await page.unrouteAll({behavior:'wait'});
   const beforeCycle=tree();await mouse(ids.a,ids.child,'inside',true);expect(tree()).toEqual(beforeCycle);await expect(page.locator('.weba-space-drop-inside')).toHaveCount(0);
   const wire=(id,target,position)=>['workspace',...([id,target,position,''].map(value=>Buffer.from(String(value)).toString('base64')))].join('|');
   await page.evaluate(value=>gw.update(document.querySelector('[id$=".DragAction"]').id,'text',value),wire(ids.a,ids.child,'inside'));await settle();await expect(page.locator(control('Notice'))).toContainText('Invalid workspace move');expect(tree()).toEqual(beforeCycle);
@@ -75,6 +80,6 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   for(const root of tree())if(root.name.startsWith('Drag '))fixture('delete-space','rest-member',{WEBA_SPACE_ID:root.id});
   fixture('delete-space','rest-other',{WEBA_SPACE_ID:String(foreign)});
   expect(errors).toEqual([]);
-  console.log('Workspace order browser: original-helper mouse/keyboard/trusted touch trees, reorder/nesting/outdent, repeated focus, collapsed-target behavior, cycle/foreign/non-overview forgery denial, scroll/cancel/reload/isolation and Archive ordering passed');
- }finally{if(context)await context.close();if(browser)await browser.close();}
+  console.log('Workspace order browser: original-helper mouse/keyboard/trusted touch trees, reorder/nesting/outdent, acknowledged hierarchy with delayed native replies, repeated focus, collapsed-target behavior, cycle/foreign/non-overview forgery denial, scroll/cancel/reload/isolation and Archive ordering passed');
+ }finally{if(context){for(const page of context.pages())await page.unrouteAll({behavior:'wait'});await context.close();}if(browser)await browser.close();}
 })().catch(error=>{let message=error.stack||String(error);if(process.env.WEBA_TEST_PASSWORD)message=message.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(message);process.exitCode=1;});

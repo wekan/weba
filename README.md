@@ -1071,7 +1071,11 @@ against the original `workspacesTree.moveWorkspace` helper.
 
 `workspace-order.browser.cjs` uses real mouse, keyboard and trusted CDP touch,
 checks both SQL and the visible native tree and compares outcomes with that
-original helper. It covers nested/root moves, repeated focus, folded targets,
+original helper. It waits for rendered workspace IDs and parentage as well as
+labels before the next keyboard move: nesting can preserve the visible name
+sequence. Delayed native replies after SQL commit exercise that ordering, and
+interception teardown waits for in-flight handlers. It covers nested/root moves,
+repeated focus, folded targets,
 scroll/cancel/reload/isolation, Archive and forged cycle/foreign/profile commands.
 It runs in test-live for source/packages; run separately with the documented
 toolchain/CDP environment using `python3 tests/run-http.py --workspace-order`,
