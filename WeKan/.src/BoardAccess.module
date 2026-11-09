@@ -1165,3 +1165,92 @@ Catch
   If status = 500 Then failure = "List deletion failed"
   Return ApiFailure(status, failure)
 End
+
+' Attachment APIs retain assigned-only scope even for a site administrator.
+Private Function MayDeleteApiAttachment(boardId As Integer, cardId As Integer) As Boolean
+  Dim actor As String = WebIdentity.Username
+  Dim flags As Collection
+  Dim flag As String
+  Dim r As Result
+  If Not actor Or Not WebDatabase.UserExists(actor) Then Return False
+  If Not WebDatabase.GetIsAdmin(actor) And Not Can(boardId, "write") Then Return False
+  r = $db.Find("kb_cards", "board_id=&1 AND id=&2 AND " & ListDeletion.LiveSql("card", "kb_cards"), boardId, cardId)
+  If Not r.Available Then Return False
+  If RoleOf(boardId, actor) Then
+    flags = ApiMemberRoles.MemberData(boardId, actor, RoleOf(boardId, actor))
+    For Each flag In ["isNormalAssignedOnly", "isCommentAssignedOnly", "isReadAssignedOnly"]
+      If flags[flag] = True Then
+        If r!assignee = actor Then Return True
+        r = $db.Find("kb_card_assignees", "board_id=&1 AND card_id=&2 AND username=&3", boardId, cardId, actor)
+        Return r.Available
+      Endif
+    Next
+  Endif
+  Return True
+End
+
+Public Function DeleteApiAttachment(fileId As Integer, reference As String) As Collection
+  Dim actor As String = WebIdentity.Username
+  Dim data As New Collection
+  Dim r As Result
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim filename As String
+  Dim transaction As Boolean
+  Dim denied As Boolean
+  Dim status As Integer = 500
+  Dim failure As String
+  $apiMemberBoard = 0
+  If Env["WEBA_API_REQUEST"] <> "1" Then Return ApiFailure(403, "API context required")
+  If Not actor Or Not WebDatabase.UserExists(actor) Then Return ApiFailure(401, "Invalid credentials")
+  OpenStore()
+  CardContent.OpenStore()
+  r = $db.Find("kb_files", "id=&1", fileId)
+  If Not r.Available Then
+    data.Add(False, "success")
+    data.Add("Attachment not found", "error")
+    Return ApiAnswer(404, data)
+  Endif
+  boardId = r!board_id
+  cardId = r!card_id
+  filename = r!filename
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+  $db.Exec("UPDATE kb_cards SET title=title WHERE board_id=&1 AND id=&2", boardId, cardId)
+  If Not MayDeleteApiAttachment(boardId, cardId) Then
+    status = 403
+    Error.Raise("You do not have permission to delete this attachment")
+  Endif
+  If WebDatabase.GetIsAdmin(actor) Then $apiMemberBoard = boardId
+  AttachmentLifecycle.Delete(boardId, cardId, fileId)
+  $apiMemberBoard = 0
+  If Not MayDeleteApiAttachment(boardId, cardId) Then
+    status = 403
+    Error.Raise("You do not have permission to delete this attachment")
+  Endif
+  DatabaseTransactions.Commit($db)
+  transaction = False
+  data.Add(True, "success")
+  data.Add(reference, "attachmentId")
+  data.Add(filename, "fileName")
+  data.Add("Attachment deleted successfully", "message")
+  Return ApiAnswer(200, data)
+Catch
+  failure = Error.Text
+  $apiMemberBoard = 0
+  If status = 500 And transaction Then
+    Try denied = Not MayDeleteApiAttachment(boardId, cardId)
+    If Not Error And denied Then
+      status = 403
+      failure = "You do not have permission to delete this attachment"
+    Endif
+  Endif
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  If status = 500 Then failure = "Attachment deletion failed"
+  data = New Collection
+  data.Add(False, "success")
+  data.Add(failure, "error")
+  Return ApiAnswer(status, data)
+End

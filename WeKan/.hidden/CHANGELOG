@@ -1,4 +1,9 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Attachment lifecycle: Retain deleted bytes, filter live reads/copies/exports,
+  add scoped native history/restore and bearer DELETE with atomic fresh guards.
+  Clear covers without restoring them; map live covers on copy/exchange and
+  preserve deletion/history on moves. Clean journals on gated container purge.
+  Anchor menus per card; verify native, source-plan, HTTP and browser outcomes.
 - List lifecycle: Add reversible list/card batch marks, hidden read/write/export
   guards, exact restore, native deleted-list controls and gated permanent purge.
   Match source list DELETE no-op/auth contracts; close legacy physical bypasses.

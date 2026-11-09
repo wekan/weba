@@ -588,3 +588,29 @@ native assigned writers are valid list writers, but a REST member gaining a raw
 assigned flag during the inner operation must roll back the entire API mutation.
 The 60-case source comparator explicitly adapts native IDs/times and stubs source
 history stores; do not describe it as complete source history/undo coverage.
+
+
+## Attachment lifecycle
+
+kb_files retains bytes after ordinary removal. kb_attachment_deletions keys the
+file and stores its board/card scope, actor/time/batch; kb_attachment_history is
+an immutable scoped lifecycle journal with filename snapshots and prior deletion
+time. Actor text is attribution, never authority. Read files through the live
+predicate; raw rows are reserved for lifecycle operations and physical container
+cleanup. Keep these tables in card moves and card/list/lane/board purge cleanup.
+
+AttachmentLifecycle locks/rechecks the current writer and parent/file scope before
+and after mutation, including idempotent calls. Delete clears only a matching
+cover; restore never writes cover metadata. A cover pointer must resolve to a live
+file on the same card. Copies and exchange must map file IDs, never copy pointers.
+DetailLive sends history metadata without blobs. Native handlers resolve selected
+journal IDs afresh and enforce writer scope independently of visible controls.
+
+DeleteApiAttachment keeps its site-admin scope private to the inner operation.
+The outer transaction independently checks raw active assigned-only flags before
+and after native deletion, including site administrators. Inspect late permission
+failure before rollback only to choose a sanitized 403; unclassifiable driver
+errors stay sanitized 500. Do not use general card REST write authorization:
+attachment deletion permits normal assigned writers on their assigned cards.
+The 12-case helper comparator proves decision outcomes on actual SQL state, not
+server activity callbacks, full ChangeHistory/undo or complete attachment APIs.

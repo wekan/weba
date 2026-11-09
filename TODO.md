@@ -85,7 +85,11 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   UI callbacks. Native multi-selection controls, retained visible-page selection
   and revisioned authoritative multi-drop transport are recorded in CHANGELOG.md.
   Native form tests do not execute the original Latin callback unchanged.
-  Card/swimlane/attachment/discussion deletion and full history/undo parity,
+  Native retained attachment deletion/restore and its DELETE API are recorded in
+  CHANGELOG.md. Card/swimlane/discussion deletion, full generic history/undo,
+  attachment upload/list/info/download API schemas, linked-card/background/map
+  permissions, storage/retention, security eventlog/Problems reporting and visual
+  cover selection,
   deleted-list local caption translations, full Recovery schema/report/filter parity and non-SQLite driver verification
   remain open beyond the native durable purge/settings audit in CHANGELOG.md.
 

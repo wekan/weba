@@ -37,6 +37,7 @@ Public Sub OpenStore()
     t.Update()
   Endif
   RetiredAuthors.OpenStore()
+  AttachmentLifecycle.OpenStore()
 End
 
 Private Sub RequireCard(boardId As Integer, cardId As Integer)
@@ -326,12 +327,12 @@ End
 
 Public Function Files(boardId As Integer, cardId As Integer) As Result
   RequireCard(boardId, cardId)
-  Return $db.Find("kb_files", "board_id = &1 AND card_id = &2 ORDER BY id", boardId, cardId)
+  Return $db.Find("kb_files", AttachmentLifecycle.LiveSql("kb_files") & " AND board_id = &1 AND card_id = &2 ORDER BY id", boardId, cardId)
 End
 
 Public Function FileSummaries(boardId As Integer, cardId As Integer) As Result
   RequireCard(boardId, cardId)
-  Return $db.Exec("SELECT id,board_id,card_id,filename,author,created_at FROM kb_files WHERE board_id=&1 AND card_id=&2 ORDER BY id", boardId, cardId)
+  Return $db.Exec("SELECT id,board_id,card_id,filename,author,created_at FROM kb_files WHERE " & AttachmentLifecycle.LiveSql("kb_files") & " AND board_id=&1 AND card_id=&2 ORDER BY id", boardId, cardId)
 End
 
 Public Function AddFile(boardId As Integer, cardId As Integer, filename As String, data As String) As Integer
@@ -367,27 +368,13 @@ End
 Public Function FileRecord(boardId As Integer, cardId As Integer, fileId As Integer) As Result
   Dim r As Result
   RequireCard(boardId, cardId)
-  r = $db.Find("kb_files", "board_id = &1 AND card_id = &2 AND id = &3", boardId, cardId, fileId)
+  r = $db.Find("kb_files", AttachmentLifecycle.LiveSql("kb_files") & " AND board_id = &1 AND card_id = &2 AND id = &3", boardId, cardId, fileId)
   If Not r.Available Then Error.Raise("Attachment not accessible")
   Return r
 End
 
 Public Sub DeleteFile(boardId As Integer, cardId As Integer, fileId As Integer)
-  Dim transaction As Boolean
-  Dim failure As String
-  FileRecord(boardId, cardId, fileId)
-  BoardAccess.Require(boardId, "write")
-  BeginChange(boardId, cardId, "write")
-  transaction = True
-  $db.Exec("DELETE FROM kb_files WHERE board_id = &1 AND card_id = &2 AND id = &3", boardId, cardId, fileId)
-  RetiredAuthors.Prune(boardId)
-  KanbanStore.Activity(boardId, "Deleted attachment", "card", cardId)
-  DatabaseTransactions.Commit($db)
-  transaction = False
-Catch
-  failure = Error.Text
-  If transaction Then Try DatabaseTransactions.Rollback($db)
-  Error.Raise(failure)
+  AttachmentLifecycle.Delete(boardId, cardId, fileId)
 End
 
 Public Sub CopyRecords(sourceBoard As Integer, sourceCard As Integer, targetBoard As Integer, targetCard As Integer)
@@ -396,6 +383,7 @@ Public Sub CopyRecords(sourceBoard As Integer, sourceCard As Integer, targetBoar
   Dim parents As New Collection
   Dim parentId As Integer
   Dim id As Integer
+  Dim cover As Integer
   RequireCard(sourceBoard, sourceCard)
   RequireCard(targetBoard, targetCard)
   BoardAccess.Require(targetBoard, "write")
@@ -413,9 +401,11 @@ Public Sub CopyRecords(sourceBoard As Integer, sourceCard As Integer, targetBoar
       If kind = "checklist" Then parents[CStr(r!id)] = id
     Next
   Next
+  cover = AttachmentLifecycle.CoverId(sourceBoard, sourceCard)
   r = Files(sourceBoard, sourceCard)
   For Each r
     id = AddFile(targetBoard, targetCard, r!filename, r!content.Data)
+    If r!id = cover Then AttachmentLifecycle.SetCover(targetBoard, targetCard, id)
     CopyAuthor(targetBoard, targetCard, "file", id, r!author, AuthorName(sourceBoard, sourceCard, "file", r!id))
   Next
 End

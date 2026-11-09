@@ -83,6 +83,22 @@ Public Sub Main()
     Return
   Endif
   fields = Split(Request.Path, "/", "", True)
+  If fields.Count = 4 Then
+    If fields[0] = "api" And fields[1] = "attachment" And fields[2] = "delete" Then
+      If Request.Method <> "DELETE" Then
+        Reply(405, ErrorData("Method not allowed"))
+        Return
+      Endif
+      Try cardId = PositiveId(fields[3])
+      If Error Then cardId = 0
+      If cardId > 0 Then
+        If Str(cardId) <> fields[3] Then cardId = 0
+      Endif
+      outcome = BoardAccess.DeleteApiAttachment(cardId, fields[3])
+      Reply(outcome["status"], outcome["data"])
+      Return
+    Endif
+  Endif
   If fields.Count = 5 Then
     If fields[0] = "api" And fields[1] = "boards" And fields[3] = "lists" Then
       If Request.Method <> "DELETE" Then

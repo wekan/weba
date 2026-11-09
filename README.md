@@ -1304,7 +1304,7 @@ list and batch cards, shares cleanup primitives, records recovery success with t
 transaction and rolls back on late authority/batch/audit failure. Earlier independently
 deleted cards are not purged with a later list batch. Legacy card/swimlane physical
 removal also requires the global gate; the old archived-list hard-delete route is
-rejected. Full card/swimlane/attachment/discussion lifecycle parity remains pending.
+rejected. Full card/swimlane/discussion and broader attachment lifecycle parity remains pending.
 
 `DELETE /api/boards/:boardId/lists/:listId` matches source authorization-first
 behavior: unauthorized roles/raw assigned flags receive 403, while authorized
@@ -1331,3 +1331,51 @@ Generic Delete/Restore/Close/warning captions use imported source translations;
 new deleted-list-specific captions currently fall back to English and remain in
 TODO.md. Full source history/undo, cross-board deleted hierarchy, original complete
 UI/API/security suites and non-SQLite drivers still require further work.
+
+
+### Retained attachment deletion and restore
+
+Ordinary native attachment Delete and `DELETE /api/attachment/delete/:id` keep
+stored file bytes and author attribution. A separate tombstone records the actual
+actor, UTC milliseconds and attachment batch. Repeated deletion keeps that batch
+and writes no duplicate activity/history. Card-facing file summaries, downloads,
+copies and JSON exports include only live files. Deleting the current cover clears
+it; restoring the bytes never puts that cover back or changes another cover.
+
+Attachments offers native History with filename/actor lifecycle rows and Restore
+for a currently deleted file. Readers can inspect this metadata without receiving
+binary content, but only a fresh card writer may restore. Assigned writers remain
+restricted to their assigned cards. Polling clears a vanished live-file selection,
+preserves a selected history row and updates Restore availability. Card menu
+buttons are anchored to individual cards so multiple cards do not overlap them.
+This is a dedicated attachment lifecycle journal, not the full original generic
+ChangeHistory selection, comparison or undo interface.
+
+The bearer DELETE route returns the source success fields (`success`,
+`attachmentId`, `fileName`, `message`), 404 for unknown IDs, 403 for denied scope,
+and a sanitized 500 for unexpected failures. Its scoped site-admin exception does
+not cancel active assigned-only member flags. Account/board/card/file locks,
+inner and outer permission checks, and nested transactions retain atomic rollback
+when scope changes during deletion. No ordinary per-file physical delete exists.
+Global gated container purge erases the retained bytes and lifecycle records.
+Moves carry deletion/history scope with the card; copies and weba JSON exchange
+omit deleted files and remap a live cover to the new file identity. Old weba-2
+exports without file IDs or covers remain accepted.
+
+AttachmentLifecycleTest exercises retention, metadata-only reader history,
+idempotency, foreign/assigned/readonly rejection, injected history/permission
+failures, cover behavior, copy/exchange/move and permanent board cleanup.
+attachment-conformance.test.cjs compares 12 actual SQL outcomes against unchanged
+source lifecycle decision helpers with explicit time/ID adapters. It compares
+implemented lifecycle metadata, not the complete source history schema. Real
+HTTP tests inspect SQL bytes, cover state and rollback (focused mode
+`--attachment-delete-api`); focused native browser
+coverage uses `tests/run-http.py --attachment-lifecycle` (plus `--archive` for the
+packaged app). The standard local/browser suites include these checks.
+
+Full attachment API upload/list/info/download DTOs, storage backends, board-level
+background/map files, linked-card permissions, retention jobs, visual cover
+selection, security eventlog/Problems reporting and original complete UI/API/
+security suites remain open in TODO.md. The unchanged UnassignedAttachBleed
+callback also requires upload, DDP and eventlog support and has not been executed
+against this implementation.

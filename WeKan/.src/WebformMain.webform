@@ -330,6 +330,15 @@
     { DetailUpload WebFileButton
       Text = ("Upload attachment")
     }
+    { DetailAttachmentHistory WebButton
+      Text = ("History")
+    }
+    { DetailLiveAttachments WebButton
+      Text = ("Attachments")
+    }
+    { DetailRestoreAttachment WebButton
+      Text = ("Restore")
+    }
     { DetailDownload WebButton
       Text = ("Download attachment")
     }

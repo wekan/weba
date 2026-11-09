@@ -7,7 +7,7 @@ root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(root / 'runtime'))
 from server import handler
 
-if any(mode in sys.argv for mode in ('--live', '--overview-live', '--catalog', '--board-order', '--workspaces', '--workspace-order', '--board-drops', '--board-selection', '--selection-archive', '--board-purge', '--list-delete-api', '--list-deletion')) and '--members' not in sys.argv:
+if any(mode in sys.argv for mode in ('--live', '--overview-live', '--catalog', '--board-order', '--workspaces', '--workspace-order', '--board-drops', '--board-selection', '--selection-archive', '--board-purge', '--list-delete-api', '--list-deletion', '--attachment-lifecycle', '--attachment-delete-api')) and '--members' not in sys.argv:
     sys.argv.append('--members')
 
 base_env = os.environ.copy()
@@ -24,6 +24,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
     if '--members' in sys.argv:
         shutil.copy2(root / 'tests/BoardCatalogFixture.module', project / '.src/BoardCatalogFixture.module')
         shutil.copy2(root / 'tests/ListDeletionFixture.module', project / '.src/ListDeletionFixture.module')
+        shutil.copy2(root / 'tests/AttachmentFixture.module', project / '.src/AttachmentFixture.module')
         shutil.copy2(root / 'tests/CardDatesConformance.module', project / '.src/CardDatesConformance.module')
         shutil.copy2(root / 'tests/ArchiveFixture.module', project / '.src/ArchiveFixture.module')
     subprocess.run([base_env.get('GBC', 'gbc3'), '-j', '1', '-a', str(project)], check=True, env=base_env)
@@ -68,7 +69,9 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
         env['WEBA_TEST_URL'] = 'http://127.0.0.1:' + str(server.server_port)
         env['WEBA_TEST_RUNNER'] = runner
         env['WEBA_TEST_APPLICATION'] = str(application)
-        if '--list-delete-api' in sys.argv:
+        if '--attachment-delete-api' in sys.argv:
+            subprocess.run([sys.executable, str(root / 'tests/api-attachment-delete.test.py')], check=True, env=env)
+        elif '--list-delete-api' in sys.argv:
             subprocess.run([sys.executable, str(root / 'tests/api-list-delete.test.py')], check=True, env=env)
         elif '--list-deletion' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/list-deletion.browser.cjs')], check=True, env=env)
@@ -90,10 +93,13 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/catalog.browser.cjs')], check=True, env=env)
         elif '--overview-live' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/overview-live.browser.cjs')], check=True, env=env)
+        elif '--attachment-lifecycle' in sys.argv:
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/attachment-lifecycle.browser.cjs')], check=True, env=env)
         elif '--live' in sys.argv:
             env['WEBA_ARCHIVE_LIVE'] = '1'
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/wekan-archive.test.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/details-live.browser.cjs')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/attachment-lifecycle.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/people-live.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/overview-live.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/catalog.browser.cjs')], check=True, env=env)
@@ -116,6 +122,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             subprocess.run([sys.executable, str(root / 'tests/api-board-reads.test.py')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/api-list-times.test.py')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/api-list-delete.test.py')], check=True, env=env)
+            subprocess.run([sys.executable, str(root / 'tests/api-attachment-delete.test.py')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/list-times-conformance.test.cjs')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/api-single-card.test.py')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/card-read-conformance.test.cjs')], check=True, env=env)

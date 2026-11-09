@@ -1,0 +1,27 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim other As Integer
+  Dim fileId As Integer
+  Dim data As New Collection
+  Dim username As String
+  If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
+  Session["username"] = "rest-other"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+  For Each username In ["rest-file-reader", "rest-file-assigned"]
+    If Not WebDatabase.UserExists(username) Then WebDatabase.Register(username, Env["WEBA_TEST_PASSWORD"])
+  Next
+  boardId = KanbanStore.AddBoard("Attachment lifecycle board")
+  BoardAccess.SetMember(boardId, "rest-member", "normal")
+  BoardAccess.SetMember(boardId, "rest-file-reader", "read-only")
+  BoardAccess.SetMember(boardId, "rest-file-assigned", "normal-assigned-only")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Retained attachments", "", "Default", "Todo", "rest-file-assigned", "", "")
+  other = KanbanStore.SaveCard(boardId, 0, "Unassigned attachments", "", "Default", "Todo", "", "", "")
+  fileId = CardContent.AddFile(boardId, cardId, "retained <literal>.bin", "kept" & Chr(0) & "bytes")
+  AttachmentLifecycle.SetCover(boardId, cardId, fileId)
+  data["boardId"] = boardId
+  data["cardId"] = cardId
+  data["fileId"] = fileId
+  data["otherId"] = CardContent.AddFile(boardId, other, "private.bin", "private")
+  Print JSON.Encode(data)
+End

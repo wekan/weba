@@ -1,0 +1,70 @@
+Public Sub Main()
+  Dim cases As Variant[] = JSON.Decode(File.Load(".public/attachment-cases.json"))
+  Dim rows As New Variant[]
+  Dim c As Collection
+  Dim row As Collection
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim fileId As Integer
+  Dim other As Integer
+  Dim cover As Integer
+  Dim db As Connection
+  WebDatabase.Register("attachment-matrix", "x")
+  Session["username"] = "attachment-matrix"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("attachment-matrix")
+  For Each c In cases
+    boardId = KanbanStore.AddBoard("Matrix")
+    cardId = KanbanStore.SaveCard(boardId, 0, "Card", "", "Default", "Todo", "", "", "")
+    fileId = CardContent.AddFile(boardId, cardId, "literal <name>.bin", "bytes")
+    other = CardContent.AddFile(boardId, cardId, "other.bin", "other")
+    db = WebDatabase.OpenConnection()
+    If c["deleted"] Then AttachmentLifecycle.Delete(boardId, cardId, fileId)
+    cover = 0
+    If c["cover"] = "target" Then cover = fileId
+    If c["cover"] = "other" Then cover = other
+    If cover Then db.Exec("INSERT INTO kb_meta (board_id,kind,item_id,setting,value) VALUES (&1,'card',&2,'cover',&3)", boardId, cardId, CStr(cover))
+    row = New Collection
+    row["fileId"] = fileId
+    row["boardId"] = boardId
+    row["cardId"] = cardId
+    row["before"] = Frame(db, boardId, cardId, fileId)
+    If c["operation"] = "delete" Then
+      AttachmentLifecycle.Delete(boardId, cardId, fileId)
+    Else
+      AttachmentLifecycle.Restore(boardId, cardId, fileId)
+    Endif
+    row["after"] = Frame(db, boardId, cardId, fileId)
+    rows.Add(row)
+  Next
+  Print JSON.Encode(rows)
+End
+
+Private Function Frame(db As Connection, boardId As Integer, cardId As Integer, fileId As Integer) As Collection
+  Dim data As New Collection
+  Dim r As Result
+  Dim history As New Variant[]
+  Dim row As Collection
+  data.Add("", "cover")
+  r = db.Find("kb_meta", "board_id=&1 AND kind='card' AND item_id=&2 AND setting='cover'", boardId, cardId)
+  If r.Available Then data["cover"] = CStr(r!value)
+  r = db.Find("kb_attachment_deletions", "file_id=&1", fileId)
+  If r.Available Then
+    data["deletedAt"] = r!deleted_at
+    data["deletedBy"] = r!actor
+    data["deleteBatchId"] = r!batch_id
+  Endif
+  r = db.Find("kb_attachment_history", "file_id=&1 ORDER BY id", fileId)
+  For Each r
+    row = New Collection
+    row["action"] = r!action
+    row["actor"] = r!actor
+    row["batch"] = r!batch_id
+    row["filename"] = r!filename
+    row["previousAt"] = r!previous_at
+    history.Add(row)
+  Next
+  data["history"] = history
+  r = db.Find("kb_files", "id=&1", fileId)
+  data["bytes"] = Base64(r!content.Data)
+  Return data
+End

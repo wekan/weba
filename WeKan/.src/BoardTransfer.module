@@ -26,6 +26,7 @@ Public Function ExportData(boardId As Integer, kind As String, itemId As Integer
   Dim r As Result
   Dim item As Collection
   Dim listId As Integer
+  Dim cover As Integer
   Dim include As Boolean
   BoardAccess.RequireContainer(boardId, kind, itemId)
   source = WorkspaceStore.Record(boardId, kind, itemId)
@@ -45,6 +46,8 @@ Public Function ExportData(boardId As Integer, kind As String, itemId As Integer
     item["assignees"] = BoardAccess.Assignees(boardId, r!id)
     item["members"] = BoardAccess.CardMembers(boardId, r!id)
     item["dates"] = CardDates.ReadDates(boardId, r!id)
+    cover = AttachmentLifecycle.CoverId(boardId, r!id)
+    If cover > 0 Then item["coverFile"] = cover
     If CardArchive.Timestamp(boardId, r!id) Then item["archivedAt"] = CardArchive.Timestamp(boardId, r!id)
     item["list_id"] = listId
     item["sort_order"] = KanbanStore.ItemOrder(boardId, "card", CStr(r!id), r!id)
@@ -73,7 +76,7 @@ Public Function ExportData(boardId As Integer, kind As String, itemId As Integer
   Next
   r = $db.Find("kb_meta", "board_id = &1", boardId)
   For Each r
-    If r!setting = "star" Or r!setting = "watch" Then Continue
+    If r!setting = "star" Or r!setting = "watch" Or r!setting = "cover" Then Continue
     include = False
     Select r!kind
       Case "board"
@@ -95,10 +98,10 @@ Public Function ExportData(boardId As Integer, kind As String, itemId As Integer
     item["author_name"] = CardContent.AuthorName(boardId, r!card_id, "entry", r!id)
     entries.Add(item)
   Next
-  r = $db.Find("kb_files", "board_id = &1 ORDER BY id", boardId)
+  r = $db.Find("kb_files", AttachmentLifecycle.LiveSql("kb_files") & " AND board_id = &1 ORDER BY id", boardId)
   For Each r
     If cardIds.Find(r!card_id) < 0 Then Continue
-    item = Row(r, ["card_id", "filename"])
+    item = Row(r, ["id", "card_id", "filename"])
     item["base64"] = Base64(r!content.Data)
     item["author_name"] = CardContent.AuthorName(boardId, r!card_id, "file", r!id)
     files.Add(item)
@@ -127,6 +130,7 @@ Public Function ImportData(text As String, title As String) As Integer
   Dim listMap As New Collection
   Dim cardMap As New Collection
   Dim entryMap As New Collection
+  Dim fileMap As New Collection
   Dim item As Collection
   Dim r As Result
   Dim boardId As Integer
@@ -231,10 +235,21 @@ Public Function ImportData(text As String, title As String) As Integer
   For Each item In data["files"]
     If Not cardMap.Exist(CStr(item["card_id"])) Then Error.Raise("Exported attachment has no card")
     id = CardContent.AddFile(boardId, cardMap[CStr(item["card_id"])], item["filename"], UnBase64(item["base64"]))
+    If item.Exist("id") Then
+      oldId = CStr(item["id"])
+      If fileMap.Exist(oldId) Then Error.Raise("Duplicate attachment ID")
+      fileMap[oldId] = id
+    Endif
     If item.Exist("author_name") Then
       If TypeOf(item["author_name"]) <> gb.String Then Error.Raise("Invalid author name")
       CardContent.RetainAuthorName(boardId, cardMap[CStr(item["card_id"])], "file", id, item["author_name"])
     Endif
+  Next
+  For Each item In data["cards"]
+    If Not item.Exist("coverFile") Then Continue
+    oldId = CStr(item["coverFile"])
+    If Not fileMap.Exist(oldId) Then Error.Raise("Unknown attachment cover")
+    AttachmentLifecycle.SetCover(boardId, cardMap[CStr(item["id"])], fileMap[oldId])
   Next
   For Each item In data["metadata"]
     oldId = CStr(item["item_id"])

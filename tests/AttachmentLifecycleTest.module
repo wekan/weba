@@ -1,0 +1,210 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim other As Integer
+  Dim first As Integer
+  Dim second As Integer
+  Dim foreign As Integer
+  Dim copied As Integer
+  Dim imported As Integer
+  Dim target As Integer
+  Dim batchId As String
+  Dim db As Connection
+  Dim r As Result
+  Dim before As String
+  Dim text As String
+  Dim denied As Boolean
+  Dim data As Collection
+  Dim historyId As Integer
+  Dim row As Collection
+  Dim boardCount As Integer
+  WebDatabase.Register("attachment-global", "x")
+  WebDatabase.Register("attachment-owner", "x")
+  WebDatabase.Register("attachment-editor", "x")
+  WebDatabase.Register("attachment-reader", "x")
+  WebDatabase.Register("attachment-assigned", "x")
+  SignIn("attachment-owner")
+  boardId = KanbanStore.AddBoard("Attachment lifecycle")
+  BoardAccess.SetMember(boardId, "attachment-editor", "normal")
+  BoardAccess.SetMember(boardId, "attachment-reader", "read-only")
+  BoardAccess.SetMember(boardId, "attachment-assigned", "normal-assigned-only")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Files", "", "Default", "Todo", "attachment-assigned", "", "")
+  other = KanbanStore.SaveCard(boardId, 0, "Other files", "", "Default", "Todo", "", "", "")
+  first = CardContent.AddFile(boardId, cardId, "retained <literal>.bin", "a" & Chr(0) & "b")
+  second = CardContent.AddFile(boardId, cardId, "other.bin", "second")
+  foreign = CardContent.AddFile(boardId, other, "private.bin", "private")
+  AttachmentLifecycle.SetCover(boardId, cardId, first)
+  db = WebDatabase.OpenConnection()
+  SignIn("attachment-reader")
+  before = Snapshot()
+  Try AttachmentLifecycle.Delete(boardId, cardId, first)
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Readonly attachment delete wrote data")
+  Try AttachmentLifecycle.Restore(boardId, cardId, first)
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Readonly restore wrote data")
+  SignIn("attachment-assigned")
+  Try AttachmentLifecycle.Delete(boardId, other, foreign)
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Unassigned attachment delete accepted")
+  SignIn("attachment-editor")
+  Try AttachmentLifecycle.Delete(boardId, cardId, foreign)
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Foreign-card attachment accepted")
+  CheckFailure("CREATE TRIGGER attachment_inject BEFORE INSERT ON kb_attachment_history BEGIN SELECT RAISE(ABORT,'history failed'); END", boardId, cardId, first, False)
+  CheckFailure("CREATE TRIGGER attachment_inject AFTER INSERT ON kb_attachment_history BEGIN UPDATE kb_members SET role='read-only' WHERE board_id=" & Str(boardId) & " AND username='attachment-editor'; END", boardId, cardId, first, False)
+  batchId = AttachmentLifecycle.Delete(boardId, cardId, first)
+  If Left(batchId, 11) <> "attachment-" Then Error.Raise("Attachment batch format lost")
+  data = DetailLive.Read(boardId, cardId, "file", True)
+  If data["files"].Count Or data["attachmentHistory"].Count <> 1 Then Error.Raise("Attachment history view mixed live/deleted rows")
+  If InStr(JSON.Encode(data), Base64("a" & Chr(0) & "b")) Then Error.Raise("History snapshot exposed bytes")
+  r = AttachmentLifecycle.History(boardId, cardId)
+  historyId = r!id
+  If r!actor <> "attachment-editor" Or r!action <> "removed" Or r!deleted = 0 Then Error.Raise("History actor/action/state lost")
+  SignIn("attachment-reader")
+  data = DetailLive.Read(boardId, cardId, "file", True)
+  If data["attachmentHistory"].Count <> 1 Or data["write"] Then Error.Raise("Readonly history unavailable or writable")
+  Try AttachmentLifecycle.HistoryEntry(boardId, other, historyId)
+  denied = Error
+  If Not denied Then Error.Raise("History entry escaped card scope")
+  SignIn("attachment-editor")
+  before = Snapshot()
+  If AttachmentLifecycle.Delete(boardId, cardId, first) <> batchId Or Snapshot() <> before Then Error.Raise("Repeated attachment delete changed state")
+  r = db.Find("kb_files", "id=&1", first)
+  If Not r.Available Or r!content.Data <> "a" & Chr(0) & "b" Then Error.Raise("Soft delete erased bytes")
+  If AttachmentLifecycle.CoverId(boardId, cardId) Then Error.Raise("Deleted cover remained selected")
+  r = CardContent.Files(boardId, cardId)
+  If r.Count <> 1 Or r!id <> second Then Error.Raise("Live file list leaked deleted attachment")
+  r = CardContent.FileSummaries(boardId, cardId)
+  If r.Count <> 1 Then Error.Raise("Summary leaked deleted attachment")
+  Try CardContent.FileRecord(boardId, cardId, first)
+  denied = Error
+  If Not denied Then Error.Raise("Deleted attachment download accepted")
+  Try AttachmentLifecycle.SetCover(boardId, cardId, first)
+  denied = Error
+  If Not denied Then Error.Raise("Deleted attachment became cover")
+  text = BoardTransfer.ExportData(boardId, "card", cardId)
+  If InStr(text, "retained <literal>") Then Error.Raise("Export leaked deleted attachment")
+  copied = WorkspaceStore.Copy(boardId, "card", cardId, "Live files copy")
+  r = CardContent.Files(boardId, copied)
+  If r.Count <> 1 Or r!filename <> "other.bin" Then Error.Raise("Copy included deleted file")
+  If AttachmentLifecycle.CoverId(boardId, copied) Then Error.Raise("Copy resurrected deleted cover")
+  CheckFailure("CREATE TRIGGER attachment_inject AFTER DELETE ON kb_attachment_deletions BEGIN UPDATE kb_members SET role='read-only' WHERE board_id=" & Str(boardId) & " AND username='attachment-editor'; END", boardId, cardId, first, True)
+  CheckFailure("CREATE TRIGGER attachment_inject BEFORE INSERT ON kb_attachment_history WHEN NEW.action='added' BEGIN SELECT RAISE(ABORT,'restore history failed'); END", boardId, cardId, first, True)
+  If Not AttachmentLifecycle.Restore(boardId, cardId, first) Then Error.Raise("Restore failed")
+  If AttachmentLifecycle.CoverId(boardId, cardId) Then Error.Raise("Restore put the cover back")
+  before = Snapshot()
+  If AttachmentLifecycle.Restore(boardId, cardId, first) Or Snapshot() <> before Then Error.Raise("Live attachment restore changed state")
+  r = CardContent.FileRecord(boardId, cardId, first)
+  If r!content.Data <> "a" & Chr(0) & "b" Then Error.Raise("Restoration changed bytes")
+  AttachmentLifecycle.SetCover(boardId, cardId, second)
+  AttachmentLifecycle.Delete(boardId, cardId, first)
+  AttachmentLifecycle.Restore(boardId, cardId, first)
+  If AttachmentLifecycle.CoverId(boardId, cardId) <> second Then Error.Raise("Delete/restore changed another cover")
+  copied = WorkspaceStore.Copy(boardId, "card", cardId, "Cover copy")
+  r = CardContent.FileRecord(boardId, copied, AttachmentLifecycle.CoverId(boardId, copied))
+  If r!filename <> "other.bin" Or r!id = second Then Error.Raise("Copy did not remap live cover")
+  imported = BoardTransfer.ImportData(BoardTransfer.ExportData(boardId, "card", cardId), "Cover exchange")
+  r = KanbanStore.Cards(imported)
+  r = CardContent.FileRecord(imported, r!id, AttachmentLifecycle.CoverId(imported, r!id))
+  If r!filename <> "other.bin" Or r!id = second Then Error.Raise("Exchange did not remap live cover")
+  data = JSON.Decode(BoardTransfer.ExportData(boardId, "card", cardId))
+  row = data["cards"][0]
+  row["coverFile"] = 999999
+  boardCount = db.Find("kb_boards").Count
+  before = Snapshot()
+  Try BoardTransfer.ImportData(JSON.Encode(data), "Invalid cover")
+  denied = Error
+  If Not denied Or db.Find("kb_boards").Count <> boardCount Or Snapshot() <> before Then Error.Raise("Unknown cover import was not atomic")
+  row.Remove("coverFile")
+  For Each row In data["files"]
+    row.Remove("id")
+  Next
+  imported = BoardTransfer.ImportData(JSON.Encode(data), "Legacy files exchange")
+  r = KanbanStore.Cards(imported)
+  If CardContent.Files(imported, r!id).Count <> 2 Or AttachmentLifecycle.CoverId(imported, r!id) Then Error.Raise("Legacy file export compatibility lost")
+  AttachmentLifecycle.Delete(boardId, cardId, first)
+  target = KanbanStore.AddBoard("Attachment move target")
+  r = KanbanStore.Lanes(target)
+  r = KanbanStore.Lists(target, "Default")
+  WorkspaceActions.Move(boardId, "card", cardId, target, "Default", r!id)
+  If Not AttachmentLifecycle.IsDeleted(target, cardId, first) Or AttachmentLifecycle.IsDeleted(boardId, cardId, first) Then Error.Raise("Move lost deletion scope")
+  r = AttachmentLifecycle.History(target, cardId)
+  If r.Count <> 5 Then Error.Raise("Move lost attachment history")
+  If AttachmentLifecycle.CoverId(target, cardId) <> second Then Error.Raise("Move lost cover")
+  If Not AttachmentLifecycle.Restore(target, cardId, first) Then Error.Raise("Moved attachment cannot be restored")
+  SignIn("attachment-global")
+  RecoveryStore.SetEnabled(True)
+  SignIn("attachment-editor")
+  WorkspaceStore.SetArchived(target, "board", target, True)
+  SignIn("attachment-global")
+  BoardPurge.DeleteBoards([target])
+  r = db.Find("kb_attachment_deletions", "board_id=&1", target)
+  If r.Count Then Error.Raise("Board purge left attachment tombstones")
+  r = db.Find("kb_attachment_history", "board_id=&1", target)
+  If r.Count Then Error.Raise("Board purge left attachment history")
+  r = db.Find("kb_files", "board_id=&1", target)
+  If r.Count Then Error.Raise("Board purge left retained file bytes")
+  Print "Attachment lifecycle: retained bytes, live filtering, idempotency, exact actor/scope, cover clearing/no-restore/remapping, history/write rollback, copy/exchange/move and gated purge cleanup passed"
+End
+
+Private Sub CheckFailure(sql As String, boardId As Integer, cardId As Integer, fileId As Integer, restore As Boolean)
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim before As String = Snapshot()
+  Dim denied As Boolean
+  db.Exec(sql)
+  If restore Then
+    Try AttachmentLifecycle.Restore(boardId, cardId, fileId)
+  Else
+    Try AttachmentLifecycle.Delete(boardId, cardId, fileId)
+  Endif
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Attachment mutation did not roll back: " & sql)
+  db.Exec("DROP TRIGGER attachment_inject")
+End
+
+Private Function Snapshot() As String
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim data As New Variant[]
+  Dim rows As Variant[]
+  Dim row As Collection
+  Dim r As Result
+  Dim tableName As String
+  Dim field As String
+  Dim fields As String[]
+  For Each tableName In ["kb_files", "kb_attachment_deletions", "kb_attachment_history", "kb_meta", "kb_members", "kb_item_changes", "kb_activity"]
+    Select tableName
+      Case "kb_files"
+        fields = ["id", "board_id", "card_id", "filename", "author"]
+      Case "kb_attachment_deletions"
+        fields = ["file_id", "board_id", "card_id", "actor", "deleted_at", "batch_id"]
+      Case "kb_attachment_history"
+        fields = ["id", "file_id", "board_id", "card_id", "actor", "filename", "action", "changed_at", "previous_at", "batch_id"]
+      Case "kb_meta"
+        fields = ["board_id", "kind", "item_id", "setting", "value"]
+      Case "kb_members"
+        fields = ["board_id", "username", "role"]
+      Case "kb_item_changes"
+        fields = ["board_id", "kind", "item_id", "modified_ms"]
+      Case "kb_activity"
+        fields = ["id", "board_id", "actor", "message"]
+    End Select
+    rows = New Variant[]
+    r = db.Find(tableName)
+    For Each r
+      row = New Collection
+      For Each field In fields
+        row.Add(r[field], field)
+      Next
+      If tableName = "kb_files" Then row.Add(Base64(r!content.Data), "bytes")
+      rows.Add(row)
+    Next
+    data.Add(rows)
+  Next
+  Return JSON.Encode(data)
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

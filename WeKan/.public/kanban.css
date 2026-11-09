@@ -3,7 +3,7 @@
 .weba-content h2{font-size:22px;margin:0 0 16px}
 .weba-columns{display:grid;grid-template-columns:repeat(3,minmax(180px,1fr));gap:12px;overflow:auto}
 .weba-column{background:#e5e9ef;padding:12px;border-radius:6px;min-height:180px}
-.weba-card{background:white;border:1px solid #cdd5df;border-radius:5px;padding:12px;margin:8px 0;overflow-wrap:anywhere}
+.weba-card{position:relative;background:white;border:1px solid #cdd5df;border-radius:5px;padding:12px;margin:8px 0;overflow-wrap:anywhere}
 .weba-card p{white-space:pre-wrap}.weba-card small{color:#526078}
 .weba-calendar{display:grid;grid-template-columns:repeat(7,minmax(100px,1fr));gap:4px;overflow:auto}
 .weba-day{min-height:110px;padding:6px;background:#fff;border:1px solid #ccd4df}

@@ -14,6 +14,8 @@ Private $detailsBoard As Integer
 Private $detailsCard As Integer
 Private $entryId As Integer
 Private $fileId As Integer
+Private $attachmentHistory As Boolean
+Private $attachmentHistoryId As Integer
 Private $contextBoard As Integer
 Private $contextKind As String
 Private $contextId As Integer
@@ -1526,6 +1528,7 @@ Private Sub ShowDetails(index As Integer, boardId As Integer, cardId As Integer)
   $loadingDetails = True
   $detailsBoard = boardId
   $detailsCard = cardId
+  $attachmentHistory = False
   DetailsTitle.Text = r!title
   DetailKind.List = ["Comments", "Checklists", "Checklist items", "Subtasks", "Dependencies", "Custom fields", "Time tracking", "Attachments"]
   DetailType.List = ["text", "number", "date", "checkbox"]
@@ -1552,7 +1555,7 @@ Private Sub RefreshLiveDetails()
     ValidateOpenCards()
     Return
   Endif
-  data = DetailLive.Read($detailsBoard, $detailsCard, DetailCode())
+  data = DetailLive.Read($detailsBoard, $detailsCard, DetailCode(), $attachmentHistory)
   If JSON.Encode(data) <> $detailState Then LoadDetails(True, data)
 Catch
   Notice.Text = "Card details refresh failed"
@@ -1610,6 +1613,7 @@ End
 Private Sub ClearDetailEditor()
   $entryId = 0
   $fileId = 0
+  $attachmentHistoryId = 0
   $entryBaseline = Null
   DetailTitle.Text = ""
   DetailBody.Text = ""
@@ -1650,7 +1654,7 @@ Private Sub LoadDetails(Optional preserve As Boolean, Optional data As Collectio
   Dim state As String
   Dim kind As String = DetailCode()
   Dim typeConflict As Boolean
-  If Not data Then data = DetailLive.Read($detailsBoard, $detailsCard, kind)
+  If Not data Then data = DetailLive.Read($detailsBoard, $detailsCard, kind, $attachmentHistory)
   If preserve Then draft = DetailFormValues()
   $loadingDetails = True
   state = JSON.Encode(data)
@@ -1663,6 +1667,9 @@ Private Sub LoadDetails(Optional preserve As Boolean, Optional data As Collectio
   Next
   DetailParent.List = checklists
   If checklists.Count Then DetailParent.Index = 0
+  For Each row In data["attachmentHistory"]
+    DetailTree.Add("h" & CStr(row["id"]), If(row["action"] = "removed", "− ", "+ ") & row["filename"] & " · " & row["actor"])
+  Next
   For Each row In data["files"]
     DetailTree.Add("f" & CStr(row["id"]), row["filename"])
   Next
@@ -1697,6 +1704,12 @@ Private Sub LoadDetails(Optional preserve As Boolean, Optional data As Collectio
         Endif
       Endif
       DetailTree.Key = "e" & CStr($entryId)
+    Else
+      ClearDetailEditor()
+    Endif
+  Else If preserve And $attachmentHistoryId > 0 Then
+    If DetailTree.Exist("h" & CStr($attachmentHistoryId)) Then
+      DetailTree.Key = "h" & CStr($attachmentHistoryId)
     Else
       ClearDetailEditor()
     Endif
@@ -1738,15 +1751,21 @@ Private Sub UpdateDetailControls()
   DetailType.Enabled = editable
   DetailParent.Enabled = editable
   DetailDone.Enabled = editable
-  DetailDelete.Visible = editable
+  DetailDelete.Visible = editable And Not $attachmentHistory
   DetailDelete.Enabled = $entryId > 0 Or $fileId > 0
   DetailSave.Visible = editable And kind <> "file"
   DetailNew.Visible = editable And kind <> "file"
   DetailStart.Visible = editable And kind = "time"
   DetailStop.Visible = editable And kind = "time"
-  DetailUpload.Visible = editable And kind = "file"
-  DetailDownload.Visible = kind = "file"
+  DetailUpload.Visible = editable And kind = "file" And Not $attachmentHistory
+  DetailDownload.Visible = kind = "file" And Not $attachmentHistory
   DetailDownload.Enabled = $fileId > 0
+  DetailAttachmentHistory.Visible = kind = "file" And Not $attachmentHistory
+  DetailLiveAttachments.Visible = kind = "file" And $attachmentHistory
+  DetailRestoreAttachment.Visible = False
+  If kind = "file" And $attachmentHistory And $attachmentHistoryId > 0 And editable Then
+    DetailRestoreAttachment.Visible = AttachmentLifecycle.IsDeleted($detailsBoard, $detailsCard, $fileId)
+  Endif
   If $entryId > 0 Then
     If $entryBaseline Then
       If $entryBaseline["kind"] = "comment" And $entryBaseline["author"] <> WebIdentity.Username And Not BoardAccess.Can($detailsBoard, "manageBoard") Then
@@ -1761,6 +1780,7 @@ End
 
 Public Sub DetailKind_Click()
   If $loadingDetails Then Return
+  $attachmentHistory = False
   LoadDetails()
 Catch
   Notice.Text = Error.Text
@@ -1770,6 +1790,15 @@ Public Sub DetailTree_Select()
   Dim r As Result
   If $loadingDetails Then Return
   If Not DetailTree.Key Then Return
+  If Left(DetailTree.Key) = "h" Then
+    If DetailCode() <> "file" Or Not $attachmentHistory Then Error.Raise("Choose attachment history")
+    $attachmentHistoryId = CInt(Mid(DetailTree.Key, 2))
+    r = AttachmentLifecycle.HistoryEntry($detailsBoard, $detailsCard, $attachmentHistoryId)
+    $fileId = r!file_id
+    $entryId = 0
+    UpdateDetailControls()
+    Return
+  Endif
   If Left(DetailTree.Key) = "f" Then
     $fileId = CInt(Mid(DetailTree.Key, 2))
     UpdateDetailControls()
@@ -1814,6 +1843,7 @@ Catch
 End
 
 Public Sub DetailDelete_Click()
+  If $attachmentHistory Then Error.Raise("Choose a live attachment")
   If DetailCode() = "file" Then
     CardContent.DeleteFile($detailsBoard, $detailsCard, $fileId)
   Else
@@ -2973,6 +3003,31 @@ Public Sub ConfirmDeletedListPurge_Click()
   DeletedListPurgeConfirmed.Value = False
   DeletedListPurgePanel.Hide()
   RefreshTree()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub DetailAttachmentHistory_Click()
+  If DetailCode() <> "file" Then Error.Raise("Choose attachments")
+  $attachmentHistory = True
+  LoadDetails()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub DetailLiveAttachments_Click()
+  $attachmentHistory = False
+  LoadDetails()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub DetailRestoreAttachment_Click()
+  Dim r As Result
+  If DetailCode() <> "file" Or Not $attachmentHistory Or $attachmentHistoryId <= 0 Then Error.Raise("Choose attachment history")
+  r = AttachmentLifecycle.HistoryEntry($detailsBoard, $detailsCard, $attachmentHistoryId)
+  AttachmentLifecycle.Restore($detailsBoard, $detailsCard, r!file_id)
+  LoadDetails(True)
 Catch
   Notice.Text = Error.Text
 End

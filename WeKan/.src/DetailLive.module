@@ -1,11 +1,12 @@
 ' Authorized, binary-free native detail-panel snapshots kept on the server.
 Export
 
-Public Function Read(boardId As Integer, cardId As Integer, kind As String) As Collection
+Public Function Read(boardId As Integer, cardId As Integer, kind As String, Optional attachmentHistory As Boolean) As Collection
   Dim data As New Collection
   Dim entries As New Variant[]
   Dim checklists As New Variant[]
   Dim files As New Variant[]
+  Dim history As New Variant[]
   Dim r As Result
   Dim row As Collection
   Dim capability As String
@@ -23,7 +24,18 @@ Public Function Read(boardId As Integer, cardId As Integer, kind As String) As C
       checklists.Add(EntryDraft.Record(r))
     Next
   Endif
-  If kind = "file" Then
+  If kind = "file" And attachmentHistory Then
+    r = AttachmentLifecycle.History(boardId, cardId)
+    For Each r
+      row = New Collection
+      row["id"] = r!id
+      row["filename"] = r!filename
+      row["actor"] = r!actor
+      row["action"] = r!action
+      row["deleted"] = CBool(r!deleted)
+      history.Add(row)
+    Next
+  Else If kind = "file" Then
     r = CardContent.FileSummaries(boardId, cardId)
     For Each r
       row = New Collection
@@ -48,5 +60,6 @@ Public Function Read(boardId As Integer, cardId As Integer, kind As String) As C
   data["entries"] = entries
   data["checklists"] = checklists
   data["files"] = files
+  data["attachmentHistory"] = history
   Return data
 End

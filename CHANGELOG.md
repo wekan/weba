@@ -2,6 +2,19 @@
 
 This work adds the following features and fixes:
 
+- Retain attachment bytes on ordinary native/API deletion; filter deleted files
+  from card reads, downloads, copies and exports. Add native metadata-only
+  attachment history/restore, idempotent actor/time/batch records and fresh
+  readonly/assigned-card guards. Clear a deleted cover without restoring it;
+  remap live covers on copy/JSON exchange and carry lifecycle scope on moves.
+  Clean retained files/journals during gated container purge. Add the bearer
+  attachment DELETE route with scoped site-admin permission, raw assigned flags
+  and sanitized atomic failures. Anchor card menus to individual cards. Verify
+  native rollback/legacy exchange, 12 unchanged source-plan SQL comparisons,
+  real source/package API and native writer/reader browser regressions.
+  Full attachment API/storage/security-eventlog and generic history/undo parity
+  remain open. Thanks to xet7.
+
 - Make ordinary native list deletion reversible: retain the list, active and
   archived cards, attachments and relationships under one actor/time/batch.
   Hide deleted rows from native/REST reads, counts, exports and destinations;

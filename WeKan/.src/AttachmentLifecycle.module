@@ -1,0 +1,245 @@
+' Ordinary attachment removal retains bytes; only explicit container purge erases.
+Export
+Private $db As Connection
+
+Public Sub OpenStore()
+  Dim t As Table
+  If $db Then Return
+  $db = WebDatabase.OpenConnection()
+  If Not $db.Tables.Exist("kb_attachment_deletions") Then
+    t = $db.Tables.Add("kb_attachment_deletions")
+    t.Fields.Add("file_id", db.Integer)
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("card_id", db.Integer)
+    t.Fields.Add("actor", db.String, 255)
+    t.Fields.Add("deleted_at", db.Long)
+    t.Fields.Add("batch_id", db.String, 128)
+    t.PrimaryKey = ["file_id"]
+    t.Update()
+  Endif
+  If Not $db.Tables.Exist("kb_attachment_history") Then
+    t = $db.Tables.Add("kb_attachment_history")
+    t.Fields.Add("id", db.Serial)
+    t.Fields.Add("file_id", db.Integer)
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("card_id", db.Integer)
+    t.Fields.Add("actor", db.String, 255)
+    t.Fields.Add("changed_at", db.Long)
+    t.Fields.Add("previous_at", db.Long)
+    t.Fields.Add("batch_id", db.String, 128)
+    t.Fields.Add("filename", db.String, 255)
+    t.Fields.Add("action", db.String, 16)
+    t.PrimaryKey = ["id"]
+    t.Update()
+  Endif
+Catch
+  $db = Null
+  Error.Propagate()
+End
+
+Public Function LiveSql(tableAlias As String) As String
+  Return "NOT EXISTS (SELECT 1 FROM kb_attachment_deletions deleted_file WHERE deleted_file.file_id=" & tableAlias & ".id AND deleted_file.board_id=" & tableAlias & ".board_id AND deleted_file.card_id=" & tableAlias & ".card_id)"
+End
+
+Private Function RawFile(boardId As Integer, cardId As Integer, fileId As Integer) As Result
+  Dim r As Result = $db.Find("kb_files", "board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, fileId)
+  If Not r.Available Then Error.Raise("Attachment not accessible")
+  Return r
+End
+
+Private Sub CheckWriter(boardId As Integer, cardId As Integer, actor As String)
+  If Not actor Or WebIdentity.Username <> actor Then Error.Raise("Sign in required")
+  BoardAccess.RequireCard(boardId, cardId)
+  BoardAccess.Require(boardId, "write")
+End
+
+Private Function BeginChange(boardId As Integer, cardId As Integer, fileId As Integer) As String
+  Dim actor As String = WebIdentity.Username
+  Dim transaction As Boolean
+  Dim failure As String
+  CardContent.OpenStore()
+  OpenStore()
+  CheckWriter(boardId, cardId, actor)
+  RawFile(boardId, cardId, fileId)
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+  $db.Exec("UPDATE kb_cards SET title=title WHERE board_id=&1 AND id=&2", boardId, cardId)
+  $db.Exec("UPDATE kb_files SET filename=filename WHERE board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, fileId)
+  CheckWriter(boardId, cardId, actor)
+  RawFile(boardId, cardId, fileId)
+  Return actor
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+Private Function Mark(boardId As Integer, cardId As Integer, fileId As Integer) As Result
+  Return $db.Find("kb_attachment_deletions", "board_id=&1 AND card_id=&2 AND file_id=&3", boardId, cardId, fileId)
+End
+
+Public Function IsDeleted(boardId As Integer, cardId As Integer, fileId As Integer) As Boolean
+  OpenStore()
+  Return Mark(boardId, cardId, fileId).Available
+End
+
+Private Sub AddHistory(boardId As Integer, cardId As Integer, fileId As Integer, actor As String, filename As String, action As String, at As Long, batchId As String, previousAt As Long)
+  Dim r As Result = $db.Create("kb_attachment_history")
+  r["board_id"] = boardId
+  r["card_id"] = cardId
+  r["file_id"] = fileId
+  r["actor"] = actor
+  r["filename"] = filename
+  r["action"] = action
+  r["changed_at"] = at
+  r["batch_id"] = batchId
+  r["previous_at"] = previousAt
+  r.Update()
+End
+
+Public Function Delete(boardId As Integer, cardId As Integer, fileId As Integer) As String
+  Dim actor As String
+  Dim file As Result
+  Dim r As Result
+  Dim batchId As String
+  Dim at As Long
+  Dim changed As Boolean
+  Dim transaction As Boolean
+  Dim failure As String
+  actor = BeginChange(boardId, cardId, fileId)
+  transaction = True
+  file = RawFile(boardId, cardId, fileId)
+  r = Mark(boardId, cardId, fileId)
+  If r.Available Then
+    batchId = r!batch_id
+  Else
+    changed = True
+    at = ItemChanges.UtcNow()
+    batchId = "attachment-" & Str(fileId) & "-" & Str(at)
+    If StoredCover(cardId, boardId) = fileId Then $db.Delete("kb_meta", "board_id=&1 AND kind=&2 AND item_id=&3 AND setting=&4", boardId, "card", cardId, "cover")
+    r = $db.Create("kb_attachment_deletions")
+    r["file_id"] = fileId
+    r["board_id"] = boardId
+    r["card_id"] = cardId
+    r["actor"] = actor
+    r["deleted_at"] = at
+    r["batch_id"] = batchId
+    r.Update()
+    AddHistory(boardId, cardId, fileId, actor, file!filename, "removed", at, batchId, 0)
+    KanbanStore.Activity(boardId, "Deleted attachment: " & file!filename, "card", cardId)
+  Endif
+  CheckWriter(boardId, cardId, actor)
+  RawFile(boardId, cardId, fileId)
+  r = Mark(boardId, cardId, fileId)
+  If Not r.Available Then Error.Raise("Attachment deletion changed")
+  If r!batch_id <> batchId Then Error.Raise("Attachment deletion changed")
+  If changed And If StoredCover(cardId, boardId) = fileId Then Error.Raise("Deleted attachment cannot be the cover")
+  DatabaseTransactions.Commit($db)
+  transaction = False
+  Return batchId
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+Public Function Restore(boardId As Integer, cardId As Integer, fileId As Integer) As Boolean
+  Dim actor As String
+  Dim file As Result
+  Dim r As Result
+  Dim batchId As String
+  Dim at As Long
+  Dim changed As Boolean
+  Dim transaction As Boolean
+  Dim failure As String
+  actor = BeginChange(boardId, cardId, fileId)
+  transaction = True
+  file = RawFile(boardId, cardId, fileId)
+  r = Mark(boardId, cardId, fileId)
+  If r.Available Then
+    changed = True
+    batchId = r!batch_id
+    at = r!deleted_at
+    $db.Delete("kb_attachment_deletions", "board_id=&1 AND card_id=&2 AND file_id=&3 AND batch_id=&4", boardId, cardId, fileId, batchId)
+    AddHistory(boardId, cardId, fileId, actor, file!filename, "added", ItemChanges.UtcNow(), batchId, at)
+    KanbanStore.Activity(boardId, "Restored attachment: " & file!filename, "card", cardId)
+  Endif
+  CheckWriter(boardId, cardId, actor)
+  RawFile(boardId, cardId, fileId)
+  If Mark(boardId, cardId, fileId).Available Then Error.Raise("Attachment deletion changed")
+  DatabaseTransactions.Commit($db)
+  transaction = False
+  Return changed
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+Private Function StoredCover(cardId As Integer, boardId As Integer) As Integer
+  Dim r As Result = $db.Find("kb_meta", "board_id=&1 AND kind=&2 AND item_id=&3 AND setting=&4", boardId, "card", cardId, "cover")
+  If r.Available Then Return Val(r!value)
+End
+
+Public Function CoverId(boardId As Integer, cardId As Integer) As Integer
+  Dim id As Integer
+  Dim r As Result
+  CardContent.OpenStore()
+  OpenStore()
+  BoardAccess.RequireCard(boardId, cardId)
+  id = StoredCover(cardId, boardId)
+  If id <= 0 Then Return 0
+  r = $db.Find("kb_files", "board_id=&1 AND card_id=&2 AND id=&3 AND " & LiveSql("kb_files"), boardId, cardId, id)
+  If r.Available Then Return id
+End
+
+Public Sub SetCover(boardId As Integer, cardId As Integer, fileId As Integer)
+  Dim actor As String
+  Dim r As Result
+  Dim transaction As Boolean
+  Dim failure As String
+  actor = BeginChange(boardId, cardId, fileId)
+  transaction = True
+  If Mark(boardId, cardId, fileId).Available Then Error.Raise("Choose a live attachment")
+  If StoredCover(cardId, boardId) <> fileId Then
+    r = $db.Edit("kb_meta", "board_id=&1 AND kind=&2 AND item_id=&3 AND setting=&4", boardId, "card", cardId, "cover")
+    If Not r.Available Then
+      r = $db.Create("kb_meta")
+      r["board_id"] = boardId
+      r["kind"] = "card"
+      r["item_id"] = cardId
+      r["setting"] = "cover"
+    Endif
+    r["value"] = CStr(fileId)
+    r.Update()
+    ItemChanges.Mark(boardId, "card", cardId)
+  Endif
+  CheckWriter(boardId, cardId, actor)
+  If CoverId(boardId, cardId) <> fileId Then Error.Raise("Attachment cover changed")
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+Public Function History(boardId As Integer, cardId As Integer) As Result
+  CardContent.OpenStore()
+  OpenStore()
+  BoardAccess.RequireCard(boardId, cardId)
+  Return $db.Exec("SELECT h.*,CASE WHEN d.file_id IS NULL THEN 0 ELSE 1 END AS deleted FROM kb_attachment_history h INNER JOIN kb_files f ON f.id=h.file_id AND f.board_id=h.board_id AND f.card_id=h.card_id LEFT JOIN kb_attachment_deletions d ON d.file_id=f.id AND d.board_id=f.board_id AND d.card_id=f.card_id WHERE h.board_id=&1 AND h.card_id=&2 ORDER BY h.id DESC", boardId, cardId)
+End
+
+Public Function HistoryEntry(boardId As Integer, cardId As Integer, historyId As Integer) As Result
+  Dim r As Result
+  CardContent.OpenStore()
+  OpenStore()
+  BoardAccess.RequireCard(boardId, cardId)
+  r = $db.Find("kb_attachment_history", "board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, historyId)
+  If Not r.Available Then Error.Raise("Attachment history not accessible")
+  RawFile(boardId, cardId, r!file_id)
+  Return r
+End
