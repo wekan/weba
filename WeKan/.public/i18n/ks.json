@@ -42,6 +42,7 @@
   "attachments": "منسلکات",
   "blockly-COPY_SHORTCUT": "نقل کریو",
   "board-admin": "بورڈ ایڈمن",
+  "board-creation-admin-only": "صرف انتظامی افسر ہی نوٚو بورڈ بناوٕتھ ہیکن",
   "board-title": "بورڈ ناو",
   "board-view-cal": "کیلنڈر",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "منگل",
   "uncollapse": "پھیلاویو",
   "view": "وُچھِو",
+  "visibility": "نظر یُن",
   "wednesday": "بُدھ",
   "worker": "کارکن"
 }

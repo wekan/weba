@@ -42,6 +42,7 @@
   "attachments": "Zolumikizidwa",
   "blockly-COPY_SHORTCUT": "Koperani",
   "board-admin": "Woyang'anira bolodi",
+  "board-creation-admin-only": "Owongolera okha ndiwo angathe kupanga bolodi",
   "board-title": "Mutu wa bolodi",
   "board-view-cal": "Kalendala",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Lachiwiri",
   "uncollapse": "Futukulani",
   "view": "Onani",
+  "visibility": "Kuoneka",
   "wednesday": "Lachitatu",
   "worker": "Wogwira Ntchito"
 }

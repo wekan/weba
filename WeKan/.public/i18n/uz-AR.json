@@ -42,6 +42,7 @@
   "attachments": "بیریکتیرمه‌لر",
   "blockly-COPY_SHORTCUT": "نسخه‌لش",
   "board-admin": "تخته ادمینی",
+  "board-creation-admin-only": "فقط ادمینیستراتار‌لر تخته یرته آله‌دی",
   "board-title": "تخته نامی",
   "board-view-cal": "تقویم",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "سه‌شنبه",
   "uncollapse": "ییچیش",
   "view": "کۉریش",
+  "visibility": "کۉرینووچنلیک",
   "wednesday": "چهارشنبه",
   "worker": "ایشچی"
 }

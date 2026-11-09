@@ -42,6 +42,7 @@
   "attachments": "Adhuntonan",
   "blockly-COPY_SHORTCUT": "Kopiá",
   "board-admin": "Atministradó di e tabla",
+  "board-creation-admin-only": "Solamente administradónan por krea tablanan",
   "board-title": "Título di e Tabla",
   "board-view-cal": "Calendario",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Martes",
   "uncollapse": "Expandir",
   "view": "Mira",
+  "visibility": "Bisibilidat",
   "wednesday": "Miércoles",
   "worker": "Trabahador"
 }

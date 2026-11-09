@@ -42,6 +42,7 @@
   "attachments": "Bashkëngjitjet",
   "blockly-COPY_SHORTCUT": "Kopjo",
   "board-admin": "Administratori i tabelës",
+  "board-creation-admin-only": "Vetëm administratorët mund të krijojnë panele",
   "board-title": "Titulli i tabelës",
   "board-view-cal": "Kalendari",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "E martë",
   "uncollapse": "Zgjero",
   "view": "Shfaq",
+  "visibility": "Dukshmëria",
   "wednesday": "E mërkurë",
   "worker": "Punëtor"
 }

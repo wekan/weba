@@ -4,7 +4,7 @@ set -eu
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 work=$(mktemp -d "$TMPDIR/weba-test.XXXXXX")
 trap 'rm -rf -- "$work"' EXIT HUP INT TERM
-for test in AuthTest UserDeletionTest SessionGenerationTest PasswordPolicyTest StoreTest DragStoreTest WorkspaceTest BoardAccessTest InactiveMembersTest AssignedAccessTest CombinedScopeTest BoardLiveTest OverviewLiveTest BoardCatalogTest BoardOrderTest BoardSpacesTest BoardSpacePresentationTest BoardSpaceDropTest BoardDropTest BoardBatchDropTest BoardSelectionTest BoardSelectedStarsTest BoardPurgeTest ListDeletionTest AttachmentLifecycleTest TransferPolicyTest BoardAttachmentAllowanceTest BoardCopyAuthorizationTest BoardCopiesTest CopyOptionsTest CardDraftTest DetailLiveTest PeopleLiveTest RelationLabelTest CardMembersTest NativeAssigneeTest CardDatesTest CardArchiveTest ItemChangesTest CardContentTest WorkspaceActionsTest BoardTransferTest ExportFieldsTest; do
+for test in AuthTest UserDeletionTest SessionGenerationTest PasswordPolicyTest StoreTest DragStoreTest WorkspaceTest BoardAccessTest InactiveMembersTest AssignedAccessTest CombinedScopeTest BoardLiveTest OverviewLiveTest BoardCatalogTest BoardOrderTest BoardSpacesTest BoardSpacePresentationTest BoardSpaceDropTest BoardDropTest BoardBatchDropTest BoardSelectionTest BoardSelectedStarsTest BoardPurgeTest ListDeletionTest AttachmentLifecycleTest TransferPolicyTest BoardAttachmentAllowanceTest BoardCopyAuthorizationTest BoardCopiesTest CopyOptionsTest BoardCreationTest CardDraftTest DetailLiveTest PeopleLiveTest RelationLabelTest CardMembersTest NativeAssigneeTest CardDatesTest CardArchiveTest ItemChangesTest CardContentTest WorkspaceActionsTest BoardTransferTest ExportFieldsTest; do
   [ -f "$root/tests/$test.module" ] || continue
   project="$work/$test"
   mkdir -p "$project"
@@ -28,6 +28,7 @@ done
 "${NODE:-node}" "$root/tests/board-copy-conformance.test.cjs"
 "${NODE:-node}" "$root/tests/selected-copy-conformance.test.cjs"
 "${NODE:-node}" "$root/tests/copy-options-conformance.test.cjs"
+"${NODE:-node}" "$root/tests/board-creation-conformance.test.cjs"
 
 python3 "$root/tests/change-clock.test.py"
 

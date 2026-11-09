@@ -42,6 +42,7 @@
   "attachments": "Abubuwan haɗawa",
   "blockly-COPY_SHORTCUT": "Kwafi",
   "board-admin": "Mai gudanar da allo",
+  "board-creation-admin-only": "Kawai masu gudanarwa ne za su iya ƙirƙirar allo",
   "board-title": "Taken allo",
   "board-view-cal": "Kalanda",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Talata",
   "uncollapse": "Warware naɗewa",
   "view": "Duba",
+  "visibility": "Ganuwa",
   "wednesday": "Laraba",
   "worker": "Ma'aikaci"
 }

@@ -42,6 +42,7 @@
   "attachments": "संलग्नक",
   "blockly-COPY_SHORTCUT": "नकल करू",
   "board-admin": "बोर्ड प्रशासक",
+  "board-creation-admin-only": "केवल प्रशासक बोर्ड बना सकैत छथि",
   "board-title": "बोर्ड शीर्षक",
   "board-view-cal": "कैलेंडर",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "मंगलवार",
   "uncollapse": "पसारू",
   "view": "दृश्य",
+  "visibility": "दृश्यता",
   "wednesday": "बुधवार",
   "worker": "कार्यकर्ता"
 }

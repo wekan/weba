@@ -42,6 +42,7 @@
   "attachments": "Ivyometse",
   "blockly-COPY_SHORTCUT": "Kopiya",
   "board-admin": "Umuyobozi w'Icapa",
+  "board-creation-admin-only": "Abayobozi gusa ni bo bashobora gukora imbao nshasha",
   "board-title": "Umutwe w'Icapa",
   "board-view-cal": "Ikirangamisi",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Kuwa kabiri",
   "uncollapse": "Zingurura",
   "view": "Raba",
+  "visibility": "Ukuboneka",
   "wednesday": "Kuwa gatatu",
   "worker": "Umukozi"
 }

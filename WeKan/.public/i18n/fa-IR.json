@@ -42,6 +42,7 @@
   "attachments": "ضمائم",
   "blockly-COPY_SHORTCUT": "رونویسی",
   "board-admin": "مدیر برد",
+  "board-creation-admin-only": "فقط مدیران می‌توانند تخته ایجاد کنند",
   "board-title": "عنوان برد",
   "board-view-cal": "تقویم",
   "board-view-gantt": "گانت",
@@ -152,6 +153,7 @@
   "tuesday": "سه شنبه",
   "uncollapse": "باز کردن",
   "view": "نما",
+  "visibility": "نمایانی",
   "wednesday": "چهارشنبه",
   "worker": "کارگر"
 }

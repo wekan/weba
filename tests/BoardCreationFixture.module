@@ -1,0 +1,46 @@
+Public Sub Main()
+  Dim mode As String = Env["WEBA_CREATION_MODE"]
+  Dim data As New Collection
+  Dim policy As New Collection
+  Dim rows As New Variant[]
+  Dim item As Collection
+  Dim r As Result
+  Dim field As ResultField
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim fileId As Integer
+  If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
+  Session["username"] = "rest-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("rest-owner")
+  BoardCreation.OpenStore()
+  If mode = "restore-global" Or mode = "demote-global" Then WebDatabase.OpenConnection().Exec("UPDATE users SET admin=&1 WHERE username='rest-owner'", mode = "restore-global")
+  If mode = "off" Then BoardCreation.SetAdminOnly(False)
+  If mode = "on" Then BoardCreation.SetAdminOnly(True)
+  If mode = "seed" Then
+    Session["username"] = "rest-other"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+    boardId = KanbanStore.AddBoard("Creation policy source")
+    cardId = KanbanStore.SaveCard(boardId, 0, "Creation card", "Body", "Default", "Todo", "", "", "")
+    fileId = CardContent.AddFile(boardId, cardId, "creation.bin", "exact" & Chr(0))
+    data["boardId"] = boardId
+    data["cardId"] = cardId
+    data["fileId"] = fileId
+    Print JSON.Encode(data)
+    Return
+  Endif
+  r = WebDatabase.OpenConnection().Find("board_creation_settings", "id=1")
+  For Each field In r.Fields
+    policy.Add(r[field.Name], field.Name)
+  Next
+  data["policy"] = policy
+  r = WebDatabase.OpenConnection().Find("kb_boards", "TRUE ORDER BY id")
+  For Each r
+    item = New Collection
+    item["id"] = r!id
+    item["title"] = r!title
+    item["owner"] = r!owner
+    rows.Add(item)
+  Next
+  data["boards"] = rows
+  Print JSON.Encode(data)
+End

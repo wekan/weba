@@ -42,6 +42,7 @@
   "attachments": "Tlanamictilli",
   "blockly-COPY_SHORTCUT": "Xiccopina",
   "board-admin": "Huapalli tlayecani",
+  "board-creation-admin-only": "Zan in tlayacanqueh huelih quichihuah yancuic tlapechtli",
   "board-title": "Huapalli itoca",
   "board-view-cal": "Tonalamatl",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Martes",
   "uncollapse": "Xicpatlahua",
   "view": "Xiquitta",
+  "visibility": "Neciyotl",
   "wednesday": "Miércoles",
   "worker": "Tequitini"
 }

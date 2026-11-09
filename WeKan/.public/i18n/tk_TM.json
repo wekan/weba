@@ -42,6 +42,7 @@
   "attachments": "Goşundylar",
   "blockly-COPY_SHORTCUT": "Göçür",
   "board-admin": "Tagta admini",
+  "board-creation-admin-only": "Diňe admin ulanyjylar tagta döredip biler",
   "board-title": "Geňeşiň ady",
   "board-view-cal": "Senenama",
   "board-view-gantt": "Gant",
@@ -152,6 +153,7 @@
   "tuesday": "Sişenbe",
   "uncollapse": "Bölünmek",
   "view": "Gör",
+  "visibility": "Görnüşlilik",
   "wednesday": "Çarşenbe",
   "worker": "Işçi"
 }

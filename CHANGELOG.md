@@ -2,6 +2,17 @@
 
 This work adds the following features and fixes:
 
+- Add persisted Global Admin-only board-creation policy under Visibility, default
+  off. Apply fresh actor/policy locks and final checks to new boards, single and
+  selected copies and JSON import, with complete hierarchy rollback on late flag
+  or admin loss. Preserve existing edits/card copies/bytes. Hide denied actions,
+  clear stale forms, retain pending-copy retry state and refresh clean settings
+  without losing drafts; clear/reject revoked admin panes. Verify native negative/
+  rollback/retry paths, 392 unchanged source policy/guard outcomes and real mobile/
+  translated/forged browser flows. Keep template/system models, missing REST/DDP
+  paths, generic Visibility and security eventlog/full original suites open.
+  Thanks to xet7.
+
 - Add eight selected-copy content controls with Select all/none, source parent
   dependencies, checkbox/keyboard semantics, mobile layout and source captions.
   Filter native layout/cards/labels/custom fields/checklists/comments/attachments

@@ -42,6 +42,7 @@
   "attachments": "Přiwěški",
   "blockly-COPY_SHORTCUT": "Kopěrować",
   "board-admin": "Administrator tafle",
+  "board-creation-admin-only": "Jenož administratorojo móža tafle wutworić",
   "board-title": "Mjeno tabla",
   "board-view-cal": "Protyka",
   "board-view-gantt": "Gantt-diagram",
@@ -152,6 +153,7 @@
   "tuesday": "Wutora",
   "uncollapse": "Rozwinyć",
   "view": "Pokazać",
+  "visibility": "Widźomnosć",
   "wednesday": "Srjeda",
   "worker": "Dźěłaćer"
 }

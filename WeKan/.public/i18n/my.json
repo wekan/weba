@@ -42,6 +42,7 @@
   "attachments": "ပူးတွဲဖိုင်များ",
   "blockly-COPY_SHORTCUT": "ကူးရန်",
   "board-admin": "ဘုတ်စီမံသူ",
+  "board-creation-admin-only": "အက်ဒမင်များသာလျှင် ဘုတ်များကို ဖန်တီးနိုင်သည်",
   "board-title": "ဘုတ်ခေါင်းစဉ်",
   "board-view-cal": "ပြက္ခဒိန်",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "အင်္ဂါ",
   "uncollapse": "ပြန်ဖြန့်ရန်",
   "view": "ကြည့်ရန်",
+  "visibility": "မြင်နိုင်မှု",
   "wednesday": "ဗုဒ္ဓဟူး",
   "worker": "လုပ်သား"
 }

@@ -42,6 +42,7 @@
   "attachments": "Viambatisho",
   "blockly-COPY_SHORTCUT": "Nakili",
   "board-admin": "Msimamizi wa Bodi",
+  "board-creation-admin-only": "Wasimamizi pekee ndio wanaweza kuunda bodi",
   "board-title": "Kichwa cha Bodi",
   "board-view-cal": "Kalenda",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Jumanne",
   "uncollapse": "Tendua",
   "view": "Tazama",
+  "visibility": "Uonekanaji",
   "wednesday": "Jumatano",
   "worker": "Mfanyakazi"
 }

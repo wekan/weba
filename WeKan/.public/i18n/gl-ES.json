@@ -42,6 +42,7 @@
   "attachments": "Anexos",
   "blockly-COPY_SHORTCUT": "Copiar",
   "board-admin": "Administrador do taboleiro",
+  "board-creation-admin-only": "Só os administradores poden crear taboleiros",
   "board-title": "Título do taboleiro",
   "board-view-cal": "Calendario",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Martes",
   "uncollapse": "Expandir",
   "view": "Vista",
+  "visibility": "Visibilidade",
   "wednesday": "Mércores",
   "worker": "Traballador"
 }

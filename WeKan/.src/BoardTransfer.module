@@ -130,7 +130,7 @@ Public Function ReadData(text As String) As Collection
 End
 
 Public Function ImportData(text As String, title As String) As Integer
-  Dim data As Collection = ReadData(text)
+  Dim data As Collection
   Dim laneMap As New Collection
   Dim listMap As New Collection
   Dim cardMap As New Collection
@@ -149,12 +149,16 @@ Public Function ImportData(text As String, title As String) As Integer
   Dim fileBytes As String
   Dim maxFileBytes As Long
   Dim transaction As Boolean
+  BoardCreation.Require()
+  data = ReadData(text)
   If Not Trim(title) Or String.Len(title) > 255 Then Error.Raise("Enter a valid board title")
   CardContent.OpenStore()
   $db = WebDatabase.OpenConnection()
   DatabaseTransactions.Begin($db)
   transaction = True
   $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  BoardCreation.Lock()
+  BoardCreation.Require()
   TransferPolicy.Lock()
   boardId = KanbanStore.AddBoard(title)
   For Each item In data["lanes"]
@@ -286,6 +290,7 @@ Public Function ImportData(text As String, title As String) As Integer
   If data["files"].Count > 0 Then TransferPolicy.RequireTransfer("attachmentsUpload", maxFileBytes)
   If WebIdentity.Username <> actor Then Error.Raise("Sign in required")
   BoardAccess.Require(boardId, "write")
+  BoardCreation.Require()
   DatabaseTransactions.Commit($db)
   transaction = False
   Return boardId

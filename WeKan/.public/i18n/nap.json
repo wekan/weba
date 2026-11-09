@@ -42,6 +42,7 @@
   "attachments": "Allegate",
   "blockly-COPY_SHORTCUT": "Cupià",
   "board-admin": "Amministratore d' 'a tavula",
+  "board-creation-admin-only": "Sulo l'amministrature ponno crià tavule nove",
   "board-title": "Tìtulo tavula",
   "board-view-cal": "Calendario",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Martedì",
   "uncollapse": "Nun collassare",
   "view": "Vista",
+  "visibility": "Visibilità",
   "wednesday": "Mercoledì",
   "worker": "Lavoratore"
 }

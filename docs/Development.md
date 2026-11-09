@@ -762,7 +762,7 @@ covers readonly forgery, successful manager copying and stale-save denial after
 live demotion. Focused mode: tests/run-http.py --board-copy, plus --archive for
 the packaged application.
 
-Remaining per-field models/controls, board-creation policy, unimplemented board
+Remaining per-field models/controls, remaining template/system-board creation models, unimplemented board
 content and full original UI/API/security suites remain open. Existing single native copy
 titles are supplied by the user; selected-copy queue and title behavior follow below.
 
@@ -805,7 +805,7 @@ Finnish captions and Archive rejection. Focused mode: tests/run-http.py
 imported verbatim for all 237 catalogs (155 imported keys).
 
 This flow duplicates the content supported by the existing native copy service.
-Remaining source copy-option models, board creation policy, destination placement/order,
+Remaining source copy-option models, remaining template/system-board creation models, destination placement/order,
 unsupported rules/integrations/
 scrum and other missing board data, complete original UI/DDP/API/security suites
 and durable request-level batch recovery remain open. The queue comparison does
@@ -852,6 +852,52 @@ remaining details/labels/files/cover and preserved completed bytes. Focused mode
 tests/run-http.py --copy-options, adding --archive for the packaged application.
 
 Rules, integrations, scrum, source board-defined labels/custom-field definitions,
-source creation policy, destination placement/order, single-copy option controls,
+source template/system-board models, destination placement/order, single-copy option controls,
 complete original backend/UI/API/DDP/security callbacks and durable request-level
 batch recovery remain open.
+
+### Global board-creation policy
+
+Admin → Visibility offers Only admins can create boards. The default is off;
+when on, every implemented new working-board path requires an actual Global Admin.
+Board administration alone does not qualify. The global singleton persists the
+flag, saving actor and UTC milliseconds; only a current Global Admin can open/save
+its settings. Ordinary users can read the effective flag needed for their controls.
+
+New board insertion, whole-board copy, selected-copy steps and JSON import all
+check the shared service. Writes lock actor then creation-policy row before source
+boards (and before import transfer-policy locks). Checks repeat under the lock and
+before the final commit, including after all copy/import children and activity.
+Late policy changes, admin loss, replacement settings and SQL failures roll back
+the attempted board/hierarchy and settings mutation. Existing board edits, card
+copies within an existing board, attachments and other existing data access keep
+their own authorization; the creation flag does not disable them.
+
+Create/import/whole-board-copy actions hide live when denied. Stale single-copy
+and import forms clear; pending selected-copy state remains private and can retry
+when creation is allowed again. Server guards still refuse forged controls. The
+settings checkbox refreshes external changes while clean and preserves an unsaved
+draft. Admin revocation hides and clears the settings pane and refuses stale Save.
+The source Visibility/Only admins labels are imported verbatim across 237 catalogs
+(157 imported keys).
+
+BoardCreationTest covers defaults, strict setting types/attribution, ordinary and
+Global Admin creation/copy/batch/import outcomes, retained edits/bytes, late flag
+changes after complete child copying/import, late admin loss, settings replacement,
+SQL rollback and recovery. The conformance test compares 392 native strict-boolean/
+type results with unchanged source boardCreationAllowed and both server guard
+functions, including template/default-type cases. Numeric singleton/typed SQL and
+no-op security-log adapters are explicit. Native entry points accept working boards
+only; the pure helper's template exemption does not create a native template bypass.
+
+The browser checks persisted settings and forged access, live controls, cleared
+stale forms, retained/re-enabled pending copies, ordinary creation refusals, Global
+Admin creation, clean/dirty external settings, mobile Finnish labels and admin
+revocation. Focused mode: tests/run-http.py --board-creation, adding --archive for
+the packaged app.
+
+Native templates/system-created boards and their real creation/exemption flows,
+missing source board-creation/import/copy REST and DDP endpoints, generic Visibility
+settings, security eventlog/Problems reporting and complete original UI/API/security
+suites remain pending. This implements the policy on current native paths; it does
+not claim those missing paths or reporting callbacks.

@@ -42,6 +42,7 @@
   "attachments": "Stagellow",
   "blockly-COPY_SHORTCUT": "Kopia",
   "board-admin": "Menystrer estyllen",
+  "board-creation-admin-only": "Yn unnyk gwithysi a yll gwruthyl clorennow",
   "board-title": "Titel estyllen",
   "board-view-cal": "Kalender",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Dy'Meurth",
   "uncollapse": "Disprega",
   "view": "Gwel",
+  "visibility": "Gweladewder",
   "wednesday": "Dy'Merher",
   "worker": "Oberer"
 }

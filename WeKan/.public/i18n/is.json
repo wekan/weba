@@ -42,6 +42,7 @@
   "attachments": "Viðhengi",
   "blockly-COPY_SHORTCUT": "Afrita",
   "board-admin": "Stjórnandi töflu",
+  "board-creation-admin-only": "Aðeins stjórnendur geta búið til töflur",
   "board-title": "Heiti töflu",
   "board-view-cal": "Dagatal",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Þriðjudagur",
   "uncollapse": "Opna aftur",
   "view": "Skoða",
+  "visibility": "Sýnileiki",
   "wednesday": "Miðvikudagur",
   "worker": "Starfsmaður"
 }

@@ -42,6 +42,7 @@
   "attachments": "Aanhangsels",
   "blockly-COPY_SHORTCUT": "Kopieer",
   "board-admin": "Bordadministrateur",
+  "board-creation-admin-only": "Slegs administrateurs kan borde skep",
   "board-title": "Raadstitel",
   "board-view-cal": "Kalender",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Dinsdag",
   "uncollapse": "Ontvou",
   "view": "Uitsig",
+  "visibility": "Sigbaarheid",
   "wednesday": "Woensdag",
   "worker": "Werker"
 }

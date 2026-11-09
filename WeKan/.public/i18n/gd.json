@@ -42,6 +42,7 @@
   "attachments": "Ceanglachain",
   "blockly-COPY_SHORTCUT": "Dèan lethbhreac",
   "board-admin": "Rianaire Bùird",
+  "board-creation-admin-only": "Chan urrainn ach do rianairean bùird a chruthachadh",
   "board-title": "Tiotal a' bhùird",
   "board-view-cal": "Mìosachan",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Dimàirt",
   "uncollapse": "Neo-phaisg",
   "view": "Seall",
+  "visibility": "Faicsinneachd",
   "wednesday": "Diciadain",
   "worker": "Neach-obrach"
 }

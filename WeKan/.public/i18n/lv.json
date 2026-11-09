@@ -42,6 +42,7 @@
   "attachments": "Faili",
   "blockly-COPY_SHORTCUT": "Kopēt",
   "board-admin": "Dēļa administrators",
+  "board-creation-admin-only": "Tikai administratori var izveidot dēļus",
   "board-title": "Valdybos pavadinimas",
   "board-view-cal": "Kalendārs",
   "board-view-gantt": "Gantas",
@@ -152,6 +153,7 @@
   "tuesday": "Otrdiena",
   "uncollapse": "Išskleisti",
   "view": "Skats",
+  "visibility": "Redzamība",
   "wednesday": "Trešdiena",
   "worker": "Darbonis"
 }

@@ -42,6 +42,7 @@
   "attachments": "Fimükots",
   "blockly-COPY_SHORTCUT": "Kopiedön",
   "board-admin": "Tabaadmin",
+  "board-creation-admin-only": "Te guvans kanons jafön tabis",
   "board-title": "Tiäd taba",
   "board-view-cal": "Kaled",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Tudel",
   "uncollapse": "Lüükön nürölön",
   "view": "Logön",
+  "visibility": "Logädäl",
   "wednesday": "Vedel",
   "worker": "Voban"
 }

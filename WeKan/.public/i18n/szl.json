@@ -42,6 +42,7 @@
   "attachments": "Przidŏwki",
   "blockly-COPY_SHORTCUT": "Kopiyruj",
   "board-admin": "Administrator tabule",
+  "board-creation-admin-only": "Ino administratory mogōm tworzić tafle",
   "board-title": "Tytuł tabule",
   "board-view-cal": "Kalendarz",
   "board-view-gantt": "Wykres Gantta",
@@ -152,6 +153,7 @@
   "tuesday": "Wtorek",
   "uncollapse": "Rozwiń",
   "view": "Widok",
+  "visibility": "Widoczność",
   "wednesday": "Środa",
   "worker": "Pracownik"
 }

@@ -42,6 +42,7 @@
   "attachments": "Ceangaltáin",
   "blockly-COPY_SHORTCUT": "Cóipeáil",
   "board-admin": "Riarthóir an Chláir",
+  "board-creation-admin-only": "Ní féidir ach le riarthóirí cláir a chruthú",
   "board-title": "Teideal Cláir",
   "board-view-cal": "Féilire",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Dé Máirt",
   "uncollapse": "Leathnaigh",
   "view": "Amharc",
+  "visibility": "Infheictheacht",
   "wednesday": "Dé Céadaoin",
   "worker": "Oibrí"
 }

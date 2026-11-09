@@ -42,6 +42,7 @@
   "attachments": "Adiuncta",
   "blockly-COPY_SHORTCUT": "Describe",
   "board-admin": "Administrator tabulae",
+  "board-creation-admin-only": "Soli administratores tabulas creare possunt",
   "board-title": "Titulus tabulae",
   "board-view-cal": "Calendarium",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Dies Martis",
   "uncollapse": "Expande",
   "view": "Prospectus",
+  "visibility": "Visibilitas",
   "wednesday": "Dies Mercurii",
   "worker": "Operarius"
 }

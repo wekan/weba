@@ -42,6 +42,7 @@
   "attachments": "添付ファイル",
   "blockly-COPY_SHORTCUT": "コピー",
   "board-admin": "ボード管理者",
+  "board-creation-admin-only": "管理者のみがボードを作成できます",
   "board-title": "ボードのタイトル",
   "board-view-cal": "カレンダー",
   "board-view-gantt": "ガント",
@@ -152,6 +153,7 @@
   "tuesday": "火曜",
   "uncollapse": "展開",
   "view": "ビュー",
+  "visibility": "表示範囲",
   "wednesday": "水曜",
   "worker": "作業者"
 }

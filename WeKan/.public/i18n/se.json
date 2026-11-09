@@ -42,6 +42,7 @@
   "attachments": "Mildosat",
   "blockly-COPY_SHORTCUT": "Máŋge",
   "board-admin": "Távvala hálddašeaddji",
+  "board-creation-admin-only": "Dušše hálddašeaddjit sáhttet ráhkadit ođđa tabellaid",
   "board-title": "Távvala namahus",
   "board-view-cal": "Kaleanddar",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Maŋŋebárga",
   "uncollapse": "Viiddit",
   "view": "Čájeheapmi",
+  "visibility": "Oidnosat",
   "wednesday": "Gaskavahkku",
   "worker": "Bargi"
 }

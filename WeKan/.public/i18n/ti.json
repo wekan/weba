@@ -42,6 +42,7 @@
   "attachments": "መተሓሓዝቲ",
   "blockly-COPY_SHORTCUT": "ቅዳሕ",
   "board-admin": "ኣመሓዳሪ ሰሌዳ",
+  "board-creation-admin-only": "ኣመሓደርቲ ጥራይ ሓድሽ ሰሌዳ ክፈጥሩ ይኽእሉ",
   "board-title": "ኣርእስቲ ሰሌዳ",
   "board-view-cal": "ዓውደ ኣዋርሕ",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "ሰሉስ",
   "uncollapse": "ዘርግሕ",
   "view": "ርኣይ",
+  "visibility": "ርኡይነት",
   "wednesday": "ረቡዕ",
   "worker": "ሰራሕተኛ"
 }

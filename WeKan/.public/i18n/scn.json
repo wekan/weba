@@ -42,6 +42,7 @@
   "attachments": "Allegati",
   "blockly-COPY_SHORTCUT": "Cupiari",
   "board-admin": "Amministraturi dâ tàvula",
+  "board-creation-admin-only": "Sulu l'amministratura ponnu criari tavuli",
   "board-title": "Tìtulu tàvula",
   "board-view-cal": "Calendario",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Martedì",
   "uncollapse": "Nnu collassare",
   "view": "Vista",
+  "visibility": "Visibilità",
   "wednesday": "Mercoledì",
   "worker": "Lavoratore"
 }

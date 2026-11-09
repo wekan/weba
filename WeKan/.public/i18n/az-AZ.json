@@ -42,6 +42,7 @@
   "attachments": "Qoşmalar",
   "blockly-COPY_SHORTCUT": "Kopyala",
   "board-admin": "Lövhə Admini",
+  "board-creation-admin-only": "Yalnız adminlər lövhə yarada bilər",
   "board-title": "İdarə Heyətinin Başlığı",
   "board-view-cal": "Təqvim",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "çərşənbə axşamı",
   "uncollapse": "Açmaq",
   "view": "Baxın",
+  "visibility": "Görünürlük",
   "wednesday": "çərşənbə",
   "worker": "işçi"
 }

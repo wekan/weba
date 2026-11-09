@@ -42,6 +42,7 @@
   "attachments": "Bilagor",
   "blockly-COPY_SHORTCUT": "Kopiera",
   "board-admin": "Taveladmin",
+  "board-creation-admin-only": "Endast administratörer kan skapa tavlor",
   "board-title": "Tavlans titel",
   "board-view-cal": "Kalender",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Tisdag",
   "uncollapse": "Expandera",
   "view": "Visa",
+  "visibility": "Synlighet",
   "wednesday": "Onsdag",
   "worker": "Arbetare"
 }

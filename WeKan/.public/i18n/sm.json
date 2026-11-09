@@ -42,6 +42,7 @@
   "attachments": "Faapipiiga",
   "blockly-COPY_SHORTCUT": "Kopi",
   "board-admin": "Pule o le Laupapa",
+  "board-creation-admin-only": "E mafai ona faia laupapa fou e le au pule",
   "board-title": "Ulutala o le Laupapa",
   "board-view-cal": "Kalena",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Aso Lua",
   "uncollapse": "Toe faalautele",
   "view": "Vaaiga",
+  "visibility": "Vaaiaina",
   "wednesday": "Aso Lulu",
   "worker": "Tagata Galuega"
 }

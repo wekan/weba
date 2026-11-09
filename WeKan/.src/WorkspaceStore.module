@@ -324,6 +324,7 @@ Public Function Copy(boardId As Integer, kind As String, itemId As Integer, titl
   source = Record(boardId, kind, itemId)
   BoardAccess.RequireContainer(boardId, kind, itemId)
   BoardAccess.Require(boardId, If(kind = "board", "manageBoard", "write"))
+  If kind = "board" Then BoardCreation.Require()
   title = Trim(title)
   If Not title Or String.Len(title) > If(kind = "list", 32, 255) Then Error.Raise("Enter a valid copy title")
   CardContent.OpenStore()
@@ -337,6 +338,8 @@ Public Function Copy(boardId As Integer, kind As String, itemId As Integer, titl
   transaction = True
   If kind = "board" Then
     $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+    BoardCreation.Lock()
+    BoardCreation.Require()
     $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
     BoardAccess.RequireContainer(boardId, kind, itemId)
     BoardAccess.Require(boardId, "manageBoard")
@@ -383,6 +386,7 @@ Public Function Copy(boardId As Integer, kind As String, itemId As Integer, titl
   CopySettings(boardId, kind, itemId, targetBoard, newId)
   If BoardAccess.Can(boardId, "write") Or BoardAccess.Can(boardId, "comment") Then KanbanStore.Activity(boardId, "Copied " & kind & ": " & title, kind, itemId, False)
   If kind = "board" Then
+    BoardCreation.Require()
     If WebIdentity.Username <> actor Then Error.Raise("Copy identity changed")
     BoardAccess.RequireContainer(sourceId, "board", sourceId)
     BoardAccess.Require(sourceId, "manageBoard")

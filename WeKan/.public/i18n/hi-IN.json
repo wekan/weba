@@ -42,6 +42,7 @@
   "attachments": "संलग्नक",
   "blockly-COPY_SHORTCUT": "कॉपी करें",
   "board-admin": "बोर्ड एडमिन",
+  "board-creation-admin-only": "केवल व्यवस्थापक ही बोर्ड बना सकते हैं",
   "board-title": "बोर्ड का शीर्षक",
   "board-view-cal": "तिथि-पत्र",
   "board-view-gantt": "गैंट",
@@ -152,6 +153,7 @@
   "tuesday": "मंगलवार",
   "uncollapse": "असंकुचित करें",
   "view": "देखें",
+  "visibility": "दृश्यता",
   "wednesday": "बुधवार",
   "worker": "कामगार"
 }

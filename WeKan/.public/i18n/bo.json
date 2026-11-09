@@ -42,6 +42,7 @@
   "attachments": "ཟུར་སྦྱར།",
   "blockly-COPY_SHORTCUT": "འདྲ་བཤུས།",
   "board-admin": "ལས་སྟེགས་དོ་དམ་པ།",
+  "board-creation-admin-only": "འགན་འཛིན་གྱིས་ཁོ་ནས་ཊི་སྒྲོམ་གསར་བཟོ་བྱེད་ཐུབ།",
   "board-title": "ལས་སྟེགས་ཀྱི་ཁ་བྱང་།",
   "board-view-cal": "ལོ་ཐོ།",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "གཟའ་མིག་དམར།",
   "uncollapse": "བསྡུས་པ་ཕྱེ།",
   "view": "ལྟ།",
+  "visibility": "མཐོང་ཚད།",
   "wednesday": "གཟའ་ལྷག་པ།",
   "worker": "ལས་མི།"
 }

@@ -42,6 +42,7 @@
   "attachments": "संलग्नकहरू",
   "blockly-COPY_SHORTCUT": "प्रतिलिपि गर्नुहोस्",
   "board-admin": "बोर्ड प्रशासक",
+  "board-creation-admin-only": "प्रशासकहरूले मात्र बोर्ड सिर्जना गर्न सक्छन्",
   "board-title": "बोर्ड शीर्षक",
   "board-view-cal": "पात्रो",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "मङ्गलबार",
   "uncollapse": "फैलाउनुहोस्",
   "view": "हेर्नुहोस्",
+  "visibility": "दृश्यता",
   "wednesday": "बुधबार",
   "worker": "कामदार"
 }

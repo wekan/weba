@@ -42,6 +42,7 @@
   "attachments": "Mandum Lampiran",
   "blockly-COPY_SHORTCUT": "Salin",
   "board-admin": "Admin Papan",
+  "board-creation-admin-only": "Peungatô mantong nyang jeuet peugöt papan",
   "board-title": "Judul Papan",
   "board-view-cal": "Almanak",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Seulasa",
   "uncollapse": "Peubuka",
   "view": "Kalon",
+  "visibility": "Deuh geukalön",
   "wednesday": "Rabu",
   "worker": "Ureueng buet"
 }

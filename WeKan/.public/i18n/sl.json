@@ -42,6 +42,7 @@
   "attachments": "Priponke",
   "blockly-COPY_SHORTCUT": "Kopiraj",
   "board-admin": "Administrator table",
+  "board-creation-admin-only": "Samo skrbniki lahko ustvarijo table",
   "board-title": "Naslov table",
   "board-view-cal": "Koledar",
   "board-view-gantt": "Ganttov diagram",
@@ -152,6 +153,7 @@
   "tuesday": "Torek",
   "uncollapse": "Razširi",
   "view": "Pogled",
+  "visibility": "Vidnost",
   "wednesday": "Sreda",
   "worker": "Delavec"
 }

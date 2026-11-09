@@ -42,6 +42,7 @@
   "attachments": "Zvakabatanidzwa",
   "blockly-COPY_SHORTCUT": "Kopa",
   "board-admin": "bhodhi mukuru",
+  "board-creation-admin-only": "Vatariri chete vanogona kugadzira bhodhi",
   "board-title": "bhodhi musoro",
   "board-view-cal": "Karenda",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Chipiri",
   "uncollapse": "Vhura zvakapetwa",
   "view": "Ona",
+  "visibility": "Kuonekwa",
   "wednesday": "Chitatu",
   "worker": "Mushandi"
 }

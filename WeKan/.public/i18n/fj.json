@@ -42,6 +42,7 @@
   "attachments": "Veika e semati",
   "blockly-COPY_SHORTCUT": "Kopitaka",
   "board-admin": "Vakatulewa ni Vola",
+  "board-creation-admin-only": "Ko ira ga na iliuliu era rawa ni bulia na peleti",
   "board-title": "Ulutaga ni Vola",
   "board-view-cal": "Kaleda",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Tusiti",
   "uncollapse": "Dolava",
   "view": "Raica",
+  "visibility": "Rairai",
   "wednesday": "Vukelulu",
   "worker": "Daucakacaka"
 }

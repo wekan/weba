@@ -42,6 +42,7 @@
   "attachments": "קבצים מצורפים",
   "blockly-COPY_SHORTCUT": "העתקה",
   "board-admin": "ניהול לוח",
+  "board-creation-admin-only": "רק מנהלי מערכת יכולים ליצור לוחות",
   "board-title": "כותרת לוח",
   "board-view-cal": "לוח שנה",
   "board-view-gantt": "גאנט",
@@ -152,6 +153,7 @@
   "tuesday": "יום שלישי",
   "uncollapse": "ביטול צמצום",
   "view": "תצוגה",
+  "visibility": "נראות",
   "wednesday": "יום רביעי",
   "worker": "עובד/ת"
 }

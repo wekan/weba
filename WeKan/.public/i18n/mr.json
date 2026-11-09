@@ -42,6 +42,7 @@
   "attachments": "संलग्नके",
   "blockly-COPY_SHORTCUT": "प्रत करा",
   "board-admin": "फलक प्रशासक",
+  "board-creation-admin-only": "फक्त प्रशासक बोर्ड तयार करू शकतात",
   "board-title": "फलक शीर्षक",
   "board-view-cal": "दिनदर्शिका",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "मंगळवार",
   "uncollapse": "विस्तृत करा",
   "view": "पहा",
+  "visibility": "दृश्यता",
   "wednesday": "बुधवार",
   "worker": "कार्यकर्ता"
 }

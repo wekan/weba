@@ -42,6 +42,7 @@
   "attachments": "Zwiṱumetshedzwa",
   "blockly-COPY_SHORTCUT": "Kopa",
   "board-admin": "Mulanguli wa Bodo",
+  "board-creation-admin-only": "Vhalanguli fhedzi vha nga sika mabodo",
   "board-title": "Ṱhoho ya bodo",
   "board-view-cal": "Khalenda",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Ḽavhuvhili",
   "uncollapse": "Ṱanḓavhudza",
   "view": "Vhona",
+  "visibility": "U vhonala",
   "wednesday": "Ḽavhuraru",
   "worker": "Mushumi"
 }

@@ -42,6 +42,7 @@
   "attachments": "Maxxansaalee",
   "blockly-COPY_SHORTCUT": "Garagalchi",
   "board-admin": "Bulchaa Gabatee",
+  "board-creation-admin-only": "Bulchitoonni qofti boordii haaraa uumuu ni danda'u",
   "board-title": "Mata Duree Gabatee",
   "board-view-cal": "Kaalaandarii",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Kibxata",
   "uncollapse": "Deebisii bal’isi",
   "view": "Mul’annoo",
+  "visibility": "Mul'achuu",
   "wednesday": "Roobii",
   "worker": "Hojjetaa"
 }

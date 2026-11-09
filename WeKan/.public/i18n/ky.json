@@ -42,6 +42,7 @@
   "attachments": "Тиркемелер",
   "blockly-COPY_SHORTCUT": "Көчүрүү",
   "board-admin": "Тактанын администратору",
+  "board-creation-admin-only": "Бир гана администраторлор доска түзө алат",
   "board-title": "Тактанын аталышы",
   "board-view-cal": "Жылнаама",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Шейшемби",
   "uncollapse": "Жайуу",
   "view": "Көрүү",
+  "visibility": "Көрүнүшү",
   "wednesday": "Шаршемби",
   "worker": "Жумушчу"
 }

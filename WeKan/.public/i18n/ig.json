@@ -42,6 +42,7 @@
   "attachments": "Mgbakwụnye",
   "blockly-COPY_SHORTCUT": "Detuo",
   "board-admin": "Admin Bọọdụ",
+  "board-creation-admin-only": "Naanị ndị nchịkwa ka nwere ike ịmepụta bọọdụ",
   "board-title": "Aha osisi",
   "board-view-cal": "Kalenda",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Tuzdee",
   "uncollapse": "Kwụpụ",
   "view": "Lelee",
+  "visibility": "Ọhụhụ",
   "wednesday": "Wenezde",
   "worker": "Onye ọrụ"
 }

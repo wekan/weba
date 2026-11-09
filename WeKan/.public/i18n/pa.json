@@ -42,6 +42,7 @@
   "attachments": "ਅਟੈਚਮੈਂਟਸ",
   "blockly-COPY_SHORTCUT": "ਕਾਪੀ ਕਰੋ",
   "board-admin": "ਬੋਰਡ ਐਡਮਿਨ",
+  "board-creation-admin-only": "ਸਿਰਫ਼ ਪ੍ਰਬੰਧਕ ਹੀ ਬੋਰਡ ਬਣਾ ਸਕਦੇ ਹਨ",
   "board-title": "ਬੋਰਡ ਦਾ ਸਿਰਲੇਖ",
   "board-view-cal": "ਕੈਲੰਡਰ",
   "board-view-gantt": "ਗੈਂਟ",
@@ -152,6 +153,7 @@
   "tuesday": "ਮੰਗਲਵਾਰ",
   "uncollapse": "ਢਹਿ-ਢੇਰੀ ਕਰੋ",
   "view": "ਦੇਖੋ",
+  "visibility": "ਦਿੱਖ",
   "wednesday": "ਬੁੱਧਵਾਰ",
   "worker": "ਵਰਕਰ"
 }

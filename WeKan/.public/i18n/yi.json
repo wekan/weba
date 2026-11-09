@@ -42,6 +42,7 @@
   "attachments": "אַטאַטשמאַנץ",
   "blockly-COPY_SHORTCUT": "קאָפּירן",
   "board-admin": "ברעט־אַדמין",
+  "board-creation-admin-only": "נאָר אַדמינען קענען שאַפֿן נײַע טאָוולען",
   "board-title": "ברעט טיטל",
   "board-view-cal": "קאַלענדאַר",
   "board-view-gantt": "גאַנטט",
@@ -152,6 +153,7 @@
   "tuesday": "דינסטיק",
   "uncollapse": "ונקאַלאַפּס",
   "view": "מבט",
+  "visibility": "זעעוודיקייט",
   "wednesday": "מיטוואך",
   "worker": "אַרבעטער"
 }

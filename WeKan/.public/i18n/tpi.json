@@ -42,6 +42,7 @@
   "attachments": "Ol samting i pas",
   "blockly-COPY_SHORTCUT": "Kopim",
   "board-admin": "Bot Admin",
+  "board-creation-admin-only": "Ol edmin tasol inap wokim ol bot",
   "board-title": "Bot nem",
   "board-view-cal": "Kalenda",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Tunde",
   "uncollapse": "Opim olgeta",
   "view": "Lukim",
+  "visibility": "Husat inap lukim",
   "wednesday": "Trinde",
   "worker": "Wokman"
 }

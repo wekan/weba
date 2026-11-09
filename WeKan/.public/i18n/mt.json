@@ -42,6 +42,7 @@
   "attachments": "Mehmużin",
   "blockly-COPY_SHORTCUT": "Ikkopja",
   "board-admin": "Bord Amministratur",
+  "board-creation-admin-only": "Biss l-amministraturi jistgħu joħolqu boards ġodda",
   "board-title": "Bord Titlu",
   "board-view-cal": "Kalendarju",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "It-Tlieta",
   "uncollapse": "Espandi",
   "view": "Ara",
+  "visibility": "Viżibbiltà",
   "wednesday": "L-Erbgħa",
   "worker": "Ħaddiem"
 }

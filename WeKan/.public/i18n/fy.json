@@ -42,6 +42,7 @@
   "attachments": "Taheaksels",
   "blockly-COPY_SHORTCUT": "Kopiearje",
   "board-admin": "Boardadmin",
+  "board-creation-admin-only": "Allinnich behearders kinne boerden oanmeitsje",
   "board-title": "Board Titel",
   "board-view-cal": "Kalinder",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "tiisdei",
   "uncollapse": "Utklappe",
   "view": "Fisy",
+  "visibility": "Sichtberens",
   "wednesday": "woansdei",
   "worker": "Wurkster"
 }

@@ -42,6 +42,7 @@
   "attachments": "ඇමුණුම්",
   "blockly-COPY_SHORTCUT": "පිටපත් කරන්න",
   "board-admin": "පුවරු පරිපාලක",
+  "board-creation-admin-only": "පරිපාලකයින්ට පමණක් පුවරු සෑදිය හැක",
   "board-title": "පුවරු මාතෘකාව",
   "board-view-cal": "දින දර්ශනය",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "අඟහරුවාදා",
   "uncollapse": "දිගහරින්න",
   "view": "දසුන",
+  "visibility": "දෘශ්‍යතාව",
   "wednesday": "බදාදා",
   "worker": "සේවකයා"
 }

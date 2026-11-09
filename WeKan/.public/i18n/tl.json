@@ -42,6 +42,7 @@
   "attachments": "Mga kalakip",
   "blockly-COPY_SHORTCUT": "Kopyahin",
   "board-admin": "pisara Tagapangasiwa",
+  "board-creation-admin-only": "Ang mga admin lamang ang maaaring gumawa ng mga board",
   "board-title": "pisara Pamagat",
   "board-view-cal": "Kalendaryo",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Martes",
   "uncollapse": "Ibuka",
   "view": "Tingnan",
+  "visibility": "Pagkakakita",
   "wednesday": "Miyerkules",
   "worker": "Manggagawa"
 }

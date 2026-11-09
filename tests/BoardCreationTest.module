@@ -1,0 +1,155 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim resultId As Integer
+  Dim db As Connection
+  Dim r As Result
+  Dim data As Collection
+  Dim text As String
+  Dim before As String
+  Dim failure As String
+  Dim denied As Boolean
+  Dim selection As Collection
+  Dim batch As Collection
+  Dim value As Variant
+  WebDatabase.Register("creation-global", "x")
+  WebDatabase.Register("creation-owner", "x")
+  SignIn("creation-owner")
+  If Not BoardCreation.Allowed() Or BoardCreation.AdminOnly() Then Error.Raise("Default creation restricted")
+  boardId = KanbanStore.AddBoard("Creation source")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Card", "Body", "Default", "Todo", "", "", "")
+  CardContent.AddFile(boardId, cardId, "creation.bin", "exact" & Chr(0))
+  text = BoardTransfer.ExportData(boardId, "board", boardId)
+  BoardAccess.SetMember(boardId, "creation-global", "board-admin")
+  db = WebDatabase.OpenConnection()
+  before = Frame()
+  Try BoardCreation.SetAdminOnly(True)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Board owner changed global creation policy")
+  Try data = BoardCreation.Settings()
+  denied = Error
+  If Not denied Then Error.Raise("Board owner read setting attribution")
+  SignIn("creation-global")
+  BoardCreation.SetAdminOnly(True)
+  data = BoardCreation.Settings()
+  If Not data["adminOnly"] Or data["actor"] <> "creation-global" Or data["changedMs"] <= 0 Then Error.Raise("Policy metadata lost")
+  For Each value In ["true", 0, Null]
+    before = Frame()
+    Try BoardCreation.SetAdminOnly(value)
+    denied = Error
+    If Not denied Or Frame() <> before Then Error.Raise("Nonboolean creation setting accepted")
+  Next
+  KanbanStore.AddBoard("Global allowed")
+  WorkspaceStore.Copy(boardId, "board", boardId, "Global copy allowed")
+  BoardTransfer.ImportData(text, "Global import allowed")
+  SignIn("creation-owner")
+  before = Frame()
+  Try resultId = KanbanStore.AddBoard("Denied direct")
+  denied = Error
+  failure = Error.Text
+  If Not denied Or failure <> "Board creation is restricted to admins." Or Frame() <> before Then Error.Raise("Direct creation bypassed policy")
+  Try resultId = WorkspaceStore.Copy(boardId, "board", boardId, "Denied copy")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Board copy bypassed policy")
+  Try resultId = BoardTransfer.ImportData("not JSON", "Denied import")
+  denied = Error
+  failure = Error.Text
+  If Not denied Or failure <> "Board creation is restricted to admins." Or Frame() <> before Then Error.Raise("Import parsed before policy guard")
+  selection = BoardSelection.NewState()
+  BoardSelection.SetActive(selection, True)
+  BoardSelection.AddVisible(selection, [boardId])
+  batch = BoardCopies.NewBatch(selection)
+  Try BoardCopies.Run(batch, selection)
+  denied = Error
+  If Not denied Or BoardCopies.Completed(batch) Or BoardCopies.Remaining(batch) <> 1 Or Frame() <> before Then Error.Raise("Batch copy bypassed policy")
+  KanbanStore.SaveCard(boardId, cardId, "Edited card", "Body", "Default", "Todo", "", "", "")
+  WorkspaceStore.Copy(boardId, "card", cardId, "Same-board card copy")
+  r = CardContent.DownloadFile(boardId, cardId, db.Find("kb_files", "board_id=&1 AND card_id=&2", boardId, cardId)!id)
+  If r!content.Data <> "exact" & Chr(0) Then Error.Raise("Creation policy hid existing bytes")
+  SignIn("creation-global")
+  BoardCreation.SetAdminOnly(False)
+  before = Frame()
+  db.Exec("CREATE TRIGGER creation_demote AFTER UPDATE OF admin_only ON board_creation_settings BEGIN UPDATE users SET admin=0 WHERE username='creation-global'; END")
+  Try BoardCreation.SetAdminOnly(True)
+  denied = Error
+  failure = Error.Text
+  If Not denied Or failure <> "Administrator required" Or Frame() <> before Then Error.Raise("Late settings demotion did not roll back")
+  db.Exec("DROP TRIGGER creation_demote")
+  db.Exec("CREATE TRIGGER creation_replace AFTER UPDATE OF admin_only ON board_creation_settings WHEN NEW.admin_only=1 BEGIN UPDATE board_creation_settings SET admin_only=0; END")
+  Try BoardCreation.SetAdminOnly(True)
+  denied = Error
+  failure = Error.Text
+  If Not denied Or failure <> "Board creation setting changed" Or Frame() <> before Then Error.Raise("Late policy replacement committed")
+  db.Exec("DROP TRIGGER creation_replace")
+  db.Exec("CREATE TRIGGER creation_sql BEFORE UPDATE OF admin_only ON board_creation_settings BEGIN SELECT RAISE(ABORT,'setting failure'); END")
+  Try BoardCreation.SetAdminOnly(True)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Failed setting write changed state")
+  db.Exec("DROP TRIGGER creation_sql")
+  SignIn("creation-owner")
+  db.Exec("CREATE TRIGGER creation_late AFTER INSERT ON kb_boards WHEN NEW.title='Late create' BEGIN UPDATE board_creation_settings SET admin_only=1; END")
+  before = Frame()
+  Try resultId = KanbanStore.AddBoard("Late create")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Late direct-creation policy did not roll back")
+  db.Exec("DROP TRIGGER creation_late")
+  db.Exec("CREATE TRIGGER creation_late_copy AFTER INSERT ON kb_activity WHEN NEW.message='Copied board: Late copy' BEGIN UPDATE board_creation_settings SET admin_only=1; END")
+  Try resultId = WorkspaceStore.Copy(boardId, "board", boardId, "Late copy")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Late final copy policy did not roll back hierarchy")
+  db.Exec("DROP TRIGGER creation_late_copy")
+  db.Exec("CREATE TRIGGER creation_late_import AFTER INSERT ON kb_activity WHEN NEW.message='Imported weba JSON' BEGIN UPDATE board_creation_settings SET admin_only=1; END")
+  Try resultId = BoardTransfer.ImportData(text, "Late import")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Late final import policy did not roll back hierarchy")
+  db.Exec("DROP TRIGGER creation_late_import")
+  BoardCopies.Run(batch, selection)
+  If BoardCopies.Completed(batch) <> 1 Then Error.Raise("Policy retry did not recover")
+  SignIn("creation-global")
+  BoardCreation.SetAdminOnly(True)
+  before = Frame()
+  db.Exec("CREATE TRIGGER creation_admin AFTER INSERT ON kb_boards WHEN NEW.title='Late admin' BEGIN UPDATE users SET admin=0 WHERE username='creation-global'; END")
+  Try resultId = KanbanStore.AddBoard("Late admin")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Late creator demotion committed")
+  db.Exec("DROP TRIGGER creation_admin")
+  Print "Board creation policy: default/open/global-only guards across direct/copy/batch/import, strict admin settings/attribution, retained existing edits/bytes, late flag/admin/source-hierarchy and SQL rollback/retry passed"
+End
+
+Private Function Frame() As String
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim tables As New String[]
+  Dim table As Table
+  Dim tableName As String
+  Dim r As Result
+  Dim row As New Collection
+  Dim rows As Variant[]
+  Dim data As New Variant[]
+  Dim field As ResultField
+  For Each table In db.Tables
+    If Left(table.Name, 3) = "kb_" Or table.Name = "users" Or table.Name = "attachment_transfer_settings" Or table.Name = "board_creation_settings" Then tables.Add(table.Name)
+  Next
+  tables.Sort()
+  For Each tableName In tables
+    rows = New Variant[]
+    r = db.Find(tableName)
+    For Each r
+      row = New Collection
+      For Each field In r.Fields
+        If field.Name = "content" Then
+          row.Add(Base64(r!content.Data), field.Name)
+        Else
+          row.Add(r[field.Name], field.Name)
+        Endif
+      Next
+      rows.Add(row)
+    Next
+    data.Add(rows)
+  Next
+  Return JSON.Encode(data)
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

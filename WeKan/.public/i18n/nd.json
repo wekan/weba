@@ -42,6 +42,7 @@
   "attachments": "Okunamathiselweyo",
   "blockly-COPY_SHORTCUT": "Kopa",
   "board-admin": "Umphathi webhodi",
+  "board-creation-admin-only": "Ngabaphathi kuphela abangenza amabhodi amatsha",
   "board-title": "Isihloko sebhodi",
   "board-view-cal": "Ikhalenda",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "ULwesibili",
   "uncollapse": "Vula ukugoqa",
   "view": "Buka",
+  "visibility": "Ukubonakala",
   "wednesday": "ULwesithathu",
   "worker": "Isisebenzi"
 }

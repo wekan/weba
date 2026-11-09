@@ -42,6 +42,7 @@
   "attachments": "Замимаҳо",
   "blockly-COPY_SHORTCUT": "Нусхабардорӣ",
   "board-admin": "Маъмури тахта",
+  "board-creation-admin-only": "Танҳо маъмурон метавонанд тахта эҷод кунанд",
   "board-title": "Унвони тахта",
   "board-view-cal": "Тақвим",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Сешанбе",
   "uncollapse": "Аз ҷамъшуда баровардан",
   "view": "Намоиш",
+  "visibility": "Намоёнӣ",
   "wednesday": "Чоршанбе",
   "worker": "Корманд"
 }

@@ -42,6 +42,7 @@
   "attachments": "Συνημμένα",
   "blockly-COPY_SHORTCUT": "Αντιγραφή",
   "board-admin": "Διαχειριστής Πίνακα",
+  "board-creation-admin-only": "Μόνο οι διαχειριστές μπορούν να δημιουργήσουν πίνακες",
   "board-title": "Τίτλος πίνακα",
   "board-view-cal": "Ημερολόγιο",
   "board-view-gantt": "Διάγραμμα Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Τρίτη",
   "uncollapse": "Ανάπτυξη",
   "view": "Vue",
+  "visibility": "Ορατότητα",
   "wednesday": "Τετάρτη",
   "worker": "Εργαζόμενος"
 }

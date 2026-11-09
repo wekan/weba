@@ -84,9 +84,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   Home/group targets, Markdown icons and original
   UI callbacks. Whole-board copy authorization and late actor/source/destination
   guards, selected native duplication with pending-only retry and source-style
-  title numbering and eight native content-option controls are recorded in
+  title numbering, eight native content-option controls and the global
+  creation policy across current native paths are recorded in
   CHANGELOG.md. Rules/integrations/scrum, board-defined labels/custom fields,
-  single-copy option controls, creation policy, destination placement/order,
+  single-copy option controls, destination placement/order,
   missing board content and full original callbacks remain open.
   Native multi-selection controls, retained visible-page selection
   and revisioned authoritative multi-drop transport are recorded in CHANGELOG.md.
@@ -645,7 +646,7 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Translation coverage
 
-- Imported 155 matching WeKan keys for 237 registered languages. Language selection
+- Imported 157 matching WeKan keys for 237 registered languages. Language selection
   on login and in the account menu persists locally; browser language is the initial
   default, with English fallback and RTL metadata from WeKan.
 - Native interface labels and selected report headings/calendar dates are localized.

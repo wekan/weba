@@ -42,6 +42,7 @@
   "attachments": "Тіркемелер",
   "blockly-COPY_SHORTCUT": "Көшіру",
   "board-admin": "Тақта әкімшісі",
+  "board-creation-admin-only": "Тек әкімшілер ғана тақта жасай алады",
   "board-title": "Тақта атауы",
   "board-view-cal": "Күнтізбе",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Сейсенбі",
   "uncollapse": "Жаю",
   "view": "Көру",
+  "visibility": "Көрінуі",
   "wednesday": "Сәрсенбі",
   "worker": "Жұмысшы"
 }

@@ -42,6 +42,7 @@
   "attachments": "ಲಗತ್ತುಗಳು",
   "blockly-COPY_SHORTCUT": "ನಕಲಿಸು",
   "board-admin": "ಫಲಕದ ನಿರ್ವಾಹಕ",
+  "board-creation-admin-only": "ಆಡಳಿತಗಾರರು ಮಾತ್ರ ಬೋರ್ಡ್‌ಗಳನ್ನು ರಚಿಸಬಹುದು",
   "board-title": "ಫಲಕದ ಶೀರ್ಷಿಕೆ",
   "board-view-cal": "ಕ್ಯಾಲೆಂಡರ್",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "ಮಂಗಳವಾರ",
   "uncollapse": "ವಿಸ್ತರಿಸಿ",
   "view": "ವೀಕ್ಷಿಸಿ",
+  "visibility": "ಗೋಚರತೆ",
   "wednesday": "ಬುಧವಾರ",
   "worker": "ಕೆಲಸಗಾರ"
 }

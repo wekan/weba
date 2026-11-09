@@ -42,6 +42,7 @@
   "attachments": "Imigereka",
   "blockly-COPY_SHORTCUT": "Koporora",
   "board-admin": "Umuyobozi w'Ikibaho",
+  "board-creation-admin-only": "Abayobozi gusa ni bo bashobora gukora ibibaho",
   "board-title": "Umutwe w'ikibaho",
   "board-view-cal": "Kalendari",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Ku wa Kabiri",
   "uncollapse": "Rambura",
   "view": "Reba",
+  "visibility": "Ukugaragara",
   "wednesday": "Ku wa Gatatu",
   "worker": "Umukozi"
 }

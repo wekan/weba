@@ -42,6 +42,7 @@
   "attachments": "Ditlaleletšo",
   "blockly-COPY_SHORTCUT": "Kopiša",
   "board-admin": "Molaodi wa Boto",
+  "board-creation-admin-only": "Batsamaisi feela ba ka hlama diboto tše difsa",
   "board-title": "Sehlogo sa Boto",
   "board-view-cal": "Khalentara",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Labobedi",
   "uncollapse": "Phutholla",
   "view": "Lebelela",
+  "visibility": "Ponagalo",
   "wednesday": "Laboraro",
   "worker": "Mošomi"
 }

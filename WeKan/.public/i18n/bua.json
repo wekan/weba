@@ -42,6 +42,7 @@
   "attachments": "Хабсаргалтанууд",
   "blockly-COPY_SHORTCUT": "Хуулаха",
   "board-admin": "Самбарай захирагша",
+  "board-creation-admin-only": "Зөвхөн администраторнууд шэнэ хуудаhа үүсхэжэ шадаха",
   "board-title": "Самбарай нэрэ",
   "board-view-cal": "Хуанли",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Мягмар гараг",
   "uncollapse": "Дэлгэхэ",
   "view": "Хараха",
+  "visibility": "Харагдаса",
   "wednesday": "Лхагба гараг",
   "worker": "Ажалшан"
 }

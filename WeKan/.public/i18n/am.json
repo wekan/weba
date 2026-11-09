@@ -42,6 +42,7 @@
   "attachments": "አባሪዎች",
   "blockly-COPY_SHORTCUT": "ቅዳ",
   "board-admin": "የሰሌዳ አስተዳዳሪ",
+  "board-creation-admin-only": "አስተዳዳሪዎች ብቻ ሰሌዳዎችን መፍጠር ይችላሉ",
   "board-title": "የቦርድ ርዕስ",
   "board-view-cal": "የቀን መቁጠሪያ",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "ማክሰኞ",
   "uncollapse": "ዘርጋ",
   "view": "እይታ",
+  "visibility": "ታይነት",
   "wednesday": "ረቡዕ",
   "worker": "ሠራተኛ"
 }

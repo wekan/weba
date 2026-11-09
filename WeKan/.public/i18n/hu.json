@@ -42,6 +42,7 @@
   "attachments": "Mellékletek",
   "blockly-COPY_SHORTCUT": "Másolás",
   "board-admin": "Tábla adminisztrátor",
+  "board-creation-admin-only": "Csak adminisztrátorok hozhatnak létre táblákat",
   "board-title": "Tábla címe",
   "board-view-cal": "Naptár",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "kedd",
   "uncollapse": "Kibontás",
   "view": "Nézet",
+  "visibility": "Láthatóság",
   "wednesday": "szerda",
   "worker": "Dolgozó"
 }

@@ -42,6 +42,7 @@
   "attachments": "Прикачени датотеки",
   "blockly-COPY_SHORTCUT": "Копирај",
   "board-admin": "Администратор на таблата",
+  "board-creation-admin-only": "Само администраторите можат да создаваат табли",
   "board-title": "Деловодни број",
   "board-view-cal": "Календар",
   "board-view-gantt": "План",
@@ -152,6 +153,7 @@
   "tuesday": "Вторник",
   "uncollapse": "Рашири",
   "view": "Поглед",
+  "visibility": "Видливост",
   "wednesday": "Сряда",
   "worker": "Работник"
 }

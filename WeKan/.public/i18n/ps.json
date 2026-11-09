@@ -42,6 +42,7 @@
   "attachments": "ضميمې",
   "blockly-COPY_SHORTCUT": "نقل",
   "board-admin": "د تختې مدير",
+  "board-creation-admin-only": "یوازې مدیران کولی شي بورډونه جوړ کړي",
   "board-title": "د تختې سرليک",
   "board-view-cal": "جنتري",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "سې‌شنبه",
   "uncollapse": "وغځوئ",
   "view": "ليد",
+  "visibility": "ښکاره‌والی",
   "wednesday": "چهارشنبه",
   "worker": "کارکوونکی"
 }

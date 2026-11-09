@@ -1,4 +1,9 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Board creation policy: Add persisted default-off Global Admin setting and
+  guarded current creation/copy/import paths with actor/policy locks and final
+  rollback checks. Hide stale actions, retain pending copies and refresh clean
+  settings while preserving drafts. Verify native failures, 392 source outcomes
+  and mobile/translated/forged UI; keep templates/API/DDP/reporting parity open.
 - Copy options: Add eight real content controls, all/none, dependent keyboard
   toggles and mobile layout. Filter cloned content and apply changed choices only
   to unfinished copies. Verify 256 SQL content cases, 2,104 source helper outcomes

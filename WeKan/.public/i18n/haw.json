@@ -42,6 +42,7 @@
   "attachments": "Nā mea pili",
   "blockly-COPY_SHORTCUT": "Kope",
   "board-admin": "papa luna hoʻokele",
+  "board-creation-admin-only": "ʻO nā luna wale nō e hiki ke hana i papa hou",
   "board-title": "papa inoa",
   "board-view-cal": "ʻalemanaka",
   "board-view-gantt": "kanakaka",
@@ -152,6 +153,7 @@
   "tuesday": "kuekakawa",
   "uncollapse": "unakolalapake",
   "view": "nānā",
+  "visibility": "likipilikawa",
   "wednesday": "wekanekakawa",
   "worker": "wolakela"
 }

@@ -42,6 +42,7 @@
   "attachments": "Nneɛma a wɔde aka ho",
   "blockly-COPY_SHORTCUT": "Yɛ bi",
   "board-admin": "Bɔɔd Sodifo",
+  "board-creation-admin-only": "Admin nkutoo na wɔtumi yɛ mmuaƴa foforo",
   "board-title": "Bɔɔd Ti asɛm",
   "board-view-cal": "Kalenda",
   "board-view-gantt": "Kyerɛ ade yi",
@@ -152,6 +153,7 @@
   "tuesday": "Benada",
   "uncollapse": "Trɛw mu",
   "view": "Kyerɛ ade yi",
+  "visibility": "Sɛnea wohu",
   "wednesday": "Wukuda",
   "worker": "Adwumayɛfo"
 }

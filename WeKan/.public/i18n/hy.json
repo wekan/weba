@@ -42,6 +42,7 @@
   "attachments": "Կցորդներ",
   "blockly-COPY_SHORTCUT": "Պատճենել",
   "board-admin": "Տախտակի ադմին",
+  "board-creation-admin-only": "Միայն ադմինիստրատորները կարող են ստեղծել գրատախտակներ",
   "board-title": "Վարչության անվանումը",
   "board-view-cal": "Օրացույց",
   "board-view-gantt": "Գանտ",
@@ -152,6 +153,7 @@
   "tuesday": "Երեքշաբթի",
   "uncollapse": "Չփլուզվել",
   "view": "Դիտել",
+  "visibility": "Տեսանելիություն",
   "wednesday": "չորեքշաբթի",
   "worker": "Աշխատող"
 }

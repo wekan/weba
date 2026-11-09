@@ -42,6 +42,7 @@
   "attachments": "Rakitra miaraka",
   "blockly-COPY_SHORTCUT": "Adikao",
   "board-admin": "Mpitantana solaitra",
+  "board-creation-admin-only": "Ny mpitantana ihany no afaka mamorona ny takelaka",
   "board-title": "Lohatenin'ny solaitra",
   "board-view-cal": "Kalandrie",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Talata",
   "uncollapse": "Velaro",
   "view": "Jereo",
+  "visibility": "Fahitana",
   "wednesday": "Alarobia",
   "worker": "Mpiasa"
 }

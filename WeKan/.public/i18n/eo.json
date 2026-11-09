@@ -42,6 +42,7 @@
   "attachments": "Aldonaĵoj",
   "blockly-COPY_SHORTCUT": "Kopii",
   "board-admin": "Tabuladministranto",
+  "board-creation-admin-only": "Nur administrantoj povas krei tabulojn",
   "board-title": "Tabula titolo",
   "board-view-cal": "Kalendaro",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Mardo",
   "uncollapse": "Malfaldi",
   "view": "Vue",
+  "visibility": "Videbleco",
   "wednesday": "Merkredo",
   "worker": "Laboranto"
 }

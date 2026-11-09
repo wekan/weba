@@ -42,6 +42,7 @@
   "attachments": "இணைப்புகள்",
   "blockly-COPY_SHORTCUT": "நகலெடு",
   "board-admin": "பலகை நிர்வாகி",
+  "board-creation-admin-only": "நிர்வாகிகள் மட்டுமே பலகைகளை உருவாக்க முடியும்",
   "board-title": "பலகையின் தலைப்பு",
   "board-view-cal": "நாள்காட்டி",
   "board-view-gantt": "கான்ட்",
@@ -152,6 +153,7 @@
   "tuesday": "செவ்வாய்",
   "uncollapse": "விரி",
   "view": "பார்",
+  "visibility": "தெரிவுநிலை",
   "wednesday": "புதன்",
   "worker": "பணியாளர்"
 }

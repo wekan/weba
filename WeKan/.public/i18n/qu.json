@@ -42,6 +42,7 @@
   "attachments": "Watasqakuna",
   "blockly-COPY_SHORTCUT": "Qatichiy",
   "board-admin": "Pirqap kamachiqnin",
+  "board-creation-admin-only": "Kamachiqkunallam mosoq tablakunata ruwayta atinku",
   "board-title": "Pirqapa uma sutin",
   "board-view-cal": "Watanqillqa",
   "board-view-gantt": "Gantt siq'i",
@@ -152,6 +153,7 @@
   "tuesday": "Atipachaw",
   "uncollapse": "Mast'ay",
   "view": "Qhaway",
+  "visibility": "Rikukuynin",
   "wednesday": "Quyllurchaw",
   "worker": "Llamkaq"
 }

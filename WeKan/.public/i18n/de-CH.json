@@ -42,6 +42,7 @@
   "attachments": "Anhänge",
   "blockly-COPY_SHORTCUT": "Kopieren",
   "board-admin": "Board-Administrator",
+  "board-creation-admin-only": "Nur Administratoren können Boards erstellen",
   "board-title": "Board-Titel",
   "board-view-cal": "Kalender",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Dienstag",
   "uncollapse": "Aufklappen",
   "view": "Ansicht",
+  "visibility": "Sichtbarkeit",
   "wednesday": "Mittwoch",
   "worker": "Arbeiter"
 }

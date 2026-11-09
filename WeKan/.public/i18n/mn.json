@@ -42,6 +42,7 @@
   "attachments": "Хавсралтууд",
   "blockly-COPY_SHORTCUT": "Хуулах",
   "board-admin": "Самбарын админ",
+  "board-creation-admin-only": "Зөвхөн админууд самбар үүсгэж чадна",
   "board-title": "Самбарын гарчиг",
   "board-view-cal": "Хуанли",
   "board-view-gantt": "Гантын диаграм",
@@ -152,6 +153,7 @@
   "tuesday": "Мягмар гараг",
   "uncollapse": "Дэлгэх",
   "view": "Харах",
+  "visibility": "Харагдах байдал",
   "wednesday": "Лхагва гараг",
   "worker": "Ажилтан"
 }

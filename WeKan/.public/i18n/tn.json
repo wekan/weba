@@ -42,6 +42,7 @@
   "attachments": "Tse di tshwaraganeng",
   "blockly-COPY_SHORTCUT": "Kopolola",
   "board-admin": "Boto Molaodi",
+  "board-creation-admin-only": "Batlhankedi fela ba ka dira diboto tse dintšha",
   "board-title": "Boto Setlhogo",
   "board-view-cal": "Khalendara",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Tshedimosetso: Tuesday",
   "uncollapse": "Tshedimosetso: Uncollapse",
   "view": "Leba",
+  "visibility": "Ponagalo",
   "wednesday": "Tshedimosetso: Wednesday",
   "worker": "Modiri"
 }

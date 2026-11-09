@@ -42,6 +42,7 @@
   "attachments": "Chikachatanaka",
   "blockly-COPY_SHORTCUT": "Qillqaqaña",
   "board-admin": "pirqa Admin",
+  "board-creation-admin-only": "Amtir jaqinakakiw tablasa luraskaspa",
   "board-title": "pirqa pʼiqiñcha",
   "board-view-cal": "Aymar aruna: Calendar",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Aymar aruna: Tuesday",
   "uncollapse": "Aymar aruna: Uncollapse",
   "view": "uñjaña",
+  "visibility": "Aymar aruna: Visibility",
   "wednesday": "Aymar aruna: Wednesday",
   "worker": "Aymar aruna: Worker"
 }

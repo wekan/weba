@@ -42,6 +42,7 @@
   "attachments": "Agiuntas",
   "blockly-COPY_SHORTCUT": "Copiar",
   "board-admin": "Administratur da la tabella",
+  "board-creation-admin-only": "Mo administraturs pon crear tabellas",
   "board-title": "Titel da la tabella",
   "board-view-cal": "Chalender",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Martedì",
   "uncollapse": "Extender",
   "view": "Vista",
+  "visibility": "Visibladad",
   "wednesday": "Mercoledì",
   "worker": "Lavurant"
 }

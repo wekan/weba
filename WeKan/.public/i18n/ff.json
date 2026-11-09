@@ -42,6 +42,7 @@
   "attachments": "Ceŋaaɗi",
   "blockly-COPY_SHORTCUT": "Natto",
   "board-admin": "Jiiloowo alluwal",
+  "board-creation-admin-only": "Ko ceerimtenaaɓe tan waawi sos taabal",
   "board-title": "Hoore alluwal",
   "board-view-cal": "Haatumeere",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Talaata",
   "uncollapse": "Yaajtin",
   "view": "Yiy",
+  "visibility": "Jiytagol",
   "wednesday": "Alarba",
   "worker": "Golloowo"
 }

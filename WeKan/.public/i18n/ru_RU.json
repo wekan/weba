@@ -42,6 +42,7 @@
   "attachments": "Вложения",
   "blockly-COPY_SHORTCUT": "Копировать",
   "board-admin": "Администратор доски",
+  "board-creation-admin-only": "Только администраторы могут создавать доски",
   "board-title": "Название доски",
   "board-view-cal": "Календарь",
   "board-view-gantt": "Диаграмма Ганта",
@@ -152,6 +153,7 @@
   "tuesday": "Вторник",
   "uncollapse": "Развернуть",
   "view": "Вид",
+  "visibility": "Видимость",
   "wednesday": "Среда",
   "worker": "Исполнитель"
 }

@@ -42,6 +42,7 @@
   "attachments": "Alegâts",
   "blockly-COPY_SHORTCUT": "Copie",
   "board-admin": "Aministradôr de taule",
+  "board-creation-admin-only": "Nome i aministradôrs a puedin creâ scheis",
   "board-title": "Titul taule",
   "board-view-cal": "Calendari",
   "board-view-gantt": "Diagram di Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Martars",
   "uncollapse": "No collassare",
   "view": "Viôt",
+  "visibility": "Visibilitât",
   "wednesday": "Miercus",
   "worker": "Lavoristoris"
 }

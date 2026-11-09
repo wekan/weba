@@ -42,6 +42,7 @@
   "attachments": "Ilanngussat",
   "blockly-COPY_SHORTCUT": "Kopeeruk",
   "board-admin": "Ilisarnaatip aqutsisua",
+  "board-creation-admin-only": "Naalakkersuisut kisimik allattaassanik pilersitsisinnaapput",
   "board-title": "Ilisarnaatip qulequtaa",
   "board-view-cal": "Ullorsiut",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Marlunngorneq",
   "uncollapse": "Siaartiguk",
   "view": "Takujuk",
+  "visibility": "Takuneqarsinnaaneq",
   "wednesday": "Pingasunngorneq",
   "worker": "Sulisartoq"
 }

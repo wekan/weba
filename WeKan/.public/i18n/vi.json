@@ -42,6 +42,7 @@
   "attachments": "Tệp Đính Kèm",
   "blockly-COPY_SHORTCUT": "Sao chép",
   "board-admin": "Quản trị viên bảng",
+  "board-creation-admin-only": "Chỉ quản trị viên mới có thể tạo bảng",
   "board-title": "Judul Papan",
   "board-view-cal": "Lịch",
   "board-view-gantt": "Biểu đồ Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Thứ ba",
   "uncollapse": "Mở rộng",
   "view": "Xem",
+  "visibility": "Khả năng hiển thị",
   "wednesday": "Thứ tư",
   "worker": "Pekerja"
 }

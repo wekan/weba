@@ -42,6 +42,7 @@
   "attachments": "منسلکات",
   "blockly-COPY_SHORTCUT": "نقل کریں",
   "board-admin": "بورڈ منتظم",
+  "board-creation-admin-only": "صرف منتظمین بورڈ بنا سکتے ہیں",
   "board-title": "بورڈ کا عنوان",
   "board-view-cal": "تقویم",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "منگل",
   "uncollapse": "پھیلائیں",
   "view": "منظر",
+  "visibility": "مرئیت",
   "wednesday": "بدھ",
   "worker": "کارکن"
 }

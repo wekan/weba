@@ -42,6 +42,7 @@
   "attachments": "Tse kopantsoeng",
   "blockly-COPY_SHORTCUT": "Kopitsa",
   "board-admin": "Molaodi wa boto",
+  "board-creation-admin-only": "Batsamaisi feela ba ka theha diboto tse ncha",
   "board-title": "Sehlooho sa boto",
   "board-view-cal": "Khalendara",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Labobedi",
   "uncollapse": "Phutholla",
   "view": "Sheba",
+  "visibility": "Ponahalo",
   "wednesday": "Laboraro",
   "worker": "Mosebeletsi"
 }

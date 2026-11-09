@@ -42,6 +42,7 @@
   "attachments": "Lampiran",
   "blockly-COPY_SHORTCUT": "Salin",
   "board-admin": "Admin Papan",
+  "board-creation-admin-only": "Mung admin sing bisa nggawe papan",
   "board-title": "Judhul Papan",
   "board-view-cal": "Tanggalan",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Selasa",
   "uncollapse": "Jembarake maneh",
   "view": "Deleng",
+  "visibility": "Katoné",
   "wednesday": "Rebo",
   "worker": "Buruh"
 }

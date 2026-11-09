@@ -42,6 +42,7 @@
   "attachments": "Qo'shimchalar",
   "blockly-COPY_SHORTCUT": "Nusxalash",
   "board-admin": "Taxta admini",
+  "board-creation-admin-only": "Faqat administratorlar yangi doska yarata oladi",
   "board-title": "Taxta nomi",
   "board-view-cal": "Kalendar",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "seshanba",
   "uncollapse": "Yechish",
   "view": "Ko'rish",
+  "visibility": "Ko'rinuvchanlik",
   "wednesday": "chorshanba",
   "worker": "Ishchi"
 }

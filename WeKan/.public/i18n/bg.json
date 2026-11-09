@@ -42,6 +42,7 @@
   "attachments": "Прикачени файлове",
   "blockly-COPY_SHORTCUT": "Копиране",
   "board-admin": "Администратор на таблото",
+  "board-creation-admin-only": "Само администраторите могат да създават дъски",
   "board-title": "Заглавие на таблото",
   "board-view-cal": "Календар",
   "board-view-gantt": "План",
@@ -152,6 +153,7 @@
   "tuesday": "Вторник",
   "uncollapse": "Разгъване",
   "view": "Поглед",
+  "visibility": "Видимост",
   "wednesday": "Сряда",
   "worker": "Работник"
 }

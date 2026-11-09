@@ -42,6 +42,7 @@
   "attachments": "Iziqhoboshelo",
   "blockly-COPY_SHORTCUT": "Khuphela",
   "board-admin": "uMlawuli weBhodi",
+  "board-creation-admin-only": "Ngoosekelwe kuphela abalawuli abanako ukwenza iibhodi",
   "board-title": "Isihloko seBhodi",
   "board-view-cal": "Ikhalenda",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "uLwesibini",
   "uncollapse": "Ukungatshitshili",
   "view": "Jonga",
+  "visibility": "Ukubonakala",
   "wednesday": "uLwesithathu",
   "worker": "Umsebenzi"
 }

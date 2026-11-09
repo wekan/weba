@@ -42,6 +42,7 @@
   "attachments": "Daftar Lampiran",
   "blockly-COPY_SHORTCUT": "Salin",
   "board-admin": "Admin Papan",
+  "board-creation-admin-only": "Hanya admin yang dapat membuat papan",
   "board-title": "Judul Papan",
   "board-view-cal": "Kalender",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Selasa",
   "uncollapse": "Buka lipatan",
   "view": "Tampilan",
+  "visibility": "Visibilitas",
   "wednesday": "Rabu",
   "worker": "Pekerja"
 }

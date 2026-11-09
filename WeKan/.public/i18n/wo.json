@@ -42,6 +42,7 @@
   "attachments": "Takkaay yi",
   "blockly-COPY_SHORTCUT": "Duppi",
   "board-admin": "Adminu tablo",
+  "board-creation-admin-only": "Ndaje yalañu jëmm bord bu bees",
   "board-title": "Turu tablo bi",
   "board-view-cal": "Kaleende",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Dilii",
   "uncollapse": "Yëkk",
   "view": "Xool",
+  "visibility": "Gis-gis",
   "wednesday": "Dilo",
   "worker": "Liggéeykat"
 }

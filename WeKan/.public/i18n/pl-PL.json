@@ -42,6 +42,7 @@
   "attachments": "Załączniki",
   "blockly-COPY_SHORTCUT": "Kopiuj",
   "board-admin": "Administrator tablicy",
+  "board-creation-admin-only": "Tylko administratorzy mogą tworzyć tablice",
   "board-title": "Tytuł tablicy",
   "board-view-cal": "Kalendarz",
   "board-view-gantt": "Wykres Gantta",
@@ -152,6 +153,7 @@
   "tuesday": "Wtorek",
   "uncollapse": "Rozwiń",
   "view": "Widok",
+  "visibility": "Widoczność",
   "wednesday": "Środa",
   "worker": "Pracownik"
 }

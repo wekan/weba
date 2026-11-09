@@ -42,6 +42,7 @@
   "attachments": "附件",
   "blockly-COPY_SHORTCUT": "复制",
   "board-admin": "看板管理员",
+  "board-creation-admin-only": "只有管理员才能创建看板",
   "board-title": "面板标题",
   "board-view-cal": "日历",
   "board-view-gantt": "甘特图",
@@ -152,6 +153,7 @@
   "tuesday": "周二",
   "uncollapse": "展开",
   "view": "视图",
+  "visibility": "可见性",
   "wednesday": "周三",
   "worker": "人员"
 }

@@ -42,6 +42,7 @@
   "attachments": "Atashamenti",
   "blockly-COPY_SHORTCUT": "Copieadzã",
   "board-admin": "Administrator di tabelã",
+  "board-creation-admin-only": "Mash administratorlji pot s-adarã tabeli",
   "board-title": "Titlul a tabelãljei",
   "board-view-cal": "Calindar",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Martedì",
   "uncollapse": "Dishcljidi",
   "view": "Videari",
+  "visibility": "Vidzutã",
   "wednesday": "Mercoledì",
   "worker": "Lucrãtor"
 }

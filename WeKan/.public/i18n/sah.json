@@ -42,6 +42,7 @@
   "attachments": "Холбоһуктар",
   "blockly-COPY_SHORTCUT": "Төгүллээ",
   "board-admin": "Дуоска дьаһабыла",
+  "board-creation-admin-only": "Аныгар администратордар эрэ саҥа дааска оҥорорго сатыылар",
   "board-title": "Дуоска аата",
   "board-view-cal": "Халандаар",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Оптуорунньук",
   "uncollapse": "Ас",
   "view": "Көр",
+  "visibility": "Көстүү",
   "wednesday": "Сэрэдэ",
   "worker": "Үлэһит"
 }

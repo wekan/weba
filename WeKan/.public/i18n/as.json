@@ -42,6 +42,7 @@
   "attachments": "সংলগ্নসমূহ",
   "blockly-COPY_SHORTCUT": "কপি কৰক",
   "board-admin": "বৰ্ড এডমিন",
+  "board-creation-admin-only": "কেৱল প্ৰশাসকসকলে নতুন বৰ্ড সৃষ্টি কৰিব পাৰে",
   "board-title": "বৰ্ডৰ শিৰোনাম",
   "board-view-cal": "দিনপঞ্জী",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "মঙলবাৰ",
   "uncollapse": "প্ৰসাৰিত কৰক",
   "view": "দৃশ্য",
+  "visibility": "দৃশ্যমানতা",
   "wednesday": "বুধবাৰ",
   "worker": "কৰ্মী"
 }

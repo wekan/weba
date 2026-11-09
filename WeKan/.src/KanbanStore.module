@@ -120,14 +120,34 @@ End
 
 Public Function AddBoard(title As String) As Integer
   Dim r As Result
+  Dim actor As String = WebIdentity.Username
+  Dim id As Integer
+  Dim transaction As Boolean
+  Dim failure As String
   RequireUser()
+  BoardCreation.Require()
   If Not Trim(title) Then Error.Raise("Enter a board title")
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  BoardCreation.Lock()
+  If WebIdentity.Username <> actor Then Error.Raise("Sign in required")
+  BoardCreation.Require()
   r = $db.Create("kb_boards")
-  r["owner"] = WebIdentity.Username
+  r["owner"] = actor
   r["title"] = Trim(title)
   r["archived"] = False
   r.Update()
-  Return $db.LastInsertId
+  id = $db.LastInsertId
+  If WebIdentity.Username <> actor Then Error.Raise("Sign in required")
+  BoardCreation.Require()
+  DatabaseTransactions.Commit($db)
+  transaction = False
+  Return id
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
 End
 
 Public Sub ArchiveBoard(boardId As Integer, archived As Boolean)

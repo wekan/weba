@@ -42,6 +42,7 @@
   "attachments": "Ebiyungiddwako",
   "blockly-COPY_SHORTCUT": "Koppa",
   "board-admin": "Lubaawo Omuddukanya",
+  "board-creation-admin-only": "Bakulembeza bokka be basobola okutonda embaawo",
   "board-title": "Lubaawo Mutwe",
   "board-view-cal": "Kalenda",
   "board-view-gantt": "Kifaananyi kya Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Lwakubiri",
   "uncollapse": "Gaziya",
   "view": "Laba",
+  "visibility": "Okulabika",
   "wednesday": "Lwakusatu",
   "worker": "Omukozi"
 }

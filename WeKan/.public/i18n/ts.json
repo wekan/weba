@@ -42,6 +42,7 @@
   "attachments": "Swihlanganisi",
   "blockly-COPY_SHORTCUT": "Kopa",
   "board-admin": "bodo mulawuri",
+  "board-creation-admin-only": "Vafambisi ntsena va nga endla mabhodo lamantsha",
   "board-title": "bodo nhlokomhaka",
   "board-view-cal": "khalendara",
   "board-view-gantt": "Tchati ya Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Ravumbirhi",
   "uncollapse": "Pfunyulula",
   "view": "Langutelo",
+  "visibility": "Ku vonaka",
   "wednesday": "Ravunharhu",
   "worker": "Mutirhi"
 }

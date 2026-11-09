@@ -42,6 +42,7 @@
   "attachments": "Viðheft",
   "blockly-COPY_SHORTCUT": "Avrita",
   "board-admin": "Talvuumsitari",
+  "board-creation-admin-only": "Bert umsitarar kunnu stovna nýggjar tavlur",
   "board-title": "Talvuheiti",
   "board-view-cal": "Kalendari",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Týsdagur",
   "uncollapse": "Víðka aftur",
   "view": "Vís",
+  "visibility": "Sjónleiki",
   "wednesday": "Mikudagur",
   "worker": "Arbeiðari"
 }

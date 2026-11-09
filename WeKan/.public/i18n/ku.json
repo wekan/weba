@@ -42,6 +42,7 @@
   "attachments": "Pêvek",
   "blockly-COPY_SHORTCUT": "Kopî bike",
   "board-admin": "Rêveberê depoyê",
+  "board-creation-admin-only": "Tenê rêveberan dikarin panoyan çêbikin",
   "board-title": "Sernavê depoyê",
   "board-view-cal": "Salname",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Sêşem",
   "uncollapse": "Veke",
   "view": "Dîtin",
+  "visibility": "Xuyabûn",
   "wednesday": "Çarşem",
   "worker": "Xebatkar"
 }

@@ -42,6 +42,7 @@
   "attachments": "Allegati",
   "blockly-COPY_SHORTCUT": "Copia",
   "board-admin": "Amministratore della bacheca",
+  "board-creation-admin-only": "Solo gli amministratori possono creare bacheche",
   "board-title": "Titolo bacheca",
   "board-view-cal": "Calendario",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Martedì",
   "uncollapse": "Non collassare",
   "view": "Vista",
+  "visibility": "Visibilità",
   "wednesday": "Mercoledì",
   "worker": "Lavoratore"
 }

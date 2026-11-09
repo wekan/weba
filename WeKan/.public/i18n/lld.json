@@ -42,6 +42,7 @@
   "attachments": "Injuntes",
   "blockly-COPY_SHORTCUT": "Copié",
   "board-admin": "Aministradëur dla tofl",
+  "board-creation-admin-only": "Mé i aministradëures possa crië tofles",
   "board-title": "Titul dla tofl",
   "board-view-cal": "Calendario",
   "board-view-gantt": "Diagram de Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Martedì",
   "uncollapse": "Giaurì",
   "view": "Vijion",
+  "visibility": "Vijibelté",
   "wednesday": "Mercoledì",
   "worker": "Lauradëur"
 }

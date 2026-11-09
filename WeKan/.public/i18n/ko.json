@@ -42,6 +42,7 @@
   "attachments": "첨부 파일",
   "blockly-COPY_SHORTCUT": "복사",
   "board-admin": "보드 관리자",
+  "board-creation-admin-only": "관리자만 보드를 만들 수 있습니다",
   "board-title": "보드 제목",
   "board-view-cal": "달력",
   "board-view-gantt": "간트",
@@ -152,6 +153,7 @@
   "tuesday": "화요일",
   "uncollapse": "펴기",
   "view": "보기",
+  "visibility": "공개 범위",
   "wednesday": "수요일",
   "worker": "노동자"
 }

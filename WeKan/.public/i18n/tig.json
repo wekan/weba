@@ -42,6 +42,7 @@
   "attachments": "ተለጠፍቲ",
   "blockly-COPY_SHORTCUT": "ቅዳሕ",
   "board-admin": "ሓክም ምዱድ",
+  "board-creation-admin-only": "ኣመሓደርቲ ጥራይ ሓድሽ ምዱድ ክፈጥሩ ይኽእሉ",
   "board-title": "ኣርእስቲ ምዱድ",
   "board-view-cal": "አምዕል ለልተዐለብ እቱ ወድና አወርሕት",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "አተሉት",
   "uncollapse": "ዘርግሕ",
   "view": "ርአ",
+  "visibility": "ርእየት",
   "wednesday": "አረቡዕ",
   "worker": "ሸቃላይ"
 }

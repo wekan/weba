@@ -42,6 +42,7 @@
   "attachments": "Prílohy",
   "blockly-COPY_SHORTCUT": "Kopírovať",
   "board-admin": "Administrátor nástenky",
+  "board-creation-admin-only": "Iba administrátori môžu vytvárať nástenky",
   "board-title": "Názov nástenky",
   "board-view-cal": "Kalendár",
   "board-view-gantt": "Gannt",
@@ -152,6 +153,7 @@
   "tuesday": "utorok",
   "uncollapse": "Rozbaliť",
   "view": "Zobraziť",
+  "visibility": "Viditeľnosť",
   "wednesday": "streda",
   "worker": "Pracovník"
 }

@@ -42,6 +42,7 @@
   "attachments": "Lifaaqyo",
   "blockly-COPY_SHORTCUT": "Koobbi",
   "board-admin": "Maamulaha Sabuuradda",
+  "board-creation-admin-only": "Maamulayaasha oo kaliya ayaa samayn kara looxyo cusub",
   "board-title": "Cinwaanka Sabuuradda",
   "board-view-cal": "Kalandar",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Talaado",
   "uncollapse": "Ka fur laabka",
   "view": "Muuqaal",
+  "visibility": "Muuqashada",
   "wednesday": "Arbaco",
   "worker": "Shaqaale"
 }

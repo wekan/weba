@@ -42,6 +42,7 @@
   "attachments": "Alligati",
   "blockly-COPY_SHORTCUT": "Cupià",
   "board-admin": "Amministratore di a tavula",
+  "board-creation-admin-only": "Solu l’amministratori ponu creà tavule",
   "board-title": "Titulu tavula",
   "board-view-cal": "Calendariu",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Marti",
   "uncollapse": "Spiegà",
   "view": "Vista",
+  "visibility": "Visibilità",
   "wednesday": "Mercuri",
   "worker": "Travagliadore"
 }

@@ -42,6 +42,7 @@
   "attachments": "Adjuntos",
   "blockly-COPY_SHORTCUT": "Copiar",
   "board-admin": "Administrador del tablero",
+  "board-creation-admin-only": "Solo los administradores pueden crear tableros",
   "board-title": "Título del Tablero",
   "board-view-cal": "Calendario",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "martes",
   "uncollapse": "Expandir",
   "view": "Ver",
+  "visibility": "Visibilidad",
   "wednesday": "miércoles",
   "worker": "Trabajador"
 }

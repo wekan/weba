@@ -42,6 +42,7 @@
   "attachments": "Vedlegg",
   "blockly-COPY_SHORTCUT": "Kopier",
   "board-admin": "Tavleadministrator",
+  "board-creation-admin-only": "Bare administratorer kan opprette tavler",
   "board-title": "Tavletittel",
   "board-view-cal": "Kalender",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Tirsdag",
   "uncollapse": "Utvid",
   "view": "Vis",
+  "visibility": "Synlighet",
   "wednesday": "Onsdag",
   "worker": "Arbeider"
 }

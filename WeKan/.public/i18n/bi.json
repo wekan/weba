@@ -42,6 +42,7 @@
   "attachments": "Ol atajmen",
   "blockly-COPY_SHORTCUT": "Kopi",
   "board-admin": "Admin blong Bod",
+  "board-creation-admin-only": "Ol admin nomo i save mekem niu bod",
   "board-title": "Taetol blong Bod",
   "board-view-cal": "Kalenda",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Tusde",
   "uncollapse": "Openem bakegen",
   "view": "Lukluk",
+  "visibility": "Fasin blong soem",
   "wednesday": "Wenesde",
   "worker": "Woka"
 }

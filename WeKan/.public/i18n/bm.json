@@ -42,6 +42,7 @@
   "attachments": "Nɔrɔlenw",
   "blockly-COPY_SHORTCUT": "Kopi",
   "board-admin": "Tabali baarakɛla kuntigi",
+  "board-creation-admin-only": "Admin dɔrɔn de se ka tabali kura da",
   "board-title": "Tabali tɔgɔ",
   "board-view-cal": "Donw kalandiriye",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Tarata",
   "uncollapse": "A dayɛlɛ",
   "view": "Jira",
+  "visibility": "Yeli",
   "wednesday": "Araba",
   "worker": "Baarakɛla"
 }

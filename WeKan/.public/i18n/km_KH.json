@@ -42,6 +42,7 @@
   "attachments": "ឯកសារភ្ជាប់",
   "blockly-COPY_SHORTCUT": "ចម្លង",
   "board-admin": "អ្នកគ្រប់គ្រងក្តារ",
+  "board-creation-admin-only": "មានតែអ្នកគ្រប់គ្រងប៉ុណ្ណោះទើបអាចបង្កើតក្តារបាន",
   "board-title": "ចំណងជើងក្តារ",
   "board-view-cal": "ប្រតិទិន",
   "board-view-gantt": "ហ្គេត",
@@ -152,6 +153,7 @@
   "tuesday": "ថ្ងៃអង្គារ",
   "uncollapse": "ពន្លា",
   "view": "មើល",
+  "visibility": "ភាពមើលឃើញ",
   "wednesday": "ថ្ងៃពុធ",
   "worker": "កម្មករ"
 }

@@ -42,6 +42,7 @@
   "attachments": "Atașamente",
   "blockly-COPY_SHORTCUT": "Copiază",
   "board-admin": "Administrator de panou",
+  "board-creation-admin-only": "Numai administratorii pot crea panouri",
   "board-title": "Titlul panoului",
   "board-view-cal": "Calendar",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Marți",
   "uncollapse": "Extinde",
   "view": "Vizualizare",
+  "visibility": "Vizibilitate",
   "wednesday": "Miercuri",
   "worker": "Lucrător"
 }

@@ -42,6 +42,7 @@
   "attachments": "Mga Attachment",
   "blockly-COPY_SHORTCUT": "Kopyaha",
   "board-admin": "Admin han Board",
+  "board-creation-admin-only": "Mga admin la an mahimo maghimo hin mga board",
   "board-title": "Titulo han Board",
   "board-view-cal": "Kalendaryo",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Martes",
   "uncollapse": "I-uncollapse",
   "view": "Kitaa",
+  "visibility": "Pagkakita",
   "wednesday": "Miyerkoles",
   "worker": "Trabahador"
 }

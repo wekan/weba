@@ -42,6 +42,7 @@
   "attachments": "जोडणी",
   "blockly-COPY_SHORTCUT": "नकल करात",
   "board-admin": "फळो प्रशासक",
+  "board-creation-admin-only": "फकत प्रशासकांक बोर्ड तयार करूंक मेळटा",
   "board-title": "फळो माथाळें",
   "board-view-cal": "दिनदर्शिका",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "मंगळार",
   "uncollapse": "परत विस्तारात",
   "view": "पळयात",
+  "visibility": "दृश्यताय",
   "wednesday": "बुधवार",
   "worker": "कामगार"
 }

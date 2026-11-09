@@ -42,6 +42,7 @@
   "attachments": "Ekler",
   "blockly-COPY_SHORTCUT": "Kopyala",
   "board-admin": "Pano Yöneticisi",
+  "board-creation-admin-only": "Sadece yöneticiler pano oluşturabilir",
   "board-title": "Pano Başlığı",
   "board-view-cal": "Takvim",
   "board-view-gantt": "Gant Şeması",
@@ -152,6 +153,7 @@
   "tuesday": "Salı",
   "uncollapse": "Genişlet",
   "view": "Görünüm",
+  "visibility": "Görünürlük",
   "wednesday": "Çarşamba",
   "worker": "Çalışan"
 }

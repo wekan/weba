@@ -42,6 +42,7 @@
   "attachments": "Ngā āpitihanga",
   "blockly-COPY_SHORTCUT": "Tārua",
   "board-admin": "Kaiwhakahaere Papa",
+  "board-creation-admin-only": "Ko ngā kaiwhakahaere anake ka taea te hanga papa",
   "board-title": "Taitara Papa",
   "board-view-cal": "Maramataka",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Tūrei",
   "uncollapse": "Whakaroha anō",
   "view": "Tirohanga",
+  "visibility": "Kitenga",
   "wednesday": "Wenerei",
   "worker": "Kaimahi"
 }

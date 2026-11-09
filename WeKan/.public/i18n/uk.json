@@ -42,6 +42,7 @@
   "attachments": "Додатки",
   "blockly-COPY_SHORTCUT": "Копіювати",
   "board-admin": "Адміністратор дошки",
+  "board-creation-admin-only": "Тільки адміністратори можуть створювати дошки",
   "board-title": "Назва дошки",
   "board-view-cal": "Календар",
   "board-view-gantt": "Гантт",
@@ -152,6 +153,7 @@
   "tuesday": "Вівторок",
   "uncollapse": "Розгорнути",
   "view": "Переглянути",
+  "visibility": "Видимість",
   "wednesday": "Середа",
   "worker": "Робітник"
 }

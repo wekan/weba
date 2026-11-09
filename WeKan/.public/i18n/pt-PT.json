@@ -42,6 +42,7 @@
   "attachments": "Anexos",
   "blockly-COPY_SHORTCUT": "Copiar",
   "board-admin": "Administrador do quadro",
+  "board-creation-admin-only": "Apenas os administradores podem criar quadros",
   "board-title": "Título do Quadro",
   "board-view-cal": "Calendário",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Terça-feira",
   "uncollapse": "Compactar",
   "view": "Visão",
+  "visibility": "Visibilidade",
   "wednesday": "Quarta-feira",
   "worker": "Trabalhador"
 }

@@ -42,6 +42,7 @@
   "attachments": "المرفقات",
   "blockly-COPY_SHORTCUT": "نسخ",
   "board-admin": "مشرف اللوحة",
+  "board-creation-admin-only": "غير الإداريين يقدرو يديرو بوردات جداد",
   "board-title": "عنوان اللوح",
   "board-view-cal": "التقويم",
   "board-view-gantt": "ڭانت",
@@ -152,6 +153,7 @@
   "tuesday": "الثلاثاء",
   "uncollapse": "إلغاء الانهيار",
   "view": "عرض",
+  "visibility": "الظهور",
   "wednesday": "لاربع",
   "worker": "عامل"
 }

@@ -42,6 +42,7 @@
   "attachments": "Кушымталар",
   "blockly-COPY_SHORTCUT": "Күчереп алу",
   "board-admin": "Такта администраторы",
+  "board-creation-admin-only": "Бары тик администраторлар гына яңа такта булдыра ала",
   "board-title": "Такта исеме",
   "board-view-cal": "Календарь",
   "board-view-gantt": "Гант диаграммасы",
@@ -152,6 +153,7 @@
   "tuesday": "Сишәмбе",
   "uncollapse": "Җәю",
   "view": "Күренеш",
+  "visibility": "Күренү",
   "wednesday": "Чәршәмбе",
   "worker": "Эшче"
 }

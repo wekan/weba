@@ -42,6 +42,7 @@
   "attachments": "هاوپێچەکان",
   "blockly-COPY_SHORTCUT": "کۆپی بکە",
   "board-admin": "بەڕێوەبەری تەختە",
+  "board-creation-admin-only": "تەنها ئەدمینەکان دەتوانن تەختە دروست بکەن",
   "board-title": "ناونیشانی تەختە",
   "board-view-cal": "ڕۆژژمێر",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "سێشەممە",
   "uncollapse": "بڵاوبکەرەوە",
   "view": "دیمەن",
+  "visibility": "دەرکەوتن",
   "wednesday": "چوارشەممە",
   "worker": "کرێکار"
 }

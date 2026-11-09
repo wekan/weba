@@ -42,6 +42,7 @@
   "attachments": "Lokunamatsiselwe",
   "blockly-COPY_SHORTCUT": "Kopisha",
   "board-admin": "Umphatsi Welibhodi",
+  "board-creation-admin-only": "Bacale kuphela labatiphatsa lababapha kutfola liward",
   "board-title": "Sihloko Selibhodi",
   "board-view-cal": "Likhalenda",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Lesibili",
   "uncollapse": "Vula kufinyeta",
   "view": "Buka",
+  "visibility": "Kubonakala",
   "wednesday": "Lesitsatfu",
   "worker": "Sisebenti"
 }

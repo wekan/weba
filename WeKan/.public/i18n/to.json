@@ -42,6 +42,7 @@
   "attachments": "Ngaahi meʻa fakapipiki",
   "blockly-COPY_SHORTCUT": "Kopi",
   "board-admin": "Pule ʻo e Papa",
+  "board-creation-admin-only": "Ko e kau pule pē 'e lava ke fa'u ha popao fo'ou",
   "board-title": "Kaveinga ʻo e papa",
   "board-view-cal": "Kalena",
   "board-view-gantt": "Fakatātā Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Tūsite",
   "uncollapse": "Toe fakaava",
   "view": "Vīsone",
+  "visibility": "Hā",
   "wednesday": "Pulelulu",
   "worker": "Tokotaha ngāue"
 }

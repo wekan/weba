@@ -42,6 +42,7 @@
   "attachments": "Coyrtyn",
   "blockly-COPY_SHORTCUT": "Jean coip",
   "board-admin": "Reireyder boayrd",
+  "board-creation-admin-only": "Cha nod agh reiltee cummal boayrdyn noa",
   "board-title": "Ennym boayrd",
   "board-view-cal": "Feaillere",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Jemayrt",
   "uncollapse": "Sheeyney reesht",
   "view": "Reayrt",
+  "visibility": "Fakinys",
   "wednesday": "Jecrean",
   "worker": "Obbreyder"
 }

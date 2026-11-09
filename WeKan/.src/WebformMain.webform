@@ -654,6 +654,10 @@
         { AdminUsers WebButton
           Text = ("People")
         }
+        { BoardCreationSettings WebButton
+          Text = ("Visibility")
+          Tooltip = ("Only admins can create boards")
+        }
         { AttachmentTransferSettings WebButton
           Text = ("Attachments")
           Tooltip = ("Attachment And API File Size Limits")
@@ -968,6 +972,19 @@
         }
         { RecoveryTree WebTree
           Class = "weba-user-text"
+        }
+      }
+      { BoardCreationPanel WebContainer
+        Arrangement = Arrange.Vertical
+        Visible = False
+        { CreationPolicyHeading WebLabel
+          Text = ("Visibility")
+        }
+        { CreationAdminOnly WebCheckBox
+          Text = ("Only admins can create boards")
+        }
+        { SaveBoardCreation WebButton
+          Text = ("Save")
         }
       }
       { PasswordPolicyPanel WebContainer

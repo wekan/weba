@@ -42,6 +42,7 @@
   "attachments": "Ałegati",
   "blockly-COPY_SHORTCUT": "Copia",
   "board-admin": "Amministrador de la bacheca",
+  "board-creation-admin-only": "Soło i aministradori i pol crear quadri",
   "board-title": "Tìtolo de la bacheca",
   "board-view-cal": "Calendario",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Martedì",
   "uncollapse": "Verzi fora",
   "view": "Vista",
+  "visibility": "Visibiłità",
   "wednesday": "Mercoledì",
   "worker": "Łavorador"
 }

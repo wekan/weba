@@ -1,0 +1,8 @@
+Public Sub Main()
+  Dim test As Variant[]
+  Dim rows As New Boolean[]
+  For Each test In JSON.Decode(File.Load(".public/creation-policy-cases.json"))
+    rows.Add(BoardCreation.Decision(test[0], test[1], test[2]))
+  Next
+  Print JSON.Encode(rows)
+End

@@ -42,6 +42,7 @@
   "attachments": "Stagadennoù",
   "blockly-COPY_SHORTCUT": "Eilañ",
   "board-admin": "Merour an daolenn",
+  "board-creation-admin-only": "Nemet an aotrounien-verrañ a c'hell krouiñ taolennoù",
   "board-title": "Titl an daolenn",
   "board-view-cal": "Deiziadur",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Meurzh",
   "uncollapse": "Displegañ",
   "view": "Gwelout",
+  "visibility": "Gweluster",
   "wednesday": "Mercrezh",
   "worker": "Klasker"
 }

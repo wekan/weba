@@ -42,6 +42,7 @@
   "attachments": "જોડાણો",
   "blockly-COPY_SHORTCUT": "નકલ કરો",
   "board-admin": "બોર્ડ એડમિન",
+  "board-creation-admin-only": "ફક્ત સંચાલકો જ બોર્ડ બનાવી શકે છે",
   "board-title": "બોર્ડ શીર્ષક",
   "board-view-cal": "કેલેન્ડર",
   "board-view-gantt": "ગેન્ટ",
@@ -152,6 +153,7 @@
   "tuesday": "મંગળવાર",
   "uncollapse": "અનકલેપ્સ",
   "view": "જુઓ",
+  "visibility": "દૃશ્યતા",
   "wednesday": "બુધવાર",
   "worker": "કામદાર"
 }

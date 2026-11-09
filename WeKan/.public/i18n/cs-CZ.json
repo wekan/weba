@@ -42,6 +42,7 @@
   "attachments": "Přílohy",
   "blockly-COPY_SHORTCUT": "Kopírovat",
   "board-admin": "Administrátor tabla",
+  "board-creation-admin-only": "Pouze administrátoři mohou vytvářet nástěnky",
   "board-title": "Název tabla",
   "board-view-cal": "Kalendář",
   "board-view-gantt": "Gannt",
@@ -152,6 +153,7 @@
   "tuesday": "Úterý",
   "uncollapse": "Rozbalit",
   "view": "Zobrazit",
+  "visibility": "Viditelnost",
   "wednesday": "Středa",
   "worker": "Pracovník"
 }

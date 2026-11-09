@@ -42,6 +42,7 @@
   "attachments": "Priedai",
   "blockly-COPY_SHORTCUT": "Kopijuoti",
   "board-admin": "Lentos administratorius",
+  "board-creation-admin-only": "Tik administratoriai gali kurti lentas",
   "board-title": "Valdybos pavadinimas",
   "board-view-cal": "Kalendorius",
   "board-view-gantt": "Gantas",
@@ -152,6 +153,7 @@
   "tuesday": "antradienis",
   "uncollapse": "Išskleisti",
   "view": "Žiūrėti",
+  "visibility": "Matomumas",
   "wednesday": "trečiadienį",
   "worker": "Darbininkas"
 }

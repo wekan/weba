@@ -42,6 +42,7 @@
   "attachments": "Liitetiedostot",
   "blockly-COPY_SHORTCUT": "Kopioi",
   "board-admin": "Taulu ylläpitäjä",
+  "board-creation-admin-only": "Vain ylläpitäjät voivat luoda tauluja",
   "board-title": "Taulun otsikko",
   "board-view-cal": "Kalenteri",
   "board-view-gantt": "Gantt-näkymä",
@@ -152,6 +153,7 @@
   "tuesday": "Tiistai",
   "uncollapse": "Suurenna",
   "view": "Näkymä",
+  "visibility": "Näkyvyys",
   "wednesday": "Keskiviikko",
   "worker": "Työntekijä"
 }

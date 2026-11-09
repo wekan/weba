@@ -42,6 +42,7 @@
   "attachments": "Awọn asomọ",
   "blockly-COPY_SHORTCUT": "Dàkọ",
   "board-admin": "Alakoso Igbimọ",
+  "board-creation-admin-only": "Àwọn alábòójútó nìkan ni wọ́n lè dá pátákó tuntun",
   "board-title": "Akọle Igbimọ",
   "board-view-cal": "Kalẹnda",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Ọjọbọ",
   "uncollapse": "Un Collapse",
   "view": "Wo",
+  "visibility": "Ìhàn",
   "wednesday": "Ọjọru",
   "worker": "Osise"
 }

@@ -42,6 +42,7 @@
   "attachments": "সংযুক্তিসমূহ",
   "blockly-COPY_SHORTCUT": "কপি করুন",
   "board-admin": "বোর্ড প্রশাসক",
+  "board-creation-admin-only": "শুধুমাত্র অ্যাডমিনরা বোর্ড তৈরি করতে পারবেন",
   "board-title": "বোর্ডের শিরোনাম",
   "board-view-cal": "পঞ্জিকা",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "মঙ্গলবার",
   "uncollapse": "প্রসারিত করুন",
   "view": "দেখুন",
+  "visibility": "দৃশ্যমানতা",
   "wednesday": "বুধবার",
   "worker": "কর্মী"
 }

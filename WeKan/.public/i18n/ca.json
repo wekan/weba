@@ -42,6 +42,7 @@
   "attachments": "Adjunts",
   "blockly-COPY_SHORTCUT": "Copia",
   "board-admin": "Administrador del tauler",
+  "board-creation-admin-only": "Només els administradors poden crear taulers",
   "board-title": "Títol del tauler",
   "board-view-cal": "Calendari",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "dimarts",
   "uncollapse": "Desplega",
   "view": "Vista",
+  "visibility": "Visibilitat",
   "wednesday": "dimecres",
   "worker": "Treballador"
 }

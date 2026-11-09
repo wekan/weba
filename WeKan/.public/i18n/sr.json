@@ -42,6 +42,7 @@
   "attachments": "Предметна грађа",
   "blockly-COPY_SHORTCUT": "Копирај",
   "board-admin": "Водећи сарадник",
+  "board-creation-admin-only": "Само администратори могу да праве табле",
   "board-title": "Деловодни број",
   "board-view-cal": "Календар",
   "board-view-gantt": "Гант",
@@ -152,6 +153,7 @@
   "tuesday": "Уторак",
   "uncollapse": "Рашири",
   "view": "Поглед",
+  "visibility": "Видљивост",
   "wednesday": "Среда",
   "worker": "Помоћник"
 }

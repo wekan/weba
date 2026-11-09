@@ -42,6 +42,7 @@
   "attachments": "Ataetche",
   "blockly-COPY_SHORTCUT": "Copyî",
   "board-admin": "Manaedjeu do tåvlea",
+  "board-creation-admin-only": "I gn a k' les manaedjeus ki polèt fé des tåves",
   "board-title": "Tite du dåvle",
   "board-view-cal": "Calindrî",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Mårdi",
   "uncollapse": "Dësbòndar",
   "view": "Veye",
+  "visibility": "Vizibilité",
   "wednesday": "Mecredi",
   "worker": "Travayeur"
 }

@@ -42,6 +42,7 @@
   "attachments": "สิ่งที่แนบมา",
   "blockly-COPY_SHORTCUT": "คัดลอก",
   "board-admin": "ผู้ดูแลบอร์ด",
+  "board-creation-admin-only": "เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถสร้างบอร์ดได้",
   "board-title": "ชื่อบอร์ด",
   "board-view-cal": "ปฏิทิน",
   "board-view-gantt": "แกนต์",
@@ -152,6 +153,7 @@
   "tuesday": "วันอังคาร",
   "uncollapse": "ยกเลิกการยุบ",
   "view": "มุมมอง",
+  "visibility": "การมองเห็น",
   "wednesday": "วันพุธ",
   "worker": "ผู้ปฏิบัติงาน"
 }

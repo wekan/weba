@@ -42,6 +42,7 @@
   "attachments": "Eranskinak",
   "blockly-COPY_SHORTCUT": "Kopiatu",
   "board-admin": "Arbeleko administratzailea",
+  "board-creation-admin-only": "Administratzaileek soilik sor ditzakete taulak",
   "board-title": "Arbelaren titulua",
   "board-view-cal": "Egutegia",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Asteartea",
   "uncollapse": "Zabaldu",
   "view": "Ikuspegia",
+  "visibility": "Ikusgaitasuna",
   "wednesday": "Asteazkena",
   "worker": "Langilea"
 }

@@ -73,9 +73,12 @@ Private Function CopyOne(boardId As Integer, options As Collection) As Integer
   Dim transaction As Boolean
   Dim failure As String
   BoardAccess.Require(boardId, "manageBoard")
+  BoardCreation.Require()
   DatabaseTransactions.Begin(db)
   transaction = True
   db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  BoardCreation.Lock()
+  BoardCreation.Require()
   db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
   If WebIdentity.Username <> actor Then Error.Raise("Copy identity changed")
   BoardAccess.Require(boardId, "manageBoard")
@@ -86,6 +89,7 @@ Private Function CopyOne(boardId As Integer, options As Collection) As Integer
   If WebIdentity.Username <> actor Then Error.Raise("Copy identity changed")
   BoardAccess.Require(boardId, "manageBoard")
   If WorkspaceStore.Archived(boardId, "board", boardId) Then Error.Raise("Select active boards first")
+  BoardCreation.Require()
   DatabaseTransactions.Commit(db)
   transaction = False
   Return id

@@ -42,6 +42,7 @@
   "attachments": "Gattidobata",
   "blockly-COPY_SHORTCUT": "Koppe ootta",
   "board-admin": "Bookkiyaa halaqaa",
+  "board-creation-admin-only": "Halaqati xalaala ooratha bordde medhanaw dandiyoosona",
   "board-title": "Bookkiyaa huuphe sunttaa",
   "board-view-cal": "Wodiyaa qoodaa",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Maayiyaa",
   "uncollapse": "Zaarettada dicissa",
   "view": "Xeella",
+  "visibility": "Be'ettiyoogaa",
   "wednesday": "Woruwaa",
   "worker": "Oosanchchaa"
 }

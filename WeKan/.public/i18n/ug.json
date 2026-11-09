@@ -42,6 +42,7 @@
   "attachments": "قوشۇمچە ھۆججەتلەر",
   "blockly-COPY_SHORTCUT": "كۆچۈرۈڭ",
   "board-admin": "تاختا باشقۇرغۇچىسى",
+  "board-creation-admin-only": "پەقەت باشقۇرغۇچىلارلا تاختا قۇرالايدۇ",
   "board-title": "تاختا ماۋزۇسى",
   "board-view-cal": "كالېندار",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "سەيشەنبە",
   "uncollapse": "يېيىش",
   "view": "كۆرۈش",
+  "visibility": "كۆرۈنۈشچانلىقى",
   "wednesday": "چارشەنبە",
   "worker": "ئىشلەمچى"
 }

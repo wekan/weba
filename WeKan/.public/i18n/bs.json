@@ -42,6 +42,7 @@
   "attachments": "Prilozi",
   "blockly-COPY_SHORTCUT": "Kopiraj",
   "board-admin": "Administrator table",
+  "board-creation-admin-only": "Samo administratori mogu kreirati table",
   "board-title": "Naslov table",
   "board-view-cal": "Kalendar",
   "board-view-gantt": "Gantov dijagram",
@@ -152,6 +153,7 @@
   "tuesday": "Utorak",
   "uncollapse": "Rasklopi",
   "view": "Prikaz",
+  "visibility": "Vidljivost",
   "wednesday": "Srijeda",
   "worker": "Radnik"
 }

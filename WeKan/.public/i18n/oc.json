@@ -42,6 +42,7 @@
   "attachments": "Pèças jonchas",
   "blockly-COPY_SHORTCUT": "Copiar",
   "board-admin": "Administrator del tablèu",
+  "board-creation-admin-only": "Sonque los administrators pòdon crear tablèus",
   "board-title": "Títol del tablèu",
   "board-view-cal": "Calendièr",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Dimars",
   "uncollapse": "Desplegar",
   "view": "Vèire",
+  "visibility": "Visibilitat",
   "wednesday": "Dimècres",
   "worker": "Travallador"
 }

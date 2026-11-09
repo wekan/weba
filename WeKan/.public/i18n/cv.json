@@ -42,6 +42,7 @@
   "attachments": "Хушӑмсем",
   "blockly-COPY_SHORTCUT": "Копилес",
   "board-admin": "Хӑма администраторӗ",
+  "board-creation-admin-only": "Тӗп администраторсем ҫеҫ ҫӗнӗ хӑма туса хума пултараҫҫӗ",
   "board-title": "Хӑма ячӗ",
   "board-view-cal": "Календарь",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Ытлари кун",
   "uncollapse": "Сарӑлтарас",
   "view": "Курӑм",
+  "visibility": "Курӑнмалли",
   "wednesday": "Юнкун",
   "worker": "Ӗҫҫын"
 }

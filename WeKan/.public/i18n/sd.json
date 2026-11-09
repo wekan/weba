@@ -42,6 +42,7 @@
   "attachments": "منسلڪات",
   "blockly-COPY_SHORTCUT": "نقل ڪريو",
   "board-admin": "بورڊ منتظم",
+  "board-creation-admin-only": "صرف منتظمين ئي نوان بورڊ ٺاهي سگهن ٿا",
   "board-title": "بورڊ جو عنوان",
   "board-view-cal": "ڪئلينڊر",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "اڱارو",
   "uncollapse": "ٻيهر پکيڙيو",
   "view": "ڏسو",
+  "visibility": "ڏيک",
   "wednesday": "اربع",
   "worker": "ڪارڪن"
 }

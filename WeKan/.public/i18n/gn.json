@@ -42,6 +42,7 @@
   "attachments": "Mba'e ojejokuáva",
   "blockly-COPY_SHORTCUT": "Ekopia",
   "board-admin": "Peteĩcha ñangarekoha",
+  "board-creation-admin-only": "Umi administrador año ikatu oikuaave tablero pyahu",
   "board-title": "Peteĩcha réra",
   "board-view-cal": "Arapapaha",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Araapy",
   "uncollapse": "Embotuichajey",
   "view": "Ehecha",
+  "visibility": "Jehecha",
   "wednesday": "Ararundy",
   "worker": "Mba'apohára"
 }

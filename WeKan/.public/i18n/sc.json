@@ -42,6 +42,7 @@
   "attachments": "Alligados",
   "blockly-COPY_SHORTCUT": "Còpia",
   "board-admin": "Amministradore de sa tàula",
+  "board-creation-admin-only": "Petzi sos amministradores podent creare tàulas",
   "board-title": "Tìtulu de sa tàula",
   "board-view-cal": "Calendàriu",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "Martis",
   "uncollapse": "Iscumprime",
   "view": "Visualizatzione",
+  "visibility": "Visibilidade",
   "wednesday": "Mèrcuris",
   "worker": "Traballadore"
 }

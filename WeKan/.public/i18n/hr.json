@@ -42,6 +42,7 @@
   "attachments": "Privitci",
   "blockly-COPY_SHORTCUT": "Kopiraj",
   "board-admin": "Administrator ploče",
+  "board-creation-admin-only": "Samo administratori mogu stvarati ploče",
   "board-title": "Naslov ploče",
   "board-view-cal": "Kalendar",
   "board-view-gantt": "Ganttov dijagram",
@@ -152,6 +153,7 @@
   "tuesday": "Utorak",
   "uncollapse": "Proširi",
   "view": "Prikaz",
+  "visibility": "Vidljivost",
   "wednesday": "Srijeda",
   "worker": "Radnik"
 }

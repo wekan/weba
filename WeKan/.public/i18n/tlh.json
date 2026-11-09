@@ -42,6 +42,7 @@
   "attachments": "rarDochmey",
   "blockly-COPY_SHORTCUT": "yIlI'",
   "board-admin": "raS che'wI'",
+  "board-creation-admin-only": "admin neH DichDaq chenmoH boards",
   "board-title": "raS pong",
   "board-view-cal": "'ISjaH",
   "board-view-gantt": "Gantt",
@@ -152,6 +153,7 @@
   "tuesday": "povjaj",
   "uncollapse": "'angqa'",
   "view": "'ang",
+  "visibility": "leghlaHghach",
   "wednesday": "ghItlhjaj",
   "worker": "Qu' ta'wI'"
 }
