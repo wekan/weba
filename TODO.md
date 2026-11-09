@@ -6,6 +6,19 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Current UI/API/security work
 
+- Completed catalog sort popup lifecycle: View/Account menus exclude it,
+  Home/Remaining/Starred/Archive navigation closes it and Escape/trigger anchoring
+  use the shared popup handler. Move kanban.css out of the refreshed Visual
+  container to stable bootstrap; reposition after stylesheet/font completion and
+  guard teardown callbacks. Real desktop/mobile tests preserve saved sort/search
+  drafts and clickable close controls. Delayed-width/async-error tests, full
+  local/test-live and existing layout regressions pass. Original suite counts
+  remain unchanged.
+- Next workspace implementation: use the current user's boardWorkspacesTree and
+  boardWorkspaceAssignments semantics from server/models/users.js and the All
+  Boards page method. Create parent/name nodes, assign boards privately and apply
+  category/search/count rules before claiming the Latin workspace UI callback.
+
 - Documented personal rank merging, readonly/sorted/archive boundaries, fresh
   transaction checks, cleanup, expected-order focus and trusted browser evidence.
   Kept workspace/multiselection/original callbacks and collation/polling limits

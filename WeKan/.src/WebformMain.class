@@ -415,6 +415,12 @@ Public Sub Search_Click()
   Visual.Refresh()
 End
 
+Private Sub CloseHeaderMenus()
+  BoardSortMenu.Hide()
+  Views.Hide()
+  AccountMenu.Hide()
+End
+
 Private Sub ShowView(view As String)
   AccountPanel.Visible = view = "Profile"
   AdminPanel.Visible = False
@@ -425,8 +431,7 @@ Private Sub ShowView(view As String)
   ContentRow.Visible = view <> "Profile"
   PageActions.Visible = view <> "Profile" And view <> "Admin panel"
   Editor.Hide()
-  Views.Hide()
-  AccountMenu.Hide()
+  CloseHeaderMenus()
   UpdateHeader()
   Visual.Refresh()
 End
@@ -435,8 +440,7 @@ Public Sub Home_Click()
   Editor.Hide()
   ContentRow.Show()
   PageActions.Show()
-  Views.Hide()
-  AccountMenu.Hide()
+  CloseHeaderMenus()
   AccountPanel.Hide()
   AdminPanel.Hide()
   PasswordPolicyPanel.Hide()
@@ -451,8 +455,7 @@ Public Sub Archive_Click()
   Editor.Hide()
   ContentRow.Show()
   PageActions.Show()
-  Views.Hide()
-  AccountMenu.Hide()
+  CloseHeaderMenus()
   AccountPanel.Hide()
   AdminPanel.Hide()
   PasswordPolicyPanel.Hide()
@@ -481,7 +484,6 @@ Public Sub Visual_Render()
   $liveState = ""
   If $board Then $liveState = BoardLive.State($board, $archive)
   Print "<script>" & File.Load(".public/kanban.js") & "</script>"
-  Print "<link rel=\"stylesheet\" href=\"kanban.css\">"
   If $board Then boardColor = WorkspaceStore.Setting($board, "board", $board, "color", "#2980b9")
   Print "<section data-board-reorder=\"" & If(IsOverview() And Not $archive And $catalogSort = "custom", "true", "false") & "\" data-board-color=\"" & Html(boardColor) & "\" data-context=\"" & Html(ContextAction.Name) & "\" data-drag=\"" & Html(DragAction.Name) & "\" data-board=\"" & Str($board) & "\" data-action=\"" & Html(BoardAction.Name) & "\" data-card-move=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "moveCard"), "true", "false") & "\" data-editable=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "write"), "true", "false") & "\" class=\"weba-content\" data-tree=\"" & Html(Boards.Name) & "\" data-view=\"" & Html($view) & "\">"
   If $view = "Profile" Then
@@ -727,11 +729,13 @@ Public Sub ToggleNavigation_Click()
 End
 
 Public Sub ViewMenu_Click()
+  BoardSortMenu.Hide()
   Views.Visible = Not Views.Visible
   AccountMenu.Hide()
 End
 
 Public Sub AccountToggle_Click()
+  BoardSortMenu.Hide()
   AccountMenu.Visible = Not AccountMenu.Visible
   Views.Hide()
 End
@@ -771,6 +775,7 @@ Public Sub AdminUsers_Click()
 End
 
 Public Sub LanguageSelector_Render()
+  Print "<link rel=\"stylesheet\" href=\"kanban.css\">"
   Print "<link rel=\"stylesheet\" href=\"fontawesome.css\">"
   Print "<script>" & File.Load(".public/i18n-catalog.js") & File.Load(".public/i18n.js") & File.Load(".public/ui.js") & File.Load(".public/popup.js") & File.Load(".public/drag.js") & "</script>"
   Print "<select data-weba-language aria-label=\"Language\" style=\"width:100%;height:32px;background:white;color:black\"></select>"

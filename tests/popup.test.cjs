@@ -1,7 +1,9 @@
+(async()=>{
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
-const {JSDOM}=require('jsdom');
-const dom=new JSDOM('<button id="trigger">Add card</button><div class="weba-editor"></div>',{runScripts:'outside-only',pretendToBeVisual:true});
+const {JSDOM,VirtualConsole}=require('jsdom');
+const errors=[],virtualConsole=new VirtualConsole();virtualConsole.on('jsdomError',error=>errors.push(error.message));
+const dom=new JSDOM('<button id="trigger">Add card</button><div class="weba-editor"></div>',{runScripts:'outside-only',pretendToBeVisual:true,virtualConsole});
 const {window}=dom;window.eval(fs.readFileSync(require('node:path').join(__dirname,'../WeKan/.public/popup.js'),'utf8'));
 const panel=window.document.querySelector('.weba-editor'),trigger=window.document.querySelector('button');
 let rect;
@@ -21,5 +23,22 @@ const r=panel.getBoundingClientRect();assert.ok(r.top>=128&&r.top+r.height<=392,
 const close=window.webaPopup.closeButton(panel,()=>panel.remove());
 assert.equal(close.type,'button');assert.ok(close.classList.contains('fa-times-thin'));assert.equal(close.getAttribute('aria-label'),'Close');
 close.click();assert.equal(panel.isConnected,false);
-window.close();
-console.log('Popup placement: anchored desktop, viewport edges, mobile/landscape, visual viewport and close actions passed');
+// A late stylesheet can change width without a resize/DOM attribute mutation.
+window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
+window.visualViewport=undefined;window.innerWidth=390;window.innerHeight=844;
+const late=window.document.createElement('div');late.id='fixture.Views';window.document.body.append(late);
+let lateWidth=100;
+late.getBoundingClientRect=()=>({left:parseFloat(late.style.left)||0,top:parseFloat(late.style.top)||0,width:lateWidth,height:180});
+rect={left:350,right:378,top:20,bottom:48};
+const sheet=window.document.createElement('link');sheet.rel='stylesheet';window.document.head.append(sheet);
+window.webaPopup.near(late,trigger);
+const frames=()=>new Promise(resolve=>window.requestAnimationFrame(()=>window.requestAnimationFrame(resolve)));
+await frames();lateWidth=210;
+assert.ok(late.getBoundingClientRect().left+lateWidth>390,'fixture reproduces stale width positioning');
+sheet.dispatchEvent(new window.Event('load'));
+await frames();
+assert.ok(late.getBoundingClientRect().left+lateWidth<=382,'loaded stylesheet repositions to actual width');
+window.close();await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(errors,[],'popup teardown must not emit async errors');
+console.log('Popup placement: anchored desktop, viewport edges, mobile/landscape, visual viewport, late stylesheet, async teardown and close actions passed');
+
+})().catch(error=>{console.error(error.stack||String(error));process.exitCode=1;});

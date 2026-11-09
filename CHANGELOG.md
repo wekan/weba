@@ -2,6 +2,13 @@
 
 This work adds the following features and fixes:
 
+- Fix catalog sort popup exclusion with View/Account menus, overview navigation
+  cleanup and Escape/trigger handling. Keep kanban.css in stable bootstrap so
+  repeated Visual refreshes do not invalidate measured popup sizes; reposition
+  after stylesheet/font completion and guard document teardown. Verify actual
+  desktop/mobile menu transitions, unchanged sort/search drafts, delayed-width/
+  async-error checks and full local/live/layout regressions. Thanks to xet7.
+
 - Document personal Custom rank merging, readonly organization, sorted/archive
   guards, transaction rechecks, cleanup and expected-order keyboard focus. Record
   native rollback/late-guard and trusted source/packaged gesture evidence while
