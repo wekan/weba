@@ -1,0 +1,103 @@
+' Native row outcomes for unchanged original list lifecycle method comparison.
+Public Sub Main()
+  Dim cases As Variant[] = JSON.Decode(File.Load(".public/list-delete-cases.json"))
+  Dim results As New Variant[]
+  Dim testCase As Collection
+  Dim data As Collection
+  Dim boardId As Integer
+  Dim listId As Integer
+  Dim a As Integer
+  Dim b As Integer
+  Dim prior As Integer
+  Dim index As Integer
+  Dim actor As String
+  Dim r As Result
+  Dim db As Connection
+  Dim denied As Boolean
+  For Each actor In ["global", "owner", "writer", "assigned", "reader"]
+    WebDatabase.Register("list-matrix-" & actor, "x")
+  Next
+  For Each testCase In cases
+    SignIn("global")
+    RecoveryStore.SetEnabled(CBool(testCase["enabled"]))
+    SignIn("owner")
+    boardId = KanbanStore.AddBoard("Source matrix")
+    BoardAccess.SetMember(boardId, "list-matrix-writer", "normal")
+    BoardAccess.SetMember(boardId, "list-matrix-assigned", "normal-assigned-only")
+    BoardAccess.SetMember(boardId, "list-matrix-reader", "read-only")
+    r = KanbanStore.Lanes(boardId)
+    r = KanbanStore.Lists(boardId, "Default")
+    listId = r!id
+    a = KanbanStore.SaveCard(boardId, 0, "A", "", "Default", "Todo", "", "", "", listId)
+    b = KanbanStore.SaveCard(boardId, 0, "B", "", "Default", "Todo", "", "", "", listId)
+    prior = KanbanStore.SaveCard(boardId, 0, "Prior", "", "Default", "Todo", "", "", "", listId)
+    CardContent.OpenStore()
+    WorkspaceStore.SetArchived(boardId, "card", b, True)
+    db = WebDatabase.OpenConnection()
+    db.Exec("INSERT INTO kb_deleted_items (board_id,kind,item_id,batch_id,actor,deleted_at) VALUES (&1,&2,&3,&4,&5,&6)", boardId, "card", prior, 1000000 + index, "prior", 10)
+    If testCase["deleted"] Then ListDeletion.SoftRemove(boardId, listId)
+    data = New Collection
+    data["board"] = boardId
+    data["listId"] = listId
+    data["before"] = Frame(db, boardId, listId)
+    actor = CStr(testCase["actor"])
+    SignIn(actor)
+    data.Add(BoardAccess.Role(boardId), "role")
+    data["actor"] = "list-matrix-" & actor
+    data["global"] = actor = "global"
+    data["enabled"] = RecoveryStore.Enabled()
+    Select CStr(testCase["operation"])
+      Case "delete"
+        Try ListDeletion.SoftRemove(boardId, listId)
+      Case "restore"
+        Try ListDeletion.Restore(boardId, listId)
+      Case "purge"
+        Try WorkspaceActions.PurgeList(boardId, listId)
+    End Select
+    denied = Error
+    data["ok"] = Not denied
+    data["after"] = Frame(db, boardId, listId)
+    results.Add(data)
+    Inc index
+  Next
+  Print JSON.Encode(results)
+End
+
+Private Function Frame(db As Connection, boardId As Integer, listId As Integer) As Collection
+  Dim data As New Collection
+  Dim cards As New Variant[]
+  Dim r As Result
+  r = db.Find("kb_lists", "board_id=&1 AND id=&2", boardId, listId)
+  If r.Available Then
+    data["list"] = Doc(db, r, "list")
+  Else
+    data.Add(Null, "list")
+  Endif
+  r = db.Find("kb_cards", "board_id=&1 ORDER BY id", boardId)
+  For Each r
+    cards.Add(Doc(db, r, "card"))
+  Next
+  data["cards"] = cards
+  Return data
+End
+
+Private Function Doc(db As Connection, r As Result, kind As String) As Collection
+  Dim data As New Collection
+  Dim mark As Result
+  data["id"] = r!id
+  data["title"] = r!title
+  data["archived"] = False
+  If kind = "card" Then data["archived"] = r!archived
+  mark = db.Find("kb_deleted_items", "board_id=&1 AND kind=&2 AND item_id=&3", r!board_id, kind, r!id)
+  If mark.Available Then
+    data["deletedAt"] = mark!deleted_at
+    data["deletedBy"] = mark!actor
+    data["deleteBatchId"] = CStr(mark!batch_id)
+  Endif
+  Return data
+End
+
+Private Sub SignIn(actor As String)
+  Session["username"] = "list-matrix-" & actor
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
+End

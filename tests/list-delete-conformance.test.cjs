@@ -1,0 +1,26 @@
+// Actual SQL list lifecycle versus unchanged original method/helper bodies.
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),{execFileSync}=require('node:child_process');
+(async()=>{
+ let source=process.env.WEKAN_SOURCE,ancestor=path.resolve(__dirname,'..');while(!source&&path.dirname(ancestor)!==ancestor){if(fs.existsSync(path.join(ancestor,'server/models/lists.js')))source=ancestor;else ancestor=path.dirname(ancestor);}
+ if(!source)throw Error('Original list source unavailable');
+ const raw=fs.readFileSync(path.join(source,'server/models/lists.js'),'utf8'),soft=require(path.join(source,'models/lib/softDelete.js')),caps=require(path.join(source,'models/lib/boardRoleCapabilities.js'));
+ const helperStart=raw.indexOf('async function softRemoveList('),helperEnd=raw.indexOf('\n}',helperStart);assert.ok(helperStart>=0&&helperEnd>helperStart);const helper=raw.slice(helperStart,helperEnd+2);
+ function method(operation,context){const name={delete:'softRemove',restore:'restore',purge:'purge'}[operation],signature=`  async 'lists.${name}'(listId) {`,at=raw.indexOf(signature),end=raw.indexOf('\n  },',at);assert.ok(at>=0&&end>at);return vm.runInNewContext(helper+'\n(async function(listId){'+raw.slice(at+signature.length,end)+'\n})',context);}
+ const cases=[];for(const actor of ['global','owner','writer','assigned','reader'])for(const enabled of [false,true])for(const deleted of [false,true])for(const operation of ['delete','restore','purge'])cases.push({actor,enabled,deleted,operation});
+ const root=path.resolve(__dirname,'..'),work=fs.mkdtempSync(path.join(process.env.TMPDIR,'weba-list-delete-source.'));
+ try{
+  for(const name of ['.src','.public'])fs.cpSync(path.join(root,'WeKan',name),path.join(work,name),{recursive:true});fs.copyFileSync(path.join(root,'WeKan/.project'),path.join(work,'.project'));fs.copyFileSync(path.join(__dirname,'ListDeletionMatrix.module'),path.join(work,'.src/ListDeletionMatrix.module'));fs.writeFileSync(path.join(work,'.public/list-delete-cases.json'),JSON.stringify(cases));execFileSync(process.env.GBC||'gbc3',['-j','1','-a',work],{stdio:'inherit'});
+  const actual=JSON.parse(execFileSync(process.env.GBX||'gbx3',['-s','ListDeletionMatrix',work],{encoding:'utf8',maxBuffer:8*1024*1024,env:{...process.env,WEBA_API_REQUEST:'0',WEBA_DB_TYPE:'sqlite3',WEBA_DB_HOST:work,WEBA_DB_NAME:'database.db',WEBA_DB_USER:'',WEBA_DB_PASSWORD:''}}));assert.equal(actual.length,cases.length);
+  const normalize=doc=>doc===null?null:{id:Number(doc.id??doc._id),title:doc.title,archived:!!doc.archived,...(doc.deletedAt?{deletedAt:typeof doc.deletedAt==='number'?doc.deletedAt:doc.deletedAt.getTime(),deletedBy:doc.deletedBy,deleteBatchId:doc.deleteBatchId}:{})};
+  for(const [index,row] of actual.entries()){
+   const listId=String(row.listId),boardId=String(row.board),adapt=doc=>{const d={...doc,_id:String(doc.id),boardId,listId,swimlaneId:'Default',sort:0};if(d.deletedAt)d.deletedAt=new Date(d.deletedAt);return d;};
+   let list=adapt(row.before.list),cards=row.before.cards.map(adapt);const nativeAfter=row.after.list,stamp=nativeAfter?.deletedAt||row.before.list?.deletedAt||1,batch=nativeAfter?.deleteBatchId||row.before.list?.deleteBatchId||'generated';
+   const match=(doc,selector)=>Object.entries(selector).every(([key,value])=>value===null?doc[key]==null:doc[key]===value),apply=(doc,modifier)=>{Object.assign(doc,modifier.$set||{});for(const key of Object.keys(modifier.$unset||{}))delete doc[key];};
+   const context={...soft,Date:class extends Date{constructor(){super(stamp);}},Random:{id:()=>batch},check(id){assert.equal(typeof id,'string');},ReactiveCache:{getBoard:async()=>({_id:boardId})},hasBoardWriteAccess:()=>!!row.role&&caps.roleCan(row.role,'write'),UserPositionHistory:{trackChange:async()=>{}},ChangeHistory:{record:async()=>{}},getFeatureFlags:()=>({enablePermanentDelete:row.enabled}),Meteor:{users:{findOneAsync:async()=>({isAdmin:row.global})},Error:class extends Error{}},Lists:{findOneAsync:async id=>list?._id===id?list:null,updateAsync:async(id,modifier)=>{if(list?._id===id)apply(list,modifier);},removeAsync:async selector=>{if(list&&match(list,selector))list=null;}},Cards:{updateAsync:async(selector,modifier)=>cards.filter(card=>match(card,selector)).forEach(card=>apply(card,modifier)),removeAsync:async selector=>{cards=cards.filter(card=>!match(card,selector));}}};
+   let ok=true;try{await method(cases[index].operation,context).call({userId:row.actor},listId);}catch{ok=false;}
+   assert.equal(row.ok,ok,JSON.stringify(cases[index]));assert.deepEqual(normalize(row.after.list),normalize(list),JSON.stringify(cases[index])+' list');assert.deepEqual(row.after.cards.map(normalize),cards.map(normalize),JSON.stringify(cases[index])+' cards');
+  }
+  console.log(`List lifecycle source conformance: ${cases.length} actual native SQL outcomes match unchanged lists.softRemove/restore/purge and softRemoveList for roles/flag, live/deleted states, exact active+archived cascade, prior deletions, idempotency and batch restore/purge; native time/ID adapters and no-op history adapters are explicit, full source history remains pending`);
+ }finally{fs.rmSync(work,{recursive:true,force:true});}
+})().catch(error=>{console.error(error);process.exitCode=1;});

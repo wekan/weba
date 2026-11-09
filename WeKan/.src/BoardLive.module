@@ -18,7 +18,7 @@ Public Function State(boardId As Integer, archived As Boolean) As String
     data[field] = BoardAccess.Can(boardId, field)
   Next
   data["lanes"] = Rows(db.Find("kb_lanes", "board_id=&1 ORDER BY id", boardId), ["id", "title"])
-  data["lists"] = Rows(db.Find("kb_lists", "board_id=&1 ORDER BY id", boardId), ["id", "lane", "title", "sort_order"])
+  data["lists"] = Rows(db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY id", boardId), ["id", "lane", "title", "sort_order"])
   data["settings"] = Rows(db.Find("kb_meta", "board_id=&1 AND kind<>&2 ORDER BY kind,item_id,setting", boardId, "card"), ["kind", "item_id", "setting", "value"])
   data["personal"] = Rows(db.Find("kb_user_meta", "board_id=&1 AND username=&2 AND kind<>&3 ORDER BY kind,item_id,setting", boardId, WebIdentity.Username, "card"), ["kind", "item_id", "setting", "value"])
   data["order"] = Rows(db.Find("kb_order", "board_id=&1 AND kind<>&2 ORDER BY kind,item", boardId, "card"), ["kind", "item", "sort_order"])

@@ -94,6 +94,7 @@ Public Sub Move(boardId As Integer, kind As String, itemId As Integer, targetBoa
   Else
     r = $db.Find("kb_lists", "board_id = &1 AND lane = &2", boardId, source!title)
     For Each r
+      If ListDeletion.IsDeleted(boardId, "list", r!id) Then Error.Raise("Restore deleted lists before moving their swimlane")
       lists.Add(r!id)
     Next
   Endif
@@ -161,14 +162,16 @@ End
 Public Sub DeleteArchived(boardId As Integer, kind As String, itemId As Integer, confirmation As String)
   Dim source As Result
   Dim ids As Integer[]
-  Dim cardId As Integer
   Dim r As Result
-  Dim affected As Result
   Dim listIds As New Integer[]
-  Dim listId As Integer
   Dim failure As String
   Dim transaction As Boolean
-  If kind = "board" Then RecoveryStore.RequirePurge()
+  Dim actor As String = WebIdentity.Username
+  Dim locks As Integer[]
+  Dim lockId As Integer
+  Dim rootTable As String
+  RecoveryStore.RequirePurge()
+  If kind = "list" Then Error.Raise("Use the Recycle Bin to purge deleted lists")
   BoardAccess.RequireContainer(boardId, kind, itemId)
   BoardAccess.Require(boardId, If(kind = "board", "manageBoard", "write"))
   Prepare(boardId)
@@ -190,7 +193,53 @@ Public Sub DeleteArchived(boardId As Integer, kind As String, itemId As Integer,
   Endif
   DatabaseTransactions.Begin($db)
   transaction = True
+  $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  $db.Exec("UPDATE recovery_settings SET id=id WHERE id=&1", 1)
+  $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+  rootTable = If(kind = "card", "kb_cards", "kb_lanes")
+  $db.Exec("UPDATE " & rootTable & " SET title=title WHERE board_id=&1 AND id=&2", boardId, itemId)
+  CheckPurgeActor(actor)
+  source = WorkspaceStore.Record(boardId, kind, itemId)
+  If Not WorkspaceStore.Archived(boardId, kind, itemId) Or source!title <> confirmation Then Error.Raise("Item deletion changed")
+  locks = ids.Copy()
+  locks.Sort()
+  For Each lockId In locks
+    $db.Exec("UPDATE kb_cards SET title=title WHERE board_id=&1 AND id=&2", boardId, lockId)
+  Next
+  If JSON.Encode(ids) <> JSON.Encode(Selection(boardId, kind, itemId)) Then Error.Raise("Item deletion changed")
+  CheckPurgeActor(actor)
+  RemoveCards(boardId, ids, 0, actor)
+  CheckPurgeActor(actor)
+  RemoveLists(boardId, listIds)
+  If kind = "lane" Then
+    $db.Delete("kb_lanes", "board_id = &1 AND id = &2", boardId, itemId)
+    $db.Delete("kb_user_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "lane", itemId)
+    $db.Delete("kb_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "lane", itemId)
+    $db.Delete("kb_history", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "lane", itemId)
+    $db.Delete("kb_order", "board_id = &1 AND kind = &2 AND item = &3", boardId, "lane", source!title)
+  Endif
+  RetiredAuthors.Prune(boardId)
+  KanbanStore.Activity(boardId, "Permanently deleted " & kind & ": " & source!title)
+  CheckPurgeActor(actor)
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+
+Private Sub RemoveCards(boardId As Integer, ids As Integer[], Optional batchId As Integer, Optional actor As String)
+  Dim cardId As Integer
+  Dim affected As Result
+  Dim mark As Result
   For Each cardId In ids
+    If actor Then CheckPurgeActor(actor)
+    If batchId > 0 Then
+      mark = $db.Find("kb_deleted_items", "board_id=&1 AND kind=&2 AND item_id=&3 AND batch_id=&4", boardId, "card", cardId, batchId)
+      If Not mark.Available Then Error.Raise("List deletion changed")
+    Endif
     affected = $db.Exec("SELECT DISTINCT e.card_id FROM kb_entries e INNER JOIN kb_cards c ON c.board_id=e.board_id AND c.id=e.card_id WHERE e.board_id=&1 AND (e.kind=&2 OR e.kind=&3) AND e.amount=&4", boardId, "dependency", "subtask", cardId)
     For Each affected
       If ids.Find(affected!card_id) < 0 Then ItemChanges.Mark(boardId, "card", affected!card_id)
@@ -205,32 +254,109 @@ Public Sub DeleteArchived(boardId As Integer, kind As String, itemId As Integer,
     $db.Delete("kb_item_changes", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "card", cardId)
     $db.Delete("kb_files", "board_id = &1 AND card_id = &2", boardId, cardId)
     $db.Delete("kb_card_lists", "board_id = &1 AND card_id = &2", boardId, cardId)
+    $db.Delete("kb_deleted_items", "board_id=&1 AND kind=&2 AND item_id=&3", boardId, "card", cardId)
     $db.Delete("kb_cards", "board_id = &1 AND id = &2", boardId, cardId)
     $db.Delete("kb_user_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "card", cardId)
     $db.Delete("kb_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "card", cardId)
     $db.Delete("kb_history", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "card", cardId)
     $db.Delete("kb_order", "board_id = &1 AND kind = &2 AND item = &3", boardId, "card", CStr(cardId))
   Next
+End
+
+Private Sub RemoveLists(boardId As Integer, listIds As Integer[])
+  Dim listId As Integer
   For Each listId In listIds
     $db.Delete("kb_item_changes", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "list", listId)
+    $db.Delete("kb_deleted_items", "board_id=&1 AND kind=&2 AND item_id=&3", boardId, "list", listId)
+    $db.Delete("kb_delete_batches", "board_id=&1 AND list_id=&2", boardId, listId)
     $db.Delete("kb_lists", "board_id = &1 AND id = &2", boardId, listId)
     $db.Delete("kb_user_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "list", listId)
     $db.Delete("kb_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "list", listId)
     $db.Delete("kb_history", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "list", listId)
   Next
-  If kind = "lane" Then
-    $db.Delete("kb_lanes", "board_id = &1 AND id = &2", boardId, itemId)
-    $db.Delete("kb_user_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "lane", itemId)
-    $db.Delete("kb_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "lane", itemId)
-    $db.Delete("kb_history", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "lane", itemId)
-    $db.Delete("kb_order", "board_id = &1 AND kind = &2 AND item = &3", boardId, "lane", source!title)
-  Endif
+End
+
+
+Public Sub PurgeList(boardId As Integer, listId As Integer, Optional expectedBatch As Integer)
+  Dim actor As String = WebIdentity.Username
+  Dim ids As New Integer[]
+  Dim afterIds As New Integer[]
+  Dim id As Integer
+  Dim batchId As Integer
+  Dim title As String
+  Dim r As Result
+  Dim transaction As Boolean
+  Dim failure As String
+  Dim boards As New Variant[]
+  Dim board As New Collection
+  RecoveryStore.OpenStore()
+  RecoveryStore.RequirePurge()
+  BoardAccess.OpenStore()
+  CardContent.OpenStore()
+  WorkspaceStore.OpenStore()
+  ListDeletion.OpenStore()
+  $db = WebDatabase.OpenConnection()
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  $db.Exec("UPDATE recovery_settings SET id=id WHERE id=&1", 1)
+  $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+  $db.Exec("UPDATE kb_lists SET title=title WHERE board_id=&1 AND id=&2", boardId, listId)
+  CheckPurgeActor(actor)
+  r = $db.Find("kb_lists", "board_id=&1 AND id=&2", boardId, listId)
+  If Not r.Available Then Error.Raise("List not found")
+  title = r!title
+  batchId = DeletedBatch(boardId, listId)
+  If expectedBatch > 0 And If expectedBatch <> batchId Then Error.Raise("List deletion changed")
+  r = PurgeCards(boardId, batchId)
+  For Each r
+    ids.Add(r!id)
+  Next
+  For Each id In ids
+    $db.Exec("UPDATE kb_cards SET title=title WHERE board_id=&1 AND id=&2", boardId, id)
+  Next
+  CheckPurgeActor(actor)
+  If DeletedBatch(boardId, listId) <> batchId Then Error.Raise("List deletion changed")
+  r = PurgeCards(boardId, batchId)
+  For Each r
+    afterIds.Add(r!id)
+  Next
+  If JSON.Encode(ids) <> JSON.Encode(afterIds) Then Error.Raise("List deletion changed")
+  RemoveCards(boardId, ids, batchId, actor)
+  CheckPurgeActor(actor)
+  If DeletedBatch(boardId, listId) <> batchId Then Error.Raise("List deletion changed")
+  RemoveLists(boardId, [listId])
+  r = $db.Find("kb_deleted_items", "board_id=&1 AND batch_id=&2", boardId, batchId)
+  If r.Available Then Error.Raise("List deletion changed")
   RetiredAuthors.Prune(boardId)
-  KanbanStore.Activity(boardId, "Permanently deleted " & kind & ": " & source!title)
+  CheckPurgeActor(actor)
+  r = $db.Find("kb_lists", "board_id=&1 AND id=&2", boardId, listId)
+  If r.Available Then Error.Raise("List deletion changed")
+  board["id"] = boardId
+  board.Add("", "title")
+  boards.Add(board)
+  RecoveryStore.Record("list-permanently-deleted", actor, True, True, "Permanently deleted list " & Str(listId) & " titled " & JSON.Encode(title), boards)
+  CheckPurgeActor(actor)
   DatabaseTransactions.Commit($db)
   transaction = False
 Catch
   failure = Error.Text
   If transaction Then Try DatabaseTransactions.Rollback($db)
+  Try RecoveryStore.Record("list-permanently-deleted", actor, False, False, "Permanent list deletion failed: " & failure, boards)
   Error.Raise(failure)
+End
+
+Private Sub CheckPurgeActor(actor As String)
+  If Not actor Or WebIdentity.Username <> actor Then Error.Raise("Permanent delete is disabled.")
+  RecoveryStore.RequirePurge()
+End
+
+Private Function DeletedBatch(boardId As Integer, listId As Integer) As Integer
+  Dim r As Result = $db.Find("kb_deleted_items", "board_id=&1 AND kind=&2 AND item_id=&3", boardId, "list", listId)
+  If Not r.Available Then Error.Raise("Only deleted lists can be permanently deleted.")
+  Return r!batch_id
+End
+
+Private Function PurgeCards(boardId As Integer, batchId As Integer) As Result
+  Return $db.Exec("SELECT c.id FROM kb_cards c INNER JOIN kb_deleted_items d ON d.board_id=c.board_id AND d.kind=&3 AND d.item_id=c.id WHERE c.board_id=&1 AND d.batch_id=&2 ORDER BY c.id", boardId, batchId, "card")
 End

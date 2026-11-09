@@ -2,6 +2,18 @@
 
 This work adds the following features and fixes:
 
+- Make ordinary native list deletion reversible: retain the list, active and
+  archived cards, attachments and relationships under one actor/time/batch.
+  Hide deleted rows from native/REST reads, counts, exports and destinations;
+  restore exactly that batch while preserving earlier deletions and archive
+  state. Add native deleted-list restore and batch-bound global purge controls,
+  a source-compatible list DELETE API and non-reused batch allocation. Close
+  legacy card/swimlane physical-delete flag bypasses. Verify SQL rollback/late
+  role/state/scope/audit failures, 60 unchanged source lifecycle outcomes and
+  source/packaged HTTP plus real desktop/mobile writer/readonly/admin controls.
+  Full source history/undo, other delete lifecycles and new local caption
+  translations remain open. Thanks to xet7.
+
 - Gate permanent board deletion behind Global Admin plus an explicit default-off
   setting. Remove archived per-board delete actions and reject forged/legacy
   bypasses. Add revision-bound confirmed Archive batch deletion, bounded unique

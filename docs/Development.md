@@ -12,7 +12,7 @@ and in the [README](../README.md), rather than in duplicate instruction files.
 | Login and registration | `WeKan/.src/WebformLogin.class` and `.webform` |
 | Native navigation, editors and live board checks | `WeKan/.src/WebformMain.class`, `.webform`, `BoardLive.module`, `CardDraft.module`, `DetailLive.module`, `EntryDraft.module`, `PeopleLive.module` |
 | Accounts, sessions and connection | `WeKan/.src/WebDatabase.module`, `WebIdentity.module`, `ApiTokens.module`, `RecoveryStore.module` |
-| Board/card persistence and permissions | `KanbanStore.module`, `BoardAccess.module`, `ApiMemberRoles.module`, `BoardCatalog.module`, `BoardOrder.module`, `BoardSpaces.module`, `BoardSelection.module`, `BoardPurge.module` |
+| Board/card persistence and permissions | `KanbanStore.module`, `BoardAccess.module`, `ApiMemberRoles.module`, `BoardCatalog.module`, `BoardOrder.module`, `BoardSpaces.module`, `BoardSelection.module`, `BoardPurge.module`, `ListDeletion.module` |
 | REST routing and projections | `RestApi.module`, `BoardRestData.module` |
 | UTC dates, archive history and change clocks | `CardDates.module`, `CardArchive.module`, `ItemChanges.module` |
 | Workspace menus, transfer and rich content | `WorkspaceStore.module`, `WorkspaceActions.module`, `BoardTransfer.module`, `CardContent.module` |
@@ -561,3 +561,30 @@ Native Archive confirmation captures private selection revision and derives IDs
 server-side. Keep recovery events out of board/account cleanup so audit survives.
 Other recovery event types, original report/filter/wire parity and public API
 adapters remain separate work; do not infer full original-suite completion.
+
+
+## Reversible list lifecycle
+
+ListDeletion stores separate kb_deleted_items marks and immutable per-list batch
+journals. The global kb_delete_batch_ids allocator survives board purge; journals
+and marks are board-owned and included in purge cleanup. Never derive permission
+from the retained actor text. Ordinary source list writes require the board write
+capability; REST separately rejects all raw assigned-only flags. Restore matches
+board and batch and does not revive earlier marks or alter archive state.
+
+Canonical card/list guards, REST selectors/counts, exports, relationship views,
+change-clock reductions and destinations must exclude marks. Keep raw row access
+inside trusted deletion/restore/purge or lifecycle cleanup, not ordinary readers.
+Cross-board lane moves containing deleted lists are refused until restoration so
+marks cannot be transplanted without their batch. Full source hierarchy parity is
+still separate work. Legacy hard-delete routes require global purge permission;
+list physical deletion goes only through PurgeList and accepts an optional captured
+batch for native stale-consent rejection.
+
+DeleteApiList authorizes before list lookup, locks the account/board, uses a private
+site-admin scope only around the inner native operation, rechecks raw API scope
+before outer commit and sanitizes failures. The outer transaction is necessary:
+native assigned writers are valid list writers, but a REST member gaining a raw
+assigned flag during the inner operation must roll back the entire API mutation.
+The 60-case source comparator explicitly adapts native IDs/times and stubs source
+history stores; do not describe it as complete source history/undo coverage.

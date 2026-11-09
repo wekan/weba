@@ -1,0 +1,91 @@
+' Copied only into disposable HTTP/native browser test projects.
+Public Sub Main()
+  Dim data As New Collection
+  Dim mode As String = Env["WEBA_LIST_MODE"]
+  Dim boardId As Integer = Val(Env["WEBA_LIST_BOARD"])
+  Dim listId As Integer = Val(Env["WEBA_LIST_ID"])
+  Dim otherList As Integer
+  Dim child As Integer
+  Dim archivedChild As Integer
+  Dim parent As Integer
+  Dim r As Result
+  Dim row As Collection
+  Dim rows As New Variant[]
+  Dim username As String
+  Dim db As Connection
+  If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
+  SignIn("rest-other")
+  If mode = "seed" Then
+    For Each username In ["rest-list-reader", "rest-list-assigned"]
+      If Not WebDatabase.UserExists(username) Then WebDatabase.Register(username, Env["WEBA_TEST_PASSWORD"])
+    Next
+    boardId = KanbanStore.AddBoard("List Lifecycle Board")
+    BoardAccess.SetMember(boardId, "rest-member", "normal")
+    BoardAccess.SetMember(boardId, "rest-list-reader", "read-only")
+    BoardAccess.SetMember(boardId, "rest-list-assigned", "normal-assigned-only")
+    r = KanbanStore.Lanes(boardId)
+    r = KanbanStore.Lists(boardId, "Default")
+    listId = r!id
+    r.MoveNext()
+    otherList = r!id
+    child = KanbanStore.SaveCard(boardId, 0, "Deleted child <literal>", "Kept body", "Default", "Todo", "", "", "", listId)
+    archivedChild = KanbanStore.SaveCard(boardId, 0, "Deleted archived child", "Archived body", "Default", "Todo", "", "", "", listId)
+    parent = KanbanStore.SaveCard(boardId, 0, "Keep other card", "Survivor", "Default", "Doing", "", "", "", otherList)
+    WorkspaceStore.SetArchived(boardId, "card", archivedChild, True)
+    CardContent.AddFile(boardId, child, "kept.bin", "kept" & Chr(0) & "bytes")
+    CardContent.Save(boardId, parent, 0, "dependency", "", "", 0, False, child)
+    data["boardId"] = boardId
+    data["listId"] = listId
+    data["otherListId"] = otherList
+    data["cardId"] = child
+    data["archivedCardId"] = archivedChild
+    data["parentId"] = parent
+  Endif
+  If mode = "grant-admin" Then BoardAccess.SetMember(boardId, "rest-owner", "board-admin")
+  If mode = "restore" Then ListDeletion.Restore(boardId, listId)
+  If mode = "delete" Then ListDeletion.SoftRemove(boardId, listId)
+  If mode = "role" Then BoardAccess.SetMember(boardId, "rest-member", Env["WEBA_LIST_ROLE"])
+  If mode = "enable" Or mode = "disable" Then
+    SignIn("rest-owner")
+    RecoveryStore.SetEnabled(mode = "enable")
+  Endif
+  db = WebDatabase.OpenConnection()
+  r = db.Find("kb_cards", "board_id=&1 ORDER BY id", boardId)
+  For Each r
+    row = New Collection
+    row["id"] = r!id
+    row.Add(CStr(r!title), "title")
+    row["archived"] = r!archived
+    rows.Add(row)
+  Next
+  data["cards"] = rows
+  rows = New Variant[]
+  r = db.Find("kb_deleted_items", "board_id=&1 ORDER BY kind,item_id", boardId)
+  For Each r
+    row = New Collection
+    row["kind"] = r!kind
+    row["id"] = r!item_id
+    row["batch"] = r!batch_id
+    row["actor"] = r!actor
+    row["at"] = r!deleted_at
+    rows.Add(row)
+  Next
+  data["deleted"] = rows
+  rows = New Variant[]
+  r = db.Find("kb_lists", "board_id=&1 ORDER BY id", boardId)
+  For Each r
+    row = New Collection
+    row["id"] = r!id
+    row.Add(CStr(r!title), "title")
+    rows.Add(row)
+  Next
+  data["lists"] = rows
+  r = db.Find("kb_files", "board_id=&1", boardId)
+  data["files"] = r.Count
+  Print JSON.Encode(data)
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

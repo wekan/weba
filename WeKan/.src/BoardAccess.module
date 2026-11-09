@@ -351,7 +351,7 @@ Public Function ReadApiCard(cardId As Integer) As Collection
   If Not WebIdentity.Username Then Return ApiFailure(401, "Invalid credentials")
   If Not WebDatabase.UserExists(WebIdentity.Username) Then Return ApiFailure(401, "Invalid credentials")
   OpenStore()
-  r = $db.Find("kb_cards", "id=&1", cardId)
+  r = $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND id=&1", cardId)
   If Not r.Available Then Return ApiFailure(404, "Card not found")
   Return ReadApiBoard(r!board_id, "card-any", 0, cardId)
 Catch
@@ -389,9 +389,9 @@ Public Function ReadApiBoard(boardId As Integer, kind As String, Optional listId
   If siteAdmin Then $apiMemberBoard = boardId
   If kind = "card" Or kind = "card-any" Then
     If kind = "card" Then
-      r = $db.Find("kb_cards", "board_id=&1 AND id=&2 AND archived=&3", boardId, cardId, False)
+      r = $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id=&1 AND id=&2 AND archived=&3", boardId, cardId, False)
     Else
-      r = $db.Find("kb_cards", "board_id=&1 AND id=&2", boardId, cardId)
+      r = $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id=&1 AND id=&2", boardId, cardId)
     Endif
     If Not r.Available Then
       $apiMemberBoard = 0
@@ -547,20 +547,20 @@ End
 Public Function CardRows(boardId As Integer, Optional byArchive As Boolean, Optional archived As Boolean) As Result
   RequireRead(boardId)
   If Not Can(boardId, "seesAllCards") Then
-    If byArchive Then Return $db.Find("kb_cards", "board_id = &1 AND archived = &2 AND (assignee = &3 OR id IN (SELECT card_id FROM kb_card_assignees WHERE board_id = &1 AND username = &3)) ORDER BY id", boardId, archived, WebIdentity.Username)
-    Return $db.Find("kb_cards", "board_id = &1 AND (assignee = &2 OR id IN (SELECT card_id FROM kb_card_assignees WHERE board_id = &1 AND username = &2)) ORDER BY id", boardId, WebIdentity.Username)
+    If byArchive Then Return $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND archived = &2 AND (assignee = &3 OR id IN (SELECT card_id FROM kb_card_assignees WHERE board_id = &1 AND username = &3)) ORDER BY id", boardId, archived, WebIdentity.Username)
+    Return $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND (assignee = &2 OR id IN (SELECT card_id FROM kb_card_assignees WHERE board_id = &1 AND username = &2)) ORDER BY id", boardId, WebIdentity.Username)
   Endif
-  If byArchive Then Return $db.Find("kb_cards", "board_id = &1 AND archived = &2 ORDER BY id", boardId, archived)
-  Return $db.Find("kb_cards", "board_id = &1 ORDER BY id", boardId)
+  If byArchive Then Return $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND archived = &2 ORDER BY id", boardId, archived)
+  Return $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 ORDER BY id", boardId)
 End
 
 Public Sub RequireCard(boardId As Integer, cardId As Integer)
   Dim r As Result
   RequireRead(boardId)
   If Can(boardId, "seesAllCards") Then
-    r = $db.Find("kb_cards", "board_id = &1 AND id = &2", boardId, cardId)
+    r = $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND id = &2", boardId, cardId)
   Else
-    r = $db.Find("kb_cards", "board_id = &1 AND id = &2 AND (assignee = &3 OR id IN (SELECT card_id FROM kb_card_assignees WHERE board_id = &1 AND username = &3))", boardId, cardId, WebIdentity.Username)
+    r = $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND id = &2 AND (assignee = &3 OR id IN (SELECT card_id FROM kb_card_assignees WHERE board_id = &1 AND username = &3))", boardId, cardId, WebIdentity.Username)
   Endif
   If Not r.Available Then Error.Raise("Card not accessible")
 End
@@ -577,7 +577,7 @@ End
 Public Function IsAssigned(boardId As Integer, cardId As Integer, username As String) As Boolean
   Dim r As Result
   RequireCard(boardId, cardId)
-  r = $db.Find("kb_cards", "board_id = &1 AND id = &2 AND assignee = &3", boardId, cardId, username)
+  r = $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND id = &2 AND assignee = &3", boardId, cardId, username)
   If r.Available Then Return True
   r = $db.Find("kb_card_assignees", "board_id = &1 AND card_id = &2 AND username = &3", boardId, cardId, username)
   Return r.Available
@@ -594,7 +594,7 @@ Public Function Assignees(boardId As Integer, cardId As Integer) As String[]
     Next
     Return names
   Endif
-  r = $db.Find("kb_cards", "board_id = &1 AND id = &2", boardId, cardId)
+  r = $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND id = &2", boardId, cardId)
   If r!assignee Then names.Add(r!assignee)
   r = $db.Exec("SELECT m.username FROM kb_card_assignees m LEFT JOIN kb_card_people_order o ON o.board_id = m.board_id AND o.card_id = m.card_id AND o.username = m.username AND o.field = &3 WHERE m.board_id = &1 AND m.card_id = &2 ORDER BY o.sort_order, m.username", boardId, cardId, "assignees")
   For Each r
@@ -771,7 +771,7 @@ Public Function ArchiveApiCard(boardId As Integer, listId As Integer, cardId As 
   Else
     $apiMemberBoard = boardId
   Endif
-  r = $db.Find("kb_cards", "board_id=&1 AND id=&2 AND archived=&3", boardId, cardId, Not archived)
+  r = $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id=&1 AND id=&2 AND archived=&3", boardId, cardId, Not archived)
   If Not r.Available Then
     status = 404
     Error.Raise("Card not found")
@@ -904,7 +904,7 @@ Private Function ChangeApiCardPeople(boardId As Integer, listId As Integer, card
       Error.Raise("Forbidden")
     Endif
   Endif
-  r = $db.Find("kb_cards", "board_id = &1 AND id = &2", boardId, cardId)
+  r = $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND id = &2", boardId, cardId)
   If Not r.Available Then
     status = 404
     Error.Raise("Card not found")
@@ -1107,4 +1107,61 @@ Private Sub WritePeopleOrder(boardId As Integer, cardId As Integer, field As Str
     r.Update()
     Inc position
   Next
+End
+
+
+Public Function DeleteApiList(boardId As Integer, listId As Integer, reference As String) As Collection
+  Dim actor As String = WebIdentity.Username
+  Dim data As New Collection
+  Dim r As Result
+  Dim siteAdmin As Boolean
+  Dim transaction As Boolean
+  Dim status As Integer = 500
+  Dim failure As String
+  $apiMemberBoard = 0
+  If Env["WEBA_API_REQUEST"] <> "1" Then Return ApiFailure(403, "API context required")
+  If Not actor Or Not WebDatabase.UserExists(actor) Then Return ApiFailure(401, "Invalid credentials")
+  OpenStore()
+  WorkspaceStore.OpenStore()
+  r = $db.Find("kb_boards", "id=&1", boardId)
+  If Not r.Available Then Return ApiFailure(404, "Board not found")
+  If Not WebDatabase.GetIsAdmin(actor) Then
+    If Not CanWriteApiCards(boardId) Then Return ApiFailure(403, "Forbidden")
+  Endif
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+  siteAdmin = WebDatabase.GetIsAdmin(actor)
+  If Not siteAdmin Then
+    If Not CanWriteApiCards(boardId) Then
+      status = 403
+      Error.Raise("Forbidden")
+    Endif
+  Else
+    $apiMemberBoard = boardId
+  Endif
+  If listId > 0 Then
+    r = $db.Find("kb_lists", "board_id=&1 AND id=&2", boardId, listId)
+    If r.Available Then ListDeletion.SoftRemove(boardId, listId)
+  Endif
+  ' The source authorizes before the lookup and acknowledges missing/foreign/
+  ' already-deleted list IDs without changing content. Retain the raw ID string.
+  $apiMemberBoard = 0
+  If Not WebDatabase.GetIsAdmin(actor) Then
+    If Not CanWriteApiCards(boardId) Then
+      status = 403
+      Error.Raise("Forbidden")
+    Endif
+  Endif
+  DatabaseTransactions.Commit($db)
+  transaction = False
+  data.Add(reference, "_id")
+  Return ApiAnswer(200, data)
+Catch
+  failure = Error.Text
+  $apiMemberBoard = 0
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  If status = 500 Then failure = "List deletion failed"
+  Return ApiFailure(status, failure)
 End

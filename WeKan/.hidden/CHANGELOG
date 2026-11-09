@@ -1,4 +1,8 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- List lifecycle: Add reversible list/card batch marks, hidden read/write/export
+  guards, exact restore, native deleted-list controls and gated permanent purge.
+  Match source list DELETE no-op/auth contracts; close legacy physical bypasses.
+  Verify native rollback, 60 source cases and source/package API/browser flows.
 - Permanent board deletion: Require Global Admin and an explicit default-off
   flag; remove per-board UI bypasses. Add revision-bound confirmed atomic Archive
   batches with bounded IDs, fresh locks/guards and independent recovery audits.

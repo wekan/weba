@@ -40,7 +40,7 @@ Public Sub Main()
   If Not denied Then Error.Raise("Normal user read private recovery events")
   ' Bind the legacy module's connection, then reject a gated call inside a
   ' caller transaction: preflight denial must not roll that transaction back.
-  Try WorkspaceActions.DeleteArchived(a, "card", cardId, "wrong")
+  Try WorkspaceActions.Move(a, "card", cardId, a, "Default", 999999)
   db = WebDatabase.OpenConnection()
   DatabaseTransactions.Begin(db)
   db.Exec("UPDATE users SET fullname=&1 WHERE username=&2", "Outer marker", "purge-owner")

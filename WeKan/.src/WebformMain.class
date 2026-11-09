@@ -34,6 +34,13 @@ Private $detailFormBase As Collection
 Private $boardSelection As Collection
 Private $overviewSidebar As String = "search"
 Private $selectedArchiveRevision As Long = -1
+Private $deleteListBoard As Integer
+Private $deleteListId As Integer
+Private $deletedListBoard As Integer
+Private $deletedListId As Integer
+Private $deletedListBatch As Integer
+Private $deletedPurgeBatch As Integer
+Private $deletedListsState As String
 Private $selectedPurgeRevision As Long = -1
 Private $purgeAllowed As Boolean
 Private $catalogData As Collection
@@ -121,7 +128,9 @@ Private Sub RefreshTree()
     Endif
   Endif
   RefreshSpaces()
+  ValidateDeleteListPanel()
   ValidateOpenCards()
+  RefreshDeletedListPanel()
   If IsOverview() Then overviewSnapshot = BoardLive.Overview($archive)
   Boards.Clear()
   b = KanbanStore.Boards($archive)
@@ -143,6 +152,8 @@ End
 Public Sub BoardPoll_Timer()
   Dim state As String
   ValidateRecoveryPanels()
+  ValidateDeleteListPanel()
+  RefreshDeletedListPanel()
   If IsOverview() And $archive Then
     If RecoveryStore.CanPurge() <> $purgeAllowed Then RefreshCatalogVisual()
   Endif
@@ -756,6 +767,8 @@ Private Sub UpdateHeader()
   SortBoards.Visible = overview
   BoardSearchPanel.Visible = overview And ($overviewSidebar <> "selection" Or Not BoardSelection.Active(SelectionState()))
   UpdateSelectionControls()
+  DeletedLists.Visible = False
+  If $board > 0 Then DeletedLists.Visible = BoardAccess.Can($board, "write")
   SearchTitle.Visible = Not overview
   Filter.Visible = Not overview
   Search.Visible = Not overview
@@ -1020,7 +1033,7 @@ Private Sub OpenContext(kind As String, itemId As Integer, boardId As Integer)
   If kind = "card" Then ContextAssignSelf.Text = If(BoardAccess.IsAssigned(boardId, itemId, WebIdentity.Username), "Unassign myself", "Assign myself")
   ContextArchive.Visible = Not archived And change
   ContextRestore.Visible = archived And change
-  ContextDelete.Visible = archived And change And kind <> "board"
+  ContextDelete.Visible = If(kind = "list", writable, archived And change And kind <> "board" And RecoveryStore.CanPurge())
   ContextRename.Visible = Not archived And change
   ContextCopy.Visible = (kind = "board" And BoardAccess.Can(boardId, "seesAllCards")) Or (kind <> "board" And writable)
   ContextAddCard.Visible = writable And Not archived And kind <> "card"
@@ -1250,6 +1263,11 @@ End
 
 Public Sub ContextDelete_Click()
   If $contextKind = "board" Then Error.Raise("Use Archive multi-selection to delete boards")
+  If $contextKind = "list" Then
+    OpenDeleteList()
+    Return
+  Endif
+  RecoveryStore.RequirePurge()
   BeginAction("Delete")
 Catch
   Notice.Text = Error.Text
@@ -1440,7 +1458,7 @@ Public Sub ArchivedItems_Click()
   For Each r
     If WorkspaceStore.Archived($board, "lane", r!id) Then BrowserTree.Add("lane:" & CStr(r!id), "Swimlane: " & r!title)
   Next
-  r = WebDatabase.OpenConnection().Find("kb_lists", "board_id = &1", $board)
+  r = WebDatabase.OpenConnection().Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1", $board)
   For Each r
     If WorkspaceStore.Archived($board, "list", r!id) Then BrowserTree.Add("list:" & CStr(r!id), "List: " & r!title)
   Next
@@ -2780,4 +2798,181 @@ Catch
   Endif
   Notice.Text = failure
   RefreshCatalogVisual()
+End
+
+
+Private Sub OpenDeleteList()
+  Dim r As Result = WorkspaceStore.Record($contextBoard, "list", $contextId)
+  BoardAccess.Require($contextBoard, "write")
+  $deleteListBoard = $contextBoard
+  $deleteListId = $contextId
+  DeleteListName.Text = r!title
+  DeleteListConfirmed.Value = False
+  ContextMenu.Hide()
+  DeleteListPanel.Show()
+End
+
+Private Sub ValidateDeleteListPanel()
+  If Not DeleteListPanel.Visible Then Return
+  If $view = "Profile" Or $view = "Admin panel" Or $board <> $deleteListBoard Then
+    CloseDeleteList_Click()
+    Return
+  Endif
+  Try BoardAccess.Require($deleteListBoard, "write")
+  If Error Then CloseDeleteList_Click()
+End
+
+Public Sub CloseDeleteList_Click()
+  $deleteListBoard = 0
+  $deleteListId = 0
+  DeleteListConfirmed.Value = False
+  DeleteListName.Text = ""
+  DeleteListPanel.Hide()
+End
+
+Public Sub ConfirmDeleteList_Click()
+  If Not DeleteListPanel.Visible Or $deleteListBoard <= 0 Or $deleteListId <= 0 Then Error.Raise("Select a list first")
+  If $view = "Profile" Or $view = "Admin panel" Then Error.Raise("Select a list first")
+  If Not DeleteListConfirmed.Value Then Error.Raise("Confirm list deletion")
+  ListDeletion.SoftRemove($deleteListBoard, $deleteListId)
+  CloseDeleteList_Click()
+  RefreshTree()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub DeletedLists_Click()
+  If $board <= 0 Or $view = "Profile" Or $view = "Admin panel" Then Error.Raise("Select a board first")
+  BoardAccess.Require($board, "write")
+  $deletedListBoard = $board
+  $deletedListId = 0
+  $deletedListsState = ""
+  DeletedListsPanel.Show()
+  RefreshDeletedListPanel()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub CloseDeletedLists_Click()
+  $deletedListBoard = 0
+  $deletedListId = 0
+  $deletedListBatch = 0
+  $deletedPurgeBatch = 0
+  $deletedListsState = ""
+  DeletedListPurgeConfirmed.Value = False
+  DeletedListPurgePanel.Hide()
+  DeletedListTree.Clear()
+  SelectedDeletedList.Text = ""
+  RestoreDeletedList.Hide()
+  PurgeDeletedList.Hide()
+  DeletedListsPanel.Hide()
+End
+
+Private Sub CheckDeletedListContext()
+  If Not DeletedListsPanel.Visible Or $deletedListBoard <= 0 Or $board <> $deletedListBoard Then Error.Raise("Select a deleted list first")
+  If $view = "Profile" Or $view = "Admin panel" Then Error.Raise("Select a deleted list first")
+  BoardAccess.Require($deletedListBoard, "write")
+End
+
+Private Sub RefreshDeletedListPanel()
+  Dim r As Result
+  Dim rows As New Variant[]
+  Dim row As Collection
+  Dim state As String
+  Dim selected As Boolean
+  If Not DeletedListsPanel.Visible Then Return
+  CheckDeletedListContext()
+  r = ListDeletion.DeletedLists($deletedListBoard)
+  For Each r
+    row = New Collection
+    row["id"] = r!id
+    row.Add(CStr(r!title), "title")
+    row["batch"] = r!batch_id
+    row["at"] = r!deleted_at
+    rows.Add(row)
+  Next
+  state = JSON.Encode(rows)
+  If state <> $deletedListsState Then
+    DeletedListTree.Clear()
+    For Each row In rows
+      DeletedListTree.Add("deleted-list:" & Str(row["id"]), CStr(row["title"]))
+    Next
+    $deletedListsState = state
+  Endif
+  For Each row In rows
+    If row["id"] <> $deletedListId Then Continue
+    selected = True
+    If $deletedListBatch <> row["batch"] Then
+      $deletedPurgeBatch = 0
+      DeletedListPurgeConfirmed.Value = False
+      DeletedListPurgePanel.Hide()
+    Endif
+    $deletedListBatch = row["batch"]
+    SelectedDeletedList.Text = CStr(row["title"])
+    If DeletedListTree.Key <> "deleted-list:" & Str($deletedListId) Then DeletedListTree.Key = "deleted-list:" & Str($deletedListId)
+  Next
+  If Not selected Then
+    $deletedListId = 0
+    $deletedListBatch = 0
+    SelectedDeletedList.Text = ""
+  Endif
+  RestoreDeletedList.Visible = selected
+  PurgeDeletedList.Visible = selected And RecoveryStore.CanPurge()
+  If Not PurgeDeletedList.Visible Then
+    $deletedPurgeBatch = 0
+    DeletedListPurgeConfirmed.Value = False
+    DeletedListPurgePanel.Hide()
+  Endif
+Catch
+  CloseDeletedLists_Click()
+End
+
+Public Sub DeletedListTree_Select()
+  Dim fields As String[]
+  CheckDeletedListContext()
+  fields = Split(DeletedListTree.Key, ":")
+  If fields.Count <> 2 Or fields[0] <> "deleted-list" Then Error.Raise("Select a deleted list first")
+  $deletedListId = CInt(fields[1])
+  $deletedPurgeBatch = 0
+  DeletedListPurgeConfirmed.Value = False
+  DeletedListPurgePanel.Hide()
+  RefreshDeletedListPanel()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub RestoreDeletedList_Click()
+  CheckDeletedListContext()
+  RefreshDeletedListPanel()
+  If $deletedListId <= 0 Then Error.Raise("Select a deleted list first")
+  ListDeletion.Restore($deletedListBoard, $deletedListId)
+  RefreshTree()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub PurgeDeletedList_Click()
+  CheckDeletedListContext()
+  RecoveryStore.RequirePurge()
+  RefreshDeletedListPanel()
+  If $deletedListId <= 0 Then Error.Raise("Select a deleted list first")
+  $deletedPurgeBatch = $deletedListBatch
+  DeletedListPurgeConfirmed.Value = False
+  DeletedListPurgePanel.Show()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub ConfirmDeletedListPurge_Click()
+  CheckDeletedListContext()
+  RecoveryStore.RequirePurge()
+  If $deletedListId <= 0 Or $deletedPurgeBatch <= 0 Or $deletedPurgeBatch <> $deletedListBatch Then Error.Raise("List deletion changed")
+  If Not DeletedListPurgeConfirmed.Value Then Error.Raise("Confirm permanent list deletion")
+  WorkspaceActions.PurgeList($deletedListBoard, $deletedListId, $deletedPurgeBatch)
+  $deletedPurgeBatch = 0
+  DeletedListPurgeConfirmed.Value = False
+  DeletedListPurgePanel.Hide()
+  RefreshTree()
+Catch
+  Notice.Text = Error.Text
 End

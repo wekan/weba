@@ -98,6 +98,7 @@ Public Sub OpenDatabase()
     t.PrimaryKey = ["id"]
     t.Update()
   Endif
+  ListDeletion.OpenStore()
 End
 
 Private Sub RequireUser()
@@ -162,7 +163,7 @@ Public Function SaveCard(boardId As Integer, cardId As Integer, title As String,
   BoardAccess.Require(boardId, "write")
   If cardId Then
     BoardAccess.RequireCard(boardId, cardId)
-    r = $db.Find("kb_cards", "board_id = &1 AND id = &2", boardId, cardId)
+    r = $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND id = &2", boardId, cardId)
     previousAssignee = r!assignee
     previousDueDay = r!due_day
     If baseline Then
@@ -181,7 +182,7 @@ Public Function SaveCard(boardId As Integer, cardId As Integer, title As String,
   If Not Trim(lane) Then lane = "Default"
   If Not Trim(title) Then Error.Raise("Enter a card title")
   If status <> "Todo" And status <> "Doing" And status <> "Done" Then
-    list = $db.Find("kb_lists", "board_id = &1 AND lane = &2 AND title = &3", boardId, lane, status)
+    list = $db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND lane = &2 AND title = &3", boardId, lane, status)
     If Not list.Available Then Error.Raise("Invalid status")
   Endif
   If dueDay Then
@@ -190,11 +191,12 @@ Public Function SaveCard(boardId As Integer, cardId As Integer, title As String,
     If Format(Date(CInt(Left(dueDay, 4)), CInt(Mid(dueDay, 6, 2)), CInt(Right(dueDay, 2))), "yyyy-mm-dd") <> dueDay Then Error.Raise("Invalid due date")
   Endif
   EnsureLane(boardId, lane)
+  If listId > 0 And If ListDeletion.IsDeleted(boardId, "list", listId) Then Error.Raise("Restore the list first")
   If listId Then
-    list = $db.Find("kb_lists", "board_id = &1 AND id = &2 AND lane = &3 AND title = &4", boardId, listId, lane, status)
+    list = $db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND id = &2 AND lane = &3 AND title = &4", boardId, listId, lane, status)
     If Not list.Available Then listId = 0
   Endif
-  If Not listId Then list = $db.Find("kb_lists", "board_id = &1 AND lane = &2 AND title = &3 ORDER BY sort_order, id", boardId, lane, status)
+  If Not listId Then list = $db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND lane = &2 AND title = &3 ORDER BY sort_order, id", boardId, lane, status)
   If Not list.Available Then Error.Raise("Invalid status")
   listId = list!id
   If WorkspaceStore.ListHidden(boardId, listId) Then Error.Raise("Restore the list or swimlane first")
@@ -293,7 +295,7 @@ Public Function Lanes(boardId As Integer) As Result
   RequireBoard(boardId)
   c = $db.Find("kb_lanes", "board_id = &1", boardId)
   If Not c.Available Then EnsureLane(boardId, "Default")
-  c = $db.Find("kb_cards", "board_id = &1", boardId)
+  c = $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1", boardId)
   For Each c
     EnsureLane(boardId, If(Trim(c!lane), c!lane, "Default"))
   Next
@@ -302,7 +304,7 @@ End
 
 Public Function Lists(boardId As Integer, lane As String) As Result
   RequireBoard(boardId)
-  Return $db.Find("kb_lists", "board_id = &1 AND lane = &2 ORDER BY sort_order, id", boardId, lane)
+  Return $db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND lane = &2 ORDER BY sort_order, id", boardId, lane)
 End
 
 Public Sub AddLane(boardId As Integer, title As String)
@@ -330,7 +332,7 @@ Public Sub AddList(boardId As Integer, lane As String, title As String, afterTit
     r = GetList(boardId, afterTitle, lane)
     position = r!sort_order + 1
   Else
-    r = $db.Find("kb_lists", "board_id = &1 AND lane = &2 ORDER BY sort_order DESC", boardId, lane)
+    r = $db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND lane = &2 ORDER BY sort_order DESC", boardId, lane)
     position = 0
     If r.Available Then position = r!sort_order + 1
   Endif
@@ -418,7 +420,7 @@ Public Sub MoveCard(boardId As Integer, cardId As Integer, laneTitle As String, 
   Dim listId As Integer
   RequireActiveBoard(boardId, "moveCard")
   BoardAccess.RequireCard(boardId, cardId)
-  r = $db.Find("kb_cards", "id = &1 AND board_id = &2 AND archived = &3", cardId, boardId, False)
+  r = $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND id = &1 AND board_id = &2 AND archived = &3", cardId, boardId, False)
   If Not r.Available Then Error.Raise("Card not accessible")
   r = GetList(boardId, listTitle, laneTitle)
   listId = r!id
@@ -555,9 +557,9 @@ Public Function GetList(boardId As Integer, reference As String, laneTitle As St
   Dim r As Result
   RequireBoard(boardId)
   If Left(reference, 1) = "#" Then
-    r = $db.Find("kb_lists", "board_id = &1 AND id = &2 AND lane = &3", boardId, CInt(Mid(reference, 2)), laneTitle)
+    r = $db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND id = &2 AND lane = &3", boardId, CInt(Mid(reference, 2)), laneTitle)
   Else
-    r = $db.Find("kb_lists", "board_id = &1 AND title = &2 AND lane = &3 ORDER BY sort_order, id", boardId, reference, laneTitle)
+    r = $db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND title = &2 AND lane = &3 ORDER BY sort_order, id", boardId, reference, laneTitle)
   Endif
   If Not r.Available Then Error.Raise("List not accessible")
   Return r
@@ -585,12 +587,12 @@ Private Function ResolveCardList(boardId As Integer, cardId As Integer) As Integ
   Dim c As Result
   Dim laneTitle As String
   RequireBoard(boardId)
-  c = $db.Find("kb_cards", "board_id = &1 AND id = &2", boardId, cardId)
+  c = $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND id = &2", boardId, cardId)
   If Not c.Available Then Error.Raise("Card not accessible")
   r = $db.Find("kb_card_lists", "card_id = &1 AND board_id = &2", cardId, boardId)
   If r.Available Then Return r!list_id
   laneTitle = If(Trim(c!lane), c!lane, "Default")
-  r = $db.Find("kb_lists", "board_id = &1 AND lane = &2 AND title = &3 ORDER BY sort_order, id", boardId, laneTitle, c!status)
+  r = $db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND lane = &2 AND title = &3 ORDER BY sort_order, id", boardId, laneTitle, c!status)
   If Not r.Available Then Return 0
   PutCardList(boardId, cardId, r!id)
   Return r!id
@@ -598,7 +600,7 @@ End
 
 Private Sub EnsureCardLinks(boardId As Integer)
   Dim r As Result
-  r = $db.Find("kb_cards", "board_id = &1", boardId)
+  r = $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1", boardId)
   For Each r
     ResolveCardList(boardId, r!id)
   Next

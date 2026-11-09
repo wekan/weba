@@ -76,6 +76,7 @@ Public Function Record(boardId As Integer, kind As String, itemId As Integer) As
     r = $db.Find(tableName, "id = &1 AND board_id = &2", itemId, boardId)
   Endif
   If Not r.Available Then Error.Raise("Item not accessible")
+  If kind = "list" And If ListDeletion.IsDeleted(boardId, kind, itemId) Then Error.Raise("List not accessible")
   If kind = "card" Then BoardAccess.RequireCard(boardId, itemId)
   Return r
 End
@@ -389,7 +390,7 @@ Private Function CloneList(sourceBoard As Integer, listId As Integer, targetBoar
   Dim id As Integer
   Dim rank As Integer
   If String.Len(title) > 32 Then Error.Raise("List titles have at most 32 characters")
-  r = $db.Find("kb_lists", "board_id = &1 AND lane = &2 ORDER BY sort_order DESC", targetBoard, lane)
+  r = $db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND lane = &2 ORDER BY sort_order DESC", targetBoard, lane)
   If r.Available Then rank = r!sort_order + 1
   r = $db.Create("kb_lists")
   r["board_id"] = targetBoard

@@ -1,0 +1,240 @@
+' Reversible ordinary list removal; archive state remains independent.
+Export
+Private $db As Connection
+
+Public Sub OpenStore()
+  Dim t As Table
+  Dim r As Result
+  Dim maximum As Integer
+  If $db Then Return
+  $db = WebDatabase.OpenConnection()
+  If Not $db.Tables.Exist("kb_delete_batch_ids") Then
+    t = $db.Tables.Add("kb_delete_batch_ids")
+    t.Fields.Add("id", db.Serial)
+    t.Fields.Add("allocated", db.Boolean)
+    t.PrimaryKey = ["id"]
+    t.Update()
+    If $db.Tables.Exist("kb_delete_batches") Then
+      r = $db.Exec("SELECT MAX(id) AS maximum FROM kb_delete_batches")
+      If r.Available Then maximum = r!maximum
+      If maximum > 0 Then
+        r = $db.Create("kb_delete_batch_ids")
+        r["id"] = maximum
+        r["allocated"] = True
+        r.Update()
+      Endif
+    Endif
+  Endif
+  If Not $db.Tables.Exist("kb_delete_batches") Then
+    t = $db.Tables.Add("kb_delete_batches")
+    t.Fields.Add("id", db.Serial)
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("list_id", db.Integer)
+    t.Fields.Add("actor", db.String, 255)
+    t.Fields.Add("deleted_at", db.Long)
+    t.PrimaryKey = ["id"]
+    t.Update()
+  Endif
+  If Not $db.Tables.Exist("kb_deleted_items") Then
+    t = $db.Tables.Add("kb_deleted_items")
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("kind", db.String, 16)
+    t.Fields.Add("item_id", db.Integer)
+    t.Fields.Add("batch_id", db.Integer)
+    t.Fields.Add("actor", db.String, 255)
+    t.Fields.Add("deleted_at", db.Long)
+    t.PrimaryKey = ["board_id", "kind", "item_id"]
+    t.Update()
+    t.Indexes.Add("kb_deleted_batch", ["board_id", "batch_id", "kind"])
+  Endif
+Catch
+  $db = Null
+  Error.Propagate()
+End
+
+' Aliases/kinds are internal constants, never wire input.
+Public Function LiveSql(kind As String, tableAlias As String) As String
+  Return "NOT EXISTS (SELECT 1 FROM kb_deleted_items deleted WHERE deleted.board_id=" & tableAlias & ".board_id AND deleted.kind='" & kind & "' AND deleted.item_id=" & tableAlias & ".id)"
+End
+
+Public Function IsDeleted(boardId As Integer, kind As String, itemId As Integer) As Boolean
+  Dim r As Result
+  OpenStore()
+  r = $db.Find("kb_deleted_items", "board_id=&1 AND kind=&2 AND item_id=&3", boardId, kind, itemId)
+  Return r.Available
+End
+
+Private Function ListRow(boardId As Integer, listId As Integer) As Result
+  Dim r As Result = $db.Find("kb_lists", "board_id=&1 AND id=&2", boardId, listId)
+  If Not r.Available Then Error.Raise("List not accessible")
+  Return r
+End
+
+Private Function Batch(boardId As Integer, listId As Integer) As Integer
+  Dim r As Result = $db.Find("kb_deleted_items", "board_id=&1 AND kind=&2 AND item_id=&3", boardId, "list", listId)
+  If r.Available Then Return r!batch_id
+End
+
+Private Sub CheckActor(boardId As Integer, actor As String)
+  If Not actor Or WebIdentity.Username <> actor Then Error.Raise("Sign in required")
+  BoardAccess.Require(boardId, "write")
+End
+
+Private Function BeginWrite(boardId As Integer, listId As Integer) As String
+  Dim actor As String = WebIdentity.Username
+  Dim transaction As Boolean
+  Dim failure As String
+  BoardAccess.Require(boardId, "write")
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+  $db.Exec("UPDATE kb_lists SET title=title WHERE board_id=&1 AND id=&2", boardId, listId)
+  CheckActor(boardId, actor)
+  ListRow(boardId, listId)
+  Return actor
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+Private Function Candidates(boardId As Integer, listId As Integer) As Integer[]
+  Dim ids As New Integer[]
+  Dim r As Result = $db.Exec("SELECT c.id FROM kb_cards c INNER JOIN kb_card_lists link ON link.board_id=c.board_id AND link.card_id=c.id WHERE c.board_id=&1 AND link.list_id=&2 AND " & LiveSql("card", "c") & " ORDER BY c.id", boardId, listId)
+  For Each r
+    ids.Add(r!id)
+  Next
+  Return ids
+End
+
+Private Function BatchCards(boardId As Integer, batchId As Integer) As Integer[]
+  Dim ids As New Integer[]
+  Dim r As Result = $db.Exec("SELECT c.id FROM kb_cards c INNER JOIN kb_deleted_items d ON d.board_id=c.board_id AND d.item_id=c.id AND d.kind=&3 WHERE c.board_id=&1 AND d.batch_id=&2 ORDER BY c.id", boardId, batchId, "card")
+  For Each r
+    ids.Add(r!id)
+  Next
+  Return ids
+End
+
+Private Sub LockCards(boardId As Integer, ids As Integer[])
+  Dim id As Integer
+  For Each id In ids
+    $db.Exec("UPDATE kb_cards SET title=title WHERE board_id=&1 AND id=&2", boardId, id)
+  Next
+End
+
+Private Sub Mark(boardId As Integer, kind As String, itemId As Integer, batchId As Integer, actor As String, at As Long)
+  Dim r As Result = $db.Create("kb_deleted_items")
+  r["board_id"] = boardId
+  r["kind"] = kind
+  r["item_id"] = itemId
+  r["batch_id"] = batchId
+  r["actor"] = actor
+  r["deleted_at"] = at
+  r.Update()
+  ItemChanges.Mark(boardId, kind, itemId)
+End
+
+Public Function SoftRemove(boardId As Integer, listId As Integer) As Integer
+  Dim actor As String
+  Dim ids As Integer[]
+  Dim id As Integer
+  Dim batchId As Integer
+  Dim at As Long
+  Dim r As Result
+  Dim transaction As Boolean
+  Dim failure As String
+  OpenStore()
+  WorkspaceStore.OpenStore()
+  actor = BeginWrite(boardId, listId)
+  transaction = True
+  batchId = Batch(boardId, listId)
+  If batchId = 0 Then
+    KanbanStore.PrimeCardLinks(boardId)
+    ids = Candidates(boardId, listId)
+    LockCards(boardId, ids)
+    CheckActor(boardId, actor)
+    If JSON.Encode(ids) <> JSON.Encode(Candidates(boardId, listId)) Or Batch(boardId, listId) <> 0 Then Error.Raise("List deletion changed")
+    at = ItemChanges.UtcNow()
+    r = $db.Create("kb_delete_batch_ids")
+    r["allocated"] = True
+    r.Update()
+    batchId = $db.LastInsertId
+    r = $db.Create("kb_delete_batches")
+    r["id"] = batchId
+    r["board_id"] = boardId
+    r["list_id"] = listId
+    r["actor"] = actor
+    r["deleted_at"] = at
+    r.Update()
+    For Each id In ids
+      CheckActor(boardId, actor)
+      Mark(boardId, "card", id, batchId, actor, at)
+    Next
+    If Batch(boardId, listId) <> 0 Then Error.Raise("List deletion changed")
+    Mark(boardId, "list", listId, batchId, actor, at)
+    r = ListRow(boardId, listId)
+    KanbanStore.Activity(boardId, "Deleted list: " & r!title, "list", listId)
+    If Candidates(boardId, listId).Count > 0 Then Error.Raise("List deletion changed")
+    If JSON.Encode(ids) <> JSON.Encode(BatchCards(boardId, batchId)) Then Error.Raise("List deletion changed")
+  Endif
+  CheckActor(boardId, actor)
+  If Batch(boardId, listId) <> batchId Then Error.Raise("List deletion changed")
+  DatabaseTransactions.Commit($db)
+  transaction = False
+  Return batchId
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+Public Sub Restore(boardId As Integer, listId As Integer)
+  Dim actor As String
+  Dim batchId As Integer
+  Dim ids As Integer[]
+  Dim id As Integer
+  Dim r As Result
+  Dim transaction As Boolean
+  Dim failure As String
+  OpenStore()
+  WorkspaceStore.OpenStore()
+  actor = BeginWrite(boardId, listId)
+  transaction = True
+  batchId = Batch(boardId, listId)
+  If batchId > 0 Then
+    ids = BatchCards(boardId, batchId)
+    LockCards(boardId, ids)
+    CheckActor(boardId, actor)
+    If Batch(boardId, listId) <> batchId Or JSON.Encode(ids) <> JSON.Encode(BatchCards(boardId, batchId)) Then Error.Raise("List deletion changed")
+    For Each id In ids
+      CheckActor(boardId, actor)
+      $db.Delete("kb_deleted_items", "board_id=&1 AND kind=&2 AND item_id=&3 AND batch_id=&4", boardId, "card", id, batchId)
+      ItemChanges.Mark(boardId, "card", id)
+    Next
+    $db.Delete("kb_deleted_items", "board_id=&1 AND kind=&2 AND item_id=&3 AND batch_id=&4", boardId, "list", listId, batchId)
+    If BatchCards(boardId, batchId).Count > 0 Then Error.Raise("List deletion changed")
+    For Each id In ids
+      If IsDeleted(boardId, "card", id) Then Error.Raise("List deletion changed")
+    Next
+  Endif
+  CheckActor(boardId, actor)
+  If Batch(boardId, listId) <> 0 Then Error.Raise("List deletion changed")
+  r = ListRow(boardId, listId)
+  KanbanStore.Activity(boardId, "Restored list: " & r!title, "list", listId)
+  CheckActor(boardId, actor)
+  If Batch(boardId, listId) <> 0 Then Error.Raise("List deletion changed")
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+Public Function DeletedLists(boardId As Integer) As Result
+  OpenStore()
+  BoardAccess.Require(boardId, "write")
+  Return $db.Exec("SELECT l.id,l.title,l.lane,d.deleted_at,d.actor,d.batch_id FROM kb_lists l INNER JOIN kb_deleted_items d ON d.board_id=l.board_id AND d.item_id=l.id AND d.kind=&2 WHERE l.board_id=&1 ORDER BY d.deleted_at DESC,l.id", boardId, "list")
+End

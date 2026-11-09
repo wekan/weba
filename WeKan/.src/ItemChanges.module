@@ -51,20 +51,20 @@ Public Function Lists(boardId As Integer) As Collection
   Dim key As String
   BoardAccess.RequireRead(boardId)
   If Not BoardAccess.Can(boardId, "seesAllCards") Then Error.Raise("Whole-board permission required")
-  r = db.Exec("SELECT id FROM kb_lists WHERE board_id = &1", boardId)
+  r = db.Exec("SELECT id FROM kb_lists WHERE board_id = &1 AND " & ListDeletion.LiveSql("list", "kb_lists"), boardId)
   For Each r
     values = New Collection
     values["modifiedAt"] = JSON.Null
     values["cardsModifiedAt"] = JSON.Null
     result[CStr(r!id)] = values
   Next
-  r = db.Exec("SELECT c.item_id,c.modified_ms FROM kb_item_changes c INNER JOIN kb_lists l ON l.board_id=c.board_id AND l.id=c.item_id WHERE c.board_id=&1 AND c.kind=&2", boardId, "list")
+  r = db.Exec("SELECT c.item_id,c.modified_ms FROM kb_item_changes c INNER JOIN kb_lists l ON l.board_id=c.board_id AND l.id=c.item_id WHERE c.board_id=&1 AND c.kind=&2 AND " & ListDeletion.LiveSql("list", "l"), boardId, "list")
   For Each r
     values = result[CStr(r!item_id)]
     values["modifiedAt"] = CardDates.Iso(r!modified_ms)
   Next
   ' Archived cards are included. Empty/legacy-only lists keep JSON null.
-  r = db.Exec("SELECT l.list_id,MAX(m.modified_ms) AS newest FROM kb_card_lists l INNER JOIN kb_cards c ON c.board_id=l.board_id AND c.id=l.card_id INNER JOIN kb_item_changes m ON m.board_id=c.board_id AND m.item_id=c.id AND m.kind=&2 WHERE l.board_id=&1 GROUP BY l.list_id", boardId, "card")
+  r = db.Exec("SELECT l.list_id,MAX(m.modified_ms) AS newest FROM kb_card_lists l INNER JOIN kb_cards c ON c.board_id=l.board_id AND c.id=l.card_id INNER JOIN kb_item_changes m ON m.board_id=c.board_id AND m.item_id=c.id AND m.kind=&2 WHERE l.board_id=&1 AND " & ListDeletion.LiveSql("card", "c") & " GROUP BY l.list_id", boardId, "card")
   For Each r
     key = CStr(r!list_id)
     If Not result.Exist(key) Then Continue

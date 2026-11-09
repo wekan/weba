@@ -52,7 +52,7 @@ Public Function ExportData(boardId As Integer, kind As String, itemId As Integer
     cardIds.Add(r!id)
     If listIds.Find(listId) < 0 Then listIds.Add(listId)
   Next
-  r = $db.Find("kb_lists", "board_id = &1 ORDER BY lane, sort_order, id", boardId)
+  r = $db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 ORDER BY lane, sort_order, id", boardId)
   For Each r
     include = kind = "board" Or (kind = "lane" And r!lane = source!title) Or (kind = "list" And r!id = itemId) Or listIds.Find(r!id) >= 0
     If Not include Then Continue

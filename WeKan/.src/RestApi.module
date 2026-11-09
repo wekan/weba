@@ -83,6 +83,27 @@ Public Sub Main()
     Return
   Endif
   fields = Split(Request.Path, "/", "", True)
+  If fields.Count = 5 Then
+    If fields[0] = "api" And fields[1] = "boards" And fields[3] = "lists" Then
+      If Request.Method <> "DELETE" Then
+        Reply(405, ErrorData("Method not allowed"))
+        Return
+      Endif
+      Try boardId = PositiveId(fields[2])
+      If Error Then
+        Reply(404, ErrorData("Board not found"))
+        Return
+      Endif
+      Try listId = PositiveId(fields[4])
+      If Error Then listId = 0
+      If listId > 0 Then
+        If Str(listId) <> fields[4] Then listId = 0
+      Endif
+      outcome = BoardAccess.DeleteApiList(boardId, listId, fields[4])
+      Reply(outcome["status"], outcome["data"])
+      Return
+    Endif
+  Endif
   If fields.Count = 4 Or fields.Count = 6 Then
     If fields[0] = "api" And fields[1] = "boards" Then
       action = ""

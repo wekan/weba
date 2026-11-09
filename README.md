@@ -829,8 +829,9 @@ Rename/copy, colors, stars, WIP limits, same-board moves, archives/restoration,
 scoped history and JSON export persist through owner-checked database operations.
 Card/list/swimlane menus also move items between owned active boards. Relationships
 must stay within one board: a move that splits a subtask/dependency group is rejected.
-Archived cards/lists/swimlanes can be permanently removed by typing their exact title; container
-removal includes its cards, file bytes and dependent records.
+Legacy archived card/swimlane physical removal requires Global Admin, the explicit
+permanent-delete flag and exact-title confirmation. Lists use reversible deletion
+and the separate deleted-list purge described below.
 
 The card editor and menu provide comments, checklists/items, real subtask cards,
 dependencies, card-level text/number/date/checkbox fields, time entries/timers and
@@ -1275,3 +1276,58 @@ selection purge and literal/admin-only Recovery. It runs in test-live for source
 and packages, or with `python3 tests/run-http.py --board-purge` (add `--archive`).
 These native tests are separate from running every unchanged original suite;
 full Recovery schema/report/filter parity and non-SQLite drivers remain open.
+
+
+### Reversible list deletion
+
+The native list menu's Delete action confirms ordinary removal with a checkbox.
+It preserves the list, its active and archived cards, attachment bytes, people,
+dates and relationships. One UTC timestamp, actor snapshot and committed batch ID
+mark the list and previously live cards. Repeating the delete keeps the same batch
+and changes no content/history clocks. A global allocator prevents committed batch
+ID reuse even after board purge. Earlier independent deletions keep their marks.
+
+Deleted lists/cards are excluded from normal native and REST reads/counts,
+relationship views and exports. Direct card/list editors and stale add/move targets
+are rejected. Board polling removes deleted rows and closes stale card/detail panes.
+Deleted lists in a board's sidebar offers native Restore to board writers, including
+assigned writers allowed by the original list method. Restoration removes exactly
+that batch's marks and preserves archive state and earlier deletions. Readonly users
+cannot delete, restore or inspect this writer control. Navigation and write loss
+cancel pending native deletion; dialogs support mobile placement and Escape.
+
+Only Global Admin with the explicit permanent-delete setting can physically purge
+a deleted list and its same-batch cards. Native confirmation captures the committed
+batch: an external restore/redelete makes old consent stale. Live flag loss hides
+and cancels purge controls. The service locks/rechecks account, setting, board,
+list and batch cards, shares cleanup primitives, records recovery success with the
+transaction and rolls back on late authority/batch/audit failure. Earlier independently
+deleted cards are not purged with a later list batch. Legacy card/swimlane physical
+removal also requires the global gate; the old archived-list hard-delete route is
+rejected. Full card/swimlane/attachment/discussion lifecycle parity remains pending.
+
+`DELETE /api/boards/:boardId/lists/:listId` matches source authorization-first
+behavior: unauthorized roles/raw assigned flags receive 403, while authorized
+missing, foreign and already-deleted list IDs receive `{ "_id": "requested-id" }`
+with 200 and no business changes. Native numeric IDs have a canonical string form;
+other list strings are acknowledged as unknown rather than coerced to another ID.
+Ordinary deletion needs no permanent-delete flag. The REST site-admin exception is
+scoped to this operation and reset afterward. Unexpected failures return sanitized
+500 JSON and roll back metadata, content, clocks and batch allocation together.
+
+ListDeletionTest checks data retention, visibility/destination guards, exact restore,
+earlier marks, archive state, allocation and injected delete/restore/purge failures.
+A 60-case SQL comparator runs the unchanged source lists.softRemove/restore/purge
+and softRemoveList bodies with explicit time/ID/role adapters and no-op history
+adapters. It proves lifecycle row outcomes, not full ChangeHistory/undo integration.
+Real source/package HTTP+SQL tests cover role/combined-scope negatives, no-op
+contracts, hidden reads/writes, bytes and rollback. list-deletion.browser.cjs covers
+actual writer/readonly/admin confirmation, restore, mobile/Escape, live revocation,
+changed-batch denial and permanent cleanup. Both tests run in the standard suites;
+focused modes are `--list-delete-api` and `--list-deletion` in tests/run-http.py,
+adding `--archive` for the packaged application.
+
+Generic Delete/Restore/Close/warning captions use imported source translations;
+new deleted-list-specific captions currently fall back to English and remain in
+TODO.md. Full source history/undo, cross-board deleted hierarchy, original complete
+UI/API/security suites and non-SQLite drivers still require further work.

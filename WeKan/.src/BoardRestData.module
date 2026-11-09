@@ -23,7 +23,7 @@ Public Function Read(boardId As Integer, kind As String, Optional listId As Inte
   Else If kind = "lists" Or kind = "swimlanes" Then
     If kind = "lists" Then
       changes = ItemChanges.Lists(boardId)
-      r = db.Find("kb_lists", "board_id = &1 ORDER BY sort_order, id", boardId)
+      r = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 ORDER BY sort_order, id", boardId)
     Else
       r = KanbanStore.Lanes(boardId)
     Endif
@@ -41,11 +41,11 @@ Public Function Read(boardId As Integer, kind As String, Optional listId As Inte
     Next
   Else If kind = "cards_count" Then
     data = New Collection
-    r = db.Find("kb_cards", "board_id = &1 AND archived = &2", boardId, False)
+    r = db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND archived = &2", boardId, False)
     data["board_cards_count"] = r.Count
   Else If kind = "cards" Or kind = "list_cards_count" Then
     KanbanStore.PrimeCardLinks(boardId)
-    r = db.Exec("SELECT c.* FROM kb_cards c INNER JOIN kb_card_lists l ON l.board_id = c.board_id AND l.card_id = c.id WHERE c.board_id = &1 AND l.list_id = &2 AND c.archived = &3 ORDER BY c.id", boardId, listId, False)
+    r = db.Exec("SELECT c.* FROM kb_cards c INNER JOIN kb_card_lists l ON l.board_id = c.board_id AND l.card_id = c.id WHERE c.board_id = &1 AND l.list_id = &2 AND c.archived = &3 AND " & ListDeletion.LiveSql("card", "c") & " ORDER BY c.id", boardId, listId, False)
     If kind = "list_cards_count" Then
       data = New Collection
       data["list_cards_count"] = r.Count
@@ -102,7 +102,7 @@ Public Function Card(boardId As Integer, cardId As Integer) As Collection
   BoardAccess.RequireCard(boardId, cardId)
   If Not BoardAccess.Can(boardId, "seesAllCards") Then Error.Raise("Whole-board permission required")
   KanbanStore.PrimeCardLinks(boardId)
-  r = db.Find("kb_cards", "board_id=&1 AND id=&2", boardId, cardId)
+  r = db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id=&1 AND id=&2", boardId, cardId)
   If Not r.Available Then Error.Raise("Card not found")
   item = CardFields(boardId, r)
   item["boardId"] = CStr(boardId)

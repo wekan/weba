@@ -1,0 +1,205 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim listId As Integer
+  Dim otherList As Integer
+  Dim a As Integer
+  Dim b As Integer
+  Dim prior As Integer
+  Dim parent As Integer
+  Dim relation As Integer
+  Dim batchId As Integer
+  Dim nextBatch As Integer
+  Dim db As Connection
+  Dim r As Result
+  Dim before As String
+  Dim denied As Boolean
+  Dim text As String
+  WebDatabase.Register("delete-global", "x")
+  WebDatabase.Register("delete-owner", "x")
+  WebDatabase.Register("delete-editor", "x")
+  WebDatabase.Register("delete-reader", "x")
+  SignIn("delete-owner")
+  boardId = KanbanStore.AddBoard("Reversible board")
+  BoardAccess.SetMember(boardId, "delete-editor", "normal")
+  BoardAccess.SetMember(boardId, "delete-reader", "read-only")
+  r = KanbanStore.Lanes(boardId)
+  r = KanbanStore.Lists(boardId, "Default")
+  listId = r!id
+  r.MoveNext()
+  otherList = r!id
+  a = KanbanStore.SaveCard(boardId, 0, "Active child", "Original", "Default", "Todo", "", "", "", listId)
+  b = KanbanStore.SaveCard(boardId, 0, "Archived child", "", "Default", "Todo", "", "", "", listId)
+  prior = KanbanStore.SaveCard(boardId, 0, "Earlier deletion", "", "Default", "Todo", "", "", "", listId)
+  parent = KanbanStore.SaveCard(boardId, 0, "Keep parent", "", "Default", "Doing", "", "", "", otherList)
+  CardContent.AddFile(boardId, a, "kept.bin", "a" & Chr(0) & "b")
+  relation = CardContent.Save(boardId, parent, 0, "dependency", "", "", 0, False, a)
+  WorkspaceStore.SetArchived(boardId, "card", b, True)
+  db = WebDatabase.OpenConnection()
+  RecoveryStore.OpenStore()
+  db.Exec("INSERT INTO kb_deleted_items (board_id,kind,item_id,batch_id,actor,deleted_at) VALUES (&1,&2,&3,&4,&5,&6)", boardId, "card", prior, 99999, "earlier", ItemChanges.UtcNow())
+  SignIn("delete-reader")
+  before = Snapshot()
+  Try ListDeletion.SoftRemove(boardId, listId)
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Readonly deletion changed data")
+  Try ListDeletion.Restore(boardId, listId)
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Readonly restore changed data")
+  SignIn("delete-editor")
+  CheckFailure("CREATE TRIGGER list_inject BEFORE INSERT ON kb_deleted_items WHEN NEW.kind='card' AND NEW.item_id=" & Str(b) & " BEGIN SELECT RAISE(ABORT,'second mark failed'); END", boardId, listId, False)
+  CheckFailure("CREATE TRIGGER list_inject AFTER INSERT ON kb_deleted_items WHEN NEW.kind='list' BEGIN UPDATE kb_members SET role='read-only' WHERE board_id=" & Str(boardId) & " AND username='delete-editor'; END", boardId, listId, False)
+  batchId = ListDeletion.SoftRemove(boardId, listId)
+  If batchId <= 0 Then Error.Raise("Delete returned no batch")
+  before = Snapshot()
+  If ListDeletion.SoftRemove(boardId, listId) <> batchId Or Snapshot() <> before Then Error.Raise("Repeated deletion changed batch/data/clocks")
+  r = db.Find("kb_cards", "board_id=&1", boardId)
+  If r.Count <> 4 Then Error.Raise("Ordinary deletion physically removed cards")
+  r = db.Find("kb_files", "board_id=&1", boardId)
+  If r.Count <> 1 Or r!content.Data <> "a" & Chr(0) & "b" Then Error.Raise("Ordinary deletion lost bytes")
+  r = db.Find("kb_deleted_items", "board_id=&1 AND batch_id=&2 ORDER BY kind,item_id", boardId, batchId)
+  If r.Count <> 3 Then Error.Raise("Delete did not cascade exact live set")
+  For Each r
+    If r!actor <> "delete-editor" Or r!deleted_at <= 0 Then Error.Raise("Delete lost actor/time")
+  Next
+  r = KanbanStore.Lists(boardId, "Default")
+  If r.Count <> 2 Then Error.Raise("Deleted list is visible")
+  r = KanbanStore.Cards(boardId)
+  If r.Count <> 1 Or r!id <> parent Then Error.Raise("Deleted cards are visible")
+  r = KanbanStore.Cards(boardId, True)
+  If r.Count Then Error.Raise("Deleted archived card is visible in Archive")
+  Try BoardAccess.RequireCard(boardId, a)
+  denied = Error
+  If Not denied Then Error.Raise("Direct deleted-card access accepted")
+  Try WorkspaceStore.Record(boardId, "list", listId)
+  denied = Error
+  If Not denied Then Error.Raise("Direct deleted-list edit accepted")
+  Try KanbanStore.SaveCard(boardId, 0, "Stale creation", "", "Default", "Todo", "", "", "", listId)
+  denied = Error
+  If Not denied Then Error.Raise("Stale form added a card to a deleted list")
+  Try WorkspaceActions.Move(boardId, "card", parent, boardId, "Default", listId)
+  denied = Error
+  If Not denied Then Error.Raise("Move entered deleted list")
+  r = CardContent.Entries(boardId, parent, "dependency")
+  If r.Count Then Error.Raise("Deleted relationship target leaked")
+  text = BoardTransfer.ExportData(boardId, "board", boardId)
+  If InStr(text, "Active child") Or InStr(text, "Earlier deletion") Or InStr(text, "Archived child") Then Error.Raise("Export leaked deleted cards")
+  CheckFailure("CREATE TRIGGER list_inject BEFORE DELETE ON kb_deleted_items WHEN OLD.kind='card' AND OLD.item_id=" & Str(b) & " BEGIN SELECT RAISE(ABORT,'second restore failed'); END", boardId, listId, True)
+  CheckFailure("CREATE TRIGGER list_inject AFTER DELETE ON kb_deleted_items WHEN OLD.kind='card' AND OLD.item_id=" & Str(a) & " BEGIN UPDATE kb_deleted_items SET batch_id=88888 WHERE board_id=" & Str(boardId) & " AND item_id=" & Str(b) & " AND kind='card'; END", boardId, listId, True)
+  ListDeletion.Restore(boardId, listId)
+  If ListDeletion.IsDeleted(boardId, "list", listId) Or ListDeletion.IsDeleted(boardId, "card", a) Or ListDeletion.IsDeleted(boardId, "card", b) Then Error.Raise("Restore missed batch members")
+  If Not ListDeletion.IsDeleted(boardId, "card", prior) Then Error.Raise("Restore revived an earlier deletion")
+  If Not WorkspaceStore.Archived(boardId, "card", b) Then Error.Raise("Restore changed archive state")
+  r = CardContent.Entries(boardId, parent, "dependency")
+  If r.Count <> 1 Or r!id <> relation Then Error.Raise("Restore lost relationship")
+  nextBatch = ListDeletion.SoftRemove(boardId, listId)
+  If nextBatch <= batchId Then Error.Raise("Restore reused a committed batch ID")
+  before = Snapshot()
+  Try WorkspaceActions.PurgeList(boardId, listId)
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Normal writer bypassed purge gate")
+  SignIn("delete-global")
+  RecoveryStore.SetEnabled(True)
+  CheckPurgeFailure("CREATE TRIGGER list_inject AFTER DELETE ON kb_cards WHEN OLD.id=" & Str(a) & " BEGIN UPDATE recovery_settings SET permanent_delete=0 WHERE id=1; END", boardId, listId)
+  CheckPurgeFailure("CREATE TRIGGER list_inject BEFORE INSERT ON recovery_events WHEN NEW.done=1 BEGIN SELECT RAISE(ABORT,'purge audit failed'); END", boardId, listId)
+  WorkspaceActions.PurgeList(boardId, listId)
+  r = db.Find("kb_lists", "board_id=&1 AND id=&2", boardId, listId)
+  If r.Count Then Error.Raise("Purged list remains")
+  r = db.Find("kb_cards", "board_id=&1 AND (id=&2 OR id=&3)", boardId, a, b)
+  If r.Count Then Error.Raise("Purge missed same-batch cards")
+  r = db.Find("kb_cards", "board_id=&1 AND id=&2", boardId, prior)
+  If r.Count <> 1 Then Error.Raise("Purge removed a prior independent deletion")
+  r = db.Find("kb_files", "board_id=&1", boardId)
+  If r.Count Then Error.Raise("Purge left file bytes")
+  r = db.Find("kb_entries", "board_id=&1 AND id=&2", boardId, relation)
+  If r.Count Then Error.Raise("Purge left relationship to deleted card")
+  SignIn("delete-owner")
+  KanbanStore.ArchiveBoard(boardId, True)
+  SignIn("delete-global")
+  BoardPurge.DeleteBoards([boardId])
+  SignIn("delete-owner")
+  boardId = KanbanStore.AddBoard("Batch allocator survives purge")
+  r = KanbanStore.Lanes(boardId)
+  r = KanbanStore.Lists(boardId, "Default")
+  If ListDeletion.SoftRemove(boardId, r!id) <= nextBatch Then Error.Raise("Board purge reused a committed deletion batch ID")
+  Print "List deletion: one actor/time/batch, exact active+archived cascade, idempotency, hidden reads/exports/relations/destinations, exact restore, preserved bytes/state, write/state and purge/audit rollback passed"
+End
+
+Private Sub CheckFailure(sql As String, boardId As Integer, listId As Integer, restore As Boolean)
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim before As String = Snapshot()
+  Dim denied As Boolean
+  db.Exec(sql)
+  If restore Then
+    Try ListDeletion.Restore(boardId, listId)
+  Else
+    Try ListDeletion.SoftRemove(boardId, listId)
+  Endif
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Delete/restore injection did not roll back: " & sql)
+  db.Exec("DROP TRIGGER list_inject")
+End
+
+Private Sub CheckPurgeFailure(sql As String, boardId As Integer, listId As Integer)
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim before As String = Snapshot()
+  Dim denied As Boolean
+  db.Exec(sql)
+  Try WorkspaceActions.PurgeList(boardId, listId)
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Purge injection did not roll back: " & sql)
+  db.Exec("DROP TRIGGER list_inject")
+End
+
+Private Function Snapshot() As String
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim data As New Variant[]
+  Dim rows As Variant[]
+  Dim row As Collection
+  Dim r As Result
+  Dim tableName As String
+  Dim field As String
+  Dim fields As String[]
+  For Each tableName In ["kb_deleted_items", "kb_delete_batches", "kb_delete_batch_ids", "kb_cards", "kb_lists", "kb_files", "kb_entries", "kb_item_changes", "kb_members", "kb_activity", "recovery_settings"]
+    Select tableName
+      Case "kb_deleted_items"
+        fields = ["board_id", "kind", "item_id", "batch_id", "actor", "deleted_at"]
+      Case "kb_delete_batches"
+        fields = ["id", "board_id", "list_id", "actor", "deleted_at"]
+      Case "kb_delete_batch_ids"
+        fields = ["id", "allocated"]
+      Case "kb_cards"
+        fields = ["id", "board_id", "title", "description", "archived"]
+      Case "kb_lists"
+        fields = ["id", "board_id", "title", "lane", "sort_order"]
+      Case "kb_files"
+        fields = ["id", "board_id", "card_id", "filename"]
+      Case "kb_entries"
+        fields = ["id", "board_id", "card_id", "kind", "amount"]
+      Case "kb_item_changes"
+        fields = ["board_id", "kind", "item_id", "modified_ms"]
+      Case "kb_members"
+        fields = ["board_id", "username", "role"]
+      Case "kb_activity"
+        fields = ["id", "board_id", "actor", "message"]
+      Case "recovery_settings"
+        fields = ["id", "permanent_delete"]
+    End Select
+    rows = New Variant[]
+    r = db.Find(tableName)
+    For Each r
+      row = New Collection
+      For Each field In fields
+        row.Add(r[field], field)
+      Next
+      If tableName = "kb_files" Then row.Add(Base64(r!content.Data), "bytes")
+      rows.Add(row)
+    Next
+    data.Add(rows)
+  Next
+  Return JSON.Encode(data)
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

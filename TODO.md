@@ -85,8 +85,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   UI callbacks. Native multi-selection controls, retained visible-page selection
   and revisioned authoritative multi-drop transport are recorded in CHANGELOG.md.
   Native form tests do not execute the original Latin callback unchanged.
-  Card/list/swimlane permanent-removal source gate/soft-delete parity,
-  full Recovery schema/report/filter parity and non-SQLite driver verification
+  Card/swimlane/attachment/discussion deletion and full history/undo parity,
+  deleted-list local caption translations, full Recovery schema/report/filter parity and non-SQLite driver verification
   remain open beyond the native durable purge/settings audit in CHANGELOG.md.
 
 - Documented header menu lifecycle and stable shared styles, delayed stylesheet/
@@ -733,8 +733,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Implemented comments, checklists/items, real subtasks, dependencies, typed
   card fields, manual time records/timers and binary attachments. Rich copies
   remap internal relationships; running timers are not copied.
-- Implemented cross-board card/list/swimlane moves and archived permanent
-  deletion with exact-title confirmation. Moves spanning only part of a card
+- Implemented cross-board card/list/swimlane moves. Legacy archived card/lane
+  physical removal now requires the global purge flag and exact-title confirmation;
+  list deletion/restore and gated deleted-list purge are recorded in CHANGELOG.md. Moves spanning only part of a card
   relationship are rejected; move the complete linked group or remove the link.
 - Implemented weba-2 JSON export/import with empty layouts, ordering, archived
   cards, metadata and rich content. Imports create a new owned board atomically;

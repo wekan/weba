@@ -65,6 +65,75 @@
       Tooltip = ("Show or hide page sidebar")
     }
   }
+  { DeleteListPanel WebContainer
+    Class = "weba-action-panel"
+    Arrangement = Arrange.Vertical
+    Width = "340px"
+    Visible = False
+    Ignore = True
+    Spacing = True
+    { CloseDeleteList WebButton
+      Class = "weba-icon-only weba-popup-close fa fa-times-thin"
+      Tooltip = ("Close")
+    }
+    { DeleteListHeading WebLabel
+      Text = ("Delete")
+    }
+    { DeleteListName WebLabel
+      Class = "weba-user-text"
+    }
+    { DeleteListHint WebLabel
+      Text = ("The list and its cards can be restored from Deleted lists.")
+    }
+    { DeleteListConfirmed WebCheckBox
+      Text = ("Delete")
+    }
+    { ConfirmDeleteList WebButton
+      Text = ("Delete")
+    }
+  }
+  { DeletedListsPanel WebContainer
+    Class = "weba-action-panel"
+    Arrangement = Arrange.Vertical
+    Width = "360px"
+    Visible = False
+    Ignore = True
+    Spacing = True
+    { CloseDeletedLists WebButton
+      Class = "weba-icon-only weba-popup-close fa fa-times-thin"
+      Tooltip = ("Close")
+    }
+    { DeletedListsHeading WebLabel
+      Text = ("Deleted lists")
+    }
+    { DeletedListTree WebTree
+      Height = "230px"
+      Class = "weba-user-text"
+    }
+    { SelectedDeletedList WebLabel
+      Class = "weba-user-text"
+    }
+    { RestoreDeletedList WebButton
+      Text = ("Restore")
+      Visible = False
+    }
+    { PurgeDeletedList WebButton
+      Text = ("Delete permanently")
+      Class = "weba-purge-selected"
+      Visible = False
+    }
+    { DeletedListPurgePanel WebContainer
+      Arrangement = Arrange.Vertical
+      Visible = False
+      { DeletedListPurgeConfirmed WebCheckBox
+        Text = ("All lists, cards, labels, and activities will be deleted and you won't be able to recover the board contents. There is no undo.")
+      }
+      { ConfirmDeletedListPurge WebButton
+        Text = ("Delete")
+        Class = "weba-purge-selected"
+      }
+    }
+  }
   { WorkspacePanel WebContainer
     Class = "weba-action-panel weba-space-panel"
     Arrangement = Arrange.Vertical
@@ -832,6 +901,9 @@
         }
         { BoardSettings WebButton
           Text = ("Board settings")
+        }
+        { DeletedLists WebButton
+          Text = ("Deleted lists")
         }
         { ArchivedItems WebButton
           Text = ("Archived items")
