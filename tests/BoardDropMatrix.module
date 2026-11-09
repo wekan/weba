@@ -1,35 +1,56 @@
 Public Sub Main()
+  Dim firstBoard As Integer
+  Dim secondBoard As Integer
   Dim boardId As Integer
   Dim firstSpace As Integer
   Dim targetSpace As Integer
+  Dim ids As Integer[]
+  Dim archived As Boolean
   Dim results As New Variant[]
   Dim testCase As Collection
   Dim row As Collection
   WebDatabase.Register("board-drop-matrix", "x")
   Session["username"] = "board-drop-matrix"
   Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
-  boardId = KanbanStore.AddBoard("Drop matrix board")
+  firstBoard = KanbanStore.AddBoard("Drop matrix Alpha")
+  secondBoard = KanbanStore.AddBoard("Drop matrix Bravo")
   firstSpace = BoardSpaces.Add("Original placement")
   targetSpace = BoardSpaces.Add("Drop target")
   For Each testCase In JSON.Decode(File.Load(".public/board-drop-cases.json"))
-    BoardSpaces.Assign(boardId, If(testCase["assigned"], firstSpace, 0))
-    WorkspaceStore.SetSetting(boardId, "board", boardId, "star", If(testCase["starred"], "1", "0"))
-    WorkspaceStore.SetArchived(boardId, "board", boardId, testCase["source"] = "archive")
+    ids = [firstBoard]
+    If testCase["multi"] Then ids.Add(secondBoard)
+    For Each boardId In ids
+      BoardSpaces.Assign(boardId, If(testCase["assigned"], firstSpace, 0))
+      WorkspaceStore.SetSetting(boardId, "board", boardId, "star", If(testCase["starred"], "1", "0"))
+      archived = testCase["source"] = "archive"
+      If testCase["mixed"] And boardId = secondBoard Then archived = Not archived
+      WorkspaceStore.SetArchived(boardId, "board", boardId, archived)
+    Next
     row = New Collection
-    row["boardId"] = CStr(boardId)
+    row["boardIds"] = ids
     row["spaceId"] = CStr(targetSpace)
-    row["before"] = Snapshot(boardId)
-    BoardSpaces.DropBoard(boardId, testCase["target"], If(testCase["target"] = "workspace", targetSpace, 0), testCase["source"])
-    row["after"] = Snapshot(boardId)
+    row["before"] = Snapshot(ids)
+    If testCase["multi"] Then
+      BoardSpaces.DropBoards(ids, testCase["target"], If(testCase["target"] = "workspace", targetSpace, 0), testCase["source"])
+    Else
+      BoardSpaces.DropBoard(firstBoard, testCase["target"], If(testCase["target"] = "workspace", targetSpace, 0), testCase["source"])
+    Endif
+    row["after"] = Snapshot(ids)
     results.Add(row)
   Next
   Print JSON.Encode(results)
 End
 
-Private Function Snapshot(boardId As Integer) As Collection
-  Dim row As New Collection
-  row["archived"] = WorkspaceStore.Archived(boardId, "board", boardId)
-  row["starred"] = WorkspaceStore.Setting(boardId, "board", boardId, "star") = "1"
-  row.Add(CStr(BoardSpaces.Assignments()[CStr(boardId)]), "assignment")
-  Return row
+Private Function Snapshot(ids As Integer[]) As Collection
+  Dim data As New Collection
+  Dim row As Collection
+  Dim boardId As Integer
+  For Each boardId In ids
+    row = New Collection
+    row["archived"] = WorkspaceStore.Archived(boardId, "board", boardId)
+    row["starred"] = WorkspaceStore.Setting(boardId, "board", boardId, "star") = "1"
+    row.Add(CStr(BoardSpaces.Assignments()[CStr(boardId)]), "assignment")
+    data[CStr(boardId)] = row
+  Next
+  Return data
 End

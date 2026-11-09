@@ -319,7 +319,27 @@ Public Sub DropBoard(boardId As Integer, target As String, spaceId As Integer, s
   Dim r As Result
   Dim transaction As Boolean
   Dim failure As String
-  If boardId <= 0 Or spaceId < 0 Then Error.Raise("Invalid board drop")
+  If boardId <= 0 Then Error.Raise("Invalid board drop")
+  ValidateDropContext(username, target, spaceId, source)
+  WorkspaceStore.OpenStore()
+  BoardAccess.OpenStore()
+  CheckBoardDrop(boardId, target, source)
+  username = BeginChange()
+  transaction = True
+  $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+  board = CheckBoardDrop(boardId, target, source)
+  If target = "workspace" Then Node(spaceId, username)
+  ApplyBoardDrop(username, boardId, target, spaceId, CBool(board!archived))
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+Private Sub ValidateDropContext(username As String, target As String, spaceId As Integer, source As String)
+  If spaceId < 0 Then Error.Raise("Invalid board drop")
   If target <> "workspace" And target <> "remaining" And target <> "starred" And target <> "archive" Then Error.Raise("Invalid board drop")
   If source <> "workspace" And source <> "remaining" And source <> "starred" And source <> "archive" Then Error.Raise("Invalid board drop")
   If target = "workspace" Then
@@ -330,19 +350,85 @@ Public Sub DropBoard(boardId As Integer, target As String, spaceId As Integer, s
   Endif
   If target = "starred" And source <> "remaining" And source <> "workspace" Then Error.Raise("Invalid board drop")
   If target = "archive" And source = "archive" Then Error.Raise("Invalid board drop")
+End
+
+Public Sub DropBoards(ids As Integer[], target As String, spaceId As Integer, source As String)
+  Dim username As String = Principal()
+  Dim uniqueIds As New Collection
+  Dim states As New Collection
+  Dim locks As Integer[]
+  Dim boardId As Integer
+  Dim board As Result
+  Dim transaction As Boolean
+  Dim failure As String
+  If Not ids Then Error.Raise("You did not select any boards.")
+  If ids.Count = 0 Then Error.Raise("You did not select any boards.")
+  ValidateDropContext(username, target, spaceId, source)
   WorkspaceStore.OpenStore()
   BoardAccess.OpenStore()
-  CheckBoardDrop(boardId, target, source)
+  For Each boardId In ids
+    If boardId <= 0 Or uniqueIds.Exist(CStr(boardId)) Then Error.Raise("Invalid board drop")
+    uniqueIds[CStr(boardId)] = True
+    board = CheckBatchBoard(boardId, target)
+    states[CStr(boardId)] = CBool(board!archived)
+  Next
+  locks = ids.Copy()
+  locks.Sort()
   username = BeginChange()
   transaction = True
-  $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
-  board = CheckBoardDrop(boardId, target, source)
+  For Each boardId In locks
+    $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+  Next
+  ' Validate the whole locked batch before applying any archive or preference.
+  For Each boardId In locks
+    board = CheckBatchBoard(boardId, target)
+    If CBool(board!archived) <> CBool(states[CStr(boardId)]) Then Error.Raise("Board archive state changed")
+  Next
   If target = "workspace" Then Node(spaceId, username)
+  For Each boardId In ids
+    If WebIdentity.Username <> username Then Error.Raise("Sign in required")
+    board = CheckBatchBoard(boardId, target)
+    If CBool(board!archived) <> CBool(states[CStr(boardId)]) Then Error.Raise("Board archive state changed")
+    If target = "workspace" Then Node(spaceId, username)
+    ApplyBoardDrop(username, boardId, target, spaceId, CBool(states[CStr(boardId)]))
+  Next
+  If WebIdentity.Username <> username Then Error.Raise("Sign in required")
+  If target = "workspace" Then Node(spaceId, username)
+  For Each boardId In locks
+    board = CheckBatchBoard(boardId, target)
+    If (target = "workspace" Or target = "remaining") And CBool(states[CStr(boardId)]) Then BoardAccess.Require(boardId, "manageBoard")
+    If target = "archive" Then
+      If Not CBool(board!archived) Then Error.Raise("Board archive state changed")
+    Else If target = "workspace" Or target = "remaining" Then
+      If CBool(board!archived) Then Error.Raise("Board archive state changed")
+    Else
+      If CBool(board!archived) <> CBool(states[CStr(boardId)]) Then Error.Raise("Board archive state changed")
+    Endif
+  Next
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+Private Function CheckBatchBoard(boardId As Integer, target As String) As Result
+  Dim board As Result
+  BoardAccess.RequireRead(boardId)
+  board = $db.Find("kb_boards", "id=&1", boardId)
+  If Not board.Available Then Error.Raise("Board not accessible")
+  If target = "archive" Or ((target = "workspace" Or target = "remaining") And CBool(board!archived)) Then BoardAccess.Require(boardId, "manageBoard")
+  Return board
+End
+
+Private Sub ApplyBoardDrop(username As String, boardId As Integer, target As String, spaceId As Integer, archived As Boolean)
+  Dim r As Result
   Select target
     Case "archive"
-      KanbanStore.ArchiveBoard(boardId, True)
+      If Not archived Then KanbanStore.ArchiveBoard(boardId, True)
     Case "workspace", "remaining"
-      If source = "archive" Then KanbanStore.ArchiveBoard(boardId, False)
+      If archived Then KanbanStore.ArchiveBoard(boardId, False)
       AssignWithin(username, boardId, spaceId)
     Case "starred"
       If WorkspaceStore.Setting(boardId, "board", boardId, "star") <> "1" Then
@@ -359,12 +445,6 @@ Public Sub DropBoard(boardId As Integer, target As String, spaceId As Integer, s
         r.Update()
       Endif
   End Select
-  DatabaseTransactions.Commit($db)
-  transaction = False
-Catch
-  failure = Error.Text
-  If transaction Then Try DatabaseTransactions.Rollback($db)
-  Error.Raise(failure)
 End
 
 Private Function CheckBoardDrop(boardId As Integer, target As String, source As String) As Result

@@ -1,4 +1,8 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Native board batch service: Add mixed active/archive all-or-none drops with
+  stable lock order and full-set/per-effect/precommit scope checks. Verify SQL
+  order, partial failure and last-effect authorization rollback, and 156 original
+  callback outcomes. Native selection UI/transport are not yet connected.
 - Documentation: Explain single-board targets, atomic restore and permission
   rechecks with native/source/browser evidence; retain multi/Home/full parity.
 - Board drops: Add single-board workspace/Remaining/add-only Starred/Archive

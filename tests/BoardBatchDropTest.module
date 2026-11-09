@@ -1,0 +1,252 @@
+Public Sub Main()
+  Dim a As Integer
+  Dim b As Integer
+  Dim hidden As Integer
+  Dim spaceId As Integer
+  Dim secondSpace As Integer
+  Dim readerSpace As Integer
+  Dim readerTarget As Integer
+  Dim foreignSpace As Integer
+  Dim ids As Integer[]
+  Dim emptyIds As New Integer[]
+  Dim db As Connection
+  Dim before As String
+  Dim inputOrder As String
+  Dim denied As Boolean
+  WebDatabase.Register("batch-owner", "x")
+  WebDatabase.Register("batch-reader", "x")
+  WebDatabase.Register("batch-other", "x")
+  SignIn("batch-other")
+  hidden = KanbanStore.AddBoard("Foreign hidden batch board")
+  foreignSpace = BoardSpaces.Add("Foreign target")
+  SignIn("batch-owner")
+  a = KanbanStore.AddBoard("Batch Alpha")
+  b = KanbanStore.AddBoard("Batch Bravo")
+  BoardAccess.SetMember(a, "batch-reader", "read-only")
+  BoardAccess.SetMember(b, "batch-reader", "read-only")
+  spaceId = BoardSpaces.Add("Owner old")
+  secondSpace = BoardSpaces.Add("Owner new")
+  ids = [b, a]
+  inputOrder = JSON.Encode(ids)
+  CheckLockOrder(ids, a, b, spaceId)
+  If JSON.Encode(ids) <> inputOrder Then Error.Raise("Batch sorted caller's input")
+  BoardSpaces.DropBoards(ids, "starred", 0, "workspace")
+  If WorkspaceStore.Setting(a, "board", a, "star") <> "1" Or WorkspaceStore.Setting(b, "board", b, "star") <> "1" Then Error.Raise("Batch missed a personal star")
+  before = Snapshot()
+  Try BoardSpaces.DropBoards(emptyIds, "remaining", 0, "workspace")
+  denied = Error
+  If Not denied Or Error.Text <> "You did not select any boards." Then Error.Raise("Empty batch accepted or wrong message")
+  Try BoardSpaces.DropBoards(Null, "remaining", 0, "workspace")
+  denied = Error
+  If Not denied Then Error.Raise("Null batch accepted")
+  Try BoardSpaces.DropBoards([a, a], "remaining", 0, "workspace")
+  denied = Error
+  If Not denied Then Error.Raise("Duplicate batch IDs accepted")
+  Try BoardSpaces.DropBoards([a, 0], "remaining", 0, "workspace")
+  denied = Error
+  If Not denied Then Error.Raise("Invalid batch ID accepted")
+  Try BoardSpaces.DropBoards([a, hidden], "remaining", 0, "workspace")
+  denied = Error
+  If Not denied Then Error.Raise("Site admin batch read bypass")
+  Try BoardSpaces.DropBoards([a, b], "workspace", foreignSpace, "workspace")
+  denied = Error
+  If Not denied Then Error.Raise("Foreign batch target accepted")
+  If Snapshot() <> before Then Error.Raise("Invalid batch wrote partial data")
+  db = WebDatabase.OpenConnection()
+  db.Exec("CREATE TRIGGER repeat_batch_star BEFORE UPDATE ON kb_user_meta BEGIN SELECT RAISE(ABORT,'repeat batch star wrote'); END")
+  BoardSpaces.DropBoards(ids, "starred", 0, "workspace")
+  db.Exec("DROP TRIGGER repeat_batch_star")
+  BoardSpaces.DropBoard(b, "archive", 0, "workspace")
+  CheckPlacementFailure(a, b, secondSpace, "workspace")
+  CheckPlacementFailure(a, b, 0, "remaining")
+  BoardSpaces.DropBoards([a, b], "workspace", secondSpace, "remaining")
+  If WorkspaceStore.Archived(a, "board", a) Or WorkspaceStore.Archived(b, "board", b) Then Error.Raise("Mixed batch failed to restore archived member")
+  CheckArchiveFailure(a, b)
+  BoardSpaces.DropBoard(a, "archive", 0, "workspace")
+  BoardSpaces.DropBoards([a, b], "archive", 0, "workspace")
+  If Not WorkspaceStore.Archived(a, "board", a) Or Not WorkspaceStore.Archived(b, "board", b) Then Error.Raise("Mixed idempotent archive failed")
+  BoardSpaces.DropBoards([a, b], "remaining", 0, "archive")
+  SignIn("batch-reader")
+  readerSpace = BoardSpaces.Add("Reader old")
+  readerTarget = BoardSpaces.Add("Reader new")
+  BoardSpaces.DropBoards([a, b], "workspace", readerSpace, "remaining")
+  BoardSpaces.DropBoards([a, b], "starred", 0, "workspace")
+  CheckLate(a, b, readerTarget, False)
+  CheckLate(a, b, readerTarget, True)
+  CheckTargetChange(a, b, readerTarget)
+  CheckFinalChange(a, b, readerTarget, False)
+  CheckFinalChange(a, b, readerTarget, True)
+  SignIn("batch-owner")
+  If BoardSpaces.Assignments().Count Then Error.Raise("Reader overwrote owner's placement")
+  CheckLateRestoreRole(a, b)
+  BoardSpaces.DropBoard(b, "archive", 0, "remaining")
+  SignIn("batch-reader")
+  before = Snapshot()
+  Try BoardSpaces.DropBoards([a, b], "remaining", 0, "workspace")
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Readonly mixed restore was partial")
+  BoardSpaces.DropBoards([a, b], "starred", 0, "workspace")
+  If Not WorkspaceStore.Archived(b, "board", b) Then Error.Raise("Personal star restored an archived board")
+  SignIn("batch-owner")
+  BoardAccess.SetMember(b, "batch-reader", "board-admin")
+  SignIn("batch-reader")
+  If BoardAccess.Can(a, "manageBoard") Then Error.Raise("Mixed permission fixture lost readonly member")
+  BoardSpaces.DropBoards([a, b], "workspace", readerTarget, "archive")
+  If WorkspaceStore.Archived(b, "board", b) Or BoardSpaces.Assignments()[CStr(a)] <> CStr(readerTarget) Or BoardSpaces.Assignments()[CStr(b)] <> CStr(readerTarget) Then Error.Raise("Mixed readable/manager batch required excessive permission")
+  Session["auth_generation"] = 0
+  Try BoardSpaces.DropBoards([a, b], "remaining", 0, "workspace")
+  denied = Error
+  If Not denied Then Error.Raise("Stale batch session wrote")
+  Print "Board batch drops: mixed active/archive, stable input and sorted locks, full-set/per-effect scope checks, empty/duplicate/foreign/stale denial, partial placement/archive rollback, late member/target guards and personal isolation passed"
+End
+
+Private Sub CheckLockOrder(ids As Integer[], a As Integer, b As Integer, spaceId As Integer)
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim r As Result
+  Dim seen As New Integer[]
+  db.Exec("CREATE TABLE batch_lock_trace (seq INTEGER PRIMARY KEY, board_id INTEGER)")
+  db.Exec("CREATE TRIGGER trace_batch_locks AFTER UPDATE ON kb_boards BEGIN INSERT INTO batch_lock_trace(board_id) VALUES(NEW.id); END")
+  BoardSpaces.DropBoards(ids, "workspace", spaceId, "remaining")
+  r = db.Find("batch_lock_trace", "seq>0 ORDER BY seq")
+  For Each r
+    seen.Add(r!board_id)
+  Next
+  If JSON.Encode(seen) <> JSON.Encode([a, b]) Then Error.Raise("Batch board locks did not use stable numeric order")
+  db.Exec("DROP TRIGGER trace_batch_locks")
+  db.Exec("DROP TABLE batch_lock_trace")
+End
+
+Private Sub CheckPlacementFailure(a As Integer, b As Integer, spaceId As Integer, target As String)
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim before As String = Snapshot()
+  Dim denied As Boolean
+  If target = "workspace" Then
+    db.Exec("CREATE TRIGGER fail_batch_placement BEFORE UPDATE ON kb_board_space_assignments WHEN NEW.board_id=" & CStr(b) & " BEGIN SELECT RAISE(ABORT,'second placement failed'); END")
+  Else
+    db.Exec("CREATE TRIGGER fail_batch_placement BEFORE DELETE ON kb_board_space_assignments WHEN OLD.board_id=" & CStr(b) & " BEGIN SELECT RAISE(ABORT,'second unassign failed'); END")
+  Endif
+  Try BoardSpaces.DropBoards([a, b], target, spaceId, "workspace")
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Partial batch placement/restore was committed")
+  db.Exec("DROP TRIGGER fail_batch_placement")
+End
+
+Private Sub CheckArchiveFailure(a As Integer, b As Integer)
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim before As String = Snapshot()
+  Dim denied As Boolean
+  db.Exec("CREATE TRIGGER fail_batch_archive BEFORE INSERT ON kb_activity WHEN NEW.board_id=" & CStr(b) & " BEGIN SELECT RAISE(ABORT,'second archive activity failed'); END")
+  Try BoardSpaces.DropBoards([a, b], "archive", 0, "workspace")
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Partial batch archive was committed")
+  db.Exec("DROP TRIGGER fail_batch_archive")
+End
+
+Private Sub CheckLate(a As Integer, b As Integer, target As Integer, duringApply As Boolean)
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim before As String = Snapshot()
+  Dim denied As Boolean
+  If duringApply Then
+    db.Exec("CREATE TRIGGER late_batch_member AFTER UPDATE ON kb_board_space_assignments WHEN NEW.board_id=" & CStr(a) & " AND NEW.username='batch-reader' BEGIN INSERT INTO kb_removed_members(board_id,username,role) VALUES(" & CStr(b) & ",'batch-reader','read-only'); END")
+  Else
+    db.Exec("CREATE TRIGGER late_batch_member AFTER UPDATE ON kb_boards WHEN NEW.id=" & CStr(a) & " BEGIN INSERT INTO kb_removed_members(board_id,username,role) VALUES(" & CStr(b) & ",'batch-reader','read-only'); END")
+  Endif
+  Try BoardSpaces.DropBoards([a, b], "workspace", target, "workspace")
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Late batch membership loss bypassed scope/rollback")
+  db.Exec("DROP TRIGGER late_batch_member")
+  BoardAccess.RequireRead(b)
+End
+
+Private Sub CheckTargetChange(a As Integer, b As Integer, target As Integer)
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim before As String = Snapshot()
+  Dim denied As Boolean
+  db.Exec("CREATE TRIGGER late_batch_target AFTER UPDATE ON kb_board_space_assignments WHEN NEW.board_id=" & CStr(a) & " AND NEW.username='batch-reader' BEGIN UPDATE kb_board_spaces SET username='batch-other' WHERE id=" & CStr(target) & "; END")
+  Try BoardSpaces.DropBoards([a, b], "workspace", target, "workspace")
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Late batch target loss bypassed scope/rollback")
+  db.Exec("DROP TRIGGER late_batch_target")
+  BoardSpaces.Record(target)
+End
+
+Private Sub CheckFinalChange(a As Integer, b As Integer, target As Integer, membership As Boolean)
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim before As String = Snapshot()
+  Dim denied As Boolean
+  If membership Then
+    db.Exec("CREATE TRIGGER final_batch_scope AFTER UPDATE ON kb_board_space_assignments WHEN NEW.board_id=" & CStr(b) & " AND NEW.username='batch-reader' BEGIN INSERT INTO kb_removed_members(board_id,username,role) VALUES(" & CStr(a) & ",'batch-reader','read-only'); END")
+  Else
+    db.Exec("CREATE TRIGGER final_batch_scope AFTER UPDATE ON kb_board_space_assignments WHEN NEW.board_id=" & CStr(b) & " AND NEW.username='batch-reader' BEGIN UPDATE kb_board_spaces SET username='batch-other' WHERE id=" & CStr(target) & "; END")
+  Endif
+  Try BoardSpaces.DropBoards([a, b], "workspace", target, "workspace")
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Final-effect scope change bypassed batch commit guard")
+  db.Exec("DROP TRIGGER final_batch_scope")
+  BoardAccess.RequireRead(a)
+  BoardSpaces.Record(target)
+End
+
+Private Sub CheckLateRestoreRole(a As Integer, b As Integer)
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim before As String
+  Dim denied As Boolean
+  BoardAccess.SetMember(a, "batch-reader", "board-admin")
+  BoardAccess.SetMember(b, "batch-reader", "board-admin")
+  BoardSpaces.DropBoards([a, b], "archive", 0, "remaining")
+  SignIn("batch-reader")
+  before = Snapshot()
+  db.Exec("CREATE TRIGGER final_restore_role AFTER INSERT ON kb_activity WHEN NEW.board_id=" & CStr(b) & " AND NEW.actor='batch-reader' BEGIN UPDATE kb_members SET role='read-only' WHERE board_id=" & CStr(a) & " AND username='batch-reader'; END")
+  Try BoardSpaces.DropBoards([a, b], "remaining", 0, "archive")
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Final restore role loss bypassed manager guard")
+  db.Exec("DROP TRIGGER final_restore_role")
+  BoardAccess.Require(a, "manageBoard")
+  SignIn("batch-owner")
+  BoardSpaces.DropBoards([a, b], "remaining", 0, "archive")
+  BoardAccess.SetMember(a, "batch-reader", "read-only")
+  BoardAccess.SetMember(b, "batch-reader", "read-only")
+End
+
+Private Function Snapshot() As String
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim data As New Variant[]
+  Dim rows As Variant[]
+  Dim row As Collection
+  Dim r As Result
+  Dim tableName As String
+  Dim field As String
+  Dim fields As String[]
+  For Each tableName In ["kb_boards", "kb_board_space_assignments", "kb_user_meta", "kb_activity", "kb_removed_members", "kb_members", "kb_board_spaces"]
+    Select tableName
+      Case "kb_boards"
+        fields = ["id", "owner", "title", "archived"]
+      Case "kb_board_space_assignments"
+        fields = ["username", "board_id", "space_id"]
+      Case "kb_user_meta"
+        fields = ["board_id", "kind", "item_id", "username", "setting", "value"]
+      Case "kb_activity"
+        fields = ["id", "board_id", "actor", "message", "created_at"]
+      Case "kb_removed_members", "kb_members"
+        fields = ["board_id", "username", "role"]
+      Case "kb_board_spaces"
+        fields = ["id", "username", "parent_id", "name", "icon", "sort_order"]
+    End Select
+    rows = New Variant[]
+    r = db.Find(tableName)
+    For Each r
+      row = New Collection
+      For Each field In fields
+        row.Add(r[field], field)
+      Next
+      rows.Add(row)
+    Next
+    data.Add(rows)
+  Next
+  Return JSON.Encode(data)
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

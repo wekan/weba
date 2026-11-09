@@ -2,6 +2,15 @@
 
 This work adds the following features and fixes:
 
+- Add the native atomic DropBoards service for mixed active/archive selections.
+  Preserve input order and acquire sorted board locks; validate the full set,
+  each effect and final identity/target/read/manage/state before commit. Share
+  mutation primitives with single drops. Verify SQL lock order, partial failure
+  rollback/retry, late/final membership/target/restore-role denial and personal
+  isolation. Expand original callback outcome comparison to 156 single/multi/
+  mixed cases. Selection UI and multi-drop transport remain in progress.
+  Thanks to xet7.
+
 - Document single-board drop targets, sorted placement, atomic restoration and
   scope guards, with native failure/late checks, 52 original callback outcomes
   and source/packaged browser evidence. Retain multi/Home/full-suite limits.

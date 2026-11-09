@@ -67,8 +67,18 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   late-owner/state tests, 52 original callback-body outcome comparisons and real
   source/packaged mouse/trusted touch, readonly/cancel/private/reserved/reload
   browser checks cover the implemented single-board path.
-- In progress: multi-board selection and drops, Home/group targets, Markdown
-  icon rendering and complete original All Boards workspace/UI callbacks.
+- Completed the native DropBoards transaction service for retained selections
+  containing active and archived boards. Preserve caller order while locking
+  sorted IDs; validate all boards before effects, each effect and final commit.
+  Guard current identity, readable scope, restore/archive roles, state and owned
+  target. Native SQL tests cover partial rollback/retry, mixed roles/states,
+  last-effect membership/target/restore-role loss and observed lock order.
+  Original callback outcome comparisons expand from 52 to 156 single/multi/mixed
+  cases. This service is not yet connected to native selection controls or a new
+  public HTTP route; existing single-board browser regressions remain separate.
+- In progress: native board multi-selection controls, visible-page Select All,
+  retained selection and authoritative multi-drop transport, followed by batch
+  sidebar actions, Home/group targets, Markdown icons and original UI callbacks.
   Native form tests do not execute the original Latin callback unchanged.
 
 - Documented header menu lifecycle and stable shared styles, delayed stylesheet/

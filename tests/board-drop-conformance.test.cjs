@@ -11,7 +11,7 @@ function callback(signature,context){const start=raw.indexOf(signature),end=raw.
 const cases=[];
 for(const source of ['remaining','workspace','starred','archive'])for(const target of ['workspace','remaining','starred','archive']){
  if(target==='starred'&&!['remaining','workspace'].includes(source)||target==='archive'&&source==='archive')continue;
- for(const assigned of [false,true])for(const starred of [false,true])cases.push({source,target,assigned,starred});
+ for(const assigned of [false,true])for(const starred of [false,true])for(const flags of [{multi:false,mixed:false},{multi:true,mixed:false},{multi:true,mixed:true}])cases.push({source,target,assigned,starred,...flags});
 }
 const root=path.resolve(__dirname,'..'),work=fs.mkdtempSync(path.join(process.env.TMPDIR,'weba-board-drop-source.'));
 try{
@@ -23,21 +23,21 @@ try{
  const actual=JSON.parse(execFileSync(process.env.GBX||'gbx3',['-s','BoardDropMatrix',work],{encoding:'utf8',maxBuffer:4*1024*1024,env:{...process.env,WEBA_API_REQUEST:'0',WEBA_DB_TYPE:'sqlite3',WEBA_DB_HOST:work,WEBA_DB_NAME:'database.db',WEBA_DB_USER:'',WEBA_DB_PASSWORD:''}}));
  assert.equal(actual.length,cases.length);
  for(const [index,row] of actual.entries()){
-  const testCase=cases[index],state={...row.before};
-  const context={confirm:()=>true,TAPi18n:{__:key=>key},clearWorkspaceDropMarks(){},workspaceDropPositionOf:()=> 'inside',BoardMultiSelection:{reset(){}},Template:{instance:()=>({refreshArchivedBoardsCount(){}})},ReactiveCache:{getCurrentUser:()=>({hasStarred:()=>state.starred}),getBoard:id=>{assert.equal(id,row.boardId);return{archived:state.archived};}},Meteor:{call:(method,id,arg)=>{
-   assert.equal(id,row.boardId);
-   if(method==='toggleBoardStar')state.starred=!state.starred;
-   else if(method==='archiveBoard')state.archived=true;
-   else if(method==='restoreBoard')state.archived=false;
-   else if(method==='assignBoardToWorkspace')state.assignment=arg;
-   else if(method==='unassignBoardFromWorkspace')state.assignment='';
+  const testCase=cases[index],state=JSON.parse(JSON.stringify(row.before)),ids=row.boardIds.map(String);
+  const context={confirm:()=>true,TAPi18n:{__:key=>key},clearWorkspaceDropMarks(){},workspaceDropPositionOf:()=> 'inside',BoardMultiSelection:{reset(){}},Template:{instance:()=>({refreshArchivedBoardsCount(){}})},ReactiveCache:{getCurrentUser:()=>({hasStarred:id=>state[id].starred}),getBoard:id=>{assert.ok(ids.includes(id));return{archived:state[id].archived};}},Meteor:{call:(method,id,arg)=>{
+   assert.ok(ids.includes(id));
+   if(method==='toggleBoardStar')state[id].starred=!state[id].starred;
+   else if(method==='archiveBoard')state[id].archived=true;
+   else if(method==='restoreBoard')state[id].archived=false;
+   else if(method==='assignBoardToWorkspace')state[id].assignment=arg;
+   else if(method==='unassignBoardFromWorkspace')state[id].assignment='';
    else throw Error('Unexpected original method '+method);
   }}};
   // Explicit DOM/dataTransfer and Meteor-call adapters; callback code is unchanged.
-  const evt={preventDefault(){},stopPropagation(){},currentTarget:{classList:{remove(){}},getAttribute:name=>name==='data-type'?testCase.target:name==='data-workspace-id'?row.spaceId:null},originalEvent:{dataTransfer:{types:testCase.source==='remaining'?['application/x-board-from-remaining']:testCase.source==='workspace'?['application/x-board-from-workspace']:[],getData:type=>type==='text/plain'?row.boardId:''}}};
+  const evt={preventDefault(){},stopPropagation(){},currentTarget:{classList:{remove(){}},getAttribute:name=>name==='data-type'?testCase.target:name==='data-workspace-id'?row.spaceId:null},originalEvent:{dataTransfer:{types:[...(testCase.source==='remaining'?['application/x-board-from-remaining']:testCase.source==='workspace'?['application/x-board-from-workspace']:[]),...(testCase.multi&&testCase.source==='archive'?[raw.match(/const ARCHIVED_MULTI_BOARD_DRAG = '([^']+)';/)[1]]:[])],getData:type=>type==='text/plain'?(testCase.multi?JSON.stringify(ids):ids[0]):type==='application/x-board-multi'&&testCase.multi?'true':''}}};
   const signature=testCase.target==='workspace'?"  'drop .workspace-node'(evt, tpl) {":testCase.target==='archive'?"  'drop .js-open-archived-board'(evt) {":"  'drop .js-select-menu'(evt) {";
   callback(signature,context)(evt,{});
   assert.deepEqual(row.after,state,JSON.stringify(testCase));
  }
- console.log(`Board drop source conformance: ${cases.length} native SQL outcomes match unchanged original workspace/menu/archive callback bodies using explicit DOM/transport adapters; role/rollback checks are separate and full UI/multi/Home callbacks remain pending`);
+ console.log(`Board drop source conformance: ${cases.length} single/multi/mixed native SQL outcomes match unchanged original workspace/menu/archive callback bodies using explicit DOM/transport adapters; role/rollback checks are separate and native selection UI/full UI/Home remain pending`);
 }finally{fs.rmSync(work,{recursive:true,force:true});}
