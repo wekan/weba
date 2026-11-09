@@ -167,7 +167,7 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - In progress: remaining original spec 39 All Boards parity: workspace/category
   semantics and translated workspace creation/navigation, then run the unchanged
   six callbacks. Native browser/source-method comparisons are separate evidence.
-  Multi-selection/cross-workspace drops, raw-JSON null-key preservation, efficient
+  Multi-selection/cross-workspace drops, remaining raw-JSON null-key contracts beyond native export rows, efficient
   SQL count/paging and other open-view/idle reactivity remain pending. Clear search
   still lacks an exact imported source caption; Custom now uses its source key.
 

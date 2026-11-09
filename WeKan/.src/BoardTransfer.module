@@ -6,7 +6,7 @@ Private Function Row(r As Result, fields As String[]) As Collection
   Dim item As New Collection
   Dim field As String
   For Each field In fields
-    item[field] = r[field]
+    item.Add(r[field], field)
   Next
   Return item
 End

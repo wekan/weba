@@ -1,0 +1,40 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim listId As Integer
+  Dim db As Connection
+  Dim r As Result
+  Dim text As String
+  WebDatabase.Register("export-fields", "x")
+  Session["username"] = "export-fields"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
+  boardId = KanbanStore.AddBoard("Fields")
+  r = KanbanStore.Lanes(boardId)
+  r = KanbanStore.Lists(boardId, "Default")
+  listId = r!id
+  cardId = KanbanStore.SaveCard(boardId, 0, "Empty fields", "", "Default", "Todo", "", "", "", listId)
+  CardContent.Save(boardId, cardId, 0, "checklist", "Checklist", "", 0, False, 0)
+  db = WebDatabase.OpenConnection()
+  ' This Gambas driver exposes empty SQL strings as Null; retain their keys.
+  db.Exec("UPDATE kb_cards SET description='',assignee='',labels='',due_day='' WHERE id=&1", cardId)
+  db.Exec("UPDATE kb_entries SET body='' WHERE board_id=&1", boardId)
+  text = BoardTransfer.ExportData(boardId, "board", boardId)
+  Need(text, "description", "null")
+  Need(text, "assignee", "null")
+  Need(text, "labels", "null")
+  Need(text, "due_day", "null")
+  Need(text, "body", "null")
+  Need(text, "done", "false")
+  Need(text, "amount", "0")
+  Need(text, "archived", "false")
+  db = WebDatabase.OpenConnection()
+  db.Exec("UPDATE kb_cards SET description=NULL WHERE id=&1", cardId)
+  text = BoardTransfer.ExportData(boardId, "card", cardId)
+  Need(text, "description", "null")
+  Need(text, "labels", "null")
+  Print "Export raw JSON: nullable text, false flags and zero values retain explicit keys"
+End
+
+Private Sub Need(text As String, key As String, value As String)
+  If Not InStr(Replace(Replace(text, " ", ""), gb.NewLine, ""), "\"" & key & "\":" & value) Then Error.Raise("Raw export lost " & key & "=" & value)
+End

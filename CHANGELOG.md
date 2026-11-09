@@ -2,6 +2,12 @@
 
 This work adds the following features and fixes:
 
+- Keep nullable native JSON export row keys instead of dropping them through
+  Collection assignment. Verify raw description/assignee/labels/due/checklist
+  fields, false flags and zero values, with a failing-before/passing-after test.
+  The current driver's SQL empty-text/null normalization and broader original
+  JSON/batch-export contracts remain separate work. Thanks to xet7.
+
 - Add selected-board archive confirmation/cancel in the native sidebar. Bind
   confirmation to the private selection revision, cancel it on selection/scope
   changes and derive IDs on the server. Use the atomic batch archive service and

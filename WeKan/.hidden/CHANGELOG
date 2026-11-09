@@ -1,4 +1,7 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- JSON export: Preserve explicit nullable row keys with Collection.Add; verify
+  raw text/null, false and zero fields with before/after regression evidence.
+  Driver empty/null distinction and full original JSON contracts remain open.
 - Selected board archive: Add revision-bound native confirmation/cancel over
   private IDs and atomic batch archiving, clearing selection only on success.
   Verify readonly/stale/forged denial and exact selected owner writes in browsers.

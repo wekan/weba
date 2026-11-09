@@ -1217,3 +1217,18 @@ commands. test-live includes it for source and packaged apps; run separately wit
 `python3 tests/run-http.py --selection-archive` (add `--archive`). Native batch
 service tests separately cover rollback and late authorization. Full original
 sidebar callbacks and remaining batch actions stay in TODO.md.
+
+
+### Explicit nullable export fields
+
+Native weba JSON exports retain every row field selected by the serializer,
+including nullable description, assignee, labels, due-day and checklist text.
+False booleans and zero numbers remain explicit. The previous indexed Collection
+assignment omitted null-valued fields; Collection.Add preserves those keys.
+ExportFieldsTest checks the raw JSON rather than decoding it through the same
+Gambas collection behavior. It fails before this change and passes afterward.
+
+The current SQLite driver exposes empty SQL text as null-like values, so this
+change preserves explicit keys but does not recover an empty/null distinction
+the driver has already lost. Other original JSON wire contracts and selected
+multi-format exports remain pending.
