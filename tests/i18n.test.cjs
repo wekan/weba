@@ -10,7 +10,7 @@ const dom = new JSDOM(`<div id="@1.LanguageSelector"><select data-weba-language>
 <div id="@1.CardPeopleHeading">Members</div><div id="@1.CardPeopleName">Members</div><div id="@1.CardPeopleTree" class="gw-tree">Normal</div>
 <div id="@1.CardPersonChoice"><select><option value="Normal">Normal</option></select></div><button id="@1.AddCardPerson">Add</button>
 <div id="@1.PaneTitle" class="weba-user-text">Members</div>
-<div class="weba-space-row"><button class="weba-space-open weba-user-text" title="Members">Members</button><button class="weba-space-collapse fa-caret-down" title="Collapse"></button></div><button class="weba-space-menu" title="Workspace menu"></button>
+<div class="weba-space-row"><button class="weba-space-open weba-user-text" title="Members">Members</button><button class="weba-space-drag" title="Move"></button><button class="weba-space-collapse fa-caret-down" title="Collapse"></button></div><button class="weba-space-menu" title="Workspace menu"></button>
 <div id="@1.WorkspaceDestination"><select><option value="0">Remaining</option><option value="1">Members</option></select></div>
 <article class="weba-card"><strong>Username</strong></article>`,{url:'http://localhost',runScripts:'outside-only'});
 const {window}=dom;
@@ -43,6 +43,7 @@ window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
   assert.equal(doc.getElementById('@1.PaneTitle').textContent,'Members','selected workspace title is literal');
   assert.equal(doc.querySelector('.weba-space-open').textContent,'Members','dynamic workspace name is literal');
   assert.equal(doc.querySelector('.weba-space-menu').title,api.t('Workspace menu'),'dynamic workspace menu is translated');
+  assert.equal(doc.querySelector('.weba-space-drag').title,api.t('Move')+': Members','workspace drag action translates without changing name');
   const caret=doc.querySelector('.weba-space-collapse');
   assert.equal(caret.title,api.t('Collapse')+': Members','caret translates only the action');
   assert.equal(caret.getAttribute('aria-expanded'),'true','open caret announces expanded');

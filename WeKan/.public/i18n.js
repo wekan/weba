@@ -45,6 +45,12 @@
       if (button.title !== caption) button.title = caption;
       if (button.getAttribute('aria-label') !== caption) button.setAttribute('aria-label',caption);
     });
+    document.querySelectorAll('.weba-space-drag').forEach(button => {
+      const name = button.closest('.weba-space-row')?.querySelector('.weba-space-open')?.title || '';
+      const caption = translate('Move')+(name ? ': '+name : '');
+      if (button.title !== caption) button.title = caption;
+      if (button.getAttribute('aria-label') !== caption) button.setAttribute('aria-label',caption);
+    });
     document.querySelectorAll('.weba-space-collapse').forEach(button => {
       const folded = button.classList.contains('fa-caret-right');
       const caption = translate(folded ? 'Uncollapse' : 'Collapse');

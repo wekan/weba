@@ -307,29 +307,87 @@ End
 
 Public Sub Move(spaceId As Integer, parentId As Integer, Optional beforeId As Integer)
   Dim username As String = Principal()
-  Dim currentId As Integer = parentId
-  Dim seen As New Collection
-  Dim ids As New Integer[]
-  Dim id As Integer
-  Dim at As Integer
-  Dim index As Integer
-  Dim r As Result
   Dim transaction As Boolean
   Dim failure As String
   If parentId < 0 Or beforeId < 0 Then Error.Raise("Invalid workspace move")
   Node(spaceId, username)
   username = BeginChange()
   transaction = True
+  MoveWithin(username, spaceId, parentId, beforeId)
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+Public Sub Drop(spaceId As Integer, targetId As Integer, position As String)
+  Dim username As String = Principal()
+  Dim target As Result
+  Dim siblings As Result
+  Dim parentId As Integer
+  Dim beforeId As Integer
+  Dim found As Boolean
+  Dim transaction As Boolean
+  Dim failure As String
+  If position <> "before" And position <> "after" And position <> "inside" Then Error.Raise("Invalid workspace drop")
+  If spaceId = targetId Then Error.Raise("Invalid workspace drop")
   Node(spaceId, username)
+  Node(targetId, username)
+  username = BeginChange()
+  transaction = True
+  Node(spaceId, username)
+  target = Node(targetId, username)
+  If position = "inside" Then
+    parentId = targetId
+  Else
+    parentId = target!parent_id
+    If position = "before" Then
+      beforeId = targetId
+    Else
+      siblings = $db.Find("kb_board_spaces", "username=&1 AND parent_id=&2 AND id<>&3 ORDER BY sort_order,id", username, parentId, spaceId)
+      For Each siblings
+        If found Then
+          beforeId = siblings!id
+          Break
+        Endif
+        If siblings!id = targetId Then found = True
+      Next
+      If Not found Then Error.Raise("Workspace not found")
+    Endif
+  Endif
+  MoveWithin(username, spaceId, parentId, beforeId)
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+Private Sub MoveWithin(username As String, spaceId As Integer, parentId As Integer, beforeId As Integer)
+  Dim currentId As Integer = parentId
+  Dim seen As New Collection
+  Dim ids As New Integer[]
+  Dim original As New Integer[]
+  Dim previousParent As Integer
+  Dim id As Integer
+  Dim at As Integer
+  Dim index As Integer
+  Dim r As Result = Node(spaceId, username)
+  previousParent = r!parent_id
+  If parentId < 0 Or beforeId < 0 Then Error.Raise("Invalid workspace move")
   While currentId > 0
     If currentId = spaceId Or seen.Exist(CStr(currentId)) Then Error.Raise("Invalid workspace move")
     seen[CStr(currentId)] = True
     r = Node(currentId, username)
     currentId = r!parent_id
   Wend
-  r = $db.Find("kb_board_spaces", "username=&1 AND parent_id=&2 AND id<>&3 ORDER BY sort_order,id", username, parentId, spaceId)
+  r = $db.Find("kb_board_spaces", "username=&1 AND parent_id=&2 ORDER BY sort_order,id", username, parentId)
   For Each r
-    ids.Add(r!id)
+    original.Add(r!id)
+    If r!id <> spaceId Then ids.Add(r!id)
   Next
   at = ids.Count
   If beforeId > 0 Then
@@ -337,6 +395,7 @@ Public Sub Move(spaceId As Integer, parentId As Integer, Optional beforeId As In
     If at < 0 Then Error.Raise("Invalid workspace move")
   Endif
   ids.Add(spaceId, at)
+  If previousParent = parentId And JSON.Encode(ids) = JSON.Encode(original) Then Return
   For Each id In ids
     r = $db.Edit("kb_board_spaces", "username=&1 AND id=&2", username, id)
     r["parent_id"] = parentId
@@ -344,12 +403,6 @@ Public Sub Move(spaceId As Integer, parentId As Integer, Optional beforeId As In
     r.Update()
     Inc index
   Next
-  DatabaseTransactions.Commit($db)
-  transaction = False
-Catch
-  failure = Error.Text
-  If transaction Then Try DatabaseTransactions.Rollback($db)
-  Error.Raise(failure)
 End
 
 Public Sub Remove(spaceId As Integer)

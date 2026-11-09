@@ -1,0 +1,79 @@
+Public Sub Main()
+  Dim a As Integer
+  Dim b As Integer
+  Dim c As Integer
+  Dim child As Integer
+  Dim foreignId As Integer
+  Dim boardId As Integer
+  Dim db As Connection
+  Dim before As String
+  Dim collapsed As String
+  Dim assignments As String
+  Dim denied As Boolean
+  Dim r As Result
+  WebDatabase.Register("space-drop-owner", "x")
+  WebDatabase.Register("space-drop-other", "x")
+  SignIn("space-drop-other")
+  foreignId = BoardSpaces.Add("Foreign")
+  SignIn("space-drop-owner")
+  a = BoardSpaces.Add("Alpha")
+  b = BoardSpaces.Add("Bravo")
+  c = BoardSpaces.Add("Charlie")
+  child = BoardSpaces.Add("Child", a)
+  boardId = KanbanStore.AddBoard("Personal placement stays")
+  BoardSpaces.Assign(boardId, child)
+  BoardSpaces.SetCollapsed(a, True)
+  before = JSON.Encode(BoardSpaces.Tree())
+  collapsed = JSON.Encode(BoardSpaces.Collapsed())
+  assignments = JSON.Encode(BoardSpaces.Assignments())
+  db = WebDatabase.OpenConnection()
+  Try BoardSpaces.Drop(a, foreignId, "inside")
+  denied = Error
+  If Not denied Then Error.Raise("Site admin dropped into foreign workspace")
+  Try BoardSpaces.Drop(foreignId, b, "before")
+  denied = Error
+  If Not denied Then Error.Raise("Site admin moved foreign workspace")
+  Try BoardSpaces.Drop(a, child, "after")
+  denied = Error
+  If Not denied Then Error.Raise("Workspace dropped beside its descendant")
+  Try BoardSpaces.Drop(a, a, "inside")
+  denied = Error
+  If Not denied Then Error.Raise("Self workspace drop accepted")
+  If JSON.Encode(BoardSpaces.Tree()) <> before Then Error.Raise("Denied drops changed tree")
+  db.Exec("CREATE TRIGGER fail_space_drop BEFORE UPDATE ON kb_board_spaces WHEN OLD.id=" & CStr(b) & " BEGIN SELECT RAISE(ABORT,'injected drop failure'); END")
+  Try BoardSpaces.Drop(c, a, "before")
+  denied = Error
+  If Not denied Or JSON.Encode(BoardSpaces.Tree()) <> before Then Error.Raise("Partial drop did not roll back")
+  db.Exec("DROP TRIGGER fail_space_drop")
+  db.Exec("CREATE TRIGGER reject_noop_drop BEFORE UPDATE ON kb_board_spaces BEGIN SELECT RAISE(ABORT,'noop wrote ranks'); END")
+  BoardSpaces.Drop(a, b, "before")
+  If JSON.Encode(BoardSpaces.Tree()) <> before Then Error.Raise("Adjacent noop changed tree")
+  db.Exec("DROP TRIGGER reject_noop_drop")
+  db.Exec("CREATE TRIGGER late_drop_parent AFTER UPDATE ON users WHEN NEW.username='space-drop-owner' BEGIN UPDATE kb_board_spaces SET parent_id=" & CStr(foreignId) & " WHERE id=" & CStr(b) & "; END")
+  Try BoardSpaces.Drop(c, b, "before")
+  denied = Error
+  If Not denied Or JSON.Encode(BoardSpaces.Tree()) <> before Then Error.Raise("Late foreign parent bypassed drop guard")
+  db.Exec("DROP TRIGGER late_drop_parent")
+  BoardSpaces.Drop(c, a, "before")
+  If BoardSpaces.Tree()[0]["id"] <> CStr(c) Then Error.Raise("Drop retry failed")
+  BoardSpaces.Drop(child, b, "inside")
+  If BoardSpaces.Record(child)["parentId"] <> b Then Error.Raise("Inside drop failed")
+  BoardSpaces.Drop(child, a, "after")
+  If BoardSpaces.Record(child)["parentId"] <> 0 Then Error.Raise("Root outdent failed")
+  If JSON.Encode(BoardSpaces.Collapsed()) <> collapsed Or JSON.Encode(BoardSpaces.Assignments()) <> assignments Then Error.Raise("Drop changed personal fold/placement data")
+  before = JSON.Encode(BoardSpaces.Tree())
+  BoardSpaces.Remove(child)
+  Try BoardSpaces.Drop(child, a, "before")
+  denied = Error
+  If Not denied Then Error.Raise("Deleted workspace drag accepted")
+  Session["auth_generation"] = 0
+  Try BoardSpaces.Drop(a, b, "after")
+  denied = Error
+  If Not denied Then Error.Raise("Stale session changed tree")
+  Print "Workspace drop: foreign/self/descendant/stale denial, partial failure rollback/retry, no-op no-rank-write, late foreign parent checks and preserved folds/assignments passed"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

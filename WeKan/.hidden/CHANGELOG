@@ -1,4 +1,9 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Workspace ordering: Resolve before/after/inside drops under the account lock;
+  guard ownership/cycles and avoid no-op rank writes. Add native mouse/touch/
+  keyboard gestures, target marks and focus recovery. Verify rollback/late-parent
+  guards, 196 original helper cases and real source/packaged gestures/forgeries.
+  Board drops and complete original workspace callbacks remain pending.
 - Documentation: Describe private fold state, direct visible counts, hidden
   selection and native/source/browser verification, with remaining parity gaps.
 - Workspace folding/counts: Persist private true-only fold state with locked

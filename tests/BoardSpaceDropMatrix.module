@@ -1,0 +1,41 @@
+Public Sub Main()
+  Dim results As New Variant[]
+  Dim testCase As Collection
+  Dim row As Collection
+  Dim ids As Collection
+  Dim root As Collection
+  Dim tree As Variant[]
+  Dim denied As Boolean
+  WebDatabase.Register("space-drop-matrix", "x")
+  Session["username"] = "space-drop-matrix"
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
+  For Each testCase In JSON.Decode(File.Load(".public/space-drop-cases.json"))
+    ids = New Collection
+    Seed(JSON.Decode(File.Load(".public/space-drop-tree.json")), 0, ids)
+    row = New Collection
+    row["before"] = BoardSpaces.Tree()
+    row["source"] = CStr(ids[testCase["source"]])
+    row["target"] = CStr(ids[testCase["target"]])
+    row["position"] = testCase["position"]
+    Try BoardSpaces.Drop(CInt(ids[testCase["source"]]), CInt(ids[testCase["target"]]), testCase["position"])
+    denied = Error
+    row["denied"] = denied
+    row["after"] = BoardSpaces.Tree()
+    results.Add(row)
+    tree = BoardSpaces.Tree()
+    For Each root In tree
+      BoardSpaces.Remove(CInt(root["id"]))
+    Next
+  Next
+  Print JSON.Encode(results)
+End
+
+Private Sub Seed(nodes As Variant[], parentId As Integer, ids As Collection)
+  Dim node As Collection
+  Dim id As Integer
+  For Each node In nodes
+    id = BoardSpaces.Add(node["name"], parentId)
+    ids[node["name"]] = id
+    Seed(node["children"], id, ids)
+  Next
+End

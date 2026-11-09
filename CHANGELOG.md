@@ -2,6 +2,16 @@
 
 This work adds the following features and fixes:
 
+- Add native workspace before/after/inside drops with fresh locked ownership,
+  sibling and ancestor resolution and no-op rank-write avoidance. Support mouse
+  name/handle, touch handle and logical keyboard sibling/indent/outdent moves,
+  target marks and bounded focus recovery. Preserve fold/assignment state and
+  reject cycle/foreign/stale/non-overview commands. Verify native partial failure
+  rollback/retry, late parent denial, 196 original tree-helper comparisons and
+  real source/packaged mouse/keyboard/trusted touch, cancellation, collapsed
+  targets, reload/isolation and Archive behavior. Board drops remain pending.
+  Thanks to xet7.
+
 - Document private workspace fold storage and cleanup, direct readable counts,
   hidden selection, keyboard/focus/aria and native failure/source/browser tests.
   Update the translation count and retain original workspace/gesture limits.

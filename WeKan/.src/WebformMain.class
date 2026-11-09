@@ -39,6 +39,7 @@ Private $spaceMenu As Integer
 Private $spacesState As String
 Private $spaceRows As New WebContainer[]
 Private $spaceButtons As New Collection
+Private $spaceHandles As New Collection
 Private $spaceCarets As New Collection
 Private $spaceCollapsed As Collection
 Private $spaceCounts As Collection
@@ -515,7 +516,7 @@ Public Sub Visual_Render()
   If $board Then $liveState = BoardLive.State($board, $archive)
   Print "<script>" & File.Load(".public/kanban.js") & "</script>"
   If $board Then boardColor = WorkspaceStore.Setting($board, "board", $board, "color", "#2980b9")
-  Print "<section data-board-reorder=\"" & If(IsOverview() And Not $archive And $catalogSort = "custom", "true", "false") & "\" data-board-color=\"" & Html(boardColor) & "\" data-context=\"" & Html(ContextAction.Name) & "\" data-drag=\"" & Html(DragAction.Name) & "\" data-board=\"" & Str($board) & "\" data-action=\"" & Html(BoardAction.Name) & "\" data-card-move=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "moveCard"), "true", "false") & "\" data-editable=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "write"), "true", "false") & "\" class=\"weba-content\" data-tree=\"" & Html(Boards.Name) & "\" data-view=\"" & Html($view) & "\">"
+  Print "<section data-workspace-reorder=\"" & If(IsOverview(), "true", "false") & "\" data-board-reorder=\"" & If(IsOverview() And Not $archive And $catalogSort = "custom", "true", "false") & "\" data-board-color=\"" & Html(boardColor) & "\" data-context=\"" & Html(ContextAction.Name) & "\" data-drag=\"" & Html(DragAction.Name) & "\" data-board=\"" & Str($board) & "\" data-action=\"" & Html(BoardAction.Name) & "\" data-card-move=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "moveCard"), "true", "false") & "\" data-editable=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "write"), "true", "false") & "\" class=\"weba-content\" data-tree=\"" & Html(Boards.Name) & "\" data-view=\"" & Html($view) & "\">"
   If $view = "Profile" Then
     Print "<p>Signed in as " & Html(WebIdentity.Username) & "</p>"
   Else If $view = "Admin panel" Then
@@ -893,6 +894,13 @@ Public Sub DragAction_Change()
   DragAction.Text = ""
   fields = Split(wire, "|")
   If fields.Count <> 5 Then Error.Raise("Invalid drag action")
+  If fields[0] = "workspace" Then
+    If Not IsOverview() Then Error.Raise("Select All Boards first")
+    If UnBase64(fields[4]) <> "" Then Error.Raise("Invalid workspace drop")
+    BoardSpaces.Drop(CInt(UnBase64(fields[1])), CInt(UnBase64(fields[2])), UnBase64(fields[3]))
+    RefreshTree()
+    Return
+  Endif
   If fields[0] = "board" Then
     ReorderCatalog(CInt(UnBase64(fields[1])), CInt(UnBase64(fields[4])))
     Return
@@ -2239,6 +2247,7 @@ Private Function RefreshSpaces() As Boolean
   $spaceRows.Clear()
   $spaceButtons.Clear()
   $spaceCarets.Clear()
+  $spaceHandles.Clear()
   $spaceNames.Clear()
   IndexSpaceNames(tree)
   AddSpaceRows(tree, 0)
@@ -2274,7 +2283,7 @@ Catch
   Notice.Text = Error.Text
 End
 
-Private Sub AddSpaceRows(nodes As Variant[], depth As Integer)
+Private Sub AddSpaceRows(nodes As Variant[], depth As Integer, Optional parentId As Integer)
   Dim node As Collection
   Dim row As WebContainer
   Dim indent As WebContainer
@@ -2283,11 +2292,12 @@ Private Sub AddSpaceRows(nodes As Variant[], depth As Integer)
   Dim caption As String
   Dim caret As WebButton
   Dim count As WebLabel
+  Dim handle As WebButton
   Dim folded As Boolean
   For Each node In nodes
     row = New WebContainer(WorkspaceRows)
     row.Arrangement = Arrange.Horizontal
-    row.Class = "weba-space-row"
+    row.Class = "weba-space-row weba-space-id-" & CStr(node["id"]) & " weba-space-parent-" & Str(parentId)
     $spaceRows.Add(row)
     If depth > 0 Then
       indent = New WebContainer(row)
@@ -2305,6 +2315,11 @@ Private Sub AddSpaceRows(nodes As Variant[], depth As Integer)
       indent = New WebContainer(row)
       indent.Class = "weba-space-collapse-spacer"
     Endif
+    handle = New WebButton(row)
+    handle.Class = "weba-drag-handle weba-space-drag fa fa-arrows"
+    handle.Tooltip = "Move"
+    handle.Visible = IsOverview()
+    $spaceHandles[node["id"]] = handle
     caption = CStr(node["name"])
     If CStr(node["icon"]) Then caption = CStr(node["icon"]) & " " & caption
     button = New WebButton(row) As "OpenPersonalWorkspace"
@@ -2321,13 +2336,17 @@ Private Sub AddSpaceRows(nodes As Variant[], depth As Integer)
     count = New WebLabel(row)
     count.Text = Str($spaceCounts[CStr(node["id"])])
     count.Class = "weba-space-count"
-    If Not folded Then AddSpaceRows(node["children"], depth + 1)
+    If Not folded Then AddSpaceRows(node["children"], depth + 1, CInt(node["id"]))
   Next
 End
 
 Private Sub UpdateSpaceSelection()
   Dim key As String
   Dim button As WebButton
+  For Each key In $spaceHandles.Keys
+    button = $spaceHandles[key]
+    button.Visible = IsOverview()
+  Next
   For Each key In $spaceButtons.Keys
     button = $spaceButtons[key]
     button.Class = "weba-space-open weba-user-text" & If(IsOverview() And $view = "Boards" And CInt(key) = $spaceMenu, " weba-active", "")

@@ -2,12 +2,12 @@
 (function(root){
   'use strict';
   if(root.webaDrag)return;
-  let pending=null,drag=null,keyboardFocus=null,suppressUntil=0,frame=0;
+  let pending=null,drag=null,keyboardFocus=null,workspaceKeyboardFocus=null,suppressUntil=0,frame=0;
   const threshold=7;
   const t=text=>root.webaI18n?.t(text)||text;
   const visible=e=>e && !e.hidden && e.getBoundingClientRect().width>0 && e.getBoundingClientRect().height>0;
   function encode(text){return btoa(Array.from(new TextEncoder().encode(String(text)),byte=>String.fromCharCode(byte)).join(''));}
-  function enabled(section,kind){return kind==='board'?section.dataset.boardReorder==='true':kind==='card'?section.dataset.cardMove==='true'||section.dataset.editable==='true':section.dataset.editable==='true';}
+  function enabled(section,kind){return kind==='workspace'?section.dataset.workspaceReorder==='true':kind==='board'?section.dataset.boardReorder==='true':kind==='card'?section.dataset.cardMove==='true'||section.dataset.editable==='true':section.dataset.editable==='true';}
   function send(section,kind,values){
     if(!enabled(section,kind)||!section.dataset.drag||!root.gw)return;
     root.gw.update(section.dataset.drag,'text',[kind,...values.map(encode)].join('|'),null);
@@ -16,18 +16,21 @@
     const handle=target.closest('.weba-drag-handle');
     const card=target.closest('.weba-list-body>.weba-card');
     const board=target.closest('.weba-board-tile-group');
+    const workspace=target.closest('.weba-space-row');
     let kind=handle?.dataset.dragKind,element;
-    if(kind==='board'||pointerType==='mouse'&&board&&target.closest('.weba-board-tile')){kind='board';element=board;}
+    if(kind==='workspace'||pointerType==='mouse'&&workspace&&target.closest('.weba-space-open')){kind='workspace';element=workspace;}
+    else if(kind==='board'||pointerType==='mouse'&&board&&target.closest('.weba-board-tile')){kind='board';element=board;}
     else if(kind==='lane')element=handle.closest('.weba-swimlane');
     else if(kind==='list')element=handle.closest('.weba-column');
     else if(kind==='card'||(pointerType==='mouse'&&card&&!target.closest('button,input,textarea,a,select'))){kind='card';element=card;}
-    const section=element?.closest('.weba-content');
+    const section=kind==='workspace'?document.querySelector('.weba-content'):element?.closest('.weba-content');
     if(!element||!section||!section.dataset.drag)return null;
     if(!enabled(section,kind))return null;
     return {kind,element,section,handle};
   }
   function reset(){
     if(frame)root.cancelAnimationFrame(frame);frame=0;
+    clearWorkspaceMark();
     if(drag){drag.ghost.remove();drag.placeholder.remove();drag.element.classList.remove('weba-drag-origin');}
     drag=null;pending=null;document.body.classList.remove('weba-is-dragging');
   }
@@ -46,8 +49,45 @@
     tick();
   }
   function insert(parent,before){if(drag.placeholder.parentNode!==parent||drag.placeholder.nextSibling!==before)parent.insertBefore(drag.placeholder,before);}
+  function workspaceRows(section){
+    return [...(section.closest('.weba-shell')||document).querySelectorAll('.weba-space-row')].filter(row=>!row.closest('.weba-drag-ghost'));
+  }
+  function workspaceDropPosition(offsetY,height){
+    if(height==null||offsetY==null)return 'inside';
+    const h=Number(height),y=Number(offsetY);
+    if(!Number.isFinite(h)||h<=0||!Number.isFinite(y))return 'inside';
+    if(y<h*.25)return 'before';
+    if(y>h*.75)return 'after';
+    return 'inside';
+  }
+  function clearWorkspaceMark(){
+    if(drag?.marked){drag.marked.classList.remove('weba-space-drop-before','weba-space-drop-after','weba-space-drop-inside');drag.marked=null;}
+  }
+  function validWorkspaceTarget(rows,source,target){
+    const byId=new Map(rows.map(row=>[row.dataset.workspaceId,row]));
+    const seen=new Set();let current=target;
+    while(current){
+      const id=current.dataset.workspaceId;
+      if(id===source.dataset.workspaceId||seen.has(id))return false;
+      seen.add(id);
+      const parent=current.dataset.workspaceParent;
+      if(!parent||parent==='0')return true;
+      current=byId.get(parent);
+      if(!current)return false;
+    }
+    return false;
+  }
   function locate(x,y){
     const hit=document.elementFromPoint(x,y);
+    if(!drag.section.isConnected||!drag.element.isConnected){drag.target=null;drag.placeholder.remove();clearWorkspaceMark();return;}
+    if(drag.kind==='workspace'){
+      const row=hit?.closest('.weba-space-row'),rows=workspaceRows(drag.section);
+      if(!row||!rows.includes(row)||!validWorkspaceTarget(rows,drag.element,row)){drag.target=null;clearWorkspaceMark();return;}
+      const rect=row.getBoundingClientRect(),position=workspaceDropPosition(y-rect.top,rect.height);
+      const cls='weba-space-drop-'+position;
+      if(drag.marked!==row||!row.classList.contains(cls)){clearWorkspaceMark();row.classList.add(cls);drag.marked=row;}
+      drag.target={id:row.dataset.workspaceId,position};return;
+    }
     if(!hit||hit.closest('.weba-content')!==drag.section){drag.target=null;drag.placeholder.remove();return;}
     let parent,items,before,lane;
     if(drag.kind==='board'){
@@ -105,7 +145,8 @@
     const state=drag;locate(state.x,state.y);const target=state.target;
     suppressUntil=Date.now()+700;reset();
     if(cancel||!target)return;
-    if(state.kind==='board')send(state.section,'board',[state.element.dataset.boardId,'','',target.before]);
+    if(state.kind==='workspace')send(state.section,'workspace',[state.element.dataset.workspaceId,target.id,target.position,'']);
+    else if(state.kind==='board')send(state.section,'board',[state.element.dataset.boardId,'','',target.before]);
     else if(state.kind==='card')send(state.section,'card',[state.element.dataset.cardId,target.lane,target.list,target.before]);
     else if(state.kind==='lane')send(state.section,'lane',[state.element.dataset.lane,'','',target.before]);
     else{
@@ -115,7 +156,7 @@
     }
   }
   function down(event){
-    keyboardFocus=null;
+    keyboardFocus=null;workspaceKeyboardFocus=null;
     if(!event.isPrimary){finish(true);return;}
     if(event.button!==0||pending||drag)return;
     const state=identify(event.target,event.pointerType);if(!state)return;
@@ -131,8 +172,25 @@
   function keyboard(event){
     const handle=event.target.closest('.weba-drag-handle');if(!handle||!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key))return;
     const state=identify(handle,'keyboard');if(!state)return;
+    if(state.kind!=='board')keyboardFocus=null;
+    if(state.kind!=='workspace')workspaceKeyboardFocus=null;
     event.preventDefault();event.stopPropagation();
-    if(state.kind==='board'){
+    if(state.kind==='workspace'){
+      const all=workspaceRows(state.section),parent=state.element.dataset.workspaceParent;
+      const siblings=all.filter(row=>row.dataset.workspaceParent===parent),index=siblings.indexOf(state.element);
+      const rtl=getComputedStyle(state.element).direction==='rtl';
+      let target,position;
+      if(event.key==='ArrowUp'){target=siblings[index-1];position='before';}
+      else if(event.key==='ArrowDown'){target=siblings[index+1];position='after';}
+      else if(event.key===(rtl?'ArrowLeft':'ArrowRight')){target=siblings[index-1];position='inside';}
+      else if(parent&&parent!=='0'){target=all.find(row=>row.dataset.workspaceId===parent);position='after';}
+      if(!target||!validWorkspaceTarget(all,state.element,target)){
+        // Outdent goes beside the parent; it is not an inside/cycle operation.
+        if(!target||position!=='after'||target.dataset.workspaceId!==parent)return;
+      }
+      workspaceKeyboardFocus={id:state.element.dataset.workspaceId,target:target.dataset.workspaceId,position,expires:Date.now()+5000};
+      send(state.section,'workspace',[state.element.dataset.workspaceId,target.dataset.workspaceId,position,'']);
+    }else if(state.kind==='board'){
       const rows=[...state.element.parentElement.querySelectorAll(':scope>.weba-board-tile-group')],index=rows.indexOf(state.element),rtl=getComputedStyle(state.element).direction==='rtl';
       const backward=event.key==='ArrowUp'||event.key===(rtl?'ArrowRight':'ArrowLeft');
       if(backward&&index===0||!backward&&index===rows.length-1)return;
@@ -173,6 +231,24 @@
     keyboardFocus=null;
     root.requestAnimationFrame(()=>{if(handle?.isConnected&&document.activeElement===document.body){handle.focus({preventScroll:true});root.webaAlignFocus?.();}});
   }
+  function restoreWorkspaceFocus(){
+    if(!workspaceKeyboardFocus)return;
+    const section=document.querySelector('.weba-content');
+    if(Date.now()>workspaceKeyboardFocus.expires||section&&section.dataset.workspaceReorder!=='true'){workspaceKeyboardFocus=null;return;}
+    if(!section)return;
+    const state=workspaceKeyboardFocus,rows=workspaceRows(section);
+    const moved=rows.find(row=>row.dataset.workspaceId===state.id),target=rows.find(row=>row.dataset.workspaceId===state.target);
+    if(!target)return;
+    let ready=false;
+    if(state.position==='inside')ready=moved?.dataset.workspaceParent===state.target||!moved&&target.querySelector('.fa-caret-right');
+    else if(moved&&moved.dataset.workspaceParent===target.dataset.workspaceParent){
+      const siblings=rows.filter(row=>row.dataset.workspaceParent===target.dataset.workspaceParent);
+      ready=siblings.indexOf(moved)===siblings.indexOf(target)+(state.position==='before'?-1:1);
+    }
+    if(!ready)return;
+    const handle=(moved||target).querySelector('.weba-space-drag');workspaceKeyboardFocus=null;
+    root.requestAnimationFrame(()=>{if(handle?.isConnected&&document.activeElement===document.body){handle.focus({preventScroll:true});root.webaAlignFocus?.();}});
+  }
   function start(){
     document.addEventListener('pointerdown',down);
     document.addEventListener('pointermove',move,{passive:false});
@@ -182,6 +258,6 @@
     document.addEventListener('click',event=>{if(Date.now()<suppressUntil||event.target.closest('.weba-drag-handle')){event.preventDefault();event.stopImmediatePropagation();}},true);
     root.addEventListener('blur',()=>finish(true));
   }
-  root.webaDrag={identify,restoreFocus,cancel:()=>finish(true),get active(){return !!drag;},threshold};
+  root.webaDrag={identify,restoreFocus,restoreWorkspaceFocus,workspaceDropPosition,cancel:()=>finish(true),get active(){return !!drag;},threshold};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })(window);
