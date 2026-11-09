@@ -102,8 +102,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   and revisioned authoritative multi-drop transport are recorded in CHANGELOG.md.
   Workspace creation form semantics and the unchanged original Latin callback
   (1/6 spec 39 callbacks, explicit native-session/locale adapters) are recorded
-  in CHANGELOG.md. Three server callbacks now run unchanged with native service
-  adapters as recorded there; the two original sort/search UI callbacks remain open.
+  in CHANGELOG.md. Three server callbacks and the search UI callback now run unchanged with
+  native service/session adapters as recorded there; the original sort UI callback remains open.
   Native retained attachment deletion/restore, bearer raw/JSON uploads with
   MIME/time metadata and source target guards, list/info/base64/raw download APIs,
   the DELETE API, four persisted Global Admin transfer controls and board
@@ -129,7 +129,7 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   local/test-live and existing layout regressions pass. Original suite counts
   remain unchanged.
 - Next workspace parity: complete edit-form semantics, Markdown icons and the
-  remaining two original spec 39 UI callbacks with explicit native adapters.
+  remaining original spec 39 sort UI callback with explicit native adapters.
 
 - Documented personal rank merging, readonly/sorted/archive boundaries, fresh
   transaction checks, cleanup, expected-order focus and trusted browser evidence.
@@ -164,14 +164,14 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   mobile controls and Finnish labels on real source/packaged browsers. Import
   current matching WeKan texts across 237 catalogs. Full local test/test-live and
   existing desktop/mobile layout regressions pass. Workspaces and unchanged
-  original spec 39 sort/search UI callbacks remain pending.
+  original spec 39 sort UI callback remains pending.
 
 - Documented the native catalog service, principal and result bounds, UTF-8
   search and account preference cleanup. Recorded the 54-case source-method
   adapter and explicit UI/raw-JSON/custom-order/workspace/facet limitations.
 
 - Documented overview snapshot boundaries, capture/refresh ordering, stable idle
-  tiles and the native/two-user browser evidence. Retained original spec 39 sort/search UI requirements, actual transport integration
+  tiles and the native/two-user browser evidence. Retained original spec 39 sort UI requirements, actual transport integration
   and remaining view/polling gaps.
 
 - Completed live All Boards/Starred/Archive overview tiles and their navigation.
@@ -194,7 +194,7 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   Native controls are now wired for the implemented modes; there is no new
   public HTTP endpoint.
 - In progress: remaining original spec 39 All Boards parity: workspace/category
-  semantics and the remaining two unchanged UI callbacks. The Latin creation/
+  semantics and the remaining unchanged sort UI callback. The Latin creation/
   navigation callback passes; native browser/source-method comparisons are
   separate evidence.
   Multi-selection/cross-workspace drops, remaining raw-JSON null-key contracts beyond native export rows, efficient

@@ -25,7 +25,7 @@ const secrets=[process.env.WEBA_TEST_PASSWORD];
  try{
   const user=await login('rest-member'),user2=await login('rest-other');
   vm.runInNewContext(fs.readFileSync(spec,'utf8'),{process:{env:{WEKAN_BASE_URL:process.env.WEBA_TEST_URL.replace(/\/$/,'')}},require:name=>{if(name==='../fixtures')return{test,expect};if(name==='../helpers/db')return db;if(name==='../helpers/auth')return{loginWithToken,waitForMeteor};throw Error('Unsupported original dependency '+name);}},{filename:spec});
-  const selected=cases.filter(item=>item.title==='returns the correct sorted page and total; pages do not overlap'||item.title==='search narrows the total; a non-matching search returns nothing'||item.title==='does not leak boards the user has no access to (negative)');expect(selected).toHaveLength(3);expect(cases).toHaveLength(6);
+  const selected=cases.filter(item=>item.title==='search filters boards by name; non-matching search shows none'||item.title==='returns the correct sorted page and total; pages do not overlap'||item.title==='search narrows the total; a non-matching search returns nothing'||item.title==='does not leak boards the user has no access to (negative)');expect(selected).toHaveLength(4);expect(cases).toHaveLength(6);
   browser=await chromium.connectOverCDP(process.env.WEBA_BROWSER_URL);
   for(const item of selected){
    context=await browser.newContext();principal=null;
@@ -44,9 +44,9 @@ const secrets=[process.env.WEBA_TEST_PASSWORD];
      expect(await page.evaluate(()=>window.nativeCatalogPage({search:'Secret User2 Board'}).then(()=>false,()=>true))).toBe(true);expect(pageCalls).toBe(before);
      console.log('Original catalog adapter security: revoked API token refused before native service invocation despite retained native UI session');
     }
-    console.log('Original spec39 server callback passed: '+item.title);}finally{for(const hook of item.cleanup)await hook(args);await context.close();context=null;}
+    console.log('Original spec39 catalog callback passed: '+item.title);}finally{for(const hook of item.cleanup)await hook(args);await context.close();context=null;}
   }
   expect(owners.size).toBe(0);
-  console.log('Original spec39 server: 3 unchanged callbacks/hooks passed through real native BoardCatalog.Page; explicit test-only RPC, numeric-ID, fixture DB and API-token-to-native-session adapters. No production DDP/routing claim; two UI callbacks remain pending, Latin is covered separately.');
+  console.log('Original spec39 catalog: 3 server + 1 search UI unchanged callbacks/hooks passed through real native BoardCatalog.Page; explicit test-only RPC, numeric-ID, fixture DB and API-token-to-native-session adapters. No production DDP/routing claim; sort UI callback remains pending, Latin is covered separately.');
  }finally{if(context)await context.close();if(browser)await browser.close();await api.dispose();}
 })().catch(error=>{let message=error.stack||String(error);for(const secret of secrets)if(secret)message=message.split(secret).join('[redacted]');console.error(message);process.exitCode=1;});

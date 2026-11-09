@@ -69,6 +69,8 @@
   function decorate(){
     if(!root.document)return;
     workspaceForm();
+    const boardSearch=document.querySelector('[id$=".BoardSearch:entry"]');
+    if(boardSearch&&!boardSearch.classList.contains("js-board-search-input"))boardSearch.classList.add("js-board-search-input");
     const remaining=document.querySelector('[id$=".Remaining"]');
     if(remaining){if(!remaining.classList.contains('js-select-menu'))remaining.classList.add('js-select-menu');if(remaining.dataset.type!=='remaining')remaining.dataset.type='remaining';}
     for(const [name,icon] of Object.entries(icons)){

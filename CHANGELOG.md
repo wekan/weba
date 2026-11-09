@@ -2,6 +2,12 @@
 
 This work adds the following features and fixes:
 
+- Render native board catalogs as semantic lists with source board-name/search
+  selectors and escaped literal titles. Preserve tile grid, selection and drag
+  surfaces. Execute the unchanged original spec 39 search UI callback through
+  actual native controls, without locator/assertion adapters. Keep the original
+  sort UI callback, production transport and broader suites pending. Thanks to xet7.
+
 - Execute three unchanged original spec 39 server callbacks and setup/cleanup
   hooks against actual native BoardCatalog.Page results. Cover disjoint sorted
   pages, exact search totals and private-board exclusion. Revalidate real API

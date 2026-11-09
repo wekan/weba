@@ -612,7 +612,7 @@ Public Sub Visual_Render()
       Next
       Print "</div>"
     Endif
-    Print "<div class=\"weba-data\">"
+    Print If(IsOverview(), "<ul class=\"weba-data\" role=\"list\">", "<div class=\"weba-data\">")
     For Each b
       If $board And b!id <> $board Then Continue
       If IsOverview() Then
@@ -621,7 +621,7 @@ Public Sub Visual_Render()
         If WorkspaceStore.Setting(b!id, "board", b!id, "star") <> "1" Then Continue
       Endif
       If Not $board And ($view = "Boards" Or $view = "Archive" Or $view = "Starred") Then
-        tiles[CStr(b!id)] = "<div data-selected=\"" & If(BoardSelection.IsSelected(SelectionState(), b!id), "true", "false") & "\" class=\"weba-board-tile-group\" data-board-id=\"" & Str(b!id) & "\">" & If(IsOverview(), "<button type=\"button\" class=\"weba-drag-handle weba-board-drag fa fa-arrows\" data-drag-kind=\"board\" aria-label=\"Sort boards\"></button>", "") & "<button style=\"background-color:" & Html(WorkspaceStore.Setting(b!id, "board", b!id, "color", "#2980b9")) & "\" type=\"button\" class=\"weba-board-tile\" data-board-key=\"b" & Str(b!id) & "\"><strong>" & Html(b!title) & "</strong></button><button class=\"weba-board-context fa fa-bars\" data-context-kind=\"board\" data-context-id=\"" & Str(b!id) & "\" aria-label=\"Board menu\"></button></div>"
+        tiles[CStr(b!id)] = "<li data-selected=\"" & If(BoardSelection.IsSelected(SelectionState(), b!id), "true", "false") & "\" class=\"weba-board-tile-group js-board\" data-board-id=\"" & Str(b!id) & "\">" & If(IsOverview(), "<button type=\"button\" class=\"weba-drag-handle weba-board-drag fa fa-arrows\" data-drag-kind=\"board\" aria-label=\"Sort boards\"></button>", "") & "<button style=\"background-color:" & Html(WorkspaceStore.Setting(b!id, "board", b!id, "color", "#2980b9")) & "\" type=\"button\" class=\"weba-board-tile\" data-board-key=\"b" & Str(b!id) & "\"><strong class=\"board-list-item-name\">" & Html(b!title) & "</strong></button><button class=\"weba-board-context fa fa-bars\" data-context-kind=\"board\" data-context-id=\"" & Str(b!id) & "\" aria-label=\"Board menu\"></button></li>"
         Continue
       Endif
       Print "<h3>" & Html(b!title) & "</h3>"
@@ -646,7 +646,7 @@ Public Sub Visual_Render()
         If tiles.Exist(CStr(overviewId)) Then Print tiles[CStr(overviewId)]
       Next
     Endif
-    Print "</div><div class=\"weba-report\"></div>"
+    Print If(IsOverview(), "</ul>", "</div>") & "<div class=\"weba-report\"></div>"
   Endif
   Print "</section>"
   WebForm.Exec("window.webaRender && window.webaRender();gw.onFocus();window.webaAlignFocus && window.webaAlignFocus();")

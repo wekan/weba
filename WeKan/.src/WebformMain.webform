@@ -36,7 +36,7 @@
       Tooltip = ("Add Board")
     }
     { HeaderSearch WebButton
-      Class = "weba-icon-only fa fa-search"
+      Class = "weba-icon-only fa fa-search js-all-boards-sidebar-search"
       Tooltip = ("Search")
     }
     { SortBoards WebButton
@@ -1122,7 +1122,7 @@
             Tooltip = ("Search boards")
           }
           { ClearBoardSearch WebButton
-            Class = "weba-icon-only fa fa-times"
+            Class = "weba-icon-only fa fa-times js-board-search-clear"
             Tooltip = ("Clear search")
           }
         }

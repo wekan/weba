@@ -473,16 +473,20 @@ Matching original WeKan labels, including Custom (drag order), are imported for
 do not count as unchanged original spec 39 callbacks.
 
 `wekan-catalog-server.browser.cjs` runs three unchanged original spec 39 server
-callbacks and hooks against real `BoardCatalog.Page` results. It seeds and cleans
+callbacks plus its unchanged search UI callback and hooks against real `BoardCatalog.Page` results. It seeds and cleans
 native boards, revalidates an actual API token before each call and explicitly
 maps its verified identity to a native fixture session through a test-only RPC
 binding. This covers page disjointness, search totals and private-board exclusion.
 A revoked-token check proves rejection before native service invocation even
 while the native UI remains signed in.
 Numeric-ID, fixture DB and transport/session adapters do not establish production
-DDP/routing parity. The two original sort/search UI callbacks remain open; the
+DDP/routing parity. The original sort UI callback remains open; the
 Latin callback is covered separately below. `--catalog` and `test-live` include
 this runner; `python3 tests/run-http.py --original-catalog [--archive]` runs it alone.
+The production overview is a semantic list (`ul`/`li.js-board`) with escaped
+`.board-list-item-name` text. Search controls expose the original source selectors;
+the unchanged search callback uses real native events, without locator adapters.
+List styling preserves the native tile grid, selection and drag surfaces.
 
 
 `BoardOrderTest` covers per-user readonly access, filtered rank merge, invalid/
@@ -1023,7 +1027,7 @@ it for source and packaged apps. Run it separately with the documented Gambas
 and Chromium environment using `python3 tests/run-http.py --workspaces`, adding
 `--archive` for the package.
 
-Complete edit-form semantics and two original All Boards UI callbacks remain
+Complete edit-form semantics and the original All Boards sort UI callback remain
 open. Creation now uses a real form, required textarea and submit input with
 revision/session/parent-bound native submission. The unchanged original Latin
 callback passes through explicit native password-session and client-locale
