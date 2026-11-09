@@ -8,6 +8,7 @@
   "admin-panel": "Skrbniška plošča",
   "all-boards": "Vse table",
   "allboards.add-subworkspace": "Dodaj podrejeni delovni prostor",
+  "allboards.add-subworkspace-prompt": "Ime podrejenega delovnega prostora",
   "allboards.add-workspace": "Dodaj delovni prostor",
   "allboards.add-workspace-prompt": "Ime delovnega prostora",
   "allboards.delete-workspace-confirm": "Ali ste prepričani, da želite izbrisati ta delovni prostor?",

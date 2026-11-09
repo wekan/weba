@@ -8,6 +8,7 @@
   "admin-panel": "پانێڵی بەڕێوەبەر",
   "all-boards": "هەموو تەختەکان",
   "allboards.add-subworkspace": "شوێنی کاری لاوەکی زیاد بکە",
+  "allboards.add-subworkspace-prompt": "ناوی شوێنی کاری لاوەکی",
   "allboards.add-workspace": "شوێنی کار زیاد بکە",
   "allboards.add-workspace-prompt": "ناوی شوێنی کار",
   "allboards.delete-workspace-confirm": "دڵنیایت لە سڕینەوەی ئەم شوێنی کارە؟",

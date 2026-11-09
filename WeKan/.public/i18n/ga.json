@@ -8,6 +8,7 @@
   "admin-panel": "Painéal an Riarthóra",
   "all-boards": "Gach clár",
   "allboards.add-subworkspace": "Cuir Fospás Oibre Leis",
+  "allboards.add-subworkspace-prompt": "Ainm an fhospáis oibre",
   "allboards.add-workspace": "Cuir Spás Oibre Leis",
   "allboards.add-workspace-prompt": "Ainm an spáis oibre",
   "allboards.delete-workspace-confirm": "An bhfuil tú cinnte gur mhaith leat an spás oibre seo a scriosadh?",

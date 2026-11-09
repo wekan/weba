@@ -8,6 +8,7 @@
   "admin-panel": "Hallintapaneeli",
   "all-boards": "Kaikki taulut",
   "allboards.add-subworkspace": "Lisää alityötila",
+  "allboards.add-subworkspace-prompt": "Alityötilan nimi",
   "allboards.add-workspace": "Lisää työtila",
   "allboards.add-workspace-prompt": "Työtilan nimi",
   "allboards.delete-workspace-confirm": "Haluatko varmasti poistaa tämän työtilan?",

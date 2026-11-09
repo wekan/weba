@@ -8,6 +8,7 @@
   "admin-panel": "관리자 패널",
   "all-boards": "전체 보드",
   "allboards.add-subworkspace": "하위 작업 공간 추가",
+  "allboards.add-subworkspace-prompt": "하위 작업 공간 이름",
   "allboards.add-workspace": "작업 공간 추가",
   "allboards.add-workspace-prompt": "작업 공간 이름",
   "allboards.delete-workspace-confirm": "이 워크스페이스를 삭제하시겠습니까?",

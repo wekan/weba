@@ -8,6 +8,7 @@
   "admin-panel": "प्रशासक पॅनेल",
   "all-boards": "सगळीं फळे",
   "allboards.add-subworkspace": "उपकार्यस्थळ जोडात",
+  "allboards.add-subworkspace-prompt": "उपकार्यस्थळाचें नांव",
   "allboards.add-workspace": "कार्यस्थळ जोडात",
   "allboards.add-workspace-prompt": "कार्यस्थळाचें नांव",
   "allboards.delete-workspace-confirm": "हें कार्यस्थळ काडून उडोवपाची तुमची खात्री आसा?",

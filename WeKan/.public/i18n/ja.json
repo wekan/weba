@@ -8,6 +8,7 @@
   "admin-panel": "管理パネル",
   "all-boards": "全てのボード",
   "allboards.add-subworkspace": "サブワークスペースを追加",
+  "allboards.add-subworkspace-prompt": "サブワークスペース名",
   "allboards.add-workspace": "ワークスペースを追加",
   "allboards.add-workspace-prompt": "ワークスペース名",
   "allboards.delete-workspace-confirm": "このワークスペースを削除してもよろしいですか?",

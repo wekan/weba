@@ -8,6 +8,7 @@
   "admin-panel": "প্ৰশাসক পেনেল",
   "all-boards": "সকলো ফলক",
   "allboards.add-subworkspace": "উপ-কৰ্মস্থান যোগ কৰক",
+  "allboards.add-subworkspace-prompt": "উপ-কৰ্মস্থানৰ নাম",
   "allboards.add-workspace": "কৰ্মস্থান যোগ কৰক",
   "allboards.add-workspace-prompt": "কৰ্মস্থানৰ নাম",
   "allboards.delete-workspace-confirm": "এই কৰ্মস্থান মচিবলৈ আপুনি নিশ্চিত নে?",

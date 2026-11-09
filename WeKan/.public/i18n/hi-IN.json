@@ -8,6 +8,7 @@
   "admin-panel": "व्यवस्थापक Panel",
   "all-boards": "सभी बोर्ड",
   "allboards.add-subworkspace": "उप-कार्यस्थान जोड़ें",
+  "allboards.add-subworkspace-prompt": "उप-कार्यस्थान का नाम",
   "allboards.add-workspace": "कार्यस्थान जोड़ें",
   "allboards.add-workspace-prompt": "कार्यस्थान का नाम",
   "allboards.delete-workspace-confirm": "क्या आप वाकई इस कार्यस्थान को हटाना चाहते हैं?",

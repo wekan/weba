@@ -8,6 +8,7 @@
   "admin-panel": "Pannellu di l'amministraturi",
   "all-boards": "Tutti i tavuli",
   "allboards.add-subworkspace": "Agghiunci sutta-spazio di lavoro",
+  "allboards.add-subworkspace-prompt": "Nomu del sutta-spazio di lavoro",
   "allboards.add-workspace": "Agghiunci spazio di lavoro",
   "allboards.add-workspace-prompt": "Nomu dellu spazio di lavoro",
   "allboards.delete-workspace-confirm": "Sei sicuro di voler cancellare chistu spazio di lavoro?",

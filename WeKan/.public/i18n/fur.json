@@ -8,6 +8,7 @@
   "admin-panel": "Panel di aministratôr",
   "all-boards": "Dutis lis taulis",
   "allboards.add-subworkspace": "Zonte sotto-spazio di lavoro",
+  "allboards.add-subworkspace-prompt": "Nome dal sotto-spazio di lavoro",
   "allboards.add-workspace": "Zonte spazio di lavoro",
   "allboards.add-workspace-prompt": "Non dal spazi di lavôr",
   "allboards.delete-workspace-confirm": "Sei sicuro di voler eliminere chest spazio di lavoro?",

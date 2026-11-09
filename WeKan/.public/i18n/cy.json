@@ -8,6 +8,7 @@
   "admin-panel": "Panel Gweinyddol",
   "all-boards": "Pob Bwrdd",
   "allboards.add-subworkspace": "Ychwanegu Subworkspace",
+  "allboards.add-subworkspace-prompt": "Enw is-fan waith",
   "allboards.add-workspace": "Ychwanegu Gweithle",
   "allboards.add-workspace-prompt": "Enw gweithle",
   "allboards.delete-workspace-confirm": "Ydych chi'n siŵr eich bod am ddileu'r man gwaith hwn?",

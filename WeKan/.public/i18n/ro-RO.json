@@ -8,6 +8,7 @@
   "admin-panel": "Panou de administrare",
   "all-boards": "Toate tablele",
   "allboards.add-subworkspace": "Adaugă subspațiu de lucru",
+  "allboards.add-subworkspace-prompt": "Numele subspațiului de lucru",
   "allboards.add-workspace": "Adaugă spațiu de lucru",
   "allboards.add-workspace-prompt": "Numele spațiului de lucru",
   "allboards.delete-workspace-confirm": "Sigur doriți să ștergeți acest spațiu de lucru?",

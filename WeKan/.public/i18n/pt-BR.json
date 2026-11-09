@@ -8,6 +8,7 @@
   "admin-panel": "Painel Administrativo",
   "all-boards": "Todos os quadros",
   "allboards.add-subworkspace": "Adicionar Subárea de trabalho",
+  "allboards.add-subworkspace-prompt": "Nome da Subárea de trabalho",
   "allboards.add-workspace": "Adicionar Área de trabalho",
   "allboards.add-workspace-prompt": "Nome da Área de trabalho",
   "allboards.delete-workspace-confirm": "Tem certeza de que deseja excluir esta área de trabalho?",

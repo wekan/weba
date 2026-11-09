@@ -8,6 +8,7 @@
   "admin-panel": "Administration",
   "all-boards": "Alle Boards",
   "allboards.add-subworkspace": "Teilarbeitsplatz hinzufügen",
+  "allboards.add-subworkspace-prompt": "Name des Teilarbeitsplatz",
   "allboards.add-workspace": "Arbeitsplatz hinzufügen",
   "allboards.add-workspace-prompt": "Name des Arbeitsplatzes",
   "allboards.delete-workspace-confirm": "Möchten Sie diesen Arbeitsplatz wirklich löschen?",

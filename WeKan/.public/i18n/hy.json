@@ -8,6 +8,7 @@
   "admin-panel": "Ադմինիստրատորի վահանակ",
   "all-boards": "Բոլոր տախտակները",
   "allboards.add-subworkspace": "Ավելացնել Subworkspace",
+  "allboards.add-subworkspace-prompt": "Ենթաշխատանքի անվանումը",
   "allboards.add-workspace": "Ավելացնել աշխատանքային տարածք",
   "allboards.add-workspace-prompt": "Աշխատանքային տարածքի անվանումը",
   "allboards.delete-workspace-confirm": "Իսկապե՞ս ուզում եք ջնջել այս աշխատանքային տարածքը:",

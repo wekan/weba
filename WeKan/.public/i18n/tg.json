@@ -8,6 +8,7 @@
   "admin-panel": "Панели маъмур",
   "all-boards": "Ҳамаи тахтаҳо",
   "allboards.add-subworkspace": "Илова кардани зерфазои корӣ",
+  "allboards.add-subworkspace-prompt": "Номи зерфазои корӣ",
   "allboards.add-workspace": "Илова кардани фазои корӣ",
   "allboards.add-workspace-prompt": "Номи фазои корӣ",
   "allboards.delete-workspace-confirm": "Шумо мутмаин ҳастед, ки ин фазои кориро нест кардан мехоҳед?",

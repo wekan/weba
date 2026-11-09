@@ -8,6 +8,7 @@
   "admin-panel": "ایڈمن پینل",
   "all-boards": "تمام بورڈز",
   "allboards.add-subworkspace": "ذیلی ورک اسپیس شامل کریں",
+  "allboards.add-subworkspace-prompt": "ذیلی ورک اسپیس کا نام",
   "allboards.add-workspace": "ورک اسپیس شامل کریں",
   "allboards.add-workspace-prompt": "ورک اسپیس کا نام",
   "allboards.delete-workspace-confirm": "کیا آپ واقعی یہ ورک اسپیس حذف کرنا چاہتے ہیں؟",

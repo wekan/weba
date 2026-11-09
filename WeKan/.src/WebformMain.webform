@@ -165,6 +165,12 @@
     { SaveWorkspace WebButton
       Text = ("Add Workspace")
     }
+    { SubworkspaceNameLabel WebLabel
+      Text = ("Subworkspace name")
+    }
+    { SubworkspaceName WebTextArea
+      Height = "68px"
+    }
     { AddSubworkspace WebButton
       Text = ("Add Subworkspace")
     }

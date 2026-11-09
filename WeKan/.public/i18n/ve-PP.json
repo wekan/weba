@@ -8,6 +8,7 @@
   "admin-panel": "Administratoran panel’",
   "all-boards": "Kaik laudad",
   "allboards.add-subworkspace": "Ližada alatötila",
+  "allboards.add-subworkspace-prompt": "Alatötilan nimi",
   "allboards.add-workspace": "Ližada tötila",
   "allboards.add-workspace-prompt": "Tötilan nimi",
   "allboards.delete-workspace-confirm": "Tahod-ik heitta necen tötilan?",

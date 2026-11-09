@@ -8,6 +8,7 @@
   "admin-panel": "باشقۇرۇش تاختىسى",
   "all-boards": "بارلىق تاختايلار",
   "allboards.add-subworkspace": "Subworkspace نى قوشۇڭ",
+  "allboards.add-subworkspace-prompt": "تارماق خىزمەت ئىسمى",
   "allboards.add-workspace": "خىزمەت بوشلۇقى قوشۇڭ",
   "allboards.add-workspace-prompt": "خىزمەت بوشلۇقى ئىسمى",
   "allboards.delete-workspace-confirm": "بۇ خىزمەت بوشلۇقىنى ئۆچۈرمەكچىمۇ؟",

@@ -8,6 +8,7 @@
   "admin-panel": "Хүтэлбэрилэгшын самбар",
   "all-boards": "Бүхы самбарнууд",
   "allboards.add-subworkspace": "Дэд ажалай оршон нэмэхэ",
+  "allboards.add-subworkspace-prompt": "Дэд ажалай оршоной нэрэ",
   "allboards.add-workspace": "Ажалай оршон нэмэхэ",
   "allboards.add-workspace-prompt": "Ажалай оршоной нэрэ",
   "allboards.delete-workspace-confirm": "Энэ ажалай оршон усадхахаяа үнэхөөрөө хүсэжэ байна гүт?",

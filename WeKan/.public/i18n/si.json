@@ -8,6 +8,7 @@
   "admin-panel": "පරිපාලක පුවරුව",
   "all-boards": "සියලු පුවරු",
   "allboards.add-subworkspace": "උපවැඩබිමක් එක් කරන්න",
+  "allboards.add-subworkspace-prompt": "උපවැඩබිමේ නම",
   "allboards.add-workspace": "වැඩබිමක් එක් කරන්න",
   "allboards.add-workspace-prompt": "වැඩබිමේ නම",
   "allboards.delete-workspace-confirm": "මෙම වැඩබිම මකා දැමීමට ඔබට විශ්වාසද?",

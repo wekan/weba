@@ -8,6 +8,7 @@
   "admin-panel": "စီမံခန့်ခွဲမှုအကန့်",
   "all-boards": "ဘုတ်အားလုံး",
   "allboards.add-subworkspace": "လုပ်ငန်းနေရာခွဲ ထည့်ရန်",
+  "allboards.add-subworkspace-prompt": "လုပ်ငန်းနေရာခွဲအမည်",
   "allboards.add-workspace": "လုပ်ငန်းနေရာ ထည့်ရန်",
   "allboards.add-workspace-prompt": "လုပ်ငန်းနေရာအမည်",
   "allboards.delete-workspace-confirm": "ဤလုပ်ငန်းနေရာကို ဖျက်ရန် သေချာပါသလား။",

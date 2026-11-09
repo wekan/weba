@@ -8,6 +8,7 @@
   "admin-panel": "འཛིན་སྐྱོང་པང་ལེབ།",
   "all-boards": "པད་ཤིང་ཆ་མཉམ།",
   "allboards.add-subworkspace": "ལཱ་གི་ས་སྒོ་འོག་མ་ཁ་སྐོང་རྐྱབ།",
+  "allboards.add-subworkspace-prompt": "ལཱ་གི་ས་སྒོ་འོག་མའི་མིང་།",
   "allboards.add-workspace": "ལཱ་གི་ས་སྒོ་ཁ་སྐོང་རྐྱབ།",
   "allboards.add-workspace-prompt": "ལཱ་གི་ས་སྒོའི་མིང་།",
   "allboards.delete-workspace-confirm": "ལཱ་གི་ས་སྒོ་འདི་བཏོན་ནི་ངེས་གཏན་ཨིན་ན?",

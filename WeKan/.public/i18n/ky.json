@@ -8,6 +8,7 @@
   "admin-panel": "Администратор панели",
   "all-boards": "Бардык такталар",
   "allboards.add-subworkspace": "Ички иш мейкиндигин кошуу",
+  "allboards.add-subworkspace-prompt": "Ички иш мейкиндигинин аталышы",
   "allboards.add-workspace": "Иш мейкиндигин кошуу",
   "allboards.add-workspace-prompt": "Иш мейкиндигинин аталышы",
   "allboards.delete-workspace-confirm": "Бул иш мейкиндигин чын эле өчүрөсүзбү?",

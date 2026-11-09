@@ -8,6 +8,7 @@
   "admin-panel": "Tabana ni dauniveiliutaki",
   "all-boards": "Na vola kece",
   "allboards.add-subworkspace": "Kuria na vanua lailai ni cakacaka",
+  "allboards.add-subworkspace-prompt": "Yaca ni vanua lailai ni cakacaka",
   "allboards.add-workspace": "Kuria na vanua ni cakacaka",
   "allboards.add-workspace-prompt": "Yaca ni vanua ni cakacaka",
   "allboards.delete-workspace-confirm": "O sa vakadeitaka ni o via bokoca na vanua ni cakacaka oqo?",

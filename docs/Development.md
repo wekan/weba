@@ -402,8 +402,19 @@ selects the target, never the DOM's `data-id`. The former Save click refuses
 writes. Source/packaged workspace tests exercise blank/whitespace names, stale
 root-to-child packets, completed-form replay, forged old Save, literal Unicode/
 icon values, translated controls and create/edit transitions. The edit label
-uses its own imported source key (162 keys/237 catalogs). Inline subworkspace
-forms and rendered Markdown icons remain pending.
+uses its own imported source key (now 163 keys/237 catalogs).
+The inline subworkspace form is a separate sibling form with source selectors,
+optional accessible textarea and translated submit button. The shared native
+command accepts a child-name snapshot only for the current editor revision,
+actor/session and visible edit mode; the server's private edit ID supplies the
+parent. Submitted DOM IDs cannot redirect the mutation. Legacy direct-button,
+closed/completed and stale-parent commands refuse writes. Parent edit drafts are
+not saved by child creation. Browser tests compare actual SQL changes with the
+unchanged original `addSubworkspace` helper for empty, whitespace and trimmed
+names, with explicit method/session/SQL-ID adapters. Empty submissions close
+the popup without writes, matching the source event; server trimming recognizes
+ECMAScript Unicode whitespace. Broader source popup and
+transport integration plus rendered Markdown icons remain pending.
 Markdown icons, multi-board workspace drops and broader original UI/API/security
 suites remain explicit TODO requirements. Folding/counts and native tree
 gestures are described below.
@@ -1122,7 +1133,7 @@ A selected live attachment now has an Export button in the native details pane.
 It downloads wekan-attachment.json with the same five-field source JSON as the
 attachment-export API, preserving exact bytes, empty data and literal Unicode
 metadata. The button uses the existing native icon/keyboard controls and source
-Export caption (now included in 162 keys across 237 catalogs). Owner and readonly full-board
+Export caption (now included in 163 keys across 237 catalogs). Owner and readonly full-board
 members can export; assigned-only members cannot, even when raw flags also make
 them board administrators.
 

@@ -8,6 +8,7 @@
   "admin-panel": "Admin Panel",
   "all-boards": "All Boards",
   "allboards.add-subworkspace": "Add Subworkspace",
+  "allboards.add-subworkspace-prompt": "Subworkspace name",
   "allboards.add-workspace": "Add Workspace",
   "allboards.add-workspace-prompt": "Workspace name",
   "allboards.delete-workspace-confirm": "Are you sure you want to delete this workspace?",

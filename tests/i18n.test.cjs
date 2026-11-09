@@ -12,6 +12,7 @@ const dom = new JSDOM(`<div id="@1.LanguageSelector"><select data-weba-language>
 <div id="@1.PaneTitle" class="weba-user-text">Members</div>
 <div class="weba-space-row"><button class="weba-space-open weba-user-text" title="Members">Members</button><button class="weba-space-drag" title="Move"></button><button class="weba-space-collapse fa-caret-down" title="Collapse"></button></div><button class="weba-space-menu" title="Workspace menu"></button>
 <div id="@1.WorkspaceDestination"><select><option value="0">Remaining</option><option value="1">Members</option></select></div>
+<div id="@1.SubworkspaceNameLabel">Subworkspace name</div>
 <div id="@1.WorkspacePanel" class="weba-workspace-edit"><div id="@1.WorkspaceNameLabel">Workspace name</div></div>
 <article class="weba-card"><strong>Username</strong></article>`,{url:'http://localhost',runScripts:'outside-only'});
 const {window}=dom;
@@ -26,6 +27,7 @@ window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
   const fi=JSON.parse(fs.readFileSync(path.join(publicDir,'i18n/fi.json'),'utf8'));
   const key=window.webaI18nCatalog.lookup.Username;
   assert.equal(doc.getElementById('@1.WorkspaceNameLabel').textContent,fi['allboards.edit-workspace-name']);
+  assert.equal(doc.getElementById('@1.SubworkspaceNameLabel').textContent,fi['allboards.add-subworkspace-prompt']);
   doc.getElementById('@1.WorkspacePanel').className='weba-workspace-create';await api.setLanguage('fi');
   assert.equal(doc.getElementById('@1.WorkspaceNameLabel').textContent,fi['allboards.add-workspace-prompt']);
   assert.equal(doc.getElementById('@1.WebLabelUser').textContent,fi[key]);

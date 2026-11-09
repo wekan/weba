@@ -8,6 +8,7 @@
   "admin-panel": "Phanele ya motsamaisi",
   "all-boards": "Diboto tsotlhe",
   "allboards.add-subworkspace": "Tsenya lefelo-potlana la tiro",
+  "allboards.add-subworkspace-prompt": "Leina la lefelo-potlana la tiro",
   "allboards.add-workspace": "Tsenya lefelo la tiro",
   "allboards.add-workspace-prompt": "Leina la lefelo la tiro",
   "allboards.delete-workspace-confirm": "A o netefatsa gore o batla go phumola lefelo leno la tiro?",

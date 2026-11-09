@@ -1,11 +1,15 @@
 // Real native personal workspace controls, with independent persisted SQL rows.
 'use strict';
-const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('node:module'),{execFileSync}=require('node:child_process');
+const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),{createRequire}=require('node:module'),{execFileSync}=require('node:child_process');
 (async()=>{
  let source=process.env.WEKAN_SOURCE,ancestor=path.resolve(__dirname,'..');
  while(!source&&path.dirname(ancestor)!==ancestor){if(fs.existsSync(path.join(ancestor,'tests/playwright/fixtures.js')))source=ancestor;else ancestor=path.dirname(ancestor);}
  if(!source)throw Error('Original Playwright fixture dependency unavailable');
  const {chromium,expect}=createRequire(path.join(source,'tests/playwright/fixtures.js'))('@playwright/test');
+ const boardSource=fs.readFileSync(path.join(source,'client/components/boards/boardsList.js'),'utf8');
+ const helperStart=boardSource.indexOf('function addSubworkspace('),helperEnd=boardSource.indexOf('\nfunction saveWorkspace(',helperStart);expect(helperStart).toBeGreaterThanOrEqual(0);expect(helperEnd).toBeGreaterThan(helperStart);
+ const sourceSubspace=(parentId,name)=>{const calls=[],context={Meteor:{call:(method,params)=>calls.push({method,params})}};vm.runInNewContext(boardSource.slice(helperStart,helperEnd)+';addSubworkspace(parentId,name);',{...context,parentId,name});return JSON.parse(JSON.stringify(calls));};
+
  const fixture=(mode,user='rest-member',extra={})=>JSON.parse(execFileSync(process.env.GBX,['-s','BoardCatalogFixture',process.env.WEBA_TEST_PROJECT],{encoding:'utf8',env:{...process.env,WEBA_API_REQUEST:'0',WEBA_CATALOG_MODE:mode,WEBA_TEST_USER:user,...extra}}));
  const seeded=fixture('seed-spaces','rest-other');
  const foreign=fixture('create-space','rest-other',{WEBA_SPACE_NAME:'Other private workspace'}).spaceId;
@@ -51,10 +55,21 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   await expect(page.locator('.weba-space-open')).toHaveText(['📁 Root <literal>']);
   expect(spaces().find(row=>row.id===root.id).icon).toBe('📁');
   const afterEdit=spaces();await page.locator(control('WorkspaceCreateAction')).evaluate((target,packet)=>gw.update(target.id,'text',packet),staleEditPacket);await settle();await expect(page.locator(control('Notice'))).toHaveText('Workspace form changed');expect(spaces()).toEqual(afterEdit);
-  await space('Root <literal>').locator('.weba-space-menu').click();await click('AddSubworkspace');await fill('WorkspaceName','Child');await submitWorkspace();
+  await space('Root <literal>').locator('.weba-space-menu').click();
+  const subForm=page.locator('form.js-workspace-subspace-form');await expect(subForm).toBeVisible();await expect(subForm).toHaveAttribute('data-id',String(root.id));expect(await subForm.evaluate(form=>form.parentElement.closest('form')===null)).toBe(true);
+  await expect(subForm.locator('textarea.js-subworkspace-name')).not.toHaveAttribute('required','');await expect(subForm.locator('textarea')).toHaveAccessibleName('Subworkspace name');
+  const beforeChild=spaces();
+  for(const name of ['', '   ', '\u00a0\uFEFF\u2003']){expect(sourceSubspace(root.id,name)).toEqual([]);await fill('SubworkspaceName',name);await subForm.locator('button[type=submit]').click();await settle();await expect(page.locator(control('WorkspacePanel'))).toBeHidden();expect(spaces()).toEqual(beforeChild);await space('Root <literal>').locator('.weba-space-menu').click();await expect(subForm).toBeVisible();}
+  await page.locator(control('AddSubworkspace')).evaluate(button=>button.click());await settle();await expect(page.locator(control('Notice'))).toHaveText('Use workspace form');await expect(editForm).toBeVisible();expect(spaces()).toEqual(beforeChild);
+  await fill('WorkspaceName','Unsaved parent draft');await fill('SubworkspaceName','\u00a0 Child \ufeff');expect(sourceSubspace(root.id,'\u00a0 Child \ufeff')).toEqual([{method:'createWorkspace',params:{parentId:root.id,name:'Child'}}]);
+  const staleSubspace=await subForm.evaluate(form=>'subspace|'+form.dataset.revision+'|'+btoa('Replay child'));
+  await subForm.evaluate(form=>form.dataset.id='999999999');await subForm.locator('button[type=submit]').click();await settle();expect(spaces().find(row=>row.id===root.id).name).toBe('Root <literal>');
+  const afterChild=spaces();await page.locator(control('WorkspaceCreateAction')).evaluate((target,packet)=>gw.update(target.id,'text',packet),staleSubspace);await settle();await expect(page.locator(control('Notice'))).toHaveText('Workspace form changed');expect(spaces()).toEqual(afterChild);
+
   const child=spaces().find(row=>row.name==='Child');expect(child.parentId).toBe(root.id);
   await space('Child').locator('.weba-space-menu').click();const beforeStaleEdit=spaces();
   await page.locator(control('WorkspaceCreateAction')).evaluate((target,packet)=>gw.update(target.id,'text',packet),staleEditPacket);await settle();await expect(page.locator(control('Notice'))).toHaveText('Workspace form changed');expect(spaces()).toEqual(beforeStaleEdit);
+  await page.locator(control('WorkspaceCreateAction')).evaluate((target,packet)=>gw.update(target.id,'text',packet),staleSubspace);await settle();expect(spaces()).toEqual(beforeStaleEdit);
   await click('CloseWorkspace');
 
   await expect(page.locator('.weba-space-open')).toHaveText(['📁 Root <literal>','Child']);
@@ -115,7 +130,7 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   await expect(page.locator(control('WorkspacesHeading'))).toHaveText(fi['allboards.workspaces']);
   await expect(caret()).toHaveAttribute('aria-label',fi.collapse+': Root <literal>');
   await space('Members').locator('.weba-space-menu').click();
-  await expect(page.locator(control('WorkspaceHeading'))).toHaveText(fi['allboards.edit-workspace']);await expect(page.locator(control('WorkspaceNameLabel'))).toHaveText(fi['allboards.edit-workspace-name']);await expect(editForm.locator('input[type=submit]')).toHaveValue(fi.save);await click('CloseWorkspace');
+  await expect(page.locator(control('WorkspaceHeading'))).toHaveText(fi['allboards.edit-workspace']);await expect(page.locator(control('WorkspaceNameLabel'))).toHaveText(fi['allboards.edit-workspace-name']);await expect(editForm.locator('input[type=submit]')).toHaveValue(fi.save);await expect(subForm.locator('button[type=submit]')).toHaveText(fi['allboards.add-subworkspace']);await expect(subForm.locator('textarea')).toHaveAccessibleName(fi['allboards.add-subworkspace-prompt']);await click('CloseWorkspace');
   await page.evaluate(()=>webaI18n.setLanguage('la'));
   const latin=JSON.parse(fs.readFileSync(path.join(source,'imports/i18n/data/la.i18n.json'),'utf8'));
   await expect(page.locator(control('WorkspacesHeading'))).toHaveText(latin['allboards.workspaces']);
@@ -149,6 +164,7 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   await page.keyboard.press('Escape');await expect(page.locator(control('WorkspacePanel'))).toBeHidden();
   await space('Root <literal>').locator('.weba-space-menu').click();await expect(page.locator(control('WorkspacePanel'))).toBeVisible();const editBox=await page.locator(control('WorkspacePanel')).boundingBox();expect(editBox.x).toBeGreaterThanOrEqual(0);expect(editBox.x+editBox.width).toBeLessThanOrEqual(390);expect(editBox.y+editBox.height).toBeLessThanOrEqual(844);fixture('delete-space','rest-member',{WEBA_SPACE_ID:String(root.id)});await expect(page.locator(control('WorkspacePanel'))).toBeHidden();await expect(page.locator('.weba-space-open')).toHaveCount(0);
   expect(errors).toEqual([]);
+  console.log('Original addSubworkspace helper: unchanged empty/Unicode-whitespace/trimmed-name outcomes match actual native inline form SQL mutations; numeric-ID/method/session adapters explicit, blank-submit closure checked separately');
   console.log('Native workspace browser: nested create/edit/confirmed delete, literal Unicode/icon persistence, readonly personal assignment, category/search, private persisted mouse/keyboard folding, direct active counts, reload/isolation, live placement/draft/deletion and revoked-save guards, translated labels and mobile popup/Escape passed');
  }finally{if(otherContext)await otherContext.close();if(context)await context.close();if(browser)await browser.close();}
 })().catch(error=>{let message=error.stack||String(error);if(process.env.WEBA_TEST_PASSWORD)message=message.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(message);process.exitCode=1;});

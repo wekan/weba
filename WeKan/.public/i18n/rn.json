@@ -8,6 +8,7 @@
   "admin-panel": "Ikibaho c'umuyobozi",
   "all-boards": "Ibicapa vyose",
   "allboards.add-subworkspace": "Ongerako agace ko gukorera",
+  "allboards.add-subworkspace-prompt": "Izina ry'agace ko gukorera",
   "allboards.add-workspace": "Ongerako aho gukorera",
   "allboards.add-workspace-prompt": "Izina ry'aho gukorera",
   "allboards.delete-workspace-confirm": "Uremeza ko ushaka gufuta aha hantu ho gukorera?",

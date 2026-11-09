@@ -8,6 +8,7 @@
   "admin-panel": "แผงผู้ดูแลระบบ",
   "all-boards": "บอร์ดทั้งหมด",
   "allboards.add-subworkspace": "เพิ่มเวิร์กสเปซย่อย",
+  "allboards.add-subworkspace-prompt": "ชื่อเวิร์กสเปซย่อย",
   "allboards.add-workspace": "เพิ่มเวิร์กสเปซ",
   "allboards.add-workspace-prompt": "ชื่อเวิร์กสเปซ",
   "allboards.delete-workspace-confirm": "คุณแน่ใจหรือไม่ว่าต้องการลบเวิร์กสเปซนี้?",

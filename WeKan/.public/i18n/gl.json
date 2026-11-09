@@ -8,6 +8,7 @@
   "admin-panel": "Panel de administración",
   "all-boards": "Todos os taboleiros",
   "allboards.add-subworkspace": "Engadir subespazo de traballo",
+  "allboards.add-subworkspace-prompt": "Nome do subespazo de traballo",
   "allboards.add-workspace": "Engadir espazo de traballo",
   "allboards.add-workspace-prompt": "Nome do espazo de traballo",
   "allboards.delete-workspace-confirm": "Seguro que queres eliminar este espazo de traballo?",

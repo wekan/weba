@@ -8,6 +8,7 @@
   "admin-panel": "അഡ്മിൻ പാനൽ",
   "all-boards": "എല്ലാ ബോർഡുകളും",
   "allboards.add-subworkspace": "ഉപപ്രവർത്തനസ്ഥലം ചേർക്കുക",
+  "allboards.add-subworkspace-prompt": "ഉപപ്രവർത്തനസ്ഥലത്തിന്റെ പേര്",
   "allboards.add-workspace": "പ്രവർത്തനസ്ഥലം ചേർക്കുക",
   "allboards.add-workspace-prompt": "പ്രവർത്തനസ്ഥലത്തിന്റെ പേര്",
   "allboards.delete-workspace-confirm": "ഈ പ്രവർത്തനസ്ഥലം ഇല്ലാതാക്കണമെന്ന് ഉറപ്പാണോ?",

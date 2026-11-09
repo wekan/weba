@@ -8,6 +8,7 @@
   "admin-panel": "Administratorski panel",
   "all-boards": "Sve table",
   "allboards.add-subworkspace": "Dodaj podprostor",
+  "allboards.add-subworkspace-prompt": "Naziv podprostora",
   "allboards.add-workspace": "Dodaj radni prostor",
   "allboards.add-workspace-prompt": "Naziv radnog prostora",
   "allboards.delete-workspace-confirm": "Jeste li sigurni da želite izbrisati ovaj radni prostor?",

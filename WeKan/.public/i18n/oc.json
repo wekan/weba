@@ -8,6 +8,7 @@
   "admin-panel": "Interfàcia d’admin",
   "all-boards": "Totes los tablèus",
   "allboards.add-subworkspace": "Apondre un sosespaci de trabalh",
+  "allboards.add-subworkspace-prompt": "Nom del sosespaci de trabalh",
   "allboards.add-workspace": "Apondre un espaci de trabalh",
   "allboards.add-workspace-prompt": "Nom de l’espaci de trabalh",
   "allboards.delete-workspace-confirm": "Volètz vertadièrament suprimir aqueste espaci de trabalh ?",

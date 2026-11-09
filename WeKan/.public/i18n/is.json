@@ -8,6 +8,7 @@
   "admin-panel": "Stjórnborð",
   "all-boards": "Allar töflur",
   "allboards.add-subworkspace": "Bæta við undirvinnusvæði",
+  "allboards.add-subworkspace-prompt": "Heiti undirvinnusvæðis",
   "allboards.add-workspace": "Bæta við vinnusvæði",
   "allboards.add-workspace-prompt": "Heiti vinnusvæðis",
   "allboards.delete-workspace-confirm": "Ertu viss um að þú viljir eyða þessu vinnusvæði?",

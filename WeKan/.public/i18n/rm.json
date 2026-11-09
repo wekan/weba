@@ -8,6 +8,7 @@
   "admin-panel": "Panel d’administraziun",
   "all-boards": "Tut las tabellas",
   "allboards.add-subworkspace": "Agiuntar in sutspazi da lavur",
+  "allboards.add-subworkspace-prompt": "Num dal sutspazi da lavur",
   "allboards.add-workspace": "Agiuntar in spazi da lavur",
   "allboards.add-workspace-prompt": "Num dal spazi da lavur",
   "allboards.delete-workspace-confirm": "Vuls ti propi stizzar quest spazi da lavur?",

@@ -8,6 +8,7 @@
   "admin-panel": "Iphaneli yomlawuli",
   "all-boards": "Wonke amabhodi",
   "allboards.add-subworkspace": "Engeza indawo yokusebenza engaphansi",
+  "allboards.add-subworkspace-prompt": "Ibizo lendawo yokusebenza engaphansi",
   "allboards.add-workspace": "Engeza indawo yokusebenza",
   "allboards.add-workspace-prompt": "Ibizo lendawo yokusebenza",
   "allboards.delete-workspace-confirm": "Uqinisekile ukuthi ufuna ukususa le indawo yokusebenza?",

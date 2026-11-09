@@ -8,6 +8,7 @@
   "admin-panel": "Pannellu de s'amministradore",
   "all-boards": "Totu sas tàulas",
   "allboards.add-subworkspace": "Agiunghe unu suta-ispàtziu de traballu",
+  "allboards.add-subworkspace-prompt": "Nùmene de su suta-ispàtziu de traballu",
   "allboards.add-workspace": "Agiunghe un'ispàtziu de traballu",
   "allboards.add-workspace-prompt": "Nùmene de s'ispàtziu de traballu",
   "allboards.delete-workspace-confirm": "Ses seguru de chèrrere cantzellare custu ispàtziu de traballu?",

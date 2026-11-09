@@ -8,6 +8,7 @@
   "admin-panel": "Bảng quản trị",
   "all-boards": "Tất cả các bảng",
   "allboards.add-subworkspace": "Tambah sub-ruang kerja",
+  "allboards.add-subworkspace-prompt": "Nama sub-ruang kerja",
   "allboards.add-workspace": "Tambah Ruang kerja",
   "allboards.add-workspace-prompt": "Nama ruang kerja",
   "allboards.delete-workspace-confirm": "Bạn có chắc chắn muốn xóa không gian làm việc này không?",

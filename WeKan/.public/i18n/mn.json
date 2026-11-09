@@ -8,6 +8,7 @@
   "admin-panel": "Админ самбар",
   "all-boards": "Бүх самбарууд",
   "allboards.add-subworkspace": "Дэд ажлын талбар нэмэх",
+  "allboards.add-subworkspace-prompt": "Дэд ажлын талбарын нэр",
   "allboards.add-workspace": "Ажлын талбар нэмэх",
   "allboards.add-workspace-prompt": "Ажлын талбарын нэр",
   "allboards.delete-workspace-confirm": "Энэ ажлын талбарыг устгахдаа итгэлтэй байна уу?",

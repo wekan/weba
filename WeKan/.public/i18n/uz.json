@@ -8,6 +8,7 @@
   "admin-panel": "Administrator paneli",
   "all-boards": "Barcha taxtalar",
   "allboards.add-subworkspace": "Subworkspace qo'shing",
+  "allboards.add-subworkspace-prompt": "Subworkspace nomi",
   "allboards.add-workspace": "Ish maydoni qo'shish",
   "allboards.add-workspace-prompt": "Ish maydoni nomi",
   "allboards.delete-workspace-confirm": "Haqiqatan ham bu ish joyini oʻchirib tashlamoqchimisiz?",

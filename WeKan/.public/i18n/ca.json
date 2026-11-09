@@ -8,6 +8,7 @@
   "admin-panel": "Tauler d'administració",
   "all-boards": "Tots els taulers",
   "allboards.add-subworkspace": "Afegeix un subespai de treball",
+  "allboards.add-subworkspace-prompt": "Nom del subespai de treball",
   "allboards.add-workspace": "Afegeix un espai de treball",
   "allboards.add-workspace-prompt": "Nom de l'espai de treball",
   "allboards.delete-workspace-confirm": "Segur que voleu esborrar aquest espai de treball?",

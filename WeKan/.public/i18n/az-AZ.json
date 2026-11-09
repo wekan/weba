@@ -8,6 +8,7 @@
   "admin-panel": "İdarəetmə Paneli",
   "all-boards": "Bütün lövhələr",
   "allboards.add-subworkspace": "Alt iş sahəsi əlavə edin",
+  "allboards.add-subworkspace-prompt": "Alt iş sahəsinin adı",
   "allboards.add-workspace": "İş sahəsi əlavə edin",
   "allboards.add-workspace-prompt": "İş sahəsinin adı",
   "allboards.delete-workspace-confirm": "Bu iş yerini silmək istədiyinizə əminsiniz?",

@@ -8,6 +8,7 @@
   "admin-panel": "የአስተዳዳሪ ፓነል",
   "all-boards": "ሁሉም ሰሌዳዎች",
   "allboards.add-subworkspace": "ንዑስ የሥራ ቦታ ጨምር",
+  "allboards.add-subworkspace-prompt": "የንዑስ የሥራ ቦታ ስም",
   "allboards.add-workspace": "የሥራ ቦታ ጨምር",
   "allboards.add-workspace-prompt": "የሥራ ቦታ ስም",
   "allboards.delete-workspace-confirm": "ይህን የሥራ ቦታ መሰረዝ እርግጠኛ ነዎት?",

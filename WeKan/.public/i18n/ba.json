@@ -8,6 +8,7 @@
   "admin-panel": "Идарасы панеле",
   "all-boards": "Бөтә такталар",
   "allboards.add-subworkspace": "Эске эш киңлеге өҫтәргә",
+  "allboards.add-subworkspace-prompt": "Эске эш киңлегенең исеме",
   "allboards.add-workspace": "Эш киңлеге өҫтәргә",
   "allboards.add-workspace-prompt": "Эш киңлегенең исеме",
   "allboards.delete-workspace-confirm": "Был эш киңлеген юйырға теләүегеҙгә ышанаһығыҙмы?",

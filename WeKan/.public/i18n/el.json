@@ -8,6 +8,7 @@
   "admin-panel": "Πίνακας διαχείρισης",
   "all-boards": "Όλοι οι πίνακες",
   "allboards.add-subworkspace": "Προσθήκη υποχώρου εργασίας",
+  "allboards.add-subworkspace-prompt": "Όνομα υποχώρου εργασίας",
   "allboards.add-workspace": "Προσθήκη χώρου εργασίας",
   "allboards.add-workspace-prompt": "Όνομα χώρου εργασίας",
   "allboards.delete-workspace-confirm": "Είστε βέβαιοι ότι θέλετε να διαγράψετε αυτόν τον χώρο εργασίας;",

@@ -8,6 +8,7 @@
   "admin-panel": "Идарәче панеле",
   "all-boards": "Барлык такталар",
   "allboards.add-subworkspace": "Эчке эш мәйданы өстәү",
+  "allboards.add-subworkspace-prompt": "Эчке эш мәйданы исеме",
   "allboards.add-workspace": "эш мәйданы өстә",
   "allboards.add-workspace-prompt": "Эш мәйданы исеме",
   "allboards.delete-workspace-confirm": "Бу эш мәйданын бетерергә теләвегезгә ышанасызмы?",

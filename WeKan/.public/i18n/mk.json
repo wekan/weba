@@ -8,6 +8,7 @@
   "admin-panel": "Администраторски панел",
   "all-boards": "Сите табли",
   "allboards.add-subworkspace": "Додај подработен простор",
+  "allboards.add-subworkspace-prompt": "Назив за радни кутак",
   "allboards.add-workspace": "Додај работен простор",
   "allboards.add-workspace-prompt": "Назив радног простора",
   "allboards.delete-workspace-confirm": "Дали сте сигурни дека сакате да го избришете овој работен простор?",

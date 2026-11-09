@@ -8,6 +8,7 @@
   "admin-panel": "Yönetici Paneli",
   "all-boards": "Tüm panolar",
   "allboards.add-subworkspace": "Alt Çalışma Alanı Ekle",
+  "allboards.add-subworkspace-prompt": "Alt çalışma alanı adı",
   "allboards.add-workspace": "Çalışma Alanı Ekle",
   "allboards.add-workspace-prompt": "Çalışma alanı adı",
   "allboards.delete-workspace-confirm": "Bu çalışma alanını silmek istediğinizden emin misiniz?",

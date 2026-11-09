@@ -8,6 +8,7 @@
   "admin-panel": "Administrátorský panel",
   "all-boards": "Všechna tabla",
   "allboards.add-subworkspace": "Přidat podprostor",
+  "allboards.add-subworkspace-prompt": "Název podprostoru",
   "allboards.add-workspace": "Přidat pracovní prostor",
   "allboards.add-workspace-prompt": "Název pracovního prostoru",
   "allboards.delete-workspace-confirm": "Opravdu chcete smazat tento pracovní prostor?",

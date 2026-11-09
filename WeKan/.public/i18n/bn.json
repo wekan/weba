@@ -8,6 +8,7 @@
   "admin-panel": "অ্যাডমিন প্যানেল",
   "all-boards": "সব বোর্ড",
   "allboards.add-subworkspace": "উপ-কর্মক্ষেত্র যোগ করুন",
+  "allboards.add-subworkspace-prompt": "উপ-কর্মক্ষেত্রের নাম",
   "allboards.add-workspace": "কর্মক্ষেত্র যোগ করুন",
   "allboards.add-workspace-prompt": "কর্মক্ষেত্রের নাম",
   "allboards.delete-workspace-confirm": "আপনি কি নিশ্চিত যে এই কর্মক্ষেত্র মুছে ফেলতে চান?",

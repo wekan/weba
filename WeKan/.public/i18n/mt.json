@@ -8,6 +8,7 @@
   "admin-panel": "Panel tal-Amministratur",
   "all-boards": "Il-bordijiet kollha",
   "allboards.add-subworkspace": "Żid Subworkspace",
+  "allboards.add-subworkspace-prompt": "Subworkspace isem",
   "allboards.add-workspace": "Żid Spazju tax-xogħol",
   "allboards.add-workspace-prompt": "Spazju tax-xogħol isem",
   "allboards.delete-workspace-confirm": "Żgur you want għal delete dan spazju tax-xogħol?",

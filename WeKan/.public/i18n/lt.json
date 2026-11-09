@@ -8,6 +8,7 @@
   "admin-panel": "Administratoriaus skydelis",
   "all-boards": "Visos lentos",
   "allboards.add-subworkspace": "Pridėti antrinę darbo sritį",
+  "allboards.add-subworkspace-prompt": "Subdarbo srities pavadinimas",
   "allboards.add-workspace": "Pridėti darbo sritį",
   "allboards.add-workspace-prompt": "Darbo srities pavadinimas",
   "allboards.delete-workspace-confirm": "Ar tikrai norite ištrinti šią darbo sritį?",

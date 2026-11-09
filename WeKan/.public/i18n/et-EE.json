@@ -8,6 +8,7 @@
   "admin-panel": "Administraatori paneel",
   "all-boards": "Kõik lauad",
   "allboards.add-subworkspace": "Lisa alamtööruum",
+  "allboards.add-subworkspace-prompt": "Alamtööruumi nimi",
   "allboards.add-workspace": "Lisa tööruum",
   "allboards.add-workspace-prompt": "Tööruumi nimi",
   "allboards.delete-workspace-confirm": "Kas oled kindel, et soovid selle tööruumi kustutada?",

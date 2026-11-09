@@ -8,6 +8,7 @@
   "admin-panel": "Әкімші панелі",
   "all-boards": "Барлық тақталар",
   "allboards.add-subworkspace": "Ішкі жұмыс кеңістігін қосу",
+  "allboards.add-subworkspace-prompt": "Ішкі жұмыс кеңістігінің атауы",
   "allboards.add-workspace": "Жұмыс кеңістігін қосу",
   "allboards.add-workspace-prompt": "Жұмыс кеңістігінің атауы",
   "allboards.delete-workspace-confirm": "Бұл жұмыс кеңістігін шынымен жойғыңыз келе ме?",

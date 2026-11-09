@@ -8,6 +8,7 @@
   "admin-panel": "חלונית ניהול המערכת",
   "all-boards": "כל הלוחות",
   "allboards.add-subworkspace": "הוספת תת־מרחב עבודה",
+  "allboards.add-subworkspace-prompt": "שם תת־מרחב עבודה",
   "allboards.add-workspace": "הוספת מרחב עבודה",
   "allboards.add-workspace-prompt": "שם מרחב עבודה",
   "allboards.delete-workspace-confirm": "למחוק את מרחב העבודה הזה?",

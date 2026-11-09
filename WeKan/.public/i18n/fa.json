@@ -8,6 +8,7 @@
   "admin-panel": "پیشخوان مدیریتی",
   "all-boards": "همه بردها",
   "allboards.add-subworkspace": "افزودن زیرفضای کاری",
+  "allboards.add-subworkspace-prompt": "نام زیرفضای کاری",
   "allboards.add-workspace": "افزودن فضای کاری",
   "allboards.add-workspace-prompt": "نام فضای کاری",
   "allboards.delete-workspace-confirm": "آیا مطمئن هستید که می‌خواهید این فضای کاری را حذف کنید؟",

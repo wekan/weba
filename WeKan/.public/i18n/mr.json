@@ -8,6 +8,7 @@
   "admin-panel": "प्रशासक पॅनेल",
   "all-boards": "सर्व फलक",
   "allboards.add-subworkspace": "उपकार्यस्थान जोडा",
+  "allboards.add-subworkspace-prompt": "उपकार्यस्थानाचे नाव",
   "allboards.add-workspace": "कार्यस्थान जोडा",
   "allboards.add-workspace-prompt": "कार्यस्थानाचे नाव",
   "allboards.delete-workspace-confirm": "हे कार्यस्थान हटवायचे आहे याची खात्री आहे का?",

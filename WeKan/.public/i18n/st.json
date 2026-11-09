@@ -8,6 +8,7 @@
   "admin-panel": "Phanele ea motsamaisi",
   "all-boards": "Diboto tsohle",
   "allboards.add-subworkspace": "Eketsa sebaka se senyenyane sa mosebetsi",
+  "allboards.add-subworkspace-prompt": "Lebitso la sebaka se senyenyane sa mosebetsi",
   "allboards.add-workspace": "Eketsa sebaka sa mosebetsi",
   "allboards.add-workspace-prompt": "Lebitso la sebaka sa mosebetsi",
   "allboards.delete-workspace-confirm": "Na o netefatsa hore o batla ho hlakola sebaka sena sa mosebetsi?",

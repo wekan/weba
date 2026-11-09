@@ -8,6 +8,7 @@
   "admin-panel": "Pannello dell'amministratore",
   "all-boards": "Tutte le bacheche",
   "allboards.add-subworkspace": "Aggiungi sotto-spazio di lavoro",
+  "allboards.add-subworkspace-prompt": "Nome del sotto-spazio di lavoro",
   "allboards.add-workspace": "Aggiungi spazio di lavoro",
   "allboards.add-workspace-prompt": "Nome dello spazio di lavoro",
   "allboards.delete-workspace-confirm": "Sei sicuro di voler eliminare questo spazio di lavoro?",

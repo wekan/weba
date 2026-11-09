@@ -8,6 +8,7 @@
   "admin-panel": "Administratora panelis",
   "all-boards": "Visi dēļi",
   "allboards.add-subworkspace": "Pievienot apakšdarbvietu",
+  "allboards.add-subworkspace-prompt": "Apakšdarbvietas nosaukums",
   "allboards.add-workspace": "Pievienot darbvietu",
   "allboards.add-workspace-prompt": "Darbvietas nosaukums",
   "allboards.delete-workspace-confirm": "Vai tiešām vēlaties izdzēst šo darbvietu?",

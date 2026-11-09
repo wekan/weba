@@ -8,6 +8,7 @@
   "admin-panel": "Bord d'arontre",
   "all-boards": "An holl daolennoù",
   "allboards.add-subworkspace": "Ouzhpennañ un is-egor labour",
+  "allboards.add-subworkspace-prompt": "Anv an is-egor labour",
   "allboards.add-workspace": "Ouzhpennañ un egor labour",
   "allboards.add-workspace-prompt": "Anv an egor labour",
   "allboards.delete-workspace-confirm": "Ha sur oc’h e fell deoc’h dilemel an egor labour-mañ ?",

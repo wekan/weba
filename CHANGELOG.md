@@ -2,6 +2,16 @@
 
 This work adds the following features and fixes:
 
+- Add inline subworkspace form with source selectors, optional accessible name
+  textarea and translated submit controls (163 keys/237 catalogs). Bind creation
+  to the open native parent/revision/actor/session, ignoring DOM parent authority.
+  Refuse stale, completed and legacy direct-button mutations; preserve stored
+  parent values despite dirty edit drafts. Compare unchanged original helper
+  empty/Unicode-whitespace/trimmed outcomes with real UI SQL mutations; close
+  blank submissions without writes as in the source event. Keep Markdown
+  icons, broader source popup/transport integration and full suites pending.
+  Thanks to xet7.
+
 - Serialize native GUI requests with the actual application-specific Gambas
   session cookies, preventing reloads from overlapping native command responses.
   Use bounded lock stripes, ordered multi-cookie acquisition and a shared queue/

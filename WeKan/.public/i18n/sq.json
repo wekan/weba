@@ -8,6 +8,7 @@
   "admin-panel": "Paneli i administratorit",
   "all-boards": "Të gjitha tabelat",
   "allboards.add-subworkspace": "Shto nënhapësirë pune",
+  "allboards.add-subworkspace-prompt": "Emri i nënhapësirës së punës",
   "allboards.add-workspace": "Shto hapësirë pune",
   "allboards.add-workspace-prompt": "Emri i hapësirës së punës",
   "allboards.delete-workspace-confirm": "Je i sigurt që dëshiron ta fshish këtë hapësirë pune?",

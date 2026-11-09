@@ -8,6 +8,7 @@
   "admin-panel": "Administrator paneel",
   "all-boards": "Alle borden",
   "allboards.add-subworkspace": "Sub-werkruimte toevoegen",
+  "allboards.add-subworkspace-prompt": "Sub-werkruimtenaam",
   "allboards.add-workspace": "Werkruimte toevoegen",
   "allboards.add-workspace-prompt": "Werkruimtenaam",
   "allboards.delete-workspace-confirm": "Weet je zeker dat je deze werkruimte wilt verwijderen?",

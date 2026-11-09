@@ -8,6 +8,7 @@
   "admin-panel": "Panel del administrador",
   "all-boards": "Tolos tableros",
   "allboards.add-subworkspace": "Amestar sub-espaciu de trabayu",
+  "allboards.add-subworkspace-prompt": "Nome del sub-espaciu de trabayu",
   "allboards.add-workspace": "Amestar espaciu de trabayu",
   "allboards.add-workspace-prompt": "Nome del espaciu de trabayu",
   "allboards.delete-workspace-confirm": "¿De xuru que quies eliminar esti espaciu de trabayu?",

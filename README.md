@@ -506,8 +506,17 @@ literal icon persistence. The server binds the submitted name/icon snapshot to
 the open editor revision, actor and session generation; its private workspace ID
 is authoritative. Closed, completed or substituted editor commands and old native
 Save-button events cannot write. Creation remains a separate form. The contextual
-edit-name key is copied from the source into all 237 catalogs (162 keys total).
-Inline subworkspace forms and rendered Markdown icons remain pending.
+edit-name key is copied from the source into all 237 catalogs (now 163 keys total).
+A separate sibling `.js-workspace-subspace-form[data-id]` provides an optional,
+labelled `.js-subworkspace-name` textarea and translated submit button. It submits
+only the child-name snapshot; the native open editor selects the authoritative
+parent under revision/actor/session checks. Empty/ECMAScript-whitespace-only input makes no
+mutation and closes the editor, matching the source submit lifecycle. Successful child creation preserves the stored parent name/icon even
+when its edit form has an unsaved draft. DOM parent tampering, legacy button
+events, stale parent editors and completed/closed packets cannot redirect or
+repeat creation. Original `addSubworkspace` helper outcomes are compared with
+actual UI SQL mutations through explicit method/identity/SQL-ID adapters.
+Rendered Markdown icons and full original popup/transport integration remain open.
 
 
 `BoardOrderTest` covers per-user readonly access, filtered rank merge, invalid/
@@ -1048,7 +1057,7 @@ it for source and packaged apps. Run it separately with the documented Gambas
 and Chromium environment using `python3 tests/run-http.py --workspaces`, adding
 `--archive` for the package.
 
-Inline subworkspace forms, Markdown icons and production transport/routing parity remain
+Markdown icons and production transport/routing parity remain
 open. Creation now uses a real form, required textarea and submit input with
 revision/session/parent-bound native submission. The unchanged original Latin
 callback passes through explicit native password-session and client-locale
@@ -1944,7 +1953,7 @@ A selected live attachment now has an Export button in the native details pane.
 It downloads wekan-attachment.json with the same five-field source JSON as the
 attachment-export API, preserving exact bytes, empty data and literal Unicode
 metadata. The button uses the existing native icon/keyboard controls and source
-Export caption (now included in 162 keys across 237 catalogs). Owner and readonly full-board
+Export caption (now included in 163 keys across 237 catalogs). Owner and readonly full-board
 members can export; assigned-only members cannot, even when raw flags also make
 them board administrators.
 

@@ -8,6 +8,7 @@
   "admin-panel": "Panail rianachd",
   "all-boards": "Na bùird uile",
   "allboards.add-subworkspace": "Cuir Fo-àite-obrach Ris",
+  "allboards.add-subworkspace-prompt": "Ainm an fho-àite-obrach",
   "allboards.add-workspace": "Cuir Àite-obrach Ris",
   "allboards.add-workspace-prompt": "Ainm an àite-obrach",
   "allboards.delete-workspace-confirm": "A bheil thu cinnteach gu bheil thu airson an t-àite-obrach seo a sguabadh às?",

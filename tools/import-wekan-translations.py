@@ -21,6 +21,7 @@ aliases = {
     'Workspaces': 'allboards.workspaces', 'Add Workspace': 'allboards.add-workspace',
     'Workspace name': 'allboards.add-workspace-prompt',
     'Workspace icon (markdown)': 'allboards.edit-workspace-icon',
+    'Subworkspace name': 'allboards.add-subworkspace-prompt',
     'Add Subworkspace': 'allboards.add-subworkspace', 'Edit workspace': 'allboards.edit-workspace',
     'Are you sure you want to delete this workspace?': 'allboards.delete-workspace-confirm',
     'Confirm workspace deletion': 'allboards.delete-workspace-confirm-check',

@@ -8,6 +8,7 @@
   "admin-panel": "Panel ng Tagapangasiwa",
   "all-boards": "Lahat ng pisara",
   "allboards.add-subworkspace": "Magdagdag ng Subworkspace",
+  "allboards.add-subworkspace-prompt": "Subworkspace pangalan",
   "allboards.add-workspace": "Magdagdag ng workspace",
   "allboards.add-workspace-prompt": "workspace pangalan",
   "allboards.delete-workspace-confirm": "Sigurado ka ba ikaw want sa tanggalin ito workspace?",

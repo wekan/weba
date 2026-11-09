@@ -8,6 +8,7 @@
   "admin-panel": "Adminisztrációs panel",
   "all-boards": "Összes tábla",
   "allboards.add-subworkspace": "Almunkaterület hozzáadása",
+  "allboards.add-subworkspace-prompt": "Almunkaterület neve",
   "allboards.add-workspace": "Munkaterület hozzáadása",
   "allboards.add-workspace-prompt": "Munkaterület neve",
   "allboards.delete-workspace-confirm": "Biztosan törölni szeretnéd ezt a munkaterületet?",

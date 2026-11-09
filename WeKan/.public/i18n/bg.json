@@ -8,6 +8,7 @@
   "admin-panel": "Администраторски панел",
   "all-boards": "Всички табла",
   "allboards.add-subworkspace": "Добавяне на подработно пространство",
+  "allboards.add-subworkspace-prompt": "Име на подработното пространство",
   "allboards.add-workspace": "Добавяне на работно пространство",
   "allboards.add-workspace-prompt": "Име на работното пространство",
   "allboards.delete-workspace-confirm": "Сигурни ли сте, че искате да изтриете това работно пространство?",

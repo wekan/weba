@@ -8,6 +8,7 @@
   "admin-panel": "Panel d'administrador",
   "all-boards": "Toz os tableros",
   "allboards.add-subworkspace": "Adhibir subespacio de trabajo",
+  "allboards.add-subworkspace-prompt": "Nombre d'o subespacio de trabajo",
   "allboards.add-workspace": "Adhibir espacio de trabajo",
   "allboards.add-workspace-prompt": "Nombre d'o espacio de trabajo",
   "allboards.delete-workspace-confirm": "¿Seguro que quieres borrar iste espacio de trabajo?",

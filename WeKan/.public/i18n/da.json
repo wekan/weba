@@ -8,6 +8,7 @@
   "admin-panel": "Administrationspanel",
   "all-boards": "Alle tavler",
   "allboards.add-subworkspace": "Tilføj Underarbejdsområde",
+  "allboards.add-subworkspace-prompt": "Underarbejdsområdets navn",
   "allboards.add-workspace": "Tilføj Arbejdsområde",
   "allboards.add-workspace-prompt": "Arbejdsområdets navn",
   "allboards.delete-workspace-confirm": "Er du sikker på, at du vil slette dette arbejdsområde?",

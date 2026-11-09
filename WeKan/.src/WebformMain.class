@@ -2623,6 +2623,7 @@ Private Sub ShowWorkspaceEditor(editId As Integer, parentId As Integer)
   $workspaceParent = parentId
   WorkspaceName.Text = ""
   WorkspaceIcon.Text = ""
+  SubworkspaceName.Text = ""
   If editId > 0 Then
     record = BoardSpaces.Record(editId)
     WorkspaceName.Text = record["name"]
@@ -2635,7 +2636,9 @@ Private Sub ShowWorkspaceEditor(editId As Integer, parentId As Integer)
   If editId = 0 Then SaveWorkspace.Text = If(parentId > 0, "Add Subworkspace", "Add Workspace")
   WorkspaceIcon.Visible = editId > 0
   WorkspaceIconLabel.Visible = editId > 0
-  AddSubworkspace.Visible = editId > 0
+  AddSubworkspace.Visible = False
+  SubworkspaceNameLabel.Visible = editId > 0
+  SubworkspaceName.Visible = editId > 0
   WorkspaceDeleteLabel.Visible = editId > 0
   ConfirmWorkspaceDelete.Visible = editId > 0
   ConfirmWorkspaceDelete.Value = False
@@ -2659,8 +2662,7 @@ Catch
 End
 
 Public Sub AddSubworkspace_Click()
-  If $workspaceEdit <= 0 Then Error.Raise("Workspace not found")
-  ShowWorkspaceEditor(0, $workspaceEdit)
+  Error.Raise("Use workspace form")
 Catch
   Notice.Text = Error.Text
 End
@@ -2669,6 +2671,22 @@ Public Sub SaveWorkspace_Click()
   Error.Raise("Use workspace form")
 Catch
   Notice.Text = Error.Text
+End
+
+Private Function WorkspaceNameTrim(text As String) As String
+  Dim whitespace As Integer[] = [9, 10, 11, 12, 13, 32, 160, 5760, 8192, 8193, 8194, 8195, 8196, 8197, 8198, 8199, 8200, 8201, 8202, 8232, 8233, 8239, 8287, 12288, 65279]
+  Dim leftIndex As Integer = 1
+  Dim rightIndex As Integer = String.Len(text)
+  While leftIndex <= rightIndex
+    If whitespace.Find(String.Code(text, leftIndex)) < 0 Then Break
+    Inc leftIndex
+  Wend
+  While rightIndex >= leftIndex
+    If whitespace.Find(String.Code(text, rightIndex)) < 0 Then Break
+    Dec rightIndex
+  Wend
+  If leftIndex > rightIndex Then Return ""
+  Return String.Mid(text, leftIndex, rightIndex - leftIndex + 1)
 End
 
 Public Sub WorkspaceCreateAction_Change()
@@ -2680,6 +2698,8 @@ Public Sub WorkspaceCreateAction_Change()
     If fields.Count <> 3 Or $workspaceEdit <> 0 Then Error.Raise("Workspace form changed")
   Else If fields[0] = "edit" Then
     If fields.Count <> 4 Or $workspaceEdit <= 0 Then Error.Raise("Workspace form changed")
+  Else If fields[0] = "subspace" Then
+    If fields.Count <> 3 Or $workspaceEdit <= 0 Then Error.Raise("Workspace form changed")
   Else
     Error.Raise("Workspace form changed")
   Endif
@@ -2688,12 +2708,20 @@ Public Sub WorkspaceCreateAction_Change()
   If CStr(revision) <> fields[1] Or revision <> $workspaceRevision Then Error.Raise("Workspace form changed")
   If WebIdentity.Username <> $workspaceActor Or WebDatabase.SessionGeneration($workspaceActor) <> $workspaceGeneration Then Error.Raise("Sign in required")
   name = UnBase64(fields[2])
+  If fields[0] = "subspace" Then name = WorkspaceNameTrim(name)
   If Trim(name) = "" Then
-    WorkspaceName.SetFocus()
+    If fields[0] = "subspace" Then
+      Inc $workspaceRevision
+      WorkspacePanel.Hide()
+    Else
+      WorkspaceName.SetFocus()
+    Endif
     Return
   Endif
   If fields[0] = "edit" Then
     BoardSpaces.Edit($workspaceEdit, name, UnBase64(fields[3]))
+  Else If fields[0] = "subspace" Then
+    BoardSpaces.Add(name, $workspaceEdit)
   Else
     BoardSpaces.Add(name, $workspaceParent)
   Endif

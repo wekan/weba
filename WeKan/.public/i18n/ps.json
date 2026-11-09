@@ -8,6 +8,7 @@
   "admin-panel": "د اداري پينل",
   "all-boards": "ټولې تختې",
   "allboards.add-subworkspace": "فرعي کاري ځای زيات کړئ",
+  "allboards.add-subworkspace-prompt": "د فرعي کاري ځای نوم",
   "allboards.add-workspace": "کاري ځای زيات کړئ",
   "allboards.add-workspace-prompt": "د کاري ځای نوم",
   "allboards.delete-workspace-confirm": "ډاډه ياست چې دا کاري ځای ړنګول غواړئ؟",

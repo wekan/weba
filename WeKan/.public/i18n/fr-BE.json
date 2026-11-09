@@ -8,6 +8,7 @@
   "admin-panel": "Panneau d'administration",
   "all-boards": "Tous les tableaux",
   "allboards.add-subworkspace": "Ajouter un sous-espace de travail",
+  "allboards.add-subworkspace-prompt": "Nom du sous-espace de travail",
   "allboards.add-workspace": "Ajouter un espace de travail",
   "allboards.add-workspace-prompt": "Nom de l'espace de travail",
   "allboards.delete-workspace-confirm": "Êtes-vous sûr de vouloir supprimer cet espace de travail ?",

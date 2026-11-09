@@ -8,6 +8,7 @@
   "admin-panel": "Ekifo ky'abaddukanya",
   "all-boards": "Embaawo zonna",
   "allboards.add-subworkspace": "Yongerako Subworkspace",
+  "allboards.add-subworkspace-prompt": "Subworkspace linnya",
   "allboards.add-workspace": "Yongerako Ekifo-ky'emirimu",
   "allboards.add-workspace-prompt": "Ekifo-ky'emirimu linnya",
   "allboards.delete-workspace-confirm": "okakasa ggwe yagala eri sangula kino ekifo-ky'emirimu?",

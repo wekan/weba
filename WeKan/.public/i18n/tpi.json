@@ -8,6 +8,7 @@
   "admin-panel": "Panel bilong admin",
   "all-boards": "Olgeta bot",
   "allboards.add-subworkspace": "Putim liklik ples wok",
+  "allboards.add-subworkspace-prompt": "Nem bilong liklik ples wok",
   "allboards.add-workspace": "Putim ples wok",
   "allboards.add-workspace-prompt": "Nem bilong ples wok",
   "allboards.delete-workspace-confirm": "Yu wanbel tru long rausim dispela ples wok?",

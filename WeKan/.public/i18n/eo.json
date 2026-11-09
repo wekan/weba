@@ -8,6 +8,7 @@
   "admin-panel": "Administra panelo",
   "all-boards": "Ĉiuj tabuloj",
   "allboards.add-subworkspace": "Aldoni sublaborspacon",
+  "allboards.add-subworkspace-prompt": "Nomo de sublaborspaco",
   "allboards.add-workspace": "Aldoni laborspacon",
   "allboards.add-workspace-prompt": "Nomo de laborspaco",
   "allboards.delete-workspace-confirm": "Ĉu vi certas, ke vi volas forigi ĉi tiun laborspacon?",

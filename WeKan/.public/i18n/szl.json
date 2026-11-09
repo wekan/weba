@@ -8,6 +8,7 @@
   "admin-panel": "Panel administratora",
   "all-boards": "Wszyskie tabule",
   "allboards.add-subworkspace": "Przidej podprzestrzeń roboczą",
+  "allboards.add-subworkspace-prompt": "Miano podprzestrzeni roboczej",
   "allboards.add-workspace": "Przidej przestrzeń roboczą",
   "allboards.add-workspace-prompt": "Miano placu roboty",
   "allboards.delete-workspace-confirm": "Na isto chcesz wyciepać tã przestrzyń roboczŏ?",

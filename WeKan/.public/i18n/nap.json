@@ -8,6 +8,7 @@
   "admin-panel": "Pannello 'e ll'ammenistratore",
   "all-boards": "Tutt' 'e tavule",
   "allboards.add-subworkspace": "Aggiunge 'n sottospazio 'e lavoro",
+  "allboards.add-subworkspace-prompt": "Nomme d' 'o sotto-spazio di lavoro",
   "allboards.add-workspace": "Aggiunge 'n spazio 'e lavoro",
   "allboards.add-workspace-prompt": "Nomme d' 'o spazio di lavoro",
   "allboards.delete-workspace-confirm": "Sei sicuro di voler eliminare chisto spazio di lavoro?",

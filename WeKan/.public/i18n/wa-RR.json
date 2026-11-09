@@ -8,6 +8,7 @@
   "admin-panel": "Panel han pagdumara",
   "all-boards": "Ngatanan nga Board",
   "allboards.add-subworkspace": "Idugang an Subworkspace",
+  "allboards.add-subworkspace-prompt": "Ngaran han subworkspace",
   "allboards.add-workspace": "Idugang an Workspace",
   "allboards.add-workspace-prompt": "Ngaran han workspace",
   "allboards.delete-workspace-confirm": "Sigurado ka ba nga karuyag mo paraon ini nga workspace?",

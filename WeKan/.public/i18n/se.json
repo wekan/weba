@@ -8,6 +8,7 @@
   "admin-panel": "Hálddašeaddjipanela",
   "all-boards": "Buot távvalat",
   "allboards.add-subworkspace": "Lasit vuollebargobáikki",
+  "allboards.add-subworkspace-prompt": "Vuollebargobáikki namma",
   "allboards.add-workspace": "Lasit bargobáikki",
   "allboards.add-workspace-prompt": "Bargobáikki namma",
   "allboards.delete-workspace-confirm": "Háliidatgo duođaid sihkkut dán bargobáikki?",

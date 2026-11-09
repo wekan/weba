@@ -8,6 +8,7 @@
   "admin-panel": "Panel blong admin",
   "all-boards": "Evri bod",
   "allboards.add-subworkspace": "Adem Smol Wokples",
+  "allboards.add-subworkspace-prompt": "Nem blong smol wokples",
   "allboards.add-workspace": "Adem Wokples",
   "allboards.add-workspace-prompt": "Wokples nem",
   "allboards.delete-workspace-confirm": "Yu sua se yu wantem diletem wokples ia?",

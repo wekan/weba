@@ -8,6 +8,7 @@
   "admin-panel": "ადმინის პანელი",
   "all-boards": "ყველა დაფა",
   "allboards.add-subworkspace": "ქვესამუშაო სივრცის დამატება",
+  "allboards.add-subworkspace-prompt": "ქვესამუშაო სივრცის სახელი",
   "allboards.add-workspace": "სამუშაო სივრცის დამატება",
   "allboards.add-workspace-prompt": "სამუშაო სივრცის სახელი",
   "allboards.delete-workspace-confirm": "დარწმუნებული ხართ, რომ გსურთ ამ სამუშაო სივრცის წაშლა?",

@@ -8,6 +8,7 @@
   "admin-panel": "Iphaneli yemlawuli",
   "all-boards": "Onkhe emabhodi",
   "allboards.add-subworkspace": "Engeta Indzawo Yekusebenta Lencane",
+  "allboards.add-subworkspace-prompt": "Ligama lendzawo yekusebenta lencane",
   "allboards.add-workspace": "Engeta Indzawo Yekusebenta",
   "allboards.add-workspace-prompt": "Ligama lendzawo yekusebenta",
   "allboards.delete-workspace-confirm": "Ucinisekile kutsi ufuna kususa lendzawo yekusebenta?",

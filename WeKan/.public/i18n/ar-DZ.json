@@ -8,6 +8,7 @@
   "admin-panel": "لوحة التحكم",
   "all-boards": "كل اللوحات",
   "allboards.add-subworkspace": "إضافة مساحة عمل فرعية",
+  "allboards.add-subworkspace-prompt": "اسم مساحة العمل الفرعية",
   "allboards.add-workspace": "إضافة مساحة عمل",
   "allboards.add-workspace-prompt": "اسم مساحة العمل",
   "allboards.delete-workspace-confirm": "هل أنت متأكد أنك تريد حذف مساحة العمل هذه؟",

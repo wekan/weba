@@ -8,6 +8,7 @@
   "admin-panel": "நிர்வாகப் பலகம்",
   "all-boards": "அனைத்துப் பலகைகள்",
   "allboards.add-subworkspace": "துணைப் பணியிடத்தைச் சேர்",
+  "allboards.add-subworkspace-prompt": "துணைப் பணியிடத்தின் பெயர்",
   "allboards.add-workspace": "பணியிடத்தைச் சேர்",
   "allboards.add-workspace-prompt": "பணியிடத்தின் பெயர்",
   "allboards.delete-workspace-confirm": "இந்தப் பணியிடத்தை நிச்சயமாக நீக்க வேண்டுமா?",

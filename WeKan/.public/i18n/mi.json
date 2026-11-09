@@ -8,6 +8,7 @@
   "admin-panel": "Papatohu Kaiwhakahaere",
   "all-boards": "Ngā papa katoa",
   "allboards.add-subworkspace": "Tāpiri Mokowāmahi-iti",
+  "allboards.add-subworkspace-prompt": "Ingoa mokowāmahi-iti",
   "allboards.add-workspace": "Tāpiri Mokowāmahi",
   "allboards.add-workspace-prompt": "Ingoa mokowāmahi",
   "allboards.delete-workspace-confirm": "E tino hiahia ana koe ki te muku i tēnei mokowāmahi?",

@@ -8,6 +8,7 @@
   "admin-panel": "管理面板",
   "all-boards": "所有板",
   "allboards.add-subworkspace": "新增子工作空間",
+  "allboards.add-subworkspace-prompt": "子工作空間名稱",
   "allboards.add-workspace": "新增工作區",
   "allboards.add-workspace-prompt": "工作區名稱",
   "allboards.delete-workspace-confirm": "您確定要刪除此工作區嗎？",

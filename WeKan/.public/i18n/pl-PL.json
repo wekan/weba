@@ -8,6 +8,7 @@
   "admin-panel": "Panel administracyjny",
   "all-boards": "Wszystkie tablice",
   "allboards.add-subworkspace": "Dodaj podprzestrzeń roboczą",
+  "allboards.add-subworkspace-prompt": "Nazwa podprzestrzeni roboczej",
   "allboards.add-workspace": "Dodaj przestrzeń roboczą",
   "allboards.add-workspace-prompt": "Nazwa przestrzeni roboczej",
   "allboards.delete-workspace-confirm": "Czy na pewno chcesz usunąć tę przestrzeń roboczą?",

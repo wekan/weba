@@ -8,6 +8,7 @@
   "admin-panel": "Kudeaketa panela",
   "all-boards": "Arbel guztiak",
   "allboards.add-subworkspace": "Gehitu azpiko laneko area",
+  "allboards.add-subworkspace-prompt": "Azpiko laneko arearen izena",
   "allboards.add-workspace": "Gehitu laneko area",
   "allboards.add-workspace-prompt": "Laneko arearen izena",
   "allboards.delete-workspace-confirm": "Ziur zaude lan-eremu hau ezabatu nahi duzula?",

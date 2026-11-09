@@ -8,6 +8,7 @@
   "admin-panel": "ផ្ទាំងគ្រប់គ្រង",
   "all-boards": "ក្តារទាំងអស់",
   "allboards.add-subworkspace": "បន្ថែមកន្លែងធ្វើការរង",
+  "allboards.add-subworkspace-prompt": "ឈ្មោះកន្លែងធ្វើការរង",
   "allboards.add-workspace": "បន្ថែមកន្លែងធ្វើការ",
   "allboards.add-workspace-prompt": "ឈ្មោះកន្លែងធ្វើការ",
   "allboards.delete-workspace-confirm": "តើអ្នកប្រាកដថាចង់លុបកន្លែងធ្វើការនេះទេ?",
