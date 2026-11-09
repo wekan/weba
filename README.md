@@ -873,7 +873,7 @@ runner above, covering persisted values, invalid hex input and mobile placement.
 
 The login page and signed-in account menu have a language selector. The selected
 language is saved in this browser; a new browser starts with its preferred language
-when available. The imported WeKan catalog currently provides 105 matching interface
+when available. The imported WeKan catalog currently provides 123 matching interface
 keys for 237 languages, including their native language names and RTL metadata.
 Only the selected catalog is fetched, from local application assets. No external
 translation service is used. Labels and report/calendar headings are translated;
@@ -973,6 +973,41 @@ board history or activity. Native tests exercise rollback/retry, late parent and
 membership changes, isolation and cleanup on SQLite/Linux ARM64. Schema and
 queries use portable Gambas APIs; other drivers still require verification.
 
-Native workspace navigation/forms, board assignment controls, live tree updates
-and workspace drag gestures remain in progress. No new public workspace API or
-passing original workspace UI callback is claimed by the service tests.
+The native workspace rows/forms and board assignment controls described below
+now use this service. Workspace gestures and complete original UI callbacks
+remain open; no new public workspace API is exposed by the service.
+
+
+### Native workspace controls
+
+The left navigation shows personal workspaces as nested native Gambas button
+rows, with a WeKan `fa-bars` menu beside each row. The plus button creates a root
+workspace. A workspace menu edits its name/literal icon, creates a child or
+deletes the subtree after the confirmation checkbox is selected. Blank names
+keep the editor open. Icons are displayed as literal text for now; Markdown
+rendering remains pending.
+
+A board's menu offers **Workspaces**, including a Remaining destination and
+workspace paths. This is a personal placement operation, so readonly members
+can use it for boards they can read. It does not change board ownership or other
+users' placement. Nonempty board search still spans categories.
+
+Live polling refreshes the private tree/assignments and the current overview
+when they change. Keep a dirty workspace editor intact during external renames;
+close it if its node/parent disappears. Losing board access clears/closes its
+placement panel, and a stale Save event cannot change assignments.
+
+`tests/workspaces.browser.cjs` runs real native controls against disposable
+SQLite fixtures. It covers nested CRUD, literal Unicode/icon persistence,
+readonly placement/unassignment, category/search changes, reload/user isolation,
+external placement/name/deletion changes, dirty drafts, revoked Save denial,
+Finnish/Latin captions and mobile popup/Escape. `./build.sh test-live` includes
+it for source and packaged apps. Run it separately with the documented Gambas
+and Chromium environment using `python3 tests/run-http.py --workspaces`, adding
+`--archive` for the package.
+
+Workspace collapse/count controls, tree and board workspace drops, complete
+form semantics and original All Boards callbacks remain open. Native Latin
+checks are separate from running the original callback unchanged. Imported
+workspace labels now bring the local selection to 123 keys in 237 catalogs;
+user workspace names and destination paths are never translated.

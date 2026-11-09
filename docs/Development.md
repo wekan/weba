@@ -332,3 +332,36 @@ late parent/membership changes, injected SQL failure rollback/retry and account/
 board cleanup. Failure triggers are SQLite test fixtures, not production schema.
 Original workspace UI callbacks, efficient SQL page counts and other driver
 conformance remain separate requirements.
+
+
+## Native workspace UI and live state
+
+`WebformMain.RefreshSpaces` reads `BoardSpaces.Tree` and `Assignments` as a
+private snapshot. Rebuild generated native rows only when that snapshot changes.
+Track the selected workspace separately from the board view and reset a deleted
+selection to Remaining. `LoadBoardOverview` passes that selection into the
+existing category-before-count service; search remains cross-category.
+
+Workspace editor state carries a server-side edit/parent ID. Board placement
+uses a server-side board ID and an index-to-workspace ID array built from the
+current principal's tree. Never accept arbitrary IDs/principals from combo text.
+Save calls the guarded service, which rechecks scope even after a stale event.
+Clear board placement fields/choices on access loss and close editors whose
+node/parent disappears. Preserve dirty text through unrelated live tree changes.
+
+Generated row names/icons and selected pane titles use `weba-user-text`; the
+translation walker excludes these elements. Translate only fixed menu tooltips
+and the first explicit Remaining destination, preserving native option values.
+Imported source labels are copied verbatim; no human catalog values are edited.
+Popup registration anchors root/row editors and board placement and adds native
+close/Escape behavior.
+
+The disposable BoardCatalogFixture seeds readonly boards and exports raw SQL
+workspace rows independently of the UI. Its mutation modes exercise external
+name/placement/deletion and membership changes. The real browser test also sends
+a hidden stale native Save after revocation and checks unchanged assignments.
+Source/packaged test-live includes the case after the existing live regressions.
+The native Latin checks do not run original spec 39's callback unchanged: that
+callback requires actual form/submit/required semantics still to be aligned.
+Collapse/visible counts, Markdown icons, workspace gestures and broader original
+UI/API/security suites remain explicit TODO requirements.

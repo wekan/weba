@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Document native workspace rows/forms, readonly placement, private live state,
+  draft/revocation guards and literal user text. Record source/packaged browser
+  checks, imported labels and the remaining form/gesture/original-suite gaps.
+  Thanks to xet7.
+
 - Add native nested workspace navigation and per-row menus, workspace/subspace
   creation, name/literal-icon edits, confirmed deletion and personal board
   placement including Remaining. Preserve dirty workspace drafts during external

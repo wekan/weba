@@ -1,4 +1,6 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Explain native workspace controls, live/draft/revocation and
+  translation boundaries, browser evidence and remaining original UI gaps.
 - Native workspace UI: Add nested navigation, create/edit/confirmed delete and
   personal placement forms, live/draft/revocation guards and literal user text.
   Import workspace translations and verify real browser persistence, isolation,

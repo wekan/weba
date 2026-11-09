@@ -6,6 +6,11 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Current UI/API/security work
 
+- Documented native workspace navigation/forms, personal placement, private live
+  snapshots, preserved drafts, cleared revoked state and translation boundaries.
+  Recorded source/packaged browser coverage and retained collapse/count/Markdown/
+  gesture/form-semantic/original-callback requirements.
+
 - Documented private workspace schema, stable IDs, transaction rechecks, category
   semantics and lifecycle tests; native UI/gestures and original callbacks remain
   in progress.
