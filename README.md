@@ -1671,9 +1671,9 @@ remaining details/labels/files/cover and preserved completed bytes. Focused mode
 tests/run-http.py --copy-options, adding --archive for the packaged application.
 
 Rules, integrations, scrum, source board-defined labels/custom-field definitions,
-source template/system-board models, destination placement/order, single-copy option controls,
-complete original backend/UI/API/DDP/security callbacks and durable request-level
-batch recovery remain open.
+source template/system-board models, destination placement/order, exact source
+single-copy title/redirect callbacks, complete original backend/UI/API/DDP/security
+callbacks and durable request-level batch recovery remain open.
 
 ### Global board-creation policy
 
@@ -1720,3 +1720,44 @@ missing source board-creation/import/copy REST and DDP endpoints, generic Visibi
 settings, security eventlog/Problems reporting and complete original UI/API/security
 suites remain pending. This implements the policy on current native paths; it does
 not claim those missing paths or reporting callbacks.
+
+### Single-board copy content controls
+
+The existing board-menu Copy dialog now offers the eight supported content
+choices, Select all/none and source parent dependencies. It uses the same native
+filtering service as selected duplication, with the existing editable copy title.
+Keyboard checkbox roles, translated captions and the shared two-column mobile
+layout apply to both dialogs. Choices reset to defaults when opening a new single
+copy and remain separate from selected-copy state. Card/list/swimlane copies keep
+their existing default content behavior.
+
+A private operation binds the source board, username and session generation.
+Changing the board/context invalidates the old form. Current board administration,
+full container scope and creation policy are checked before reading choices or
+copying; the existing transactional service rechecks them while copying. Busy or
+completed operations cannot change options or run again. A failed copy rolls back
+its data and leaves the same operation available for correction/retry. A completed
+or cancelled form rejects subsequent submit/option events. This is per-form replay
+protection; durable request IDs and recovery across lost responses remain open.
+
+Role loss, assigned-only scope narrowing (including a board admin with a raw
+assigned-only flag), or creation-policy denial hides and clears the single form.
+A different board menu cannot substitute its source into an already prepared
+copy. The shared action handler also refuses hidden copy forms. The server still
+checks authority for forged events. Selected-duplication retry state is unaffected.
+
+SingleBoardCopyTest verifies copied options, filtered comments/labels/files,
+source/account/generation binding, busy/completed state, child SQL failure and
+retry, readonly/role/assigned-scope/policy refusal. Actual browser checks cover
+mobile and keyboard choices, exact filtered data and omitted covers, cancellation/
+default reset, completed replay, two authorized source boards (substitution is
+refused), live role/scope/policy loss, Finnish labels and selected-state isolation.
+Focused mode: tests/run-http.py --single-copy, adding --archive for packaged runs.
+The existing source option-helper comparisons and 256 native content selections
+continue to cover the reused option/filter semantics.
+
+This extends the native single-copy dialog. The original clone popup's
+withoutCards choice corresponds to clearing Cards here; exact source clone title,
+placement, redirect/subscription callbacks and full original UI/API/DDP/security
+behavior remain pending. Rules/integrations/scrum and board-defined label/custom-
+field models also remain pending; there are no placeholder controls for them.

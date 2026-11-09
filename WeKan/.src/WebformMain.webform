@@ -564,6 +564,44 @@
     { ActionFlag WebCheckBox
       Text = ("Prevent exceeding limit")
     }
+    { SingleCopyOptions WebContainer
+      Visible = False
+      Arrangement = Arrange.Vertical
+      { SingleCopyAll WebButton
+        Text = ("Select all")
+      }
+      { SingleCopyNone WebButton
+        Text = ("Select none")
+      }
+      { SingleCopyFieldsGrid WebContainer
+        Class = "weba-copy-options"
+        Arrangement = Arrange.Vertical
+        { SingleCopySwimlanes WebButton
+          Text = ("Swimlanes")
+        }
+        { SingleCopyLists WebButton
+          Text = ("Lists")
+        }
+        { SingleCopyCards WebButton
+          Text = ("Cards")
+        }
+        { SingleCopyLabels WebButton
+          Text = ("Labels")
+        }
+        { SingleCopyFields WebButton
+          Text = ("Custom fields")
+        }
+        { SingleCopyChecklists WebButton
+          Text = ("Checklists")
+        }
+        { SingleCopyComments WebButton
+          Text = ("Comments")
+        }
+        { SingleCopyAttachments WebButton
+          Text = ("Attachments")
+        }
+      }
+    }
     { ActionConfirm WebButton
       Text = ("Save")
     }

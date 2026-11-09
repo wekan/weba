@@ -2,6 +2,16 @@
 
 This work adds the following features and fixes:
 
+- Add the eight supported content choices to the single-board Copy dialog, with
+  all/none, dependent keyboard checkbox controls, mobile layout and existing source
+  translations. Bind private operation state to source/account/generation; reject
+  source substitution, busy/completed/cancelled replay and hidden form submits.
+  Preserve atomic failure retry and isolate selected-copy choices. Clear forms on
+  role, raw assigned-scope or creation-policy loss. Verify native data/protocol
+  guards and real mobile/translated/filter/replay/context/scope browser outcomes.
+  Keep exact source clone title/placement/redirect, missing models and full original
+  UI/API/DDP/security callbacks open. Thanks to xet7.
+
 - Add persisted Global Admin-only board-creation policy under Visibility, default
   off. Apply fresh actor/policy locks and final checks to new boards, single and
   selected copies and JSON import, with complete hierarchy rollback on late flag

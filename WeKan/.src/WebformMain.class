@@ -39,6 +39,7 @@ Private $boardSelection As Collection
 Private $overviewSidebar As String = "search"
 Private $selectedArchiveRevision As Long = -1
 Private $selectedCopy As Collection
+Private $singleCopy As Collection
 Private $deleteListBoard As Integer
 Private $deleteListId As Integer
 Private $deletedListBoard As Integer
@@ -1044,6 +1045,13 @@ Private Sub OpenContext(kind As String, itemId As Integer, boardId As Integer)
   Dim writable As Boolean = BoardAccess.Can(boardId, "write")
   Dim manager As Boolean = BoardAccess.Can(boardId, "manageBoard")
   Dim change As Boolean = If(kind = "board", manager, writable)
+  If $singleCopy Then
+    If kind <> "board" Or boardId <> $singleCopy["boardId"] Or itemId <> boardId Then
+      ActionPanel.Hide()
+      ActionText.Text = ""
+      ClearSingleCopy()
+    Endif
+  Endif
   $contextBoard = boardId
   $contextKind = kind
   $contextId = itemId
@@ -1095,6 +1103,7 @@ End
 
 Public Sub CloseAction_Click()
   ActionPanel.Hide()
+  ClearSingleCopy()
   $importText = ""
 End
 
@@ -1110,6 +1119,7 @@ Public Sub ImportBoard_Finish()
   BoardCreation.Require()
   If Not ImportBoard.Path Then Return
   If Stat(ImportBoard.Path).Size > 20 * 1024 * 1024 Then Error.Raise("Import JSON exceeds 20 MiB")
+  ClearSingleCopy()
   $importText = File.Load(ImportBoard.Path)
   data = BoardTransfer.ReadData($importText)
   ColorChooser.Hide()
@@ -1132,6 +1142,8 @@ End
 
 Private Sub BeginAction(action As String)
   Dim r As Result = WorkspaceStore.Record($contextBoard, $contextKind, $contextId)
+  ClearSingleCopy()
+  If action = "Copy" And $contextKind = "board" Then $singleCopy = SingleBoardCopy.NewState($contextBoard)
   $action = action
   ColorChooser.Visible = action = "Color"
   $loadingDestinations = True
@@ -1179,6 +1191,10 @@ Private Sub BeginAction(action As String)
   If action = "Description" Then ActionText.Text = WorkspaceStore.Setting($contextBoard, $contextKind, $contextId, "description")
   ContextMenu.Hide()
   ActionPanel.Show()
+  If $singleCopy Then
+    SingleCopyOptions.Show()
+    LoadSingleCopyOptions()
+  Endif
 End
 
 Private Sub LoadColorPresets()
@@ -1393,7 +1409,15 @@ Public Sub ActionConfirm_Click()
         CardDraft.SetValue($draft, "title", CardTitle.Text)
       Endif
     Case "Copy"
-      WorkspaceStore.Copy($contextBoard, $contextKind, $contextId, ActionText.Text, DestinationLane.Text)
+      If $contextKind = "board" Then
+        BoardAccess.Require($contextBoard, "manageBoard")
+        BoardCreation.Require()
+        If Not ActionPanel.Visible Then Error.Raise("Copy form changed")
+        SingleBoardCopy.Copy($singleCopy, $contextBoard, ActionText.Text)
+      Else
+        If $singleCopy Or Not ActionPanel.Visible Then Error.Raise("Copy form changed")
+        WorkspaceStore.Copy($contextBoard, $contextKind, $contextId, ActionText.Text, DestinationLane.Text)
+      Endif
     Case "Color"
       WorkspaceStore.SetSetting($contextBoard, $contextKind, $contextId, "color", ActionText.Text)
     Case "WIP"
@@ -1439,6 +1463,7 @@ Public Sub ActionConfirm_Click()
       Error.Raise("Unknown menu action")
   End Select
   ActionPanel.Hide()
+  ClearSingleCopy()
   Notice.Text = "Saved"
   RefreshTree()
 Catch
@@ -3209,8 +3234,9 @@ End
 
 Private Sub ValidateBoardCopy()
   If $contextKind <> "board" Then Return
-  If BoardAccess.Can($contextBoard, "manageBoard") And BoardCreation.Allowed() Then Return
+  If BoardAccess.Can($contextBoard, "manageBoard") And BoardAccess.Can($contextBoard, "seesAllCards") And BoardCreation.Allowed() Then Return
   ContextCopy.Hide()
+  ClearSingleCopy()
   If $action = "Copy" And ActionPanel.Visible Then
     ActionPanel.Hide()
     ActionText.Text = ""
@@ -3263,9 +3289,11 @@ Catch
 End
 
 Private Sub LoadCopyOptions()
-  Dim options As Collection = BoardCopies.Options($selectedCopy)
+  ApplyCopyOptionButtons(BoardCopies.Options($selectedCopy), [CopySwimlanes, CopyLists, CopyCards, CopyLabels, CopyFields, CopyChecklists, CopyComments, CopyAttachments])
+End
+
+Private Sub ApplyCopyOptionButtons(options As Collection, buttons As WebButton[])
   Dim fields As String[] = ["swimlanes", "lists", "cards", "labels", "customFields", "checklists", "comments", "attachments"]
-  Dim buttons As WebButton[] = [CopySwimlanes, CopyLists, CopyCards, CopyLabels, CopyFields, CopyChecklists, CopyComments, CopyAttachments]
   Dim i As Integer
   Dim button As WebButton
   For i = 0 To fields.Max
@@ -3372,6 +3400,72 @@ Private Sub ValidateBoardCreation()
     ActionPanel.Hide()
     ActionText.Text = ""
     $importText = ""
+    ClearSingleCopy()
   Endif
   If $contextKind = "board" Then ContextCopy.Hide()
+End
+
+Private Sub ClearSingleCopy()
+  $singleCopy = Null
+  SingleCopyOptions.Hide()
+End
+
+Private Sub LoadSingleCopyOptions()
+  ApplyCopyOptionButtons(SingleBoardCopy.Options($singleCopy, $contextBoard), [SingleCopySwimlanes, SingleCopyLists, SingleCopyCards, SingleCopyLabels, SingleCopyFields, SingleCopyChecklists, SingleCopyComments, SingleCopyAttachments])
+End
+
+Private Sub ToggleSingleCopyOption(field As String)
+  If $contextKind <> "board" Or $action <> "Copy" Or Not ActionPanel.Visible Then Error.Raise("Copy form changed")
+  SingleBoardCopy.SetOptions($singleCopy, $contextBoard, CopyOptions.Toggle(SingleBoardCopy.Options($singleCopy, $contextBoard), field))
+  LoadSingleCopyOptions()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub SingleCopyAll_Click()
+  If $contextKind <> "board" Or $action <> "Copy" Or Not ActionPanel.Visible Then Error.Raise("Copy form changed")
+  SingleBoardCopy.SetOptions($singleCopy, $contextBoard, CopyOptions.Defaults())
+  LoadSingleCopyOptions()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub SingleCopyNone_Click()
+  If $contextKind <> "board" Or $action <> "Copy" Or Not ActionPanel.Visible Then Error.Raise("Copy form changed")
+  SingleBoardCopy.SetOptions($singleCopy, $contextBoard, CopyOptions.Defaults(False))
+  LoadSingleCopyOptions()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub SingleCopySwimlanes_Click()
+  ToggleSingleCopyOption("swimlanes")
+End
+
+Public Sub SingleCopyLists_Click()
+  ToggleSingleCopyOption("lists")
+End
+
+Public Sub SingleCopyCards_Click()
+  ToggleSingleCopyOption("cards")
+End
+
+Public Sub SingleCopyLabels_Click()
+  ToggleSingleCopyOption("labels")
+End
+
+Public Sub SingleCopyFields_Click()
+  ToggleSingleCopyOption("customFields")
+End
+
+Public Sub SingleCopyChecklists_Click()
+  ToggleSingleCopyOption("checklists")
+End
+
+Public Sub SingleCopyComments_Click()
+  ToggleSingleCopyOption("comments")
+End
+
+Public Sub SingleCopyAttachments_Click()
+  ToggleSingleCopyOption("attachments")
 End

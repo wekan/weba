@@ -1,0 +1,148 @@
+Public Sub Main()
+  Dim a As Integer
+  Dim b As Integer
+  Dim cardId As Integer
+  Dim id As Integer
+  Dim state As Collection
+  Dim fresh As Collection
+  Dim options As Collection
+  Dim flags As Collection
+  Dim before As String
+  Dim denied As Boolean
+  Dim r As Result
+  Dim db As Connection
+  WebDatabase.Register("single-global", "x")
+  WebDatabase.Register("single-owner", "x")
+  WebDatabase.Register("single-other", "x")
+  WebDatabase.Register("single-reader", "x")
+  SignIn("single-other")
+  b = KanbanStore.AddBoard("Other authorized source")
+  BoardAccess.SetMember(b, "single-owner", "board-admin")
+  SignIn("single-owner")
+  a = KanbanStore.AddBoard("Single source")
+  cardId = KanbanStore.SaveCard(a, 0, "Card", "Body", "Default", "Todo", "", "Label", "")
+  CardContent.Save(a, cardId, 0, "comment", "", "<literal>", 0, False, 0)
+  CardContent.AddFile(a, cardId, "single.bin", "exact" & Chr(0))
+  BoardAccess.SetMember(a, "single-reader", "read-only")
+  db = WebDatabase.OpenConnection()
+  state = SingleBoardCopy.NewState(a)
+  options = SingleBoardCopy.Options(state, a)
+  options["cards"] = False
+  If Not SingleBoardCopy.Options(state, a)["cards"] Then Error.Raise("Option getter exposed dialog state")
+  before = Frame()
+  Try id = SingleBoardCopy.Copy(state, b, "Wrong source")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Dialog source substitution accepted")
+  state["busy"] = True
+  Try id = SingleBoardCopy.Copy(state, a, "Busy copy")
+  denied = Error
+  If Not denied Or Not state["busy"] Or Frame() <> before Then Error.Raise("Reentrant copy unlocked operation")
+  Try SingleBoardCopy.SetOptions(state, a, CopyOptions.Defaults(False))
+  denied = Error
+  If Not denied Or Not SingleBoardCopy.Options(state, a)["cards"] Then Error.Raise("Busy choices changed")
+  state["busy"] = False
+  db.Exec("CREATE TRIGGER single_copy_sql BEFORE INSERT ON kb_files BEGIN SELECT RAISE(ABORT,'single child failure'); END")
+  Try id = SingleBoardCopy.Copy(state, a, "Failed single")
+  denied = Error
+  If Not denied Or state["done"] Or state["busy"] Or Frame() <> before Then Error.Raise("Failed copy consumed operation or left data")
+  db.Exec("DROP TRIGGER single_copy_sql")
+  options = CopyOptions.Toggle(CopyOptions.Defaults(False), "comments")
+  SingleBoardCopy.SetOptions(state, a, options)
+  options["attachments"] = True
+  If SingleBoardCopy.Options(state, a)["attachments"] Then Error.Raise("Setter exposed dialog state")
+  id = SingleBoardCopy.Copy(state, a, "Filtered single")
+  If Not state["done"] Or state["busy"] Then Error.Raise("Successful dialog not consumed")
+  r = db.Find("kb_cards", "board_id=&1", id)
+  If r.Count <> 1 Or r!labels Then Error.Raise("Single choices did not filter labels")
+  If db.Find("kb_files", "board_id=&1", id).Count Then Error.Raise("Single choices did not omit bytes")
+  r = db.Find("kb_entries", "board_id=&1", id)
+  If r.Count <> 1 Or r!kind <> "comment" Or r!body <> "<literal>" Then Error.Raise("Single choices lost comments")
+  before = Frame()
+  Try id = SingleBoardCopy.Copy(state, a, "Replayed single")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Completed dialog replayed")
+  Try SingleBoardCopy.SetOptions(state, a, CopyOptions.Defaults())
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Completed choices changed")
+  fresh = SingleBoardCopy.NewState(a)
+  fresh["generation"] = 0
+  Try id = SingleBoardCopy.Copy(fresh, a, "Wrong generation")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Old-generation state reused")
+  fresh = SingleBoardCopy.NewState(a)
+  SignIn("single-reader")
+  Try id = SingleBoardCopy.Copy(fresh, a, "Foreign actor")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Foreign dialog actor reused")
+  Try fresh = SingleBoardCopy.NewState(a)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Readonly copy dialog opened")
+  SignIn("single-owner")
+  state = SingleBoardCopy.NewState(b)
+  flags = ApiMemberRoles.FlagsFor("board-admin")
+  flags["isNormalAssignedOnly"] = True
+  ApiMemberRoles.Save(b, "single-owner", flags)
+  If Not BoardAccess.Can(b, "manageBoard") Or BoardAccess.Can(b, "seesAllCards") Then Error.Raise("Assigned admin fixture did not narrow scope")
+  before = Frame()
+  Try id = SingleBoardCopy.Copy(state, b, "Scope lost")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Assigned-only administrator copied container")
+  SignIn("single-other")
+  BoardAccess.SetMember(b, "single-owner", "board-admin")
+  SignIn("single-owner")
+  state = SingleBoardCopy.NewState(b)
+  SignIn("single-other")
+  BoardAccess.SetMember(b, "single-owner", "read-only")
+  SignIn("single-owner")
+  before = Frame()
+  Try id = SingleBoardCopy.Copy(state, b, "Role lost")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Revoked manager copied")
+  state = SingleBoardCopy.NewState(a)
+  SignIn("single-global")
+  BoardCreation.SetAdminOnly(True)
+  SignIn("single-owner")
+  before = Frame()
+  Try id = SingleBoardCopy.Copy(state, a, "Policy lost")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Restricted dialog copied")
+  Print "Single-board copy: source/account/generation/busy/completed binding, filtered content, copied options, atomic child failure/retry and readonly/role/creation-policy guards passed"
+End
+
+Private Function Frame() As String
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim tables As New String[]
+  Dim table As Table
+  Dim tableName As String
+  Dim r As Result
+  Dim row As New Collection
+  Dim rows As Variant[]
+  Dim data As New Variant[]
+  Dim field As ResultField
+  For Each table In db.Tables
+    If Left(table.Name, 3) = "kb_" Or table.Name = "users" Or table.Name = "attachment_transfer_settings" Or table.Name = "board_creation_settings" Then tables.Add(table.Name)
+  Next
+  tables.Sort()
+  For Each tableName In tables
+    rows = New Variant[]
+    r = db.Find(tableName)
+    For Each r
+      row = New Collection
+      For Each field In r.Fields
+        If field.Name = "content" Then
+          row.Add(Base64(r!content.Data), field.Name)
+        Else
+          row.Add(r[field.Name], field.Name)
+        Endif
+      Next
+      rows.Add(row)
+    Next
+    data.Add(rows)
+  Next
+  Return JSON.Encode(data)
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

@@ -1,0 +1,55 @@
+' One private dialog operation; no browser-provided option/source object is accepted.
+Export
+
+Public Function NewState(boardId As Integer) As Collection
+  Dim data As New Collection
+  BoardAccess.Require(boardId, "manageBoard")
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  BoardCreation.Require()
+  data["boardId"] = boardId
+  data["username"] = WebIdentity.Username
+  data["generation"] = WebDatabase.SessionGeneration(WebIdentity.Username)
+  data["options"] = CopyOptions.Defaults()
+  data["busy"] = False
+  data["done"] = False
+  Return data
+End
+
+Private Sub Check(state As Collection, boardId As Integer)
+  If Not state Then Error.Raise("Copy form changed")
+  If CBool(state["done"]) Or state["boardId"] <> boardId Then Error.Raise("Copy form changed")
+  If Not WebIdentity.Username Or state["username"] <> WebIdentity.Username Then Error.Raise("Sign in required")
+  If state["generation"] <> WebDatabase.SessionGeneration(WebIdentity.Username) Then Error.Raise("Sign in required")
+  BoardAccess.Require(boardId, "manageBoard")
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  BoardCreation.Require()
+End
+
+Public Function Options(state As Collection, boardId As Integer) As Collection
+  Check(state, boardId)
+  Return CopyOptions.Normalize(state["options"])
+End
+
+Public Sub SetOptions(state As Collection, boardId As Integer, options As Collection)
+  Check(state, boardId)
+  If state["busy"] Then Error.Raise("Board copy is already running")
+  state["options"] = CopyOptions.Normalize(options)
+End
+
+Public Function Copy(state As Collection, boardId As Integer, title As String) As Integer
+  Dim id As Integer
+  Dim acquired As Boolean
+  Dim failure As String
+  Check(state, boardId)
+  If state["busy"] Then Error.Raise("Board copy is already running")
+  state["busy"] = True
+  acquired = True
+  id = WorkspaceStore.Copy(boardId, "board", boardId, title, "", CopyOptions.Normalize(state["options"]))
+  state["done"] = True
+  state["busy"] = False
+  Return id
+Catch
+  failure = Error.Text
+  If acquired Then state["busy"] = False
+  Error.Raise(failure)
+End

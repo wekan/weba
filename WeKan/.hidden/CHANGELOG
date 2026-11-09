@@ -1,4 +1,8 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Single-board copy choices: Add eight real content options with shared keyboard/
+  mobile/translated controls. Bind source/session and reject stale/replayed copies;
+  preserve failure retry and clear revoked role/scope/policy forms. Verify native
+  rollback/protocol and browser filtering/context/selected-state isolation.
 - Board creation policy: Add persisted default-off Global Admin setting and
   guarded current creation/copy/import paths with actor/policy locks and final
   rollback checks. Hide stale actions, retain pending copies and refresh clean

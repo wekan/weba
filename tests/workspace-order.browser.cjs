@@ -16,7 +16,20 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
  try{
   browser=await chromium.connectOverCDP(process.env.WEBA_BROWSER_URL);context=await browser.newContext({viewport:{width:1440,height:1000},hasTouch:true});
   const page=await context.newPage();page.on('pageerror',error=>errors.push(error.message));
-  const settle=()=>page.waitForFunction(()=>window.gw&&gw.commands.length===0);
+  const settle=async()=>{
+    try{await page.waitForFunction(()=>window.gw&&gw.commands.length===0);}
+    catch(error){
+      console.error('Workspace page errors',errors);
+      console.error('Workspace queue diagnostic',await page.evaluate(()=>({
+        visibility:document.visibilityState,
+        queued:window.gw?.commands?.length,
+        commands:window.gw?.commands?.slice(0,6).map(command=>({
+          type:typeof command,header:Array.isArray(command)?command.slice(0,3):undefined
+        }))
+      })));
+      throw error;
+    }
+  };
   const click=async name=>{await settle();await page.locator(control(name)).click();await settle();};
   const row=id=>page.locator(`.weba-space-row[data-workspace-id="${id}"]`),handle=id=>row(id).locator('.weba-space-drag');
   const tree=()=>fixture('read').tree;

@@ -84,10 +84,11 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   Home/group targets, Markdown icons and original
   UI callbacks. Whole-board copy authorization and late actor/source/destination
   guards, selected native duplication with pending-only retry and source-style
-  title numbering, eight native content-option controls and the global
+  title numbering, eight native content-option controls in selected/single Copy,
+  private single-form source/session/replay guards and the global
   creation policy across current native paths are recorded in
   CHANGELOG.md. Rules/integrations/scrum, board-defined labels/custom fields,
-  single-copy option controls, destination placement/order,
+  exact source single-copy title/redirect callbacks, destination placement/order,
   missing board content and full original callbacks remain open.
   Native multi-selection controls, retained visible-page selection
   and revisioned authoritative multi-drop transport are recorded in CHANGELOG.md.
