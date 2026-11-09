@@ -116,6 +116,8 @@
   "select-all": "تحديد الكل",
   "select-none": "إلغاء تحديد الكل",
   "selected-label": "المحدد:",
+  "set-selected-starred": "تمييز اللوحات المحددة بنجمة",
+  "set-selected-unstarred": "إزالة النجمة من اللوحات المحددة",
   "sort-boards": "فرز اللوحات",
   "sort-boards-custom": "مخصص (ترتيب السحب)",
   "sort-boards-title-asc": "العنوان (أ ← ي)",

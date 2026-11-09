@@ -116,6 +116,8 @@
   "select-all": "ھەممىنى تاللاش",
   "select-none": "ھېچقايسىسىنى تاللىماسلىق",
   "selected-label": "تاللانغان:",
+  "set-selected-starred": "تاللانغان تاختىلارغا يۇلتۇز قويۇش",
+  "set-selected-unstarred": "تاللانغان تاختايلاردىن يۇلتۇزنى چىقىرىۋېتىش",
   "sort-boards": "تاختىلارنى تەرتىپلەش",
   "sort-boards-custom": "ئىختىيارىي (سۆرەش تەرتىپى)",
   "sort-boards-title-asc": "ماۋزۇ (A → Z)",

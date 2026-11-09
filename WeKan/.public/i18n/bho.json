@@ -116,6 +116,8 @@
   "select-all": "सभ चुनीं",
   "select-none": "कुछुओ मत चुनीं",
   "selected-label": "चुनल:",
+  "set-selected-starred": "चुनल बोर्डन पर तारा लगाईं",
+  "set-selected-unstarred": "चुनल बोर्डन से तारा हटाईं",
   "sort-boards": "बोर्ड क्रम में लगाईं",
   "sort-boards-custom": "मनपसंद (खींचल क्रम)",
   "sort-boards-title-asc": "शीर्षक (A → Z)",

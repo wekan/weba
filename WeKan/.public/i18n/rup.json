@@ -116,6 +116,8 @@
   "select-all": "Aleadzi tuti",
   "select-none": "Nu aleadzi tsiva",
   "selected-label": "Aleapti:",
+  "set-selected-starred": "Bagã steauã la tabelili aleapti",
+  "set-selected-unstarred": "Scoati steaua di la tabelili aleapti",
   "sort-boards": "Aradã tabelili",
   "sort-boards-custom": "Personalizat (arada di trãdzeari)",
   "sort-boards-title-asc": "Titlu (A → Z)",

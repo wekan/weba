@@ -116,6 +116,8 @@
   "select-all": "Họrọ ihe niile",
   "select-none": "Ahọrọla nke ọ bụla",
   "selected-label": "Ahọpụtara:",
+  "set-selected-starred": "Kpakwaa bọọdụ ndị ahọpụtara",
+  "set-selected-unstarred": "Wepụ kpakpando na bọọdụ ndị ahọpụtara",
   "sort-boards": "Hazie Bọọdụ",
   "sort-boards-custom": "Emeghari (usoro ndọkpụ)",
   "sort-boards-title-asc": "Aha (A → Z)",

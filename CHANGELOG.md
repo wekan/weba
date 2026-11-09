@@ -2,6 +2,14 @@
 
 This work adds the following features and fixes:
 
+- Add the native selected-board sidebar star toggle: fill missing stars in mixed
+  selections and clear all when every selected board is starred. Use private
+  selection IDs, current account/sorted board locks and final access checks.
+  Keep personal stars independent and unchanged stars unwritten. Verify readonly
+  controls, partial/final-access rollback and retry, source/package 30-board
+  browser selection and disabled/Archive event guards. Remaining sidebar actions
+  and complete original suites stay open. Thanks to xet7.
+
 - Add native per-form board multi-selection controls and visible-page Select All,
   retaining selection across filtering, paging and categories. Use revisioned
   server-owned IDs for multi-drop transport; reject stale/private/off-page and

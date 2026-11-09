@@ -116,6 +116,8 @@
   "select-all": "Dooro dhammaan",
   "select-none": "Midna ha dooran",
   "selected-label": "La doortay:",
+  "set-selected-starred": "Xiddig saar sabuuradaha la doortay",
+  "set-selected-unstarred": "Xiddigta ka saar sabuuradaha la doortay",
   "sort-boards": "Kala Sooc Sabuuradaha",
   "sort-boards-custom": "Gaar ah (jiid kala-horraynta)",
   "sort-boards-title-asc": "Cinwaan (A → Z)",

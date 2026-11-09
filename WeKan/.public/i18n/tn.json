@@ -116,6 +116,8 @@
   "select-all": "Tlhopha tsotlhe",
   "select-none": "Se tlhophe sepe",
   "selected-label": "Tse di tlhophilweng:",
+  "set-selected-starred": "Tsenya naledi mo dibotong tse di tlhophilweng",
+  "set-selected-unstarred": "Tlosa naledi mo dibotong tse di tlhophilweng",
   "sort-boards": "Rulaganya Diboto",
   "sort-boards-custom": "E e rulagantsweng (goga thulaganyo)",
   "sort-boards-title-asc": "Setlhogo (E → Z)",

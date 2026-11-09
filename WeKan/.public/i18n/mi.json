@@ -116,6 +116,8 @@
   "select-all": "Tīpakohia katoa",
   "select-none": "Kaua e tīpako",
   "selected-label": "Kua tīpakohia:",
+  "set-selected-starred": "Whetūrangitia ngā papa kua tīpakohia",
+  "set-selected-unstarred": "Tangohia te whetū i ngā papa kua tīpakohia",
   "sort-boards": "Kōmakahia ngā Papa",
   "sort-boards-custom": "Ritenga (raupapa tō)",
   "sort-boards-title-asc": "Taitara (A → Z)",

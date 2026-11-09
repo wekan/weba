@@ -825,6 +825,9 @@
         { BoardSelectionPanel WebContainer
           Arrangement = Arrange.Vertical
           Visible = False
+          { StarSelectedBoards WebButton
+            Text = ("Star the selected boards")
+          }
           { BoardSelectionHint WebLabel
             Text = ("Click checkboxes to select boards")
           }

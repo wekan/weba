@@ -116,6 +116,8 @@
   "select-all": "Барыһын һайларға",
   "select-none": "Бер нәмәне лә һайламаҫҡа",
   "selected-label": "Һайланған:",
+  "set-selected-starred": "Һайланған таҡталарҙы билдәләргә",
+  "set-selected-unstarred": "Һайланған таҡталарҙың билдәһен алырға",
   "sort-boards": "Таҡталарҙы теҙергә",
   "sort-boards-custom": "Махсус (һөйрәү тәртибе)",
   "sort-boards-title-asc": "Исем (A → Z)",

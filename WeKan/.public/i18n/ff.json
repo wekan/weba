@@ -116,6 +116,8 @@
   "select-all": "Suɓo fof",
   "select-none": "Hoto suɓ hay gooto",
   "selected-label": "Cuɓaaɗe:",
+  "set-selected-starred": "Maanto alluuje cuɓaaɗe koode",
+  "set-selected-unstarred": "Ittu koode e alluuje cuɓaaɗe",
   "sort-boards": "Deggondir alluuje",
   "sort-boards-custom": "Keeriɗo (daas deggondiral)",
   "sort-boards-title-asc": "Hoore (A → Z)",

@@ -116,6 +116,8 @@
   "select-all": "Seleccionar tot",
   "select-none": "Seleccionar pas res",
   "selected-label": "Seleccionat :",
+  "set-selected-starred": "Marcar amb estela los tablèus seleccionats",
+  "set-selected-unstarred": "Levar l'estela dels tablèus seleccionats",
   "sort-boards": "Triar los tablèus",
   "sort-boards-custom": "Personalizat (òrdre per lisament)",
   "sort-boards-title-asc": "Títol (A → Z)",

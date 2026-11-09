@@ -116,6 +116,8 @@
   "select-all": "בחירה בכולם",
   "select-none": "ביטול כל הבחירות",
   "selected-label": "נבחר:",
+  "set-selected-starred": "סימון הלוחות הנבחרים בכוכב",
+  "set-selected-unstarred": "הסר כוכב מהלוחות שנבחרו",
   "sort-boards": "מיון לוחות",
   "sort-boards-custom": "מותאם אישית (סדר גרירה)",
   "sort-boards-title-asc": "כותרת (A → Z)",

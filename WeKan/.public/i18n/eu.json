@@ -116,6 +116,8 @@
   "select-all": "Hautatu guztiak",
   "select-none": "Ez hautatu bat ere",
   "selected-label": "Hautatuta:",
+  "set-selected-starred": "Markatu hautatutako arbelak izarrekin",
+  "set-selected-unstarred": "Kendu izarra hautatutako arboletatik",
   "sort-boards": "Ordenatu arbelak",
   "sort-boards-custom": "Pertsonalizatua (arrastatze-ordena)",
   "sort-boards-title-asc": "Izenburua (A → Z)",

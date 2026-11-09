@@ -116,6 +116,8 @@
   "select-all": "Zaznacz wszysko",
   "select-none": "Nic niy ôbiyrej",
   "selected-label": "Zaznaczone:",
+  "set-selected-starred": "Przidej zaznaczone tabule do ulubionych",
+  "set-selected-unstarred": "Wyciep zaznaczone tabule z ulubionych",
   "sort-boards": "Sortuj tabule",
   "sort-boards-custom": "Włŏsne (kolejność przeciągania)",
   "sort-boards-title-asc": "Tytuł (A → Z)",

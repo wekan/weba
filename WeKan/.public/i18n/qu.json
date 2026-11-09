@@ -116,6 +116,8 @@
   "select-all": "Llapanta akllay",
   "select-none": "Mana imatapas akllay",
   "selected-label": "Akllasqa:",
+  "set-selected-starred": "Akllasqa pirqakunata quyllurchay",
+  "set-selected-unstarred": "Akllasqa pirqakunamanta quyllurta qichuy",
   "sort-boards": "Pirqakunata ñiqichay",
   "sort-boards-custom": "Sapan (aysasqa ñiqin)",
   "sort-boards-title-asc": "Uma suti (A → Z)",

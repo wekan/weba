@@ -116,6 +116,8 @@
   "select-all": "Kgetha tsohle",
   "select-none": "Se kgethe letho",
   "selected-label": "Tse kgethilweng:",
+  "set-selected-starred": "Tshwaya diboto tse kgethilweng ka naledi",
+  "set-selected-unstarred": "Tlosa naledi dibotong tse kgethilweng",
   "sort-boards": "Hlopha diboto",
   "sort-boards-custom": "E ikgethileng (tatelano ya ho hula)",
   "sort-boards-title-asc": "Sehlooho (A → Z)",

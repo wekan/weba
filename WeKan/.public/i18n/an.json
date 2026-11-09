@@ -116,6 +116,8 @@
   "select-all": "Seleccionar todo",
   "select-none": "No seleccionar ninguno",
   "selected-label": "Trigaus:",
+  "set-selected-starred": "Destacar os tableros trigaus",
+  "set-selected-unstarred": "Deixar de destacar os tableros trigaus",
   "sort-boards": "Ordenar tableros",
   "sort-boards-custom": "Personalizau (orden por arrocegamiento)",
   "sort-boards-title-asc": "Título (A → Z)",

@@ -116,6 +116,8 @@
   "select-all": "Пурне те суйлас",
   "select-none": "Нимӗн те суйламас",
   "selected-label": "Суйланӑ:",
+  "set-selected-starred": "Суйланӑ хӑмасене паллӑ тӑвас",
+  "set-selected-unstarred": "Суйланӑ хӑмасен паллине кӑларас",
   "sort-boards": "Хӑмасене йӗркелес",
   "sort-boards-custom": "Уйрӑм (сӗтӗрсе йӗркелес)",
   "sort-boards-title-asc": "Ят (А → Я)",

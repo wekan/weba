@@ -116,6 +116,8 @@
   "select-all": "Selectează tot",
   "select-none": "Nu selecta nimic",
   "selected-label": "Selectat:",
+  "set-selected-starred": "Marchează cu stea panourile selectate",
+  "set-selected-unstarred": "Elimină steaua de pe panourile selectate",
   "sort-boards": "Sortează panourile",
   "sort-boards-custom": "Personalizat (ordine prin tragere)",
   "sort-boards-title-asc": "Titlu (A → Z)",

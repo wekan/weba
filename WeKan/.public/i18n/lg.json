@@ -116,6 +116,8 @@
   "select-all": "Londa byonna",
   "select-none": "Londa tewali",
   "selected-label": "Kilondeddwa:",
+  "set-selected-starred": "Star kilondeddwa mbaawo",
+  "set-selected-unstarred": "Unstar kilondeddwa mbaawo",
   "sort-boards": "Tegeka Mbaawo",
   "sort-boards-custom": "Eby'enjawulo (ensengeka y'okusika)",
   "sort-boards-title-asc": "Mutwe ( → Z)",

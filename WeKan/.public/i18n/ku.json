@@ -116,6 +116,8 @@
   "select-all": "Hemûyan hilbijêre",
   "select-none": "Tu yekî hilnebijêre",
   "selected-label": "Hilbijartî:",
+  "set-selected-starred": "Depoyên hilbijartî stêrk bike",
+  "set-selected-unstarred": "Stêrka depoyên hilbijartî rake",
   "sort-boards": "Depoyan rêz bike",
   "sort-boards-custom": "Taybet (rêza kişandinê)",
   "sort-boards-title-asc": "Sernav (A → Z)",

@@ -116,6 +116,8 @@
   "select-all": "Wëbierzë wszëtkò",
   "select-none": "Nie wëbiérôj nick",
   "selected-label": "Wëbróné:",
+  "set-selected-starred": "Dodôj zaznaczone tôblëce do ulubionych",
+  "set-selected-unstarred": "Rëmôj zaznaczone tôblëce z ulubionych",
   "sort-boards": "Sortuj tôblëce",
   "sort-boards-custom": "Niestandardowé (kolejność przeciągania)",
   "sort-boards-title-asc": "Titel (A → Z)",

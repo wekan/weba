@@ -116,6 +116,8 @@
   "select-all": "ყველას არჩევა",
   "select-none": "არცერთი არ აირჩიოთ",
   "selected-label": "არჩეული:",
+  "set-selected-starred": "მონიშნეთ არჩეული დაფები ვარსკვლავით",
+  "set-selected-unstarred": "ვარსკვლავის მოხსნა არჩეული დაფებიდან",
   "sort-boards": "დაფების დალაგება",
   "sort-boards-custom": "მორგებული (გადათრევის თანმიმდევრობა)",
   "sort-boards-title-asc": "სათაური (A → Z)",

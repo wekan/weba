@@ -1,4 +1,7 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Selected board stars: Add atomic mixed/all-starred sidebar toggles over private
+  selection IDs. Verify readonly/personal isolation, no redundant star writes,
+  partial/final-access rollback and native source/package browser controls.
 - Native board selection: Add isolated revisioned per-form selections, visible
   Select All, retained page/filter state and authoritative group-drop transport.
   Verify private/stale/bypass denial, mouse/touch, 25+5 paging and atomic denial

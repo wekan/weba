@@ -116,6 +116,8 @@
   "select-all": "Выбраць усё",
   "select-none": "Не выбіраць нічога",
   "selected-label": "Выбрана:",
+  "set-selected-starred": "Дадаць выбраныя дошкі ў абраныя",
+  "set-selected-unstarred": "Выдаліць выбраныя дошкі з абраных",
   "sort-boards": "Сартаваць дошкі",
   "sort-boards-custom": "Карыстальніцкі (парадак перацягвання)",
   "sort-boards-title-asc": "Назва (А → Я)",

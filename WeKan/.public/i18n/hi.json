@@ -116,6 +116,8 @@
   "select-all": "सभी चुनें",
   "select-none": "कोई भी न चुनें",
   "selected-label": "चयनित:",
+  "set-selected-starred": "चयनित बोर्ड को स्टार करें",
+  "set-selected-unstarred": "चयनित बोर्डों से तारा हटाएँ",
   "sort-boards": "बोर्ड क्रमबद्ध करें",
   "sort-boards-custom": "कस्टम (खींचने का क्रम)",
   "sort-boards-title-asc": "शीर्षक (A → Z)",

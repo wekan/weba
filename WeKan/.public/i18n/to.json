@@ -116,6 +116,8 @@
   "select-all": "Fili kotoa",
   "select-none": "ʻOua ʻe fili ha meʻa",
   "selected-label": "Kuo fili:",
+  "set-selected-starred": "Fakafetuʻuʻi ʻa e ngaahi papa kuo fili",
+  "set-selected-unstarred": "Toʻo ʻa e fetuʻu mei he ngaahi papa kuo fili",
   "sort-boards": "Fakahokohoko ʻa e Ngaahi Papa",
   "sort-boards-custom": "Fakatāutaha (hokohoko toho)",
   "sort-boards-title-asc": "Kaveinga (A → Z)",

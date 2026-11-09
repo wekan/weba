@@ -116,6 +116,8 @@
   "select-all": "Seletziona totu",
   "select-none": "Non seletziones nudda",
   "selected-label": "Seletzionadas:",
+  "set-selected-starred": "Marca cun istella sas tàulas seletzionadas",
+  "set-selected-unstarred": "Boga s'istella dae sas tàulas seletzionadas",
   "sort-boards": "Òrdina sas tàulas",
   "sort-boards-custom": "Personalizadu (òrdine de trasinamentu)",
   "sort-boards-title-asc": "Tìtulu (A → Z)",

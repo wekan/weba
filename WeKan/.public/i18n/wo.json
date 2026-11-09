@@ -116,6 +116,8 @@
   "select-all": "Tànn lépp",
   "select-none": "Bul tànn dara",
   "selected-label": "Tànnaan:",
+  "set-selected-starred": "Def biddéew ci tablo yi ñu tànn",
+  "set-selected-unstarred": "Dindi biddéew bi ci ëtt yi ñu tànn",
   "sort-boards": "Toftal Tablo yi",
   "sort-boards-custom": "Bu ñu sos (toftalin bu dëj)",
   "sort-boards-title-asc": "Tur (A → Z)",

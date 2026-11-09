@@ -116,6 +116,8 @@
   "select-all": "Pileh mandum",
   "select-none": "Bek pileh meusapeue",
   "selected-label": "Nyang geupileh:",
+  "set-selected-starred": "Bri bintang bak papan nyang geupileh",
+  "set-selected-unstarred": "Hapus bintang nibak papan nyang geupileh",
   "sort-boards": "Susun Papan",
   "sort-boards-custom": "Keudroe (urutan seuret)",
   "sort-boards-title-asc": "Judôl (A → Z)",

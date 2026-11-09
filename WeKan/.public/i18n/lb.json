@@ -116,6 +116,8 @@
   "select-all": "All auswielen",
   "select-none": "Näischt auswielen",
   "selected-label": "Ausgewielt:",
+  "set-selected-starred": "Ausgewählte Boards mat Stern markieren",
+  "set-selected-unstarred": "Stern vun ausgewählten Boards ewechhuelen",
   "sort-boards": "Boards sortieren",
   "sort-boards-custom": "Benutzerdefiniert (Ziehreihenfolge)",
   "sort-boards-title-asc": "Titel (A → Z)",

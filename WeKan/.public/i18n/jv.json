@@ -116,6 +116,8 @@
   "select-all": "Pilih kabeh",
   "select-none": "Aja pilih apa wae",
   "selected-label": "Dipilih:",
+  "set-selected-starred": "Wenehi lintang marang papan sing dipilih",
+  "set-selected-unstarred": "Busak lintang saka papan sing dipilih",
   "sort-boards": "Urutake Papan",
   "sort-boards-custom": "Kustom (urutan seret)",
   "sort-boards-title-asc": "Judhul (A → Z)",

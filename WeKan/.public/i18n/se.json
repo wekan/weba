@@ -116,6 +116,8 @@
   "select-all": "Vállje buot",
   "select-none": "Ale vállje maidege",
   "selected-label": "Válljejuvvon:",
+  "set-selected-starred": "Merke válljejuvvon távvaliid násttuin",
+  "set-selected-unstarred": "Váldde nástomearkka eret válljejuvvon távvaliin",
   "sort-boards": "Ortte távvaliid",
   "sort-boards-custom": "Iešmearriduvvon (gease ortnega)",
   "sort-boards-title-asc": "Namahus (A → Z)",

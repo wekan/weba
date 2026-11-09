@@ -1177,3 +1177,21 @@ denial, off-page access revocation with no partial placement, clear/disable and
 reload/form isolation. It runs in test-live for source and packaged apps, or with
 `python3 tests/run-http.py --board-selection` (add `--archive`). This coverage
 does not establish that all unchanged original WeKan suites pass.
+
+
+### Selected board stars
+
+The selection sidebar offers Star the selected boards, or Unstar the selected
+boards when every retained board is starred. A mixed selection adds only missing
+stars. This is independent of placement and other users' preferences, works for
+readonly board members and retains the selected set. Archive hides the action;
+forged Archive or inactive-mode events are rejected on the server.
+
+The server takes IDs from private selection state, locks the account and sorted
+board IDs, decides the action against current stars and rechecks all read access
+before commit. Failure on a later write or loss of access after the final write
+rolls back the entire set. Native tests inject these failures and verify retry,
+personal isolation and that existing stars are not redundantly written. The
+source/package selection browser test checks a 30-board retained set, mixed and
+all-starred captions, revoked off-page denial and forged control events. This
+covers the star action; other selection sidebar actions remain in TODO.md.

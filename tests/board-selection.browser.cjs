@@ -33,22 +33,29 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   await click(page,'SelectNoBoards');await expect(page.locator(control('SelectedBoardsCount'))).toHaveText('0');
   await click(page,'MultiBoards');await expect(page.locator('.weba-board-select')).toHaveCount(0);await click(page,'MultiBoards');
   await click(page,'CloseMultiBoards');await expect(page.locator('.weba-board-select')).toHaveCount(0);
+  const disabledStars=state().rawStars;await page.evaluate(()=>gw.raise(document.querySelector('[id$=".StarSelectedBoards"]').id,'click',[]));await settle(page);expect(state().rawStars).toEqual(disabledStars);await expect(page.locator(control('Notice'))).toContainText('Activate multi-selection first');
   // Reload is a new form with no inherited selection.
   await page.reload();await expect(page.locator('.weba-content')).toHaveAttribute('data-multi-active','false');
   const second=await context.newPage();await second.goto(process.env.WEBA_TEST_URL);await expect(second.locator('.weba-content')).toHaveAttribute('data-selection-count','0');
   const paging=fixture('seed-selection').ids.map(String);
   await page.bringToFront();await click(page,'SortBoards');await click(page,'SortTitleAsc');await click(page,'HeaderSearch');await page.locator(entry('BoardSearch')).fill('Selection Paging');await expect(page.locator('.weba-board-tile-group')).toHaveCount(25);
   await click(page,'MultiBoards');await click(page,'SelectAllBoards');await expect(page.locator(control('SelectedBoardsCount'))).toHaveText('25');await click(page,'NextBoardPage');await expect(page.locator('.weba-board-tile-group')).toHaveCount(5);await click(page,'SelectAllBoards');await expect(page.locator(control('SelectedBoardsCount'))).toHaveText('30');
+  fixture('star-space-board','rest-member',{WEBA_SPACE_BOARD:paging[0]});
+  await click(page,'StarSelectedBoards');await expect.poll(()=>{const stars=state().rawStars;return paging.filter(id=>stars[id]==='1').length;}).toBe(30);
+  await expect(page.locator(control('StarSelectedBoards'))).toHaveText('Unstar the selected boards');
+  await click(page,'StarSelectedBoards');await expect.poll(()=>{const stars=state().rawStars;return paging.filter(id=>stars[id]==='1').length;}).toBe(0);
   // A retained board revoked off-page denies the complete batch without partial writes.
   fixture('revoke-space-board','rest-other',{WEBA_SPACE_BOARD:paging[0]});const snapshot=state().rawAssignments;
+  const starsBefore=state().rawStars;await click(page,'StarSelectedBoards');expect(state().rawStars).toEqual(starsBefore);
   await send('DragAction',wire('board-multi-drop',[paging[29],'workspace',space,await revision()]));expect(state().rawAssignments).toEqual(snapshot);await expect(page.locator(control('SelectedBoardsCount'))).toHaveText('30');
   fixture('grant-space-board','rest-other',{WEBA_SPACE_BOARD:paging[0]});
   await click(page,'CloseSidebar');await page.setViewportSize({width:390,height:844});if(!await page.locator(control('LeftNavigation')).isVisible())await click(page,'ToggleNavigation');
-  await page.waitForTimeout(1200);await settle(page);await page.locator(tile(paging[25])+' .weba-board-drag').scrollIntoViewIfNeeded();
-  const touch=await context.newCDPSession(page),from=await page.locator(tile(paging[25])+' .weba-board-drag').boundingBox(),to=await page.locator(`.weba-space-row[data-workspace-id="${space}"]`).boundingBox();
+  await page.waitForTimeout(1200);await settle(page);await page.locator('.weba-board-tile-group[data-selected="true"] .weba-board-drag').first().scrollIntoViewIfNeeded();
+  const touch=await context.newCDPSession(page),from=await page.locator('.weba-board-tile-group[data-selected="true"] .weba-board-drag').first().boundingBox(),to=await page.locator(`.weba-space-row[data-workspace-id="${space}"]`).boundingBox();
   const points=n=>[{x:Math.round(from.x+from.width/2+(to.x+to.width/2-from.x-from.width/2)*n/8),y:Math.round(from.y+from.height/2+(to.y+to.height/2-from.y-from.height/2)*n/8),id:1}];
   await touch.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:points(0)});for(let n=1;n<=8;n++){await touch.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:points(n)});await page.waitForTimeout(25);}await touch.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
-  await expect.poll(()=>paging.filter(id=>state().rawAssignments[id]===space).length,{message:JSON.stringify({from,to,notice:await page.locator(control('Notice')).textContent()})}).toBe(30);
+  await expect.poll(()=>{const assignments=state().rawAssignments;return paging.filter(id=>assignments[id]===space).length;},{message:JSON.stringify({from,to,notice:await page.locator(control('Notice')).textContent()})}).toBe(30);
+  await page.waitForTimeout(750);await click(page,'Archive');await expect(page.locator('.weba-content')).toHaveAttribute('data-view','Archive');const archiveStars=state().rawStars;await page.evaluate(()=>gw.raise(document.querySelector('[id$=".StarSelectedBoards"]').id,'click',[]));await settle(page);expect(state().rawStars).toEqual(archiveStars);await expect(page.locator(control('Notice'))).toContainText('Select active boards first');
   expect(errors).toEqual([]);console.log('Native selection browser: checkbox controls, retained filtered selection, visible-only Select All, private toggle/stale revision/single-drop bypass denial, real grouped drop and SQL isolation, clear/disable/reload/form isolation passed');
  }finally{if(context)await context.close();if(browser)await browser.close();}
 })().catch(error=>{let message=error.stack||String(error);if(process.env.WEBA_TEST_PASSWORD)message=message.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(message);process.exitCode=1;});

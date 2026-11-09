@@ -2553,6 +2553,9 @@ Private Sub UpdateSelectionControls()
   BoardSelectionPanel.Visible = IsOverview() And active And $overviewSidebar = "selection"
   BoardSearchPanel.Visible = IsOverview() And Not BoardSelectionPanel.Visible
   SelectedBoardsCount.Text = Str(BoardSelection.Count(SelectionState()))
+  StarSelectedBoards.Visible = IsOverview() And Not $archive And active
+  StarSelectedBoards.Text = "Star the selected boards"
+  Try SetSelectedStarCaption()
 End
 
 Public Sub MultiBoards_Click()
@@ -2611,6 +2614,20 @@ Public Sub BoardSelectionAction_Change()
   ids = data["ids"]
   BoardSelection.Toggle(SelectionState(), CInt(UnBase64(fields[1])), ids)
   RefreshCatalogVisual()
+Catch
+  Notice.Text = Error.Text
+  RefreshCatalogVisual()
+End
+
+
+Private Sub SetSelectedStarCaption()
+  If Not BoardSpaces.SelectionNeedsStars(BoardSelection.Ids(SelectionState())) Then StarSelectedBoards.Text = "Unstar the selected boards"
+End
+
+Public Sub StarSelectedBoards_Click()
+  If Not IsOverview() Or $archive Then Error.Raise("Select active boards first")
+  BoardSpaces.ToggleSelectedStars(BoardSelection.ActionIds(SelectionState()))
+  RefreshTree()
 Catch
   Notice.Text = Error.Text
   RefreshCatalogVisual()

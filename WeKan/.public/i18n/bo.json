@@ -116,6 +116,8 @@
   "select-all": "ཚང་མ་འདེམས།",
   "select-none": "གང་ཡང་མ་འདེམས།",
   "selected-label": "བདམས་པ།",
+  "set-selected-starred": "བདམས་པའི་ལས་སྒྲོམ་ལ་སྐར་རྟགས་འགོད།",
+  "set-selected-unstarred": "བདམས་པའི་ལས་སྒྲོམ་གྱི་སྐར་རྟགས་སུབ།",
   "sort-boards": "ལས་སྟེགས་རིམ་སྒྲིག",
   "sort-boards-custom": "རང་བཟོས་ (འདྲུད་པའི་རིམ་པ་)",
   "sort-boards-title-asc": "ཁ་བྱང་ (A → Z)",

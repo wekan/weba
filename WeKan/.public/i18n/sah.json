@@ -116,6 +116,8 @@
   "select-all": "Барытын тал",
   "select-none": "Тугу да талба",
   "selected-label": "Талылынна:",
+  "set-selected-starred": "Талыллыбыт дуоскаларга сулус туруор",
+  "set-selected-unstarred": "Талыллыбыт дуоскалартан сулуһу уһул",
   "sort-boards": "Дуоскалары наардаа",
   "sort-boards-custom": "Ураты (көһөрүү бэрээдэгэ)",
   "sort-boards-title-asc": "Аат (A → Z)",

@@ -116,6 +116,8 @@
   "select-all": "hlawula hinkwavo",
   "select-none": "U nga hlawuli na xin’we",
   "selected-label": "Leswi hlawuriweke:",
+  "set-selected-starred": "Nyika tibodo leti hlawuriweke nyeleti",
+  "set-selected-unstarred": "Susa nyeleti eka tibodo leti hlawuriweke",
   "sort-boards": "mhaka tibodo",
   "sort-boards-custom": "Swa wena (nxaxamelo wo koka)",
   "sort-boards-title-asc": "nhlokomhaka (A → mhaka)",

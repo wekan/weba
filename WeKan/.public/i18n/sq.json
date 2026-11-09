@@ -116,6 +116,8 @@
   "select-all": "Zgjidh të gjitha",
   "select-none": "Mos zgjidh asnjë",
   "selected-label": "Të zgjedhura:",
+  "set-selected-starred": "Shëno tabelat e zgjedhura me yll",
+  "set-selected-unstarred": "Hiq yllin nga tabelat e zgjedhura",
   "sort-boards": "Rendit tabelat",
   "sort-boards-custom": "E personalizuar (renditje me tërheqje)",
   "sort-boards-title-asc": "Titulli (A → Z)",

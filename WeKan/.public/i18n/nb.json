@@ -116,6 +116,8 @@
   "select-all": "Velg alle",
   "select-none": "Velg ingen",
   "selected-label": "Valgt:",
+  "set-selected-starred": "Stjernemerk de valgte tavlene",
+  "set-selected-unstarred": "Fjern stjernemerket fra de valgte tavlene",
   "sort-boards": "Sorter tavler",
   "sort-boards-custom": "Egendefinert (dra-rekkefølge)",
   "sort-boards-title-asc": "Tittel (A → Å)",

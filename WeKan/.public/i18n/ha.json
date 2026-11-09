@@ -116,6 +116,8 @@
   "select-all": "Zaɓi duka",
   "select-none": "Kada a zaɓi komai",
   "selected-label": "Zaɓaɓɓu:",
+  "set-selected-starred": "Sa wa zaɓaɓɓun alluna tauraro",
+  "set-selected-unstarred": "Cire tauraro daga zaɓaɓɓun alluna",
   "sort-boards": "Jera alluna",
   "sort-boards-custom": "Na musamman (ja don tsara)",
   "sort-boards-title-asc": "Take (A → Z)",

@@ -116,6 +116,8 @@
   "select-all": "Diuzañ pep tra",
   "select-none": "Na ziuz hini ebet",
   "selected-label": "Diuzet:",
+  "set-selected-starred": "Sterennañ an taolennoù diuzet",
+  "set-selected-unstarred": "Lemel ar steredenn diwar an taolennoù diuzet",
   "sort-boards": "Rummañ an taolennoù",
   "sort-boards-custom": "Personelaet (urzh stlejañ)",
   "sort-boards-title-asc": "Titl (A → Z)",

@@ -116,6 +116,8 @@
   "select-all": "Seleccionar todo",
   "select-none": "Non seleccionar ningún",
   "selected-label": "Seleccionado:",
+  "set-selected-starred": "Marcar como favoritos os taboleiros seleccionados",
+  "set-selected-unstarred": "Deixar de destacar os taboleiros seleccionados",
   "sort-boards": "Ordenar taboleiros",
   "sort-boards-custom": "Personalizado (orde por arrastre)",
   "sort-boards-title-asc": "Título (A → Z)",

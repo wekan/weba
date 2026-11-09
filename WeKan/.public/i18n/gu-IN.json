@@ -116,6 +116,8 @@
   "select-all": "બધું પસંદ કરો",
   "select-none": "કંઈ પસંદ ન કરો",
   "selected-label": "પસંદ કરેલ:",
+  "set-selected-starred": "પસંદ કરેલા બોર્ડને સ્ટાર કરો",
+  "set-selected-unstarred": "પસંદ કરેલા બોર્ડમાંથી તારો દૂર કરો",
   "sort-boards": "બોર્ડ સૉર્ટ કરો",
   "sort-boards-custom": "કસ્ટમ (ખેંચીને ક્રમ)",
   "sort-boards-title-asc": "શીર્ષક (A → Z)",

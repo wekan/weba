@@ -116,6 +116,8 @@
   "select-all": "Hemmesini saýlaň",
   "select-none": "Hiç birini saýlama",
   "selected-label": "Saýlanan:",
+  "set-selected-starred": "Saýlanan tagtalary ýyldyzlaň",
+  "set-selected-unstarred": "Saýlanan tagtalardan ýyldyzy aýyr",
   "sort-boards": "Tagtalary tertipläň",
   "sort-boards-custom": "Ýörite (süýräp tertip)",
   "sort-boards-title-asc": "At (A → Z)",

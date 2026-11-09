@@ -116,6 +116,8 @@
   "select-all": "Valitse kaikki",
   "select-none": "Poista kaikki valinnat",
   "selected-label": "Valitut:",
+  "set-selected-starred": "Merkitse valitut taulut tähdellä",
+  "set-selected-unstarred": "Poista tähtimerkintä valituilta tauluilta",
   "sort-boards": "Lajittele taulut",
   "sort-boards-custom": "Mukautettu (vetojärjestys)",
   "sort-boards-title-asc": "Otsikko (A → Ö)",

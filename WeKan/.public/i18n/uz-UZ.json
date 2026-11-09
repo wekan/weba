@@ -116,6 +116,8 @@
   "select-all": "Barchasini tanlash",
   "select-none": "Hech birini tanlamaslik",
   "selected-label": "Tanlangan:",
+  "set-selected-starred": "Tanlangan taxtalarni yulduzcha bilan belgilash",
+  "set-selected-unstarred": "Tanlangan doskalardan yulduzchani olib tashlash",
   "sort-boards": "Taxtalarni saralash",
   "sort-boards-custom": "Maxsus (sudrab tartiblash)",
   "sort-boards-title-asc": "Sarlavha (A → Z)",

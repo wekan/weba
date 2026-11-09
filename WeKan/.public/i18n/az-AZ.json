@@ -116,6 +116,8 @@
   "select-all": "Hamısını seç",
   "select-none": "Heç birini seçmə",
   "selected-label": "Seçildi:",
+  "set-selected-starred": "Seçilmiş lövhələri ulduzla işarələ",
+  "set-selected-unstarred": "Seçilmiş lövhələrdən ulduzu silin",
   "sort-boards": "Lövhələri Sırala",
   "sort-boards-custom": "Xüsusi (sürükləmə sırası)",
   "sort-boards-title-asc": "Başlıq (A → Z)",

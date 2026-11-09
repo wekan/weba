@@ -116,6 +116,8 @@
   "select-all": "Tia wo katã",
   "select-none": "Mègatia aɖeke o",
   "selected-label": "Nusiwo wotia:",
+  "set-selected-starred": "De ɣletivi kpekpeɖeŋu siwo wotia",
+  "set-selected-unstarred": "Ðe ɣletivi le kpekpeɖeŋu siwo wotia ŋu",
   "sort-boards": "Ðo kpekpeɖeŋuwo ɖe ɖoɖo nu",
   "sort-boards-custom": "Tɔxɛ (he ƒe ɖoɖo)",
   "sort-boards-title-asc": "Ŋkɔ (A → Z)",

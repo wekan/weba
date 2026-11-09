@@ -116,6 +116,8 @@
   "select-all": "Seleicionar too",
   "select-none": "Nun seleicionar nengún",
   "selected-label": "Seleicionaos:",
+  "set-selected-starred": "Destacar los tableros seleicionaos",
+  "set-selected-unstarred": "Dexar de destacar los tableros seleicionaos",
   "sort-boards": "Ordenar tableros",
   "sort-boards-custom": "Personalizáu (orde arrastrando)",
   "sort-boards-title-asc": "Títulu (A → Z)",

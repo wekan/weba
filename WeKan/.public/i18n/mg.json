@@ -116,6 +116,8 @@
   "select-all": "Fidio rehetra",
   "select-none": "Aza mifidy",
   "selected-label": "Voafidy:",
+  "set-selected-starred": "Asio kintana ireo solaitra voafidy",
+  "set-selected-unstarred": "Esory ny kintana amin'ireo solaitra voafidy",
   "sort-boards": "Alamino ny solaitra",
   "sort-boards-custom": "Namboarina (filaharana amin'ny fitarihana)",
   "sort-boards-title-asc": "Lohateny (A → Z)",

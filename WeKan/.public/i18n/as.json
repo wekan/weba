@@ -116,6 +116,8 @@
   "select-all": "সকলো বাছক",
   "select-none": "এটাও নাবাছিব",
   "selected-label": "বাছনি কৰা হৈছে:",
+  "set-selected-starred": "বাছনি কৰা ব'ৰ্ডসমূহ তাৰকাচিহ্নিত কৰক",
+  "set-selected-unstarred": "বাছনি কৰা ব'ৰ্ডসমূহৰ তাৰকাচিহ্ন আঁতৰাওক",
   "sort-boards": "বৰ্ড সজাওক",
   "sort-boards-custom": "কাষ্টম (টানি সজোৱা ক্ৰম)",
   "sort-boards-title-asc": "শিৰোনাম (A → Z)",

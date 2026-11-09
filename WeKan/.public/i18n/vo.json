@@ -116,6 +116,8 @@
   "select-all": "Välön valik",
   "select-none": "No välön wani",
   "selected-label": "Pevälöl:",
+  "set-selected-starred": "Stelön tabis pevälöl",
+  "set-selected-unstarred": "Moükön steli de tabs pevälöl",
   "sort-boards": "Ordön Tabis",
   "sort-boards-custom": "Pösodik (letälaord)",
   "sort-boards-title-asc": "Tiäd (A → Z)",

@@ -116,6 +116,8 @@
   "select-all": "Chwazi tout",
   "select-none": "Pa chwazi okenn",
   "selected-label": "Chwazi:",
+  "set-selected-starred": "Mete yon zetwal sou tablo chwazi yo",
+  "set-selected-unstarred": "Retire zetwal sou tablo chwazi yo",
   "sort-boards": "Triye tablo",
   "sort-boards-custom": "Pèsonalize (glise pou òdone)",
   "sort-boards-title-asc": "Tit (A → Z)",

@@ -116,6 +116,8 @@
   "select-all": "קלייַב אַלע",
   "select-none": "גאָרנישט אויסקלייבן",
   "selected-label": "אויסגעקליבן:",
+  "set-selected-starred": "שטערן די אויסגעקליבענע באָרדז",
+  "set-selected-unstarred": "אַראָפּנעמען דעם שטערן פֿון די אויסגעקליבענע ברעטער",
   "sort-boards": "סאָרטיר באָרדז",
   "sort-boards-custom": "אייגן (שלעפּ־סדר)",
   "sort-boards-title-asc": "טיטל (A → Z)",

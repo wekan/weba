@@ -116,6 +116,8 @@
   "select-all": "Vybrať všetko",
   "select-none": "Nevybrať nič",
   "selected-label": "Vybrané:",
+  "set-selected-starred": "Pridať hviezdičku vybraným nástenkám",
+  "set-selected-unstarred": "Odobrať hviezdičku vybraným tabuliam",
   "sort-boards": "Zoradiť nástenky",
   "sort-boards-custom": "Vlastné (poradie presunutím)",
   "sort-boards-title-asc": "Názov (A → Z)",

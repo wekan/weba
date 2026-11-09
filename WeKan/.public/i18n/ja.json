@@ -116,6 +116,8 @@
   "select-all": "すべて選択",
   "select-none": "すべて選択解除",
   "selected-label": "選択中:",
+  "set-selected-starred": "選択したボードにスターを付ける",
+  "set-selected-unstarred": "選択したボードのスターを外す",
   "sort-boards": "ボードを並べ替え",
   "sort-boards-custom": "カスタム(ドラッグ順)",
   "sort-boards-title-asc": "タイトル(A → Z)",

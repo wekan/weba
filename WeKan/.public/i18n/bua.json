@@ -116,6 +116,8 @@
   "select-all": "Бүгэдые шэлэхэ",
   "select-none": "Юушье шэлэхэгүй",
   "selected-label": "Шэлэгдэһэн:",
+  "set-selected-starred": "Шэлэгдэһэн самбарнуудые одотой болгохо",
+  "set-selected-unstarred": "Шэлэгдэһэн самбарнуудай одые абаха",
   "sort-boards": "Самбарнуудые эрэмбэлхэ",
   "sort-boards-custom": "Тусхай (шэрэжэ эрэмбэлхэ)",
   "sort-boards-title-asc": "Нэрэ (А → Я)",

@@ -116,6 +116,8 @@
   "select-all": "सगळें निवडात",
   "select-none": "कांयच निवडूं नाकात",
   "selected-label": "निवडिल्लें:",
+  "set-selected-starred": "निवडिल्ल्या फळ्यांक तारांकित करात",
+  "set-selected-unstarred": "निवडिल्ल्या फळ्यांचें तारांकन काडात",
   "sort-boards": "फळे क्रमांत लायात",
   "sort-boards-custom": "सानुकूल (ओडपाचो क्रम)",
   "sort-boards-title-asc": "माथाळें (A → Z)",

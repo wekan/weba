@@ -116,6 +116,8 @@
   "select-all": "Tümünü seç",
   "select-none": "Hiçbirini seçme",
   "selected-label": "Seçilen:",
+  "set-selected-starred": "Seçili panoları yıldızla",
+  "set-selected-unstarred": "Seçili panoların yıldızını kaldır",
   "sort-boards": "Panoları Sırala",
   "sort-boards-custom": "Özel (sürükleme sırası)",
   "sort-boards-title-asc": "Başlık (A → Z)",

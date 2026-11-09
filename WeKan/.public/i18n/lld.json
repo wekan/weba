@@ -116,6 +116,8 @@
   "select-all": "Cernì dut",
   "select-none": "Ne cernì nia",
   "selected-label": "Cernudes:",
+  "set-selected-starred": "Dé na stëila ala tofles cernudes",
+  "set-selected-unstarred": "Tò demez la stëila dala tofles cernudes",
   "sort-boards": "Ordiné la tofles",
   "sort-boards-custom": "Personalisà (orden cun strasciné)",
   "sort-boards-title-asc": "Titul (A → Z)",

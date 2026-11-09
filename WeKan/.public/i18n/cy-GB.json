@@ -116,6 +116,8 @@
   "select-all": "Dewis popeth",
   "select-none": "Dewis dim",
   "selected-label": "Wedi dewis:",
+  "set-selected-starred": "Serennu'r byrddau a ddewiswyd",
+  "set-selected-unstarred": "Tynnu'r seren oddi ar y byrddau a ddewiswyd",
   "sort-boards": "Trefnu Byrddau",
   "sort-boards-custom": "Personol (trefn llusgo)",
   "sort-boards-title-asc": "Teitl (A → Z)",

@@ -116,6 +116,8 @@
   "select-all": "Vel alt",
   "select-none": "Vel einki",
   "selected-label": "Valt:",
+  "set-selected-starred": "Yndismerk valdu talvurnar",
+  "set-selected-unstarred": "Tak yndismerkingina av valdu talvunum",
   "sort-boards": "Raða talvur",
   "sort-boards-custom": "Egið (dráttar-raðfylgja)",
   "sort-boards-title-asc": "Heiti (A → Z)",

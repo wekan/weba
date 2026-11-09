@@ -116,6 +116,8 @@
   "select-all": "Hoch wIv",
   "select-none": "pagh yIwIv",
   "selected-label": "wIvlu'pu':",
+  "set-selected-starred": "wIvlu'bogh raSmey HovmoH",
+  "set-selected-unstarred": "'echletmey wIvlu'bogh Hovmey yIteq",
   "sort-boards": "raSmey tlheghmoH",
   "sort-boards-custom": "le' (woH Segh)",
   "sort-boards-title-asc": "pong (A → Z)",

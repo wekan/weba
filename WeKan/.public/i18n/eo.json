@@ -116,6 +116,8 @@
   "select-all": "Elekti ĉiujn",
   "select-none": "Elekti nenion",
   "selected-label": "Elektita:",
+  "set-selected-starred": "Steli la elektitajn tabulojn",
+  "set-selected-unstarred": "Forigi la stelon de la elektitaj tabuloj",
   "sort-boards": "Ordigi tabulojn",
   "sort-boards-custom": "Propra (trena ordo)",
   "sort-boards-title-asc": "Titolo (A → Z)",

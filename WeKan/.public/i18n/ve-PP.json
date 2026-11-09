@@ -116,6 +116,8 @@
   "select-all": "Vali kaik",
   "select-none": "Ni songo nanga tshithu",
   "selected-label": "Valitud:",
+  "set-selected-starred": "Pane tähtaine valitud laudoile",
+  "set-selected-unstarred": "Susa inkanyezi emabhodini akhethiwe",
   "sort-boards": "Järgenda laudad",
   "sort-boards-custom": "Ičemäne (vedandan järgenduz)",
   "sort-boards-title-asc": "Pälkirjutez (A → Z)",

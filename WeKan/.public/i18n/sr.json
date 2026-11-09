@@ -116,6 +116,8 @@
   "select-all": "Изабери све",
   "select-none": "Не изабери ништа",
   "selected-label": "Ознаке:",
+  "set-selected-starred": "Додели им звездице",
+  "set-selected-unstarred": "Уклони им звездице",
   "sort-boards": "Редослед",
   "sort-boards-custom": "Настао померањем списа",
   "sort-boards-title-asc": "Азбучни (А → Ш)",

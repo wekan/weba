@@ -116,6 +116,8 @@
   "select-all": "هەمووی هەڵبژێرە",
   "select-none": "هیچیان هەڵمەبژێرە",
   "selected-label": "هەڵبژێردراو:",
+  "set-selected-starred": "تەختە هەڵبژێردراوەکان ئەستێرەدار بکە",
+  "set-selected-unstarred": "ئەستێرەی تەختە هەڵبژێردراوەکان لاببە",
   "sort-boards": "تەختەکان ڕیز بکە",
   "sort-boards-custom": "تایبەت (ڕیزی ڕاکێشان)",
   "sort-boards-title-asc": "ناونیشان (A → Z)",

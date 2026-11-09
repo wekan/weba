@@ -116,6 +116,8 @@
   "select-all": "Избери всички",
   "select-none": "Без избор",
   "selected-label": "Избрани:",
+  "set-selected-starred": "Отбележи избраните табла със звезда",
+  "set-selected-unstarred": "Премахни звездата от избраните табла",
   "sort-boards": "Сортирай таблата",
   "sort-boards-custom": "Персонализиран (ред чрез влачене)",
   "sort-boards-title-asc": "Заглавие (А → Я)",

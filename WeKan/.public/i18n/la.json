@@ -116,6 +116,8 @@
   "select-all": "Elige omnia",
   "select-none": "Nihil elige",
   "selected-label": "Electae:",
+  "set-selected-starred": "Tabulas electas stella nota",
+  "set-selected-unstarred": "Stellas a tabulis electis remove",
   "sort-boards": "Ordina tabulas",
   "sort-boards-custom": "Proprius (ordo trahendo constitutus)",
   "sort-boards-title-asc": "Titulus (A → Z)",

@@ -116,6 +116,8 @@
   "select-all": "Select all",
   "select-none": "Select none",
   "selected-label": "Selected:",
+  "set-selected-starred": "Star the selected boards",
+  "set-selected-unstarred": "Unstar the selected boards",
   "sort-boards": "Sort Boards",
   "sort-boards-custom": "Custom (drag order)",
   "sort-boards-title-asc": "Title (A → Z)",

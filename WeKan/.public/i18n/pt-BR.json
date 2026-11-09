@@ -116,6 +116,8 @@
   "select-all": "Selecionar todos",
   "select-none": "Não selecionar nenhum",
   "selected-label": "Selecionado:",
+  "set-selected-starred": "Favoritar os quadros selecionados",
+  "set-selected-unstarred": "Remover os quadros selecionados dos favoritos",
   "sort-boards": "Organizar Quadros",
   "sort-boards-custom": "Personalizado (arrastar e soltar)",
   "sort-boards-title-asc": "Título (A → Z)",

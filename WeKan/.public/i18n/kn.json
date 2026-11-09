@@ -116,6 +116,8 @@
   "select-all": "ಎಲ್ಲವನ್ನೂ ಆಯ್ಕೆಮಾಡಿ",
   "select-none": "ಯಾವುದನ್ನೂ ಆಯ್ಕೆಮಾಡಬೇಡಿ",
   "selected-label": "ಆಯ್ಕೆಮಾಡಿದ್ದು:",
+  "set-selected-starred": "ಆಯ್ಕೆಮಾಡಿದ ಫಲಕಗಳಿಗೆ ನಕ್ಷತ್ರ ಗುರುತು ಹಾಕಿ",
+  "set-selected-unstarred": "ಆಯ್ಕೆಮಾಡಿದ ಫಲಕಗಳ ನಕ್ಷತ್ರ ಗುರುತು ತೆಗೆದುಹಾಕಿ",
   "sort-boards": "ಫಲಕಗಳನ್ನು ವಿಂಗಡಿಸಿ",
   "sort-boards-custom": "ಕಸ್ಟಮ್ (ಎಳೆಯುವ ಕ್ರಮ)",
   "sort-boards-title-asc": "ಶೀರ್ಷಿಕೆ (A → Z)",

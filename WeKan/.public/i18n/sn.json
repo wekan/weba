@@ -116,6 +116,8 @@
   "select-all": "sarudza zvose",
   "select-none": "Usasarudza chinhu",
   "selected-label": "zvasarudzwa:",
+  "set-selected-starred": "Star the zvasarudzwa mabhodhi",
+  "set-selected-unstarred": "Unstar the zvasarudzwa mabhodhi",
   "sort-boards": "ronga mabhodhi",
   "sort-boards-custom": "Zvawakasarudza (kurongeka nekudhonza)",
   "sort-boards-title-asc": "musoro (A → Z)",

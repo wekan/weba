@@ -116,6 +116,8 @@
   "select-all": "Ընտրել բոլորը",
   "select-none": "Ոչինչ չընտրել",
   "selected-label": "Ընտրված՝",
+  "set-selected-starred": "Աստղանշել ընտրված տախտակները",
+  "set-selected-unstarred": "Հեռացնել աստղը ընտրված տախտակներից",
   "sort-boards": "Տեսակավորել տախտակները",
   "sort-boards-custom": "Հատուկ (քաշման կարգ)",
   "sort-boards-title-asc": "Վերնագիր (Ա → Ֆ)",

@@ -116,6 +116,8 @@
   "select-all": "Khetha konke",
   "select-none": "Ungakhethi lutho",
   "selected-label": "Okukhethiweyo:",
+  "set-selected-starred": "Faka inkanyezi kumabhodi akhethiweyo",
+  "set-selected-unstarred": "Susa inkanyezi kumabhodi akhethiweyo",
   "sort-boards": "Hlela amabhodi",
   "sort-boards-custom": "Ngokwezifiso (ukuhudula)",
   "sort-boards-title-asc": "Isihloko (A → Z)",

@@ -116,6 +116,8 @@
   "select-all": "Hitamwo vyose",
   "select-none": "Ntuhitemwo na kimwe",
   "selected-label": "Vyahisemwo:",
+  "set-selected-starred": "Shira inyenyeri ku vyapa vyahisemwo",
+  "set-selected-unstarred": "Kura inyenyeri ku vyapa vyahisemwo",
   "sort-boards": "Tunganya Ibicapo",
   "sort-boards-custom": "Bihariye (kwega uko bikurikirana)",
   "sort-boards-title-asc": "Umutwe (A → Z)",

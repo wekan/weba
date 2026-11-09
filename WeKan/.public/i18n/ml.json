@@ -116,6 +116,8 @@
   "select-all": "എല്ലാം തിരഞ്ഞെടുക്കുക",
   "select-none": "ഒന്നും തിരഞ്ഞെടുക്കരുത്",
   "selected-label": "തിരഞ്ഞെടുത്തത്:",
+  "set-selected-starred": "തിരഞ്ഞെടുത്ത ബോർഡുകൾക്ക് നക്ഷത്രമിടുക",
+  "set-selected-unstarred": "തിരഞ്ഞെടുത്ത ബോർഡുകളുടെ നക്ഷത്രം നീക്കുക",
   "sort-boards": "ബോർഡുകൾ ക്രമപ്പെടുത്തുക",
   "sort-boards-custom": "ഇഷ്ടാനുസൃതം (വലിച്ചിടൽ ക്രമം)",
   "sort-boards-title-asc": "ശീർഷകം (A → Z)",

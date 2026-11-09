@@ -116,6 +116,8 @@
   "select-all": "Izberi vse",
   "select-none": "Ne izberi ničesar",
   "selected-label": "Izbrano:",
+  "set-selected-starred": "Označi izbrane table z zvezdico",
+  "set-selected-unstarred": "Odstrani zvezdico z izbranih tabel",
   "sort-boards": "Razvrsti table",
   "sort-boards-custom": "Po meri (vrstni red vlečenja)",
   "sort-boards-title-asc": "Naslov (A → Ž)",

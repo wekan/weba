@@ -116,6 +116,8 @@
   "select-all": "Pili-a ngatanan",
   "select-none": "Ayaw pagpili hin bisan ano",
   "selected-label": "Napili:",
+  "set-selected-starred": "Butangi hin bituon an napili nga mga board",
+  "set-selected-unstarred": "Kuhaa an bituon han mga ginpili nga board",
   "sort-boards": "Ayusa an mga Board",
   "sort-boards-custom": "Custom (han-ay han pag-drag)",
   "sort-boards-title-asc": "Titulo (A → Z)",

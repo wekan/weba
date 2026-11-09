@@ -116,6 +116,8 @@
   "select-all": "Välj alla",
   "select-none": "Välj ingen",
   "selected-label": "Valda:",
+  "set-selected-starred": "Stjärnmärk de valda tavlorna",
+  "set-selected-unstarred": "Ta bort stjärnmärkningen från de valda tavlorna",
   "sort-boards": "Sortera tavlor",
   "sort-boards-custom": "Anpassad (dragordning)",
   "sort-boards-title-asc": "Titel (A → Ö)",

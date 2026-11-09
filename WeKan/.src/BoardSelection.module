@@ -112,3 +112,12 @@ Public Function DropIds(state As Collection, draggedId As Integer, revision As L
   CheckVisible(draggedId, visible)
   Return BoardSelection.Ids(state)
 End
+
+
+Public Function ActionIds(state As Collection) As Integer[]
+  Dim values As Integer[]
+  Check(state, True)
+  values = BoardSelection.Ids(state)
+  If values.Count = 0 Then Error.Raise("You did not select any boards.")
+  Return values
+End

@@ -116,6 +116,8 @@
   "select-all": "Makim olgeta",
   "select-none": "Makim i no gat",
   "selected-label": "Makim pinis:",
+  "set-selected-starred": "Putim sta long ol bot yu makim",
+  "set-selected-unstarred": "Rausim sta long ol bot yu makim",
   "sort-boards": "Stretim ol bot",
   "sort-boards-custom": "Oda yu makim yet (pulim bilong senisim oda)",
   "sort-boards-title-asc": "Nem (A → Z)",

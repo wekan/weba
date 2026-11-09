@@ -116,6 +116,8 @@
   "select-all": "全选",
   "select-none": "全部不選",
   "selected-label": "已选择：",
+  "set-selected-starred": "为所选看板加星标",
+  "set-selected-unstarred": "取消所選看板嘅星標",
   "sort-boards": "排序看板",
   "sort-boards-custom": "自定义（拖动排序）",
   "sort-boards-title-asc": "标题（A → Z）",

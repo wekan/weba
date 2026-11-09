@@ -116,6 +116,8 @@
   "select-all": "Chagua zote",
   "select-none": "Usichague yoyote",
   "selected-label": "Imechaguliwa:",
+  "set-selected-starred": "Weka nyota kwenye bodi zilizochaguliwa",
+  "set-selected-unstarred": "Ondoa nyota kwenye mbao zilizochaguliwa",
   "sort-boards": "Panga Bodi",
   "sort-boards-custom": "Maalum (mpangilio wa kuburuta)",
   "sort-boards-title-asc": "Kichwa (A → Z)",

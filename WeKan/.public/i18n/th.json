@@ -116,6 +116,8 @@
   "select-all": "เลือกทั้งหมด",
   "select-none": "ไม่เลือกทั้งหมด",
   "selected-label": "เลือกแล้ว:",
+  "set-selected-starred": "ติดดาวบอร์ดที่เลือก",
+  "set-selected-unstarred": "เอาดาวออกจากบอร์ดที่เลือก",
   "sort-boards": "เรียงลำดับบอร์ด",
   "sort-boards-custom": "กำหนดเอง (ลำดับการลาก)",
   "sort-boards-title-asc": "ชื่อ (A → Z)",

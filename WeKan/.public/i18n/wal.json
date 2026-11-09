@@ -116,6 +116,8 @@
   "select-all": "Ubbaa doora",
   "select-none": "Aybanne dooroppa",
   "selected-label": "Doorettidaageeta:",
+  "set-selected-starred": "Doorettida bookkiyata xoolliya wotta",
+  "set-selected-unstarred": "Doorettida bookkiyatuppe xoolliya digga",
   "sort-boards": "Bookkiyaata maaran wotha",
   "sort-boards-custom": "Dumma (goochchida maaraa)",
   "sort-boards-title-asc": "Sunttaa (A → Z)",

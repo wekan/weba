@@ -116,6 +116,8 @@
   "select-all": "Vali kõik",
   "select-none": "Ära vali midagi",
   "selected-label": "Valitud:",
+  "set-selected-starred": "Märgi valitud tahvlid tähega",
+  "set-selected-unstarred": "Eemalda tärn valitud tahvlitelt",
   "sort-boards": "Sorteeri tahvlid",
   "sort-boards-custom": "Kohandatud (lohistuse järjekord)",
   "sort-boards-title-asc": "Pealkiri (A → Z)",

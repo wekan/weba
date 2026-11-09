@@ -116,6 +116,8 @@
   "select-all": "Баарын тандоо",
   "select-none": "Эч бирин тандабоо",
   "selected-label": "Тандалды:",
+  "set-selected-starred": "Тандалган такталарга жылдызча коюу",
+  "set-selected-unstarred": "Тандалган такталардан жылдызчаны алып салуу",
   "sort-boards": "Такталарды иреттөө",
   "sort-boards-custom": "Ыңгайлаштырылган (сүйрөө тартиби)",
   "sort-boards-title-asc": "Аталышы (A → Z)",

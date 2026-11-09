@@ -116,6 +116,8 @@
   "select-all": "Selezione tutto",
   "select-none": "No selezionâ nuie",
   "selected-label": "Selezionete:",
+  "set-selected-starred": "Zonte le taulis selezionete ai preferiti",
+  "set-selected-unstarred": "Togli le taulis selezionete dai preferiti",
   "sort-boards": "Ordina taulis",
   "sort-boards-custom": "Personalizât (ordine di trascinamento)",
   "sort-boards-title-asc": "Titul (A → Z)",

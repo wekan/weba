@@ -116,6 +116,8 @@
   "select-all": "Wšě wubrać",
   "select-none": "Ničo njewubrać",
   "selected-label": "Wubrane:",
+  "set-selected-starred": "Wubrane tafle z hwěžku markěrować",
+  "set-selected-unstarred": "Hwěžku z wubranych taflow wotstronić",
   "sort-boards": "Tafle sortěrować",
   "sort-boards-custom": "Swójske (porjad přez ćahnjenje)",
   "sort-boards-title-asc": "Titul (A → Z)",

@@ -116,6 +116,8 @@
   "select-all": "سڀ چونڊيو",
   "select-none": "ڪوبه نه چونڊيو",
   "selected-label": "چونڊيل:",
+  "set-selected-starred": "چونڊيل بورڊن تي تارو لڳايو",
+  "set-selected-unstarred": "چونڊيل بورڊن تان تارو هٽايو",
   "sort-boards": "بورڊ ترتيب ڏيو",
   "sort-boards-custom": "حسب ضرورت (ڇڪڻ واري ترتيب)",
   "sort-boards-title-asc": "عنوان (A → Z)",

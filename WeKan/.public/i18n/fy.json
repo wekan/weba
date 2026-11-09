@@ -116,6 +116,8 @@
   "select-all": "Alles selektearje",
   "select-none": "Kies neat",
   "selected-label": "Selektearre:",
+  "set-selected-starred": "Set in stjer op de selektearre boards",
+  "set-selected-unstarred": "Helje de stjer fan de selektearre boarden ôf",
   "sort-boards": "Boards sortearje",
   "sort-boards-custom": "Oanpast (sleepfolchoarder)",
   "sort-boards-title-asc": "Titel (A → Z)",

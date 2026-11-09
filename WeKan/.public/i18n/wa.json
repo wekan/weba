@@ -116,6 +116,8 @@
   "select-all": "Tchoezi totafwait",
   "select-none": "Ni tchoezi nouk",
   "selected-label": "Tchoezi:",
+  "set-selected-starred": "Mete ene sitoele so les tåvleas tchoezis",
+  "set-selected-unstarred": "Oister l' sitoele des tåvleas tchoezis",
   "sort-boards": "Trîyî les tåvleas",
   "sort-boards-custom": "Da vosse (ôre di haetchaedje)",
   "sort-boards-title-asc": "Tite (A → Z)",

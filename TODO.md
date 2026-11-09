@@ -80,7 +80,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   Original callback outcome comparisons expand from 52 to 156 single/multi/mixed
   cases. This service is not yet connected to native selection controls or a new
   public HTTP route; existing single-board browser regressions remain separate.
-- Next: batch sidebar actions, Home/group targets, Markdown icons and original
+- Next: remaining batch sidebar actions (archive, duplication/export and enabled
+  permanent deletion), Home/group targets, Markdown icons and original
   UI callbacks. Native multi-selection controls, retained visible-page selection
   and revisioned authoritative multi-drop transport are recorded in CHANGELOG.md.
   Native form tests do not execute the original Latin callback unchanged.

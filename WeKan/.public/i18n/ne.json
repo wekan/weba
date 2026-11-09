@@ -116,6 +116,8 @@
   "select-all": "सबै चयन गर्नुहोस्",
   "select-none": "कुनै पनि चयन नगर्नुहोस्",
   "selected-label": "चयन गरिएको:",
+  "set-selected-starred": "चयन गरिएका बोर्डहरूमा तारा लगाउनुहोस्",
+  "set-selected-unstarred": "चयन गरिएका बोर्डहरूबाट तारा हटाउनुहोस्",
   "sort-boards": "बोर्डहरू क्रमबद्ध गर्नुहोस्",
   "sort-boards-custom": "अनुकूल (तान्ने क्रम)",
   "sort-boards-title-asc": "शीर्षक (A → Z)",

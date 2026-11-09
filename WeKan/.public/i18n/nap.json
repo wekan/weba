@@ -116,6 +116,8 @@
   "select-all": "Sceglie tutto",
   "select-none": "Nun selezionare nulla",
   "selected-label": "Selezionate:",
+  "set-selected-starred": "Aggiungi le tavule selezionate ai preferiti",
+  "set-selected-unstarred": "Togli le tavule selezionate dai preferiti",
   "sort-boards": "Ordina tavule",
   "sort-boards-custom": "Personalizzato (ordine 'e trascinamento)",
   "sort-boards-title-asc": "Tìtulo (A → Z)",

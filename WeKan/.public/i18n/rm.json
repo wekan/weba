@@ -116,6 +116,8 @@
   "select-all": "Tscherner tut",
   "select-none": "Deselecziunar tut",
   "selected-label": "Tschernì:",
+  "set-selected-starred": "Marcar las tabellas tschernidas cun ina staila",
+  "set-selected-unstarred": "Allontanar la staila da las tabellas tschernidas",
   "sort-boards": "Ordinar las tabellas",
   "sort-boards-custom": "Persunalisà (urden definì cun trair)",
   "sort-boards-title-asc": "Titel (A → Z)",

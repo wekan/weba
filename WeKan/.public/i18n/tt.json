@@ -116,6 +116,8 @@
   "select-all": "Барысын сайлау",
   "select-none": "Берсен дә сайламау",
   "selected-label": "Сайланган:",
+  "set-selected-starred": "Сайланган такталарга йолдыз кую",
+  "set-selected-unstarred": "Сайланган такталардан йолдызны алу",
   "sort-boards": "Такталарны тәртипкә китерү",
   "sort-boards-custom": "Махсус (сөйрәп урнаштыру тәртибе)",
   "sort-boards-title-asc": "Исем (A → Z)",

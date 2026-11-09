@@ -116,6 +116,8 @@
   "select-all": "Piliin lahat",
   "select-none": "Piliin wala",
   "selected-label": "Napili:",
+  "set-selected-starred": "Star the napili pisaras",
+  "set-selected-unstarred": "Unstar the napili pisaras",
   "sort-boards": "Ayusin pisaras",
   "sort-boards-custom": "Pasadya (drag pagkakasunod-sunod)",
   "sort-boards-title-asc": "Pamagat (A → Z)",

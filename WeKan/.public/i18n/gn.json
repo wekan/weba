@@ -116,6 +116,8 @@
   "select-all": "Eiporavo opavave",
   "select-none": "Ani eiporavo mba'eve",
   "selected-label": "Ojeporavóva:",
+  "set-selected-starred": "Emombyja umi peteĩcha ojeporavóva",
+  "set-selected-unstarred": "Eipe'a mbyja umi peteĩcha ojeporavóvagui",
   "sort-boards": "Emohenda peteĩcha",
   "sort-boards-custom": "Ñemomba'epyre (egueraha emohenda hag̃ua)",
   "sort-boards-title-asc": "Téra (A → Z)",

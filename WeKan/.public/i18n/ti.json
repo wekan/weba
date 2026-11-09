@@ -116,6 +116,8 @@
   "select-all": "ኩሉ ምረጽ",
   "select-none": "ዋላ ሓደ ኣይትምረጽ",
   "selected-label": "ዝተመርጸ፦",
+  "set-selected-starred": "ንዝተመርጹ ሰሌዳታት ኮኾብ ግበረሎም",
+  "set-selected-unstarred": "ካብ ዝተመርጹ ሰሌዳታት ኮኾብ ኣልዕል",
   "sort-boards": "ሰሌዳታት ስርዕ",
   "sort-boards-custom": "ብሕታዊ (ብምጉታት ቅደም ተኸተል)",
   "sort-boards-title-asc": "ኣርእስቲ (A → Z)",

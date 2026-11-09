@@ -116,6 +116,8 @@
   "select-all": "ជ្រើសរើសទាំងអស់",
   "select-none": "មិនជ្រើសរើសអ្វីទាំងអស់",
   "selected-label": "បានជ្រើសរើស៖",
+  "set-selected-starred": "ដាក់ផ្កាយក្តារដែលបានជ្រើសរើស",
+  "set-selected-unstarred": "ដកផ្កាយចេញពីក្តារដែលបានជ្រើសរើស",
   "sort-boards": "តម្រៀបក្តារ",
   "sort-boards-custom": "ផ្ទាល់ខ្លួន (លំដាប់អូស)",
   "sort-boards-title-asc": "ចំណងជើង (A → Z)",

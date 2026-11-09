@@ -116,6 +116,8 @@
   "select-all": "ⵙⵜⴰⵢ ⴰⴽⴽⵯ",
   "select-none": "ⵓⵔ ⵙⵜⵉ ⵓⵍⴰ ⵢⴰⵏ",
   "selected-label": "ⵉⵜⵜⵓⵙⵜⴰⵢⵏ:",
+  "set-selected-starred": "ⵔⵏⵓ ⵉⵜⵔⵉ ⵉ ⵜⵉⴼⵍⵡⵉⵡⵉⵏ ⵜⵜⵓⵙⵜⴰⵢⵏⵜ",
+  "set-selected-unstarred": "ⴽⴽⵙ ⵉⵜⵔⵉ ⵙⴳ ⵜⵉⴼⵍⵡⵉⵡⵉⵏ ⵜⵜⵓⵙⵜⴰⵢⵏⵜ",
   "sort-boards": "ⵙⵎⵉⵣⵣⵡⴻⵔ ⵜⵉⴼⴻⵍⵡⵉⵏ",
   "sort-boards-custom": "ⵓⴷⵎⴰⵡⴰⵏ (ⴰⵎⵉⵣⵣⵡⴻⵔ ⵙ ⵓⵣⵓⵖⴻⵔ)",
   "sort-boards-title-asc": "ⴰⵣⵡⴻⵍ (ⴰ → ⵣ)",

@@ -116,6 +116,8 @@
   "select-all": "Atlasīt visu",
   "select-none": "Neatlasīt neko",
   "selected-label": "Atlasīts:",
+  "set-selected-starred": "Atzīmēt atlasītos dēļus ar zvaigznīti",
+  "set-selected-unstarred": "Noņemt zvaigzni izvēlētajiem dēļiem",
   "sort-boards": "Kārtot dēļus",
   "sort-boards-custom": "Pielāgots (vilkšanas secība)",
   "sort-boards-title-asc": "Nosaukums (A → Z)",

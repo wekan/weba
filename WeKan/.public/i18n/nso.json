@@ -116,6 +116,8 @@
   "select-all": "Kgetha tšohle",
   "select-none": "O se kgethe selo",
   "selected-label": "Tše di kgethilwego:",
+  "set-selected-starred": "Tsenya naledi dibotong tše di kgethilwego",
+  "set-selected-unstarred": "Tloša naledi dibotong tše di kgethilwego",
   "sort-boards": "Hlaola Diboto",
   "sort-boards-custom": "Ya tlwaelo (goga tatelano)",
   "sort-boards-title-asc": "Sehlogo (A → Z)",

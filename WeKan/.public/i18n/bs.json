@@ -116,6 +116,8 @@
   "select-all": "Odaberi sve",
   "select-none": "Ne odaberi ništa",
   "selected-label": "Odabrano:",
+  "set-selected-starred": "Dodaj oznaku zvjezdice odabranim tablama",
+  "set-selected-unstarred": "Ukloni zvjezdicu s odabranih tabli",
   "sort-boards": "Sortiraj table",
   "sort-boards-custom": "Prilagođeno (poredak povlačenjem)",
   "sort-boards-title-asc": "Naslov (A → Z)",

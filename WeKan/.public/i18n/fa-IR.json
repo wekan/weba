@@ -116,6 +116,8 @@
   "select-all": "انتخاب همه",
   "select-none": "هیچ‌کدام را انتخاب نکنید",
   "selected-label": "انتخاب‌شده:",
+  "set-selected-starred": "ستاره‌دار کردن بردهای انتخاب‌شده",
+  "set-selected-unstarred": "ستاره را از تخته‌های انتخاب‌شده بردارید",
   "sort-boards": "مرتب‌سازی بردها",
   "sort-boards-custom": "سفارشی (ترتیب کشیدن)",
   "sort-boards-title-asc": "عنوان (الف → ی)",

@@ -116,6 +116,8 @@
   "select-all": "Roghnaigh uile",
   "select-none": "Ná roghnaigh aon cheann",
   "selected-label": "Roghnaithe:",
+  "set-selected-starred": "Cuir réiltín leis na cláir roghnaithe",
+  "set-selected-unstarred": "Bain réiltín de na cláir roghnaithe",
   "sort-boards": "Sórtáil Cláir",
   "sort-boards-custom": "Saincheaptha (ord tarraingthe)",
   "sort-boards-title-asc": "Teideal (A → Z)",

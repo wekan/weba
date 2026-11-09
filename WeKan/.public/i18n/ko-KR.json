@@ -116,6 +116,8 @@
   "select-all": "모두 선택",
   "select-none": "모두 선택 해제",
   "selected-label": "선택됨:",
+  "set-selected-starred": "선택한 보드에 별표 지정",
+  "set-selected-unstarred": "선택한 보드의 별표 해제",
   "sort-boards": "보드 정렬",
   "sort-boards-custom": "사용자 지정 (드래그 순서)",
   "sort-boards-title-asc": "제목 (A → Z)",

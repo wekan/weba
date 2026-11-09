@@ -116,6 +116,8 @@
   "select-all": "ټول وټاکئ",
   "select-none": "هېڅ مه ټاکئ",
   "selected-label": "ټاکل شوي:",
+  "set-selected-starred": "ټاکل شويو تختو ته ستوری ورکړئ",
+  "set-selected-unstarred": "د ټاکل شويو تختو ستوری لرې کړئ",
   "sort-boards": "تختې ترتيب کړئ",
   "sort-boards-custom": "دوديز (په راکښلو ترتيب)",
   "sort-boards-title-asc": "سرليک (ا ← ی)",

@@ -1,0 +1,115 @@
+Public Sub Main()
+  Dim a As Integer
+  Dim b As Integer
+  Dim hidden As Integer
+  Dim ids As Integer[]
+  Dim emptyIds As New Integer[]
+  Dim db As Connection
+  Dim before As String
+  Dim denied As Boolean
+  WebDatabase.Register("stars-owner", "x")
+  WebDatabase.Register("stars-reader", "x")
+  WebDatabase.Register("stars-other", "x")
+  SignIn("stars-other")
+  hidden = KanbanStore.AddBoard("Private stars")
+  SignIn("stars-owner")
+  a = KanbanStore.AddBoard("Stars Alpha")
+  b = KanbanStore.AddBoard("Stars Bravo")
+  BoardAccess.SetMember(a, "stars-reader", "read-only")
+  BoardAccess.SetMember(b, "stars-reader", "read-only")
+  WorkspaceStore.SetSetting(a, "board", a, "star", "1")
+  SignIn("stars-reader")
+  ids = [b, a]
+  If Not BoardSpaces.SelectionNeedsStars(ids) Then Error.Raise("Empty stars chose unstar")
+  BoardSpaces.ToggleSelectedStars(ids)
+  If BoardSpaces.SelectionNeedsStars(ids) Then Error.Raise("Star all failed")
+  BoardSpaces.ToggleSelectedStars(ids)
+  If WorkspaceStore.Setting(a, "board", a, "star") = "1" Or WorkspaceStore.Setting(b, "board", b, "star") = "1" Then Error.Raise("Unstar all failed")
+  WorkspaceStore.SetSetting(a, "board", a, "star", "1")
+  db = WebDatabase.OpenConnection()
+  db.Exec("CREATE TRIGGER reject_repeat_star BEFORE UPDATE ON kb_user_meta WHEN OLD.board_id=" & Str(a) & " AND NEW.value=OLD.value BEGIN SELECT RAISE(ABORT,'repeat star'); END")
+  BoardSpaces.ToggleSelectedStars(ids)
+  db.Exec("DROP TRIGGER reject_repeat_star")
+  If BoardSpaces.SelectionNeedsStars(ids) Then Error.Raise("Mixed stars flipped existing star")
+  before = Snapshot()
+  Try BoardSpaces.ToggleSelectedStars([a, hidden])
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Foreign batch stars were partial")
+  Try BoardSpaces.ToggleSelectedStars([a, a])
+  denied = Error
+  If Not denied Then Error.Raise("Duplicate batch stars accepted")
+  Try BoardSpaces.ToggleSelectedStars([a, 0])
+  denied = Error
+  If Not denied Then Error.Raise("Invalid stars ID accepted")
+  Try BoardSpaces.ToggleSelectedStars(emptyIds)
+  denied = Error
+  If Not denied Then Error.Raise("Empty star selection accepted")
+  Try BoardSpaces.ToggleSelectedStars(Null)
+  denied = Error
+  If Not denied Then Error.Raise("Null star selection accepted")
+  ' Failure after the first effect must roll back its personal preference.
+  db.Exec("CREATE TRIGGER fail_second_star BEFORE UPDATE ON kb_user_meta WHEN NEW.board_id=" & Str(a) & " AND NEW.username='stars-reader' BEGIN SELECT RAISE(ABORT,'second star failed'); END")
+  Try BoardSpaces.ToggleSelectedStars(ids)
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Second star failure left partial writes")
+  db.Exec("DROP TRIGGER fail_second_star")
+  ' The last write removes authority over an earlier board, after its own check.
+  db.Exec("CREATE TRIGGER revoke_after_star AFTER UPDATE ON kb_user_meta WHEN NEW.board_id=" & Str(a) & " AND NEW.username='stars-reader' BEGIN DELETE FROM kb_members WHERE board_id=" & Str(b) & " AND username='stars-reader'; END")
+  Try BoardSpaces.ToggleSelectedStars(ids)
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Final star membership loss bypassed rollback")
+  db.Exec("DROP TRIGGER revoke_after_star")
+  BoardSpaces.ToggleSelectedStars(ids)
+  If WorkspaceStore.Setting(a, "board", a, "star") = "1" Or WorkspaceStore.Setting(b, "board", b, "star") = "1" Then Error.Raise("Retry after failures failed")
+  SignIn("stars-owner")
+  If WorkspaceStore.Setting(a, "board", a, "star") <> "1" Or WorkspaceStore.Setting(b, "board", b, "star") = "1" Then Error.Raise("Batch changed another user's stars")
+  SignIn("stars-reader")
+  Session["auth_generation"] = 0
+  Try BoardSpaces.ToggleSelectedStars(ids)
+  denied = Error
+  If Not denied Then Error.Raise("Stale session changed stars")
+  Print "Selected stars: none/mixed/all, readonly isolation, unchanged-star no-write, invalid/private/stale denial, second-write and final-access rollback/retry passed"
+End
+
+Private Function Snapshot() As String
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim data As New Variant[]
+  Dim rows As Variant[]
+  Dim row As Collection
+  Dim r As Result
+  Dim tableName As String
+  Dim field As String
+  Dim fields As String[]
+  For Each tableName In ["kb_boards", "kb_board_space_assignments", "kb_user_meta", "kb_activity", "kb_removed_members", "kb_members", "kb_board_spaces"]
+    Select tableName
+      Case "kb_boards"
+        fields = ["id", "owner", "title", "archived"]
+      Case "kb_board_space_assignments"
+        fields = ["username", "board_id", "space_id"]
+      Case "kb_user_meta"
+        fields = ["board_id", "kind", "item_id", "username", "setting", "value"]
+      Case "kb_activity"
+        fields = ["id", "board_id", "actor", "message", "created_at"]
+      Case "kb_removed_members", "kb_members"
+        fields = ["board_id", "username", "role"]
+      Case "kb_board_spaces"
+        fields = ["id", "username", "parent_id", "name", "icon", "sort_order"]
+    End Select
+    rows = New Variant[]
+    r = db.Find(tableName)
+    For Each r
+      row = New Collection
+      For Each field In fields
+        row.Add(r[field], field)
+      Next
+      rows.Add(row)
+    Next
+    data.Add(rows)
+  Next
+  Return JSON.Encode(data)
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

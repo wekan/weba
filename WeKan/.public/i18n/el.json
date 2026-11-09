@@ -116,6 +116,8 @@
   "select-all": "Επιλογή όλων",
   "select-none": "Καμία επιλογή",
   "selected-label": "Επιλεγμένα:",
+  "set-selected-starred": "Προσθήκη αστεριού στους επιλεγμένους πίνακες",
+  "set-selected-unstarred": "Αφαίρεση αστεριού από τους επιλεγμένους πίνακες",
   "sort-boards": "Ταξινόμηση Πινάκων",
   "sort-boards-custom": "Προσαρμοσμένη (σειρά μεταφοράς)",
   "sort-boards-title-asc": "Τίτλος (Α → Ω)",

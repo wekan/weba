@@ -116,6 +116,8 @@
   "select-all": "Yan gbogbo",
   "select-none": "Má yan èyíkéyìí",
   "selected-label": "Ti yan:",
+  "set-selected-starred": "Ṣe irawọ awọn igbimọ ti a yan",
+  "set-selected-unstarred": "Yọ ìràwọ̀ kúrò lára àwọn pátákó tí a yàn",
   "sort-boards": "To Awọn Igbimọ",
   "sort-boards-custom": "Aṣa (aṣẹ fifa)",
   "sort-boards-title-asc": "Akọle (A → Z)",

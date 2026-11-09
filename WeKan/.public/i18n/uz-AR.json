@@ -116,6 +116,8 @@
   "select-all": "برچه‌سینی تنلش",
   "select-none": "Hech birini tanlamaslik",
   "selected-label": "تنلنگن:",
+  "set-selected-starred": "تنلنگن تخته‌لرنی یۉلدوزلش",
+  "set-selected-unstarred": "تنلنگن تخته‌لردن یولدوزچه‌نی آلیب تشلش",
   "sort-boards": "تخته‌لرنی ساراله‌ش",
   "sort-boards-custom": "مخصوص (تارتیش تارتیبی)",
   "sort-boards-title-asc": "عنوان (A → Z)",

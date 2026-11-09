@@ -116,6 +116,8 @@
   "select-all": "Alles selecteren",
   "select-none": "Kies niets",
   "selected-label": "Geselecteerd:",
+  "set-selected-starred": "Markeer de geselecteerde borden met een ster",
+  "set-selected-unstarred": "Verwijder de ster van de geselecteerde borden",
   "sort-boards": "Borden sorteren",
   "sort-boards-custom": "Aangepast (sleepvolgorde)",
   "sort-boards-title-asc": "Titel (A → Z)",

@@ -116,6 +116,8 @@
   "select-all": "Selektá todo",
   "select-none": "No selektá niun",
   "selected-label": "Selecsionados:",
+  "set-selected-starred": "Destacar e tablanan selecsionados",
+  "set-selected-unstarred": "Dehar di destacar e tablanan selecsionados",
   "sort-boards": "Ordenar tablanan",
   "sort-boards-custom": "Personalizado (orden pa arrastre)",
   "sort-boards-title-asc": "Título (Na → Z)",

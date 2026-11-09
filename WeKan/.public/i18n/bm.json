@@ -116,6 +116,8 @@
   "select-all": "Bɛɛ sugandi",
   "select-none": "Foyi kana sugandi",
   "selected-label": "Sugandilen:",
+  "set-selected-starred": "Dɔgɔkun taamasiyɛn kɛ tabali sugandilenw la",
+  "set-selected-unstarred": "Dɔgɔkun taamasiyɛn bɔ tabali sugandilenw la",
   "sort-boards": "Tabaliw labɛn",
   "sort-boards-custom": "Kɛrɛnkɛrɛnnen (sama ka labɛn)",
   "sort-boards-title-asc": "Tɔgɔ (A → Z)",

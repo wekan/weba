@@ -116,6 +116,8 @@
   "select-all": "Selezziunà tuttu",
   "select-none": "Ùn selezziunà nunda",
   "selected-label": "Scelte:",
+  "set-selected-starred": "Aghjunghje e tavule scelte à e preferite",
+  "set-selected-unstarred": "Caccià e tavule scelte da e preferite",
   "sort-boards": "Urdinà e tavule",
   "sort-boards-custom": "Persunalizatu (ordine definitu trascinendu)",
   "sort-boards-title-asc": "Titulu (A → Z)",

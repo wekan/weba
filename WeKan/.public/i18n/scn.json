@@ -116,6 +116,8 @@
   "select-all": "Scegghi tutto",
   "select-none": "Nnu scegghire nulla",
   "selected-label": "Scegghite:",
+  "set-selected-starred": "Agghiunci li bacheche scegghite ai preferiti",
+  "set-selected-unstarred": "Toli li bacheche scegghite dai preferiti",
   "sort-boards": "Ordina bacheche",
   "sort-boards-custom": "Personalizzato (ordine di trascinamento)",
   "sort-boards-title-asc": "Tìtulu (A → Z)",

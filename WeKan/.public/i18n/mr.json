@@ -116,6 +116,8 @@
   "select-all": "सर्व निवडा",
   "select-none": "काहीही निवडू नका",
   "selected-label": "निवडलेले:",
+  "set-selected-starred": "निवडलेल्या फलकांना तारा लावा",
+  "set-selected-unstarred": "निवडलेल्या फलकांवरील तारे काढा",
   "sort-boards": "फलकांची क्रमवारी लावा",
   "sort-boards-custom": "सानुकूल (ओढण्याचा क्रम)",
   "sort-boards-title-asc": "शीर्षक (A → Z)",

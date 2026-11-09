@@ -116,6 +116,8 @@
   "select-all": "Xicpehpena mochi",
   "select-none": "Amo xicpehpena tlein",
   "selected-label": "Tlaixpehpenalli:",
+  "set-selected-starred": "Xiquincitlalmachioti huapaltin tlaixpehpenaltin",
+  "set-selected-unstarred": "Xiquinquixtili incitlalmachiotl huapaltin tlaixpehpenaltin",
   "sort-boards": "Xiquintecpana huapaltin",
   "sort-boards-custom": "Monemac (huilanaliztli tlatecpanaliz)",
   "sort-boards-title-asc": "Tocayotl (A → Z)",

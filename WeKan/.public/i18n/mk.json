@@ -116,6 +116,8 @@
   "select-all": "Избери сè",
   "select-none": "Не избирај ништо",
   "selected-label": "Избрано:",
+  "set-selected-starred": "Означи ги избраните табли со ѕвезда",
+  "set-selected-unstarred": "Отстрани ја ѕвездата од избраните табли",
   "sort-boards": "Подреди табли",
   "sort-boards-custom": "Прилагодено (редослед со влечење)",
   "sort-boards-title-asc": "Наслов (A → Z)",

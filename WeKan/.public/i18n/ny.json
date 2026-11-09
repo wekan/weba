@@ -116,6 +116,8 @@
   "select-all": "Sankhani zonse",
   "select-none": "Musasankhe chilichonse",
   "selected-label": "Zasankhidwa:",
+  "set-selected-starred": "Ikani nyenyezi pa mabodi osankhidwa",
+  "set-selected-unstarred": "Chotsani nyenyezi pa mabodi osankhidwa",
   "sort-boards": "Sanjani mabodi",
   "sort-boards-custom": "Mwapadera (kokerani dongosolo)",
   "sort-boards-title-asc": "Mutu (A → Z)",

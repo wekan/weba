@@ -116,6 +116,8 @@
   "select-all": "Vybrat vše",
   "select-none": "Nevybrat nic",
   "selected-label": "Vybráno:",
+  "set-selected-starred": "Přidat vybraná tabla mezi oblíbená",
+  "set-selected-unstarred": "Odebrat hvězdičku vybraným tablům",
   "sort-boards": "Seřadit tabla",
   "sort-boards-custom": "Vlastní (pořadí přetažením)",
   "sort-boards-title-asc": "Název (A → Z)",

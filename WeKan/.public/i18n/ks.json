@@ -116,6 +116,8 @@
   "select-all": "سٲری ژٲریو",
   "select-none": "کانٛہہ نہٕ ژٲریو",
   "selected-label": "ژارنہٕ آمُت:",
+  "set-selected-starred": "ژارنہٕ آمتؠن بورڈن ستارٕ دِیو",
+  "set-selected-unstarred": "ژارنہٕ آمتؠن بورڈن پؠٹھ ستارٕ ہٹٲویو",
   "sort-boards": "بورڈ ترتیب دِیو",
   "sort-boards-custom": "مخصوص (اَنِتھ ترتیب دِیو)",
   "sort-boards-title-asc": "ناو (A → Z)",

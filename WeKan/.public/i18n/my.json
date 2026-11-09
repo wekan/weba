@@ -116,6 +116,8 @@
   "select-all": "အားလုံး ရွေးရန်",
   "select-none": "မည်သည့်အရာမျှ မရွေးရန်",
   "selected-label": "ရွေးထားသည်:",
+  "set-selected-starred": "ရွေးထားသော ဘုတ်များကို ကြယ်ပွင့်တပ်ပါ",
+  "set-selected-unstarred": "ရွေးထားသော ဘုတ်များမှ ကြယ်ပွင့်ဖြုတ်ပါ",
   "sort-boards": "ဘုတ်များ စီရန်",
   "sort-boards-custom": "စိတ်ကြိုက် (ဆွဲရွှေ့အစီအစဉ်)",
   "sort-boards-title-asc": "ခေါင်းစဉ် (A → Z)",

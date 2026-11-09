@@ -592,3 +592,61 @@ Catch
   If transaction Then Try DatabaseTransactions.Rollback($db)
   Error.Raise(failure)
 End
+
+
+' Sidebar toggle: mixed selections fill missing stars; all-starred clears all.
+Public Function SelectionNeedsStars(ids As Integer[]) As Boolean
+  Dim boardId As Integer
+  If Not ids Then Return True
+  For Each boardId In ids
+    If WorkspaceStore.Setting(boardId, "board", boardId, "star") <> "1" Then Return True
+  Next
+  Return ids.Count = 0
+End
+
+Public Sub ToggleSelectedStars(ids As Integer[])
+  Dim username As String = Principal()
+  Dim uniqueIds As New Collection
+  Dim locks As Integer[]
+  Dim boardId As Integer
+  Dim starred As Boolean
+  Dim transaction As Boolean
+  Dim failure As String
+  If Not ids Then Error.Raise("You did not select any boards.")
+  If ids.Count = 0 Then Error.Raise("You did not select any boards.")
+  WorkspaceStore.OpenStore()
+  BoardAccess.OpenStore()
+  For Each boardId In ids
+    If boardId <= 0 Or uniqueIds.Exist(CStr(boardId)) Then Error.Raise("Invalid board selection")
+    uniqueIds[CStr(boardId)] = True
+    BoardAccess.RequireRead(boardId)
+  Next
+  locks = ids.Copy()
+  locks.Sort()
+  username = BeginChange()
+  transaction = True
+  For Each boardId In locks
+    $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+  Next
+  For Each boardId In locks
+    BoardAccess.RequireRead(boardId)
+  Next
+  starred = SelectionNeedsStars(ids)
+  For Each boardId In ids
+    If WebIdentity.Username <> username Then Error.Raise("Sign in required")
+    BoardAccess.RequireRead(boardId)
+    If (WorkspaceStore.Setting(boardId, "board", boardId, "star") = "1") = starred Then Continue
+    WorkspaceStore.SetSetting(boardId, "board", boardId, "star", If(starred, "1", "0"))
+  Next
+  If WebIdentity.Username <> username Then Error.Raise("Sign in required")
+  For Each boardId In locks
+    BoardAccess.RequireRead(boardId)
+    If (WorkspaceStore.Setting(boardId, "board", boardId, "star") = "1") <> starred Then Error.Raise("Board stars changed")
+  Next
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End

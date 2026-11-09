@@ -116,6 +116,8 @@
   "select-all": "Velja allt",
   "select-none": "Velja ekkert",
   "selected-label": "Valið:",
+  "set-selected-starred": "Stjörnumerkja valdar töflur",
+  "set-selected-unstarred": "Fjarlægja stjörnu af völdum töflum",
   "sort-boards": "Raða töflum",
   "sort-boards-custom": "Sérsniðið (dragröð)",
   "sort-boards-title-asc": "Heiti (A → Ö)",

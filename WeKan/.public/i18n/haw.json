@@ -116,6 +116,8 @@
   "select-all": "koho a pau",
   "select-none": "koho ʻaʻohe",
   "selected-label": "koho ʻia:",
+  "set-selected-starred": "kakala ka koho ʻia nā papa",
+  "set-selected-unstarred": "unakakala ka koho ʻia nā papa",
   "sort-boards": "kolaka nā papa",
   "sort-boards-custom": "hoʻopilikino (kauō olakela)",
   "sort-boards-title-asc": "inoa (he → ka)",

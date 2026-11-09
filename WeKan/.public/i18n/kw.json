@@ -116,6 +116,8 @@
   "select-all": "Dewis pub tra",
   "select-none": "Dewis tra vyth",
   "selected-label": "Dewisys:",
+  "set-selected-starred": "Sterennya an estyllennow dewisys",
+  "set-selected-unstarred": "Disterennya an estyllennow dewisys",
   "sort-boards": "Sortya estyllennow",
   "sort-boards-custom": "A-vusur (orden halya)",
   "sort-boards-title-asc": "Titel (A → Z)",

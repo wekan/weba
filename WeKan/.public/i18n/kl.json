@@ -116,6 +116,8 @@
   "select-all": "Tamaasa toqqakkit",
   "select-none": "Suminilluunniit toqqagaqarnak",
   "selected-label": "Toqqakkat:",
+  "set-selected-starred": "Ilisarnaatit toqqakkat ulloriaqutserlugit",
+  "set-selected-unstarred": "Ilisarnaatit toqqakkat ulloriaqutaannik piiaagit",
   "sort-boards": "Ilisarnaatit tulleriiaarikkit",
   "sort-boards-custom": "Nammineq toqqagaq (kalillugit tulleriiaarineq)",
   "sort-boards-title-asc": "Qulequtaq (A → Z)",

@@ -116,6 +116,8 @@
   "select-all": "Tagh na h-uile",
   "select-none": "Na tagh gin",
   "selected-label": "Air a thaghadh:",
+  "set-selected-starred": "Cuir rionnag ris na bùird thaghte",
+  "set-selected-unstarred": "Thoir an rionnag far nam bòrd taghte",
   "sort-boards": "Seòrsaich Bùird",
   "sort-boards-custom": "Gnàthaichte (òrdugh slaodaidh)",
   "sort-boards-title-asc": "Tiotal (A → Z)",

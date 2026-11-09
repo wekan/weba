@@ -116,6 +116,8 @@
   "select-all": "Бүгдийг сонгох",
   "select-none": "Юу ч сонгохгүй",
   "selected-label": "Сонгосон:",
+  "set-selected-starred": "Сонгосон самбаруудыг одтой болгох",
+  "set-selected-unstarred": "Сонгосон самбаруудаас од хасах",
   "sort-boards": "Самбаруудыг эрэмбэлэх",
   "sort-boards-custom": "Тусгай (чирэх дараалал)",
   "sort-boards-title-asc": "Гарчиг (A → Z)",

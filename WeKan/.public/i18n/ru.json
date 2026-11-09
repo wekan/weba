@@ -116,6 +116,8 @@
   "select-all": "Выбрать все",
   "select-none": "Снять выделение",
   "selected-label": "Выбрано:",
+  "set-selected-starred": "Добавить выбранные доски в избранное",
+  "set-selected-unstarred": "Убрать выбранные доски из избранного",
   "sort-boards": "Сортировать доски",
   "sort-boards-custom": "Пользовательский (порядок перетаскивания)",
   "sort-boards-title-asc": "Название (А → Я)",

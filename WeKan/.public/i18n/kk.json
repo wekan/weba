@@ -116,6 +116,8 @@
   "select-all": "Барлығын таңдау",
   "select-none": "Ешқайсысын таңдамау",
   "selected-label": "Таңдалды:",
+  "set-selected-starred": "Таңдалған тақталарды таңдаулы ету",
+  "set-selected-unstarred": "Таңдалған тақталарды таңдаулыдан алу",
   "sort-boards": "Тақталарды сұрыптау",
   "sort-boards-custom": "Арнайы (сүйреу реті)",
   "sort-boards-title-asc": "Атауы (А → Я)",

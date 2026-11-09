@@ -116,6 +116,8 @@
   "select-all": "සියල්ල තෝරන්න",
   "select-none": "කිසිවක් තෝරන්න එපා",
   "selected-label": "තෝරා ඇත:",
+  "set-selected-starred": "තෝරාගත් පුවරුවලට තරු යොදන්න",
+  "set-selected-unstarred": "තෝරාගත් පුවරුවල තරු ඉවත් කරන්න",
   "sort-boards": "පුවරු අනුපිළිවෙළට සකසන්න",
   "sort-boards-custom": "අභිරුචි (ඇදගෙන යන අනුපිළිවෙළ)",
   "sort-boards-title-asc": "මාතෘකාව (A → Z)",

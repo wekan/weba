@@ -116,6 +116,8 @@
   "select-all": "Pasirinkti viską",
   "select-none": "Nieko nepasirinkti",
   "selected-label": "Pasirinkta:",
+  "set-selected-starred": "Pažymėti pasirinktas lentas žvaigždute",
+  "set-selected-unstarred": "Pašalinti žvaigždutę iš pasirinktų lentų",
   "sort-boards": "Rūšiuoti lentas",
   "sort-boards-custom": "Pasirinktinė (tempimo tvarka)",
   "sort-boards-title-asc": "Pavadinimas (A → Z)",

@@ -116,6 +116,8 @@
   "select-all": "Nanga zwoṱhe",
   "select-none": "Ni songo nanga tshithu",
   "selected-label": "Zwo nangwaho:",
+  "set-selected-starred": "Isa naledzi kha mabodo o nangiwaho",
+  "set-selected-unstarred": "Bvisa ṋaledzi kha bodo dza Kanban dzo nangwaho",
   "sort-boards": "Dzudzanya Mabodo",
   "sort-boards-custom": "Zwo khethwaho (odara ya u kokodza)",
   "sort-boards-title-asc": "Thero (A → Z)",

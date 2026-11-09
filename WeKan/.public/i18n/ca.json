@@ -116,6 +116,8 @@
   "select-all": "Selecciona-ho tot",
   "select-none": "No en seleccionis cap",
   "selected-label": "Seleccionats:",
+  "set-selected-starred": "Destaca els taulers seleccionats",
+  "set-selected-unstarred": "Deixa de destacar els taulers seleccionats",
   "sort-boards": "Ordena els taulers",
   "sort-boards-custom": "Personalitzat (ordre d'arrossegament)",
   "sort-boards-title-asc": "Títol (A → Z)",

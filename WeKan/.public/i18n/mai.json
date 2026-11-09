@@ -116,6 +116,8 @@
   "select-all": "सभ चुनू",
   "select-none": "किछु नहि चुनू",
   "selected-label": "चुनल गेल:",
+  "set-selected-starred": "चुनल बोर्ड केँ तारांकित करू",
+  "set-selected-unstarred": "चुनल बोर्ड सँ तारा हटाउ",
   "sort-boards": "बोर्ड क्रमबद्ध करू",
   "sort-boards-custom": "अनुकूलित (घींचल क्रम)",
   "sort-boards-title-asc": "शीर्षक (A → Z)",

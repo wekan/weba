@@ -116,6 +116,8 @@
   "select-all": "Összes kijelölése",
   "select-none": "Kijelölés megszüntetése",
   "selected-label": "Kijelölve:",
+  "set-selected-starred": "Csillagozd a kijelölt táblákat",
+  "set-selected-unstarred": "Csillag eltávolítása a kijelölt tábláktól",
   "sort-boards": "Táblák rendezése",
   "sort-boards-custom": "Egyéni (húzási sorrend)",
   "sort-boards-title-asc": "Cím (A → Z)",

@@ -116,6 +116,8 @@
   "select-all": "Reih ooilley",
   "select-none": "Ny reih veg",
   "selected-label": "Reih't:",
+  "set-selected-starred": "Cur rollage er ny boayrdyn reih't",
+  "set-selected-unstarred": "Gow rollage jeh ny boayrdyn reih't",
   "sort-boards": "Reaghey boayrdyn",
   "sort-boards-custom": "Reih't (oardagh tarraghey)",
   "sort-boards-title-asc": "Ennym (A → Z)",

@@ -116,6 +116,8 @@
   "select-all": "ਸਭ ਚੁਣੋ",
   "select-none": "ਕੁਝ ਨਾ ਚੁਣੋ",
   "selected-label": "ਚੁਣਿਆ ਗਿਆ:",
+  "set-selected-starred": "ਚੁਣੇ ਹੋਏ ਬੋਰਡਾਂ ਨੂੰ ਸਟਾਰ ਲਗਾਓ",
+  "set-selected-unstarred": "ਚੁਣੇ ਬੋਰਡਾਂ ਤੋਂ ਤਾਰਾ ਹਟਾਓ",
   "sort-boards": "ਬੋਰਡ ਲੜੀਬੱਧ ਕਰੋ",
   "sort-boards-custom": "ਕਸਟਮ (ਖਿੱਚਣ ਦਾ ਕ੍ਰਮ)",
   "sort-boards-title-asc": "ਸਿਰਲੇਖ (A → Z)",

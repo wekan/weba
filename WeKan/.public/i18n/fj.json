@@ -116,6 +116,8 @@
   "select-all": "Digitaka kece",
   "select-none": "Kua ni digitaka e dua",
   "selected-label": "Digitaki:",
+  "set-selected-starred": "Taleitaka na vola digitaki",
+  "set-selected-unstarred": "Kauta tani na taleitaki mai na vola digitaki",
   "sort-boards": "Tuvanaka na Vola",
   "sort-boards-custom": "Digitaki (dretaka na ituvatuva)",
   "sort-boards-title-asc": "Ulutaga (A → Z)",

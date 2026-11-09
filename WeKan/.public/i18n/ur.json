@@ -116,6 +116,8 @@
   "select-all": "سب منتخب کریں",
   "select-none": "کچھ بھی منتخب نہ کریں",
   "selected-label": "منتخب شدہ:",
+  "set-selected-starred": "منتخب بورڈز پر ستارہ لگائیں",
+  "set-selected-unstarred": "منتخب بورڈز سے ستارہ ہٹائیں",
   "sort-boards": "بورڈز ترتیب دیں",
   "sort-boards-custom": "حسب ضرورت (گھسیٹ کر ترتیب)",
   "sort-boards-title-asc": "عنوان (ا → ی)",

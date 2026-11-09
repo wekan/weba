@@ -116,6 +116,8 @@
   "select-all": "Интихоби ҳама",
   "select-none": "Интихоби ҳеҷ кадом",
   "selected-label": "Интихобшуда:",
+  "set-selected-starred": "Ба тахтаҳои интихобшуда ситора гузоред",
+  "set-selected-unstarred": "Ситораро аз тахтаҳои интихобшуда гиред",
   "sort-boards": "Мураттаб кардани тахтаҳо",
   "sort-boards-custom": "Фармоишӣ (тартиби кашидан)",
   "sort-boards-title-asc": "Унвон (A → Z)",

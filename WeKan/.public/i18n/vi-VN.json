@@ -116,6 +116,8 @@
   "select-all": "Chọn tất cả",
   "select-none": "Không chọn bảng nào",
   "selected-label": "Đã chọn:",
+  "set-selected-starred": "Gắn sao các bảng đã chọn",
+  "set-selected-unstarred": "Bỏ gắn sao các bảng đã chọn",
   "sort-boards": "Sắp xếp bảng",
   "sort-boards-custom": "Tùy chỉnh (thứ tự kéo)",
   "sort-boards-title-asc": "Tiêu đề (A → Z)",

@@ -116,6 +116,8 @@
   "select-all": "Khetsa konkhe",
   "select-none": "Ungakhetsi lutfo",
   "selected-label": "Lokukhetsiwe:",
+  "set-selected-starred": "Faka inkhanyeti emabhodini lakhetsiwe",
+  "set-selected-unstarred": "Susa inkhanyeti emabhodini lakhetsiwe",
   "sort-boards": "Hlela Emabhodi",
   "sort-boards-custom": "Lokukhetsekile (dvonsa kulandzelana)",
   "sort-boards-title-asc": "Sihloko (A → Z)",

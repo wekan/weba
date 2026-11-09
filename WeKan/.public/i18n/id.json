@@ -116,6 +116,8 @@
   "select-all": "Pilih semua",
   "select-none": "Jangan pilih apa pun",
   "selected-label": "Terpilih:",
+  "set-selected-starred": "Bintangi papan yang terpilih",
+  "set-selected-unstarred": "Hapus bintang dari papan yang dipilih",
   "sort-boards": "Urutkan Papan",
   "sort-boards-custom": "Khusus (urutan seret)",
   "sort-boards-title-asc": "Judul (A → Z)",

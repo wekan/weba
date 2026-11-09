@@ -116,6 +116,8 @@
   "select-all": "Agħżel all",
   "select-none": "Agħżel none",
   "selected-label": "Magħżula:",
+  "set-selected-starred": "Star il- selected bordijiet",
+  "set-selected-unstarred": "Unstar il- selected bordijiet",
   "sort-boards": "Issortja Bordijiet",
   "sort-boards-custom": "Personalizzat (drag order)",
   "sort-boards-title-asc": "Titlu (A → Z)",
