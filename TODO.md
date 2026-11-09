@@ -81,7 +81,7 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   cases. Native selection and confirmed sidebar actions now use this service;
   no new public HTTP route is exposed. Original full callbacks remain open.
 - Next: remaining copy-option models/controls and batch multi-format export,
-  Home/group targets, Markdown icons and original
+  Home/group targets and original
   UI callbacks. Whole-board copy authorization and late actor/source/destination
   guards, selected native duplication with pending-only retry and source-style
   title numbering, eight native content-option controls in selected/single Copy,
@@ -132,8 +132,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   drafts and clickable close controls. Delayed-width/async-error tests, full
   local/test-live and existing layout regressions pass. Original suite counts
   remain unchanged.
-- Next workspace parity: Markdown icons and the
-  actual production transport/routing beyond the six adapter-backed spec 39 callbacks.
+- Next workspace parity: native Markdown settings/card-title resolver/icon-color
+  bridges and actual production transport/routing beyond the six adapter-backed
+  spec 39 callbacks. Rendered/sanitized source viewer icons are in CHANGELOG.md.
 
 - Documented personal rank merging, readonly/sorted/archive boundaries, fresh
   transaction checks, cleanup, expected-order focus and trusted browser evidence.

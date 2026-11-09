@@ -1,0 +1,3 @@
+# Preserve upstream renderer/license bytes; manifest tests verify their integrity.
+vendor/wekan-markdown/** -whitespace
+WeKan/.public/workspace-markdown-LICENSES.txt -whitespace

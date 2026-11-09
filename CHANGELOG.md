@@ -2,6 +2,14 @@
 
 This work adds the following features and fixes:
 
+- Render workspace icons through the unchanged source Markdown viewer/helper
+  and sanitizer, with literal names, safe raw storage, default folders and native
+  link selection. Retain all source plugins and local policy snapshots. Import
+  exact source/dependency hashes, reproducible bundle tooling and license notices.
+  Compare 112 outputs with the source and test real formatted/emoji/hidden-link/
+  policy/default/XSS/form/clobber flows. Keep native settings/card-title/iconColor
+  bridges, original transport and full original suites pending. Thanks to xet7.
+
 - Add inline subworkspace form with source selectors, optional accessible name
   textarea and translated submit controls (163 keys/237 catalogs). Bind creation
   to the open native parent/revision/actor/session, ignoring DOM parent authority.

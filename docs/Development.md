@@ -414,9 +414,24 @@ unchanged original `addSubworkspace` helper for empty, whitespace and trimmed
 names, with explicit method/session/SQL-ID adapters. Empty submissions close
 the popup without writes, matching the source event; server trimming recognizes
 ECMAScript Unicode whitespace. Broader source popup and
-transport integration plus rendered Markdown icons remain pending.
-Markdown icons, multi-board workspace drops and broader original UI/API/security
-suites remain explicit TODO requirements. Folding/counts and native tree
+transport integration remains pending.
+Workspace icon source is held in a hidden native text label separately from the
+literal name. The client builds an icon/name structure and renders icon HTML
+only through the bundled unchanged source helper/sanitizer. Empty icons show a
+folder; icon links keep native workspace selection without following their URL.
+A WeakMap plus renderer/policy generations prevents observer loops and redundant
+rendering, while native text refreshes rebuild missing structure. The standalone
+Blaze/HTML/ReactiveVar adapters supply synchronous content/policy snapshots, not
+DDP or native persisted admin settings. All source plugins are retained. Native
+settings, external-rule/card-title bridges and iconColor remain open.
+`tools/import-wekan-markdown.cjs` imports source bytes, bundles installed parent
+dependencies and records hashes/versions and license notices. The oracle test
+compares 112 full/raw/custom/forbidden-scheme outputs against the parent source;
+real browser cases exercise persisted formatting, emoji, links, default folders,
+policy changes, hidden-link warnings, and executable/form/clobber injection.
+Builds carry the prebuilt assets and need no Node.js at runtime.
+Native Markdown policy/card resolver/icon-color bridges and broader original
+UI/API/security suites remain explicit TODO requirements. Folding/counts and native tree
 gestures are described below.
 
 

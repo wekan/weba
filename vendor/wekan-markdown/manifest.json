@@ -1,0 +1,29 @@
+{
+  "source": "wekan/wekan packages/markdown/src",
+  "build": {
+    "webpack": "5.111.1",
+    "node": "26.13.0"
+  },
+  "adapters": {
+    "entry.js": "be6b6475e23ef535d17387fb4e829af20e9797599abe870b7d082f641393224b",
+    "meteor-adapter.js": "7f3bc58aa07bc9688ff8f043368ec6c0c13a69ed1ffc7c707ec08b176b3a9fdc"
+  },
+  "sourceFiles": {
+    "template-integration.js": "d5778c6026d9d93531f9dd1ee8d5534600889cf5796e335434224824e1adfed6",
+    "secureDOMPurify.js": "c0e6ea11da2f95d291c4a1cb58fb9996dc02640dbac0a2a6e1fc2876ed9b62f3"
+  },
+  "packages": {
+    "dompurify": "3.4.17",
+    "entities": "8.1.0",
+    "highlight.js": "11.12.0",
+    "linkify-it": "6.1.0",
+    "markdown-it": "15.0.3",
+    "markdown-it-emoji": "3.1.0",
+    "markdown-it-math": "6.0.1",
+    "mdurl": "2.1.0",
+    "punycode.js": "2.3.1",
+    "temml": "0.14.0",
+    "uc.micro": "3.0.0"
+  },
+  "bundleSha256": "00df1eba00c5b86f740743a79637b8304dae3d4abfc86eef7972fd096a194eac"
+}

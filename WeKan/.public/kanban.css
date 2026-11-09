@@ -211,3 +211,9 @@
 ul.weba-data{list-style:none;margin:0;padding:0}
 
 .weba-board-sort a.gw-button{display:flex;align-items:center;justify-content:flex-start;text-decoration:none;cursor:pointer;color:inherit}
+
+.weba-space-open .gw-button-text{display:flex;align-items:center;gap:4px;min-width:0}
+.weba-space-open .workspace-icon{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;line-height:1}
+.weba-space-open .workspace-icon-value,.weba-space-open .workspace-icon-value p{display:inline;margin:0}
+.weba-space-open .workspace-icon img{max-width:32px;max-height:24px}
+.weba-space-open .workspace-name{overflow:hidden;text-overflow:ellipsis}

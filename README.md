@@ -516,7 +516,22 @@ when its edit form has an unsaved draft. DOM parent tampering, legacy button
 events, stale parent editors and completed/closed packets cannot redirect or
 repeat creation. Original `addSubworkspace` helper outcomes are compared with
 actual UI SQL mutations through explicit method/identity/SQL-ID adapters.
-Rendered Markdown icons and full original popup/transport integration remain open.
+Workspace icons now use the unchanged source viewer/helper and DOMPurify
+sanitizer in a standalone browser bundle; names remain literal text. Empty icons
+show the source folder glyph. The bundle includes Markdown/emoji/math/highlight/
+task-list/hidden-link handling and exact source security rules. Native icon links
+select the workspace without navigating. Raw icon values remain text in native
+controls/SQL and are sanitized before insertion into the visible icon container.
+The local policy snapshot adapter is not a native Global Admin, DDP, external-rule
+or reactive card-title bridge; those integrations and icon colors remain open.
+
+Rebuild with `node tools/import-wekan-markdown.cjs /path/to/wekan` using that
+checkout's installed dependencies. The source copies, hashes and dependency
+versions live in `vendor/wekan-markdown/manifest.json`; deployed notices are in
+`WeKan/.public/workspace-markdown-LICENSES.txt`. `workspace-markdown.test.cjs`
+compares 112 bundled outputs with the unchanged parent helper/sanitizer and
+checks injection/form/URL guards. Full original popup/transport integration
+remains pending.
 
 
 `BoardOrderTest` covers per-user readonly access, filtered rank merge, invalid/
@@ -1035,8 +1050,8 @@ The left navigation shows personal workspaces as nested native Gambas button
 rows, with a WeKan `fa-bars` menu beside each row. The plus button creates a root
 workspace. A workspace menu edits its name/literal icon, creates a child or
 deletes the subtree after the confirmation checkbox is selected. Blank names
-keep the editor open. Icons are displayed as literal text for now; Markdown
-rendering remains pending.
+keep the editor open; blank child-name submissions close without mutation. Icons
+render through the source Markdown viewer/sanitizer; stored values stay literal.
 
 A board's menu offers **Workspaces**, including a Remaining destination and
 workspace paths. This is a personal placement operation, so readonly members
@@ -1057,8 +1072,8 @@ it for source and packaged apps. Run it separately with the documented Gambas
 and Chromium environment using `python3 tests/run-http.py --workspaces`, adding
 `--archive` for the package.
 
-Markdown icons and production transport/routing parity remain
-open. Creation now uses a real form, required textarea and submit input with
+Markdown settings/card resolver/icon-color bridges and production transport/
+routing parity remain open. Creation now uses a real form, required textarea and submit input with
 revision/session/parent-bound native submission. The unchanged original Latin
 callback passes through explicit native password-session and client-locale
 adapters (1/6 spec 39 callbacks; no DDP/profile persistence claim).
@@ -1132,8 +1147,8 @@ scroll/cancel/reload/isolation, Archive and forged cycle/foreign/profile command
 It runs in test-live for source/packages; run separately with the documented
 toolchain/CDP environment using `python3 tests/run-http.py --workspace-order`,
 adding `--archive` for the package. This does not run all original workspace
-UI callbacks unchanged or implement their full desktop-handle preferences,
-multiselection, multi-board drop targets or Markdown icons.
+UI callbacks unchanged or implement their full shared desktop-handle preferences. Implemented native
+multiselection/drop targets and rendered Markdown icons are described separately.
 
 
 ### Single-board drop targets

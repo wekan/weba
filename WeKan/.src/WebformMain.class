@@ -2479,7 +2479,7 @@ Catch
 End
 
 
-' Personal workspace controls; names/icons are user text, never HTML.
+' Personal workspace controls; raw names/icons stay text until sanitized viewer rendering.
 Private Function RefreshSpaces() As Boolean
   Dim tree As Variant[] = BoardSpaces.Tree()
   Dim state As String
@@ -2537,6 +2537,7 @@ Private Sub AddSpaceRows(nodes As Variant[], depth As Integer, Optional parentId
   Dim button As WebButton
   Dim menu As WebButton
   Dim caption As String
+  Dim iconSource As WebLabel
   Dim caret As WebButton
   Dim count As WebLabel
   Dim handle As WebButton
@@ -2568,7 +2569,10 @@ Private Sub AddSpaceRows(nodes As Variant[], depth As Integer, Optional parentId
     handle.Visible = IsOverview()
     $spaceHandles[node["id"]] = handle
     caption = CStr(node["name"])
-    If CStr(node["icon"]) Then caption = CStr(node["icon"]) & " " & caption
+    iconSource = New WebLabel(row)
+    iconSource.Text = CStr(node["icon"])
+    iconSource.Class = "weba-space-icon-source weba-user-text"
+    iconSource.Visible = False
     button = New WebButton(row) As "OpenPersonalWorkspace"
     button.Text = caption
     button.Tooltip = CStr(node["name"])

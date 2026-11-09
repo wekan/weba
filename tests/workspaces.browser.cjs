@@ -55,6 +55,17 @@ const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),{cre
   await expect(page.locator('.weba-space-open')).toHaveText(['📁 Root <literal>']);
   expect(spaces().find(row=>row.id===root.id).icon).toBe('📁');
   const afterEdit=spaces();await page.locator(control('WorkspaceCreateAction')).evaluate((target,packet)=>gw.update(target.id,'text',packet),staleEditPacket);await settle();await expect(page.locator(control('Notice'))).toHaveText('Workspace form changed');expect(spaces()).toEqual(afterEdit);
+  await page.waitForFunction(()=>window.webaWorkspaceMarkdown);
+  const iconValue=()=>space('Root <literal>').locator('.workspace-icon-value');
+  async function saveIcon(text){await space('Root <literal>').locator('.weba-space-menu').click();await fill('WorkspaceIcon',text);await editForm.locator('input[type=submit]').click();await settle();await expect.poll(()=>spaces().find(row=>row.id===root.id).icon).toBe(text);await expect(space('Root <literal>').locator('.workspace-name')).toHaveText('Root <literal>');}
+  await saveIcon('**Bold** :rocket:');await expect(iconValue().locator('strong')).toHaveText('Bold');await expect(iconValue()).toContainText('🚀');
+  await saveIcon('[link](#weba-icon-canary)');const iconUrl=page.url();await iconValue().locator('a').click();await settle();expect(page.url()).toBe(iconUrl);await expect(page.locator(control('PaneTitle'))).toHaveText('Root <literal>');
+  await saveIcon('<script>window.webaIconXss=1</script><img src="data:image/svg+xml,bad" onerror="window.webaIconXss=2"><div id="clobber" class="workspace-name"><input type=password name=secret><a href="javascript:alert(1)">unsafe</a></div>');
+  await expect(iconValue().locator('script,svg,form,iframe,[id],[onerror],input[type=password]')).toHaveCount(0);expect(await page.evaluate(()=>window.webaIconXss)).toBeUndefined();
+  await saveIcon('[](#hidden)');await expect(iconValue().locator('pre')).toContainText('[](#hidden)');await expect(iconValue().locator('a')).toHaveCount(0);
+  await saveIcon('**Raw policy**');await page.evaluate(()=>webaWorkspaceMarkdown.configure({alwaysShowCodeAsText:true}));await expect(iconValue().locator('pre')).toHaveText('**Raw policy**');await page.evaluate(()=>webaWorkspaceMarkdown.configure({alwaysShowCodeAsText:false}));await expect(iconValue().locator('strong')).toHaveText('Raw policy');
+  await saveIcon('');await expect(space('Root <literal>').locator('.workspace-icon .fa-folder')).toBeVisible();await saveIcon('📁');
+
   await space('Root <literal>').locator('.weba-space-menu').click();
   const subForm=page.locator('form.js-workspace-subspace-form');await expect(subForm).toBeVisible();await expect(subForm).toHaveAttribute('data-id',String(root.id));expect(await subForm.evaluate(form=>form.parentElement.closest('form')===null)).toBe(true);
   await expect(subForm.locator('textarea.js-subworkspace-name')).not.toHaveAttribute('required','');await expect(subForm.locator('textarea')).toHaveAccessibleName('Subworkspace name');

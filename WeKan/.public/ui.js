@@ -36,6 +36,32 @@
     };
   }
   const icons={Swimlanes:'th-large',Kanban:'trello',Calendar:'calendar',Gantt:'bar-chart',TableView:'table',Charts:'pie-chart',ContextMembers:'users',CardMembersButton:'users',CardAssigneesButton:'user',ContextAssignees:'user',AddCardPerson:'user-plus',RemoveCardPerson:'user-times',ContextAssignSelf:'user-plus',SaveMember:'save',RemoveMember:'user-times',ImportBoard:'download',ContextDelete:'trash-o',ContextRename:'pencil',ContextCopy:'clipboard',ContextMove:'arrow-up',ContextColor:'paint-brush',ContextStar:'star-o',ContextWatch:'eye-slash',ContextWip:'ban',ContextDescription:'align-left',ContextHistory:'history',ContextExport:'upload',ContextArchive:'archive',ContextRestore:'undo',ContextAddCard:'plus',ContextAddList:'plus',ContextAddLane:'plus',Starred:'star',BoardSettings:'cog',ArchivedItems:'archive',ContextComments:'comment-o',ContextChecklists:'check-square-o',ContextChecklistItems:'check',ContextSubtasks:'sitemap',ContextDependencies:'link',ContextFields:'list-alt',ContextTime:'clock-o',ContextAttachments:'paperclip',CardComments:'comment-o',CardChecklists:'check-square-o',CardChecklistItems:'check',CardSubtasks:'sitemap',CardDependencies:'link',CardFields:'list-alt',CardTime:'clock-o',CardAttachments:'paperclip',DetailStart:'play',DetailStop:'stop',DetailExport:'upload',DetailDownload:'download',DetailDelete:'trash-o'};
+  let markdownGeneration=0;
+  const workspaceIconState=new WeakMap();
+  function workspaceIcons(){
+    for(const row of document.querySelectorAll('.weba-space-row')){
+      const button=row.querySelector('.weba-space-open'),source=row.querySelector('.weba-space-icon-source');
+      const holder=button?.querySelector('.gw-button-text');if(!button||!source||!holder)continue;
+      const text=source.textContent,name=button.title,prior=workspaceIconState.get(button);
+      if(prior?.text===text&&prior.name===name&&prior.generation===markdownGeneration&&holder.querySelector('.workspace-name'))continue;
+      const icon=document.createElement('span');icon.className='workspace-icon';icon.setAttribute('aria-hidden','true');
+      if(text){
+        const value=document.createElement('span');value.className='workspace-icon-value';
+        if(root.webaWorkspaceMarkdown)value.innerHTML=root.webaWorkspaceMarkdown.render(text);else value.textContent=text;
+        icon.append(value);
+      }else{const folder=document.createElement('i');folder.className='fa fa-folder';icon.append(folder);}
+      icon.addEventListener('click',event=>event.preventDefault());
+      const label=document.createElement('span');label.className='workspace-name';label.textContent=name;
+      if(text)holder.replaceChildren(icon,document.createTextNode(' '),label);else holder.replaceChildren(icon,label);
+      if(button.getAttribute('aria-label')!==name)button.setAttribute('aria-label',name);
+      workspaceIconState.set(button,{text,name,generation:markdownGeneration});
+    }
+  }
+  function loadWorkspaceMarkdown(){
+    if(root.webaWorkspaceMarkdown||document.querySelector('script[data-weba-markdown]'))return;
+    const script=document.createElement('script');script.src='workspace-markdown.js';script.dataset.webaMarkdown='1';
+    script.addEventListener('load',()=>{markdownGeneration++;decorate();});document.head.append(script);
+  }
   function workspaceText(value){let binary='';for(const byte of new TextEncoder().encode(value))binary+=String.fromCharCode(byte);return btoa(binary);}
   function subworkspaceForm(panel,editing,revision,workspaceId){
     const label=document.querySelector('[id$=".SubworkspaceNameLabel"]'),control=document.querySelector('[id$=".SubworkspaceName"]'),caption=document.querySelector('[id$=".AddSubworkspace"]');
@@ -117,6 +143,7 @@
   function decorate(){
     if(!root.document)return;
     workspaceForm();
+    workspaceIcons();
     sortControls();
     const boardSearch=document.querySelector('[id$=".BoardSearch:entry"]');
     if(boardSearch&&!boardSearch.classList.contains("js-board-search-input"))boardSearch.classList.add("js-board-search-input");
@@ -171,6 +198,8 @@
       }else if(event.target.id===wheel.dataset.target+':entry')syncColor();
     });
     root.addEventListener('weba-language-changed',workspaceForm);
+    root.addEventListener('weba-workspace-markdown-changed',()=>{markdownGeneration++;decorate();});
+    loadWorkspaceMarkdown();
     decorate();new MutationObserver(decorate).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
