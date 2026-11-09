@@ -2,6 +2,14 @@
 
 This work adds the following features and fixes:
 
+- Execute three unchanged original spec 39 server callbacks and setup/cleanup
+  hooks against actual native BoardCatalog.Page results. Cover disjoint sorted
+  pages, exact search totals and private-board exclusion. Revalidate real API
+  credentials before each test-only RPC request and refuse revoked tokens before
+  native execution despite retained native login; explicitly adapt numeric IDs,
+  fixture DB and verified identity to native session. Keep production DDP/routing,
+  two original sort/search UI callbacks and full suites pending. Thanks to xet7.
+
 - Add real workspace creation form/required textarea/submit semantics with
   actor/session/revision-bound native commands and fresh parent authorization.
   Preserve edit controls and translated submit values; expose the source

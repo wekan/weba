@@ -368,7 +368,17 @@ closed, stale and completed form packets cannot create another workspace.
 `wekan-workspace-latin.browser.cjs` executes original spec 39's Latin callback
 unchanged against production selectors. Explicit adapters establish a native
 password session and apply client locale; this proves neither DDP nor persisted
-profile language. The other five spec 39 callbacks remain unexecuted.
+profile language. `wekan-catalog-server.browser.cjs` also executes the three
+original server callbacks and their hooks unchanged. Its disposable fixture
+creates and cleans actual native boards and calls `BoardCatalog.Page`; a test-only
+browser RPC binding revalidates an actual API token before each call and maps
+its verified principal to a native fixture session. Numeric IDs, fixture DB and
+transport/session adapters are explicit. A revoked API token is refused before
+native service invocation while the independent native UI remains signed in.
+This verifies native paging/search/
+privacy outcomes, not production DDP or routing. The two sort/search UI callbacks
+remain unexecuted. Run with `python3 tests/run-http.py --original-catalog` (add
+`--archive` for the package), or as part of `--catalog` and `test-live`.
 Markdown icons, multi-board workspace drops and broader original UI/API/security
 suites remain explicit TODO requirements. Folding/counts and native tree
 gestures are described below.

@@ -472,6 +472,19 @@ Matching original WeKan labels, including Custom (drag order), are imported for
 237 languages; Clear search remains unmatched translation follow-up. These new native tests
 do not count as unchanged original spec 39 callbacks.
 
+`wekan-catalog-server.browser.cjs` runs three unchanged original spec 39 server
+callbacks and hooks against real `BoardCatalog.Page` results. It seeds and cleans
+native boards, revalidates an actual API token before each call and explicitly
+maps its verified identity to a native fixture session through a test-only RPC
+binding. This covers page disjointness, search totals and private-board exclusion.
+A revoked-token check proves rejection before native service invocation even
+while the native UI remains signed in.
+Numeric-ID, fixture DB and transport/session adapters do not establish production
+DDP/routing parity. The two original sort/search UI callbacks remain open; the
+Latin callback is covered separately below. `--catalog` and `test-live` include
+this runner; `python3 tests/run-http.py --original-catalog [--archive]` runs it alone.
+
+
 `BoardOrderTest` covers per-user readonly access, filtered rank merge, invalid/
 foreign/revoked/archive/mode rejection, injected write rollback/retry and account/
 permanent-board cleanup. `board-order.browser.cjs` uses real keyboard/mouse and
@@ -1010,7 +1023,7 @@ it for source and packaged apps. Run it separately with the documented Gambas
 and Chromium environment using `python3 tests/run-http.py --workspaces`, adding
 `--archive` for the package.
 
-Complete edit-form semantics and five original All Boards callbacks remain
+Complete edit-form semantics and two original All Boards UI callbacks remain
 open. Creation now uses a real form, required textarea and submit input with
 revision/session/parent-bound native submission. The unchanged original Latin
 callback passes through explicit native password-session and client-locale

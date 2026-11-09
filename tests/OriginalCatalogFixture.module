@@ -1,0 +1,29 @@
+' Disposable original-callback adapter; never included in production artifacts.
+Public Sub Main()
+  Dim mode As String = Env["WEBA_ORIGINAL_CATALOG_MODE"]
+  Dim data As New Collection
+  Dim params As Collection
+  Dim ids As Variant[]
+  Dim item As Variant
+  Dim db As Connection
+  If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
+  Session["username"] = Env["WEBA_TEST_USER"]
+  Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
+  db = WebDatabase.OpenConnection()
+  Select mode
+    Case "seed"
+      data["boardId"] = KanbanStore.AddBoard(Env["WEBA_ORIGINAL_CATALOG_TITLE"])
+    Case "cleanup"
+      ids = JSON.Decode(Env["WEBA_ORIGINAL_CATALOG_IDS"])
+      For Each item In ids
+        db.Delete("kb_boards", "id=&1 AND owner=&2", CInt(item), WebIdentity.Username)
+      Next
+      data["done"] = True
+    Case "page"
+      params = JSON.Decode(Env["WEBA_ORIGINAL_CATALOG_PARAMS"])
+      data = BoardCatalog.Page(params)
+    Case Else
+      Error.Raise("Invalid original catalog operation")
+  End Select
+  Print JSON.Encode(data)
+End

@@ -7,7 +7,7 @@ root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(root / 'runtime'))
 from server import handler
 
-if any(mode in sys.argv for mode in ('--live', '--overview-live', '--catalog', '--board-order', '--workspaces', '--workspace-order', '--board-drops', '--board-selection', '--selection-archive', '--board-purge', '--list-delete-api', '--list-deletion', '--attachment-lifecycle', '--attachment-delete-api', '--attachment-upload-api', '--attachment-upload', '--attachment-reads-api', '--attachment-reads', '--transfer-policy-api', '--transfer-policy', '--board-allowance', '--board-copy', '--selected-copy', '--copy-options', '--board-creation', '--single-copy', '--import-export-policy', '--attachment-export-api', '--attachment-export')) and '--members' not in sys.argv:
+if any(mode in sys.argv for mode in ('--original-catalog', '--live', '--overview-live', '--catalog', '--board-order', '--workspaces', '--workspace-order', '--board-drops', '--board-selection', '--selection-archive', '--board-purge', '--list-delete-api', '--list-deletion', '--attachment-lifecycle', '--attachment-delete-api', '--attachment-upload-api', '--attachment-upload', '--attachment-reads-api', '--attachment-reads', '--transfer-policy-api', '--transfer-policy', '--board-allowance', '--board-copy', '--selected-copy', '--copy-options', '--board-creation', '--single-copy', '--import-export-policy', '--attachment-export-api', '--attachment-export')) and '--members' not in sys.argv:
     sys.argv.append('--members')
 
 base_env = os.environ.copy()
@@ -23,6 +23,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
         shutil.copy2(root / 'tests/ApiFixture.module', project / '.src/ApiFixture.module')
     if '--members' in sys.argv:
         shutil.copy2(root / 'tests/BoardCatalogFixture.module', project / '.src/BoardCatalogFixture.module')
+        shutil.copy2(root / 'tests/OriginalCatalogFixture.module', project / '.src/OriginalCatalogFixture.module')
         shutil.copy2(root / 'tests/ListDeletionFixture.module', project / '.src/ListDeletionFixture.module')
         shutil.copy2(root / 'tests/AttachmentFixture.module', project / '.src/AttachmentFixture.module')
         shutil.copy2(root / 'tests/TransferPolicyFixture.module', project / '.src/TransferPolicyFixture.module')
@@ -130,8 +131,11 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/wekan-workspace-latin.browser.cjs')], check=True, env=env)
         elif '--board-order' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-order.browser.cjs')], check=True, env=env)
+        elif '--original-catalog' in sys.argv:
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/wekan-catalog-server.browser.cjs')], check=True, env=env)
         elif '--catalog' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/catalog.browser.cjs')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/wekan-catalog-server.browser.cjs')], check=True, env=env)
         elif '--overview-live' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/overview-live.browser.cjs')], check=True, env=env)
         elif '--attachment-lifecycle' in sys.argv:
@@ -155,6 +159,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/people-live.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/overview-live.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/catalog.browser.cjs')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/wekan-catalog-server.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-order.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/workspaces.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/wekan-workspace-latin.browser.cjs')], check=True, env=env)
