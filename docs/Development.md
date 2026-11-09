@@ -362,8 +362,13 @@ workspace rows independently of the UI. Its mutation modes exercise external
 name/placement/deletion and membership changes. The real browser test also sends
 a hidden stale native Save after revocation and checks unchanged assignments.
 Source/packaged test-live includes the case after the existing live regressions.
-The native Latin checks do not run original spec 39's callback unchanged: that
-callback requires actual form/submit/required semantics still to be aligned.
+Workspace creation uses an actual form, required textarea and submit input.
+Its native command binds actor, session generation, editor revision and parent;
+closed, stale and completed form packets cannot create another workspace.
+`wekan-workspace-latin.browser.cjs` executes original spec 39's Latin callback
+unchanged against production selectors. Explicit adapters establish a native
+password session and apply client locale; this proves neither DDP nor persisted
+profile language. The other five spec 39 callbacks remain unexecuted.
 Markdown icons, multi-board workspace drops and broader original UI/API/security
 suites remain explicit TODO requirements. Folding/counts and native tree
 gestures are described below.

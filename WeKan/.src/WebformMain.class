@@ -64,6 +64,9 @@ Private $spaceCarets As New Collection
 Private $spaceCollapsed As Collection
 Private $spaceCounts As Collection
 Private $spaceNames As New Collection
+Private $workspaceRevision As Long
+Private $workspaceActor As String
+Private $workspaceGeneration As Long
 Private $workspaceEdit As Integer
 Private $workspaceParent As Integer
 Private $workspaceBoard As Integer
@@ -2611,6 +2614,9 @@ Private Sub ShowWorkspaceEditor(editId As Integer, parentId As Integer)
   CloseHeaderMenus()
   ContextMenu.Hide()
   BoardWorkspacePanel.Hide()
+  Inc $workspaceRevision
+  $workspaceActor = WebIdentity.Username
+  $workspaceGeneration = WebDatabase.SessionGeneration($workspaceActor)
   $workspaceEdit = editId
   $workspaceParent = parentId
   WorkspaceName.Text = ""
@@ -2632,6 +2638,8 @@ Private Sub ShowWorkspaceEditor(editId As Integer, parentId As Integer)
   ConfirmWorkspaceDelete.Visible = editId > 0
   ConfirmWorkspaceDelete.Value = False
   DeleteWorkspace.Visible = editId > 0
+  WorkspacePanel.Class = "weba-action-panel weba-space-panel weba-workspace-revision-" & CStr($workspaceRevision) & If(editId = 0, " weba-workspace-create", "")
+  SaveWorkspace.Visible = editId > 0
   WorkspacePanel.Show()
   WorkspaceName.SetFocus()
 End
@@ -2656,15 +2664,35 @@ Catch
 End
 
 Public Sub SaveWorkspace_Click()
+  If $workspaceEdit <= 0 Then Error.Raise("Use workspace creation form")
   If Trim(WorkspaceName.Text) = "" Then
     WorkspaceName.SetFocus()
     Return
   Endif
-  If $workspaceEdit > 0 Then
-    BoardSpaces.Edit($workspaceEdit, WorkspaceName.Text, WorkspaceIcon.Text)
-  Else
-    BoardSpaces.Add(WorkspaceName.Text, $workspaceParent)
+  BoardSpaces.Edit($workspaceEdit, WorkspaceName.Text, WorkspaceIcon.Text)
+  WorkspacePanel.Hide()
+  RefreshTree()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub WorkspaceCreateAction_Change()
+  Dim fields As String[] = Split(WorkspaceCreateAction.Text, "|")
+  Dim revision As Long
+  Dim name As String
+  If fields.Count <> 3 Then Error.Raise("Workspace form changed")
+  If fields[0] <> "create" Then Error.Raise("Workspace form changed")
+  If Not WorkspacePanel.Visible Or $workspaceEdit <> 0 Then Error.Raise("Workspace form changed")
+  revision = CLong(fields[1])
+  If CStr(revision) <> fields[1] Or revision <> $workspaceRevision Then Error.Raise("Workspace form changed")
+  If WebIdentity.Username <> $workspaceActor Or WebDatabase.SessionGeneration($workspaceActor) <> $workspaceGeneration Then Error.Raise("Sign in required")
+  name = UnBase64(fields[2])
+  If Trim(name) = "" Then
+    WorkspaceName.SetFocus()
+    Return
   Endif
+  BoardSpaces.Add(name, $workspaceParent)
+  Inc $workspaceRevision
   WorkspacePanel.Hide()
   RefreshTree()
 Catch
@@ -2682,6 +2710,7 @@ Catch
 End
 
 Public Sub CloseWorkspace_Click()
+  Inc $workspaceRevision
   WorkspacePanel.Hide()
 End
 

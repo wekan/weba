@@ -134,6 +134,9 @@
       }
     }
   }
+  { WorkspaceCreateAction WebTextBox
+    Visible = False
+  }
   { WorkspacePanel WebContainer
     Class = "weba-action-panel weba-space-panel"
     Arrangement = Arrange.Vertical

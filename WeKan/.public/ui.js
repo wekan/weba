@@ -36,8 +36,41 @@
     };
   }
   const icons={Swimlanes:'th-large',Kanban:'trello',Calendar:'calendar',Gantt:'bar-chart',TableView:'table',Charts:'pie-chart',ContextMembers:'users',CardMembersButton:'users',CardAssigneesButton:'user',ContextAssignees:'user',AddCardPerson:'user-plus',RemoveCardPerson:'user-times',ContextAssignSelf:'user-plus',SaveMember:'save',RemoveMember:'user-times',ImportBoard:'download',ContextDelete:'trash-o',ContextRename:'pencil',ContextCopy:'clipboard',ContextMove:'arrow-up',ContextColor:'paint-brush',ContextStar:'star-o',ContextWatch:'eye-slash',ContextWip:'ban',ContextDescription:'align-left',ContextHistory:'history',ContextExport:'upload',ContextArchive:'archive',ContextRestore:'undo',ContextAddCard:'plus',ContextAddList:'plus',ContextAddLane:'plus',Starred:'star',BoardSettings:'cog',ArchivedItems:'archive',ContextComments:'comment-o',ContextChecklists:'check-square-o',ContextChecklistItems:'check',ContextSubtasks:'sitemap',ContextDependencies:'link',ContextFields:'list-alt',ContextTime:'clock-o',ContextAttachments:'paperclip',CardComments:'comment-o',CardChecklists:'check-square-o',CardChecklistItems:'check',CardSubtasks:'sitemap',CardDependencies:'link',CardFields:'list-alt',CardTime:'clock-o',CardAttachments:'paperclip',DetailStart:'play',DetailStop:'stop',DetailExport:'upload',DetailDownload:'download',DetailDelete:'trash-o'};
+  function workspaceForm(){
+    const panel=document.querySelector('[id$=".WorkspacePanel"]');
+    if(!panel)return;
+    const label=document.querySelector('[id$=".WorkspaceNameLabel"]'),control=document.querySelector('[id$=".WorkspaceName"]'),save=document.querySelector('[id$=".SaveWorkspace"]');
+    if(!label||!control||!save)return;
+    const textarea=control.matches('textarea')?control:control.querySelector('textarea');if(!textarea)return;
+    let form=panel.querySelector('.js-add-workspace-form');
+    if(!panel.classList.contains('weba-workspace-create')){
+      if(form){panel.insertBefore(label,form);panel.insertBefore(control,form);form.remove();}
+      textarea.required=false;return;
+    }
+    if(!form){
+      form=document.createElement('form');form.className='js-add-workspace-form weba-workspace-create-form';
+      form.style.cssText='display:flex;flex-direction:column;gap:6px;width:100%';
+      panel.insertBefore(form,label);form.append(label,control);
+      const submit=document.createElement('input');submit.type='submit';submit.className='gw-button';form.append(submit);
+      form.addEventListener('submit',event=>{
+        event.preventDefault();if(!form.reportValidity())return;
+        const target=document.querySelector('[id$=".WorkspaceCreateAction"]');if(!target)return;
+        const encoded=btoa(String.fromCharCode(...new TextEncoder().encode(textarea.value)));
+        root.gw.update(target.id,'text','create|'+form.dataset.revision+'|'+encoded);
+      });
+    }
+    textarea.required=true;
+    const revision=[...panel.classList].find(value=>value.startsWith('weba-workspace-revision-'))?.slice('weba-workspace-revision-'.length)||'';
+    const changed=form.dataset.revision!==revision;form.dataset.revision=revision;
+    const submit=form.querySelector('input[type="submit"]'),caption=save.textContent.trim();
+    if(submit.value!==caption)submit.value=caption;
+    if(changed&&panel.getBoundingClientRect().width)textarea.focus({preventScroll:true});
+  }
   function decorate(){
     if(!root.document)return;
+    workspaceForm();
+    const remaining=document.querySelector('[id$=".Remaining"]');
+    if(remaining){if(!remaining.classList.contains('js-select-menu'))remaining.classList.add('js-select-menu');if(remaining.dataset.type!=='remaining')remaining.dataset.type='remaining';}
     for(const [name,icon] of Object.entries(icons)){
       document.querySelectorAll(`[id$=".${name}"]`).forEach(button=>{
         const nameIcon=name==='ContextStar'&&button.classList.contains('weba-starred')?'star':name==='ContextWatch'&&button.classList.contains('weba-watched')?'eye':icon;
@@ -86,6 +119,7 @@
         if(input){input.value=wheel.value;gw.update(wheel.dataset.target,'text',wheel.value);}
       }else if(event.target.id===wheel.dataset.target+':entry')syncColor();
     });
+    root.addEventListener('weba-language-changed',workspaceForm);
     decorate();new MutationObserver(decorate).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();

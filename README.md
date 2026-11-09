@@ -1010,9 +1010,12 @@ it for source and packaged apps. Run it separately with the documented Gambas
 and Chromium environment using `python3 tests/run-http.py --workspaces`, adding
 `--archive` for the package.
 
-Multi-board drops, complete form semantics and original All Boards callbacks
-remain open. Single-board drops are described below. Native Latin
-checks are separate from running the original callback unchanged. Imported
+Complete edit-form semantics and five original All Boards callbacks remain
+open. Creation now uses a real form, required textarea and submit input with
+revision/session/parent-bound native submission. The unchanged original Latin
+callback passes through explicit native password-session and client-locale
+adapters (1/6 spec 39 callbacks; no DDP/profile persistence claim).
+Single-board drops are described below. Imported
 workspace, collapse and archive-confirmation labels now bring the local selection
 to 125 keys in 237 catalogs;
 user workspace names and destination paths are never translated.

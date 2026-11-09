@@ -2,6 +2,13 @@
 
 This work adds the following features and fixes:
 
+- Add real workspace creation form/required textarea/submit semantics with
+  actor/session/revision-bound native commands and fresh parent authorization.
+  Preserve edit controls and translated submit values; expose the source
+  Remaining selector. Run unchanged original spec 39 Latin callback with explicit
+  native-session/client-locale adapters (1/6); retain five callbacks, edit-form
+  parity and full original suites as pending. Thanks to xet7.
+
 - Add native selected-attachment JSON export with readonly/full-board access,
   session generation and board/card/file binding. Share guarded serialization
   while preserving API token/cookie separation and independent native download

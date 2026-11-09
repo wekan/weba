@@ -100,7 +100,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   missing board content and full original callbacks remain open.
   Native multi-selection controls, retained visible-page selection
   and revisioned authoritative multi-drop transport are recorded in CHANGELOG.md.
-  Native form tests do not execute the original Latin callback unchanged.
+  Workspace creation form semantics and the unchanged original Latin callback
+  (1/6 spec 39 callbacks, explicit native-session/locale adapters) are recorded
+  in CHANGELOG.md; the other five callbacks remain open.
   Native retained attachment deletion/restore, bearer raw/JSON uploads with
   MIME/time metadata and source target guards, list/info/base64/raw download APIs,
   the DELETE API, four persisted Global Admin transfer controls and board
@@ -125,9 +127,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   drafts and clickable close controls. Delayed-width/async-error tests, full
   local/test-live and existing layout regressions pass. Original suite counts
   remain unchanged.
-- Next workspace parity: multi-board selection/drop semantics, then align form
-  semantics and run the unchanged original Latin callback with explicit native
-  transport/fixture adapters.
+- Next workspace parity: complete edit-form semantics, Markdown icons and the
+  remaining five original spec 39 callbacks with explicit native adapters.
 
 - Documented personal rank merging, readonly/sorted/archive boundaries, fresh
   transaction checks, cleanup, expected-order focus and trusted browser evidence.
@@ -192,8 +193,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   Native controls are now wired for the implemented modes; there is no new
   public HTTP endpoint.
 - In progress: remaining original spec 39 All Boards parity: workspace/category
-  semantics and translated workspace creation/navigation, then run the unchanged
-  six callbacks. Native browser/source-method comparisons are separate evidence.
+  semantics and the remaining five unchanged callbacks. The Latin creation/
+  navigation callback passes; native browser/source-method comparisons are
+  separate evidence.
   Multi-selection/cross-workspace drops, remaining raw-JSON null-key contracts beyond native export rows, efficient
   SQL count/paging and other open-view/idle reactivity remain pending. Clear search
   still lacks an exact imported source caption; Custom now uses its source key.

@@ -18,6 +18,7 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   const click=async name=>{await settle();await page.locator(control(name)).click();await settle();};
   const fill=async(name,text)=>{await settle();await page.locator(entry(name)).fill(text);};
   async function login(target,user){await target.goto(process.env.WEBA_TEST_URL);await target.waitForFunction(()=>window.webaI18n);await target.evaluate(()=>webaI18n.setLanguage('en'));await target.locator(entry('WebTextName')).fill(user);await target.locator(entry('WebTextPass')).fill(process.env.WEBA_TEST_PASSWORD);await target.locator(control('WebButtonLogin')).click();await expect(target.locator(control('AddWorkspace'))).toBeVisible();}
+  const submitWorkspace=async()=>{await page.locator('form.js-add-workspace-form input[type=submit]').click();await settle();};
   const names=()=>page.locator('.weba-board-tile strong').allTextContents();
   const space=name=>page.locator('.weba-space-row').filter({has:page.locator('.weba-space-open').filter({hasText:name})});
   const spaces=()=>fixture('read').rawSpaces;
@@ -25,15 +26,23 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   await expect(page.locator('.weba-space-open')).toHaveCount(0);
   await click('AddWorkspace');await expect(page.locator(control('WorkspacePanel'))).toBeVisible();
   await expect(page.locator(control('SaveWorkspace'))).toHaveText('Add Workspace');
-  await click('SaveWorkspace');await expect(page.locator(control('WorkspacePanel'))).toBeVisible();expect(spaces()).toHaveLength(0);
-  await fill('WorkspaceName','  Members  ');await click('SaveWorkspace');
+  await expect(page.locator('form.js-add-workspace-form textarea')).toHaveAttribute('required','');
+  expect(await page.locator('form.js-add-workspace-form').evaluate(form=>form.parentElement.closest('form')===null)).toBe(true);
+  await submitWorkspace();await expect(page.locator(control('WorkspacePanel'))).toBeVisible();expect(spaces()).toHaveLength(0);
+  const createPacket=await page.locator('form.js-add-workspace-form').evaluate(form=>'create|'+form.dataset.revision+'|'+btoa('Stale workspace'));
+  await click('CloseWorkspace');await click('AddWorkspace');
+  await page.locator(control('WorkspaceCreateAction')).evaluate((target,packet)=>gw.update(target.id,'text',packet),createPacket);await settle();
+  await expect(page.locator(control('Notice'))).toContainText('Workspace form changed');expect(spaces()).toHaveLength(0);
+  await fill('WorkspaceName','   ');await submitWorkspace();expect(spaces()).toHaveLength(0);
+  await fill('WorkspaceName','  Members  ');await submitWorkspace();
   await expect(page.locator('.weba-space-open')).toHaveText(['Members']);
+  await page.locator(control('WorkspaceCreateAction')).evaluate((target,packet)=>gw.update(target.id,'text',packet+' '),createPacket);await settle();expect(spaces()).toHaveLength(1);
   let root=spaces().find(row=>row.name==='Members');expect(root.parentId).toBe(0);
   await space('Members').locator('.weba-space-menu').click();await expect(page.locator(entry('WorkspaceName'))).toHaveValue('Members');
   await fill('WorkspaceName','Root <literal>');await fill('WorkspaceIcon','📁');await click('SaveWorkspace');
   await expect(page.locator('.weba-space-open')).toHaveText(['📁 Root <literal>']);
   expect(spaces().find(row=>row.id===root.id).icon).toBe('📁');
-  await space('Root <literal>').locator('.weba-space-menu').click();await click('AddSubworkspace');await fill('WorkspaceName','Child');await click('SaveWorkspace');
+  await space('Root <literal>').locator('.weba-space-menu').click();await click('AddSubworkspace');await fill('WorkspaceName','Child');await submitWorkspace();
   const child=spaces().find(row=>row.name==='Child');expect(child.parentId).toBe(root.id);
   await expect(page.locator('.weba-space-open')).toHaveText(['📁 Root <literal>','Child']);
   await expect(space('Root <literal>').locator('.weba-space-count')).toHaveText('0');
@@ -98,7 +107,7 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   const latin=JSON.parse(fs.readFileSync(path.join(source,'imports/i18n/data/la.i18n.json'),'utf8'));
   await expect(page.locator(control('WorkspacesHeading'))).toHaveText(latin['allboards.workspaces']);
   await click('AddWorkspace');await expect(page.locator(control('WorkspaceNameLabel'))).toHaveText(latin['allboards.add-workspace-prompt']);
-  await expect(page.locator(control('SaveWorkspace'))).toHaveText(latin['allboards.add-workspace']);
+  await expect(page.locator('form.js-add-workspace-form input[type=submit]')).toHaveValue(latin['allboards.add-workspace']);
   await expect(page.locator(entry('WorkspaceName'))).toHaveValue('');await click('CloseWorkspace');
 
   await page.evaluate(()=>webaI18n.setLanguage('en'));
