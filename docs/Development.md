@@ -278,3 +278,26 @@ failure test, not a new physical COMMIT phase. Real source/packaged Chromium tes
 use trusted touch events and compare actual stored maps with original helpers and
 setBoardSortIndexes. Original UI callbacks, multiselection/workspace transfers,
 locale/driver-wide collation and efficient polling remain unverified/pending.
+
+
+## Header menus and stable popup styles
+
+`CloseHeaderMenus` closes Sort/View/Account during native view and overview
+navigation. Toggling a header menu explicitly closes the competing two; include
+new menus in both the native lifecycle and popup.js trigger/Escape registries.
+Do not reset the personal sort or board-search draft merely to close a popup.
+
+Keep kanban.css in the stable LanguageSelector bootstrap alongside other shared
+assets. Loading it from Visual_Render removed/reloaded global styles on each
+report refresh, so placement could measure an unstyled width and retain a
+coordinate that put the final close button outside the viewport. The popup
+helper also repositions on stylesheet load and FontFaceSet completion; document
+teardown guards keep pending observer callbacks harmless.
+
+The catalog browser test reproduces the competing-menu bug and covers both
+opening directions, overview navigation and Escape on desktop/mobile. The popup
+unit test changes width after initial placement without a resize or attribute
+mutation, dispatches stylesheet load and verifies the new bounds. It captures
+asynchronous jsdom errors, including teardown, instead of accepting a passing
+exit status with an uncaught callback error. Full original UI callbacks remain
+separate work.

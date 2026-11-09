@@ -1,4 +1,6 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Explain native header menu lifecycle, stable CSS bootstrap and
+  style/font placement refresh, with desktop/mobile and teardown test evidence.
 - Popup lifecycle: Close catalog sorting across competing header menus and
   overview navigation; wire Escape/anchors. Stabilize the shared stylesheet,
   reschedule placement after style/font loading and guard teardown. Verify

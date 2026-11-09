@@ -480,6 +480,15 @@ from another active field. These checks supplement the original callback counts;
 multiselection, workspace drops and complete original UI/API/security suites
 remain separate work.
 
+The native Sort, View and Account header popups exclude one another. Home,
+Remaining, Starred and Archive navigation closes them, and Sort uses the shared
+Escape/trigger positioning behavior. Saved sort and board-search text survive
+these menu transitions. Shared kanban styling is loaded in the stable bootstrap,
+so refreshing the Visual container does not temporarily invalidate popup sizing.
+Stylesheet/font completion triggers placement again when needed. Desktop/mobile
+menu tests, delayed-width/teardown checks and existing layout/live tests cover
+this behavior; full original-suite parity remains incomplete.
+
 Polling cost grows with visible cards. Signed-in views still emit native heartbeat
 requests; visible people/detail panes are checked even without an active board.
 Efficient idle/background suspension, navigation updates while another board or

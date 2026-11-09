@@ -6,6 +6,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Current UI/API/security work
 
+- Documented header menu lifecycle and stable shared styles, delayed stylesheet/
+  font placement and safe teardown. Recorded the new real browser/unit evidence;
+  workspace and full original-suite requirements remain open.
+
 - Completed catalog sort popup lifecycle: View/Account menus exclude it,
   Home/Remaining/Starred/Archive navigation closes it and Escape/trigger anchoring
   use the shared popup handler. Move kanban.css out of the refreshed Visual

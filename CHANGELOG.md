@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Document header menu exclusion/navigation, Sort Escape/anchors, stable shared
+  CSS placement and stylesheet/font rescheduling. Record desktop/mobile and
+  delayed-width/teardown verification without changing original-suite claims.
+  Thanks to xet7.
+
 - Fix catalog sort popup exclusion with View/Account menus, overview navigation
   cleanup and Escape/trigger handling. Keep kanban.css in stable bootstrap so
   repeated Visual refreshes do not invalidate measured popup sizes; reposition
