@@ -1554,3 +1554,33 @@ adding --archive for the packaged application.
 This control implements allowsAttachments only. Minicard display preferences,
 background/map files, linked-card permissions, full board settings and original
 DDP/UI/security callbacks remain separate TODO work.
+
+### Board copy authorization
+
+Whole-board Copy requires board administration, matching the current source
+copyBoard method. Reading a board, ordinary write access and site administration
+without board membership do not authorize copying it. Assigned-only container
+restrictions remain enforced. Native context menus hide Copy for nonmanagers;
+forged opens are denied, and live role loss closes and clears a pending copy form.
+
+The service locks the actor and source board, rechecks scope before cloning and
+checks identity, source administration, source owner/title/archive state and
+new-board owner/title/live state before commit. Card-link preparation is inside
+the transaction. Late changes and failed child writes roll back the complete
+hierarchy, bytes, metadata, activity and clocks. Retained deleted cards are
+excluded from clone queries instead of causing a copy failure or entering a copy.
+
+BoardCopyAuthorizationTest covers eight nonadmin roles, global nonmembership,
+manager exact binary content, retained-card exclusion and late role/source/target
+or SQL rollback/retry. Thirteen SQL-backed authorization outcomes match the
+unchanged source copyBoard authorization prefix and hasAdmin helper; owner-to-
+active-admin membership, ID, findWhere and no-op logging adapters are explicit.
+This comparison does not execute the full original copy method or its properties,
+options, creation-policy, content, DDP or security-event callbacks. The real browser
+covers readonly forgery, successful manager copying and stale-save denial after
+live demotion. Focused mode: tests/run-http.py --board-copy, plus --archive for
+the packaged application.
+
+Selected-board duplication, per-field copy options, source unique-title generation,
+board-creation policy, unimplemented board content and full original UI/API/security
+suites remain open. Existing single native copy titles are supplied by the user.

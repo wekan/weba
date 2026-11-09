@@ -82,7 +82,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   no new public HTTP route is exposed. Original full callbacks remain open.
 - Next: remaining batch sidebar actions (duplication and multi-format export),
   Home/group targets, Markdown icons and original
-  UI callbacks. Native multi-selection controls, retained visible-page selection
+  UI callbacks. Whole-board copy authorization and late actor/source/destination
+  guards are recorded in CHANGELOG.md; selected duplication, per-field options,
+  source title generation and creation policy remain open.
+  Native multi-selection controls, retained visible-page selection
   and revisioned authoritative multi-drop transport are recorded in CHANGELOG.md.
   Native form tests do not execute the original Latin callback unchanged.
   Native retained attachment deletion/restore, bearer raw/JSON uploads with

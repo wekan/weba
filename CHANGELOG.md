@@ -2,6 +2,16 @@
 
 This work adds the following features and fixes:
 
+- Require board administration for whole-board copies, matching source copyBoard
+  authorization. Hide and guard nonmanager Copy; close and clear revoked forms.
+  Lock actor/source, prepare links within the transaction and recheck identity,
+  source authority/state and destination ownership/state before commit. Exclude
+  retained deleted cards. Verify eight role negatives, exact binary manager copy,
+  late role/source/destination and child SQL rollback, 13 unchanged source guard
+  outcomes and real readonly/stale-save browser checks. Keep selected duplication,
+  options, source title/creation policy and full original callbacks open.
+  Thanks to xet7.
+
 - Add the board-manager Attachments allowance checkbox with persisted default-on
   state, live native upload controls and existing bearer enforcement. Retain
   downloads/metadata/internal copies. Lock actor/board and recheck permission and

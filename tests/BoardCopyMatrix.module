@@ -1,0 +1,60 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim copyId As Integer
+  Dim mode As String
+  Dim row As Collection
+  Dim flags As Collection
+  Dim member As Collection
+  Dim members As Variant[]
+  Dim output As New Variant[]
+  Dim r As Result
+  Dim denied As Boolean
+  Dim user As String
+  WebDatabase.Register("copy-matrix-global", "x")
+  WebDatabase.Register("copy-matrix-owner", "x")
+  WebDatabase.Register("copy-matrix-member", "x")
+  SignIn("copy-matrix-owner")
+  boardId = KanbanStore.AddBoard("Copy oracle")
+  CardContent.OpenStore()
+  BoardAccess.OpenStore()
+  For Each mode In ["anonymous", "global-nonmember", "owner", "normal", "board-admin", "read-only", "comment-only", "no-comments", "worker", "normal-assigned-only", "comment-assigned-only", "read-assigned-only", "removed"]
+    SignIn("copy-matrix-owner")
+    If mode = "removed" Then
+      BoardAccess.SetMember(boardId, "copy-matrix-member", "board-admin")
+      BoardAccess.RemoveMember(boardId, "copy-matrix-member")
+    Else If ["anonymous", "global-nonmember", "owner"].Find(mode) < 0 Then
+      BoardAccess.SetMember(boardId, "copy-matrix-member", mode)
+    Endif
+    user = "copy-matrix-member"
+    If mode = "anonymous" Then user = ""
+    If mode = "global-nonmember" Then user = "copy-matrix-global"
+    If mode = "owner" Then user = "copy-matrix-owner"
+    row = New Collection
+    row["mode"] = mode
+    row["user"] = user
+    members = New Variant[]
+    member = ApiMemberRoles.FlagsFor("board-admin")
+    member["userId"] = "copy-matrix-owner"
+    member["isActive"] = True
+    members.Add(member)
+    r = WebDatabase.OpenConnection().Find("kb_members", "board_id=&1", boardId)
+    For Each r
+      flags = ApiMemberRoles.FlagsFor(r!role)
+      flags["userId"] = r!username
+      flags["isActive"] = True
+      members.Add(flags)
+    Next
+    row["members"] = members
+    SignIn(user)
+    Try copyId = WorkspaceStore.Copy(boardId, "board", boardId, "Oracle " & mode)
+    denied = Error
+    row["ok"] = Not denied
+    output.Add(row)
+  Next
+  Print JSON.Encode(output)
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  If username Then Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

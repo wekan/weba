@@ -295,6 +295,12 @@ Private Function CloneCard(sourceBoard As Integer, cardId As Integer, targetBoar
 End
 
 Public Function Copy(boardId As Integer, kind As String, itemId As Integer, title As String, Optional targetLane As String) As Integer
+  Dim actor As String = WebIdentity.Username
+  Dim transaction As Boolean
+  Dim sourceArchived As Boolean
+  Dim sourceTitle As String
+  Dim sourceOwner As String
+  Dim sourceId As Integer = boardId
   Dim source As Result
   Dim r As Result
   Dim laneRows As Result
@@ -308,10 +314,9 @@ Public Function Copy(boardId As Integer, kind As String, itemId As Integer, titl
   Dim targetBoard As Integer
   source = Record(boardId, kind, itemId)
   BoardAccess.RequireContainer(boardId, kind, itemId)
-  If kind <> "board" Then BoardAccess.Require(boardId, "write")
+  BoardAccess.Require(boardId, If(kind = "board", "manageBoard", "write"))
   title = Trim(title)
   If Not title Or String.Len(title) > If(kind = "list", 32, 255) Then Error.Raise("Enter a valid copy title")
-  KanbanStore.PrimeCardLinks(boardId)
   CardContent.OpenStore()
   $copyMap = New Collection
   If kind = "list" Then
@@ -320,6 +325,18 @@ Public Function Copy(boardId As Integer, kind As String, itemId As Integer, titl
     If Not r.Available Then Error.Raise("Destination swimlane not accessible")
   Endif
   DatabaseTransactions.Begin($db)
+  transaction = True
+  If kind = "board" Then
+    $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+    $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+    BoardAccess.RequireContainer(boardId, kind, itemId)
+    BoardAccess.Require(boardId, "manageBoard")
+    source = Record(boardId, kind, itemId)
+    sourceArchived = source!archived
+    sourceTitle = source!title
+    sourceOwner = source!owner
+  Endif
+  KanbanStore.PrimeCardLinks(boardId)
   Select kind
     Case "card"
       listId = KanbanStore.CardListId(boardId, itemId)
@@ -354,11 +371,21 @@ Public Function Copy(boardId As Integer, kind As String, itemId As Integer, titl
   Next
   CopySettings(boardId, kind, itemId, targetBoard, newId)
   If BoardAccess.Can(boardId, "write") Or BoardAccess.Can(boardId, "comment") Then KanbanStore.Activity(boardId, "Copied " & kind & ": " & title, kind, itemId, False)
+  If kind = "board" Then
+    If WebIdentity.Username <> actor Then Error.Raise("Copy identity changed")
+    BoardAccess.RequireContainer(sourceId, "board", sourceId)
+    BoardAccess.Require(sourceId, "manageBoard")
+    source = Record(sourceId, "board", sourceId)
+    If source!archived <> sourceArchived Or source!title <> sourceTitle Or source!owner <> sourceOwner Then Error.Raise("Source board changed during copy")
+    source = Record(newId, "board", newId)
+    If source!owner <> actor Or source!archived Or source!title <> title Then Error.Raise("Copied board changed")
+  Endif
   DatabaseTransactions.Commit($db)
+  transaction = False
   Return newId
 Catch
   failure = Error.Text
-  Try DatabaseTransactions.Rollback($db)
+  If transaction Then Try DatabaseTransactions.Rollback($db)
   Error.Raise(failure)
 End
 
@@ -410,7 +437,7 @@ Private Function CloneList(sourceBoard As Integer, listId As Integer, targetBoar
   r.Update()
   id = $db.LastInsertId
   ItemChanges.Mark(targetBoard, "list", id)
-  cards = $db.Find("kb_cards", "board_id = &1 AND archived = &2", sourceBoard, False)
+  cards = $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND archived = &2", sourceBoard, False)
   For Each cards
     If KanbanStore.CardListId(sourceBoard, cards!id) <> listId Then Continue
     CloneCard(sourceBoard, cards!id, targetBoard, id, lane, title, cards!title)

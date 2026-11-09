@@ -1,0 +1,123 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim copyId As Integer
+  Dim hidden As Integer
+  Dim listId As Integer
+  Dim role As String
+  Dim before As String
+  Dim denied As Boolean
+  Dim failure As String
+  Dim db As Connection
+  Dim rows As Result
+  WebDatabase.Register("copy-global", "x")
+  WebDatabase.Register("copy-owner", "x")
+  WebDatabase.Register("copy-member", "x")
+  SignIn("copy-owner")
+  boardId = KanbanStore.AddBoard("Protected source")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Kept card", "exact body", "Default", "Todo", "", "", "")
+  CardContent.UploadFile(boardId, cardId, "bytes.bin", "kept" & Chr(0) & "bytes")
+  hidden = KanbanStore.SaveCard(boardId, 0, "Hidden card", "hidden body", "Default", "Todo", "", "", "")
+  CardContent.OpenStore()
+  db = WebDatabase.OpenConnection()
+  ' A card retained in a deleted batch must never enter an otherwise live copy.
+  rows = db.Create("kb_deleted_items")
+  rows["board_id"] = boardId
+  rows["kind"] = "card"
+  rows["item_id"] = hidden
+  rows["batch_id"] = 999
+  rows["actor"] = "copy-owner"
+  rows["deleted_at"] = ItemChanges.UtcNow()
+  rows.Update()
+  For Each role In ["normal", "read-only", "comment-only", "no-comments", "worker", "normal-assigned-only", "comment-assigned-only", "read-assigned-only"]
+    SignIn("copy-owner")
+    BoardAccess.SetMember(boardId, "copy-member", role)
+    SignIn("copy-member")
+    before = Frame()
+    Try WorkspaceStore.Copy(boardId, "board", boardId, "Denied")
+    denied = Error
+    If Not denied Or Frame() <> before Then Error.Raise("Nonadmin board copy wrote: " & role)
+  Next
+  SignIn("copy-global")
+  before = Frame()
+  Try WorkspaceStore.Copy(boardId, "board", boardId, "Global nonmember denied")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Global nonmember copied private board")
+  SignIn("copy-owner")
+  BoardAccess.SetMember(boardId, "copy-member", "board-admin")
+  SignIn("copy-member")
+  copyId = WorkspaceStore.Copy(boardId, "board", boardId, "Manager copy")
+  rows = WorkspaceStore.Record(copyId, "board", copyId)
+  If rows!owner <> "copy-member" Then Error.Raise("Copy principal lost")
+  rows = KanbanStore.Cards(copyId)
+  If rows.Count <> 1 Or rows!title <> "Kept card" Or rows!description <> "exact body" Then Error.Raise("Live copy content differs")
+  rows = CardContent.Files(copyId, rows!id)
+  If rows.Count <> 1 Then Error.Raise("Copy lost binary file")
+  rows = db.Find("kb_files", "board_id=&1", copyId)
+  If rows!content.Data <> "kept" & Chr(0) & "bytes" Then Error.Raise("Copy bytes changed")
+  before = Frame()
+  db.Exec("CREATE TRIGGER copy_late_role AFTER INSERT ON kb_boards WHEN NEW.title='Late role' BEGIN UPDATE kb_members SET role='read-only' WHERE board_id=" & Str(boardId) & " AND username='copy-member'; END")
+  Try WorkspaceStore.Copy(boardId, "board", boardId, "Late role")
+  denied = Error
+  failure = Error.Text
+  If Not denied Or failure <> "Board permission denied" Or Frame() <> before Then Error.Raise("Late admin loss did not roll back: " & failure)
+  db.Exec("DROP TRIGGER copy_late_role")
+  db.Exec("CREATE TRIGGER copy_late_source AFTER INSERT ON kb_boards WHEN NEW.title='Late source' BEGIN UPDATE kb_boards SET title='Changed source' WHERE id=" & Str(boardId) & "; END")
+  Try WorkspaceStore.Copy(boardId, "board", boardId, "Late source")
+  denied = Error
+  failure = Error.Text
+  If Not denied Or failure <> "Source board changed during copy" Or Frame() <> before Then Error.Raise("Late source replacement committed: " & failure)
+  db.Exec("DROP TRIGGER copy_late_source")
+  db.Exec("CREATE TRIGGER copy_late_target AFTER INSERT ON kb_activity WHEN NEW.message='Copied board: Late target' BEGIN UPDATE kb_boards SET archived=1 WHERE title='Late target'; END")
+  Try WorkspaceStore.Copy(boardId, "board", boardId, "Late target")
+  denied = Error
+  failure = Error.Text
+  If Not denied Or failure <> "Copied board changed" Or Frame() <> before Then Error.Raise("Late target replacement committed: " & failure)
+  db.Exec("DROP TRIGGER copy_late_target")
+  db.Exec("CREATE TRIGGER copy_sql BEFORE INSERT ON kb_files BEGIN SELECT RAISE(ABORT,'copy file failure'); END")
+  Try WorkspaceStore.Copy(boardId, "board", boardId, "Failed bytes")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Failed child copy left partial hierarchy")
+  db.Exec("DROP TRIGGER copy_sql")
+  copyId = WorkspaceStore.Copy(boardId, "board", boardId, "Retry copy")
+  If KanbanStore.Cards(copyId).Count <> 1 Then Error.Raise("Copy retry failed")
+  Print "Board copy authorization: eight nonadmin roles/global nonmember denied, manager exact live bytes, retained-card exclusion, late role/source/target and child SQL rollback/retry passed"
+End
+
+Private Function Frame() As String
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim tables As New String[]
+  Dim table As Table
+  Dim tableName As String
+  Dim r As Result
+  Dim row As New Collection
+  Dim rows As Variant[]
+  Dim data As New Variant[]
+  Dim field As ResultField
+  For Each table In db.Tables
+    If Left(table.Name, 3) = "kb_" Or table.Name = "users" Or table.Name = "attachment_transfer_settings" Then tables.Add(table.Name)
+  Next
+  tables.Sort()
+  For Each tableName In tables
+    rows = New Variant[]
+    r = db.Find(tableName)
+    For Each r
+      row = New Collection
+      For Each field In r.Fields
+        If field.Name = "content" Then
+          row.Add(Base64(r!content.Data), field.Name)
+        Else
+          row.Add(r[field.Name], field.Name)
+        Endif
+      Next
+      rows.Add(row)
+    Next
+    data.Add(rows)
+  Next
+  Return JSON.Encode(data)
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

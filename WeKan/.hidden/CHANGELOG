@@ -1,4 +1,8 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Board copy security: Require source board administration, hide/guard nonmanager
+  Copy and clear revoked forms. Lock/recheck actor/source/destination and roll back
+  late changes or failed children. Skip retained deleted cards. Verify native
+  negatives/bytes/rollback, 13 source guard outcomes and readonly/stale-save UI.
 - Board attachment allowance: Add manager checkbox with fresh locked saves,
   live upload hiding and preserved downloads. Test role/value/SQL rollback,
   mobile/reload persistence, bearer refusal and forged stale saves. Anchor the

@@ -82,9 +82,9 @@ Public Sub Main()
   Try BoardAccess.SetMember(boardId, "access-reader", "board-admin")
   denied = Error
   If Not denied Then Error.Raise("Read-only member escalation accepted")
-  copied = WorkspaceStore.Copy(boardId, "board", boardId, "Readable copy")
-  r = KanbanStore.Cards(copied)
-  If r.Count <> 1 Then Error.Raise("Copy into own board lost readable content")
+  Try WorkspaceStore.Copy(boardId, "board", boardId, "Denied board copy")
+  denied = Error
+  If Not denied Then Error.Raise("Read-only board copy accepted")
   Session["username"] = "access-editor"
   Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   KanbanStore.SaveCard(boardId, cardId, "Edited", "Body", "Default", "Todo", "access-owner", "", "", listId)

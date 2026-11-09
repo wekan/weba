@@ -157,6 +157,7 @@ Public Sub BoardPoll_Timer()
   ValidateRecoveryPanels()
   ValidateTransferPanel()
   ValidateAttachmentAllowance()
+  ValidateBoardCopy()
   ValidateDeleteListPanel()
   RefreshDeletedListPanel()
   If IsOverview() And $archive Then
@@ -1045,7 +1046,7 @@ Private Sub OpenContext(kind As String, itemId As Integer, boardId As Integer)
   ContextRestore.Visible = archived And change
   ContextDelete.Visible = If(kind = "list", writable, archived And change And kind <> "board" And RecoveryStore.CanPurge())
   ContextRename.Visible = Not archived And change
-  ContextCopy.Visible = (kind = "board" And BoardAccess.Can(boardId, "seesAllCards")) Or (kind <> "board" And writable)
+  ContextCopy.Visible = (kind = "board" And manager And BoardAccess.Can(boardId, "seesAllCards")) Or (kind <> "board" And writable)
   ContextAddCard.Visible = writable And Not archived And kind <> "card"
   ContextAddList.Visible = writable And Not archived And kind <> "card"
   ContextAddLane.Visible = writable And Not archived And (kind = "lane" Or kind = "board")
@@ -1296,6 +1297,7 @@ Catch
   Notice.Text = Error.Text
 End
 Public Sub ContextCopy_Click()
+  If $contextKind = "board" Then BoardAccess.Require($contextBoard, "manageBoard")
   BeginAction("Copy")
 Catch
   Notice.Text = Error.Text
@@ -3176,5 +3178,15 @@ Private Sub ValidateAttachmentAllowance()
   If ActionPanel.Visible Then
     ActionPanel.Hide()
     ActionFlag.Value = False
+  Endif
+End
+
+Private Sub ValidateBoardCopy()
+  If $contextKind <> "board" Then Return
+  If BoardAccess.Can($contextBoard, "manageBoard") Then Return
+  ContextCopy.Hide()
+  If $action = "Copy" And ActionPanel.Visible Then
+    ActionPanel.Hide()
+    ActionText.Text = ""
   Endif
 End
