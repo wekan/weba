@@ -369,20 +369,29 @@ closed, stale and completed form packets cannot create another workspace.
 unchanged against production selectors. Explicit adapters establish a native
 password session and apply client locale; this proves neither DDP nor persisted
 profile language. `wekan-catalog-server.browser.cjs` also executes the three
-original server callbacks plus the search UI callback and their hooks unchanged. Its disposable fixture
-creates and cleans actual native boards and calls `BoardCatalog.Page`; a test-only
+original server callbacks plus the sort/search UI callbacks and their hooks
+unchanged. Its disposable fixture creates and cleans actual native boards and calls `BoardCatalog.Page`; a test-only
 browser RPC binding revalidates an actual API token before each call and maps
-its verified principal to a native fixture session. Numeric IDs, fixture DB and
-transport/session adapters are explicit. A revoked API token is refused before
+its verified principal to a native fixture session. Each original callback gets
+fresh native normal accounts, created and deleted
+through native admin services, preserving the original fixture isolation from
+earlier suites and their boards/preferences.
+Numeric IDs, fixture DB and transport/session adapters are explicit. A revoked API token is refused before
 native service invocation while the independent native UI remains signed in.
-This verifies native paging/search/
-privacy outcomes, not production DDP or routing. The sort UI callback
-remains unexecuted. Run with `python3 tests/run-http.py --original-catalog` (add
+This verifies native paging/search/privacy outcomes, not production DDP or routing. The source profile sort
+assertion maps explicitly to a raw `kb_board_preferences` read. All six callbacks
+have adapter-backed execution (five catalog callbacks plus Latin separately).
+Run with `python3 tests/run-http.py --original-catalog` (add
 `--archive` for the package), or as part of `--catalog` and `test-live`.
 The production overview renders a `ul` with `li.js-board` rows and escaped
 `.board-list-item-name` text; native search controls carry the source selectors.
 The original search callback runs against those elements and native events with
 no locator/assertion adapters. List styling retains the tile grid geometry.
+Native sort buttons become anchors with their original IDs/attributes/handlers
+and child nodes. Class/text updates still target those same IDs. Enter and Space
+activate once without fragment navigation; disabled aria state refuses clicks.
+The source `.boards-pagination` class exists only for visible sorted paging,
+with a separate stable native layout class.
 Markdown icons, multi-board workspace drops and broader original UI/API/security
 suites remain explicit TODO requirements. Folding/counts and native tree
 gestures are described below.

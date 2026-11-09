@@ -33,6 +33,6 @@ const secrets=[process.env.WEBA_TEST_PASSWORD];
   }},{filename:spec});
   const selected=cases.filter(item=>item.title==='Latin workspace navigation and creation form use translated labels');expect(selected).toHaveLength(1);expect(cases).toHaveLength(6);
   await selected[0].callback({page,user});
-  console.log('Original spec 39: unchanged Latin workspace callback passed (1/6); five sort/search/server callbacks unexecuted. Explicit native password-session and client locale adapters; no DDP/profile persistence claim.');
+  console.log('Original spec 39: unchanged Latin workspace callback passed (1/6); this runner executes Latin only; five catalog callbacks run separately. Explicit native password-session and client locale adapters; no DDP/profile persistence claim.');
  }finally{if(context)await context.close();if(browser)await browser.close();await api.dispose();}
 })().catch(error=>{let message=error.stack||String(error);for(const secret of secrets)if(secret)message=message.split(secret).join('[redacted]');console.error(message);process.exitCode=1;});

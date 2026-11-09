@@ -6,11 +6,21 @@ Public Sub Main()
   Dim ids As Variant[]
   Dim item As Variant
   Dim db As Connection
+  Dim r As Result
   If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
   Session["username"] = Env["WEBA_TEST_USER"]
   Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
   db = WebDatabase.OpenConnection()
   Select mode
+    Case "create-user", "delete-user"
+      Session["username"] = "rest-owner"
+      Session["auth_generation"] = WebDatabase.SessionGeneration("rest-owner")
+      If mode = "create-user" Then
+        WebDatabase.NewUser(Env["WEBA_TEST_USER"], Env["WEBA_TEST_PASSWORD"], False)
+      Else
+        WebDatabase.DeleteUser(Env["WEBA_TEST_USER"])
+      Endif
+      data["id"] = Env["WEBA_TEST_USER"]
     Case "seed"
       data["boardId"] = KanbanStore.AddBoard(Env["WEBA_ORIGINAL_CATALOG_TITLE"])
     Case "cleanup"
@@ -19,6 +29,11 @@ Public Sub Main()
         db.Delete("kb_boards", "id=&1 AND owner=&2", CInt(item), WebIdentity.Username)
       Next
       data["done"] = True
+    Case "profile"
+      BoardCatalog.SortBy()
+      r = db.Find("kb_board_preferences", "username=&1", WebIdentity.Username)
+      data["sortBy"] = "custom"
+      If r.Available Then data["sortBy"] = CStr(r!sort_by)
     Case "page"
       params = JSON.Decode(Env["WEBA_ORIGINAL_CATALOG_PARAMS"])
       data = BoardCatalog.Page(params)

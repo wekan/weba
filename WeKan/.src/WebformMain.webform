@@ -40,7 +40,7 @@
       Tooltip = ("Search")
     }
     { SortBoards WebButton
-      Class = "weba-icon-only fa fa-sort"
+      Class = "weba-icon-only fa fa-sort js-open-boards-sort"
       Tooltip = ("Sort boards")
     }
     { MultiBoards WebButton
@@ -750,7 +750,7 @@
         }
       }
       { BoardPagination WebContainer
-        Class = "boards-pagination"
+        Class = "weba-board-pagination"
         Arrangement = Arrange.Horizontal
         Visible = False
         Spacing = True

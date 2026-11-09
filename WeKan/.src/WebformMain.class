@@ -401,13 +401,14 @@ Private Function LoadBoardOverview() As Collection
   PreviousBoardPage.Enabled = $catalogPage > 1
   NextBoardPage.Enabled = $catalogPage < lastPage
   BoardPagination.Visible = IsOverview() And $catalogSort <> "custom"
+  BoardPagination.Class = "weba-board-pagination" & If(BoardPagination.Visible, " boards-pagination", "")
   Return data
 End
 
 Private Sub UpdateCatalogSort()
-  SortCustom.Class = "fa fa-arrows" & If($catalogSort = "custom", " weba-active active", "")
-  SortTitleAsc.Class = "fa fa-sort-alpha-asc" & If($catalogSort = "title-asc", " weba-active active", "")
-  SortTitleDesc.Class = "fa fa-sort-alpha-desc" & If($catalogSort = "title-desc", " weba-active active", "")
+  SortCustom.Class = "js-boards-sort fa fa-arrows" & If($catalogSort = "custom", " weba-active active", "")
+  SortTitleAsc.Class = "js-boards-sort fa fa-sort-alpha-asc" & If($catalogSort = "title-asc", " weba-active active", "")
+  SortTitleDesc.Class = "js-boards-sort fa fa-sort-alpha-desc" & If($catalogSort = "title-desc", " weba-active active", "")
 End
 
 Private Sub ChooseCatalogSort(value As String)
@@ -804,6 +805,7 @@ Private Sub UpdateHeader()
   Filter.Visible = Not overview
   Search.Visible = Not overview
   BoardPagination.Visible = overview And $catalogSort <> "custom"
+  BoardPagination.Class = "weba-board-pagination" & If(BoardPagination.Visible, " boards-pagination", "")
   If Not overview Then BoardSortMenu.Hide()
   ContentRow.Expand = Not overview
   PaneTitle.Text = If($view = "Boards", "Remaining", $view)

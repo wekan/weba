@@ -167,7 +167,7 @@
 
 /* Make the native selected sort visible as well as exposing its active class. */
 .weba-board-sort .gw-button.active{background:#2878a8;color:#fff}
-.boards-pagination{align-items:center;gap:8px;padding:4px 8px;flex-wrap:wrap}
+.weba-board-pagination{align-items:center;gap:8px;padding:4px 8px;flex-wrap:wrap}
 
 .weba-board-drag{position:absolute;inset-inline-start:4px;bottom:4px;z-index:2;touch-action:none}
 
@@ -209,3 +209,5 @@
 
 /* Semantic native board catalog list retains the tile grid geometry. */
 ul.weba-data{list-style:none;margin:0;padding:0}
+
+.weba-board-sort a.gw-button{display:flex;align-items:center;justify-content:flex-start;text-decoration:none;cursor:pointer;color:inherit}

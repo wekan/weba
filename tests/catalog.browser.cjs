@@ -39,18 +39,18 @@ const secrets=[process.env.WEBA_TEST_PASSWORD];
   }
   await menuTransitions();await expect(page.locator(input('BoardSearch'))).toHaveValue('Catalog Board');await expect.poll(catalogNames).toHaveLength(30);
 
-  await click('SortBoards');await click('SortTitleAsc');
+  await click('SortBoards');const sortLink=page.locator('a.js-boards-sort[data-sort="title-asc"]');await expect(sortLink).toHaveAttribute('role','button');const beforeSortUrl=page.url();await sortLink.focus();await sortLink.press('Space');await settle();expect(page.url()).toBe(beforeSortUrl);
   await expect(page.locator(control('BoardPagination'))).toBeVisible();
   await expect.poll(catalogNames).toEqual(Array.from({length:25},(_,i)=>'Catalog Board '+String(i+1).padStart(2,'0')));
   expect(fixture('read').sortBy).toBe('title-asc');expect(fixture('read','rest-owner').sortBy).toBe('custom');
-  await click('SortBoards');await expect(page.locator(control('SortTitleAsc'))).toHaveClass(/active/);await expect(page.locator(control('SortTitleAsc'))).toHaveClass(/fa-sort-alpha-asc/);await expect(page.locator(control('SortTitleAsc'))).toHaveCSS('background-color','rgb(40, 120, 168)');await click('CloseBoardSort');
+  await click('SortBoards');await expect(page.locator(control('SortTitleAsc'))).toHaveClass(/active/);await expect(page.locator(control('SortTitleAsc'))).toHaveClass(/fa-sort-alpha-asc/);await expect(page.locator(control('SortTitleAsc'))).toHaveCSS('background-color','rgb(40, 120, 168)');await expect(page.locator(control('SortTitleAsc'))).toHaveCSS('color','rgb(255, 255, 255)');await click('CloseBoardSort');
   await click('NextBoardPage');await expect.poll(catalogNames).toEqual(['Catalog Board 26','Catalog Board 27','Catalog Board 28','Catalog Board 29','Catalog Board 30']);
   await expect(page.locator(control('NextBoardPage'))).toBeDisabled();await expect(page.locator(control('BoardPageLabel'))).toContainText('2 / 2');
   await click('PreviousBoardPage');await expect(page.locator(control('BoardPageLabel'))).toContainText('1 / 2');
   await click('NextBoardPage');fixture('archive-last');await page.bringToFront();
   await expect(page.locator(control('BoardPageLabel'))).toContainText('1 / 1');await expect.poll(catalogNames).toHaveLength(25);
   fixture('restore-last');await expect(page.locator(control('BoardPageLabel'))).toContainText('1 / 2');
-  await click('SortBoards');await click('SortTitleDesc');
+  await click('SortBoards');await page.locator('a.js-boards-sort[data-sort="title-desc"]').press('Enter');await settle();expect(page.url()).toBe(beforeSortUrl);
   await expect.poll(catalogNames).toEqual(Array.from({length:25},(_,i)=>'Catalog Board '+String(30-i).padStart(2,'0')));
   await click('NextBoardPage');await fill('BoardSearch','catalog board 0');
   await expect.poll(catalogNames).toEqual(Array.from({length:9},(_,i)=>'Catalog Board 0'+(9-i)));
@@ -76,6 +76,8 @@ const secrets=[process.env.WEBA_TEST_PASSWORD];
   const finnish=JSON.parse(fs.readFileSync(path.join(source,'imports/i18n/data/fi.i18n.json'),'utf8'));
   await expect(page.locator(control('SortTitleAsc'))).toHaveText(finnish['sort-boards-title-asc']);
   await expect(page.locator(control('BoardSearchLabel'))).toHaveText(finnish['search-boards']);
+  await click('CloseBoardSort');await page.locator('.weba-board-tile').first().click();await expect(page.locator('.boards-pagination')).toHaveCount(0);
+  await page.setViewportSize({width:1440,height:1000});if(!await page.locator(control('LeftNavigation')).isVisible())await click('ToggleNavigation');await click('Home');await expect(page.locator('.boards-pagination')).toHaveCount(1);
   expect(errors).toEqual([]);
   console.log('Native catalog browser: custom/unpaged and saved A-Z/Z-A choices, 25/5 disjoint pages, live search/reset, Unicode/private search, reload/personal isolation, external sort/page clamping, desktop/mobile menu exclusion/navigation, paging and Finnish labels passed');
  }finally{if(context)await context.close();if(browser)await browser.close();}

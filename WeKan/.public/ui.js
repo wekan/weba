@@ -66,9 +66,26 @@
     if(submit.value!==caption)submit.value=caption;
     if(changed&&panel.getBoundingClientRect().width)textarea.focus({preventScroll:true});
   }
+  function sortControls(){
+    for(const [name,value] of Object.entries({SortCustom:'custom',SortTitleAsc:'title-asc',SortTitleDesc:'title-desc'})){
+      let control=document.querySelector('[id$=".'+name+'"]');if(!control)continue;
+      if(control.tagName==='BUTTON'){
+        const link=document.createElement('a');
+        for(const attribute of control.attributes)link.setAttribute(attribute.name,attribute.value);
+        link.href='#';link.setAttribute('role','button');
+        while(control.firstChild)link.append(control.firstChild);
+        link.addEventListener('click',event=>{event.preventDefault();if(link.getAttribute('aria-disabled')==='true')event.stopImmediatePropagation();},true);
+        link.addEventListener('keydown',event=>{if(event.key===' '){event.preventDefault();link.click();}});
+        control.replaceWith(link);control=link;
+      }
+      if(!control.classList.contains('js-boards-sort'))control.classList.add('js-boards-sort');
+      if(control.dataset.sort!==value)control.dataset.sort=value;
+    }
+  }
   function decorate(){
     if(!root.document)return;
     workspaceForm();
+    sortControls();
     const boardSearch=document.querySelector('[id$=".BoardSearch:entry"]');
     if(boardSearch&&!boardSearch.classList.contains("js-board-search-input"))boardSearch.classList.add("js-board-search-input");
     const remaining=document.querySelector('[id$=".Remaining"]');

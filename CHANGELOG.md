@@ -2,6 +2,15 @@
 
 This work adds the following features and fixes:
 
+- Align native sort anchors, source data/active selectors and visible-only paging
+  selector while preserving native events, text updates and layout. Support
+  Enter/Space without fragment navigation. Execute the unchanged original sort
+  UI callback with fresh native accounts and an explicit independent native
+  preference/profile adapter.
+  All six spec 39 callbacks now have adapter-backed execution; production
+  DDP/routing/profile publications and full original suites remain pending.
+  Thanks to xet7.
+
 - Render native board catalogs as semantic lists with source board-name/search
   selectors and escaped literal titles. Preserve tile grid, selection and drag
   surfaces. Execute the unchanged original spec 39 search UI callback through
