@@ -185,6 +185,7 @@ Public Sub DeleteArchived(boardId As Integer, kind As String, itemId As Integer,
   Endif
   DatabaseTransactions.Begin($db)
   If kind = "board" Then
+    If $db.Tables.Exist("kb_board_space_assignments") Then $db.Delete("kb_board_space_assignments", "board_id=&1", boardId)
     If $db.Tables.Exist("kb_board_order") Then $db.Delete("kb_board_order", "board_id=&1", boardId)
     For Each tableName In ["kb_entries", "kb_files", "kb_card_lists", "kb_cards", "kb_lists", "kb_lanes", "kb_meta", "kb_history", "kb_order", "kb_activity", "kb_members", "kb_removed_members", "kb_member_flags", "kb_user_meta", "kb_card_assignees", "kb_card_members", "kb_card_people_order", "kb_card_people_sequence", "kb_card_dates", "kb_card_archive", "kb_item_changes", "kb_retired_authors"]
       $db.Delete(tableName, "board_id = &1", boardId)

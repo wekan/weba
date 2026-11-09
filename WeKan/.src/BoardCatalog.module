@@ -78,6 +78,7 @@ Private Function SelectBoards(params As Collection, archived As Boolean, paged A
   Dim total As Integer
   Dim offset As Long
   Dim include As Boolean
+  Dim assignments As Collection
   If Not params Then Error.Raise("Invalid board page")
   For Each key In params.Keys
     Select key
@@ -105,9 +106,7 @@ Private Function SelectBoards(params As Collection, archived As Boolean, paged A
   data["ids"] = ids
   data["total"] = 0
   If Not WebIdentity.Username Then Return data
-  ' Search spans the implemented categories. Unknown workspace/template menus
-  ' return nothing until those entities have their own guarded implementation.
-  If Not search And menu <> "remaining" And menu <> "starred" Then Return data
+  assignments = BoardSpaces.Assignments()
   offset = CLong(pageNumber - 1) * perPage
   r = KanbanStore.Boards(archived, sortBy = "title-desc")
   For Each r
@@ -116,6 +115,11 @@ Private Function SelectBoards(params As Collection, archived As Boolean, paged A
       include = InStr(String.LCase(CStr(r!title)), search) > 0
     Else If menu = "starred" Then
       include = WorkspaceStore.Setting(r!id, "board", r!id, "star") = "1"
+    Else If menu = "remaining" Then
+      include = Not assignments.Exist(CStr(r!id))
+    Else
+      include = assignments.Exist(CStr(r!id))
+      If include Then include = assignments[CStr(r!id)] = menu
     Endif
     If Not include Then Continue
     If Not paged Then

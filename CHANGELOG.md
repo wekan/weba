@@ -2,6 +2,14 @@
 
 This work adds the following features and fixes:
 
+- Add personal nested workspaces with rename/icon edits, cycle-safe moves,
+  subtree deletion and private board assignments. Filter categories before page
+  counts while preserving cross-category search and stars. Guard current-user
+  ownership and fresh board access, keep stable IDs and clean account/board
+  references. Verify rollback/retry, late permission changes, readonly isolation
+  and 75 original page-method comparisons; native workspace UI remains pending.
+  Thanks to xet7.
+
 - Document header menu exclusion/navigation, Sort Escape/anchors, stable shared
   CSS placement and stylesheet/font rescheduling. Record desktop/mobile and
   delayed-width/teardown verification without changing original-suite claims.

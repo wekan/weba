@@ -1,0 +1,232 @@
+' Personal workspace trees, category paging and account/board lifecycle.
+Public Sub Main()
+  Dim rootId As Integer
+  Dim childId As Integer
+  Dim leafId As Integer
+  Dim secondId As Integer
+  Dim otherId As Integer
+  Dim a As Integer
+  Dim b As Integer
+  Dim c As Integer
+  Dim foreignBoard As Integer
+  Dim oldId As Integer
+  Dim freshId As Integer
+  Dim tree As Variant[]
+  Dim data As Collection
+  Dim params As New Collection
+  Dim db As Connection
+  Dim r As Result
+  Dim before As String
+  Dim denied As Boolean
+  Dim history As Integer
+  Dim activity As Integer
+  WebDatabase.Register("spaces-owner", "x")
+  WebDatabase.Register("spaces-other", "x")
+  SignIn("spaces-other")
+  foreignBoard = KanbanStore.AddBoard("Foreign workspace board")
+  otherId = BoardSpaces.Add("Other private workspace")
+  SignIn("spaces-owner")
+  a = KanbanStore.AddBoard("Space Board Alpha")
+  b = KanbanStore.AddBoard("Space Board Bravo")
+  c = KanbanStore.AddBoard("Space Board Charlie")
+  BoardAccess.SetMember(a, "spaces-other", "read-only")
+  WorkspaceStore.OpenStore()
+  db = WebDatabase.OpenConnection()
+  r = db.Find("kb_history")
+  history = r.Count
+  r = db.Find("kb_activity")
+  activity = r.Count
+  rootId = BoardSpaces.Add(" Parent ")
+  childId = BoardSpaces.Add("Child", rootId)
+  leafId = BoardSpaces.Add("Leaf", childId)
+  secondId = BoardSpaces.Add("Second")
+  tree = BoardSpaces.Tree()
+  If tree.Count <> 2 Or tree[0]["name"] <> "Parent" Or tree[0]["children"][0]["children"].Count <> 1 Then Error.Raise("Initial nested tree wrong")
+  BoardSpaces.Edit(rootId, "Å workspace <literal>", "📁")
+  data = BoardSpaces.Record(rootId)
+  If data["name"] <> "Å workspace <literal>" Or data["icon"] <> "📁" Then Error.Raise("Workspace edit lost literal Unicode")
+  before = JSON.Encode(BoardSpaces.Tree())
+  Try BoardSpaces.Add("", rootId)
+  denied = Error
+  If Not denied Then Error.Raise("Empty name accepted")
+  Try BoardSpaces.Add("Foreign child", otherId)
+  denied = Error
+  If Not denied Then Error.Raise("Foreign parent accepted")
+  Try BoardSpaces.Edit(otherId, "Stolen")
+  denied = Error
+  If Not denied Then Error.Raise("Site admin edited another user's workspace")
+  Try BoardSpaces.Move(rootId, leafId)
+  denied = Error
+  If Not denied Then Error.Raise("Parent/descendant cycle accepted")
+  If JSON.Encode(BoardSpaces.Tree()) <> before Then Error.Raise("Denied tree changes wrote data")
+  BoardSpaces.Move(leafId, secondId)
+  BoardSpaces.Move(secondId, 0, rootId)
+  tree = BoardSpaces.Tree()
+  If tree[0]["id"] <> CStr(secondId) Or tree[0]["children"][0]["id"] <> CStr(leafId) Then Error.Raise("Reparent/root reorder failed")
+  BoardSpaces.Assign(a, rootId)
+  BoardSpaces.Assign(b, leafId)
+  BoardSpaces.Assign(c, childId)
+  data = BoardCatalog.Page(params)
+  If data["total"] Then Error.Raise("Remaining included assigned boards")
+  params["menu"] = CStr(rootId)
+  data = BoardCatalog.Page(params)
+  If data["total"] <> 1 Or data["ids"][0] <> a Then Error.Raise("Workspace category/count wrong")
+  params["menu"] = CStr(childId)
+  data = BoardCatalog.Unpaged(params)
+  If data["total"] <> 1 Or data["ids"][0] <> c Then Error.Raise("Child category wrong")
+  params["search"] = "space board"
+  params["menu"] = "remaining"
+  data = BoardCatalog.Page(params)
+  If data["total"] <> 3 Then Error.Raise("Search failed to span workspaces")
+  params.Remove("search")
+  WorkspaceStore.SetSetting(a, "board", a, "star", "1")
+  params["menu"] = "starred"
+  data = BoardCatalog.Page(params)
+  If data["total"] <> 1 Or data["ids"][0] <> a Then Error.Raise("Workspace assignment hid a starred board")
+  Try BoardSpaces.Assign(foreignBoard, rootId)
+  denied = Error
+  If Not denied Then Error.Raise("Site admin assigned an unreadable board")
+  Try BoardSpaces.Assign(a, otherId)
+  denied = Error
+  If Not denied Then Error.Raise("Foreign workspace assignment accepted")
+  SignIn("spaces-other")
+  tree = BoardSpaces.Tree()
+  If tree.Count <> 1 Or tree[0]["id"] <> CStr(otherId) Then Error.Raise("Workspace trees leaked across users")
+  BoardSpaces.Assign(a, otherId)
+  If BoardSpaces.Assignments()[CStr(a)] <> CStr(otherId) Then Error.Raise("Readonly member could not organize own workspace")
+  SignIn("spaces-owner")
+  If BoardSpaces.Assignments()[CStr(a)] <> CStr(rootId) Then Error.Raise("Another user's assignment overwrote personal placement")
+  r = db.Find("kb_history")
+  If r.Count <> history Then Error.Raise("Personal spaces wrote shared history")
+  r = db.Find("kb_activity")
+  If r.Count <> activity Then Error.Raise("Personal spaces wrote shared activity")
+  WorkspaceStore.SetArchived(a, "board", a, True)
+  params["menu"] = CStr(rootId)
+  data = BoardCatalog.Page(params)
+  If data["total"] Then Error.Raise("Archived workspace board leaked into active category")
+  data = BoardCatalog.Page(params, True)
+  If data["total"] <> 1 Or data["ids"][0] <> a Then Error.Raise("Archived workspace category lost its board")
+  WorkspaceStore.SetArchived(a, "board", a, False)
+  BoardAccess.RemoveMember(a, "spaces-other")
+  SignIn("spaces-other")
+  BoardSpaces.Assign(a)
+  If BoardSpaces.Assignments().Count Then Error.Raise("Stale personal assignment could not be cleared")
+  SignIn("spaces-owner")
+  BoardSpaces.Remove(rootId)
+  tree = BoardSpaces.Tree()
+  If tree.Count <> 1 Or tree[0]["id"] <> CStr(secondId) Then Error.Raise("Subtree delete damaged surviving tree")
+  If BoardSpaces.Assignments().Count <> 1 Or BoardSpaces.Assignments()[CStr(b)] <> CStr(leafId) Then Error.Raise("Subtree delete did not clear exactly its assignments")
+  params["menu"] = "remaining"
+  data = BoardCatalog.Page(params)
+  If data["total"] <> 2 Then Error.Raise("Deleted subtree boards did not return to Remaining")
+  oldId = BoardSpaces.Add("Ephemeral")
+  BoardSpaces.Remove(oldId)
+  freshId = BoardSpaces.Add("Fresh")
+  If freshId <= oldId Then Error.Raise("Deleted workspace ID was reused")
+  Try BoardSpaces.Edit(oldId, "Stale edit")
+  denied = Error
+  If Not denied Then Error.Raise("Stale workspace ID edited a new node")
+  CheckRollback(a, b)
+  CheckLateParent(freshId)
+  CheckLateAssignment(a, otherId)
+  CheckDuplicateNames()
+  db = WebDatabase.OpenConnection()
+  SignIn("spaces-owner")
+  BoardSpaces.Assign(b, freshId)
+  BoardAccess.SetMember(b, "spaces-other", "read-only")
+  SignIn("spaces-other")
+  BoardSpaces.Assign(b, otherId)
+  SignIn("spaces-owner")
+  WorkspaceStore.SetArchived(b, "board", b, True)
+  WorkspaceActions.DeleteArchived(b, "board", b, "Space Board Bravo")
+  r = db.Find("kb_board_space_assignments", "board_id=&1", b)
+  If r.Count Then Error.Raise("Permanent board deletion left assignments")
+  WebDatabase.DeleteUser("spaces-other")
+  r = db.Find("kb_board_spaces", "username=&1", "spaces-other")
+  If r.Count Then Error.Raise("Account deletion left personal workspace nodes")
+  r = db.Find("kb_board_space_assignments", "username=&1", "spaces-other")
+  If r.Count Then Error.Raise("Account deletion left workspace assignments")
+  WebDatabase.NewUser("spaces-other", "x", False)
+  SignIn("spaces-other")
+  If BoardSpaces.Tree().Count Or BoardSpaces.Assignments().Count Then Error.Raise("Recreated user inherited workspaces")
+  Session["auth_generation"] = 0
+  Try BoardSpaces.Add("Stale")
+  denied = Error
+  If Not denied Then Error.Raise("Stale session mutated workspace tree")
+  Print "Board spaces: personal nested CRUD/reparenting, stable IDs, readonly assignment, foreign/cycle/stale denial, category search/counts, atomic rollback and account/board cleanup passed"
+End
+
+Private Sub CheckRollback(a As Integer, b As Integer)
+  Dim rootId As Integer = BoardSpaces.Add("Transaction root")
+  Dim childId As Integer = BoardSpaces.Add("Transaction child", rootId)
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim r As Result
+  Dim tree As String
+  Dim assignments As String
+  Dim before As Integer
+  Dim denied As Boolean
+  BoardSpaces.Assign(a, childId)
+  tree = JSON.Encode(BoardSpaces.Tree())
+  assignments = JSON.Encode(BoardSpaces.Assignments())
+  db.Exec("CREATE TRIGGER fail_space_delete BEFORE DELETE ON kb_board_spaces WHEN OLD.id=" & CStr(rootId) & " BEGIN SELECT RAISE(ABORT,'injected workspace delete failure'); END")
+  Try BoardSpaces.Remove(rootId)
+  denied = Error
+  If Not denied Then Error.Raise("Injected subtree failure ignored")
+  If JSON.Encode(BoardSpaces.Tree()) <> tree Or JSON.Encode(BoardSpaces.Assignments()) <> assignments Then Error.Raise("Subtree failure left partial changes")
+  db.Exec("DROP TRIGGER fail_space_delete")
+  BoardSpaces.Remove(rootId)
+  r = db.Find("kb_board_space_ids")
+  before = r.Count
+  db.Exec("CREATE TRIGGER fail_space_create BEFORE INSERT ON kb_board_spaces WHEN NEW.name='Fail' BEGIN SELECT RAISE(ABORT,'injected workspace create failure'); END")
+  Try BoardSpaces.Add("Fail")
+  denied = Error
+  If Not denied Then Error.Raise("Injected workspace creation failure ignored")
+  r = db.Find("kb_board_space_ids")
+  If r.Count <> before Then Error.Raise("Failed creation leaked allocator rows")
+  db.Exec("DROP TRIGGER fail_space_create")
+  BoardSpaces.Add("Retry succeeded")
+End
+
+Private Sub CheckLateParent(parentId As Integer)
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim tree As String = JSON.Encode(BoardSpaces.Tree())
+  Dim denied As Boolean
+  db.Exec("CREATE TRIGGER change_space_parent AFTER UPDATE ON users WHEN NEW.username='spaces-owner' BEGIN UPDATE kb_board_spaces SET username='spaces-other' WHERE id=" & CStr(parentId) & "; END")
+  Try BoardSpaces.Add("Late foreign child", parentId)
+  denied = Error
+  If Not denied Then Error.Raise("Late foreign parent bypassed workspace guard")
+  If JSON.Encode(BoardSpaces.Tree()) <> tree Then Error.Raise("Late parent failure leaked tree change")
+  db.Exec("DROP TRIGGER change_space_parent")
+End
+
+Private Sub CheckLateAssignment(boardId As Integer, spaceId As Integer)
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim before As String
+  Dim denied As Boolean
+  BoardAccess.SetMember(boardId, "spaces-other", "read-only")
+  SignIn("spaces-other")
+  before = JSON.Encode(BoardSpaces.Assignments())
+  db.Exec("CREATE TRIGGER change_space_membership AFTER UPDATE ON kb_boards WHEN NEW.id=" & CStr(boardId) & " BEGIN INSERT INTO kb_removed_members(board_id,username,role) VALUES (NEW.id,'spaces-other','read-only'); END")
+  Try BoardSpaces.Assign(boardId, spaceId)
+  denied = Error
+  If Not denied Then Error.Raise("Late membership loss bypassed assignment guard")
+  If JSON.Encode(BoardSpaces.Assignments()) <> before Then Error.Raise("Late membership failure wrote assignment")
+  BoardAccess.RequireRead(boardId)
+  db.Exec("DROP TRIGGER change_space_membership")
+  BoardSpaces.Assign(boardId, spaceId)
+  BoardSpaces.Assign(boardId)
+  SignIn("spaces-owner")
+End
+
+Private Sub CheckDuplicateNames()
+  Dim firstId As Integer = BoardSpaces.Add("Same name")
+  Dim secondId As Integer = BoardSpaces.Add("Same name")
+  If firstId = secondId Then Error.Raise("Duplicate workspace names reused identity")
+  BoardSpaces.Remove(firstId)
+  BoardSpaces.Remove(secondId)
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

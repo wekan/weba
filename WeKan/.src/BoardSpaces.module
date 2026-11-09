@@ -1,0 +1,318 @@
+' Personal workspace tree and board assignments for the effective principal.
+Export
+Private $db As Connection
+
+Private Sub OpenStore()
+  Dim t As Table
+  If $db Then Return
+  $db = WebDatabase.OpenConnection()
+  If Not $db.Tables.Exist("kb_board_space_ids") Then
+    t = $db.Tables.Add("kb_board_space_ids")
+    t.Fields.Add("id", db.Serial)
+    t.Fields.Add("allocated", db.Boolean)
+    t.PrimaryKey = ["id"]
+    t.Update()
+  Endif
+  If Not $db.Tables.Exist("kb_board_spaces") Then
+    t = $db.Tables.Add("kb_board_spaces")
+    t.Fields.Add("id", db.Integer)
+    t.Fields.Add("username", db.String, 255)
+    t.Fields.Add("parent_id", db.Integer)
+    t.Fields.Add("name", db.String)
+    t.Fields.Add("icon", db.String)
+    t.Fields.Add("sort_order", db.Integer)
+    t.PrimaryKey = ["id"]
+    t.Update()
+  Endif
+  If Not $db.Tables.Exist("kb_board_space_assignments") Then
+    t = $db.Tables.Add("kb_board_space_assignments")
+    t.Fields.Add("username", db.String, 255)
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("space_id", db.Integer)
+    t.PrimaryKey = ["username", "board_id"]
+    t.Update()
+  Endif
+Catch
+  $db = Null
+  Error.Propagate()
+End
+
+Private Function Principal() As String
+  Dim username As String = WebIdentity.Username
+  If Not username Then Error.Raise("Sign in required")
+  OpenStore()
+  If Not WebDatabase.UserExists(username) Then Error.Raise("Sign in required")
+  Return username
+End
+
+Private Function BeginChange() As String
+  Dim username As String = Principal()
+  Dim transaction As Boolean
+  Dim failure As String
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE users SET username=username WHERE username=&1", username)
+  If WebIdentity.Username <> username Or Not WebDatabase.UserExists(username) Then Error.Raise("Sign in required")
+  Return username
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+Private Function Node(spaceId As Integer, username As String) As Result
+  Dim r As Result = $db.Find("kb_board_spaces", "id=&1 AND username=&2", spaceId, username)
+  If Not r.Available Then Error.Raise("Workspace not found")
+  Return r
+End
+
+Public Function Record(spaceId As Integer) As Collection
+  Dim username As String = Principal()
+  Dim data As New Collection
+  Dim r As Result = Node(spaceId, username)
+  data["id"] = spaceId
+  data["parentId"] = r!parent_id
+  data.Add(CStr(r!name), "name")
+  data.Add(CStr(r!icon), "icon")
+  Return data
+End
+
+Public Function Tree() As Variant[]
+  Dim username As String = Principal()
+  Dim roots As New Variant[]
+  Dim nodes As New Collection
+  Dim parents As New Collection
+  Dim ids As New Integer[]
+  Dim queue As New Variant[]
+  Dim seen As New Collection
+  Dim r As Result
+  Dim row As Collection
+  Dim child As Collection
+  Dim id As Integer
+  Dim parentId As Integer
+  Dim cursor As Integer
+  r = $db.Find("kb_board_spaces", "username=&1 ORDER BY sort_order,id", username)
+  For Each r
+    row = New Collection
+    row.Add(CStr(r!id), "id")
+    row.Add(CStr(r!name), "name")
+    If CStr(r!icon) Then row.Add(CStr(r!icon), "icon")
+    row["children"] = New Variant[]
+    nodes[CStr(r!id)] = row
+    parents[CStr(r!id)] = r!parent_id
+    ids.Add(r!id)
+  Next
+  For Each id In ids
+    parentId = parents[CStr(id)]
+    If parentId = 0 Then
+      roots.Add(nodes[CStr(id)])
+    Else
+      If Not nodes.Exist(CStr(parentId)) Then Error.Raise("Invalid workspace tree")
+      nodes[CStr(parentId)]["children"].Add(nodes[CStr(id)])
+    Endif
+  Next
+  For Each row In roots
+    queue.Add(row)
+  Next
+  While cursor < queue.Count
+    row = queue[cursor]
+    If seen.Exist(row["id"]) Then Error.Raise("Invalid workspace tree")
+    seen[row["id"]] = True
+    For Each child In row["children"]
+      queue.Add(child)
+    Next
+    Inc cursor
+  Wend
+  If seen.Count <> nodes.Count Then Error.Raise("Invalid workspace tree")
+  Return roots
+End
+
+Public Function Assignments() As Collection
+  Dim username As String = Principal()
+  Dim data As New Collection
+  Dim r As Result = $db.Find("kb_board_space_assignments", "username=&1 ORDER BY board_id", username)
+  For Each r
+    data.Add(CStr(r!space_id), CStr(r!board_id))
+  Next
+  Return data
+End
+
+Private Function NextOrder(username As String, parentId As Integer) As Integer
+  Dim r As Result = $db.Find("kb_board_spaces", "username=&1 AND parent_id=&2 ORDER BY sort_order DESC,id DESC", username, parentId)
+  If r.Available Then Return CInt(r!sort_order) + 1
+  Return 0
+End
+
+Public Function Add(name As String, Optional parentId As Integer) As Integer
+  Dim username As String = Principal()
+  Dim r As Result
+  Dim id As Integer
+  Dim transaction As Boolean
+  Dim failure As String
+  name = Trim(name)
+  If name = "" Or parentId < 0 Then Error.Raise("Enter a workspace name")
+  If parentId > 0 Then Node(parentId, username)
+  username = BeginChange()
+  transaction = True
+  If parentId > 0 Then Node(parentId, username)
+  r = $db.Create("kb_board_space_ids")
+  r["allocated"] = True
+  r.Update()
+  id = $db.LastInsertId
+  r = $db.Create("kb_board_spaces")
+  r["id"] = id
+  r["username"] = username
+  r["parent_id"] = parentId
+  r["name"] = name
+  r["icon"] = ""
+  r["sort_order"] = NextOrder(username, parentId)
+  r.Update()
+  DatabaseTransactions.Commit($db)
+  transaction = False
+  Return id
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+Public Sub Edit(spaceId As Integer, name As String, Optional icon As String)
+  Dim username As String = Principal()
+  Dim r As Result
+  Dim transaction As Boolean
+  Dim failure As String
+  name = Trim(name)
+  If Not name Then Error.Raise("Enter a workspace name")
+  Node(spaceId, username)
+  username = BeginChange()
+  transaction = True
+  Node(spaceId, username)
+  r = $db.Edit("kb_board_spaces", "id=&1 AND username=&2", spaceId, username)
+  r["name"] = name
+  r["icon"] = icon
+  r.Update()
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+Public Sub Assign(boardId As Integer, Optional spaceId As Integer)
+  Dim username As String = Principal()
+  Dim r As Result
+  Dim transaction As Boolean
+  Dim failure As String
+  If boardId <= 0 Or spaceId < 0 Then Error.Raise("Invalid workspace assignment")
+  If spaceId > 0 Then
+    BoardAccess.RequireRead(boardId)
+    Node(spaceId, username)
+  Endif
+  username = BeginChange()
+  transaction = True
+  If spaceId > 0 Then
+    $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+    BoardAccess.RequireRead(boardId)
+    Node(spaceId, username)
+    r = $db.Edit("kb_board_space_assignments", "username=&1 AND board_id=&2", username, boardId)
+    If Not r.Available Then
+      r = $db.Create("kb_board_space_assignments")
+      r["username"] = username
+      r["board_id"] = boardId
+    Endif
+    r["space_id"] = spaceId
+    r.Update()
+  Else
+    ' Removing a stale personal assignment needs no current board access.
+    $db.Delete("kb_board_space_assignments", "username=&1 AND board_id=&2", username, boardId)
+  Endif
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+Public Sub Move(spaceId As Integer, parentId As Integer, Optional beforeId As Integer)
+  Dim username As String = Principal()
+  Dim currentId As Integer = parentId
+  Dim seen As New Collection
+  Dim ids As New Integer[]
+  Dim id As Integer
+  Dim at As Integer
+  Dim index As Integer
+  Dim r As Result
+  Dim transaction As Boolean
+  Dim failure As String
+  If parentId < 0 Or beforeId < 0 Then Error.Raise("Invalid workspace move")
+  Node(spaceId, username)
+  username = BeginChange()
+  transaction = True
+  Node(spaceId, username)
+  While currentId > 0
+    If currentId = spaceId Or seen.Exist(CStr(currentId)) Then Error.Raise("Invalid workspace move")
+    seen[CStr(currentId)] = True
+    r = Node(currentId, username)
+    currentId = r!parent_id
+  Wend
+  r = $db.Find("kb_board_spaces", "username=&1 AND parent_id=&2 AND id<>&3 ORDER BY sort_order,id", username, parentId, spaceId)
+  For Each r
+    ids.Add(r!id)
+  Next
+  at = ids.Count
+  If beforeId > 0 Then
+    at = ids.Find(beforeId)
+    If at < 0 Then Error.Raise("Invalid workspace move")
+  Endif
+  ids.Add(spaceId, at)
+  For Each id In ids
+    r = $db.Edit("kb_board_spaces", "username=&1 AND id=&2", username, id)
+    r["parent_id"] = parentId
+    r["sort_order"] = index
+    r.Update()
+    Inc index
+  Next
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+Public Sub Remove(spaceId As Integer)
+  Dim username As String = Principal()
+  Dim ids As Integer[] = [spaceId]
+  Dim seen As New Collection
+  Dim cursor As Integer
+  Dim id As Integer
+  Dim r As Result
+  Dim transaction As Boolean
+  Dim failure As String
+  Node(spaceId, username)
+  username = BeginChange()
+  transaction = True
+  Node(spaceId, username)
+  While cursor < ids.Count
+    id = ids[cursor]
+    If seen.Exist(CStr(id)) Then Error.Raise("Invalid workspace tree")
+    seen[CStr(id)] = True
+    r = $db.Find("kb_board_spaces", "username=&1 AND parent_id=&2 ORDER BY sort_order,id", username, id)
+    For Each r
+      ids.Add(r!id)
+    Next
+    Inc cursor
+  Wend
+  For cursor = ids.Max To 0 Step -1
+    $db.Delete("kb_board_space_assignments", "username=&1 AND space_id=&2", username, ids[cursor])
+    $db.Delete("kb_board_spaces", "username=&1 AND id=&2", username, ids[cursor])
+  Next
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End

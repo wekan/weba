@@ -16,6 +16,9 @@ const {execFileSync}=require('node:child_process');
    {menu:'starred'},{menu:'starred',search:'Board 0'},{menu:'unknown-workspace'},
    {menu:'unknown-workspace',search:'Board 0'},{page:0,perPage:0},{page:1,perPage:-1},
    {page:2147483647,perPage:200},{perPage:1000},{sortBy:'custom'},
+   {menu:'native-root'},{menu:'native-child'},{menu:'native-other'},
+   {menu:'native-root',search:'Board 0'},{menu:'native-child',search:'Secret User2 Board'},
+   {menu:'native-other',sortBy:'title-desc',perPage:1},{menu:'native-root',page:2,perPage:1},
   ])cases.push({user,params});
   for(const name of ['.src','.public'])fs.cpSync(path.join(root,'WeKan',name),path.join(work,name),{recursive:true});
   fs.copyFileSync(path.join(root,'WeKan/.project'),path.join(work,'.project'));
@@ -24,8 +27,10 @@ const {execFileSync}=require('node:child_process');
   execFileSync(process.env.GBC||'gbc3',['-j','1','-a',work],{stdio:'inherit'});
   const input=JSON.parse(execFileSync(process.env.GBX||'gbx3',['-s','BoardCatalogMatrix',work],{encoding:'utf8',env:{...process.env,WEBA_API_REQUEST:'0',WEBA_DB_TYPE:'sqlite3',WEBA_DB_HOST:work,WEBA_DB_NAME:'database.db',WEBA_DB_USER:'',WEBA_DB_PASSWORD:''}}));
   const inactive=(id,user)=>input.removed.some(row=>row.board_id===id&&row.username===user);
-  // Explicit native-schema adapter: an existing SQL owner is an implicit member.
-  const boards=input.boards.map(row=>({_id:row.id,title:row.title,archived:row.archived,type:'board',permission:'private',members:[
+  // Explicit identity adapter preserves native numeric tie order in string IDs.
+  const boardKey=id=>'sql:'+String(id).padStart(10,'0');
+  // An existing native SQL owner is an implicit active member.
+  const boards=input.boards.map(row=>({_id:boardKey(row.id),title:row.title,archived:row.archived,type:'board',permission:'private',members:[
    {userId:row.owner,isActive:!!row.owner&&!inactive(row.id,row.owner)},
    ...input.members.filter(m=>m.board_id===row.id&&m.username!==row.owner).map(m=>({userId:m.username,isActive:!inactive(row.id,m.username)})),
   ]}));
@@ -48,7 +53,7 @@ const {execFileSync}=require('node:child_process');
   const original=vm.runInNewContext('(async function(params) {'+raw.slice(start+signature.length,end)+'\n})',{
    // Only valid source parameters are compared; negative validation is native-tested.
    check:()=>{},Match:{Optional:value=>value,ObjectIncluding:value=>value,test:(value,type)=>{assert.equal(type.name,"String");return typeof value==="string";}},
-   ReactiveCache:{getUser:async user=>({orgIds:()=>[],teamIds:()=>[],emailDomains:()=>[],profile:{starredBoards:input.stars.filter(row=>row.username===user&&row.value==='1').map(row=>row.board_id)}})},
+   ReactiveCache:{getUser:async user=>({orgIds:()=>[],teamIds:()=>[],emailDomains:()=>[],profile:{starredBoards:input.stars.filter(row=>row.username===user&&row.value==='1').map(row=>boardKey(row.board_id)),boardWorkspaceAssignments:Object.fromEntries(input.assignments.filter(row=>row.username===user).map(row=>[boardKey(row.board_id),String(row.space_id)]))}})},
    ...require(path.join(source,'models/lib/boardVisibilitySelectors.js')),
    require:name=>{assert.equal(name,'/models/lib/allBoardsFacets');return require(path.join(source,'models/lib/allBoardsFacets.js'));},
    Boards:{find:(selector,options={})=>{
@@ -61,9 +66,12 @@ const {execFileSync}=require('node:child_process');
   });
   assert.equal(input.actual.length,cases.length);
   for(let index=0;index<cases.length;index++){
-   const testCase=cases[index],expected=await original.call({userId:testCase.user},testCase.params);
-   assert.deepEqual(input.actual[index].result,JSON.parse(JSON.stringify(expected)),'native/source case '+JSON.stringify(testCase));
+   const testCase={...cases[index],params:{...cases[index].params}};
+   if(input.spaceIds[testCase.params.menu])testCase.params.menu=input.spaceIds[testCase.params.menu];
+   const expected=await original.call({userId:testCase.user},testCase.params);
+   const actual={...input.actual[index].result,ids:input.actual[index].result.ids.map(boardKey)};
+   assert.deepEqual(actual,JSON.parse(JSON.stringify(expected)),'native/source case '+JSON.stringify(testCase));
   }
-  console.log(`Board catalog source conformance: ${cases.length} native pages match the original getAllBoardsPage body on raw SQL inputs; direct membership, stars, literal/Unicode search, scopes, sorts and clamps covered; UI/workspaces/facets/full wire suites remain pending`);
+  console.log(`Board catalog source conformance: ${cases.length} native pages match the original getAllBoardsPage body on raw SQL inputs; direct membership, personal workspace assignments, stars, cross-category search, scopes, sorts and clamps covered; UI/workspace tree/facets/full wire suites remain pending`);
  }finally{fs.rmSync(work,{recursive:true,force:true});}
 })().catch(error=>{console.error(error.stack||String(error));process.exitCode=1;});

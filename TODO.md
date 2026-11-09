@@ -6,6 +6,14 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Current UI/API/security work
 
+- Completed personal workspace tree CRUD/reparenting and board assignments,
+  category filtering before counts, current-principal/foreign/cycle guards and
+  account/board cleanup. Native tests cover readonly personal organization,
+  rollback/retry, late parent/membership changes, stable IDs and recreation.
+  Original getAllBoardsPage comparison now covers 75 cases on raw SQL fixtures.
+- In progress: native workspace tree navigation, create/rename/delete and board
+  assignment controls, followed by workspace drag gestures and original callbacks.
+
 - Documented header menu lifecycle and stable shared styles, delayed stylesheet/
   font placement and safe teardown. Recorded the new real browser/unit evidence;
   workspace and full original-suite requirements remain open.
@@ -18,10 +26,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   drafts and clickable close controls. Delayed-width/async-error tests, full
   local/test-live and existing layout regressions pass. Original suite counts
   remain unchanged.
-- Next workspace implementation: use the current user's boardWorkspacesTree and
-  boardWorkspaceAssignments semantics from server/models/users.js and the All
-  Boards page method. Create parent/name nodes, assign boards privately and apply
-  category/search/count rules before claiming the Latin workspace UI callback.
+- Next workspace UI: expose the implemented personal tree/assignment service
+  through native Gambas components and verify live navigation, category counts
+  and the Latin workspace form before claiming its original UI callback.
 
 - Documented personal rank merging, readonly/sorted/archive boundaries, fresh
   transaction checks, cleanup, expected-order focus and trusted browser evidence.

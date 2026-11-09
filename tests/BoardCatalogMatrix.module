@@ -2,18 +2,28 @@
 Public Sub Main()
   Dim boardId As Integer
   Dim index As Integer
+  Dim firstBoard As Integer
+  Dim rootSpace As Integer
+  Dim childSpace As Integer
+  Dim otherSpace As Integer
   Dim r As Result
   Dim data As New Collection
   Dim item As Collection
   Dim testCase As Collection
   Dim results As New Variant[]
+  Dim spaceIds As Collection
   WebDatabase.Register("catalog-matrix-owner", "x")
   WebDatabase.Register("catalog-matrix-other", "x")
   SignIn("catalog-matrix-owner")
   For index = 1 To 30
     boardId = KanbanStore.AddBoard("Board " & Format(index, "00"))
+    If index = 1 Then firstBoard = boardId
   Next
   WorkspaceStore.SetSetting(boardId, "board", boardId, "star", "1")
+  rootSpace = BoardSpaces.Add("Catalog workspace")
+  childSpace = BoardSpaces.Add("Catalog child", rootSpace)
+  BoardSpaces.Assign(boardId, rootSpace)
+  BoardSpaces.Assign(firstBoard, childSpace)
   KanbanStore.AddBoard("Literal .*%_ board")
   KanbanStore.AddBoard("Ångström board")
   boardId = KanbanStore.AddBoard("Archived board")
@@ -22,6 +32,8 @@ Public Sub Main()
   KanbanStore.AddBoard("Secret User2 Board")
   boardId = KanbanStore.AddBoard("Shared board")
   BoardAccess.SetMember(boardId, "catalog-matrix-owner", "normal")
+  otherSpace = BoardSpaces.Add("Other catalog workspace")
+  BoardSpaces.Assign(boardId, otherSpace)
   boardId = KanbanStore.AddBoard("Revoked board")
   BoardAccess.SetMember(boardId, "catalog-matrix-owner", "normal")
   BoardAccess.RemoveMember(boardId, "catalog-matrix-owner")
@@ -33,7 +45,16 @@ Public Sub Main()
   data["removed"] = RawRows(r, ["board_id", "username"])
   r = WebDatabase.OpenConnection().Find("kb_user_meta", "kind=&1 AND setting=&2", "board", "star")
   data["stars"] = RawRows(r, ["board_id", "username", "value"])
+  r = WebDatabase.OpenConnection().Find("kb_board_space_assignments")
+  data["assignments"] = RawRows(r, ["username", "board_id", "space_id"])
+  item = New Collection
+  item["native-root"] = CStr(rootSpace)
+  item["native-child"] = CStr(childSpace)
+  item["native-other"] = CStr(otherSpace)
+  data["spaceIds"] = item
+  spaceIds = item
   For Each testCase In JSON.Decode(File.Load(".public/catalog-cases.json"))
+    If spaceIds.Exist(CStr(testCase["params"]["menu"])) Then testCase["params"]["menu"] = spaceIds[testCase["params"]["menu"]]
     SignIn(testCase["user"])
     item = New Collection
     item["result"] = BoardCatalog.Page(testCase["params"])
