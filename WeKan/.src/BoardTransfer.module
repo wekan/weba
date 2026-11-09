@@ -102,6 +102,7 @@ Public Function ExportData(boardId As Integer, kind As String, itemId As Integer
   For Each r
     If cardIds.Find(r!card_id) < 0 Then Continue
     item = Row(r, ["id", "card_id", "filename"])
+    item["mime"] = AttachmentData.Mime(boardId, r!card_id, r!id)
     item["base64"] = Base64(r!content.Data)
     item["author_name"] = CardContent.AuthorName(boardId, r!card_id, "file", r!id)
     files.Add(item)
@@ -234,7 +235,7 @@ Public Function ImportData(text As String, title As String) As Integer
   If entryMap.Count <> data["entries"].Count Then Error.Raise("Unknown exported detail kind")
   For Each item In data["files"]
     If Not cardMap.Exist(CStr(item["card_id"])) Then Error.Raise("Exported attachment has no card")
-    id = CardContent.AddFile(boardId, cardMap[CStr(item["card_id"])], item["filename"], UnBase64(item["base64"]))
+    id = CardContent.AddFile(boardId, cardMap[CStr(item["card_id"])], item["filename"], UnBase64(item["base64"]), If(item.Exist("mime"), CStr(item["mime"]), "application/octet-stream"), 67108864)
     If item.Exist("id") Then
       oldId = CStr(item["id"])
       If fileMap.Exist(oldId) Then Error.Raise("Duplicate attachment ID")

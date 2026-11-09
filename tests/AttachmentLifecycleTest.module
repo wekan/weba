@@ -18,6 +18,7 @@ Public Sub Main()
   Dim historyId As Integer
   Dim row As Collection
   Dim boardCount As Integer
+  Dim emptyFile As Integer
   WebDatabase.Register("attachment-global", "x")
   WebDatabase.Register("attachment-owner", "x")
   WebDatabase.Register("attachment-editor", "x")
@@ -31,10 +32,30 @@ Public Sub Main()
   cardId = KanbanStore.SaveCard(boardId, 0, "Files", "", "Default", "Todo", "attachment-assigned", "", "")
   other = KanbanStore.SaveCard(boardId, 0, "Other files", "", "Default", "Todo", "", "", "")
   first = CardContent.AddFile(boardId, cardId, "retained <literal>.bin", "a" & Chr(0) & "b")
-  second = CardContent.AddFile(boardId, cardId, "other.bin", "second")
+  second = CardContent.AddFile(boardId, cardId, "other.bin", "second", "application/x-retained-test")
+  emptyFile = CardContent.AddFile(boardId, other, "empty.bin", "")
+  r = CardContent.FileRecord(boardId, other, emptyFile)
+  If Len(r!content.Data) <> 0 Then Error.Raise("Zero-byte file did not round trip")
   foreign = CardContent.AddFile(boardId, other, "private.bin", "private")
   AttachmentLifecycle.SetCover(boardId, cardId, first)
+  WorkspaceStore.SetSetting(boardId, "board", boardId, "allowsAttachments", "0")
+  copied = WorkspaceStore.Copy(boardId, "board", boardId, "Disabled attachments copy")
+  If WorkspaceStore.Setting(copied, "board", copied, "allowsAttachments", "1") <> "0" Then Error.Raise("Board copy lost attachment policy")
+  WorkspaceStore.SetSetting(boardId, "board", boardId, "allowsAttachments", "1")
   db = WebDatabase.OpenConnection()
+  BoardAccess.SetMember(boardId, "attachment-editor", "board-admin")
+  SignIn("attachment-editor")
+  before = Snapshot()
+  db.Exec("CREATE TRIGGER attachment_policy_inject AFTER UPDATE ON kb_meta WHEN NEW.setting='allowsAttachments' BEGIN UPDATE kb_members SET role='read-only' WHERE board_id=" & Str(boardId) & " AND username='attachment-editor'; END")
+  Try WorkspaceStore.SetSetting(boardId, "board", boardId, "allowsAttachments", "0")
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Attachment setting accepted late management loss")
+  db.Exec("DROP TRIGGER attachment_policy_inject")
+  Try WorkspaceStore.SetSetting(boardId, "card", cardId, "allowsAttachments", "0")
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Attachment policy escaped board setting scope")
+  SignIn("attachment-owner")
+  BoardAccess.SetMember(boardId, "attachment-editor", "normal")
   SignIn("attachment-reader")
   before = Snapshot()
   Try AttachmentLifecycle.Delete(boardId, cardId, first)
@@ -104,10 +125,12 @@ Public Sub Main()
   copied = WorkspaceStore.Copy(boardId, "card", cardId, "Cover copy")
   r = CardContent.FileRecord(boardId, copied, AttachmentLifecycle.CoverId(boardId, copied))
   If r!filename <> "other.bin" Or r!id = second Then Error.Raise("Copy did not remap live cover")
+  If AttachmentData.Mime(boardId, copied, r!id) <> "application/x-retained-test" Then Error.Raise("Copy lost attachment MIME")
   imported = BoardTransfer.ImportData(BoardTransfer.ExportData(boardId, "card", cardId), "Cover exchange")
   r = KanbanStore.Cards(imported)
   r = CardContent.FileRecord(imported, r!id, AttachmentLifecycle.CoverId(imported, r!id))
   If r!filename <> "other.bin" Or r!id = second Then Error.Raise("Exchange did not remap live cover")
+  If AttachmentData.Mime(imported, r!card_id, r!id) <> "application/x-retained-test" Then Error.Raise("Exchange lost attachment MIME")
   data = JSON.Decode(BoardTransfer.ExportData(boardId, "card", cardId))
   row = data["cards"][0]
   row["coverFile"] = 999999
@@ -119,6 +142,7 @@ Public Sub Main()
   row.Remove("coverFile")
   For Each row In data["files"]
     row.Remove("id")
+    row.Remove("mime")
   Next
   imported = BoardTransfer.ImportData(JSON.Encode(data), "Legacy files exchange")
   r = KanbanStore.Cards(imported)
@@ -132,6 +156,7 @@ Public Sub Main()
   r = AttachmentLifecycle.History(target, cardId)
   If r.Count <> 5 Then Error.Raise("Move lost attachment history")
   If AttachmentLifecycle.CoverId(target, cardId) <> second Then Error.Raise("Move lost cover")
+  If AttachmentData.Mime(target, cardId, second) <> "application/x-retained-test" Then Error.Raise("Move lost MIME scope")
   If Not AttachmentLifecycle.Restore(target, cardId, first) Then Error.Raise("Moved attachment cannot be restored")
   SignIn("attachment-global")
   RecoveryStore.SetEnabled(True)
@@ -143,6 +168,8 @@ Public Sub Main()
   If r.Count Then Error.Raise("Board purge left attachment tombstones")
   r = db.Find("kb_attachment_history", "board_id=&1", target)
   If r.Count Then Error.Raise("Board purge left attachment history")
+  r = db.Find("kb_attachment_data", "board_id=&1", target)
+  If r.Count Then Error.Raise("Board purge left attachment attributes")
   r = db.Find("kb_files", "board_id=&1", target)
   If r.Count Then Error.Raise("Board purge left retained file bytes")
   Print "Attachment lifecycle: retained bytes, live filtering, idempotency, exact actor/scope, cover clearing/no-restore/remapping, history/write rollback, copy/exchange/move and gated purge cleanup passed"
@@ -172,10 +199,12 @@ Private Function Snapshot() As String
   Dim tableName As String
   Dim field As String
   Dim fields As String[]
-  For Each tableName In ["kb_files", "kb_attachment_deletions", "kb_attachment_history", "kb_meta", "kb_members", "kb_item_changes", "kb_activity"]
+  For Each tableName In ["kb_files", "kb_attachment_data", "kb_attachment_deletions", "kb_attachment_history", "kb_meta", "kb_members", "kb_item_changes", "kb_activity"]
     Select tableName
       Case "kb_files"
         fields = ["id", "board_id", "card_id", "filename", "author"]
+      Case "kb_attachment_data"
+        fields = ["file_id", "board_id", "card_id", "mime", "uploaded_ms"]
       Case "kb_attachment_deletions"
         fields = ["file_id", "board_id", "card_id", "actor", "deleted_at", "batch_id"]
       Case "kb_attachment_history"

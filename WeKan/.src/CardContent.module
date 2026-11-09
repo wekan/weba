@@ -38,6 +38,7 @@ Public Sub OpenStore()
   Endif
   RetiredAuthors.OpenStore()
   AttachmentLifecycle.OpenStore()
+  AttachmentData.OpenStore()
 End
 
 Private Sub RequireCard(boardId As Integer, cardId As Integer)
@@ -335,7 +336,7 @@ Public Function FileSummaries(boardId As Integer, cardId As Integer) As Result
   Return $db.Exec("SELECT id,board_id,card_id,filename,author,created_at FROM kb_files WHERE " & AttachmentLifecycle.LiveSql("kb_files") & " AND board_id=&1 AND card_id=&2 ORDER BY id", boardId, cardId)
 End
 
-Public Function AddFile(boardId As Integer, cardId As Integer, filename As String, data As String) As Integer
+Public Function AddFile(boardId As Integer, cardId As Integer, filename As String, data As String, Optional mime As String = "application/octet-stream", Optional maxBytes As Integer = 10485760) As Integer
   Dim transaction As Boolean
   Dim failure As String
   Dim r As Result
@@ -345,7 +346,7 @@ Public Function AddFile(boardId As Integer, cardId As Integer, filename As Strin
   BeginChange(boardId, cardId, "write")
   transaction = True
   filename = File.Name(Replace(filename, "\\", "/"))
-  If Not filename Or String.Len(filename) > 255 Or Len(data) > 10485760 Then Error.Raise("Choose a file up to 10 MiB with a valid name")
+  If Not filename Or String.Len(filename) > 255 Or maxBytes < 0 Or maxBytes > 67108864 Or Len(data) > maxBytes Then Error.Raise("Choose a file within the size limit with a valid name")
   r = $db.Create("kb_files")
   r["board_id"] = boardId
   r["card_id"] = cardId
@@ -355,7 +356,10 @@ Public Function AddFile(boardId As Integer, cardId As Integer, filename As Strin
   r["created_at"] = Now
   r.Update()
   id = $db.LastInsertId
+  AttachmentData.Record(boardId, cardId, id, mime)
   KanbanStore.Activity(boardId, "Attached file: " & filename, "card", cardId)
+  RequireCard(boardId, cardId)
+  BoardAccess.Require(boardId, "write")
   DatabaseTransactions.Commit($db)
   transaction = False
   Return id
@@ -404,7 +408,7 @@ Public Sub CopyRecords(sourceBoard As Integer, sourceCard As Integer, targetBoar
   cover = AttachmentLifecycle.CoverId(sourceBoard, sourceCard)
   r = Files(sourceBoard, sourceCard)
   For Each r
-    id = AddFile(targetBoard, targetCard, r!filename, r!content.Data)
+    id = AddFile(targetBoard, targetCard, r!filename, r!content.Data, AttachmentData.Mime(sourceBoard, sourceCard, r!id), 67108864)
     If r!id = cover Then AttachmentLifecycle.SetCover(targetBoard, targetCard, id)
     CopyAuthor(targetBoard, targetCard, "file", id, r!author, AuthorName(sourceBoard, sourceCard, "file", r!id))
   Next

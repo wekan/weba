@@ -1,0 +1,63 @@
+ ' Additional file attributes; old retained blobs remain valid without a row.
+Export
+Private $db As Connection
+
+Public Sub OpenStore()
+  Dim t As Table
+  If $db Then Return
+  $db = WebDatabase.OpenConnection()
+  If Not $db.Tables.Exist("kb_attachment_data") Then
+    t = $db.Tables.Add("kb_attachment_data")
+    t.Fields.Add("file_id", db.Integer)
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("card_id", db.Integer)
+    t.Fields.Add("mime", db.String, 255)
+    t.Fields.Add("uploaded_ms", db.Long)
+    t.PrimaryKey = ["file_id"]
+    t.Update()
+  Endif
+Catch
+  $db = Null
+  Error.Propagate()
+End
+
+' Internal hook within the caller's authorized file transaction.
+Public Sub Record(boardId As Integer, cardId As Integer, fileId As Integer, mime As String)
+  Dim r As Result
+  OpenStore()
+  If Not mime Then mime = "application/octet-stream"
+  If String.Len(mime) > 255 Or InStr(mime, Chr(13)) Or InStr(mime, Chr(10)) Or InStr(mime, Chr(0)) Then Error.Raise("Invalid attachment type")
+  r = $db.Create("kb_attachment_data")
+  r["file_id"] = fileId
+  r["board_id"] = boardId
+  r["card_id"] = cardId
+  r["mime"] = mime
+  r["uploaded_ms"] = ItemChanges.UtcNow()
+  r.Update()
+End
+
+Public Function Mime(boardId As Integer, cardId As Integer, fileId As Integer) As String
+  Dim r As Result
+  CardContent.FileRecord(boardId, cardId, fileId)
+  OpenStore()
+  r = $db.Find("kb_attachment_data", "board_id=&1 AND card_id=&2 AND file_id=&3", boardId, cardId, fileId)
+  If r.Available Then Return r!mime
+  Return "application/octet-stream"
+End
+
+Public Function ApiUploadLimit() As Integer
+  Dim value As String = Trim(Env["ATTACHMENT_API_MAX_UPLOAD_BYTES"])
+  Dim digits As String
+  Dim i As Integer
+  Dim number As Float
+  If Left(value) = "+" Then value = Mid(value, 2)
+  For i = 1 To Len(value)
+    If Not InStr("0123456789", Mid(value, i, 1)) Then Break
+    digits &= Mid(value, i, 1)
+  Next
+  If Not digits Then Return 67108864
+  Try number = Val(digits)
+  If Error Then Return 67108864
+  If number <= 0 Or number > 67108864 Then Return 67108864
+  Return CInt(number)
+End

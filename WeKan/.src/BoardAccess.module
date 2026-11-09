@@ -1167,7 +1167,7 @@ Catch
 End
 
 ' Attachment APIs retain assigned-only scope even for a site administrator.
-Private Function MayDeleteApiAttachment(boardId As Integer, cardId As Integer) As Boolean
+Private Function MayWriteApiAttachment(boardId As Integer, cardId As Integer) As Boolean
   Dim actor As String = WebIdentity.Username
   Dim flags As Collection
   Dim flag As String
@@ -1219,14 +1219,14 @@ Public Function DeleteApiAttachment(fileId As Integer, reference As String) As C
   $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
   $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
   $db.Exec("UPDATE kb_cards SET title=title WHERE board_id=&1 AND id=&2", boardId, cardId)
-  If Not MayDeleteApiAttachment(boardId, cardId) Then
+  If Not MayWriteApiAttachment(boardId, cardId) Then
     status = 403
     Error.Raise("You do not have permission to delete this attachment")
   Endif
   If WebDatabase.GetIsAdmin(actor) Then $apiMemberBoard = boardId
   AttachmentLifecycle.Delete(boardId, cardId, fileId)
   $apiMemberBoard = 0
-  If Not MayDeleteApiAttachment(boardId, cardId) Then
+  If Not MayWriteApiAttachment(boardId, cardId) Then
     status = 403
     Error.Raise("You do not have permission to delete this attachment")
   Endif
@@ -1241,7 +1241,7 @@ Catch
   failure = Error.Text
   $apiMemberBoard = 0
   If status = 500 And transaction Then
-    Try denied = Not MayDeleteApiAttachment(boardId, cardId)
+    Try denied = Not MayWriteApiAttachment(boardId, cardId)
     If Not Error And denied Then
       status = 403
       failure = "You do not have permission to delete this attachment"
@@ -1252,5 +1252,85 @@ Catch
   data = New Collection
   data.Add(False, "success")
   data.Add(failure, "error")
+  Return ApiAnswer(status, data)
+End
+
+Private Function ApiUploadTarget(boardId As Integer, laneId As Integer, listId As Integer, cardId As Integer) As Collection
+  Dim r As Result
+  r = $db.Find("kb_cards", "id=&1 AND " & ListDeletion.LiveSql("card", "kb_cards"), cardId)
+  If Not r.Available Then Return ApiFailure(404, "Card not found")
+  If Not $db.Find("kb_boards", "id=&1", boardId).Available Then Return ApiFailure(404, "Board not found")
+  If r!board_id <> boardId Then Return ApiFailure(400, "Card does not belong to the specified board")
+  If Not $db.Find("kb_lanes", "board_id=&1 AND title=&2 AND id=&3", boardId, r!lane, laneId).Available Then Return ApiFailure(400, "Swimlane ID does not match the card's swimlane")
+  If Not $db.Find("kb_card_lists", "board_id=&1 AND card_id=&2 AND list_id=&3", boardId, cardId, listId).Available Then Return ApiFailure(400, "List ID does not match the card's list")
+  If Not MayWriteApiAttachment(boardId, cardId) Then Return ApiFailure(403, "You do not have permission to modify this card")
+  r = $db.Find("kb_meta", "board_id=&1 AND kind='board' AND item_id=&1 AND setting='allowsAttachments' AND value='0'", boardId)
+  If r.Available Then Return ApiFailure(403, "Attachments are not allowed on this board")
+  Return Null
+End
+
+Public Function UploadApiAttachment(boardId As Integer, laneId As Integer, listId As Integer, cardId As Integer, filename As String, bytes As String, mime As String) As Collection
+  Dim actor As String = WebIdentity.Username
+  Dim data As New Collection
+  Dim check As Collection
+  Dim fileId As Integer
+  Dim transaction As Boolean
+  Dim status As Integer = 500
+  Dim failure As String
+  $apiMemberBoard = 0
+  If Env["WEBA_API_REQUEST"] <> "1" Then Return ApiFailure(403, "API context required")
+  If Not actor Or Not WebDatabase.UserExists(actor) Then Return ApiFailure(401, "Invalid credentials")
+  OpenStore()
+  CardContent.OpenStore()
+  check = ApiUploadTarget(boardId, laneId, listId, cardId)
+  If check Then Return AttachmentUploadFailure(check["status"], check["data"]["error"])
+  If Len(bytes) > AttachmentData.ApiUploadLimit() Then Return AttachmentUploadFailure(413, "Attachment exceeds API upload limit")
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+  $db.Exec("UPDATE kb_cards SET title=title WHERE board_id=&1 AND id=&2", boardId, cardId)
+  check = ApiUploadTarget(boardId, laneId, listId, cardId)
+  If check Then
+    status = check["status"]
+    Error.Raise(check["data"]["error"])
+  Endif
+  If WebDatabase.GetIsAdmin(actor) Then $apiMemberBoard = boardId
+  fileId = CardContent.AddFile(boardId, cardId, filename, bytes, mime, AttachmentData.ApiUploadLimit())
+  $apiMemberBoard = 0
+  check = ApiUploadTarget(boardId, laneId, listId, cardId)
+  If check Then
+    status = check["status"]
+    Error.Raise(check["data"]["error"])
+  Endif
+  If WebIdentity.Username <> actor Then Error.Raise("Upload identity changed")
+  DatabaseTransactions.Commit($db)
+  transaction = False
+  data.Add(True, "success")
+  data.Add(CStr(fileId), "attachmentId")
+  data.Add(filename, "fileName")
+  data.Add(Len(bytes), "fileSize")
+  data.Add("database", "storageBackend")
+  data.Add("Attachment uploaded successfully", "message")
+  Return ApiAnswer(200, data)
+Catch
+  failure = Error.Text
+  $apiMemberBoard = 0
+  If status = 500 And transaction Then
+    Try check = ApiUploadTarget(boardId, laneId, listId, cardId)
+    If Not Error And check Then
+      status = check["status"]
+      failure = check["data"]["error"]
+    Endif
+  Endif
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  If status = 500 Then failure = "Failed to upload attachment"
+  Return AttachmentUploadFailure(status, failure)
+End
+
+Private Function AttachmentUploadFailure(status As Integer, message As String) As Collection
+  Dim data As New Collection
+  data.Add(False, "success")
+  data.Add(message, "error")
   Return ApiAnswer(status, data)
 End

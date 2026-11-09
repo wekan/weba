@@ -2,6 +2,19 @@
 
 This work adds the following features and fixes:
 
+- Add raw-byte and JSON/base64 card attachment uploads through the bearer API.
+  Validate the canonical board/swimlane/list/card path, current writer/assigned
+  scope and board attachment allowance before and after atomic writes. Preserve
+  exact binary/Unicode names, MIME and UTC upload metadata; carry MIME through
+  copy/exchange/moves and clean attributes during gated purge. Respect configured
+  upload bytes with a 64 MiB cap and 96 MiB JSON safety bound; reject stalled or
+  truncated request bodies before CGI with an absolute deadline. Report the real
+  database backend and sanitize failures. Verify native policy/metadata rollback,
+  source/package HTTP, 140 unchanged source-helper target/write outcomes and real
+  native upload/download/revocation browsers. Streaming, additional storage/read
+  APIs, settings controls, DDP and security-event reporting remain open.
+  Thanks to xet7.
+
 - Retain attachment bytes on ordinary native/API deletion; filter deleted files
   from card reads, downloads, copies and exports. Add native metadata-only
   attachment history/restore, idempotent actor/time/batch records and fresh

@@ -835,7 +835,7 @@ and the separate deleted-list purge described below.
 
 The card editor and menu provide comments, checklists/items, real subtask cards,
 dependencies, card-level text/number/date/checkbox fields, time entries/timers and
-native attachment upload/download (10 MiB each). Copying containers/cards preserves
+native attachment upload (10 MiB file picker) and download. Copying containers/cards preserves
 rich records and remaps internal links. Running timers are excluded from copies.
 Watch preferences are saved, but notification delivery is still pending.
 
@@ -1373,9 +1373,63 @@ HTTP tests inspect SQL bytes, cover state and rollback (focused mode
 coverage uses `tests/run-http.py --attachment-lifecycle` (plus `--archive` for the
 packaged app). The standard local/browser suites include these checks.
 
-Full attachment API upload/list/info/download DTOs, storage backends, board-level
+Attachment list/info/download API DTOs, streamed uploads, storage backends, board-level
 background/map files, linked-card permissions, retention jobs, visual cover
 selection, security eventlog/Problems reporting and original complete UI/API/
 security suites remain open in TODO.md. The unchanged UnassignedAttachBleed
-callback also requires upload, DDP and eventlog support and has not been executed
+callback also requires DDP and eventlog support and has not been executed
 against this implementation.
+
+
+### Card attachment API uploads
+
+`POST /api/attachment/upload` accepts either raw bytes with query parameters
+`boardId`, `swimlaneId`, `listId`, `cardId`, `fileName` and optional `fileType`, or
+JSON containing those target/name fields plus `fileData` as base64. Target IDs use
+the canonical numeric strings returned by native board/card APIs. Raw requests
+preserve arbitrary bytes; JSON accepts the source decoder's unpadded, whitespace,
+URL-safe and ignored-character base64 forms. Names preserve literal Unicode,
+spaces, plus and percent characters. The host forwards valid escaped supplementary
+filename characters as UTF-8 for Gambas 3.20. Ambiguous duplicate raw parameters,
+invalid MIME/name controls and malformed target types are rejected.
+
+The success response includes `success`, `attachmentId`, `fileName`, `fileSize`,
+`storageBackend` and `message`. Weba reports its actual `database` backend rather
+than claiming an FS/GridFS/S3 file. File bytes, author, MIME and UTC upload time
+are committed together with activity/change clocks. Older blobs without metadata
+remain readable with an octet-stream MIME fallback. Copy and weba exchange
+preserve MIME under mapped identities; moves carry the scope; gated container
+purge removes metadata. SQLite's Gambas driver represents a zero-byte blob as SQL
+NULL; a retained file row reads and downloads as zero bytes, not a missing file.
+
+The full card/board/lane/list path is validated, with fresh writer and assigned
+scope before/after upload under account/board/card locks. Global site-admin writes
+retain active raw assigned-only restrictions. A board's `allowsAttachments=0`
+setting blocks API uploads, including global administrators; native board-setting
+writes require manageBoard and copies/exchange preserve the policy. Its settings
+UI remains pending. Late role, assignment, target or allowance changes roll back
+the file, attributes, clocks and activity. Unexpected errors return sanitized JSON.
+
+`ATTACHMENT_API_MAX_UPLOAD_BYTES` follows the source positive-byte configuration
+and 64 MiB hard cap; zero/unset uses that cap. JSON requests have a 96 MiB safety
+limit at both host and endpoint. Body reads have an absolute 30-second deadline;
+truncated, timed-out and oversized uploads return JSON without starting CGI.
+Other host routes retain the 20 MiB body limit.
+Native file-picker uploads retain their 10 MiB cap and weba JSON imports retain
+their overall 20 MiB limit. The current host/CGI/database implementation buffers
+uploads; the source raw streaming behavior is still unimplemented, as are admin
+storage/transfer settings and FS/GridFS/S3 backends. These are explicit remaining
+requirements, not covered by the bounded upload tests.
+
+`api-attachment-upload.test.py` uses actual source/package HTTP and SQL to check
+exact binary/Unicode responses, MIME/time, raw content types and base64 variants,
+zero bytes, configured bounds, path/role/assignment/policy negatives and injected
+rollback failures. `attachment-upload-conformance.test.cjs` compares 140 actual
+HTTP results with unchanged source target/write helper bodies and source role/
+scope functions; native ID/backend and no-op security-event adapters are explicit.
+`attachment-upload.browser.cjs` verifies live panes, actual native binary download
+and assignment-revocation cleanup. Focused modes are `--attachment-upload-api`
+and `--attachment-upload`, with `--archive` for the packaged application. Standard
+local/browser suites include these tests. Info/list/download API routes, streaming,
+background/map/linked-card scope, DDP, Problems/eventlog and the original complete
+UnassignedAttachBleed callback remain open.

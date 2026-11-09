@@ -82,6 +82,14 @@ Public Sub Main()
     Reply(403, ErrorData("API is disabled; set WITH_API=true"))
     Return
   Endif
+  If Request.Path = "/api/attachment/upload" Then
+    If Request.Method <> "POST" Then
+      Reply(405, AttachmentError("Method not allowed"))
+    Else
+      UploadAttachment()
+    Endif
+    Return
+  Endif
   fields = Split(Request.Path, "/", "", True)
   If fields.Count = 4 Then
     If fields[0] = "api" And fields[1] = "attachment" And fields[2] = "delete" Then
@@ -401,4 +409,138 @@ Private Sub ReplyEmpty(status As Integer)
   Print "Status: " & CStr(status)
   Print "Cache-Control: no-store"
   Print
+End
+
+Private Function AttachmentError(message As String) As Collection
+  Dim data As New Collection
+  data.Add(False, "success")
+  data.Add(message, "error")
+  Return data
+End
+
+Private Sub UploadAttachment()
+  Dim data As New Collection
+  Dim value As Variant
+  Dim ids As New Integer[]
+  Dim field As String
+  Dim bytes As String
+  Dim filename As String
+  Dim mime As String
+  Dim outcome As Collection
+  Dim body As String
+  Dim encoded As String
+  If Request.ContentLength < 0 Or Request.ContentLength > 100663296 Then
+    Reply(413, AttachmentError("Request payload exceeds server safety limit"))
+    Return
+  Endif
+  If LCase(Split(Request.ContentType, ";")[0]) = "application/json" Then
+    body = Read Request.ContentLength
+    Try value = JSON.Decode(body)
+    If Error Then
+      Reply(400, AttachmentError("Invalid JSON body"))
+      Return
+    Endif
+    If Not (value Is Collection) Then
+      Reply(400, AttachmentError("Expected a JSON object"))
+      Return
+    Endif
+    data = value
+    If Not data.Exist("fileData") Then
+      Reply(400, AttachmentError("Missing required parameters"))
+      Return
+    Endif
+    If TypeOf(data["fileData"]) <> gb.String Then
+      Reply(400, AttachmentError("Invalid fileData format"))
+      Return
+    Endif
+    encoded = data["fileData"]
+    If Not encoded Then
+      Reply(400, AttachmentError("Missing required parameters"))
+      Return
+    Endif
+    If Len(encoded) > Ceil(AttachmentData.ApiUploadLimit() * 4 / 3) + 4 Then
+      Reply(413, AttachmentError("Attachment exceeds API upload limit"))
+      Return
+    Endif
+    Try bytes = UnBase64(Replace(Replace(encoded, "-", "+"), "_", "/"))
+    If Error Then
+      Reply(400, AttachmentError("Invalid fileData format"))
+      Return
+    Endif
+  Else
+    For Each field In ["boardId", "swimlaneId", "listId", "cardId", "fileName", "fileType"]
+      Try data.Add(UploadQuery(field), field)
+      If Error Then
+        Reply(400, AttachmentError("Invalid upload query"))
+        Return
+      Endif
+    Next
+    If Request.ContentLength > AttachmentData.ApiUploadLimit() Then
+      Reply(413, AttachmentError("Attachment exceeds API upload limit"))
+      Return
+    Endif
+    bytes = Read Request.ContentLength
+    If Not data["fileType"] Then data["fileType"] = Request.ContentType
+  Endif
+  For Each field In ["boardId", "swimlaneId", "listId", "cardId", "fileName"]
+    If Not data.Exist(field) Then
+      Reply(400, AttachmentError("Missing required parameters"))
+      Return
+    Endif
+    If TypeOf(data[field]) <> gb.String Or Not data[field] Then
+      Reply(400, AttachmentError("Missing required parameters"))
+      Return
+    Endif
+  Next
+  For Each field In ["boardId", "swimlaneId", "listId", "cardId"]
+    Try ids.Add(PositiveId(data[field]))
+    If Error Then
+      Reply(400, AttachmentError("Invalid attachment target"))
+      Return
+    Endif
+    If Str(ids.Last) <> data[field] Then
+      Reply(400, AttachmentError("Invalid attachment target"))
+      Return
+    Endif
+  Next
+  filename = String.Left(data["fileName"], 255)
+  If Not File.Name(Replace(filename, "\\", "/")) Or InStr(filename, Chr(0)) Or InStr(filename, Chr(13)) Or InStr(filename, Chr(10)) Then
+    Reply(400, AttachmentError("Invalid attachment name"))
+    Return
+  Endif
+  mime = "application/octet-stream"
+  If data.Exist("fileType") Then
+    If TypeOf(data["fileType"]) <> gb.String Then
+      Reply(400, AttachmentError("Invalid attachment type"))
+      Return
+    Endif
+    If data["fileType"] Then mime = String.Left(data["fileType"], 255)
+  Endif
+  If InStr(mime, Chr(13)) Or InStr(mime, Chr(10)) Or InStr(mime, Chr(0)) Then
+    Reply(400, AttachmentError("Invalid attachment type"))
+    Return
+  Endif
+  outcome = BoardAccess.UploadApiAttachment(ids[0], ids[1], ids[2], ids[3], filename, bytes, mime)
+  Reply(outcome["status"], outcome["data"])
+Catch
+  Reply(500, AttachmentError("Failed to upload attachment"))
+End
+
+Private Function UploadQuery(name As String) As String
+  Dim pair As String
+  Dim splitAt As Integer
+  Dim found As Boolean
+  Dim value As String
+  Dim key As String
+  For Each pair In Split(Env["QUERY_STRING"], "&")
+    splitAt = InStr(pair, "=")
+    If splitAt Then
+      key = Cgi.Decode(Replace(Left(pair, splitAt - 1), "+", " "))
+      If key <> name Then Continue
+      If found Then Error.Raise("Duplicate upload parameter")
+      found = True
+      value = Cgi.Decode(Replace(Mid(pair, splitAt + 1), "+", " "))
+    Endif
+  Next
+  Return value
 End

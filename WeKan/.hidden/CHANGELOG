@@ -1,4 +1,9 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Attachment upload API: Add raw/JSON exact-byte uploads, scoped path/assigned
+  guards, board allowance and atomic MIME/time metadata. Preserve attributes on
+  copy/exchange/moves and purge cleanup. Bound bytes/body deadlines and sanitize
+  errors. Verify source/package HTTP, 140 source-helper cases and native browser
+  binary download/assignment revocation; retain streaming/storage/reporting TODO.
 - Attachment lifecycle: Retain deleted bytes, filter live reads/copies/exports,
   add scoped native history/restore and bearer DELETE with atomic fresh guards.
   Clear covers without restoring them; map live covers on copy/exchange and

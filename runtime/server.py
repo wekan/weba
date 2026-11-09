@@ -53,6 +53,18 @@ def canonical_card_dates(body):
         return body
 
 
+def canonical_upload_unicode(body):
+    """Retain valid escaped supplementary filename/type characters on Gambas 3.20."""
+    try:
+        data = json.loads(body.decode('utf-8'))
+        if isinstance(data, dict) and any(isinstance(data.get(key), str) and
+                any(ord(char) > 0xffff for char in data[key]) for key in ('fileName', 'fileType')):
+            return json.dumps(data, ensure_ascii=False, separators=(',', ':'), allow_nan=False).encode('utf-8')
+    except (ValueError, UnicodeError, OverflowError, RecursionError):
+        pass
+    return body
+
+
 def run_application(command, *, input, env, timeout=30):
     """A CGI descendant must not hold capture pipes open after a timeout.
 
@@ -174,6 +186,38 @@ def handler(application, runner, environment):
             except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
                 self.close_connection = True
 
+        def _read_body(self, length, timeout=30):
+            """One absolute deadline, including clients that drip bytes forever."""
+            deadline = time.monotonic() + timeout
+            connection = getattr(self, 'connection', None)
+            previous_timeout = connection.gettimeout() if connection is not None else None
+            chunks = []
+            remaining = length
+            try:
+                while remaining:
+                    seconds = deadline - time.monotonic()
+                    if seconds <= 0:
+                        raise TimeoutError('Request timeout')
+                    if connection is not None:
+                        connection.settimeout(seconds)
+                    chunk = self.rfile.read1(min(remaining, 65536))
+                    if not chunk:
+                        raise ValueError('Incomplete request body')
+                    chunks.append(chunk)
+                    remaining -= len(chunk)
+                return b''.join(chunks)
+            finally:
+                if connection is not None:
+                    connection.settimeout(previous_timeout)
+
+        def _upload_body_error(self, status, message):
+            self.close_connection = True
+            self.send_response(status)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Cache-Control', 'no-store')
+            self.end_headers()
+            self.wfile.write(json.dumps({'success': False, 'error': message}).encode())
+
         def _run_cgi(self):
             url = urllib.parse.urlsplit(self.path)
             # Gambas exposes /~dump before application dispatch. It prints the
@@ -229,14 +273,39 @@ def handler(application, runner, environment):
                 if key in self.headers: env['HTTP_' + key.upper().replace('-', '_')] = self.headers[key]
             try:
                 length = int(self.headers.get('Content-Length', '0'))
-                if not 0 <= length <= 20 * 1024 * 1024:
-                    self.send_error(413); return
-                body = self.rfile.read(length)
+                upload = decoded_path == '/api/attachment/upload' and self.command == 'POST'
+                body_limit = 96 * 1024 * 1024 if upload else 20 * 1024 * 1024
+                if not 0 <= length <= body_limit:
+                    if upload:
+                        self._upload_body_error(413, 'Request payload exceeds server safety limit')
+                    else:
+                        self.send_error(413)
+                    return
+                try:
+                    body = self._read_body(length)
+                except TimeoutError:
+                    if upload:
+                        self._upload_body_error(408, 'Request timeout')
+                    else:
+                        self.close_connection = True
+                        self.send_error(408)
+                    return
+                except ValueError:
+                    if upload:
+                        self._upload_body_error(400, 'Request error')
+                    else:
+                        self.close_connection = True
+                        self.send_error(400)
+                    return
                 pieces = decoded_path.strip('/').split('/')
                 if (api and self.command == 'PUT' and len(pieces) == 7
                         and pieces[0:2] == ['api', 'boards'] and pieces[3] == 'lists' and pieces[5] == 'cards'
                         and self.headers.get('Content-Type', '').split(';', 1)[0].strip().lower() == 'application/json'):
                     body = canonical_card_dates(body)
+                    length = len(body)
+                if (api and decoded_path == '/api/attachment/upload' and self.command == 'POST'
+                        and self.headers.get('Content-Type', '').split(';', 1)[0].strip().lower() == 'application/json'):
+                    body = canonical_upload_unicode(body)
                     length = len(body)
                 env.update(CONTENT_LENGTH=str(length), CONTENT_TYPE=self.headers.get('Content-Type', ''))
                 command_text = None

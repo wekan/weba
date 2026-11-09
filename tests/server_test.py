@@ -111,6 +111,75 @@ class LoginThrottleTest(unittest.TestCase):
         self.assertLessEqual(len(gate.attempts), 2)
 
 
+class AttachmentUploadTransportTest(unittest.TestCase):
+    def test_unicode_normalization_preserves_payload_and_is_upload_only(self):
+        expected = {'fileName': 'name 🚀 +.bin', 'fileType': 'application/octet-stream', 'fileData': 'AP8=', 'boardId': '1'}
+        body = json.dumps(expected, ensure_ascii=True).encode()
+        self.assertEqual(json.loads(server.canonical_upload_unicode(body)), expected)
+        self.assertIn('🚀'.encode(), server.canonical_upload_unicode(body))
+        for path, changed in [('/api/attachment/upload', True), ('/users/login', False), ('/api/boards/1/members/user', False)]:
+            request = NativeOriginTest().request('POST', path, {'Content-Type': 'application/json', 'Content-Length': str(len(body))})
+            request.rfile = io.BytesIO(body)
+            request.wfile = io.BytesIO()
+            request.client_address = ('127.0.0.1', 12345)
+            request.send_response = Mock()
+            request.send_header = Mock()
+            request.end_headers = Mock()
+            result = SimpleNamespace(returncode=0, stdout=b'Content-Type: application/json\r\n\r\n{}')
+            with patch.object(server, 'run_application', return_value=result) as runner:
+                request._run_cgi()
+            forwarded = runner.call_args.kwargs['input']
+            self.assertEqual(forwarded, server.canonical_upload_unicode(body) if changed else body)
+            self.assertEqual(int(runner.call_args.kwargs['env']['CONTENT_LENGTH']), len(forwarded))
+
+    def test_absolute_body_deadline_rejects_a_dripping_client_and_restores_socket(self):
+        request = NativeOriginTest().request('POST', '/api/attachment/upload')
+        request.connection = Mock()
+        request.connection.gettimeout.return_value = None
+        request.rfile = Mock()
+        request.rfile.read1.side_effect = [b'ab', b'cd']
+        with patch.object(server.time, 'monotonic', side_effect=[0, 1, 2, 31]):
+            with self.assertRaises(TimeoutError):
+                request._read_body(6)
+        self.assertEqual(request.rfile.read1.call_count, 2)
+        self.assertEqual([call.args[0] for call in request.connection.settimeout.call_args_list], [29, 28, None])
+
+    def test_incomplete_and_oversized_uploads_never_start_cgi(self):
+        for length, status, message in [(3, 400, 'Request error'), (96*1024*1024+1, 413, 'Request payload exceeds server safety limit')]:
+            request = NativeOriginTest().request('POST', '/api/attachment/upload', {'Content-Type': 'text/plain', 'Content-Length': str(length)})
+            request.rfile = io.BytesIO(b'x')
+            request.wfile = io.BytesIO()
+            request.client_address = ('127.0.0.1', 12345)
+            request.send_response = Mock()
+            request.send_header = Mock()
+            request.end_headers = Mock()
+            with patch.object(server, 'run_application') as runner:
+                request._run_cgi()
+            runner.assert_not_called()
+            request.send_response.assert_called_with(status)
+            self.assertTrue(request.close_connection)
+            self.assertEqual(json.loads(request.wfile.getvalue()), {'success': False, 'error': message})
+
+    def test_timeout_upload_answers_json_before_cgi(self):
+        request = NativeOriginTest().request('POST', '/api/attachment/upload', {'Content-Type': 'text/plain', 'Content-Length': '10'})
+        request.rfile = Mock()
+        request.rfile.read1.side_effect = TimeoutError()
+        request.wfile = io.BytesIO()
+        request.client_address = ('127.0.0.1', 12345)
+        request.send_response = Mock()
+        request.send_header = Mock()
+        request.end_headers = Mock()
+        with patch.object(server, 'run_application') as runner:
+            request._run_cgi()
+        runner.assert_not_called()
+        request.send_response.assert_called_with(408)
+        self.assertEqual(json.loads(request.wfile.getvalue()), {'success': False, 'error': 'Request timeout'})
+
+    def test_malformed_and_unrelated_json_are_unchanged(self):
+        for body in (b'{', b'[]', b'{"fileData":"YQ=="}', b'{"fileName":null}'):
+            self.assertEqual(server.canonical_upload_unicode(body), body)
+
+
 class CardDateTransportTest(unittest.TestCase):
     def test_numeric_timeclip_is_exact_and_does_not_change_other_fields(self):
         body = b'{"dueAt":8640000000000000.0,"startAt":-1.9,"receivedAt":0.9999999999999999,"endAt":-0.0,"members":["owner"],"other":1.25}'

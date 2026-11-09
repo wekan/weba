@@ -112,12 +112,13 @@ Public Sub SetSetting(boardId As Integer, kind As String, itemId As Integer, nam
     BoardAccess.Require(boardId, "write")
   Endif
   Select name
-    Case "star", "watch", "archived", "wip_strict"
+    Case "star", "watch", "archived", "wip_strict", "allowsAttachments"
       If value <> "0" And value <> "1" Then Error.Raise("Expected a boolean setting")
     Case "color", "wip", "description"
     Case Else
       Error.Raise("Unknown item setting")
   End Select
+  If name = "allowsAttachments" And kind <> "board" Then Error.Raise("Board setting required")
   If name = "color" And value Then
     If Len(value) <> 7 Or Left(value) <> "#" Then Error.Raise("Use #RRGGBB")
     For index = 2 To 7
@@ -151,6 +152,10 @@ Public Sub SetSetting(boardId As Integer, kind As String, itemId As Integer, nam
   r["value"] = value
   r.Update()
   If tableName <> "kb_user_meta" And (kind = "list" Or kind = "card") Then ItemChanges.Mark(boardId, kind, itemId)
+  If name = "allowsAttachments" Then
+    Record(boardId, kind, itemId)
+    BoardAccess.Require(boardId, "manageBoard")
+  Endif
   DatabaseTransactions.Commit($db)
   transaction = False
 Catch
@@ -356,6 +361,7 @@ End
 Private Sub CopySettings(sourceBoard As Integer, kind As String, sourceId As Integer, targetBoard As Integer, targetId As Integer)
   Dim name As String
   Dim value As String
+  If kind = "board" Then SetSetting(targetBoard, kind, targetId, "allowsAttachments", Setting(sourceBoard, kind, sourceId, "allowsAttachments", "1"))
   For Each name In ["color", "wip", "wip_strict", "description"]
     value = Setting(sourceBoard, kind, sourceId, name)
     If value Then SetSetting(targetBoard, kind, targetId, name, value)

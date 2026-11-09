@@ -614,3 +614,34 @@ errors stay sanitized 500. Do not use general card REST write authorization:
 attachment deletion permits normal assigned writers on their assigned cards.
 The 12-case helper comparator proves decision outcomes on actual SQL state, not
 server activity callbacks, full ChangeHistory/undo or complete attachment APIs.
+
+
+## Attachment uploads and attributes
+
+kb_attachment_data is file-owned board/card-scoped MIME and UTC millisecond
+metadata. Create it inside the file transaction, preserve MIME on copy/exchange,
+transfer its scope on card moves and clean it on container purge. Legacy files
+without metadata use octet-stream; do not infer an original MIME from a filename.
+The Gambas SQLite driver formats zero-length blobs as NULL; keep the file row and
+verify its native content.Data returns the zero-length byte string.
+
+UploadApiAttachment shares the attachment-specific write guard with DELETE,
+not the stricter general REST card-write guard: assigned normal members may
+upload on their assigned cards. Validate raw card path before enabling scoped
+site-admin write access, clear that scope before the independent final guard,
+and roll back all file/metadata/activity/clock changes on late permission or
+allowsAttachments changes. The board allowance is a boolean native board setting
+requiring manageBoard with a final guard and is included in board copy/exchange.
+Its UI and global admin transfer/storage policy remain future work.
+
+RestApi parses the original encoded query so form '+' spaces and escaped '%2B'
+remain distinct; never repair Request.Get output after it has lost that distinction.
+Translate URL-safe base64 alphabet before UnBase64 to match Buffer.from behavior.
+The host normalizes only upload JSON supplementary filename/type characters and
+updates CGI length; raw bytes and other routes remain opaque. Size gates apply
+before normalization. Read in bounded chunks with one absolute 30-second deadline,
+not a timeout reset by every byte; restore the socket timeout and reject incomplete
+bodies before CGI. API uploads are still buffered and database-backed; report
+that backend honestly and retain streaming/multiple-backend requirements in TODO.
+The source helper comparator uses unchanged function bodies with explicit storage/
+ID and no-op security-log adapters; it is not the full original security callback.

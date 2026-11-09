@@ -5,6 +5,7 @@ Public Sub Main()
   Dim fileId As Integer
   Dim data As New Collection
   Dim username As String
+  Dim r As Result
   If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
   Session["username"] = "rest-other"
   Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
@@ -19,6 +20,10 @@ Public Sub Main()
   other = KanbanStore.SaveCard(boardId, 0, "Unassigned attachments", "", "Default", "Todo", "", "", "")
   fileId = CardContent.AddFile(boardId, cardId, "retained <literal>.bin", "kept" & Chr(0) & "bytes")
   AttachmentLifecycle.SetCover(boardId, cardId, fileId)
+  r = KanbanStore.Lanes(boardId)
+  data["swimlaneId"] = r!id
+  r = KanbanStore.Lists(boardId, "Default")
+  data["listId"] = r!id
   data["boardId"] = boardId
   data["cardId"] = cardId
   data["fileId"] = fileId
