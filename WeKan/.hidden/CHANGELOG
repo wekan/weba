@@ -1,4 +1,6 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Documentation: Describe private fold state, direct visible counts, hidden
+  selection and native/source/browser verification, with remaining parity gaps.
 - Workspace folding/counts: Persist private true-only fold state with locked
   ownership checks and cleanup; add native keyboard/focus carets, named aria
   labels and direct readable active/helper-filtered counts. Preserve hidden

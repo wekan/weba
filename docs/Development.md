@@ -363,5 +363,39 @@ a hidden stale native Save after revocation and checks unchanged assignments.
 Source/packaged test-live includes the case after the existing live regressions.
 The native Latin checks do not run original spec 39's callback unchanged: that
 callback requires actual form/submit/required semantics still to be aligned.
-Collapse/visible counts, Markdown icons, workspace gestures and broader original
-UI/API/security suites remain explicit TODO requirements.
+Markdown icons, workspace gestures and broader original UI/API/security suites
+remain explicit TODO requirements. Folding/counts are described below.
+
+
+## Workspace presentation state
+
+`BoardSpaces.Collapsed` returns current-principal folded IDs. The separate
+`kb_board_space_collapsed` table stores only username/space rows with a composite
+key; expand deletes rather than storing false. `SetCollapsed` rechecks ownership
+after the account lock, commits atomically and rolls back failures. Subtree
+removal includes these rows in its existing transaction; account deletion and
+recreation clear all rows for that principal. Keep allocated workspace IDs so
+old events cannot fold a later node under a reused ID.
+
+`Counts` initializes zeros for the principal's spaces, then counts only directly
+assigned readable active boards. Use the normal native visibility query and
+exclude helper titles, matching the original workspace helper's title pattern
+without a driver-specific regular expression. A revoked stale assignment stays
+private but contributes zero. Template types and organization/team schema remain
+separate work. This does not change the original page-method contract or expose
+a new HTTP service.
+
+Include fold/count maps in the private live snapshot. Index ALL workspace names
+before rendering only visible rows, so a hidden selected descendant remains
+valid. Keep the native click's requested fold state instead of toggling a later
+database value, then focus the replacement caret. Translate only the action;
+append the literal name and synchronize aria-expanded with caret direction.
+
+The new native presentation test injects insert/delete failure, a late ownership
+change and partial subtree failure, then checks rollback and recovery. It tests
+readonly/revoked count boundaries, zero/default/idempotent state, typed key removal
+and deletion/recreation cleanup. The source comparator calls the original
+helperBoards export against real native SQL count results; it is a 25-case helper
+comparison, not an unchanged original workspace UI callback. Real browser tests
+cover Enter/Space/focus, reload/live expansion, hidden selection, direct counts
+and archive/restore updates.

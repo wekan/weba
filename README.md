@@ -873,7 +873,7 @@ runner above, covering persisted values, invalid hex input and mobile placement.
 
 The login page and signed-in account menu have a language selector. The selected
 language is saved in this browser; a new browser starts with its preferred language
-when available. The imported WeKan catalog currently provides 123 matching interface
+when available. The imported WeKan catalog currently provides 124 matching interface
 keys for 237 languages, including their native language names and RTL metadata.
 Only the selected catalog is fetched, from local application assets. No external
 translation service is used. Labels and report/calendar headings are translated;
@@ -1006,8 +1006,38 @@ it for source and packaged apps. Run it separately with the documented Gambas
 and Chromium environment using `python3 tests/run-http.py --workspaces`, adding
 `--archive` for the package.
 
-Workspace collapse/count controls, tree and board workspace drops, complete
-form semantics and original All Boards callbacks remain open. Native Latin
+Workspace tree and board workspace drops, complete form semantics and original
+All Boards callbacks remain open. Native Latin
 checks are separate from running the original callback unchanged. Imported
-workspace labels now bring the local selection to 123 keys in 237 catalogs;
+workspace and collapse labels now bring the local selection to 124 keys in 237 catalogs;
 user workspace names and destination paths are never translated.
+
+
+### Workspace folding and counts
+
+A native caret appears before workspace names that have children; leaf rows keep
+the same space reserved. Click it or use Enter/Space to fold/unfold children.
+The caret retains keyboard focus after the native rows refresh, announces the
+translated action plus the literal workspace name and exposes `aria-expanded`.
+Folding a parent preserves a selected child's board view.
+
+Fold state belongs to the current user, survives reload and updates across live
+private changes. Only folded IDs are stored; expanding deletes the row. Writes
+lock/recheck the account and workspace, and subtree/account deletion removes the
+state. This does not change shared board history, tree placement or assignments.
+
+The count after each menu is the number of directly assigned readable active
+boards, independent of current search and child assignments. Internal helper
+board titles (`^Subtasks^`) are excluded using the source helper's line-terminator
+rules. Archiving or losing access removes the board from the count; restoration
+or a personal assignment updates it. These are signed-in native SQL board counts;
+organization/team/template schema and complete original wire/UI parity remain
+separate requirements.
+
+`BoardSpacePresentationTest` verifies storage, isolation, fresh ownership guards,
+SQL failure rollback/retry, archive/revocation behavior and lifecycle cleanup.
+`board-space-counts-conformance.test.cjs` compares 25 actual native count results
+against the unchanged original helper function, including Unicode and legacy line
+terminators. The workspace browser test covers persisted mouse/keyboard folding,
+hidden selection, live counts and named translated aria labels on source and
+packaged apps. Other drivers and complete original callbacks remain unverified.

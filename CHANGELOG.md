@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Document private workspace fold storage and cleanup, direct readable counts,
+  hidden selection, keyboard/focus/aria and native failure/source/browser tests.
+  Update the translation count and retain original workspace/gesture limits.
+  Thanks to xet7.
+
 - Add private persisted workspace folding with native caret buttons, keyboard/
   focus support and translated named aria labels. Preserve a selected hidden
   descendant and show direct active readable board counts with helper exclusion.
