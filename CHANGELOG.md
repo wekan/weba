@@ -2,6 +2,14 @@
 
 This work adds the following features and fixes:
 
+- Generate source-style numbered single-copy titles inside the locked copy
+  transaction and navigate to the destination only after commit. Preserve edited
+  bases, failed-save source/form state and retry after child or late session
+  failure. Verify native rollback/titles, repeated with/without-card browser
+  copies and unchanged source uniqueTitle/clone callback outcomes with explicit
+  adapters. Keep actual routing/subscriptions, destination placement/order,
+  unsupported models and full original suites open. Thanks to xet7.
+
 - Add the eight supported content choices to the single-board Copy dialog, with
   all/none, dependent keyboard checkbox controls, mobile layout and existing source
   translations. Bind private operation state to source/account/generation; reject

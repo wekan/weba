@@ -42,16 +42,19 @@ Public Sub Main()
   If Not denied Or Not SingleBoardCopy.Options(state, a)["cards"] Then Error.Raise("Busy choices changed")
   state["busy"] = False
   db.Exec("CREATE TRIGGER single_copy_sql BEFORE INSERT ON kb_files BEGIN SELECT RAISE(ABORT,'single child failure'); END")
-  Try id = SingleBoardCopy.Copy(state, a, "Failed single")
+  Try id = SingleBoardCopy.Copy(state, a, "Single source")
   denied = Error
   If Not denied Or state["done"] Or state["busy"] Or Frame() <> before Then Error.Raise("Failed copy consumed operation or left data")
   db.Exec("DROP TRIGGER single_copy_sql")
+  If BoardCopies.UniqueTitle("Single source") <> "Single source [1]" Then Error.Raise("Failed single consumed numbered title")
   options = CopyOptions.Toggle(CopyOptions.Defaults(False), "comments")
   SingleBoardCopy.SetOptions(state, a, options)
   options["attachments"] = True
   If SingleBoardCopy.Options(state, a)["attachments"] Then Error.Raise("Setter exposed dialog state")
-  id = SingleBoardCopy.Copy(state, a, "Filtered single")
+  id = SingleBoardCopy.Copy(state, a, "Single source")
   If Not state["done"] Or state["busy"] Then Error.Raise("Successful dialog not consumed")
+  r = WorkspaceStore.Record(id, "board", id)
+  If r!title <> "Single source [1]" Then Error.Raise("Single default title not numbered")
   r = db.Find("kb_cards", "board_id=&1", id)
   If r.Count <> 1 Or r!labels Then Error.Raise("Single choices did not filter labels")
   If db.Find("kb_files", "board_id=&1", id).Count Then Error.Raise("Single choices did not omit bytes")
@@ -64,6 +67,24 @@ Public Sub Main()
   Try SingleBoardCopy.SetOptions(state, a, CopyOptions.Defaults())
   denied = Error
   If Not denied Or Frame() <> before Then Error.Raise("Completed choices changed")
+  fresh = SingleBoardCopy.NewState(a)
+  id = SingleBoardCopy.Copy(fresh, a, "Single source")
+  r = WorkspaceStore.Record(id, "board", id)
+  If r!title <> "Single source [2]" Then Error.Raise("Repeated single copy repeated title")
+  fresh = SingleBoardCopy.NewState(a)
+  before = Frame()
+  Try id = SingleBoardCopy.Copy(fresh, a, " ")
+  denied = Error
+  If Not denied Or Frame() <> before Or fresh["done"] Or fresh["busy"] Then Error.Raise("Blank single title changed state")
+  fresh = SingleBoardCopy.NewState(a)
+  db.Exec("CREATE TRIGGER single_generation AFTER INSERT ON kb_boards WHEN NEW.title='Late single generation' BEGIN UPDATE account_sessions SET generation=generation+1 WHERE username='single-owner'; END")
+  before = Frame()
+  Try id = SingleBoardCopy.Copy(fresh, a, "Late single generation")
+  denied = Error
+  If Not denied Or Frame() <> before Or fresh["done"] Or fresh["busy"] Then Error.Raise("Late generation change survived copy")
+  db.Exec("DROP TRIGGER single_generation")
+  id = SingleBoardCopy.Copy(fresh, a, "Late single generation")
+  before = Frame()
   fresh = SingleBoardCopy.NewState(a)
   fresh["generation"] = 0
   Try id = SingleBoardCopy.Copy(fresh, a, "Wrong generation")
@@ -106,7 +127,7 @@ Public Sub Main()
   Try id = SingleBoardCopy.Copy(state, a, "Policy lost")
   denied = Error
   If Not denied Or Frame() <> before Then Error.Raise("Restricted dialog copied")
-  Print "Single-board copy: source/account/generation/busy/completed binding, filtered content, copied options, atomic child failure/retry and readonly/role/creation-policy guards passed"
+  Print "Single-board copy: source/account/generation/busy/completed binding, numbered titles, filtered content, copied options, atomic child/generation failure/retry and readonly/role/creation-policy guards passed"
 End
 
 Private Function Frame() As String
@@ -120,7 +141,7 @@ Private Function Frame() As String
   Dim data As New Variant[]
   Dim field As ResultField
   For Each table In db.Tables
-    If Left(table.Name, 3) = "kb_" Or table.Name = "users" Or table.Name = "attachment_transfer_settings" Or table.Name = "board_creation_settings" Then tables.Add(table.Name)
+    If Left(table.Name, 3) = "kb_" Or table.Name = "users" Or table.Name = "account_sessions" Or table.Name = "attachment_transfer_settings" Or table.Name = "board_creation_settings" Then tables.Add(table.Name)
   Next
   tables.Sort()
   For Each tableName In tables

@@ -852,8 +852,8 @@ remaining details/labels/files/cover and preserved completed bytes. Focused mode
 tests/run-http.py --copy-options, adding --archive for the packaged application.
 
 Rules, integrations, scrum, source board-defined labels/custom-field definitions,
-source template/system-board models, destination placement/order, exact source
-single-copy title/redirect callbacks, complete original backend/UI/API/DDP/security
+source template/system-board models, destination placement/order, actual source
+routing/subscription integration, complete original backend/UI/API/DDP/security
 callbacks and durable request-level batch recovery remain open.
 
 ### Global board-creation policy
@@ -906,7 +906,8 @@ not claim those missing paths or reporting callbacks.
 
 The existing board-menu Copy dialog now offers the eight supported content
 choices, Select all/none and source parent dependencies. It uses the same native
-filtering service as selected duplication, with the existing editable copy title.
+filtering service as selected duplication. The title editor starts with the source
+title; the saved title uses source-style collision numbering.
 Keyboard checkbox roles, translated captions and the shared two-column mobile
 layout apply to both dialogs. Choices reset to defaults when opening a new single
 copy and remain separate from selected-copy state. Card/list/swimlane copies keep
@@ -938,7 +939,35 @@ The existing source option-helper comparisons and 256 native content selections
 continue to cover the reused option/filter semantics.
 
 This extends the native single-copy dialog. The original clone popup's
-withoutCards choice corresponds to clearing Cards here; exact source clone title,
-placement, redirect/subscription callbacks and full original UI/API/DDP/security
-behavior remain pending. Rules/integrations/scrum and board-defined label/custom-
+withoutCards choice corresponds to clearing Cards here. Source-style numbered
+titles and native destination navigation are implemented below. Placement/order,
+actual Meteor routing/subscriptions and full original UI/API/DDP/security behavior
+remain pending. Rules/integrations/scrum and board-defined label/custom-
 field models also remain pending; there are no placeholder controls for them.
+
+### Single-clone title and destination
+
+The single Copy dialog starts with the source board title and generates a unique
+numbered title at save time, using the same source-derived title algorithm as
+selected copies. An edited base stays supported; a previously unused base is kept
+as entered. Native title trimming and the 255-character/counter bounds still
+apply. Account, policy and source locks precede title generation inside an outer
+transaction. A failed child or late session-generation change rolls back the copy
+and leaves the operation retryable; completion is recorded after that transaction
+commits. Repeated copies of the same source receive successive numbered titles.
+
+After success, select the copied board in Swimlanes, close the previous card
+editor and discard its draft. A failed save keeps the source and form. This is native navigation;
+it does not implement Meteor URLs or subscriptions. The authorization browser
+regression explicitly returns to the source before testing its demotion.
+
+SingleBoardCopyTest covers numbered retries, repeated titles, blank-title refusal
+and late session-generation rollback/retry. Real browser checks compare two native
+SQL snapshots (with and without cards) with the unchanged source uniqueTitle and
+clone submit callback, using explicit native-ID, cache, method-result, Session,
+subscription and router adapters. They check the source title, card choice,
+callback sequence and destination identity alongside native mobile/security
+behavior. The
+source sort argument is inspected, but native destination rank/placement is not
+claimed. Full original UI/API/DDP/security suites, actual routing/subscriptions,
+non-SQLite concurrency and missing content models remain pending.

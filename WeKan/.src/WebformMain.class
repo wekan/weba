@@ -1181,7 +1181,7 @@ Private Sub BeginAction(action As String)
     DestinationLane.Visible = False
     DestinationLaneLabel.Visible = False
   Endif
-  If action = "Copy" Then ActionText.Text = r!title & " copy"
+  If action = "Copy" Then ActionText.Text = If($contextKind = "board", r!title, r!title & " copy")
   If action = "Color" Then
     ActionText.Text = WorkspaceStore.Setting($contextBoard, $contextKind, $contextId, "color", "#2980b9")
     LoadColorPresets()
@@ -1413,7 +1413,13 @@ Public Sub ActionConfirm_Click()
         BoardAccess.Require($contextBoard, "manageBoard")
         BoardCreation.Require()
         If Not ActionPanel.Visible Then Error.Raise("Copy form changed")
-        SingleBoardCopy.Copy($singleCopy, $contextBoard, ActionText.Text)
+        destination = SingleBoardCopy.Copy($singleCopy, $contextBoard, ActionText.Text)
+        $board = destination
+        $card = 0
+        $draft = Null
+        Editor.Hide()
+        $view = "Swimlanes"
+        $archive = False
       Else
         If $singleCopy Or Not ActionPanel.Visible Then Error.Raise("Copy form changed")
         WorkspaceStore.Copy($contextBoard, $contextKind, $contextId, ActionText.Text, DestinationLane.Text)

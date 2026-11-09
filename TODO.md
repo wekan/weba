@@ -85,10 +85,11 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   UI callbacks. Whole-board copy authorization and late actor/source/destination
   guards, selected native duplication with pending-only retry and source-style
   title numbering, eight native content-option controls in selected/single Copy,
-  private single-form source/session/replay guards and the global
+  private single-form source/session/replay guards, source-style single-clone
+  title generation/native destination navigation and the global
   creation policy across current native paths are recorded in
   CHANGELOG.md. Rules/integrations/scrum, board-defined labels/custom fields,
-  exact source single-copy title/redirect callbacks, destination placement/order,
+  actual source routing/subscription integration, destination placement/order,
   missing board content and full original callbacks remain open.
   Native multi-selection controls, retained visible-page selection
   and revisioned authoritative multi-drop transport are recorded in CHANGELOG.md.

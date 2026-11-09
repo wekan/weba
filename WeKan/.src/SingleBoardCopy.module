@@ -38,18 +38,33 @@ End
 
 Public Function Copy(state As Collection, boardId As Integer, title As String) As Integer
   Dim id As Integer
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim transaction As Boolean
   Dim acquired As Boolean
   Dim failure As String
   Check(state, boardId)
   If state["busy"] Then Error.Raise("Board copy is already running")
   state["busy"] = True
   acquired = True
+  DatabaseTransactions.Begin(db)
+  transaction = True
+  db.Exec("UPDATE users SET username=username WHERE username=&1", WebIdentity.Username)
+  BoardCreation.Lock()
+  db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+  Check(state, boardId)
+  title = Trim(title)
+  If Not title Or String.Len(title) > 255 Then Error.Raise("Enter a valid copy title")
+  title = BoardCopies.UniqueTitle(title)
   id = WorkspaceStore.Copy(boardId, "board", boardId, title, "", CopyOptions.Normalize(state["options"]))
+  Check(state, boardId)
+  DatabaseTransactions.Commit(db)
+  transaction = False
   state["done"] = True
   state["busy"] = False
   Return id
 Catch
   failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback(db)
   If acquired Then state["busy"] = False
   Error.Raise(failure)
 End
