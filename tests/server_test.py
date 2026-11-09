@@ -174,6 +174,66 @@ class CgiDeadlineTest(unittest.TestCase):
         self.assertEqual(result.stdout, b'Content-Type: text/plain\r\n\r\nOK')
 
 
+class NativeRequestCoordinatorTest(unittest.TestCase):
+    def test_application_cookie_serializes_despite_extra_cookie_changes(self):
+        coordinator = server.NativeRequestCoordinator()
+        entered, release, second = threading.Event(), threading.Event(), threading.Event()
+        results = []
+        def run(command, **kwargs):
+            if command == ['first']:
+                entered.set()
+                self.assertTrue(release.wait(3))
+            else:
+                second.set()
+            return command
+        with patch.object(server, 'run_application', side_effect=run):
+            first = threading.Thread(target=lambda: results.append(coordinator.run(['first'], input=b'', env={'HTTP_COOKIE':'GBSESSIONID-57454B414E=shared; extra=one'}, timeout=3)))
+            following = threading.Thread(target=lambda: results.append(coordinator.run(['second'], input=b'', env={'HTTP_COOKIE':'extra=two; GBSESSIONID-57454B414E=shared'}, timeout=3)))
+            first.start()
+            self.assertTrue(entered.wait(3))
+            following.start()
+            self.assertFalse(second.wait(.1))
+            release.set()
+            first.join(3)
+            following.join(3)
+        self.assertFalse(first.is_alive())
+        self.assertFalse(following.is_alive())
+        self.assertEqual(results, [['first'], ['second']])
+
+    def test_api_and_anonymous_requests_bypass_native_lock(self):
+        coordinator = server.NativeRequestCoordinator(stripes=1)
+        coordinator.locks[0].acquire()
+        try:
+            with patch.object(server, 'run_application', return_value='ok') as runner:
+                for env in [{'HTTP_COOKIE':'GBSESSIONID-57454B414E=shared','WEBA_API_REQUEST':'1'}, {}]:
+                    self.assertEqual(coordinator.run(['cgi'], input=b'body', env=env, timeout=.01), 'ok')
+                self.assertEqual(runner.call_count, 2)
+                with self.assertRaisesRegex(RuntimeError, 'Native session busy'):
+                    coordinator.run(['cgi'], input=b'', env={'HTTP_COOKIE':'GBSESSIONID-57454B414E=shared'}, timeout=.01)
+        finally:
+            coordinator.locks[0].release()
+
+    def test_multiple_application_cookies_and_errors_release_all_locks(self):
+        coordinator = server.NativeRequestCoordinator(stripes=1)
+        with patch.object(server, 'run_application', side_effect=RuntimeError('private')):
+            with self.assertRaisesRegex(RuntimeError, 'private'):
+                coordinator.run(['cgi'], input=b'', env={'HTTP_COOKIE':'GBSESSIONID-41=one; GBSESSIONID-42=two'})
+        self.assertTrue(coordinator.locks[0].acquire(blocking=False))
+        coordinator.locks[0].release()
+
+    def test_distinct_session_stripes_run_independently(self):
+        coordinator = server.NativeRequestCoordinator()
+        cookies = ['session'+str(i) for i in range(10)]
+        stripe = lambda value: int.from_bytes(server.hashlib.sha256(value.encode()).digest()[:4], 'big') % len(coordinator.locks)
+        other = next(value for value in cookies[1:] if stripe(value) != stripe(cookies[0]))
+        coordinator.locks[stripe(cookies[0])].acquire()
+        try:
+            with patch.object(server, 'run_application', return_value='ok'):
+                self.assertEqual(coordinator.run(['cgi'], input=b'', env={'HTTP_COOKIE':'GBSESSIONID-57454B414E='+other}, timeout=.01), 'ok')
+        finally:
+            coordinator.locks[stripe(cookies[0])].release()
+
+
 class LoginThrottleTest(unittest.TestCase):
     def test_limit_window_success_reset_and_capacity(self):
         clock = [100.0]

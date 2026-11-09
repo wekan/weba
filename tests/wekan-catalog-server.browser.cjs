@@ -15,19 +15,20 @@ const secrets=[process.env.WEBA_TEST_PASSWORD];
  const test=(title,callback)=>cases.push({title,callback,hooks:stack.flatMap(scope=>scope.before),cleanup:stack.toReversed().flatMap(scope=>scope.after)});
  test.describe=(_title,callback)=>{stack.push({before:[],after:[]});callback();stack.pop();};test.beforeEach=callback=>stack.at(-1).before.push(callback);test.afterEach=callback=>stack.at(-1).after.push(callback);
  const login=async username=>{const response=await api.post('/users/login',{data:{username,password:process.env.WEBA_TEST_PASSWORD}});expect(response.status()).toBe(200);const user=await response.json();secrets.push(user.token);return user;};
- const waitForMeteor=target=>target.waitForFunction(()=>window.gw&&window.webaI18n&&window.Meteor);
- let principal,pageCalls=0;
+ const navigations=new WeakMap();
+ const waitForMeteor=async target=>{try{await target.waitForFunction(()=>window.gw&&window.webaI18n&&window.Meteor);}catch(error){const state=await target.evaluate(()=>({path:location.pathname,title:document.title,ready:document.readyState,gw:!!window.gw,i18n:!!window.webaI18n,meteor:!!window.Meteor,htmlLength:document.documentElement.outerHTML.length,scriptCount:document.scripts.length,bodyNodes:document.body?.childNodes.length})).catch(()=>({unavailable:true}));throw Error('Original catalog startup state '+JSON.stringify({...state,response:navigations.get(target)})+'; '+error.message);}};
+ let principal,pageCalls=0,shownCookies=false;
  const loginWithToken=async(target,id,token)=>{
   const response=await api.get('/api/users/'+encodeURIComponent(id)+'/boards',{headers:{Authorization:'Bearer '+token}});expect(response.status()).toBe(200);
   principal={id,token};await target.goto(process.env.WEBA_TEST_URL);await waitForMeteor(target);
   await target.locator('[id$=".WebTextName:entry"]').fill(id);await target.locator('[id$=".WebTextPass:entry"]').fill(process.env.WEBA_TEST_PASSWORD);
-  await target.locator('[id$=".WebButtonLogin"]').click();await expect(target.locator('.workspaces-header')).toBeVisible();
+  await target.locator('[id$=".WebButtonLogin"]').click();await expect(target.locator('.workspaces-header')).toBeVisible();if(!shownCookies){shownCookies=true;console.log('Native cookie names: '+JSON.stringify((await target.context().cookies()).map(cookie=>cookie.name)));}
  };
  try{
   vm.runInNewContext(fs.readFileSync(spec,'utf8'),{process:{env:{WEKAN_BASE_URL:process.env.WEBA_TEST_URL.replace(/\/$/,'')}},require:name=>{if(name==='../fixtures')return{test,expect};if(name==='../helpers/db')return db;if(name==='../helpers/auth')return{loginWithToken,waitForMeteor};throw Error('Unsupported original dependency '+name);}},{filename:spec});
   const selected=cases.filter(item=>item.title==='Title A→Z and Z→A sort the board grid; custom hides pagination'||item.title==='search filters boards by name; non-matching search shows none'||item.title==='returns the correct sorted page and total; pages do not overlap'||item.title==='search narrows the total; a non-matching search returns nothing'||item.title==='does not leak boards the user has no access to (negative)');expect(selected).toHaveLength(5);expect(cases).toHaveLength(6);
   browser=await chromium.connectOverCDP(process.env.WEBA_BROWSER_URL);
-  for(const item of selected){
+  for(const item of Array.from({length:Number(process.env.WEBA_CATALOG_REPRO_ROUNDS||1)},()=>selected).flat()){
    const freshUser=async()=>{const id='catalog-'+randomUUID();fixture('create-user',id);accounts.push(id);return login(id);};
    const user=await freshUser(),user2=await freshUser();
    context=await browser.newContext();principal=null;
@@ -38,7 +39,7 @@ const secrets=[process.env.WEBA_TEST_PASSWORD];
     pageCalls++;return fixture('page',principal.id,{WEBA_ORIGINAL_CATALOG_PARAMS:JSON.stringify(params)});
    });
    await context.addInitScript(()=>{window.Meteor={call(name,...args){const callback=args.pop();if(name!=='getAllBoardsPage')throw Error('Unsupported original method');window.nativeCatalogPage(args[0]).then(result=>callback(null,result),error=>callback(error));}};});
-   const page=await context.newPage(),args={page,user,user2};
+   const page=await context.newPage(),args={page,user,user2};page.on('response',response=>{if(response.request().isNavigationRequest()&&response.frame()===page.mainFrame()){const headers=response.headers();navigations.set(page,{status:response.status(),type:headers['content-type'],length:headers['content-length']});}});page.on('pageerror',error=>console.log('Catalog browser error: '+error.message.slice(0,200)));page.on('requestfailed',request=>console.log('Catalog request failed: '+new URL(request.url()).pathname.slice(0,160)+' '+request.failure()?.errorText));
    try{for(const hook of item.hooks)await hook(args);await item.callback(args);
     if(item.title==='does not leak boards the user has no access to (negative)'){
      const before=pageCalls,response=await api.post('/users/logout',{headers:{Authorization:'Bearer '+user.token},data:{}});expect(response.status()).toBe(200);
@@ -46,7 +47,11 @@ const secrets=[process.env.WEBA_TEST_PASSWORD];
      expect(await page.evaluate(()=>window.nativeCatalogPage({search:'Secret User2 Board'}).then(()=>false,()=>true))).toBe(true);expect(pageCalls).toBe(before);
      console.log('Original catalog adapter security: revoked API token refused before native service invocation despite retained native UI session');
     }
-    console.log('Original spec39 catalog callback passed: '+item.title);}finally{for(const hook of item.cleanup)await hook(args);await context.close();context=null;for(const id of [user.id,user2.id]){fixture('delete-user',id);accounts.splice(accounts.indexOf(id),1);}}
+    console.log('Original spec39 catalog callback passed: '+item.title);}catch(error){const state=await page.evaluate(()=>({path:location.pathname,title:document.title,ready:document.readyState,gw:!!window.gw,i18n:!!window.webaI18n,meteor:!!window.Meteor,htmlLength:document.documentElement.outerHTML.length,scriptCount:document.scripts.length,bodyNodes:document.body?.childNodes.length})).catch(()=>({unavailable:true}));console.log('Catalog failure state: '+JSON.stringify({...state,response:navigations.get(page)}));
+    const redactions=[...secrets,...(await context.cookies()).map(cookie=>cookie.value)];
+    const inline=await page.locator('script:not([src])').allTextContents();
+    for(const [index,script] of inline.entries()){try{new vm.Script(script);}catch(parseError){let sanitized=script;for(const value of redactions)if(value)sanitized=sanitized.split(value).join('[redacted]');const destination=path.join(process.env.TMPDIR,'weba-startup-'+randomUUID()+'.js');fs.writeFileSync(destination,sanitized,{mode:0o600});const frames=parseError.stack.split('\n'),line=Number(/:(\d+)$/.exec(frames[0])?.[1]||1),column=Math.max(0,frames[2]?.indexOf('^')||0);console.log('Malformed inline script: '+JSON.stringify({index,line,column,length:script.length,path:destination,snippet:sanitized.split('\n')[line-1]?.slice(Math.max(0,column-70),column+70)}));}}
+    throw error;}finally{for(const hook of item.cleanup)await hook(args);await context.close();context=null;for(const id of [user.id,user2.id]){fixture('delete-user',id);accounts.splice(accounts.indexOf(id),1);}}
   }
   expect(owners.size).toBe(0);
   console.log('Original spec39 catalog: 3 server + 2 sort/search UI unchanged callbacks/hooks passed through real native BoardCatalog.Page; explicit test-only RPC, numeric-ID, fixture DB/profile and API-token-to-native-session adapters. No production DDP/routing claim; Latin is covered separately; all six callbacks have explicit adapter-backed execution, production transport remains open.');

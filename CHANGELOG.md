@@ -2,6 +2,14 @@
 
 This work adds the following features and fixes:
 
+- Serialize native GUI requests with the actual application-specific Gambas
+  session cookies, preventing reloads from overlapping native command responses.
+  Use bounded lock stripes, ordered multi-cookie acquisition and a shared queue/
+  execution deadline; preserve API and anonymous dispatch. Verify 38 host tests
+  and four source plus four packaged rounds of unchanged catalog callbacks.
+  Thanks to xet7.
+
+
 - Wait for complete CGI response output, including descendant writers, before
   serializing HTTP headers/body. Retain the request deadline, terminate the
   request process group on timeout, close capture pipes without waiting for

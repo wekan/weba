@@ -14,6 +14,7 @@ import time
 import tempfile
 from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.cookies import SimpleCookie, CookieError
 from pathlib import Path
 import os
 import subprocess
@@ -136,6 +137,42 @@ def run_application(command, *, input, env, timeout=30):
         return subprocess.CompletedProcess(command, process.returncode, stdout=output)
 
 
+class NativeRequestCoordinator:
+    """Coordinate real gb.web.gui cookie names with bounded lock stripes."""
+    def __init__(self, stripes=256):
+        self.locks = [threading.Lock() for _ in range(stripes)]
+
+    def run(self, command, *, input, env, timeout=30):
+        if env.get('WEBA_API_REQUEST') == '1':
+            return run_application(command, input=input, env=env, timeout=timeout)
+        cookies = SimpleCookie()
+        try:
+            cookies.load(env.get('HTTP_COOKIE', ''))
+        except CookieError:
+            cookies.clear()
+        sessions = [cookie.value for name, cookie in cookies.items()
+                    if name == 'GBSESSIONID' or (name.startswith('GBSESSIONID-') and
+                    name[12:] and all(char in '0123456789ABCDEF' for char in name[12:]))]
+        if not sessions:
+            return run_application(command, input=input, env=env, timeout=timeout)
+        indices = sorted({int.from_bytes(hashlib.sha256(value.encode()).digest()[:4], 'big') % len(self.locks)
+                          for value in sessions})
+        deadline = time.monotonic() + timeout
+        acquired = []
+        try:
+            for index in indices:
+                if not self.locks[index].acquire(timeout=max(0, deadline - time.monotonic())):
+                    raise RuntimeError('Native session busy')
+                acquired.append(index)
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise RuntimeError('Native session busy')
+            return run_application(command, input=input, env=env, timeout=remaining)
+        finally:
+            for index in reversed(acquired):
+                self.locks[index].release()
+
+
 class LoginThrottle:
     """Bounded per-peer login window; forwarded identity headers are untrusted."""
     def __init__(self, clock=time.monotonic, limit=5, window=60, capacity=4096):
@@ -165,6 +202,7 @@ class LoginThrottle:
 
 def handler(application, runner, environment):
     login_throttle = LoginThrottle()
+    native_requests = NativeRequestCoordinator()
     class GambasHandler(BaseHTTPRequestHandler):
         def do_GET(self): self.run_cgi()
         def do_POST(self): self.run_cgi()
@@ -402,11 +440,11 @@ def handler(application, runner, environment):
                         env['QUERY_STRING'] = urllib.parse.urlencode({
                             'c': '["update",null,"weba-large-update",null,true]'
                         }, quote_via=urllib.parse.quote)
-                        result = run_application(command, input=body, env=env, timeout=30)
+                        result = native_requests.run(command, input=body, env=env, timeout=30)
                 else:
                     if command_text is not None:
                         env['QUERY_STRING'] = command_text
-                    result = run_application(command, input=body, env=env, timeout=30)
+                    result = native_requests.run(command, input=body, env=env, timeout=30)
                 boundaries = [(result.stdout.find(separator), separator)
                               for separator in (b'\r\n\r\n', b'\n\n')
                               if result.stdout.find(separator) >= 0]
