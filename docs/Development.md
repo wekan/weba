@@ -11,8 +11,8 @@ and in the [README](../README.md), rather than in duplicate instruction files.
 | --- | --- |
 | Login and registration | `WeKan/.src/WebformLogin.class` and `.webform` |
 | Native navigation, editors and live board checks | `WeKan/.src/WebformMain.class`, `.webform`, `BoardLive.module`, `CardDraft.module`, `DetailLive.module`, `EntryDraft.module`, `PeopleLive.module` |
-| Accounts, sessions and connection | `WeKan/.src/WebDatabase.module`, `WebIdentity.module`, `ApiTokens.module` |
-| Board/card persistence and permissions | `KanbanStore.module`, `BoardAccess.module`, `ApiMemberRoles.module`, `BoardCatalog.module`, `BoardOrder.module`, `BoardSpaces.module`, `BoardSelection.module` |
+| Accounts, sessions and connection | `WeKan/.src/WebDatabase.module`, `WebIdentity.module`, `ApiTokens.module`, `RecoveryStore.module` |
+| Board/card persistence and permissions | `KanbanStore.module`, `BoardAccess.module`, `ApiMemberRoles.module`, `BoardCatalog.module`, `BoardOrder.module`, `BoardSpaces.module`, `BoardSelection.module`, `BoardPurge.module` |
 | REST routing and projections | `RestApi.module`, `BoardRestData.module` |
 | UTC dates, archive history and change clocks | `CardDates.module`, `CardArchive.module`, `ItemChanges.module` |
 | Workspace menus, transfer and rich content | `WorkspaceStore.module`, `WorkspaceActions.module`, `BoardTransfer.module`, `CardContent.module` |
@@ -542,3 +542,22 @@ The source/package test-live runner includes board-selection.browser.cjs; the
 isolated --board-selection mode also exercises paging and late off-page access
 revocation. SQL fixtures and native service tests cover storage/authorization
 separately. No unchanged full original selection callback suite is claimed.
+
+
+## Permanent board purge boundary
+
+RecoveryStore owns the default-off site setting and independent recovery_events
+journal. Mutators derive the actor from current WebIdentity, lock/recheck the
+account and setting and commit success audits with effects. Failed attempts are
+appended only after rollback; failure-audit errors must not replace the original
+error. Events requires current Global Admin, and the new panels clear on demotion.
+
+BoardPurge is the explicit global-admin exception for deleting archived boards,
+not a general board-read override. Validate the entire bounded unique selection,
+lock account/setting/sorted boards, and recheck gate/state through effects/final
+commit. Keep cleanup references and native lifecycle tests current as schemas grow.
+The legacy board service is gated; UI per-board commands must reject board purge.
+Native Archive confirmation captures private selection revision and derives IDs
+server-side. Keep recovery events out of board/account cleanup so audit survives.
+Other recovery event types, original report/filter/wire parity and public API
+adapters remain separate work; do not infer full original-suite completion.

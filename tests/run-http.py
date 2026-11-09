@@ -7,7 +7,7 @@ root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(root / 'runtime'))
 from server import handler
 
-if any(mode in sys.argv for mode in ('--live', '--overview-live', '--catalog', '--board-order', '--workspaces', '--workspace-order', '--board-drops', '--board-selection', '--selection-archive')) and '--members' not in sys.argv:
+if any(mode in sys.argv for mode in ('--live', '--overview-live', '--catalog', '--board-order', '--workspaces', '--workspace-order', '--board-drops', '--board-selection', '--selection-archive', '--board-purge')) and '--members' not in sys.argv:
     sys.argv.append('--members')
 
 base_env = os.environ.copy()
@@ -67,7 +67,9 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
         env['WEBA_TEST_URL'] = 'http://127.0.0.1:' + str(server.server_port)
         env['WEBA_TEST_RUNNER'] = runner
         env['WEBA_TEST_APPLICATION'] = str(application)
-        if '--selection-archive' in sys.argv:
+        if '--board-purge' in sys.argv:
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-purge.browser.cjs')], check=True, env=env)
+        elif '--selection-archive' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/selection-archive.browser.cjs')], check=True, env=env)
         elif '--board-selection' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-selection.browser.cjs')], check=True, env=env)
@@ -96,6 +98,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-drops.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-selection.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/selection-archive.browser.cjs')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-purge.browser.cjs')], check=True, env=env)
         elif '--members' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/dates-conformance.test.cjs')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/api-members.test.py')], check=True, env=env)

@@ -576,6 +576,12 @@
         { AdminProblemsTitle WebLabel
           Text = ("Problems")
         }
+        { PermanentDeleteSettings WebButton
+          Text = ("Delete")
+        }
+        { RecoveryEvents WebButton
+          Text = ("Recovery")
+        }
         { PasswordLength WebButton
           Text = ("Password Length")
         }
@@ -751,6 +757,34 @@
           Text = ("Change password")
         }
       }
+      { PermanentDeletePanel WebContainer
+        Visible = False
+        Arrangement = Arrange.Vertical
+        Class = "weba-settings-panel"
+        { PermanentDeleteHeading WebLabel
+          Text = ("Admin Panel / Problems / Delete")
+        }
+        { PermanentDeleteEnabled WebCheckBox
+          Text = ("Enable permanent delete for Global Admin")
+        }
+        { PermanentDeleteExplanation WebLabel
+          Text = ("Allow Global Admins to permanently delete soft-deleted content. Enabling this setting does not delete anything by itself.")
+        }
+        { SavePermanentDelete WebButton
+          Text = ("Save")
+        }
+      }
+      { RecoveryPanel WebContainer
+        Visible = False
+        Arrangement = Arrange.Vertical
+        Class = "weba-settings-panel"
+        { RecoveryHeading WebLabel
+          Text = ("Recovery")
+        }
+        { RecoveryTree WebTree
+          Class = "weba-user-text"
+        }
+      }
       { PasswordPolicyPanel WebContainer
         Visible = False
         Spacing = True
@@ -827,6 +861,25 @@
           Visible = False
           { StarSelectedBoards WebButton
             Text = ("Star the selected boards")
+          }
+          { PurgeSelectedBoards WebButton
+            Text = ("Delete")
+            Class = "weba-purge-selected"
+            Visible = False
+          }
+          { SelectedPurgePanel WebContainer
+            Arrangement = Arrange.Vertical
+            Visible = False
+            { SelectedPurgeConfirmation WebCheckBox
+              Text = ("All lists, cards, labels, and activities will be deleted and you won't be able to recover the board contents. There is no undo.")
+            }
+            { ConfirmSelectedPurge WebButton
+              Text = ("Delete")
+              Class = "weba-purge-selected"
+            }
+            { CancelSelectedPurge WebButton
+              Text = ("Cancel")
+            }
           }
           { ArchiveSelectedBoards WebButton
             Text = ("Move Board to Archive")

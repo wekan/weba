@@ -1,0 +1,115 @@
+' Explicit Global Admin purge for bounded archived-board selections.
+Export
+Private $tables As String[] = ["kb_entries", "kb_files", "kb_card_lists", "kb_cards", "kb_lists", "kb_lanes", "kb_meta", "kb_history", "kb_order", "kb_activity", "kb_members", "kb_removed_members", "kb_member_flags", "kb_user_meta", "kb_card_assignees", "kb_card_members", "kb_card_people_order", "kb_card_people_sequence", "kb_card_dates", "kb_card_archive", "kb_item_changes", "kb_retired_authors", "kb_board_space_assignments", "kb_board_order"]
+
+Public Function DeleteBoards(ids As Integer[]) As Integer
+  Dim db As Connection
+  Dim actor As String = WebIdentity.Username
+  Dim uniqueIds As New Collection
+  Dim boards As New Collection
+  Dim attempts As Variant[]
+  Dim item As Collection
+  Dim locks As Integer[]
+  Dim boardId As Integer
+  Dim r As Result
+  Dim tableName As String
+  Dim transaction As Boolean
+  Dim failure As String
+  RecoveryStore.OpenStore()
+  attempts = AttemptedBoards(ids)
+  For Each item In attempts
+    boards[CStr(item["id"])] = item
+  Next
+  RecoveryStore.RequirePurge()
+  If Not ids Then Error.Raise("Invalid board selection")
+  If ids.Count = 0 Then Error.Raise("Invalid board selection")
+  For Each boardId In ids
+    If boardId <= 0 Then Error.Raise("Invalid board selection")
+    If uniqueIds.Exist(CStr(boardId)) Then Continue
+    uniqueIds[CStr(boardId)] = True
+  Next
+  If uniqueIds.Count > 200 Then Error.Raise("Invalid board selection")
+  locks = New Integer[]
+  For Each tableName In uniqueIds.Keys
+    locks.Add(CInt(tableName))
+  Next
+  locks.Sort()
+  db = WebDatabase.OpenConnection()
+  DatabaseTransactions.Begin(db)
+  transaction = True
+  db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  db.Exec("UPDATE recovery_settings SET id=id WHERE id=&1", 1)
+  CheckGate(actor)
+  For Each boardId In locks
+    db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+  Next
+  ' Validate the entire locked set before any board/content deletion.
+  For Each boardId In locks
+    r = ArchivedBoard(db, boardId)
+    item = boards[CStr(boardId)]
+    item["title"] = CStr(r!title)
+  Next
+  For Each boardId In locks
+    CheckGate(actor)
+    ArchivedBoard(db, boardId)
+    For Each tableName In $tables
+      If db.Tables.Exist(tableName) Then db.Delete(tableName, "board_id=&1", boardId)
+    Next
+    ' A trigger/late state change during child cleanup cannot purge an active board.
+    CheckGate(actor)
+    ArchivedBoard(db, boardId)
+    db.Delete("kb_boards", "id=&1", boardId)
+    item = boards[CStr(boardId)]
+    RecoveryStore.Record("board-permanently-deleted", actor, True, True, "Permanently deleted board " & Str(boardId) & " titled " & JSON.Encode(CStr(item["title"])), [item])
+  Next
+  CheckGate(actor)
+  For Each boardId In locks
+    r = db.Find("kb_boards", "id=&1", boardId)
+    If r.Available Then Error.Raise("Board deletion changed")
+  Next
+  DatabaseTransactions.Commit(db)
+  transaction = False
+  Return locks.Count
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback(db)
+  Try RecoveryStore.Record("board-permanently-deleted", actor, False, False, "Permanent board deletion failed: " & failure, attempts)
+  Error.Raise(failure)
+End
+
+Private Sub CheckGate(actor As String)
+  If Not actor Or WebIdentity.Username <> actor Then Error.Raise("Permanent delete is disabled.")
+  RecoveryStore.RequirePurge()
+End
+
+Private Function ArchivedBoard(db As Connection, boardId As Integer) As Result
+  Dim r As Result = db.Find("kb_boards", "id=&1", boardId)
+  If Not r.Available Then Error.Raise("Only archived boards can be permanently deleted.")
+  If Not r!archived Then Error.Raise("Only archived boards can be permanently deleted.")
+  Return r
+End
+
+
+' Native confirmation preflight denial must be audited too; it has no effects
+' transaction and must not manufacture success or trust a browser ID list.
+Public Sub RecordRejected(ids As Integer[], failure As String)
+  RecoveryStore.Record("board-permanently-deleted", WebIdentity.Username, False, False, "Permanent board deletion rejected: " & failure, AttemptedBoards(ids))
+End
+
+Private Function AttemptedBoards(ids As Integer[]) As Variant[]
+  Dim seen As New Collection
+  Dim attempts As New Variant[]
+  Dim item As Collection
+  Dim boardId As Integer
+  If Not ids Then Return attempts
+  For Each boardId In ids
+    If seen.Exist(CStr(boardId)) Then Continue
+    If seen.Count >= 200 Then Exit
+    seen[CStr(boardId)] = True
+    item = New Collection
+    item["id"] = boardId
+    item.Add("", "title")
+    attempts.Add(item)
+  Next
+  Return attempts
+End

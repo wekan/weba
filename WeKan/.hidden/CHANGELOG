@@ -1,4 +1,8 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Permanent board deletion: Require Global Admin and an explicit default-off
+  flag; remove per-board UI bypasses. Add revision-bound confirmed atomic Archive
+  batches with bounded IDs, fresh locks/guards and independent recovery audits.
+  Verify partial/late/audit rollback, retry and two-user source/package controls.
 - JSON export: Preserve explicit nullable row keys with Collection.Add; verify
   raw text/null, false and zero fields with before/after regression evidence.
   Driver empty/null distinction and full original JSON contracts remain open.

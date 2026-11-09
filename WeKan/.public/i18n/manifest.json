@@ -2,11 +2,12 @@
   "source": "wekan/wekan imports/i18n",
   "englishSha256": "e2d69d7470e6ea08c5d7b3e669580832198b155217b533ba2d2ef0dcb163160b",
   "languages": 237,
-  "keys": 135,
+  "keys": 140,
   "unmapped": [
     "Account",
     "Add a list first",
     "Admin Panel / Password Length",
+    "Admin Panel / Problems / Delete",
     "Archive / restore card",
     "Archived items",
     "Assign myself",

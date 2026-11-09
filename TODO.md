@@ -78,13 +78,16 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   target. Native SQL tests cover partial rollback/retry, mixed roles/states,
   last-effect membership/target/restore-role loss and observed lock order.
   Original callback outcome comparisons expand from 52 to 156 single/multi/mixed
-  cases. This service is not yet connected to native selection controls or a new
-  public HTTP route; existing single-board browser regressions remain separate.
-- Next: remaining batch sidebar actions (duplication/export and enabled
-  permanent deletion), Home/group targets, Markdown icons and original
+  cases. Native selection and confirmed sidebar actions now use this service;
+  no new public HTTP route is exposed. Original full callbacks remain open.
+- Next: remaining batch sidebar actions (duplication and multi-format export),
+  Home/group targets, Markdown icons and original
   UI callbacks. Native multi-selection controls, retained visible-page selection
   and revisioned authoritative multi-drop transport are recorded in CHANGELOG.md.
   Native form tests do not execute the original Latin callback unchanged.
+  Card/list/swimlane permanent-removal source gate/soft-delete parity,
+  full Recovery schema/report/filter parity and non-SQLite driver verification
+  remain open beyond the native durable purge/settings audit in CHANGELOG.md.
 
 - Documented header menu lifecycle and stable shared styles, delayed stylesheet/
   font placement and safe teardown. Recorded the new real browser/unit evidence;

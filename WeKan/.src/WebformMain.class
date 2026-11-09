@@ -34,6 +34,8 @@ Private $detailFormBase As Collection
 Private $boardSelection As Collection
 Private $overviewSidebar As String = "search"
 Private $selectedArchiveRevision As Long = -1
+Private $selectedPurgeRevision As Long = -1
+Private $purgeAllowed As Boolean
 Private $catalogData As Collection
 Private $catalogSort As String = "custom"
 Private $catalogPage As Integer = 1
@@ -140,6 +142,10 @@ End
 
 Public Sub BoardPoll_Timer()
   Dim state As String
+  ValidateRecoveryPanels()
+  If IsOverview() And $archive Then
+    If RecoveryStore.CanPurge() <> $purgeAllowed Then RefreshCatalogVisual()
+  Endif
   If RefreshSpaces() And IsOverview() Then RefreshTree()
   If $board > 0 Then
     If $view <> "Profile" And $view <> "Admin panel" Then
@@ -237,6 +243,8 @@ Public Sub Boards_Select()
   ContentRow.Show()
   AccountPanel.Hide()
   PasswordPolicyPanel.Hide()
+  PermanentDeletePanel.Hide()
+  RecoveryPanel.Hide()
   AdminPanel.Hide()
   PageActions.Show()
   RefreshTree()
@@ -456,6 +464,8 @@ Private Sub ShowView(view As String)
   AccountPanel.Visible = view = "Profile"
   AdminPanel.Visible = False
   PasswordPolicyPanel.Hide()
+  PermanentDeletePanel.Hide()
+  RecoveryPanel.Hide()
   If view = "Admin panel" Then AdminPanel.Visible = WebDatabase.GetIsAdmin(WebIdentity.Username)
   If view = "Profile" Then Fullname.Text = WebDatabase.GetFullname(WebIdentity.Username)
   $view = view
@@ -477,6 +487,8 @@ Public Sub Home_Click()
   AccountPanel.Hide()
   AdminPanel.Hide()
   PasswordPolicyPanel.Hide()
+  PermanentDeletePanel.Hide()
+  RecoveryPanel.Hide()
   $archive = False
   $board = 0
   $view = "Boards"
@@ -495,6 +507,8 @@ Public Sub Archive_Click()
   AccountPanel.Hide()
   AdminPanel.Hide()
   PasswordPolicyPanel.Hide()
+  PermanentDeletePanel.Hide()
+  RecoveryPanel.Hide()
   $archive = True
   $board = 0
   $view = "Archive"
@@ -713,6 +727,8 @@ Public Sub PasswordLength_Click()
   PolicyMinimum.Text = Str(WebDatabase.PasswordMinLength())
   ContentRow.Hide()
   PaneTitle.Text = "Password Length"
+  PermanentDeletePanel.Hide()
+  RecoveryPanel.Hide()
   PasswordPolicyPanel.Show()
 Catch
   Notice.Text = Error.Text
@@ -1004,7 +1020,7 @@ Private Sub OpenContext(kind As String, itemId As Integer, boardId As Integer)
   If kind = "card" Then ContextAssignSelf.Text = If(BoardAccess.IsAssigned(boardId, itemId, WebIdentity.Username), "Unassign myself", "Assign myself")
   ContextArchive.Visible = Not archived And change
   ContextRestore.Visible = archived And change
-  ContextDelete.Visible = archived And change
+  ContextDelete.Visible = archived And change And kind <> "board"
   ContextRename.Visible = Not archived And change
   ContextCopy.Visible = (kind = "board" And BoardAccess.Can(boardId, "seesAllCards")) Or (kind <> "board" And writable)
   ContextAddCard.Visible = writable And Not archived And kind <> "card"
@@ -1233,6 +1249,7 @@ Public Sub DestinationLane_Click()
 End
 
 Public Sub ContextDelete_Click()
+  If $contextKind = "board" Then Error.Raise("Use Archive multi-selection to delete boards")
   BeginAction("Delete")
 Catch
   Notice.Text = Error.Text
@@ -1281,6 +1298,7 @@ Public Sub ActionConfirm_Click()
       $view = "Swimlanes"
       $archive = False
     Case "Delete"
+      If $contextKind = "board" Then Error.Raise("Use Archive multi-selection to delete boards")
       WorkspaceActions.DeleteArchived($contextBoard, $contextKind, $contextId, ActionText.Text)
       If $contextKind = "board" And $board = $contextBoard Then $board = 0
       ItemBrowser.Hide()
@@ -2554,6 +2572,11 @@ Private Sub UpdateSelectionControls()
   BoardSelectionPanel.Visible = IsOverview() And active And $overviewSidebar = "selection"
   BoardSearchPanel.Visible = IsOverview() And Not BoardSelectionPanel.Visible
   SelectedBoardsCount.Text = Str(BoardSelection.Count(SelectionState()))
+  $purgeAllowed = RecoveryStore.CanPurge()
+  PurgeSelectedBoards.Visible = IsOverview() And $archive And active And $purgeAllowed
+  BoardSelectionHint.Text = "Click checkboxes to select boards"
+  If IsOverview() And $archive And Not $purgeAllowed Then BoardSelectionHint.Text = "If at Admin Panel / Problems / Delete is checked Enable permanent delete for Global Admin then here will become visible button for Delete."
+  If Not IsOverview() Or Not $archive Or Not active Or Not $purgeAllowed Or $selectedPurgeRevision <> BoardSelection.Revision(SelectionState()) Then CancelSelectedPurge_Click()
   ArchiveSelectedBoards.Visible = IsOverview() And Not $archive And active
   If Not IsOverview() Or $archive Or Not active Or $selectedArchiveRevision <> BoardSelection.Revision(SelectionState()) Then CancelSelectedArchive_Click()
   StarSelectedBoards.Visible = IsOverview() And Not $archive And active
@@ -2667,5 +2690,94 @@ Public Sub ConfirmSelectedArchive_Click()
   RefreshTree()
 Catch
   Notice.Text = Error.Text
+  RefreshCatalogVisual()
+End
+
+
+Public Sub PermanentDeleteSettings_Click()
+  RecoveryStore.RequireAdmin()
+  PermanentDeleteEnabled.Value = RecoveryStore.Enabled()
+  ContentRow.Hide()
+  PasswordPolicyPanel.Hide()
+  RecoveryPanel.Hide()
+  PermanentDeletePanel.Show()
+  PaneTitle.Text = "Delete"
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub SavePermanentDelete_Click()
+  RecoveryStore.SetEnabled(PermanentDeleteEnabled.Value)
+  Notice.Text = "Saved."
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub RecoveryEvents_Click()
+  Dim r As Result = RecoveryStore.Events()
+  ContentRow.Hide()
+  PasswordPolicyPanel.Hide()
+  PermanentDeletePanel.Hide()
+  RecoveryTree.Clear()
+  For Each r
+    RecoveryTree.Add("recovery:" & Str(r!id), Str(r!created_at) & " · " & r!actor & " · " & If(r!done, "✓ ", "× ") & r!detail)
+  Next
+  RecoveryPanel.Show()
+  PaneTitle.Text = "Recovery"
+Catch
+  RecoveryTree.Clear()
+  RecoveryPanel.Hide()
+  Notice.Text = Error.Text
+End
+
+Private Sub ValidateRecoveryPanels()
+  If Not PermanentDeletePanel.Visible And Not RecoveryPanel.Visible Then Return
+  Try RecoveryStore.RequireAdmin()
+  If Error Then
+    PermanentDeletePanel.Hide()
+    PermanentDeleteEnabled.Value = False
+    RecoveryPanel.Hide()
+    RecoveryTree.Clear()
+  Endif
+End
+
+Public Sub PurgeSelectedBoards_Click()
+  If Not IsOverview() Or Not $archive Then Error.Raise("Select Archive first")
+  RecoveryStore.RequirePurge()
+  BoardSelection.ActionIds(SelectionState())
+  $selectedPurgeRevision = BoardSelection.Revision(SelectionState())
+  SelectedPurgeConfirmation.Value = False
+  SelectedPurgePanel.Show()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub CancelSelectedPurge_Click()
+  $selectedPurgeRevision = -1
+  SelectedPurgeConfirmation.Value = False
+  SelectedPurgePanel.Hide()
+End
+
+Public Sub ConfirmSelectedPurge_Click()
+  Dim ids As Integer[]
+  Dim dispatched As Boolean
+  Dim failure As String
+  If Not IsOverview() Or Not $archive Then Error.Raise("Select Archive first")
+  RecoveryStore.RequirePurge()
+  ids = BoardSelection.ActionIds(SelectionState())
+  If $selectedPurgeRevision < 0 Or $selectedPurgeRevision <> BoardSelection.Revision(SelectionState()) Then Error.Raise("Board selection changed")
+  If Not SelectedPurgeConfirmation.Value Then Error.Raise("Confirm permanent board deletion")
+  dispatched = True
+  BoardPurge.DeleteBoards(ids)
+  BoardSelection.Clear(SelectionState())
+  CancelSelectedPurge_Click()
+  RefreshTree()
+Catch
+  failure = Error.Text
+  If Not dispatched Then
+    Try ids = BoardSelection.Ids(SelectionState())
+    Try BoardPurge.RecordRejected(ids, failure)
+  Endif
+  Notice.Text = failure
   RefreshCatalogVisual()
 End

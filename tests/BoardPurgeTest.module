@@ -1,0 +1,208 @@
+Public Sub Main()
+  Dim a As Integer
+  Dim b As Integer
+  Dim active As Integer
+  Dim cardId As Integer
+  Dim listId As Integer
+  Dim ids As Integer[]
+  Dim attempts As Variant[]
+  Dim emptyIds As New Integer[]
+  Dim tooMany As New Integer[]
+  Dim db As Connection
+  Dim r As Result
+  Dim before As String
+  Dim successEvents As Integer
+  Dim denied As Boolean
+  Dim index As Integer
+  WebDatabase.Register("purge-global", "x")
+  WebDatabase.Register("purge-owner", "x")
+  SignIn("purge-global")
+  If RecoveryStore.Enabled() Or RecoveryStore.CanPurge() Then Error.Raise("Fresh permanent delete is enabled")
+  SignIn("purge-owner")
+  a = KanbanStore.AddBoard("Purge Alpha <literal>")
+  b = KanbanStore.AddBoard("Purge Bravo")
+  active = KanbanStore.AddBoard("Keep active")
+  r = KanbanStore.Lanes(a)
+  r = KanbanStore.Lists(a, "Default")
+  listId = r!id
+  cardId = KanbanStore.SaveCard(a, 0, "Purge card", "Body", "Default", "Todo", "", "", "", listId)
+  CardContent.AddFile(a, cardId, "bytes.bin", "a" & Chr(0) & "b")
+  BoardSpaces.Assign(a, BoardSpaces.Add("Keep workspace"))
+  WorkspaceStore.SetSetting(a, "board", a, "star", "1")
+  WorkspaceStore.SetArchived(a, "board", a, True)
+  WorkspaceStore.SetArchived(b, "board", b, True)
+  ids = [b, a]
+  Try RecoveryStore.SetEnabled(True)
+  denied = Error
+  If Not denied Or RecoveryStore.Enabled() Then Error.Raise("Normal user enabled permanent delete")
+  Try RecoveryStore.Events()
+  denied = Error
+  If Not denied Then Error.Raise("Normal user read private recovery events")
+  ' Bind the legacy module's connection, then reject a gated call inside a
+  ' caller transaction: preflight denial must not roll that transaction back.
+  Try WorkspaceActions.DeleteArchived(a, "card", cardId, "wrong")
+  db = WebDatabase.OpenConnection()
+  DatabaseTransactions.Begin(db)
+  db.Exec("UPDATE users SET fullname=&1 WHERE username=&2", "Outer marker", "purge-owner")
+  Try WorkspaceActions.DeleteArchived(a, "board", a, "Purge Alpha <literal>")
+  denied = Error
+  If Not denied Then Error.Raise("Legacy owner bypassed disabled global gate")
+  r = db.Find("users", "username=&1", "purge-owner")
+  If r!fullname <> "Outer marker" Then Error.Raise("Legacy gate denial rolled back caller transaction")
+  DatabaseTransactions.Rollback(db)
+  SignIn("purge-global")
+  db = WebDatabase.OpenConnection()
+  RecoveryStore.SetEnabled(True)
+  successEvents = SuccessfulEvents()
+  RecoveryStore.SetEnabled(True)
+  If SuccessfulEvents() <> successEvents Then Error.Raise("No-op setting wrote an audit event")
+  before = Snapshot()
+  SignIn("purge-owner")
+  Try BoardPurge.DeleteBoards(ids)
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Board owner bypassed Global Admin gate")
+  SignIn("purge-global")
+  Try BoardPurge.DeleteBoards([a, active])
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Active selection partially purged")
+  Try BoardPurge.DeleteBoards([a, 999999])
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Missing selection partially purged")
+  r = db.Find("recovery_events", "event=&1 AND done=&2 ORDER BY id DESC", "board-permanently-deleted", False)
+  attempts = JSON.Decode(r!boards_json)
+  If attempts.Count <> 2 Or attempts[0]["id"] <> a Or attempts[1]["id"] <> 999999 Then Error.Raise("Failed purge lost bounded attempted IDs")
+  Try BoardPurge.DeleteBoards(emptyIds)
+  denied = Error
+  If Not denied Then Error.Raise("Empty purge accepted")
+  Try BoardPurge.DeleteBoards(Null)
+  denied = Error
+  If Not denied Then Error.Raise("Null purge accepted")
+  Try BoardPurge.DeleteBoards([a, 0])
+  denied = Error
+  If Not denied Then Error.Raise("Invalid purge ID accepted")
+  For index = 1 To 201
+    tooMany.Add(index)
+  Next
+  Try BoardPurge.DeleteBoards(tooMany)
+  denied = Error
+  If Not denied Or Error.Text <> "Invalid board selection" Then Error.Raise("Unbounded purge accepted")
+  r = db.Find("recovery_events", "event=&1 AND done=&2 ORDER BY id DESC", "board-permanently-deleted", False)
+  attempts = JSON.Decode(r!boards_json)
+  If attempts.Count <> 200 Then Error.Raise("Failed purge audit is not bounded to 200 IDs")
+  CheckFailure("CREATE TRIGGER purge_inject AFTER DELETE ON kb_boards WHEN OLD.id=" & Str(a) & " BEGIN UPDATE kb_boards SET archived=0 WHERE id=" & Str(b) & "; END", ids)
+  CheckFailure("CREATE TRIGGER purge_inject AFTER DELETE ON kb_cards WHEN OLD.board_id=" & Str(a) & " BEGIN UPDATE recovery_settings SET permanent_delete=0 WHERE id=1; END", ids)
+  CheckFailure("CREATE TRIGGER purge_inject AFTER DELETE ON kb_boards WHEN OLD.id=" & Str(b) & " BEGIN UPDATE users SET admin=0 WHERE username='purge-global'; END", ids)
+  CheckFailure("CREATE TRIGGER purge_inject AFTER DELETE ON kb_boards WHEN OLD.id=" & Str(b) & " BEGIN UPDATE account_sessions SET generation=generation+1 WHERE username='purge-global'; END", ids)
+  If WebIdentity.Username <> "purge-global" Then Error.Raise("Late session loss was not rolled back")
+  CheckFailure("CREATE TRIGGER purge_inject BEFORE DELETE ON kb_boards WHEN OLD.id=" & Str(b) & " BEGIN SELECT RAISE(ABORT,'second purge failed'); END", ids)
+  CheckFailure("CREATE TRIGGER purge_inject BEFORE INSERT ON recovery_events WHEN NEW.done=1 BEGIN SELECT RAISE(ABORT,'success audit failed'); END", ids)
+  ' Recheck Global Admin after acquiring its account lock, before deleting rows.
+  CheckFailure("CREATE TRIGGER purge_inject AFTER UPDATE ON users WHEN OLD.username='purge-global' BEGIN UPDATE users SET admin=0 WHERE username='purge-global'; END", ids)
+  ' Settings changes have the same atomic role/audit requirements.
+  db.Exec("CREATE TRIGGER setting_audit_fail BEFORE INSERT ON recovery_events WHEN NEW.done=1 BEGIN SELECT RAISE(ABORT,'setting audit failed'); END")
+  Try RecoveryStore.SetEnabled(False)
+  denied = Error
+  If Not denied Or Not RecoveryStore.Enabled() Then Error.Raise("Setting survived failed audit")
+  db.Exec("DROP TRIGGER setting_audit_fail")
+  db.Exec("CREATE TRIGGER late_setting_admin AFTER UPDATE ON recovery_settings BEGIN UPDATE users SET admin=0 WHERE username='purge-global'; END")
+  Try RecoveryStore.SetEnabled(False)
+  denied = Error
+  If Not denied Or Not RecoveryStore.Enabled() Or Not WebDatabase.GetIsAdmin("purge-global") Then Error.Raise("Late setting demotion failed to roll back")
+  db.Exec("DROP TRIGGER late_setting_admin")
+  Session["auth_generation"] = 0
+  Try BoardPurge.DeleteBoards(ids)
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Stale session purged data")
+  SignIn("purge-global")
+  successEvents = SuccessfulEvents()
+  ' Explicit Global Admin purge does not require board membership. Duplicate IDs
+  ' have the original method's set semantics and count only unique boards.
+  If BoardPurge.DeleteBoards([b, a, a]) <> 2 Then Error.Raise("Purge count or deduplication failed")
+  If SuccessfulEvents() <> successEvents + 2 Then Error.Raise("Deleted boards lost durable success audits")
+  r = db.Find("kb_boards", "id=&1 OR id=&2", a, b)
+  If r.Count Then Error.Raise("Purged boards remain")
+  r = db.Find("recovery_events", "event=&1 AND done=&2", "board-permanently-deleted", True)
+  For Each r
+    If Not r!deleted_data Or Not r!boards_json Or r!actor <> "purge-global" Then Error.Raise("Incomplete recovery audit")
+  Next
+  r = db.Find("kb_files", "board_id=&1", a)
+  If r.Count Then Error.Raise("Purge left attachment bytes")
+  r = db.Find("kb_board_space_assignments", "board_id=&1", a)
+  If r.Count Then Error.Raise("Purge left private assignments")
+  r = db.Find("kb_user_meta", "board_id=&1", a)
+  If r.Count Then Error.Raise("Purge left personal metadata")
+  r = db.Find("kb_boards", "id=&1", active)
+  If Not r.Available Or r!archived Then Error.Raise("Purge touched an unselected active board")
+  RecoveryStore.SetEnabled(False)
+  If RecoveryStore.CanPurge() Then Error.Raise("Disable did not close gate")
+  Print "Board purge: explicit disabled/default/global gates, bounded/deduplicated archive-only selection, legacy/stale denial, atomic content/settings/audit rollback, late state/role/flag guards, retry and durable cleanup audits passed"
+End
+
+Private Sub CheckFailure(sql As String, ids As Integer[])
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim before As String = Snapshot()
+  Dim successes As Integer = SuccessfulEvents()
+  Dim failures As Integer = FailedEvents()
+  Dim denied As Boolean
+  db.Exec(sql)
+  Try BoardPurge.DeleteBoards(ids)
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Injected purge was not atomic: " & sql)
+  If SuccessfulEvents() <> successes Or FailedEvents() <> failures + 1 Then Error.Raise("Rollback kept success audit or lost failed audit")
+  db.Exec("DROP TRIGGER purge_inject")
+End
+
+Private Function SuccessfulEvents() As Integer
+  Dim r As Result = WebDatabase.OpenConnection().Find("recovery_events", "done=&1", True)
+  Return r.Count
+End
+
+Private Function FailedEvents() As Integer
+  Dim r As Result = WebDatabase.OpenConnection().Find("recovery_events", "done=&1", False)
+  Return r.Count
+End
+
+Private Function Snapshot() As String
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim data As New Variant[]
+  Dim rows As Variant[]
+  Dim row As Collection
+  Dim r As Result
+  Dim tableName As String
+  Dim field As String
+  Dim fields As String[]
+  For Each tableName In ["users", "recovery_settings", "kb_boards", "kb_cards", "kb_files", "kb_user_meta", "kb_board_space_assignments"]
+    Select tableName
+      Case "users"
+        fields = ["username", "admin"]
+      Case "recovery_settings"
+        fields = ["id", "permanent_delete"]
+      Case "kb_boards"
+        fields = ["id", "title", "owner", "archived"]
+      Case "kb_cards"
+        fields = ["id", "board_id", "title", "description"]
+      Case "kb_files"
+        fields = ["id", "board_id", "card_id", "filename"]
+      Case "kb_user_meta"
+        fields = ["board_id", "kind", "item_id", "username", "setting", "value"]
+      Case "kb_board_space_assignments"
+        fields = ["board_id", "username", "space_id"]
+    End Select
+    rows = New Variant[]
+    r = db.Find(tableName)
+    For Each r
+      row = New Collection
+      For Each field In fields
+        row.Add(r[field], field)
+      Next
+      rows.Add(row)
+    Next
+    data.Add(rows)
+  Next
+  Return JSON.Encode(data)
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

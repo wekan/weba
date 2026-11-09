@@ -829,7 +829,7 @@ Rename/copy, colors, stars, WIP limits, same-board moves, archives/restoration,
 scoped history and JSON export persist through owner-checked database operations.
 Card/list/swimlane menus also move items between owned active boards. Relationships
 must stay within one board: a move that splits a subtask/dependency group is rejected.
-Archived items can be permanently removed by typing their exact title; container
+Archived cards/lists/swimlanes can be permanently removed by typing their exact title; container
 removal includes its cards, file bytes and dependent records.
 
 The card editor and menu provide comments, checklists/items, real subtask cards,
@@ -1232,3 +1232,46 @@ The current SQLite driver exposes empty SQL text as null-like values, so this
 change preserves explicit keys but does not recover an empty/null distinction
 the driver has already lost. Other original JSON wire contracts and selected
 multi-format exports remain pending.
+
+
+### Gated permanent board deletion and Recovery
+
+Board deletion is offered only in the Archive multi-selection sidebar when the
+current user is Global Admin and Admin Panel → Problems → Delete has Enable
+permanent delete for Global Admin checked. The flag starts disabled. Changing it
+does not delete content. The old per-board delete action is hidden and forged
+menu/confirm events are rejected. Its internal legacy board service also requires
+the global gate; card/list/swimlane title-confirmed cleanup is separate.
+
+Delete opens the original irreversible-delete wording with a native checkbox and
+Cancel. Confirmation belongs to the private selection revision. Selection changes,
+live flag disablement or admin demotion cancel pending confirmation. Success clears
+selection; refusal keeps it. The server checks current account/session/admin/flag,
+accepts 1–200 unique positive board IDs and validates every archived board before
+effects. Duplicates use set semantics. It locks account, setting and sorted boards,
+rechecks before each deletion and again before commit, and rolls back the complete
+batch on a late role/flag/archive/session change or write/audit failure. This explicit
+Global Admin service may purge an archived board without membership, as the original
+method does; it is not a general board-read override.
+
+Recovery records setting changes and each purged board with actor, time, literal
+ID/title, success and deleted-data flags. No-op setting changes add no event. A
+success audit shares the mutation transaction; a denied/failed attempt is recorded
+after rollback, with attempted IDs bounded to 200. If even the failure-audit write
+fails, the original error is retained. Purging a board does not erase Recovery.
+Native Confirm rejections before service dispatch also record bounded failures;
+service failures are not recorded twice. Admin Panel → Problems → Recovery shows native text rows and clears/hides them
+on live admin loss. No public recovery or purge HTTP route is added.
+
+BoardPurgeTest injects second-delete, last-role/session, setting-disable, restored
+board and success-audit failures; it checks rollback, failed/successful audit
+boundaries, retry, duplicate/bound/null/active/missing/stale denial and private
+content cleanup. Existing lifecycle fixtures now explicitly enable the gate.
+A 55-case SQL comparator runs the unchanged original permanentlyDeleteArchivedBoards
+body with explicit board/user/flag/audit adapters, including a 200-board success.
+board-purge.browser.cjs uses actual two-user controls and SQL fixtures for the
+setting, hidden/forged bypasses, confirmation/revision, live revocation, exact
+selection purge and literal/admin-only Recovery. It runs in test-live for source
+and packages, or with `python3 tests/run-http.py --board-purge` (add `--archive`).
+These native tests are separate from running every unchanged original suite;
+full Recovery schema/report/filter parity and non-SQLite drivers remain open.

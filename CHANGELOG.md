@@ -2,6 +2,17 @@
 
 This work adds the following features and fixes:
 
+- Gate permanent board deletion behind Global Admin plus an explicit default-off
+  setting. Remove archived per-board delete actions and reject forged/legacy
+  bypasses. Add revision-bound confirmed Archive batch deletion, bounded unique
+  IDs, full-set archive validation, account/setting/sorted-board locks and fresh
+  per-effect/final guards. Persist independent recovery setting/purge success and
+  failure audits; roll back data and success audits together. Verify native late
+  role/session/flag/state/audit and second-delete failures, retry and cleanup,
+  55 unchanged original method outcomes including 200 boards, and real two-user source/package setting, confirmation, live revocation,
+  selection and private literal Recovery controls. Full original suites and
+  Recovery report/schema parity remain open. Thanks to xet7.
+
 - Keep nullable native JSON export row keys instead of dropping them through
   Collection assignment. Verify raw description/assignee/labels/due/checklist
   fields, false flags and zero values, with a failing-before/passing-after test.

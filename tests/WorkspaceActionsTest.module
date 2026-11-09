@@ -69,6 +69,7 @@ Public Sub Main()
   WorkspaceStore.SetArchived(target, "lane", laneId, True)
   WorkspaceActions.DeleteArchived(target, "lane", laneId, "Moved lane")
   WorkspaceStore.SetArchived(target, "board", target, True)
+  RecoveryStore.SetEnabled(True)
   WorkspaceActions.DeleteArchived(target, "board", target, "Target")
   Try KanbanStore.RequireBoard(target)
   denied = Error

@@ -201,3 +201,5 @@
 .weba-board-selected{outline:3px solid #2878a8;outline-offset:2px}
 .weba-topbar .weba-active{background:#ffffff45}
 .weba-multidrag-count{position:absolute;right:4px;top:4px;padding:4px 8px;background:#2878a8;color:#fff;border-radius:12px;font-weight:bold}
+
+.weba-purge-selected button,.weba-purge-selected.gw-button{background:#b71c1c!important;color:#fff!important}

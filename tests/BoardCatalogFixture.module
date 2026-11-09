@@ -11,6 +11,35 @@ Public Sub Main()
   If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
   Session["username"] = If(Env["WEBA_TEST_USER"], Env["WEBA_TEST_USER"], "rest-other")
   Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
+  If Env["WEBA_CATALOG_MODE"] = "seed-purge" Then
+    For Each title In ["Purge UI Alpha <literal>", "Purge UI Bravo", "Purge UI Active"]
+      boardId = KanbanStore.AddBoard(title)
+      BoardAccess.SetMember(boardId, "rest-owner", "board-admin")
+      BoardAccess.SetMember(boardId, "rest-member", "read-only")
+      ids.Add(boardId)
+      If ids.Count < 3 Then KanbanStore.ArchiveBoard(boardId, True)
+    Next
+    data["ids"] = ids
+  Endif
+  If Env["WEBA_CATALOG_MODE"] = "purge-enable" Then RecoveryStore.SetEnabled(True)
+  If Env["WEBA_CATALOG_MODE"] = "purge-disable" Then RecoveryStore.SetEnabled(False)
+  If Env["WEBA_CATALOG_MODE"] = "purge-demote" Then WebDatabase.OpenConnection().Exec("UPDATE users SET admin=&1 WHERE username=&2", False, "rest-owner")
+  If Env["WEBA_CATALOG_MODE"] = "purge-promote" Then WebDatabase.OpenConnection().Exec("UPDATE users SET admin=&1 WHERE username=&2", True, "rest-owner")
+  RecoveryStore.OpenStore()
+  data["purgeEnabled"] = RecoveryStore.Enabled()
+  r = WebDatabase.OpenConnection().Find("recovery_events", "id>0 ORDER BY id")
+  For Each r
+    row = New Collection
+    row["event"] = r!event
+    row["actor"] = r!actor
+    row["done"] = r!done
+    row["deletedData"] = r!deleted_data
+    row["detail"] = r!detail
+    row["boardsJson"] = r!boards_json
+    raw.Add(row)
+  Next
+  data["recoveryEvents"] = raw
+  raw = New Variant[]
   If Env["WEBA_CATALOG_MODE"] = "seed-order" Then
     For Each title In ["Order Alpha", "Order Bravo", "Order Charlie"]
       boardId = KanbanStore.AddBoard(title)

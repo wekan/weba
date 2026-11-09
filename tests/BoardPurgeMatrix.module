@@ -1,0 +1,125 @@
+' Actual native outcomes for the unchanged original purge-method comparator.
+Public Sub Main()
+  Dim cases As Variant[] = JSON.Decode(File.Load(".public/purge-cases.json"))
+  Dim results As New Variant[]
+  Dim data As Collection
+  Dim testCase As Collection
+  Dim tracked As Integer[]
+  Dim ids As Integer[]
+  Dim db As Connection
+  Dim r As Result
+  Dim a As Integer
+  Dim b As Integer
+  Dim c As Integer
+  Dim index As Integer
+  Dim lastAudit As Integer
+  Dim deleted As Integer
+  Dim denied As Boolean
+  WebDatabase.Register("matrix-global", "x")
+  WebDatabase.Register("matrix-owner", "x")
+  SignIn("matrix-global")
+  RecoveryStore.OpenStore()
+  For Each testCase In cases
+    SignIn("matrix-global")
+    RecoveryStore.SetEnabled(CBool(testCase["enabled"]))
+    SignIn("matrix-owner")
+    a = KanbanStore.AddBoard("Matrix archived <Alpha>")
+    b = KanbanStore.AddBoard("Matrix archived Bravo")
+    c = KanbanStore.AddBoard("Matrix active")
+    KanbanStore.ArchiveBoard(a, True)
+    KanbanStore.ArchiveBoard(b, True)
+    tracked = [a, b, c]
+    ids = New Integer[]
+    Select CStr(testCase["selection"])
+      Case "archived"
+        ids = [b, a]
+      Case "duplicate"
+        ids = [b, a, a]
+      Case "active"
+        ids = [c]
+      Case "mixed"
+        ids = [a, c]
+      Case "missing"
+        ids = [a, 999999]
+      Case "zero"
+        ids = [0]
+      Case "empty"
+      Case "null"
+        ids = Null
+      Case "overlimit"
+        For index = 1 To 201
+          ids.Add(index)
+        Next
+      Case "maximum"
+        For index = 1 To 200
+          a = KanbanStore.AddBoard("Bounded archive " & Str(index))
+          KanbanStore.ArchiveBoard(a, True)
+          tracked.Add(a)
+          ids.Add(a)
+        Next
+    End Select
+    db = WebDatabase.OpenConnection()
+    data = New Collection
+    data["before"] = Boards(db, tracked)
+    data.Add(ids, "ids")
+    data["enabled"] = RecoveryStore.Enabled()
+    data["admin"] = CStr(testCase["actor"]) = "global"
+    data["signedIn"] = CStr(testCase["actor"]) <> "anonymous"
+    lastAudit = 0
+    r = db.Find("recovery_events")
+    For Each r
+      lastAudit = Max(lastAudit, r!id)
+    Next
+    If testCase["actor"] = "anonymous" Then
+      Session["username"] = ""
+      Session["auth_generation"] = 0
+    Else
+      SignIn("matrix-" & CStr(testCase["actor"]))
+    Endif
+    deleted = 0
+    Try deleted = BoardPurge.DeleteBoards(ids)
+    denied = Error
+    data["ok"] = Not denied
+    data["deleted"] = deleted
+    data["after"] = Boards(db, tracked)
+    data["audits"] = Audits(db, lastAudit)
+    results.Add(data)
+  Next
+  Print JSON.Encode(results)
+End
+
+Private Function Boards(db As Connection, ids As Integer[]) As Variant[]
+  Dim rows As New Variant[]
+  Dim row As Collection
+  Dim id As Integer
+  Dim r As Result
+  For Each id In ids
+    r = db.Find("kb_boards", "id=&1", id)
+    If Not r.Available Then Continue
+    row = New Collection
+    row["id"] = r!id
+    row.Add(CStr(r!title), "title")
+    row["archived"] = CBool(r!archived)
+    rows.Add(row)
+  Next
+  Return rows
+End
+
+Private Function Audits(db As Connection, afterId As Integer) As Variant[]
+  Dim rows As New Variant[]
+  Dim row As Collection
+  Dim r As Result = db.Find("recovery_events", "id>&1 AND event=&2 ORDER BY id", afterId, "board-permanently-deleted")
+  For Each r
+    row = New Collection
+    row["done"] = r!done
+    row["deletedData"] = r!deleted_data
+    row["boards"] = JSON.Decode(r!boards_json)
+    rows.Add(row)
+  Next
+  Return rows
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

@@ -166,14 +166,19 @@ Public Sub DeleteArchived(boardId As Integer, kind As String, itemId As Integer,
   Dim affected As Result
   Dim listIds As New Integer[]
   Dim listId As Integer
-  Dim tableName As String
   Dim failure As String
+  Dim transaction As Boolean
+  If kind = "board" Then RecoveryStore.RequirePurge()
   BoardAccess.RequireContainer(boardId, kind, itemId)
   BoardAccess.Require(boardId, If(kind = "board", "manageBoard", "write"))
   Prepare(boardId)
   source = WorkspaceStore.Record(boardId, kind, itemId)
   If Not WorkspaceStore.Archived(boardId, kind, itemId) Then Error.Raise("Archive the item before deleting it")
   If confirmation <> source!title Then Error.Raise("Type the exact title to confirm permanent deletion")
+  If kind = "board" Then
+    BoardPurge.DeleteBoards([boardId])
+    Return
+  Endif
   ids = Selection(boardId, kind, itemId)
   If kind = "lane" Then
     r = $db.Find("kb_lists", "board_id = &1 AND lane = &2", boardId, source!title)
@@ -184,55 +189,48 @@ Public Sub DeleteArchived(boardId As Integer, kind As String, itemId As Integer,
     listIds.Add(itemId)
   Endif
   DatabaseTransactions.Begin($db)
-  If kind = "board" Then
-    If $db.Tables.Exist("kb_board_space_assignments") Then $db.Delete("kb_board_space_assignments", "board_id=&1", boardId)
-    If $db.Tables.Exist("kb_board_order") Then $db.Delete("kb_board_order", "board_id=&1", boardId)
-    For Each tableName In ["kb_entries", "kb_files", "kb_card_lists", "kb_cards", "kb_lists", "kb_lanes", "kb_meta", "kb_history", "kb_order", "kb_activity", "kb_members", "kb_removed_members", "kb_member_flags", "kb_user_meta", "kb_card_assignees", "kb_card_members", "kb_card_people_order", "kb_card_people_sequence", "kb_card_dates", "kb_card_archive", "kb_item_changes", "kb_retired_authors"]
-      $db.Delete(tableName, "board_id = &1", boardId)
+  transaction = True
+  For Each cardId In ids
+    affected = $db.Exec("SELECT DISTINCT e.card_id FROM kb_entries e INNER JOIN kb_cards c ON c.board_id=e.board_id AND c.id=e.card_id WHERE e.board_id=&1 AND (e.kind=&2 OR e.kind=&3) AND e.amount=&4", boardId, "dependency", "subtask", cardId)
+    For Each affected
+      If ids.Find(affected!card_id) < 0 Then ItemChanges.Mark(boardId, "card", affected!card_id)
     Next
-    $db.Delete("kb_boards", "id = &1", boardId)
-  Else
-    For Each cardId In ids
-      affected = $db.Exec("SELECT DISTINCT e.card_id FROM kb_entries e INNER JOIN kb_cards c ON c.board_id=e.board_id AND c.id=e.card_id WHERE e.board_id=&1 AND (e.kind=&2 OR e.kind=&3) AND e.amount=&4", boardId, "dependency", "subtask", cardId)
-      For Each affected
-        If ids.Find(affected!card_id) < 0 Then ItemChanges.Mark(boardId, "card", affected!card_id)
-      Next
-      $db.Delete("kb_entries", "board_id = &1 AND (card_id = &2 OR ((kind = &3 OR kind = &4) AND amount = &2))", boardId, cardId, "dependency", "subtask")
-      $db.Delete("kb_card_assignees", "board_id = &1 AND card_id = &2", boardId, cardId)
-      $db.Delete("kb_card_members", "board_id = &1 AND card_id = &2", boardId, cardId)
-      $db.Delete("kb_card_people_order", "board_id = &1 AND card_id = &2", boardId, cardId)
-      $db.Delete("kb_card_people_sequence", "board_id = &1 AND card_id = &2", boardId, cardId)
-      $db.Delete("kb_card_dates", "board_id = &1 AND card_id = &2", boardId, cardId)
-      $db.Delete("kb_card_archive", "board_id=&1 AND card_id=&2", boardId, cardId)
-      $db.Delete("kb_item_changes", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "card", cardId)
-      $db.Delete("kb_files", "board_id = &1 AND card_id = &2", boardId, cardId)
-      $db.Delete("kb_card_lists", "board_id = &1 AND card_id = &2", boardId, cardId)
-      $db.Delete("kb_cards", "board_id = &1 AND id = &2", boardId, cardId)
-      $db.Delete("kb_user_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "card", cardId)
-      $db.Delete("kb_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "card", cardId)
-      $db.Delete("kb_history", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "card", cardId)
-      $db.Delete("kb_order", "board_id = &1 AND kind = &2 AND item = &3", boardId, "card", CStr(cardId))
-    Next
-    For Each listId In listIds
-      $db.Delete("kb_item_changes", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "list", listId)
-      $db.Delete("kb_lists", "board_id = &1 AND id = &2", boardId, listId)
-      $db.Delete("kb_user_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "list", listId)
-      $db.Delete("kb_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "list", listId)
-      $db.Delete("kb_history", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "list", listId)
-    Next
-    If kind = "lane" Then
-      $db.Delete("kb_lanes", "board_id = &1 AND id = &2", boardId, itemId)
-      $db.Delete("kb_user_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "lane", itemId)
-      $db.Delete("kb_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "lane", itemId)
-      $db.Delete("kb_history", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "lane", itemId)
-      $db.Delete("kb_order", "board_id = &1 AND kind = &2 AND item = &3", boardId, "lane", source!title)
-    Endif
-    RetiredAuthors.Prune(boardId)
-    KanbanStore.Activity(boardId, "Permanently deleted " & kind & ": " & source!title)
+    $db.Delete("kb_entries", "board_id = &1 AND (card_id = &2 OR ((kind = &3 OR kind = &4) AND amount = &2))", boardId, cardId, "dependency", "subtask")
+    $db.Delete("kb_card_assignees", "board_id = &1 AND card_id = &2", boardId, cardId)
+    $db.Delete("kb_card_members", "board_id = &1 AND card_id = &2", boardId, cardId)
+    $db.Delete("kb_card_people_order", "board_id = &1 AND card_id = &2", boardId, cardId)
+    $db.Delete("kb_card_people_sequence", "board_id = &1 AND card_id = &2", boardId, cardId)
+    $db.Delete("kb_card_dates", "board_id = &1 AND card_id = &2", boardId, cardId)
+    $db.Delete("kb_card_archive", "board_id=&1 AND card_id=&2", boardId, cardId)
+    $db.Delete("kb_item_changes", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "card", cardId)
+    $db.Delete("kb_files", "board_id = &1 AND card_id = &2", boardId, cardId)
+    $db.Delete("kb_card_lists", "board_id = &1 AND card_id = &2", boardId, cardId)
+    $db.Delete("kb_cards", "board_id = &1 AND id = &2", boardId, cardId)
+    $db.Delete("kb_user_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "card", cardId)
+    $db.Delete("kb_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "card", cardId)
+    $db.Delete("kb_history", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "card", cardId)
+    $db.Delete("kb_order", "board_id = &1 AND kind = &2 AND item = &3", boardId, "card", CStr(cardId))
+  Next
+  For Each listId In listIds
+    $db.Delete("kb_item_changes", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "list", listId)
+    $db.Delete("kb_lists", "board_id = &1 AND id = &2", boardId, listId)
+    $db.Delete("kb_user_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "list", listId)
+    $db.Delete("kb_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "list", listId)
+    $db.Delete("kb_history", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "list", listId)
+  Next
+  If kind = "lane" Then
+    $db.Delete("kb_lanes", "board_id = &1 AND id = &2", boardId, itemId)
+    $db.Delete("kb_user_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "lane", itemId)
+    $db.Delete("kb_meta", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "lane", itemId)
+    $db.Delete("kb_history", "board_id = &1 AND kind = &2 AND item_id = &3", boardId, "lane", itemId)
+    $db.Delete("kb_order", "board_id = &1 AND kind = &2 AND item = &3", boardId, "lane", source!title)
   Endif
+  RetiredAuthors.Prune(boardId)
+  KanbanStore.Activity(boardId, "Permanently deleted " & kind & ": " & source!title)
   DatabaseTransactions.Commit($db)
+  transaction = False
 Catch
   failure = Error.Text
-  If $db Then Try DatabaseTransactions.Rollback($db)
+  If transaction Then Try DatabaseTransactions.Rollback($db)
   Error.Raise(failure)
 End

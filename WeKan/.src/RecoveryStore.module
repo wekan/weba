@@ -1,0 +1,112 @@
+' Site-wide permanent-delete gate and independent durable recovery audit.
+Export
+Private $db As Connection
+
+Public Sub OpenStore()
+  Dim t As Table
+  If $db Then Return
+  $db = WebDatabase.OpenConnection()
+  If Not $db.Tables.Exist("recovery_settings") Then
+    t = $db.Tables.Add("recovery_settings")
+    t.Fields.Add("id", db.Integer)
+    t.Fields.Add("permanent_delete", db.Boolean)
+    t.PrimaryKey = ["id"]
+    t.Update()
+  Endif
+  If Not $db.Tables.Exist("recovery_events") Then
+    t = $db.Tables.Add("recovery_events")
+    t.Fields.Add("id", db.Serial)
+    t.Fields.Add("event", db.String, 64)
+    t.Fields.Add("actor", db.String, 255)
+    t.Fields.Add("created_at", db.Date)
+    t.Fields.Add("done", db.Boolean)
+    t.Fields.Add("deleted_data", db.Boolean)
+    t.Fields.Add("detail", db.String)
+    t.Fields.Add("boards_json", db.String)
+    t.PrimaryKey = ["id"]
+    t.Update()
+  Endif
+Catch
+  $db = Null
+  Error.Propagate()
+End
+
+Public Sub RequireAdmin()
+  If Not WebIdentity.Username Then Error.Raise("Administrator required")
+  If Not WebDatabase.GetIsAdmin(WebIdentity.Username) Then Error.Raise("Administrator required")
+End
+
+Public Function Enabled() As Boolean
+  Dim r As Result
+  OpenStore()
+  r = $db.Find("recovery_settings", "id=&1", 1)
+  If Not r.Available Then Return False
+  Return r!permanent_delete
+End
+
+Public Function CanPurge() As Boolean
+  If Not WebIdentity.Username Then Return False
+  If Not WebDatabase.GetIsAdmin(WebIdentity.Username) Then Return False
+  Return Enabled()
+End
+
+Public Sub RequirePurge()
+  If Not CanPurge() Then Error.Raise("Permanent delete is disabled.")
+End
+
+' Internal audit sink: caller owns any success transaction; denied attempts are
+' appended only after rollback. No browser/public route accepts audit records.
+Public Sub Record(event As String, actor As String, done As Boolean, deletedData As Boolean, detail As String, Optional boards As Variant[])
+  Dim r As Result
+  OpenStore()
+  r = $db.Create("recovery_events")
+  r["event"] = event
+  r["actor"] = If(actor, actor, "unknown")
+  r["created_at"] = Now
+  r["done"] = done
+  r["deleted_data"] = deletedData
+  r["detail"] = detail
+  If boards Then r["boards_json"] = JSON.Encode(boards)
+  r.Update()
+End
+
+Public Sub SetEnabled(value As Boolean)
+  Dim actor As String = WebIdentity.Username
+  Dim r As Result
+  Dim transaction As Boolean
+  Dim failure As String
+  OpenStore()
+  RequireAdmin()
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  If WebIdentity.Username <> actor Then Error.Raise("Administrator required")
+  RequireAdmin()
+  $db.Exec("UPDATE recovery_settings SET id=id WHERE id=&1", 1)
+  If Enabled() <> value Then
+    r = $db.Edit("recovery_settings", "id=&1", 1)
+    If Not r.Available Then
+      r = $db.Create("recovery_settings")
+      r["id"] = 1
+    Endif
+    r["permanent_delete"] = value
+    r.Update()
+    Record("permanent-delete-setting-changed", actor, True, False, If(value, "Enabled permanent delete", "Disabled permanent delete"))
+  Endif
+  If WebIdentity.Username <> actor Then Error.Raise("Administrator required")
+  RequireAdmin()
+  If Enabled() <> value Then Error.Raise("Permanent delete setting changed")
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Try Record("permanent-delete-setting-changed", actor, False, False, If(value, "Enable", "Disable") & " permanent delete failed: " & failure)
+  Error.Raise(failure)
+End
+
+Public Function Events() As Result
+  RequireAdmin()
+  OpenStore()
+  Return $db.Find("recovery_events", "id>0 ORDER BY id DESC")
+End
