@@ -78,6 +78,7 @@
   "description": "Açıklama",
   "done": "Tamam",
   "dueCards-title": "Son Kartlar",
+  "duplicate-board": "Panoyu Çoğalt",
   "edit": "Düzenle",
   "enable-permanent-delete": "Genel Yönetici için kalıcı silmeyi etkinleştir",
   "enable-permanent-delete-description": "Genel Yöneticilerin geçici olarak silinmiş içeriği kalıcı olarak silmesine izin ver. Bu ayarı etkinleştirmek tek başına hiçbir şeyi silmez.",

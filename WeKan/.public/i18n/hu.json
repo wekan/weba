@@ -78,6 +78,7 @@
   "description": "Leírás",
   "done": "Kész",
   "dueCards-title": "Határidős Kártyák",
+  "duplicate-board": "Tábla duplikálása",
   "edit": "Szerkesztés",
   "enable-permanent-delete": "Végleges törlés engedélyezése a globális adminisztrátornak",
   "enable-permanent-delete-description": "A globális adminisztrátorok véglegesen törölhetik a helyreállíthatóan törölt tartalmat. A beállítás engedélyezése önmagában nem töröl semmit.",

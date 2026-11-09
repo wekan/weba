@@ -80,11 +80,13 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   Original callback outcome comparisons expand from 52 to 156 single/multi/mixed
   cases. Native selection and confirmed sidebar actions now use this service;
   no new public HTTP route is exposed. Original full callbacks remain open.
-- Next: remaining batch sidebar actions (duplication and multi-format export),
+- Next: per-field duplication options and remaining batch multi-format export,
   Home/group targets, Markdown icons and original
   UI callbacks. Whole-board copy authorization and late actor/source/destination
-  guards are recorded in CHANGELOG.md; selected duplication, per-field options,
-  source title generation and creation policy remain open.
+  guards, selected native duplication with pending-only retry and source-style
+  title numbering are recorded in CHANGELOG.md. Per-field options, creation
+  policy, destination placement/order, missing board content and full original
+  callbacks remain open.
   Native multi-selection controls, retained visible-page selection
   and revisioned authoritative multi-drop transport are recorded in CHANGELOG.md.
   Native form tests do not execute the original Latin callback unchanged.
@@ -642,7 +644,7 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 
 ## Translation coverage
 
-- Imported 92 matching WeKan keys for 237 registered languages. Language selection
+- Imported 155 matching WeKan keys for 237 registered languages. Language selection
   on login and in the account menu persists locally; browser language is the initial
   default, with English fallback and RTL metadata from WeKan.
 - Native interface labels and selected report headings/calendar dates are localized.

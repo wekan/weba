@@ -78,6 +78,7 @@
   "description": "Beskrywing",
   "done": "Klaar",
   "dueCards-title": "Verskuldigde kaarte",
+  "duplicate-board": "Duplikaatbord",
   "edit": "Wysig",
   "enable-permanent-delete": "Aktiveer permanente skrapping vir die Globale Administrateur",
   "enable-permanent-delete-description": "Laat Globale Administrateurs toe om saggeskrapte inhoud permanent te skrap. Om hierdie instelling te aktiveer, skrap niks vanself nie.",

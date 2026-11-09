@@ -78,6 +78,7 @@
   "description": "Katrangan",
   "done": "Rampung",
   "dueCards-title": "Kertu Tenggat",
+  "duplicate-board": "Gandhakake Papan",
   "edit": "Sunting",
   "enable-permanent-delete": "Aktifake pambusakan permanen kanggo Admin Global",
   "enable-permanent-delete-description": "Idini Admin Global mbusak isi sing wis dibusak alus kanthi permanen. Nguripake setelan iki ora mbusak apa wae kanthi otomatis.",

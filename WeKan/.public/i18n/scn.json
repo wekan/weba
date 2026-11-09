@@ -78,6 +78,7 @@
   "description": "Discrizzioni",
   "done": "Fattu",
   "dueCards-title": "Schede in scadenza",
+  "duplicate-board": "Duplica tàvula",
   "edit": "Cancià",
   "enable-permanent-delete": "Abbìlita l'cancellazzzioni permanente pi l'amministraturi globale",
   "enable-permanent-delete-description": "Consenti ali amministratori globali di cancellare definitivamenti i contenuti contrassegnati comu cancellati. L'attivazzzioni di chista impostazzzioni nnu cancella nulla da sola.",

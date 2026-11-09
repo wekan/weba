@@ -78,6 +78,7 @@
   "description": "Aprašymas",
   "done": "Atlikta",
   "dueCards-title": "Apmokėtos kortelės",
+  "duplicate-board": "Dubliuoti lentą",
   "edit": "Redaguoti",
   "enable-permanent-delete": "Įjungti visuotinį šalinimą visuotiniam administratoriui",
   "enable-permanent-delete-description": "Leisti visuotiniams administratoriams visam laikui pašalinti laikinai pašalintą turinį. Įjungus šią nuostatą savaime niekas nepašalinama.",

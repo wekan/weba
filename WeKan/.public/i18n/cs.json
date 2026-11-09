@@ -78,6 +78,7 @@
   "description": "Popis",
   "done": "Hotovo",
   "dueCards-title": "Termín karet",
+  "duplicate-board": "Duplikovat tablo",
   "edit": "Upravit",
   "enable-permanent-delete": "Povolit trvalé odstranění globálnímu správci",
   "enable-permanent-delete-description": "Povolit globálním správcům trvale odstranit obsah označený jako odstraněný. Samotné povolení tohoto nastavení nic neodstraní.",

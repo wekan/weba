@@ -78,6 +78,7 @@
   "description": "Ennyonyola",
   "done": "Kiwedde",
   "dueCards-title": "Due Kaadi",
+  "duplicate-board": "Duplicate Lubaawo",
   "edit": "Kyusa",
   "enable-permanent-delete": "Sobozesa permanent sangula ku lwa Global Omuddukanya",
   "enable-permanent-delete-description": "Allow Global Admins eri permanently sangula soft-deleted birimu. Enabling kino ntegeka does si sangula anything nga itself.",

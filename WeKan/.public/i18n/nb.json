@@ -78,6 +78,7 @@
   "description": "Beskrivelse",
   "done": "Utført",
   "dueCards-title": "Forfalte Kort",
+  "duplicate-board": "Dupliser tavle",
   "edit": "Rediger",
   "enable-permanent-delete": "Aktiver permanent sletting for global administrator",
   "enable-permanent-delete-description": "Tillat globale administratorer å slette mykslettet innhold permanent. Aktivering av denne innstillingen sletter ikke noe i seg selv.",

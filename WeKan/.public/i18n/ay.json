@@ -78,6 +78,7 @@
   "description": "Qhananchawi",
   "done": "Tukuyata",
   "dueCards-title": "tukuyañ tarjetanaka",
+  "duplicate-board": "Duplicate pirqa",
   "edit": "Askichaña",
   "enable-permanent-delete": "naktayaña permanent chhaqtayaña for Global Admin",
   "enable-permanent-delete-description": "Allow Global Admins ukaru permanently chhaqtayaña soft-deleted content. Enabling aka setting does jani chhaqtayaña anything by itself.",

@@ -78,6 +78,7 @@
   "description": "Deskripsyon",
   "done": "Tapos",
   "dueCards-title": "Mga Card nga May Deadline",
+  "duplicate-board": "Duplikaha an Board",
   "edit": "Pag-edit",
   "enable-permanent-delete": "Tuguti an permanente nga pagtanggal para ha Global Admin",
   "enable-permanent-delete-description": "Tuguti an mga Global Admin nga permanente nga magtanggal han sulod nga gintanggal na pero aada pa ha sistema. An pagtugot hini nga setting diri nagtatanggal hin bisan ano ha iya la kalugaringon.",

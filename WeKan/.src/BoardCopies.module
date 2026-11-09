@@ -1,0 +1,160 @@
+' Private form batch; each completed board is committed before advancing the queue.
+Export
+
+Public Function NewBatch(selection As Collection) As Collection
+  Dim data As New Collection
+  Dim ids As Integer[] = BoardSelection.ActionIds(selection)
+  data["username"] = WebIdentity.Username
+  data["generation"] = WebDatabase.SessionGeneration(WebIdentity.Username)
+  data["revision"] = BoardSelection.Revision(selection)
+  data["ids"] = ids.Copy()
+  data["remaining"] = ids.Copy()
+  data["copies"] = New Integer[]
+  data["busy"] = False
+  Return data
+End
+
+Private Sub Check(batch As Collection, selection As Collection)
+  If Not batch Then Error.Raise("Board selection changed")
+  If WebIdentity.Username = "" Or WebIdentity.Username <> batch["username"] Then Error.Raise("Sign in required")
+  If WebDatabase.SessionGeneration(WebIdentity.Username) <> batch["generation"] Then Error.Raise("Sign in required")
+  If BoardSelection.Revision(selection) <> batch["revision"] Or Not BoardSelection.Active(selection) Then Error.Raise("Board selection changed")
+  If JSON.Encode(BoardSelection.ActionIds(selection)) <> JSON.Encode(batch["ids"]) Then Error.Raise("Board selection changed")
+End
+
+Public Function Remaining(batch As Collection) As Integer
+  Dim ids As Integer[] = batch["remaining"]
+  Return ids.Count
+End
+
+Public Function Completed(batch As Collection) As Integer
+  Dim ids As Integer[] = batch["copies"]
+  Return ids.Count
+End
+
+Public Function Copies(batch As Collection) As Integer[]
+  Dim ids As Integer[] = batch["copies"]
+  Return ids.Copy()
+End
+
+Public Sub Run(batch As Collection, selection As Collection)
+  Dim pending As Integer[]
+  Dim done As Integer[]
+  Dim copied As Integer
+  Dim acquired As Boolean
+  Dim failure As String
+  Check(batch, selection)
+  If batch["busy"] Then Error.Raise("Board copy is already running")
+  batch["busy"] = True
+  acquired = True
+  pending = batch["remaining"]
+  done = batch["copies"]
+  While pending.Count
+    Check(batch, selection)
+    copied = CopyOne(pending[0])
+    done.Add(copied)
+    pending.Remove(0)
+  Wend
+  Check(batch, selection)
+  batch["busy"] = False
+Catch
+  failure = Error.Text
+  If acquired Then batch["busy"] = False
+  Error.Raise(failure)
+End
+
+Private Function CopyOne(boardId As Integer) As Integer
+  Dim actor As String = WebIdentity.Username
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim source As Result
+  Dim title As String
+  Dim id As Integer
+  Dim transaction As Boolean
+  Dim failure As String
+  BoardAccess.Require(boardId, "manageBoard")
+  DatabaseTransactions.Begin(db)
+  transaction = True
+  db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+  If WebIdentity.Username <> actor Then Error.Raise("Copy identity changed")
+  BoardAccess.Require(boardId, "manageBoard")
+  source = WorkspaceStore.Record(boardId, "board", boardId)
+  If source!archived Then Error.Raise("Select active boards first")
+  title = UniqueTitle(source!title)
+  id = WorkspaceStore.Copy(boardId, "board", boardId, title)
+  If WebIdentity.Username <> actor Then Error.Raise("Copy identity changed")
+  BoardAccess.Require(boardId, "manageBoard")
+  If WorkspaceStore.Archived(boardId, "board", boardId) Then Error.Raise("Select active boards first")
+  DatabaseTransactions.Commit(db)
+  transaction = False
+  Return id
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback(db)
+  Error.Raise(failure)
+End
+
+Private Function White(code As Integer) As Boolean
+  Return [9, 10, 11, 12, 13, 32, 160, 5760, 8192, 8193, 8194, 8195, 8196, 8197, 8198, 8199, 8200, 8201, 8202, 8232, 8233, 8239, 8287, 12288, 65279].Find(code) >= 0
+End
+
+Private Function RightTrim(text As String) As String
+  While String.Len(text) > 0
+    If Not White(String.Code(text, String.Len(text))) Then Break
+    text = String.Left(text, String.Len(text) - 1)
+  Wend
+  Return text
+End
+
+Private Function Parts(text As String) As Collection
+  Dim data As New Collection
+  Dim at As Integer
+  Dim i As Integer
+  Dim digits As String
+  text = RightTrim(text)
+  If Right(text) = "]" Then
+    at = RInStr(text, "[")
+    If at > 0 Then
+      digits = Mid(text, at + 1, Len(text) - at - 1)
+      If digits Then
+        For i = 1 To Len(digits)
+          If Not InStr("0123456789", Mid(digits, i, 1)) Then Break
+        Next
+        If i > Len(digits) Then
+          data["number"] = Val(digits)
+          text = RightTrim(Left(text, at - 1))
+        Endif
+      Endif
+    Endif
+  Endif
+  ' Source's non-dotAll lazy title group cannot consume internal line separators.
+  For i = 1 To String.Len(text)
+    If [10, 13, 8232, 8233].Find(String.Code(text, i)) >= 0 Then Error.Raise("Invalid copy title")
+  Next
+  data["base"] = text
+  Return data
+End
+
+Public Function UniqueTitle(title As String) As String
+  Dim source As Collection = Parts(title)
+  Dim candidate As Collection
+  Dim r As Result
+  Dim anyMatch As Boolean
+  Dim number As Float
+  Dim failure As Boolean
+  r = WebDatabase.OpenConnection().Find("kb_boards")
+  For Each r
+    Try candidate = Parts(r!title)
+    failure = Error
+    If failure Then Continue
+    If candidate["base"] <> source["base"] Then Continue
+    anyMatch = True
+    If candidate.Exist("number") Then number = Max(number, CFloat(candidate["number"]))
+  Next
+  If Not anyMatch Then Return title
+  ' Native titles are bounded; refuse a lossy counter rather than repeat a name.
+  If number >= 9007199254740991 Then Error.Raise("Copy title counter is too large")
+  title = source["base"] & " [" & CStr(CLong(number) + CLong(1)) & "]"
+  If String.Len(title) > 255 Then Error.Raise("Enter a valid copy title")
+  Return title
+End

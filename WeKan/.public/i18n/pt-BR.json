@@ -78,6 +78,7 @@
   "description": "Descrição",
   "done": "Feito",
   "dueCards-title": "Cartões com prazo final",
+  "duplicate-board": "Duplicar Quadro",
   "edit": "Editar",
   "enable-permanent-delete": "Ativar exclusão permanente para o administrador global",
   "enable-permanent-delete-description": "Permitir que administradores globais excluam permanentemente o conteúdo marcado como excluído. Ativar esta configuração não exclui nada por si só.",

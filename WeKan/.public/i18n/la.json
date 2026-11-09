@@ -78,6 +78,7 @@
   "description": "Descriptio",
   "done": "Factum",
   "dueCards-title": "Chartae cum die debito",
+  "duplicate-board": "Duplica tabulam",
   "edit": "Recense",
   "enable-permanent-delete": "Permitte administratori globali in perpetuum delere",
   "enable-permanent-delete-description": "Permitte administratoribus globalibus res quae iam remotae sed nondum penitus deletae sunt in perpetuum delere. Hanc optionem activare per se nihil delet.",

@@ -78,6 +78,7 @@
   "description": "Opis",
   "done": "Zakończone",
   "dueCards-title": "Karty oczekujące",
+  "duplicate-board": "Duplikuj tablicę",
   "edit": "Edytuj",
   "enable-permanent-delete": "Włącz trwałe usuwanie dla administratora globalnego",
   "enable-permanent-delete-description": "Zezwól administratorom globalnym na trwałe usuwanie treści oznaczonych jako usunięte. Samo włączenie tego ustawienia niczego nie usuwa.",

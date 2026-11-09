@@ -1,0 +1,139 @@
+Public Sub Main()
+  Dim a As Integer
+  Dim b As Integer
+  Dim cardId As Integer
+  Dim selection As Collection
+  Dim batch As Collection
+  Dim fresh As Collection
+  Dim copies As Integer[]
+  Dim db As Connection
+  Dim denied As Boolean
+  Dim failure As String
+  Dim before As String
+  Dim r As Result
+  WebDatabase.Register("batch-global", "x")
+  WebDatabase.Register("batch-owner", "x")
+  WebDatabase.Register("batch-other", "x")
+  SignIn("batch-other")
+  b = KanbanStore.AddBoard("Batch B")
+  cardId = KanbanStore.SaveCard(b, 0, "B card", "B body", "Default", "Todo", "", "", "")
+  CardContent.UploadFile(b, cardId, "b.bin", "B" & Chr(0))
+  BoardAccess.SetMember(b, "batch-owner", "board-admin")
+  SignIn("batch-owner")
+  a = KanbanStore.AddBoard("Batch A")
+  cardId = KanbanStore.SaveCard(a, 0, "A card", "A body", "Default", "Todo", "", "", "")
+  CardContent.UploadFile(a, cardId, "a.bin", "A" & Chr(0))
+  selection = BoardSelection.NewState()
+  BoardSelection.SetActive(selection, True)
+  BoardSelection.AddVisible(selection, [a, b])
+  batch = BoardCopies.NewBatch(selection)
+  db = WebDatabase.OpenConnection()
+  db.Exec("CREATE TRIGGER copy_batch_fail BEFORE INSERT ON kb_files WHEN NEW.filename='b.bin' BEGIN SELECT RAISE(ABORT,'second board failed'); END")
+  Try BoardCopies.Run(batch, selection)
+  denied = Error
+  If Not denied Or BoardCopies.Completed(batch) <> 1 Or BoardCopies.Remaining(batch) <> 1 Or batch["busy"] Then Error.Raise("Failed batch lost queue/progress")
+  r = db.Find("kb_boards")
+  If r.Count <> 3 Then Error.Raise("Failed board left a partial destination")
+  copies = BoardCopies.Copies(batch)
+  r = WorkspaceStore.Record(copies[0], "board", copies[0])
+  If r!title <> "Batch A [1]" Then Error.Raise("Batch lost input order or title")
+  r = db.Find("kb_files", "board_id=&1", copies[0])
+  If r.Count <> 1 Or r!content.Data <> "A" & Chr(0) Then Error.Raise("Completed copy lost exact bytes")
+  copies.Clear()
+  If BoardCopies.Completed(batch) <> 1 Then Error.Raise("Getter exposed queue state")
+  db.Exec("DROP TRIGGER copy_batch_fail")
+  BoardCopies.Run(batch, selection)
+  If BoardCopies.Completed(batch) <> 2 Or BoardCopies.Remaining(batch) Then Error.Raise("Retry did not finish only pending board")
+  copies = BoardCopies.Copies(batch)
+  r = WorkspaceStore.Record(copies[1], "board", copies[1])
+  If r!title <> "Batch B [1]" Then Error.Raise("Failed title was consumed")
+  before = Frame()
+  BoardCopies.Run(batch, selection)
+  If Frame() <> before Then Error.Raise("Completed batch duplicated work on repeat")
+  fresh = BoardCopies.NewBatch(selection)
+  fresh["busy"] = True
+  Try BoardCopies.Run(fresh, selection)
+  denied = Error
+  If Not denied Or Not fresh["busy"] Or Frame() <> before Then Error.Raise("Reentrant call unlocked running batch")
+  fresh["busy"] = False
+  BoardSelection.Toggle(selection, b, [a, b])
+  BoardSelection.Toggle(selection, b, [a, b])
+  Try BoardCopies.Run(fresh, selection)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Stale revision copied boards")
+  fresh = BoardCopies.NewBatch(selection)
+  SignIn("batch-other")
+  Try BoardCopies.Run(fresh, selection)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Foreign actor reused batch")
+  SignIn("batch-owner")
+  selection = BoardSelection.NewState()
+  BoardSelection.SetActive(selection, True)
+  BoardSelection.AddVisible(selection, [b, a])
+  batch = BoardCopies.NewBatch(selection)
+  SignIn("batch-other")
+  BoardAccess.SetMember(b, "batch-owner", "read-only")
+  SignIn("batch-owner")
+  before = Frame()
+  Try BoardCopies.Run(batch, selection)
+  denied = Error
+  failure = Error.Text
+  If Not denied Or failure <> "Board permission denied" Or BoardCopies.Completed(batch) Or BoardCopies.Remaining(batch) <> 2 Or Frame() <> before Then Error.Raise("Denied first board advanced queue")
+  SignIn("batch-other")
+  BoardAccess.SetMember(b, "batch-owner", "board-admin")
+  SignIn("batch-owner")
+  WorkspaceStore.SetArchived(b, "board", b, True)
+  before = Frame()
+  Try BoardCopies.Run(batch, selection)
+  denied = Error
+  If Not denied Or BoardCopies.Completed(batch) Or Frame() <> before Then Error.Raise("Archived source copied")
+  KanbanStore.AddBoard("Counter [9007199254740991]")
+  before = Frame()
+  Try failure = BoardCopies.UniqueTitle("Counter")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Lossy copy counter accepted")
+  KanbanStore.AddBoard(String$(255, "x"))
+  before = Frame()
+  Try failure = BoardCopies.UniqueTitle(String$(255, "x"))
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Oversize numbered title accepted")
+  Print "Selected board copies: ordered per-board commits, failed-child rollback, retained completed bytes, pending-only retry, completed repeat/no-op, reentrant/revision/actor/role/archive guards passed"
+End
+
+Private Function Frame() As String
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim tables As New String[]
+  Dim table As Table
+  Dim tableName As String
+  Dim r As Result
+  Dim row As New Collection
+  Dim rows As Variant[]
+  Dim data As New Variant[]
+  Dim field As ResultField
+  For Each table In db.Tables
+    If Left(table.Name, 3) = "kb_" Or table.Name = "users" Or table.Name = "attachment_transfer_settings" Then tables.Add(table.Name)
+  Next
+  tables.Sort()
+  For Each tableName In tables
+    rows = New Variant[]
+    r = db.Find(tableName)
+    For Each r
+      row = New Collection
+      For Each field In r.Fields
+        If field.Name = "content" Then
+          row.Add(Base64(r!content.Data), field.Name)
+        Else
+          row.Add(r[field.Name], field.Name)
+        Endif
+      Next
+      rows.Add(row)
+    Next
+    data.Add(rows)
+  Next
+  Return JSON.Encode(data)
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

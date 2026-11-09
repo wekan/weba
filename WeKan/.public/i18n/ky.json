@@ -78,6 +78,7 @@
   "description": "Сүрөттөмө",
   "done": "Даяр",
   "dueCards-title": "Мөөнөттүү карточкалар",
+  "duplicate-board": "Тактаны кайталоо",
   "edit": "Түзөтүү",
   "enable-permanent-delete": "Global Admin үчүн туруктуу өчүрүүнү иштетүү",
   "enable-permanent-delete-description": "Global Admin колдонуучуларына жумшак өчүрүлгөн мазмунду туруктуу өчүрүүгө уруксат берүү. Бул жөндөөнү иштетүү өзүнөн өзү эч нерсени өчүрбөйт.",

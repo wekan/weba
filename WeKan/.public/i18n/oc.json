@@ -78,6 +78,7 @@
   "description": "Descripcion",
   "done": "Acabat",
   "dueCards-title": "Cartas a vencer",
+  "duplicate-board": "Duplicar tablèu",
   "edit": "Modificar",
   "enable-permanent-delete": "Activar la supression permanenta per l'administrator global",
   "enable-permanent-delete-description": "Permetre als administrators globals de suprimir definitivament lo contengut suprimit logicament. Activar aqueste reglatge suprimís pas res d'esperel.",

@@ -78,6 +78,7 @@
   "description": "Descripción",
   "done": "Hecho",
   "dueCards-title": "Tarjetas Vencidas",
+  "duplicate-board": "Duplicar tablero",
   "edit": "Editar",
   "enable-permanent-delete": "Activar el desaniciu permanente pal alministrador global",
   "enable-permanent-delete-description": "Permitir que los alministradores globales desanicien permanentemente'l conteníu desaniciáu de mou lóxicu. Activar esta opción nun desanicia nada por sigo mesma.",

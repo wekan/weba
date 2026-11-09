@@ -78,6 +78,7 @@
   "description": "Descrição",
   "done": "Feito",
   "dueCards-title": "Cartões Data Limite",
+  "duplicate-board": "Duplicar Quadro",
   "edit": "Editar",
   "enable-permanent-delete": "Ativar eliminação permanente para o administrador global",
   "enable-permanent-delete-description": "Permitir que os administradores globais eliminem permanentemente conteúdo marcado como eliminado. Ativar esta definição não elimina nada por si só.",

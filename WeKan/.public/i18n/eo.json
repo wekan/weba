@@ -78,6 +78,7 @@
   "description": "Priskribo",
   "done": "Farite",
   "dueCards-title": "Kartoj kun limdato",
+  "duplicate-board": "Duobligi tabulon",
   "edit": "Redakti",
   "enable-permanent-delete": "Ebligi konstantan forigon por Tutmonda Administranto",
   "enable-permanent-delete-description": "Permesi al Tutmondaj Administrantoj konstante forigi provizore forigitan enhavon. Ebligi ĉi tiun agordon mem ne forigas ion ajn.",

@@ -78,6 +78,7 @@
   "description": "Opis",
   "done": "Končano",
   "dueCards-title": "Kartice z rokom",
+  "duplicate-board": "Dupliciraj tablo",
   "edit": "Uredi",
   "enable-permanent-delete": "Omogoči trajno brisanje za globalnega skrbnika",
   "enable-permanent-delete-description": "Globalnim skrbnikom dovoli trajno brisanje začasno izbrisane vsebine. Vklop te nastavitve sam po sebi ničesar ne izbriše.",

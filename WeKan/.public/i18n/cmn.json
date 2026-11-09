@@ -78,6 +78,7 @@
   "description": "描述",
   "done": "完毕",
   "dueCards-title": "到期卡",
+  "duplicate-board": "重复板",
   "edit": "编辑",
   "enable-permanent-delete": "为全局管理员启用永久删除",
   "enable-permanent-delete-description": "允许全局管理员永久删除已软删除的内容。启用此设置本身不会删除任何内容。",

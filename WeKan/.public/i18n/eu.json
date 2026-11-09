@@ -78,6 +78,7 @@
   "description": "Deskripzioa",
   "done": "Egina",
   "dueCards-title": "Txartelen epemuga",
+  "duplicate-board": "Bikoiztu arbela",
   "edit": "Editatu",
   "enable-permanent-delete": "Gaitu behin betiko ezabatzea administratzaile globalarentzat",
   "enable-permanent-delete-description": "Baimendu administratzaile globalei modu bigunean ezabatutako edukia behin betiko ezabatzea. Ezarpen hau gaitzeak ez du berez ezer ezabatzen.",

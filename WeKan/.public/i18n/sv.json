@@ -78,6 +78,7 @@
   "description": "Beskrivning",
   "done": "Färdig",
   "dueCards-title": "Kort med förfallodatum",
+  "duplicate-board": "Duplicera tavla",
   "edit": "Redigera",
   "enable-permanent-delete": "Aktivera permanent borttagning för global administratör",
   "enable-permanent-delete-description": "Tillåt globala administratörer att permanent ta bort mjukraderat innehåll. Att aktivera inställningen tar inte bort något i sig.",

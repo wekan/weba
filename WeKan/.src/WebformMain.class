@@ -37,6 +37,7 @@ Private $detailFormBase As Collection
 Private $boardSelection As Collection
 Private $overviewSidebar As String = "search"
 Private $selectedArchiveRevision As Long = -1
+Private $selectedCopy As Collection
 Private $deleteListBoard As Integer
 Private $deleteListId As Integer
 Private $deletedListBoard As Integer
@@ -2664,6 +2665,10 @@ Private Sub UpdateSelectionControls()
   If Not IsOverview() Or Not $archive Or Not active Or Not $purgeAllowed Or $selectedPurgeRevision <> BoardSelection.Revision(SelectionState()) Then CancelSelectedPurge_Click()
   ArchiveSelectedBoards.Visible = IsOverview() And Not $archive And active
   If Not IsOverview() Or $archive Or Not active Or $selectedArchiveRevision <> BoardSelection.Revision(SelectionState()) Then CancelSelectedArchive_Click()
+  DuplicateSelectedBoards.Visible = IsOverview() And Not $archive And active
+  If $selectedCopy Then
+    If Not IsOverview() Or $archive Or Not active Or $selectedCopy["revision"] <> BoardSelection.Revision(SelectionState()) Then CancelSelectedCopy_Click()
+  Endif
   StarSelectedBoards.Visible = IsOverview() And Not $archive And active
   StarSelectedBoards.Text = "Star the selected boards"
   Try SetSelectedStarCaption()
@@ -3189,4 +3194,46 @@ Private Sub ValidateBoardCopy()
     ActionPanel.Hide()
     ActionText.Text = ""
   Endif
+End
+
+Public Sub DuplicateSelectedBoards_Click()
+  If Not IsOverview() Or $archive Then Error.Raise("Select active boards first")
+  BoardSelection.ActionIds(SelectionState())
+  If Not $selectedCopy Then $selectedCopy = BoardCopies.NewBatch(SelectionState())
+  UpdateSelectedCopyProgress()
+  SelectedCopyPanel.Show()
+Catch
+  Notice.Text = Error.Text
+End
+
+Private Sub UpdateSelectedCopyProgress()
+  If Not $selectedCopy Then Return
+  SelectedCopyProgress.Text = "Completed: " & Str(BoardCopies.Completed($selectedCopy)) & "; remaining: " & Str(BoardCopies.Remaining($selectedCopy))
+End
+
+Public Sub CancelSelectedCopy_Click()
+  $selectedCopy = Null
+  SelectedCopyPanel.Hide()
+  SelectedCopyProgress.Text = ""
+End
+
+Public Sub ConfirmSelectedCopy_Click()
+  If Not IsOverview() Or $archive Then Error.Raise("Select active boards first")
+  BoardCopies.Run($selectedCopy, SelectionState())
+  BoardSelection.Clear(SelectionState())
+  CancelSelectedCopy_Click()
+  RefreshTree()
+Catch
+  Notice.Text = Error.Text
+  UpdateSelectedCopyProgress()
+  RefreshTree()
+End
+
+Public Sub SelectedBoardsCaption_Click()
+  If Not IsOverview() Or Not BoardSelection.Active(SelectionState()) Then Error.Raise("Activate multi-selection first")
+  $overviewSidebar = "selection"
+  UpdateSelectionControls()
+  PageSidebar.Show()
+Catch
+  Notice.Text = Error.Text
 End

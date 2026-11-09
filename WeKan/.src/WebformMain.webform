@@ -690,8 +690,9 @@
         { SelectNoBoards WebButton
           Text = ("Select none")
         }
-        { SelectedBoardsCaption WebLabel
+        { SelectedBoardsCaption WebButton
           Text = ("Selected:")
+          Tooltip = ("Multi-Selection")
         }
         { SelectedBoardsCount WebLabel
         }
@@ -1065,6 +1066,21 @@
               Class = "weba-purge-selected"
             }
             { CancelSelectedPurge WebButton
+              Text = ("Cancel")
+            }
+          }
+          { DuplicateSelectedBoards WebButton
+            Text = ("Duplicate Board")
+          }
+          { SelectedCopyPanel WebContainer
+            Arrangement = Arrange.Vertical
+            Visible = False
+            { SelectedCopyProgress WebLabel
+            }
+            { ConfirmSelectedCopy WebButton
+              Text = ("Duplicate Board")
+            }
+            { CancelSelectedCopy WebButton
               Text = ("Cancel")
             }
           }

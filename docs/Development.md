@@ -762,6 +762,51 @@ covers readonly forgery, successful manager copying and stale-save denial after
 live demotion. Focused mode: tests/run-http.py --board-copy, plus --archive for
 the packaged application.
 
-Selected-board duplication, per-field copy options, source unique-title generation,
-board-creation policy, unimplemented board content and full original UI/API/security
-suites remain open. Existing single native copy titles are supplied by the user.
+Per-field copy options, board-creation policy, unimplemented board content and
+full original UI/API/security suites remain open. Existing single native copy
+titles are supplied by the user; selected-copy queue and title behavior follow below.
+
+### Selected-board duplication
+
+Multi-Selection → Duplicate Board opens a per-form queue for selected active
+boards, including selections retained outside the visible search/page. Clicking
+Selected: reopens the selection sidebar after using search. Cancel before running
+creates nothing. Each copy requires current board administration and commits
+independently. A failed board rolls back its hierarchy/bytes while previous
+successes remain. The panel reports completed/remaining counts; retry processes
+only unfinished boards. Selection clears after every board succeeds.
+
+The private queue is bound to the current account, session generation and selection
+revision. Selection changes, leaving the active overview or disabling selection
+cancel the panel; stale/forged submits cannot replace its source IDs. Each copy
+locks actor/source, checks source scope/archive state and uses the guarded native
+copy service. Busy/reentrant and completed-repeat checks prevent repeated work
+within the same form operation. Queue state is per-form, matching the source
+popup's lifetime: cancellation/reload starts a new operation; this is not durable
+crash-resume or an idempotency protocol across lost responses.
+
+Titles follow the source's terminal [number] convention over stored board names,
+including regex characters, Unicode whitespace and existing numbered copies.
+Native titles retain the 255-character bound and refuse counters at/above
+9007199254740991 rather than produce a lossy repeated name. Integer formatting
+preserves the largest supported suffix exactly. Concurrent unrelated sources do
+not gain a global title reservation/unique constraint.
+
+BoardCopiesTest covers per-board commits, failed-child rollback, exact completed
+bytes, pending-only retry, completed repeats, revision/principal/role/archive and
+reentrant guards plus title bounds. Twenty-nine actual SQL-backed title results
+match the unchanged source uniqueTitle body. Six queue stages match the unchanged
+selected-duplication submit callback for success, first/second failure and retry,
+with explicit regex/ID/transport/reset adapters. Native browser checks cover
+readonly denial/cancel, off-page selection/sidebar return, revision forgery,
+mobile progress, late role loss, retry, exact bytes, successful clear/reload,
+Finnish captions and Archive rejection. Focused mode: tests/run-http.py
+--selected-copy, adding --archive for the packaged application. Source labels are
+imported verbatim for all 237 catalogs (155 imported keys).
+
+This flow duplicates the content supported by the existing native copy service.
+Source per-field copy options, board creation policy, destination placement/order,
+unsupported rules/integrations/
+scrum and other missing board data, complete original UI/DDP/API/security suites
+and durable request-level batch recovery remain open. The queue comparison does
+not claim those behaviors or replace the unchanged backend copy method.

@@ -78,6 +78,7 @@
   "description": "描述",
   "done": "完成",
   "dueCards-title": "到期卡片",
+  "duplicate-board": "複製看板",
   "edit": "編輯",
   "enable-permanent-delete": "為全域管理員啟用永久刪除",
   "enable-permanent-delete-description": "允許全域管理員永久刪除已軟刪除的內容。啟用此設定本身並不會刪除任何內容。",

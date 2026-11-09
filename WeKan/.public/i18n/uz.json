@@ -78,6 +78,7 @@
   "description": "Tavsif",
   "done": "Bajarildi",
   "dueCards-title": "To'lov kartalari",
+  "duplicate-board": "Dublikat taxtasi",
   "edit": "Tahrirlash",
   "enable-permanent-delete": "Global administrator uchun butunlay o‘chirishni yoqish",
   "enable-permanent-delete-description": "Global administratorlarga yumshoq o‘chirilgan tarkibni butunlay o‘chirishga ruxsat berish. Bu sozlamani yoqish o‘z-o‘zidan hech narsani o‘chirmaydi.",

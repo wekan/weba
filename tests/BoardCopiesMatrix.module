@@ -1,0 +1,99 @@
+Public Sub Main()
+  Dim payload As New Collection
+  Dim titles As New Variant[]
+  Dim batches As New Variant[]
+  Dim test As Collection
+  Dim row As Collection
+  Dim raw As New String[]
+  Dim stage As Collection
+  Dim stages As Variant[]
+  Dim title As String
+  Dim copiedTitle As String
+  Dim mode As String
+  Dim id As Integer
+  Dim a As Integer
+  Dim b As Integer
+  Dim cardId As Integer
+  Dim index As Integer
+  Dim selection As Collection
+  Dim batch As Collection
+  Dim r As Result
+  Dim db As Connection
+  Dim pending As Integer[]
+  Dim denied As Boolean
+  WebDatabase.Register("copies-matrix", "x")
+  Session["username"] = "copies-matrix"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("copies-matrix")
+  KanbanStore.OpenDatabase()
+  db = WebDatabase.OpenConnection()
+  For Each test In JSON.Decode(File.Load(".public/copy-title-cases.json"))
+    db.Delete("kb_boards")
+    For Each title In test["existing"]
+      r = db.Create("kb_boards")
+      r["owner"] = "copies-matrix"
+      r["title"] = title
+      r["archived"] = False
+      r.Update()
+    Next
+    raw = New String[]
+    r = db.Find("kb_boards", "TRUE ORDER BY id")
+    For Each r
+      raw.Add(CStr(r!title))
+    Next
+    row = New Collection
+    row["input"] = test["input"]
+    row["existing"] = raw
+    Try copiedTitle = BoardCopies.UniqueTitle(test["input"])
+    denied = Error
+    row["ok"] = Not denied
+    If Not denied Then row["title"] = copiedTitle
+    titles.Add(row)
+  Next
+  db.Delete("kb_boards")
+  For Each mode In ["none", "first", "second"]
+    a = KanbanStore.AddBoard("Queue " & mode & " A")
+    b = KanbanStore.AddBoard("Queue " & mode & " B")
+    cardId = KanbanStore.SaveCard(a, 0, "A", "", "Default", "Todo", "", "", "")
+    CardContent.AddFile(a, cardId, "a-" & mode, "A")
+    cardId = KanbanStore.SaveCard(b, 0, "B", "", "Default", "Todo", "", "", "")
+    CardContent.AddFile(b, cardId, "b-" & mode, "B")
+    selection = BoardSelection.NewState()
+    BoardSelection.SetActive(selection, True)
+    BoardSelection.AddVisible(selection, [a, b])
+    batch = BoardCopies.NewBatch(selection)
+    row = New Collection
+    row["mode"] = mode
+    row["ids"] = [a, b]
+    row["names"] = ["Queue " & mode & " A", "Queue " & mode & " B"]
+    raw = New String[]
+    r = db.Find("kb_boards", "TRUE ORDER BY id")
+    For Each r
+      raw.Add(CStr(r!title))
+    Next
+    row["existing"] = raw
+    If mode <> "none" Then db.Exec("CREATE TRIGGER queue_fail BEFORE INSERT ON kb_files WHEN NEW.filename='" & If(mode = "first", "a-", "b-") & mode & "' BEGIN SELECT RAISE(ABORT,'queue fail'); END")
+    stages = New Variant[]
+    For index = 1 To 2
+      Try BoardCopies.Run(batch, selection)
+      denied = Error
+      stage = New Collection
+      stage["ok"] = Not denied
+      pending = batch["remaining"]
+      stage["remaining"] = pending.Copy()
+      raw = New String[]
+      For Each id In BoardCopies.Copies(batch)
+        r = WorkspaceStore.Record(id, "board", id)
+        raw.Add(CStr(r!title))
+      Next
+      stage["titles"] = raw
+      stage["busy"] = batch["busy"]
+      stages.Add(stage)
+      If index = 1 And mode <> "none" Then db.Exec("DROP TRIGGER queue_fail")
+    Next
+    row["stages"] = stages
+    batches.Add(row)
+  Next
+  payload["titles"] = titles
+  payload["batches"] = batches
+  Print JSON.Encode(payload)
+End

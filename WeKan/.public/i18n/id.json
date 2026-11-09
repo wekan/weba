@@ -78,6 +78,7 @@
   "description": "Deskripsi",
   "done": "Selesai",
   "dueCards-title": "Kartu Jatuh Tempo",
+  "duplicate-board": "Duplikat Papan",
   "edit": "Sunting",
   "enable-permanent-delete": "Aktifkan penghapusan permanen untuk Admin Global",
   "enable-permanent-delete-description": "Izinkan Admin Global menghapus secara permanen konten yang telah dihapus sementara. Mengaktifkan pengaturan ini saja tidak menghapus apa pun.",

@@ -78,6 +78,7 @@
   "description": "תיאור",
   "done": "בוצע",
   "dueCards-title": "כרטיסים שתוקפם פג",
+  "duplicate-board": "שכפול לוח",
   "edit": "עריכה",
   "enable-permanent-delete": "הפעלת מחיקה לצמיתות למנהל הכללי",
   "enable-permanent-delete-description": "לאפשר למנהלים כלליים למחוק לצמיתות תוכן שנמחק באופן זמני. הפעלת הגדרה זו כשלעצמה אינה מוחקת דבר.",

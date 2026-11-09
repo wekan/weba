@@ -1,4 +1,9 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Selected board copies: Add per-form revision-bound duplication/progress and
+  pending-only retry after per-board commits. Retain off-page selection and reopen
+  actions after search. Enforce fresh admin/scope and source-style bounded titles.
+  Verify native rollback, 29 source titles/six queue stages and real mobile/forged/
+  translated/retry browser flows; keep options/creation/full-suite TODOs open.
 - Board copy security: Require source board administration, hide/guard nonmanager
   Copy and clear revoked forms. Lock/recheck actor/source/destination and roll back
   late changes or failed children. Skip retained deleted cards. Verify native

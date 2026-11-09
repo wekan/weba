@@ -78,6 +78,7 @@
   "description": "Description",
   "done": "Done",
   "dueCards-title": "Due Cards",
+  "duplicate-board": "Duplicate Board",
   "edit": "Edit",
   "enable-permanent-delete": "Enable permanent delete for Global Admin",
   "enable-permanent-delete-description": "Allow Global Admins to permanently delete soft-deleted content. Enabling this setting does not delete anything by itself.",

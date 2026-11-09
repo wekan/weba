@@ -78,6 +78,7 @@
   "description": "Descrizione",
   "done": "Fatto",
   "dueCards-title": "Schede in scadenza",
+  "duplicate-board": "Duplica bacheca",
   "edit": "Modifica",
   "enable-permanent-delete": "Abilita l'eliminazione permanente per l'amministratore globale",
   "enable-permanent-delete-description": "Consenti agli amministratori globali di eliminare definitivamente i contenuti contrassegnati come eliminati. L'attivazione di questa impostazione non elimina nulla da sola.",

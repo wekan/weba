@@ -78,6 +78,7 @@
   "description": "Lýsing",
   "done": "Lokið",
   "dueCards-title": "Spjöld á skiladegi",
+  "duplicate-board": "Afrita töflu",
   "edit": "Breyta",
   "enable-permanent-delete": "Virkja varanlega eyðingu fyrir yfirkerfisstjóra",
   "enable-permanent-delete-description": "Leyfa yfirkerfisstjórum að eyða endanlega efni sem hefur verið merkt sem eytt. Þessi stilling eyðir engu ein og sér.",

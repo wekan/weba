@@ -2,6 +2,18 @@
 
 This work adds the following features and fixes:
 
+- Add selected native board duplication with a private revision/account-bound
+  per-form queue. Commit each board independently; retain successes and retry only
+  unfinished boards after failure. Show progress, cancel and clear on completion;
+  reopen selection actions after search without losing off-page selections.
+  Require fresh admin/active scope and use source-style numbered titles with
+  native length/safe-counter limits and exact integer suffixes. Verify native
+  rollback/retry/forgery, 29 source title outcomes, six unchanged submit-callback
+  queue stages and mobile/translated browser behavior. Import source Duplicate
+  Board labels across 237 catalogs. Keep source per-field options, creation
+  policy, missing content, durable batch recovery and full original suites open.
+  Thanks to xet7.
+
 - Require board administration for whole-board copies, matching source copyBoard
   authorization. Hide and guard nonmanager Copy; close and clear revoked forms.
   Lock actor/source, prepare links within the transaction and recheck identity,

@@ -78,6 +78,7 @@
   "description": "Kirjeldus",
   "done": "Valmis",
   "dueCards-title": "Due Kaardid",
+  "duplicate-board": "Duplikaat Board",
   "edit": "Muuda",
   "enable-permanent-delete": "Luba globaalsel administraatoril jäädavalt kustutada",
   "enable-permanent-delete-description": "Luba globaalsetel administraatoritel pehmelt kustutatud sisu jäädavalt kustutada. Selle seade lubamine ei kustuta iseenesest midagi.",

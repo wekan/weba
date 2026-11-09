@@ -78,6 +78,7 @@
   "description": "詳細",
   "done": "完了",
   "dueCards-title": "期限切れカード",
+  "duplicate-board": "ボードの複製",
   "edit": "編集",
   "enable-permanent-delete": "グローバル管理者の完全削除を有効にする",
   "enable-permanent-delete-description": "グローバル管理者が論理削除されたコンテンツを完全に削除できるようにします。この設定を有効にするだけでは、何も削除されません。",

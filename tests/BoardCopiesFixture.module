@@ -1,0 +1,59 @@
+Public Sub Main()
+  Dim mode As String = Env["WEBA_COPIES_MODE"]
+  Dim ids As Integer[]
+  Dim id As Integer
+  Dim cardId As Integer
+  Dim r As Result
+  Dim data As New Collection
+  Dim rows As New Variant[]
+  Dim item As Collection
+  Dim db As Connection
+  If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
+  Session["username"] = "rest-other"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+  If mode = "seed" Then
+    ids = New Integer[]
+    For Each mode In ["Alpha", "Bravo"]
+      id = KanbanStore.AddBoard("Batch copy " & mode)
+      cardId = KanbanStore.SaveCard(id, 0, mode & " card", "Body", "Default", "Todo", "", "", "")
+      CardContent.AddFile(id, cardId, "batch-" & mode & ".bin", mode & Chr(0))
+      BoardAccess.SetMember(id, "rest-member", "read-only")
+      ids.Add(id)
+    Next
+    data["ids"] = ids
+    Print JSON.Encode(data)
+    Return
+  Endif
+  ids = New Integer[]
+  For Each id In JSON.Decode(Env["WEBA_COPIES_IDS"])
+    ids.Add(id)
+  Next
+  If mode = "grant" Then
+    For Each id In ids
+      BoardAccess.SetMember(id, "rest-member", "board-admin")
+    Next
+  Endif
+  If mode = "demote-second" Then BoardAccess.SetMember(ids[1], "rest-member", "normal")
+  db = WebDatabase.OpenConnection()
+  If mode = "fail-second" Then db.Exec("CREATE TRIGGER copies_browser_fail BEFORE INSERT ON kb_files WHEN NEW.filename='batch-Bravo.bin' BEGIN SELECT RAISE(ABORT,'second browser copy failed'); END")
+  If mode = "allow" Then db.Exec("DROP TRIGGER IF EXISTS copies_browser_fail")
+  r = db.Find("kb_boards", "TRUE ORDER BY id")
+  For Each r
+    item = New Collection
+    item["id"] = r!id
+    item["owner"] = r!owner
+    item["title"] = r!title
+    rows.Add(item)
+  Next
+  data["boards"] = rows
+  rows = New Variant[]
+  r = db.Find("kb_files", "TRUE ORDER BY id")
+  For Each r
+    item = New Collection
+    item["boardId"] = r!board_id
+    item["bytes"] = Base64(r!content.Data)
+    rows.Add(item)
+  Next
+  data["files"] = rows
+  Print JSON.Encode(data)
+End

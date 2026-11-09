@@ -78,6 +78,7 @@
   "description": "Beschreiwung",
   "done": "Fäerdeg",
   "dueCards-title": "Fällige Kaarten",
+  "duplicate-board": "Board duplizieren",
   "edit": "Änneren",
   "enable-permanent-delete": "Permanent Läsche fir global Administrateuren aktivéieren",
   "enable-permanent-delete-description": "Erlaabt globalen Administrateuren, mëll geläschten Inhalt permanent ze läschen. D'Aktivéiere vun dëser Astellung läscht eleng näischt.",

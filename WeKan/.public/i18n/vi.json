@@ -78,6 +78,7 @@
   "description": "Mô tả",
   "done": "Xong",
   "dueCards-title": "Thẻ đến hạn",
+  "duplicate-board": "Bảng trùng lặp",
   "edit": "Sửa",
   "enable-permanent-delete": "Bật xóa vĩnh viễn cho Quản trị viên toàn cục",
   "enable-permanent-delete-description": "Cho phép Quản trị viên toàn cục xóa vĩnh viễn nội dung đã được xóa mềm. Việc bật cài đặt này không tự xóa bất kỳ nội dung nào.",

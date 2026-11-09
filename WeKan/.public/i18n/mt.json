@@ -78,6 +78,7 @@
   "description": "Deskrizzjoni",
   "done": "Lest",
   "dueCards-title": "Due Kards",
+  "duplicate-board": "Duplicate Bord",
   "edit": "Editja",
   "enable-permanent-delete": "Attiva permanent delete għal Global Amministratur",
   "enable-permanent-delete-description": "Allow Global Admins għal permanently delete soft-ħassar content. Enabling dan setting does mhux delete anything by itself.",

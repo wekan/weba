@@ -78,6 +78,7 @@
   "description": "Descrición",
   "done": "Feito",
   "dueCards-title": "Tarxetas con vencemento",
+  "duplicate-board": "Duplicar taboleiro",
   "edit": "Editar",
   "enable-permanent-delete": "Activar a eliminación permanente para o administrador global",
   "enable-permanent-delete-description": "Permitir que os administradores globais eliminen permanentemente o contido eliminado de forma lóxica. Activar esta opción non elimina nada por si mesma.",

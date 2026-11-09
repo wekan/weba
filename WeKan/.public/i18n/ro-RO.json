@@ -78,6 +78,7 @@
   "description": "Descriere",
   "done": "Gata",
   "dueCards-title": "Carduri cu termen",
+  "duplicate-board": "Duplică panoul",
   "edit": "Editează",
   "enable-permanent-delete": "Activează ștergerea permanentă pentru administratorul global",
   "enable-permanent-delete-description": "Permite administratorilor globali să șteargă permanent conținutul șters logic. Activarea acestei setări nu șterge nimic de la sine.",

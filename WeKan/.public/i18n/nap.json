@@ -78,6 +78,7 @@
   "description": "Descrizzione",
   "done": "Fatto",
   "dueCards-title": "Carte in scadenza",
+  "duplicate-board": "Duplica tavula",
   "edit": "Cagnà",
   "enable-permanent-delete": "Abilita l'eliminazione permanente pe l'amministratore globale",
   "enable-permanent-delete-description": "Consenti agli amministratori globali di eliminare definitivamente i contenuti contrassegnati comme eliminati. L'attivazione di chesta impostazione nun scancella nulla da sola.",

@@ -78,6 +78,7 @@
   "description": "وصف",
   "done": "تم",
   "dueCards-title": "البطاقات المستحقة",
+  "duplicate-board": "نسخ اللوحة",
   "edit": "تعديل",
   "enable-permanent-delete": "تمكين الحذف الدائم للمسؤول العام",
   "enable-permanent-delete-description": "السماح للمسؤولين العامين بحذف المحتوى المحذوف منطقيًا نهائيًا. لا يؤدي تمكين هذا الإعداد وحده إلى حذف أي شيء.",

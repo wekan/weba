@@ -78,6 +78,7 @@
   "description": "Përshkrimi",
   "done": "U krye",
   "dueCards-title": "Kartat me afat",
+  "duplicate-board": "Dyfisho tabelën",
   "edit": "Redakto",
   "enable-permanent-delete": "Aktivizo fshirjen e përhershme për Administratorin global",
   "enable-permanent-delete-description": "Lejo Administratorët globalë të fshijnë përgjithmonë përmbajtjen e fshirë butësisht. Aktivizimi i këtij cilësimi nuk fshin asgjë vetvetiu.",
