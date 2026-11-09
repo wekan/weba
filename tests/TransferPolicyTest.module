@@ -1,0 +1,198 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim fileId As Integer
+  Dim data As Collection
+  Dim original As Collection
+  Dim db As Connection
+  Dim r As Result
+  Dim row As Result
+  Dim denied As Boolean
+  Dim failure As String
+  Dim before As String
+  Dim exportText As String
+  Dim field As String
+  Dim snapshot As Collection
+  WebDatabase.Register("transfer-global", "x")
+  WebDatabase.Register("transfer-owner", "x")
+  WebDatabase.Register("transfer-reader", "x")
+  SignIn("transfer-owner")
+  boardId = KanbanStore.AddBoard("Transfer policy")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Bytes", "", "Default", "Todo", "", "", "")
+  BoardAccess.SetMember(boardId, "transfer-reader", "read-only")
+  fileId = CardContent.UploadFile(boardId, cardId, "policy.bin", "a" & Chr(0) & "b")
+  exportText = BoardTransfer.ExportData(boardId, "card", cardId)
+  db = WebDatabase.OpenConnection()
+  If TransferPolicy.Blocked("attachmentsUpload") Then Error.Raise("Default upload policy blocked")
+  original = Defaults()
+  before = Frame()
+  Try TransferPolicy.Save(original)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Board owner changed global limits")
+  Try TransferPolicy.Settings()
+  denied = Error
+  If Not denied Then Error.Raise("Board owner read global limits")
+  SignIn("transfer-reader")
+  Try CardContent.UploadFile(boardId, cardId, "denied.bin", "x")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Readonly upload wrote bytes")
+  SignIn("transfer-global")
+  data = TransferPolicy.Settings()
+  If data.Count <> 9 Then Error.Raise("Source policy field inventory changed")
+  For Each field In ["attachmentsUploadMaxBytes", "attachmentsDownloadMaxBytes", "apiUploadMaxBytes", "apiDownloadMaxBytes"]
+    If data[field] <> 0 Then Error.Raise("Absent setting did not normalize to zero")
+  Next
+  data["attachmentsUploadBlocked"] = True
+  data["attachmentsDownloadBlocked"] = True
+  TransferPolicy.Save(data)
+  r = db.Find("attachment_transfer_settings", "id=1")
+  If r!actor <> "transfer-global" Or r!changed_ms <= 0 Then Error.Raise("Global policy attribution lost")
+  SignIn("transfer-owner")
+  before = Frame()
+  Try CardContent.UploadFile(boardId, cardId, "blocked.bin", "x")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Native upload bypassed block")
+  Try CardContent.DownloadFile(boardId, cardId, fileId)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Native download bypassed block")
+  Try BoardTransfer.ExportData(boardId, "card", cardId)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("JSON export leaked blocked bytes")
+  Try BoardTransfer.ImportData(exportText, "Blocked import")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("JSON import bypassed upload block")
+  snapshot = DetailLive.Read(boardId, cardId, "file")
+  If Not snapshot["uploadsBlocked"] Or Not snapshot["downloadsBlocked"] Or snapshot["files"].Count <> 1 Then Error.Raise("Detail policy hid metadata or omitted block flags")
+  ' Storage-level copy and lifecycle actions do not upload/download bytes.
+  WorkspaceStore.Copy(boardId, "card", cardId, "Internal copy")
+  AttachmentLifecycle.Delete(boardId, cardId, fileId)
+  AttachmentLifecycle.Restore(boardId, cardId, fileId)
+  SignIn("transfer-global")
+  data = Defaults()
+  data["attachmentsUploadMaxBytes"] = 2
+  data["attachmentsDownloadMaxBytes"] = 2
+  data["apiUploadBlocked"] = True
+  data["apiDownloadBlocked"] = True
+  TransferPolicy.Save(data)
+  SignIn("transfer-owner")
+  before = Frame()
+  Try CardContent.UploadFile(boardId, cardId, "large.bin", "abc")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Native upload size limit ignored")
+  Try CardContent.DownloadFile(boardId, cardId, fileId)
+  denied = Error
+  If Not denied Then Error.Raise("Native download size limit ignored")
+  fileId = CardContent.UploadFile(boardId, cardId, "small.bin", "ab")
+  r = CardContent.DownloadFile(boardId, cardId, fileId)
+  If r!content.Data <> "ab" Then Error.Raise("API blocks affected native transfers")
+  WorkspaceStore.SetSetting(boardId, "board", boardId, "allowsAttachments", "0")
+  before = Frame()
+  Try CardContent.UploadFile(boardId, cardId, "board-blocked.bin", "a")
+  denied = Error
+  If denied Then failure = Error.Text
+  If Not denied Or failure <> "Attachments are not allowed on this board" Or Frame() <> before Then Error.Raise("Native board allowance was bypassed")
+  snapshot = DetailLive.Read(boardId, cardId, "file")
+  If Not snapshot["uploadsBlocked"] Then Error.Raise("Disabled board still advertises upload")
+  WorkspaceStore.SetSetting(boardId, "board", boardId, "allowsAttachments", "1")
+  db.Exec("CREATE TRIGGER transfer_board_late AFTER INSERT ON kb_attachment_data BEGIN UPDATE kb_meta SET value='0' WHERE setting='allowsAttachments'; END")
+  before = Frame()
+  Try CardContent.UploadFile(boardId, cardId, "late-board.bin", "a")
+  denied = Error
+  If denied Then failure = Error.Text
+  If Not denied Or failure <> "Attachments are not allowed on this board" Or Frame() <> before Then Error.Raise("Late board allowance was not atomic")
+  db.Exec("DROP TRIGGER transfer_board_late")
+  ' A setting update injected after the file write must roll back file and policy.
+  db.Exec("CREATE TRIGGER transfer_late AFTER INSERT ON kb_attachment_data BEGIN UPDATE attachment_transfer_settings SET attachmentsUploadBlocked=1 WHERE id=1; END")
+  before = Frame()
+  Try CardContent.UploadFile(boardId, cardId, "late.bin", "a")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Late policy change was not atomic")
+  db.Exec("DROP TRIGGER transfer_late")
+  SignIn("transfer-global")
+  data = Defaults()
+  before = Frame()
+  db.Exec("CREATE TRIGGER transfer_fail BEFORE UPDATE ON attachment_transfer_settings WHEN NEW.apiUploadMaxBytes<>OLD.apiUploadMaxBytes BEGIN SELECT RAISE(ABORT,'private SQL canary'); END")
+  data["apiUploadMaxBytes"] = 123
+  Try TransferPolicy.Save(data)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Failed policy write changed state")
+  db.Exec("DROP TRIGGER transfer_fail")
+  db.Exec("CREATE TRIGGER transfer_demote AFTER UPDATE ON attachment_transfer_settings WHEN NEW.apiUploadMaxBytes<>OLD.apiUploadMaxBytes BEGIN UPDATE users SET admin=0 WHERE username='transfer-global'; END")
+  Try TransferPolicy.Save(data)
+  denied = Error
+  If denied Then failure = Error.Text
+  If Not denied Or failure <> "Administrator required" Or Frame() <> before Then Error.Raise("Late admin demotion was not rolled back with an authority failure")
+  db.Exec("DROP TRIGGER transfer_demote")
+  data = Defaults()
+  data["apiUploadMaxBytes"] = -1
+  Try TransferPolicy.Save(data)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Negative size accepted")
+  data = Defaults()
+  data["apiUploadBlocked"] = "true"
+  Try TransferPolicy.Save(data)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("String policy switch accepted")
+  data = Defaults()
+  data.Add(True, "unknown")
+  Try TransferPolicy.Save(data)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Unknown policy field accepted")
+  TransferPolicy.Save(Defaults())
+  SignIn("transfer-owner")
+  db.Exec("CREATE TRIGGER transfer_import_late AFTER INSERT ON kb_activity WHEN NEW.message='Imported weba JSON' BEGIN UPDATE attachment_transfer_settings SET attachmentsUploadBlocked=1 WHERE id=1; END")
+  before = Frame()
+  Try BoardTransfer.ImportData(exportText, "Late blocked import")
+  denied = Error
+  If denied Then failure = Error.Text
+  If Not denied Or failure <> "Attachment uploads are disabled by administrator" Or Frame() <> before Then Error.Raise("Final import policy change was not atomic")
+  db.Exec("DROP TRIGGER transfer_import_late")
+  SignIn("transfer-global")
+  If TransferPolicy.Limit("apiUpload") <> 67108864 Then Error.Raise("Explicit unlimited did not override environment")
+  Print "Transfer policy: Global Admin/schema guards, defaults/attribution, native/API independence, native blocks/limits and JSON import/export enforcement, metadata/internal lifecycle, late policy/admin and SQL rollback passed"
+End
+
+Private Function Defaults() As Collection
+  Dim data As New Collection
+  Dim field As String
+  For Each field In ["attachmentsUploadMaxBytes", "attachmentsDownloadMaxBytes", "apiUploadMaxBytes", "apiDownloadMaxBytes"]
+    data.Add(0, field)
+  Next
+  For Each field In ["attachmentsUploadBlocked", "attachmentsDownloadBlocked", "apiUploadBlocked", "apiDownloadBlocked", "avatarsUploadBlocked"]
+    data.Add(False, field)
+  Next
+  Return data
+End
+
+Private Function Frame() As String
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim tables As String[] = ["users", "kb_boards", "kb_lanes", "kb_lists", "kb_card_lists", "kb_order", "kb_history", "kb_entries", "kb_members", "kb_cards", "kb_files", "kb_attachment_data", "kb_attachment_history", "kb_attachment_deletions", "kb_activity", "kb_item_changes", "kb_meta", "attachment_transfer_settings"]
+  Dim tableName As String
+  Dim r As Result
+  Dim row As New Collection
+  Dim rows As Variant[]
+  Dim data As New Variant[]
+  Dim field As ResultField
+  For Each tableName In tables
+    rows = New Variant[]
+    r = db.Find(tableName)
+    For Each r
+      row = New Collection
+      For Each field In r.Fields
+        If field.Name = "content" Then
+          row.Add(Base64(r!content.Data), field.Name)
+        Else
+          row.Add(r[field.Name], field.Name)
+        Endif
+      Next
+      rows.Add(row)
+    Next
+    data.Add(rows)
+  Next
+  Return JSON.Encode(data)
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

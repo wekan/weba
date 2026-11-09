@@ -38,34 +38,20 @@ End
 
 Public Function Mime(boardId As Integer, cardId As Integer, fileId As Integer) As String
   Dim r As Result
-  CardContent.FileRecord(boardId, cardId, fileId)
+  CardContent.OpenStore()
+  BoardAccess.RequireCard(boardId, cardId)
   OpenStore()
+  r = $db.Exec("SELECT id FROM kb_files WHERE board_id=&1 AND card_id=&2 AND id=&3 AND " & AttachmentLifecycle.LiveSql("kb_files"), boardId, cardId, fileId)
+  If Not r.Available Then Error.Raise("Attachment not accessible")
   r = $db.Find("kb_attachment_data", "board_id=&1 AND card_id=&2 AND file_id=&3", boardId, cardId, fileId)
   If r.Available Then Return r!mime
   Return "application/octet-stream"
 End
 
-Public Function ApiUploadLimit() As Integer
-  Return ApiLimit("ATTACHMENT_API_MAX_UPLOAD_BYTES")
+Public Function ApiUploadLimit() As Float
+  Return TransferPolicy.Limit("apiUpload")
 End
 
-Public Function ApiDownloadLimit() As Integer
-  Return ApiLimit("ATTACHMENT_API_MAX_DOWNLOAD_BYTES")
-End
-
-Private Function ApiLimit(setting As String) As Integer
-  Dim value As String = Trim(Env[setting])
-  Dim digits As String
-  Dim i As Integer
-  Dim number As Float
-  If Left(value) = "+" Then value = Mid(value, 2)
-  For i = 1 To Len(value)
-    If Not InStr("0123456789", Mid(value, i, 1)) Then Break
-    digits &= Mid(value, i, 1)
-  Next
-  If Not digits Then Return 67108864
-  Try number = Val(digits)
-  If Error Then Return 67108864
-  If number <= 0 Or number > 67108864 Then Return 67108864
-  Return CInt(number)
+Public Function ApiDownloadLimit() As Float
+  Return TransferPolicy.Limit("apiDownload")
 End

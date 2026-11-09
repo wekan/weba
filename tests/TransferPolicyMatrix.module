@@ -1,0 +1,40 @@
+Public Sub Main()
+  Dim cases As Variant[] = JSON.Decode(File.Load(".public/transfer-policy-cases.json"))
+  Dim rows As New Variant[]
+  Dim test As Collection
+  Dim row As Collection
+  Dim data As Collection
+  Dim normalized As Collection
+  Dim field As String
+  Dim denied As Boolean
+  WebDatabase.Register("policy-source", "x")
+  Session["username"] = "policy-source"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("policy-source")
+  For Each test In cases
+    row = New Collection
+    If test["type"] = "form" Then
+      Try data = TransferPolicy.FormLimit(test["mode"], test["value"], test["unit"])
+      denied = Error
+      row.Add(Not denied, "valid")
+      If Not denied Then row.Add(data, "data")
+    Else
+      If test["type"] = "stored" Then
+        data = New Collection
+        For Each field In ["attachmentsUploadMaxBytes", "attachmentsDownloadMaxBytes", "apiUploadMaxBytes", "apiDownloadMaxBytes"]
+          data.Add(CFloat(Val(test["size"])), field)
+        Next
+        For Each field In ["attachmentsUploadBlocked", "attachmentsDownloadBlocked", "apiUploadBlocked", "apiDownloadBlocked", "avatarsUploadBlocked"]
+          data.Add(test["blocked"], field)
+        Next
+        TransferPolicy.Save(data)
+      Endif
+      normalized = TransferPolicy.Settings()
+      row.Add(normalized, "settings")
+      row.Add(TransferPolicy.Limit("apiUpload"), "uploadLimit")
+      row.Add(TransferPolicy.Limit("apiDownload"), "downloadLimit")
+      row.Add(TransferPolicy.DisplayUnit(normalized["apiUploadMaxBytes"]), "unit")
+    Endif
+    rows.Add(row)
+  Next
+  Print JSON.Encode(rows)
+End

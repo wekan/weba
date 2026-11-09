@@ -2,6 +2,15 @@
 
 This work adds the following features and fixes:
 
+- Add persisted Global Admin native/API upload/download controls with Unlimited,
+  Maximum file size and Blocked modes and source GB/MB/Bytes conversions. Enforce
+  fresh limits on native/API bytes and JSON exchange with atomic late-change
+  rollback; retain metadata/internal lifecycle access and board upload allowance.
+  Close and clear settings on admin revocation; translate labels from source.
+  Verify 234 source-helper outcomes, native rollback, HTTP and mobile/translated
+  browser controls. Keep the buffered 64 MiB ceiling and explicit avatar/storage/
+  streaming/DDP/eventlog/full-suite TODOs. Thanks to xet7.
+
 - Add attachment list/info/JSON and raw download APIs plus the legacy board-list
   alias. Match source membership and raw assigned-card scope, including global
   nonmember read denial and retained-file direct history reads. Keep listings

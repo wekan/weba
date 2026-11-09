@@ -284,7 +284,8 @@ def handler(application, runner, environment):
             try:
                 length = int(self.headers.get('Content-Length', '0'))
                 upload = decoded_path == '/api/attachment/upload' and self.command == 'POST'
-                body_limit = 96 * 1024 * 1024 if upload else 20 * 1024 * 1024
+                native_upload = decoded_path.startswith('/upload:') and self.command == 'POST'
+                body_limit = 96 * 1024 * 1024 if upload or native_upload else 20 * 1024 * 1024
                 if not 0 <= length <= body_limit:
                     if upload:
                         self._upload_body_error(413, 'Request payload exceeds server safety limit')

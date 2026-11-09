@@ -113,6 +113,7 @@ Public Function ReadFile(reference As String, download As Boolean, raw As Boolea
   Dim bytes As String
   Dim field As String
   OpenStore()
+  If download And TransferPolicy.Blocked("apiDownload") Then Return Failure(403, "API downloads are disabled by administrator")
   r = $db.Exec("SELECT board_id,card_id FROM kb_files WHERE id=&1", fileId)
   If Not r.Available Then Return Failure(404, "Attachment not found")
   boardId = r!board_id
@@ -129,6 +130,8 @@ Public Function ReadFile(reference As String, download As Boolean, raw As Boolea
     If Len(bytes) > AttachmentData.ApiDownloadLimit() Then Return Failure(413, "Attachment exceeds API download limit")
     If Len(bytes) <> data["fileSize"] Then Return Failure(500, "Attachment changed during download")
     If Not CardVisible(boardId, cardId) Then Return Failure(403, "You do not have permission to access this attachment")
+    If TransferPolicy.Blocked("apiDownload") Then Return Failure(403, "API downloads are disabled by administrator")
+    If Len(bytes) > AttachmentData.ApiDownloadLimit() Then Return Failure(413, "Attachment exceeds API download limit")
     If raw Then
       outcome = Answer(200, data)
       outcome.Add(True, "raw")

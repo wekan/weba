@@ -15,6 +15,8 @@ Public Function Read(boardId As Integer, cardId As Integer, kind As String, Opti
   r = WorkspaceStore.Record(boardId, "card", cardId)
   data["title"] = r!title
   data["kind"] = kind
+  data["uploadsBlocked"] = TransferPolicy.Blocked("attachmentsUpload") Or WorkspaceStore.Setting(boardId, "board", boardId, "allowsAttachments", "1") <> "1"
+  data["downloadsBlocked"] = TransferPolicy.Blocked("attachmentsDownload")
   For Each capability In ["comment", "write", "manageBoard", "seesAllCards"]
     data[capability] = BoardAccess.Can(boardId, capability)
   Next

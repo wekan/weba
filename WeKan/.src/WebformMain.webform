@@ -651,6 +651,10 @@
         { AdminUsers WebButton
           Text = ("People")
         }
+        { AttachmentTransferSettings WebButton
+          Text = ("Attachments")
+          Tooltip = ("Attachment And API File Size Limits")
+        }
         { AdminProblemsTitle WebLabel
           Text = ("Problems")
         }
@@ -833,6 +837,105 @@
         }
         { ChangePassword WebButton
           Text = ("Change password")
+        }
+      }
+      { TransferLimitsPanel WebContainer
+        Visible = False
+        Arrangement = Arrange.Vertical
+        Spacing = True
+        Class = "weba-settings-panel"
+        { TransferLimitsHeading WebLabel
+          Text = ("Attachment And API File Size Limits")
+        }
+        { TransferLimitsDescription WebLabel
+          Text = ("Configure maximum file size limits for uploads and downloads. API transfer buffering has separate server-side safety caps.")
+        }
+        { NativeUploadHeading WebLabel
+          Text = ("Attachments upload max file size")
+        }
+        { NativeUploadMode WebComboBox
+          Tooltip = ("Attachments upload max file size")
+          ReadOnly = True
+        }
+        { NativeUploadSizeRow WebContainer
+          Arrangement = Arrange.Horizontal
+          Spacing = True
+          Class = "weba-transfer-size-row"
+          { NativeUploadValue WebTextBox
+            Tooltip = ("Please enter a valid positive limit value")
+            Expand = True
+          }
+          { NativeUploadUnit WebComboBox
+            Tooltip = ("Bytes")
+            ReadOnly = True
+            Width = "100px"
+          }
+        }
+        { NativeDownloadHeading WebLabel
+          Text = ("Attachments download max file size")
+        }
+        { NativeDownloadMode WebComboBox
+          Tooltip = ("Attachments download max file size")
+          ReadOnly = True
+        }
+        { NativeDownloadSizeRow WebContainer
+          Arrangement = Arrange.Horizontal
+          Spacing = True
+          Class = "weba-transfer-size-row"
+          { NativeDownloadValue WebTextBox
+            Tooltip = ("Please enter a valid positive limit value")
+            Expand = True
+          }
+          { NativeDownloadUnit WebComboBox
+            Tooltip = ("Bytes")
+            ReadOnly = True
+            Width = "100px"
+          }
+        }
+        { ApiUploadHeading WebLabel
+          Text = ("API upload max file size")
+        }
+        { ApiUploadMode WebComboBox
+          Tooltip = ("API upload max file size")
+          ReadOnly = True
+        }
+        { ApiUploadSizeRow WebContainer
+          Arrangement = Arrange.Horizontal
+          Spacing = True
+          Class = "weba-transfer-size-row"
+          { ApiUploadValue WebTextBox
+            Tooltip = ("Please enter a valid positive limit value")
+            Expand = True
+          }
+          { ApiUploadUnit WebComboBox
+            Tooltip = ("Bytes")
+            ReadOnly = True
+            Width = "100px"
+          }
+        }
+        { ApiDownloadHeading WebLabel
+          Text = ("API download max file size")
+        }
+        { ApiDownloadMode WebComboBox
+          Tooltip = ("API download max file size")
+          ReadOnly = True
+        }
+        { ApiDownloadSizeRow WebContainer
+          Arrangement = Arrange.Horizontal
+          Spacing = True
+          Class = "weba-transfer-size-row"
+          { ApiDownloadValue WebTextBox
+            Tooltip = ("Please enter a valid positive limit value")
+            Expand = True
+          }
+          { ApiDownloadUnit WebComboBox
+            Tooltip = ("Bytes")
+            ReadOnly = True
+            Width = "100px"
+          }
+        }
+        { SaveTransferLimits WebButton
+          Text = ("Save")
         }
       }
       { PermanentDeletePanel WebContainer

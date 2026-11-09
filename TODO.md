@@ -87,10 +87,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   Native form tests do not execute the original Latin callback unchanged.
   Native retained attachment deletion/restore, bearer raw/JSON uploads with
   MIME/time metadata and source target guards, list/info/base64/raw download APIs,
-  and the DELETE API are recorded in
+  the DELETE API and four persisted Global Admin transfer controls are recorded in
   CHANGELOG.md. Card/swimlane/discussion deletion, full generic history/undo,
-  streamed uploads/downloads, global transfer/
-  storage settings and board allowance controls, linked-card/background/map
+  streamed uploads/downloads, avatar upload integration, full storage/cloud
+  settings and board allowance controls, linked-card/background/map
   permissions, storage/retention, security eventlog/Problems reporting and visual
   cover selection,
   deleted-list local caption translations, full Recovery schema/report/filter parity and non-SQLite driver verification
@@ -746,8 +746,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   relationship are rejected; move the complete linked group or remove the link.
 - Implemented weba-2 JSON export/import with empty layouts, ordering, archived
   cards, metadata and rich content. Imports create a new owned board atomically;
-  20 MiB JSON exchange and 10 MiB native file-picker limits apply; bearer uploads
-  use the source-configured byte limit capped at 64 MiB. Running imported
+  20 MiB JSON exchange applies; native and bearer attachment bytes follow
+  persisted transfer policy within a physical 64 MiB buffered ceiling. Running imported
   time records become stopped records. Meteor WeKan JSON import remains pending.
 - SQLite store tests and real Chromium native-menu, rich-card, cross-board,
   deletion and packaged JSON exchange tests pass. Desktop/mobile full-layout

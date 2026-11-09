@@ -1,0 +1,274 @@
+ ' Global transfer settings; attribution never grants policy authority.
+Export
+Private $db As Connection
+Private $sizes As String[] = ["attachmentsUploadMaxBytes", "attachmentsDownloadMaxBytes", "apiUploadMaxBytes", "apiDownloadMaxBytes"]
+Private $blocks As String[] = ["attachmentsUploadBlocked", "attachmentsDownloadBlocked", "apiUploadBlocked", "apiDownloadBlocked", "avatarsUploadBlocked"]
+
+Public Sub OpenStore()
+  Dim t As Table
+  Dim field As String
+  If $db Then Return
+  $db = WebDatabase.OpenConnection()
+  If Not $db.Tables.Exist("attachment_transfer_settings") Then
+    t = $db.Tables.Add("attachment_transfer_settings")
+    t.Fields.Add("id", db.Integer)
+    For Each field In $sizes
+      t.Fields.Add(field, db.Float)
+    Next
+    For Each field In $blocks
+      t.Fields.Add(field, db.Boolean)
+    Next
+    t.Fields.Add("actor", db.String, 255)
+    t.Fields.Add("changed_ms", db.Long)
+    t.PrimaryKey = ["id"]
+    t.Update()
+  Endif
+  If Not $db.Find("attachment_transfer_settings", "id=1").Available Then
+    Try $db.Exec("INSERT INTO attachment_transfer_settings (id) SELECT 1 WHERE NOT EXISTS (SELECT 1 FROM attachment_transfer_settings WHERE id=1)")
+    If Error Then
+      If Not $db.Find("attachment_transfer_settings", "id=1").Available Then Error.Propagate()
+    Endif
+  Endif
+Catch
+  $db = Null
+  Error.Propagate()
+End
+
+Private Sub ValidateKind(kind As String)
+  If ["attachmentsUpload", "attachmentsDownload", "apiUpload", "apiDownload", "avatarsUpload"].Find(kind) < 0 Then Error.Raise("Unknown transfer policy")
+End
+
+Public Function Blocked(kind As String) As Boolean
+  Dim r As Result
+  ValidateKind(kind)
+  OpenStore()
+  r = $db.Find("attachment_transfer_settings", "id=1")
+  Return CBool(r[kind & "Blocked"])
+End
+
+Private Function Configured(field As String) As Variant
+  Dim r As Result
+  OpenStore()
+  r = $db.Find("attachment_transfer_settings", "id=1")
+  If IsNull(r[field]) Then Return Null
+  If Not Finite(CFloat(r[field])) Or r[field] < 0 Then Return Null
+  Return CFloat(r[field])
+End
+
+Private Function EnvironmentLimit(setting As String) As Float
+  Dim text As String = Trim(Env[setting])
+  Dim digits As String
+  Dim i As Integer
+  Dim value As Float
+  If Left(text) = "+" Then text = Mid(text, 2)
+  For i = 1 To Len(text)
+    If Not InStr("0123456789", Mid(text, i, 1)) Then Break
+    digits &= Mid(text, i, 1)
+  Next
+  If Not digits Then Return 0
+  Try value = Val(digits)
+  If Error Then Return 0
+  If value < 0 Or Not Finite(value) Then Return 0
+  Return value
+End
+
+Public Function Limit(kind As String) As Float
+  Dim value As Variant
+  ValidateKind(kind)
+  If kind = "avatarsUpload" Then Error.Raise("Avatar policy has no size limit")
+  value = Configured(kind & "MaxBytes")
+  If IsNull(value) Then
+    If kind = "attachmentsDownload" Then value = Configured("apiDownloadMaxBytes")
+  Endif
+  If IsNull(value) Then
+    Select kind
+      Case "attachmentsUpload"
+        value = EnvironmentLimit("ATTACHMENTS_UPLOAD_MAX_SIZE")
+      Case "apiUpload"
+        value = EnvironmentLimit("ATTACHMENT_API_MAX_UPLOAD_BYTES")
+      Case Else
+        value = EnvironmentLimit("ATTACHMENT_API_MAX_DOWNLOAD_BYTES")
+    End Select
+  Endif
+  ' Native files are database/CGI buffered too until streaming storage exists.
+  If value <= 0 Then Return 67108864
+  Return Min(CFloat(value), 67108864)
+End
+
+Public Sub Lock()
+  OpenStore()
+  $db.Exec("UPDATE attachment_transfer_settings SET id=id WHERE id=1")
+End
+
+Public Sub RequireTransfer(kind As String, size As Long)
+  If Blocked(kind) Then
+    Select kind
+      Case "apiUpload"
+        Error.Raise("API uploads are disabled by administrator")
+      Case "apiDownload"
+        Error.Raise("API downloads are disabled by administrator")
+      Case "attachmentsUpload"
+        Error.Raise("Attachment uploads are disabled by administrator")
+      Case "attachmentsDownload"
+        Error.Raise("Attachment downloads are disabled by administrator")
+      Case Else
+        Error.Raise("Avatar uploads are disabled by administrator")
+    End Select
+  Endif
+  If kind = "avatarsUpload" Then Return
+  If size < 0 Or size > Limit(kind) Then
+    If kind = "apiUpload" Then Error.Raise("Attachment exceeds API upload limit")
+    If kind = "apiDownload" Then Error.Raise("Attachment exceeds API download limit")
+    If kind = "attachmentsUpload" Then Error.Raise("Attachment exceeds upload limit")
+    Error.Raise("Attachment exceeds download limit")
+  Endif
+End
+
+Public Function Settings() As Collection
+  Dim data As New Collection
+  Dim field As String
+  Dim value As Variant
+  RecoveryStore.RequireAdmin()
+  OpenStore()
+  For Each field In $sizes
+    value = Configured(field)
+    If IsNull(value) Then value = 0
+    data.Add(ViewInteger(CFloat(value)), field)
+  Next
+  For Each field In $blocks
+    data.Add(Blocked(Left(field, -7)), field)
+  Next
+  Return data
+End
+
+Private Function Finite(value As Float) As Boolean
+  Dim wire As String
+  Try wire = JSON.Encode(value)
+  If Error Or Not wire Then Return False
+  Return InStr("-+0123456789", Left(wire)) > 0
+End
+
+Public Sub Save(data As Collection)
+  Dim actor As String = WebIdentity.Username
+  Dim field As String
+  Dim value As Variant
+  Dim r As Result
+  Dim transaction As Boolean
+  Dim failure As String
+  RecoveryStore.RequireAdmin()
+  If Not data Or data.Count <> 9 Then Error.Raise("Invalid transfer settings")
+  For Each field In $sizes
+    If Not data.Exist(field) Then Error.Raise("Invalid transfer settings")
+    value = data[field]
+    If [gb.Byte, gb.Short, gb.Integer, gb.Long, gb.Single, gb.Float].Find(TypeOf(value)) < 0 Then Error.Raise("Invalid transfer size")
+    If Not Finite(CFloat(value)) Or value < 0 Then Error.Raise("Invalid transfer size")
+  Next
+  For Each field In $blocks
+    If Not data.Exist(field) Then Error.Raise("Invalid transfer settings")
+    If TypeOf(data[field]) <> gb.Boolean Then Error.Raise("Invalid transfer switch")
+  Next
+  OpenStore()
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  Lock()
+  If WebIdentity.Username <> actor Then Error.Raise("Administrator required")
+  RecoveryStore.RequireAdmin()
+  r = $db.Edit("attachment_transfer_settings", "id=1")
+  For Each field In $sizes
+    r[field] = data[field]
+  Next
+  For Each field In $blocks
+    r[field] = data[field]
+  Next
+  r["actor"] = actor
+  r["changed_ms"] = ItemChanges.UtcNow()
+  r.Update()
+  If WebIdentity.Username <> actor Then Error.Raise("Administrator required")
+  RecoveryStore.RequireAdmin()
+  r = $db.Find("attachment_transfer_settings", "id=1")
+  For Each field In data.Keys
+    If r[field] <> data[field] Then Error.Raise("Transfer settings changed")
+  Next
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+Public Function Bytes(text As String, unit As String) As Float
+  Dim i As Integer = 1
+  Dim endAt As Integer
+  Dim digits As Boolean
+  Dim exponent As Integer
+  Dim value As Float
+  Dim factor As Float = 1
+  text = Trim(text)
+  If Left(text) = "+" Or Left(text) = "-" Then Inc i
+  While i <= Len(text) And InStr("0123456789", Mid(text, i, 1)) > 0
+    digits = True
+    Inc i
+  Wend
+  If Mid(text, i, 1) = "." Then
+    Inc i
+    While i <= Len(text) And InStr("0123456789", Mid(text, i, 1)) > 0
+      digits = True
+      Inc i
+    Wend
+  Endif
+  If Not digits Then Error.Raise("Please enter a valid positive limit value")
+  endAt = i - 1
+  If LCase(Mid(text, i, 1)) = "e" Then
+    Inc i
+    If Mid(text, i, 1) = "+" Or Mid(text, i, 1) = "-" Then Inc i
+    exponent = i
+    While i <= Len(text) And InStr("0123456789", Mid(text, i, 1)) > 0
+      Inc i
+    Wend
+    If i > exponent Then endAt = i - 1
+  Endif
+  Try value = Val(Left(text, endAt))
+  If Error Or value < 0 Or Not Finite(value) Then Error.Raise("Please enter a valid positive limit value")
+  If unit = "mb" Then factor = 1048576
+  If unit = "gb" Then factor = 1073741824
+  value *= factor
+  If Not Finite(value) Then Error.Raise("Please enter a valid positive limit value")
+  If value < 4503599627370496 Then value = Floor(value + 0.5)
+  Return value
+End
+
+Public Function FormLimit(mode As Integer, text As String, unit As Integer) As Collection
+  Dim data As New Collection
+  Dim value As Float
+  If mode < 0 Or mode > 2 Or unit < 0 Or unit > 2 Then Error.Raise("Please enter a valid positive limit value")
+  If mode = 1 Then
+    value = Bytes(text, ["gb", "mb", "bytes"][unit])
+    If value <= 0 Then Error.Raise("Please enter a valid positive limit value")
+  Endif
+  data.Add(value, "maxBytes")
+  data.Add(mode = 2, "blocked")
+  Return data
+End
+
+Private Function ViewInteger(value As Float) As Float
+  Dim wire As String
+  Dim i As Integer
+  If value > 0 And (value < 0.000001 Or value >= 1.0E+21) Then
+    ' Source Number.parseInt(number,10) reads the first scientific significand.
+    wire = JSON.Encode(value)
+    For i = 1 To Len(wire)
+      If InStr("123456789", Mid(wire, i, 1)) Then Return Val(Mid(wire, i, 1))
+    Next
+  Endif
+  Return Floor(value)
+End
+
+Public Function DisplayUnit(value As Float) As Integer
+  If value > 0 Then
+    If value / 1073741824 = Floor(value / 1073741824) Then Return 0
+    If value / 1048576 = Floor(value / 1048576) Then Return 1
+  Endif
+  Return 2
+End

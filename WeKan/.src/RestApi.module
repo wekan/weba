@@ -465,6 +465,10 @@ Private Sub UploadAttachment()
   Dim outcome As Collection
   Dim body As String
   Dim encoded As String
+  If TransferPolicy.Blocked("apiUpload") Then
+    Reply(403, AttachmentError("API uploads are disabled by administrator"))
+    Return
+  Endif
   If Request.ContentLength < 0 Or Request.ContentLength > 100663296 Then
     Reply(413, AttachmentError("Request payload exceeds server safety limit"))
     Return

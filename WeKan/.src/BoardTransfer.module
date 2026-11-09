@@ -24,6 +24,7 @@ Public Function ExportData(boardId As Integer, kind As String, itemId As Integer
   Dim laneIds As New Integer[]
   Dim source As Result
   Dim r As Result
+  Dim bytesRow As Result
   Dim item As Collection
   Dim listId As Integer
   Dim cover As Integer
@@ -98,12 +99,15 @@ Public Function ExportData(boardId As Integer, kind As String, itemId As Integer
     item["author_name"] = CardContent.AuthorName(boardId, r!card_id, "entry", r!id)
     entries.Add(item)
   Next
-  r = $db.Find("kb_files", AttachmentLifecycle.LiveSql("kb_files") & " AND board_id = &1 ORDER BY id", boardId)
+  r = $db.Exec("SELECT id,card_id,filename,COALESCE(LENGTH(content),0) AS file_size FROM kb_files WHERE " & AttachmentLifecycle.LiveSql("kb_files") & " AND board_id=&1 ORDER BY id", boardId)
   For Each r
     If cardIds.Find(r!card_id) < 0 Then Continue
     item = Row(r, ["id", "card_id", "filename"])
+    TransferPolicy.RequireTransfer("attachmentsDownload", r!file_size)
+    bytesRow = CardContent.FileRecord(boardId, r!card_id, r!id)
+    TransferPolicy.RequireTransfer("attachmentsDownload", Len(bytesRow!content.Data))
     item["mime"] = AttachmentData.Mime(boardId, r!card_id, r!id)
-    item["base64"] = Base64(r!content.Data)
+    item["base64"] = Base64(bytesRow!content.Data)
     item["author_name"] = CardContent.AuthorName(boardId, r!card_id, "file", r!id)
     files.Add(item)
   Next
@@ -141,12 +145,17 @@ Public Function ImportData(text As String, title As String) As Integer
   Dim kind As String
   Dim titleValue As String
   Dim failure As String
+  Dim actor As String = WebIdentity.Username
+  Dim fileBytes As String
+  Dim maxFileBytes As Long
   Dim transaction As Boolean
   If Not Trim(title) Or String.Len(title) > 255 Then Error.Raise("Enter a valid board title")
   CardContent.OpenStore()
   $db = WebDatabase.OpenConnection()
   DatabaseTransactions.Begin($db)
   transaction = True
+  $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  TransferPolicy.Lock()
   boardId = KanbanStore.AddBoard(title)
   For Each item In data["lanes"]
     oldId = CStr(item["id"])
@@ -235,7 +244,9 @@ Public Function ImportData(text As String, title As String) As Integer
   If entryMap.Count <> data["entries"].Count Then Error.Raise("Unknown exported detail kind")
   For Each item In data["files"]
     If Not cardMap.Exist(CStr(item["card_id"])) Then Error.Raise("Exported attachment has no card")
-    id = CardContent.AddFile(boardId, cardMap[CStr(item["card_id"])], item["filename"], UnBase64(item["base64"]), If(item.Exist("mime"), CStr(item["mime"]), "application/octet-stream"), 67108864)
+    fileBytes = UnBase64(item["base64"])
+    maxFileBytes = Max(maxFileBytes, Len(fileBytes))
+    id = CardContent.UploadFile(boardId, cardMap[CStr(item["card_id"])], item["filename"], fileBytes, If(item.Exist("mime"), CStr(item["mime"]), "application/octet-stream"))
     If item.Exist("id") Then
       oldId = CStr(item["id"])
       If fileMap.Exist(oldId) Then Error.Raise("Duplicate attachment ID")
@@ -272,6 +283,9 @@ Public Function ImportData(text As String, title As String) As Integer
     WorkspaceStore.SetSetting(boardId, item["kind"], id, item["setting"], item["value"])
   Next
   KanbanStore.Activity(boardId, "Imported weba JSON")
+  If data["files"].Count > 0 Then TransferPolicy.RequireTransfer("attachmentsUpload", maxFileBytes)
+  If WebIdentity.Username <> actor Then Error.Raise("Sign in required")
+  BoardAccess.Require(boardId, "write")
   DatabaseTransactions.Commit($db)
   transaction = False
   Return boardId

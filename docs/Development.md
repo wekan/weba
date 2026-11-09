@@ -674,3 +674,38 @@ and byte bounds; raw output remains buffered until streaming storage is added.
 The 192-case comparator executes unchanged source handlers with explicit SQL-ID,
 time, database stream, transfer policy and no-op security logger adapters. Full
 source storage, DDP, eventlog and original UI callbacks remain separate work.
+
+## Persistent attachment transfer limits
+
+Global Admin → Attachments now controls native upload/download and API
+upload/download independently. Each offers Unlimited, Maximum file size and
+Blocked, with GB/MB/Bytes conversion. Settings persist globally with actor/time;
+ordinary owners and readers cannot read or change the settings panel. Role
+revocation closes and clears it. Existing source translations supply the labels.
+
+Saved limits override environment defaults, including explicit zero. Native
+downloads fall back to the saved API download limit, then its environment default.
+Both native and API byte paths retain a physical 64 MiB buffered-backend ceiling;
+Unlimited removes the configured limit within that ceiling. Native uploads use
+ATTACHMENTS_UPLOAD_MAX_SIZE when unset. Native/API upload host bodies have a
+96 MiB safety bound and a 30-second deadline; JSON exchange remains 20 MiB overall.
+
+Fresh server guards cover file-picker uploads, downloads, API raw/JSON bodies and
+native JSON import/export. Uploads also require the board attachment allowance.
+Actor/policy/scope locks and final checks roll back late policy or permission
+changes, including changes after the final imported activity. Blocks leave
+metadata reads and trusted internal copy/delete/restore operations available.
+
+TransferPolicyTest covers schema, Global Admin, SQL failures and late-change
+rollback. The conformance test compares 234 native outcomes with unchanged source
+form and API-limit helpers, with explicit SQL/scientific-number adapters. Actual
+HTTP checks cover independent blocks, defaults, zero/fractional limits and rollback.
+Browser checks cover owner/reader forgery, live controls, mobile editing, Corsican
+labels and admin revocation. Focused modes: --transfer-policy-api and
+--transfer-policy, with --archive for packaged checks.
+
+Avatar upload controls/integration, storage/cloud settings, streaming beyond the
+buffered ceiling, full version/retention behavior, board allowance editing,
+DDP, security eventlog/Problems reporting and complete original UI/API/security
+suites remain pending. This implements the four transfer controls, not the full
+source attachment-storage settings schema or its failure fallback behavior.

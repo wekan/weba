@@ -176,6 +176,32 @@ class AttachmentUploadTransportTest(unittest.TestCase):
         request.send_response.assert_called_with(408)
         self.assertEqual(json.loads(request.wfile.getvalue()), {'success': False, 'error': 'Request timeout'})
 
+    def test_native_upload_larger_body_gate_still_requires_origin_header(self):
+        cases = [
+            ('/upload:@1.DetailUpload', 20*1024*1024+1, {}, 400, True),
+            ('/upload:@1.DetailUpload', 96*1024*1024+1, {}, 413, False),
+            ('/upload:@1.DetailUpload', 20*1024*1024+1, {'X-WeBa-Request': None}, 403, False),
+            ('/upload:@1.DetailUpload', 20*1024*1024+1, {'Sec-Fetch-Site':'cross-site'}, 403, False),
+            ('/api/boards/1', 20*1024*1024+1, {}, 413, False),
+        ]
+        for route,length,headers,status,read in cases:
+            request = NativeOriginTest().request('POST',route,{'Content-Type':'application/octet-stream','Content-Length':str(length),**headers})
+            request.rfile = Mock()
+            request.rfile.read1.return_value = b''
+            request.wfile = io.BytesIO()
+            request.client_address = ('127.0.0.1',12345)
+            request.send_response = Mock()
+            request.send_header = Mock()
+            request.end_headers = Mock()
+            with patch.object(server,'run_application') as runner:
+                request._run_cgi()
+            if status == 403:
+                request.send_error.assert_called_once_with(status, 'Request origin not allowed')
+            else:
+                request.send_error.assert_called_once_with(status)
+            self.assertEqual(request.rfile.read1.called,read)
+            runner.assert_not_called()
+
     def test_malformed_and_unrelated_json_are_unchanged(self):
         for body in (b'{', b'[]', b'{"fileData":"YQ=="}', b'{"fileName":null}'):
             self.assertEqual(server.canonical_upload_unicode(body), body)

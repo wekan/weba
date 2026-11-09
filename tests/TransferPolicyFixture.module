@@ -1,0 +1,43 @@
+Public Sub Main()
+  Dim data As Collection
+  Dim mode As String = Env["WEBA_TRANSFER_MODE"]
+  Dim username As String = Env["WEBA_TRANSFER_USER"]
+  Dim r As Result
+  Dim field As ResultField
+  Dim result As New Collection
+  If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
+  If Not username Then username = "rest-owner"
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+  If mode = "demote-global" Or mode = "restore-global" Then
+    WebDatabase.OpenConnection().Exec("UPDATE users SET admin=&1 WHERE username='rest-owner'", mode = "restore-global")
+    Print "{}"
+    Return
+  Endif
+  If mode = "save" Then
+    data = JSON.Decode(Env["WEBA_TRANSFER_DATA"])
+    TransferPolicy.Save(data)
+  Endif
+  If mode = "reset" Then
+    RecoveryStore.RequireAdmin()
+    TransferPolicy.OpenStore()
+    WebDatabase.OpenConnection().Delete("attachment_transfer_settings", "id=1")
+    Print "{}"
+    Return
+  Endif
+  If mode = "raw" Then
+    RecoveryStore.RequireAdmin()
+    TransferPolicy.OpenStore()
+    r = WebDatabase.OpenConnection().Find("attachment_transfer_settings", "id=1")
+    For Each field In r.Fields
+      result.Add(r[field.Name], field.Name)
+    Next
+  Else
+    result = TransferPolicy.Settings()
+  Endif
+  result.Add(TransferPolicy.Limit("apiUpload"), "effectiveApiUpload")
+  result.Add(TransferPolicy.Limit("apiDownload"), "effectiveApiDownload")
+  result.Add(TransferPolicy.Limit("attachmentsUpload"), "effectiveNativeUpload")
+  result.Add(TransferPolicy.Limit("attachmentsDownload"), "effectiveNativeDownload")
+  Print JSON.Encode(result)
+End

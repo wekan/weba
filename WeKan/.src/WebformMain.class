@@ -9,6 +9,7 @@ Private $peopleCard As Integer
 Private $peopleAssignees As Boolean
 Private $board As Integer
 Private $loadingDetails As Boolean
+Private $loadingTransfer As Boolean
 Private $loadingDestinations As Boolean
 Private $detailsBoard As Integer
 Private $detailsCard As Integer
@@ -154,6 +155,7 @@ End
 Public Sub BoardPoll_Timer()
   Dim state As String
   ValidateRecoveryPanels()
+  ValidateTransferPanel()
   ValidateDeleteListPanel()
   RefreshDeletedListPanel()
   If IsOverview() And $archive Then
@@ -256,6 +258,7 @@ Public Sub Boards_Select()
   ContentRow.Show()
   AccountPanel.Hide()
   PasswordPolicyPanel.Hide()
+  TransferLimitsPanel.Hide()
   PermanentDeletePanel.Hide()
   RecoveryPanel.Hide()
   AdminPanel.Hide()
@@ -477,6 +480,7 @@ Private Sub ShowView(view As String)
   AccountPanel.Visible = view = "Profile"
   AdminPanel.Visible = False
   PasswordPolicyPanel.Hide()
+  TransferLimitsPanel.Hide()
   PermanentDeletePanel.Hide()
   RecoveryPanel.Hide()
   If view = "Admin panel" Then AdminPanel.Visible = WebDatabase.GetIsAdmin(WebIdentity.Username)
@@ -500,6 +504,7 @@ Public Sub Home_Click()
   AccountPanel.Hide()
   AdminPanel.Hide()
   PasswordPolicyPanel.Hide()
+  TransferLimitsPanel.Hide()
   PermanentDeletePanel.Hide()
   RecoveryPanel.Hide()
   $archive = False
@@ -520,6 +525,7 @@ Public Sub Archive_Click()
   AccountPanel.Hide()
   AdminPanel.Hide()
   PasswordPolicyPanel.Hide()
+  TransferLimitsPanel.Hide()
   PermanentDeletePanel.Hide()
   RecoveryPanel.Hide()
   $archive = True
@@ -742,6 +748,7 @@ Public Sub PasswordLength_Click()
   PaneTitle.Text = "Password Length"
   PermanentDeletePanel.Hide()
   RecoveryPanel.Hide()
+  TransferLimitsPanel.Hide()
   PasswordPolicyPanel.Show()
 Catch
   Notice.Text = Error.Text
@@ -1757,9 +1764,9 @@ Private Sub UpdateDetailControls()
   DetailNew.Visible = editable And kind <> "file"
   DetailStart.Visible = editable And kind = "time"
   DetailStop.Visible = editable And kind = "time"
-  DetailUpload.Visible = editable And kind = "file" And Not $attachmentHistory
+  DetailUpload.Visible = editable And kind = "file" And Not $attachmentHistory And Not TransferPolicy.Blocked("attachmentsUpload") And WorkspaceStore.Setting($detailsBoard, "board", $detailsBoard, "allowsAttachments", "1") = "1"
   DetailDownload.Visible = kind = "file" And Not $attachmentHistory
-  DetailDownload.Enabled = $fileId > 0
+  DetailDownload.Enabled = $fileId > 0 And Not TransferPolicy.Blocked("attachmentsDownload")
   DetailAttachmentHistory.Visible = kind = "file" And Not $attachmentHistory
   DetailLiveAttachments.Visible = kind = "file" And $attachmentHistory
   DetailRestoreAttachment.Visible = False
@@ -1867,17 +1874,26 @@ Catch
   Notice.Text = Error.Text
 End
 Public Sub DetailUpload_Click()
+  BoardAccess.RequireCard($detailsBoard, $detailsCard)
+  BoardAccess.Require($detailsBoard, "write")
+  TransferPolicy.RequireTransfer("attachmentsUpload", 0)
+  If WorkspaceStore.Setting($detailsBoard, "board", $detailsBoard, "allowsAttachments", "1") <> "1" Then Error.Raise("Attachments are not allowed on this board")
   DetailUpload.Upload()
+Catch
+  Notice.Text = Error.Text
 End
 Public Sub DetailUpload_Finish()
-  If Stat(DetailUpload.Path).Size > 10485760 Then Error.Raise("Choose a file up to 10 MiB")
-  CardContent.AddFile($detailsBoard, $detailsCard, DetailUpload.File, File.Load(DetailUpload.Path))
+  BoardAccess.RequireCard($detailsBoard, $detailsCard)
+  BoardAccess.Require($detailsBoard, "write")
+  TransferPolicy.RequireTransfer("attachmentsUpload", 0)
+  TransferPolicy.RequireTransfer("attachmentsUpload", Stat(DetailUpload.Path).Size)
+  CardContent.UploadFile($detailsBoard, $detailsCard, DetailUpload.File, File.Load(DetailUpload.Path))
   LoadDetails()
 Catch
   Notice.Text = Error.Text
 End
 Public Sub DetailDownload_Click()
-  Dim r As Result = CardContent.FileRecord($detailsBoard, $detailsCard, $fileId)
+  Dim r As Result = CardContent.DownloadFile($detailsBoard, $detailsCard, $fileId)
   Dim data As String = Base64(r!content.Data)
   WebForm.Exec("(function(){const bytes=Uint8Array.from(atob(" & JS(data) & "),c=>c.charCodeAt(0));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([bytes],{type:'application/octet-stream'}));a.download=" & JS(r!filename) & ";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);})();")
 Catch
@@ -2747,6 +2763,7 @@ Public Sub PermanentDeleteSettings_Click()
   PermanentDeleteEnabled.Value = RecoveryStore.Enabled()
   ContentRow.Hide()
   PasswordPolicyPanel.Hide()
+  TransferLimitsPanel.Hide()
   RecoveryPanel.Hide()
   PermanentDeletePanel.Show()
   PaneTitle.Text = "Delete"
@@ -2765,6 +2782,7 @@ Public Sub RecoveryEvents_Click()
   Dim r As Result = RecoveryStore.Events()
   ContentRow.Hide()
   PasswordPolicyPanel.Hide()
+  TransferLimitsPanel.Hide()
   PermanentDeletePanel.Hide()
   RecoveryTree.Clear()
   For Each r
@@ -3030,4 +3048,103 @@ Public Sub DetailRestoreAttachment_Click()
   LoadDetails(True)
 Catch
   Notice.Text = Error.Text
+End
+
+Public Sub AttachmentTransferSettings_Click()
+  Dim data As Collection = TransferPolicy.Settings()
+  LoadTransferSettings(data)
+  ContentRow.Hide()
+  PasswordPolicyPanel.Hide()
+  PermanentDeletePanel.Hide()
+  RecoveryPanel.Hide()
+  TransferLimitsPanel.Show()
+  PaneTitle.Text = "Attachment And API File Size Limits"
+  $loadingTransfer = False
+Catch
+  $loadingTransfer = False
+  Notice.Text = Error.Text
+End
+
+Private Sub LoadTransferSettings(data As Collection)
+  $loadingTransfer = True
+  LoadTransferField("attachmentsUpload", NativeUploadMode, NativeUploadValue, NativeUploadUnit, data)
+  LoadTransferField("attachmentsDownload", NativeDownloadMode, NativeDownloadValue, NativeDownloadUnit, data)
+  LoadTransferField("apiUpload", ApiUploadMode, ApiUploadValue, ApiUploadUnit, data)
+  LoadTransferField("apiDownload", ApiDownloadMode, ApiDownloadValue, ApiDownloadUnit, data)
+  $loadingTransfer = False
+Catch
+  $loadingTransfer = False
+  Error.Propagate()
+End
+
+Private Sub LoadTransferField(kind As String, mode As WebComboBox, value As WebTextBox, unit As WebComboBox, data As Collection)
+  Dim size As Float = data[kind & "MaxBytes"]
+  Dim factor As Float = 1
+  mode.List = ["Unlimited", "Maximum file size", "Blocked"]
+  mode.Index = If(data[kind & "Blocked"], 2, If(size > 0, 1, 0))
+  unit.List = ["GB", "MB", "Bytes"]
+  unit.Index = TransferPolicy.DisplayUnit(size)
+  factor = [1073741824, 1048576, 1][unit.Index]
+  value.Text = Str(size / factor)
+  ShowTransferField(mode, value, unit)
+End
+
+Private Sub ShowTransferField(mode As WebComboBox, value As WebTextBox, unit As WebComboBox)
+  value.Parent.Visible = mode.Index = 1
+  value.Visible = mode.Index = 1
+  unit.Visible = mode.Index = 1
+End
+
+Public Sub NativeUploadMode_Click()
+  If Not $loadingTransfer Then ShowTransferField(NativeUploadMode, NativeUploadValue, NativeUploadUnit)
+End
+Public Sub NativeDownloadMode_Click()
+  If Not $loadingTransfer Then ShowTransferField(NativeDownloadMode, NativeDownloadValue, NativeDownloadUnit)
+End
+Public Sub ApiUploadMode_Click()
+  If Not $loadingTransfer Then ShowTransferField(ApiUploadMode, ApiUploadValue, ApiUploadUnit)
+End
+Public Sub ApiDownloadMode_Click()
+  If Not $loadingTransfer Then ShowTransferField(ApiDownloadMode, ApiDownloadValue, ApiDownloadUnit)
+End
+
+Private Sub AddTransferField(data As Collection, kind As String, mode As WebComboBox, value As WebTextBox, unit As WebComboBox)
+  Dim field As Collection = TransferPolicy.FormLimit(mode.Index, value.Text, unit.Index)
+  data.Add(field["maxBytes"], kind & "MaxBytes")
+  data.Add(field["blocked"], kind & "Blocked")
+End
+
+Public Sub SaveTransferLimits_Click()
+  Dim data As New Collection
+  Dim current As Collection
+  RecoveryStore.RequireAdmin()
+  AddTransferField(data, "attachmentsUpload", NativeUploadMode, NativeUploadValue, NativeUploadUnit)
+  AddTransferField(data, "attachmentsDownload", NativeDownloadMode, NativeDownloadValue, NativeDownloadUnit)
+  AddTransferField(data, "apiUpload", ApiUploadMode, ApiUploadValue, ApiUploadUnit)
+  AddTransferField(data, "apiDownload", ApiDownloadMode, ApiDownloadValue, ApiDownloadUnit)
+  current = TransferPolicy.Settings()
+  data.Add(current["avatarsUploadBlocked"], "avatarsUploadBlocked")
+  TransferPolicy.Save(data)
+  LoadTransferSettings(TransferPolicy.Settings())
+  Notice.Text = "Attachment transfer limits saved."
+Catch
+  Notice.Text = Error.Text
+End
+
+Private Sub ValidateTransferPanel()
+  AttachmentTransferSettings.Visible = WebDatabase.GetIsAdmin(WebIdentity.Username)
+  If Not TransferLimitsPanel.Visible Then Return
+  Try RecoveryStore.RequireAdmin()
+  If Not Error Then Return
+  TransferLimitsPanel.Hide()
+  $loadingTransfer = True
+  NativeUploadMode.Index = 0
+  NativeDownloadMode.Index = 0
+  ApiUploadMode.Index = 0
+  ApiDownloadMode.Index = 0
+  NativeUploadValue.Text = ""
+  NativeDownloadValue.Text = ""
+  ApiUploadValue.Text = ""
+  ApiDownloadValue.Text = ""
+  $loadingTransfer = False
 End

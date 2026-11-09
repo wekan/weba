@@ -1257,6 +1257,7 @@ End
 
 Private Function ApiUploadTarget(boardId As Integer, laneId As Integer, listId As Integer, cardId As Integer) As Collection
   Dim r As Result
+  If TransferPolicy.Blocked("apiUpload") Then Return ApiFailure(403, "API uploads are disabled by administrator")
   r = $db.Find("kb_cards", "id=&1 AND " & ListDeletion.LiveSql("card", "kb_cards"), cardId)
   If Not r.Available Then Return ApiFailure(404, "Card not found")
   If Not $db.Find("kb_boards", "id=&1", boardId).Available Then Return ApiFailure(404, "Board not found")
@@ -1288,6 +1289,7 @@ Public Function UploadApiAttachment(boardId As Integer, laneId As Integer, listI
   DatabaseTransactions.Begin($db)
   transaction = True
   $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  TransferPolicy.Lock()
   $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
   $db.Exec("UPDATE kb_cards SET title=title WHERE board_id=&1 AND id=&2", boardId, cardId)
   check = ApiUploadTarget(boardId, laneId, listId, cardId)
@@ -1296,12 +1298,16 @@ Public Function UploadApiAttachment(boardId As Integer, laneId As Integer, listI
     Error.Raise(check["data"]["error"])
   Endif
   If WebDatabase.GetIsAdmin(actor) Then $apiMemberBoard = boardId
-  fileId = CardContent.AddFile(boardId, cardId, filename, bytes, mime, AttachmentData.ApiUploadLimit())
+  fileId = CardContent.AddFile(boardId, cardId, filename, bytes, mime, CInt(Floor(AttachmentData.ApiUploadLimit())))
   $apiMemberBoard = 0
   check = ApiUploadTarget(boardId, laneId, listId, cardId)
   If check Then
     status = check["status"]
     Error.Raise(check["data"]["error"])
+  Endif
+  If Len(bytes) > AttachmentData.ApiUploadLimit() Then
+    status = 413
+    Error.Raise("Attachment exceeds API upload limit")
   Endif
   If WebIdentity.Username <> actor Then Error.Raise("Upload identity changed")
   DatabaseTransactions.Commit($db)

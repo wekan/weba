@@ -15,6 +15,9 @@ english = json.loads((source / 'data/en.i18n.json').read_text())
 # Explicit equivalents where weba and WeKan use different English captions.
 aliases = {
     'Collapse': 'collapse', 'Uncollapse': 'uncollapse',
+    'Unlimited': 'attachment-limit-mode-unlimited', 'Maximum file size': 'attachment-limit-mode-max-size',
+    'Blocked': 'attachment-limit-mode-blocked', 'GB': 'attachment-limit-unit-gb',
+    'MB': 'attachment-limit-unit-mb', 'Bytes': 'attachment-limit-unit-bytes',
     'Workspaces': 'allboards.workspaces', 'Add Workspace': 'allboards.add-workspace',
     'Workspace name': 'allboards.add-workspace-prompt',
     'Workspace icon (markdown)': 'allboards.edit-workspace-icon',
@@ -40,7 +43,7 @@ aliases = {
     'Mon': 'monday', 'Tue': 'tuesday', 'Wed': 'wednesday', 'Thu': 'thursday',
     'Fri': 'friday', 'Sat': 'saturday', 'Sun': 'sunday',
 }
-texts = {'Board administrator', 'Normal', 'Normal (assigned cards only)',
+texts = {'Unlimited', 'Maximum file size', 'Blocked', 'GB', 'MB', 'Bytes', 'Board administrator', 'Normal', 'Normal (assigned cards only)',
          'No comments', 'Comment only', 'Comment (assigned cards only)',
          'Worker', 'Read only', 'Read (assigned cards only)', 'Language', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'}
 controls = set()
@@ -74,6 +77,8 @@ for text in sorted(texts):
 # Never translate identities, user content, stored status values or editor inputs.
 controls -= {'AccountToggle', 'PageTitle', 'PaneTitle', 'Status', 'Boards', 'WebLabelVersion', 'ContextTitle', 'ActionTitle', 'DetailsTitle'}
 controls.add('MemberRole')
+controls.add('Notice')
+controls.update({'NativeUploadMode', 'NativeDownloadMode', 'ApiUploadMode', 'ApiDownloadMode'})
 metadata = []
 for line in (source / 'languages.js').read_text().splitlines():
     match = re.match(r'\s*(\[".*\]),?\s*$', line)

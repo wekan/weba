@@ -39,6 +39,7 @@ Public Sub OpenStore()
   RetiredAuthors.OpenStore()
   AttachmentLifecycle.OpenStore()
   AttachmentData.OpenStore()
+  TransferPolicy.OpenStore()
 End
 
 Private Sub RequireCard(boardId As Integer, cardId As Integer)
@@ -412,4 +413,50 @@ Public Sub CopyRecords(sourceBoard As Integer, sourceCard As Integer, targetBoar
     If r!id = cover Then AttachmentLifecycle.SetCover(targetBoard, targetCard, id)
     CopyAuthor(targetBoard, targetCard, "file", id, r!author, AuthorName(sourceBoard, sourceCard, "file", r!id))
   Next
+End
+
+Public Function UploadFile(boardId As Integer, cardId As Integer, filename As String, bytes As String, Optional mime As String = "application/octet-stream") As Integer
+  Dim actor As String = WebIdentity.Username
+  Dim id As Integer
+  Dim transaction As Boolean
+  Dim failure As String
+  OpenStore()
+  RequireCard(boardId, cardId)
+  BoardAccess.Require(boardId, "write")
+  If WorkspaceStore.Setting(boardId, "board", boardId, "allowsAttachments", "1") <> "1" Then Error.Raise("Attachments are not allowed on this board")
+  TransferPolicy.RequireTransfer("attachmentsUpload", Len(bytes))
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  TransferPolicy.Lock()
+  RequireCard(boardId, cardId)
+  BoardAccess.Require(boardId, "write")
+  If WorkspaceStore.Setting(boardId, "board", boardId, "allowsAttachments", "1") <> "1" Then Error.Raise("Attachments are not allowed on this board")
+  TransferPolicy.RequireTransfer("attachmentsUpload", Len(bytes))
+  id = AddFile(boardId, cardId, filename, bytes, mime, CInt(Floor(TransferPolicy.Limit("attachmentsUpload"))))
+  If WebIdentity.Username <> actor Then Error.Raise("Sign in required")
+  RequireCard(boardId, cardId)
+  BoardAccess.Require(boardId, "write")
+  If WorkspaceStore.Setting(boardId, "board", boardId, "allowsAttachments", "1") <> "1" Then Error.Raise("Attachments are not allowed on this board")
+  TransferPolicy.RequireTransfer("attachmentsUpload", Len(bytes))
+  DatabaseTransactions.Commit($db)
+  transaction = False
+  Return id
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+Public Function DownloadFile(boardId As Integer, cardId As Integer, fileId As Integer) As Result
+  Dim r As Result
+  RequireCard(boardId, cardId)
+  TransferPolicy.RequireTransfer("attachmentsDownload", 0)
+  r = $db.Exec("SELECT COALESCE(LENGTH(content),0) AS size FROM kb_files WHERE " & AttachmentLifecycle.LiveSql("kb_files") & " AND board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, fileId)
+  If Not r.Available Then Error.Raise("Attachment not accessible")
+  TransferPolicy.RequireTransfer("attachmentsDownload", r!size)
+  r = FileRecord(boardId, cardId, fileId)
+  TransferPolicy.RequireTransfer("attachmentsDownload", Len(r!content.Data))
+  RequireCard(boardId, cardId)
+  Return r
 End

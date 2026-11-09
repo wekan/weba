@@ -1,4 +1,8 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Transfer limits: Add four persisted Global Admin native/API controls, source
+  units/modes, live revocation and fresh atomic byte/JSON exchange guards.
+  Verify 234 source cases, rollback, HTTP and mobile/translated browser flows;
+  retain buffered ceiling and avatar/storage/streaming/full-suite TODOs.
 - Attachment read APIs: Add live listings, retained authorized info/JSON/raw
   downloads and the legacy board alias with member/assigned scope and byte caps.
   Force safe Unicode disposition and sandbox headers; preserve embedded binary

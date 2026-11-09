@@ -835,7 +835,7 @@ and the separate deleted-list purge described below.
 
 The card editor and menu provide comments, checklists/items, real subtask cards,
 dependencies, card-level text/number/date/checkbox fields, time entries/timers and
-native attachment upload (10 MiB file picker) and download. Copying containers/cards preserves
+native attachment upload and download with persisted transfer limits. Copying containers/cards preserves
 rich records and remaps internal links. Running timers are excluded from copies.
 Watch preferences are saved, but notification delivery is still pending.
 
@@ -1377,7 +1377,7 @@ HTTP tests inspect SQL bytes, cover state and rollback (focused mode
 coverage uses `tests/run-http.py --attachment-lifecycle` (plus `--archive` for the
 packaged app). The standard local/browser suites include these checks.
 
-Streamed uploads/downloads, global transfer policy, storage backends, board-level
+Streamed uploads/downloads, storage backends, board-level
 background/map files, linked-card permissions, retention jobs, visual cover
 selection, security eventlog/Problems reporting and original complete UI/API/
 security suites remain open in TODO.md. The unchanged UnassignedAttachBleed
@@ -1419,11 +1419,10 @@ and 64 MiB hard cap; zero/unset uses that cap. JSON requests have a 96 MiB safet
 limit at both host and endpoint. Body reads have an absolute 30-second deadline;
 truncated, timed-out and oversized uploads return JSON without starting CGI.
 Other host routes retain the 20 MiB body limit.
-Native file-picker uploads retain their 10 MiB cap and weba JSON imports retain
-their overall 20 MiB limit. The current host/CGI/database implementation buffers
-uploads; the source raw streaming behavior is still unimplemented, as are admin
-storage/transfer settings and FS/GridFS/S3 backends. These are explicit remaining
-requirements, not covered by the bounded upload tests.
+Native file-picker uploads now follow persisted transfer policy with a physical
+64 MiB ceiling; weba JSON imports retain their overall 20 MiB limit. Uploads are
+buffered. Streaming and FS/GridFS/S3 backends remain unimplemented; the four
+transfer controls are described below.
 
 `api-attachment-upload.test.py` uses actual source/package HTTP and SQL to check
 exact binary/Unicode responses, MIME/time, raw content types and base64 variants,
@@ -1495,3 +1494,38 @@ responses are still buffered by the database/CGI/host architecture. Source strea
 other storage/version backends, global download blocking/settings UI, board-level
 background/map and linked-card behavior, ordinary Meteor-Files URL/range routes,
 DDP, security eventlog/Problems and original complete callbacks remain open.
+
+### Persistent attachment transfer limits
+
+Global Admin → Attachments now controls native upload/download and API
+upload/download independently. Each offers Unlimited, Maximum file size and
+Blocked, with GB/MB/Bytes conversion. Settings persist globally with actor/time;
+ordinary owners and readers cannot read or change the settings panel. Role
+revocation closes and clears it. Existing source translations supply the labels.
+
+Saved limits override environment defaults, including explicit zero. Native
+downloads fall back to the saved API download limit, then its environment default.
+Both native and API byte paths retain a physical 64 MiB buffered-backend ceiling;
+Unlimited removes the configured limit within that ceiling. Native uploads use
+ATTACHMENTS_UPLOAD_MAX_SIZE when unset. Native/API upload host bodies have a
+96 MiB safety bound and a 30-second deadline; JSON exchange remains 20 MiB overall.
+
+Fresh server guards cover file-picker uploads, downloads, API raw/JSON bodies and
+native JSON import/export. Uploads also require the board attachment allowance.
+Actor/policy/scope locks and final checks roll back late policy or permission
+changes, including changes after the final imported activity. Blocks leave
+metadata reads and trusted internal copy/delete/restore operations available.
+
+TransferPolicyTest covers schema, Global Admin, SQL failures and late-change
+rollback. The conformance test compares 234 native outcomes with unchanged source
+form and API-limit helpers, with explicit SQL/scientific-number adapters. Actual
+HTTP checks cover independent blocks, defaults, zero/fractional limits and rollback.
+Browser checks cover owner/reader forgery, live controls, mobile editing, Corsican
+labels and admin revocation. Focused modes: --transfer-policy-api and
+--transfer-policy, with --archive for packaged checks.
+
+Avatar upload controls/integration, storage/cloud settings, streaming beyond the
+buffered ceiling, full version/retention behavior, board allowance editing,
+DDP, security eventlog/Problems reporting and complete original UI/API/security
+suites remain pending. This implements the four transfer controls, not the full
+source attachment-storage settings schema or its failure fallback behavior.
