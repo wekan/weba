@@ -2,6 +2,15 @@
 
 This work adds the following features and fixes:
 
+- Add private single-attachment JSON export with source response/auth ordering,
+  live-file/full-board scope, exact Unicode/binary/zero-byte fields and safe
+  errors. Accept scoped query credentials through host-side hashing/scrubbing;
+  preserve Bearer and cookie boundaries. Lock/recheck policy, token, scope and
+  native byte limits. Verify CGI forwarding, actual HTTP negative/rollback paths
+  and 126 unchanged source route/serializer/helper outcomes. Keep public/field/
+  storage/impersonation models, native attachment-export UI, broader formats and
+  full original suites pending. Thanks to xet7.
+
 - Add independent default-off Global Admin import/export disable switches with
   typed/audited locked saves and live clean-field refresh/draft preservation.
   Gate native JSON transfers and whole-board copies with fresh policy/scope

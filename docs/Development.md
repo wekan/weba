@@ -997,8 +997,8 @@ creation-policy, import-policy and source lock ordering consistent. Hide import
 and duplication actions and close/clear stale prepared forms; retain selected
 copy progress for pending-only retry after re-enabling. Ordinary new boards,
 local card/list/swimlane copies and authorized attachment reads retain their
-existing behavior. The dedicated source attachment-export endpoint is still
-missing; ordinary native downloads are attachment reads.
+existing behavior. Ordinary native downloads are attachment reads. The new
+dedicated attachment-export API is described below.
 
 ImportExportPolicyTest covers independent/default flags, typed/admin audited
 settings, refused transfers without writes, stale single/selected copies, retained
@@ -1018,7 +1018,60 @@ Focused mode: tests/run-http.py --import-export-policy; add --archive for the
 packaged app. It is included in both test-live phases.
 
 These switches cover current native paths. Avatar exclusions/anonymization,
-missing original multi-format import/export and attachment-export HTTP routes,
+missing original multi-format import/export HTTP routes,
 streaming, security eventlog/Problems reporting, non-SQLite concurrency and full
 original UI/API/DDP/security suites remain pending. No controls for unsupported
 formats or privacy transformations are shown.
+
+### Single-attachment export API
+
+GET /api/boards/:boardId/attachments/:attachmentId/export now returns the current
+native card attachment as source-shaped JSON: string _id/cardId, name, type and
+base64 file. Preserve Unicode metadata, exact binary bytes and file: "" for a
+zero-byte attachment. A live file from another board, a missing/noncanonical ID
+or a soft-deleted file returns an empty object after authorization. The separate
+retained attachment read APIs keep their existing behavior.
+
+This endpoint follows the private-board export contract: Disable all export
+returns plain-text 403 first; a missing board returns JSON 404 before token
+lookup; invalid supplied tokens return JSON 401; a signed-out private-board
+request returns JSON 403. Exporter permissions require active full-board
+visibility. Assigned-only members, including a board administrator with a raw
+assigned flag, are refused. A site administrator needs board membership or
+ownership here. These are the source exporter rules, separate from board/card
+REST projection permissions.
+
+Accept the native token issued by POST /users/login either as a Bearer header
+or in this endpoint's source-compatible authToken query parameter. A nonempty
+query token takes precedence; an invalid one cannot fall back to a valid header.
+An empty query value permits Bearer fallback. Other API routes keep their current
+Bearer authentication, and native cookies grant no API authority. The host
+recognizes only this route for query credentials, bounds parsing and the source
+UTF-16 token length, rejects duplicate/bracketed values, strips the raw credential
+before
+CGI dispatch and forwards a digest plus bounded state. Request logs stay disabled.
+
+Hold account/token, export-policy, transfer-policy and source locks while
+preflighting and serializing the file. Recheck the token, current full-board
+scope, export switch and native API download byte policy before commit/return.
+Metadata/content failures return an opaque JSON 500; no partial document is
+sent. Responses use no-store and nosniff. The native API size/block policy and
+buffer cap apply; streaming remains pending. File bytes come from a bound SQL
+BLOB lookup, never a caller-supplied filesystem path.
+
+Five credential tests include actual mocked CGI dispatch inspection for raw
+credential removal and precedence. Actual HTTP/SQL tests cover missing/auth/
+disabled ordering, Unicode and exact binary/empty content, query scope/bounds,
+combined assignment/admin guards, retained versus exported deletion, legacy
+metadata, native limits, late policy/token rollback/retry and opaque SQL failure.
+126 real query/Bearer HTTP responses also match the unchanged source export
+route, Exporter.build/canExport and role/visibility/live helpers across twelve
+role/scope states. That comparison uses explicit numeric-ID/private-board/token,
+SQL-to-filesystem, absent field-definition and security-log adapters.
+
+Focused mode: tests/run-http.py --attachment-export-api; add --archive for the
+packaged app. Both checks are part of full members source/package runs. Public/
+instance boards, anonymous/Sandstorm/impersonation, board-defined admin-only
+custom fields, background/source models, alternate storage and complete original
+UI/API/DDP/security suites remain pending. The native dedicated attachment-export
+button, whole-board source formats and batch export also remain pending.

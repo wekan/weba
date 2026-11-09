@@ -1,0 +1,111 @@
+' Dedicated single-attachment source JSON export; ordinary reads stay separate.
+Export
+
+Public Function BoardId(reference As String) As Integer
+  Dim id As Integer = ParseId(reference)
+  If id = 0 Then Return 0
+  KanbanStore.OpenDatabase()
+  If Not WebDatabase.OpenConnection().Find("kb_boards", "id=&1", id).Available Then Return 0
+  Return id
+End
+
+Private Function ParseId(reference As String) As Integer
+  Dim id As Integer
+  Dim index As Integer
+  If Not reference Or Len(reference) > 10 Then Return 0
+  For index = 1 To Len(reference)
+    If InStr("0123456789", Mid(reference, index, 1)) = 0 Then Return 0
+  Next
+  id = CInt(reference)
+  If id <= 0 Or CStr(id) <> reference Then Return 0
+  Return id
+Catch
+  Return 0
+End
+
+Private Function Result(status As Integer, message As String) As Collection
+  Dim outcome As New Collection
+  Dim data As New Collection
+  data["error"] = message
+  outcome["status"] = status
+  outcome["data"] = data
+  Return outcome
+End
+
+Public Function Read(boardId As Integer, reference As String) As Collection
+  Dim actor As String = WebIdentity.Username
+  Dim db As Connection
+  Dim r As Result
+  Dim metadata As Result
+  Dim fileId As Integer = ParseId(reference)
+  Dim cardId As Integer
+  Dim bytes As String
+  Dim mime As String = "application/octet-stream"
+  Dim data As New Collection
+  Dim outcome As New Collection
+  Dim transaction As Boolean
+  Dim failure As String
+  If Env["WEBA_API_REQUEST"] <> "1" Then Return Result(403, "Forbidden")
+  ImportExportPolicy.RequireExport()
+  If Not actor Then Return Result(401, "Invalid token")
+  If Not BoardAccess.Can(boardId, "seesAllCards") Then Return Result(403, "Forbidden")
+  CardContent.OpenStore()
+  AttachmentData.ApiDownloadLimit()
+  db = WebDatabase.OpenConnection()
+  DatabaseTransactions.Begin(db)
+  transaction = True
+  db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  db.Exec("UPDATE api_tokens SET digest=digest WHERE digest=&1 AND username=&2", Env["WEBA_API_TOKEN_DIGEST"], actor)
+  ImportExportPolicy.Lock()
+  ImportExportPolicy.RequireExport()
+  TransferPolicy.Lock()
+  db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+  If ApiTokens.Authenticate() <> actor Or WebIdentity.Username <> actor Then Error.Raise("Invalid token")
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  r = db.Exec("SELECT id,card_id,filename,COALESCE(LENGTH(content),0) AS size FROM kb_files WHERE board_id=&1 AND id=&2 AND " & AttachmentLifecycle.LiveSql("kb_files"), boardId, fileId)
+  If r.Available Then
+    TransferPolicy.RequireTransfer("apiDownload", r!size)
+    cardId = r!card_id
+    data["_id"] = CStr(r!id)
+    data["cardId"] = CStr(cardId)
+    data.Add(CStr(r!filename), "name")
+    metadata = db.Find("kb_attachment_data", "board_id=&1 AND card_id=&2 AND file_id=&3", boardId, cardId, fileId)
+    If metadata.Available Then
+      If Not IsNull(metadata!mime) Then mime = metadata!mime
+    Endif
+    data.Add(mime, "type")
+    r = db.Find("kb_files", "board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, fileId)
+    If Not r.Available Then Error.Raise("Attachment export failed")
+    bytes = r!content.Data
+    TransferPolicy.RequireTransfer("apiDownload", Len(bytes))
+    data.Add(Base64(bytes), "file")
+  Endif
+  If ApiTokens.Authenticate() <> actor Or WebIdentity.Username <> actor Then Error.Raise("Invalid token")
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  ImportExportPolicy.RequireExport()
+  If data.Count Then TransferPolicy.RequireTransfer("apiDownload", Len(bytes))
+  DatabaseTransactions.Commit(db)
+  transaction = False
+  outcome["status"] = 200
+  outcome["data"] = data
+  Return outcome
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback(db)
+  Select failure
+    Case "Invalid token", "Sign in required"
+      Return Result(401, "Invalid token")
+    Case "Board not accessible", "Board permission denied", "Assigned-only members cannot copy, export or transfer containers"
+      Return Result(403, "Forbidden")
+    Case "Export is disabled by the administrator."
+      outcome = Result(403, failure)
+      outcome["plain"] = True
+      Return outcome
+    Case "API downloads are disabled by administrator"
+      Return Result(403, failure)
+    Case "Attachment exceeds API download limit"
+      Return Result(413, failure)
+    Case Else
+      Return Result(500, "Attachment export failed")
+  End Select
+End

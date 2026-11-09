@@ -20,6 +20,37 @@ import subprocess
 import urllib.parse
 
 
+def is_attachment_export_path(path):
+    parts = path.split('/')
+    if len(parts) == 8 and parts[-1] == '':
+        parts.pop()
+    return (len(parts) == 7 and parts[:3] == ['', 'api', 'boards']
+            and bool(parts[3]) and parts[4] == 'attachments'
+            and bool(parts[5]) and parts[6] == 'export')
+
+
+def attachment_export_credential(query):
+    """Strip the source-compatible URL credential before the CGI boundary."""
+    try:
+        pairs = urllib.parse.parse_qsl(query, keep_blank_values=True, max_num_fields=1000)
+    except ValueError:
+        return '', 'bad-query', ''
+    values = [value for key, value in pairs if key == 'authToken']
+    structured = any(key.startswith('authToken[') for key, _ in pairs)
+    clean = urllib.parse.urlencode([(key, value) for key, value in pairs
+                                  if key != 'authToken' and not key.startswith('authToken[')])
+    if len(values) > 1 or structured:
+        return clean, 'bad-query', ''
+    if not values or not values[0]:
+        return clean, 'none', ''
+    value = values[0]
+    if len(value.encode('utf-16-le', errors='surrogatepass')) // 2 > 10000:
+        return clean, 'too-long', ''
+    if len(value) != 43 or any(char not in 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_' for char in value):
+        return clean, 'invalid', ''
+    return clean, 'token', hashlib.sha256(value.encode()).hexdigest()
+
+
 def canonical_card_dates(body):
     """Preserve card date numbers and supplementary description characters.
 
@@ -275,8 +306,17 @@ def handler(application, runner, environment):
                     raw = authorization[7:]
                     if len(raw) == 43 and all(c in 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_' for c in raw):
                         env['WEBA_API_TOKEN_DIGEST'] = hashlib.sha256(raw.encode()).hexdigest()
+            query = url.query
+            env['WEBA_EXPORT_QUERY_STATE'] = ''
+            env['WEBA_EXPORT_HEADER_PRESENT'] = '0'
+            if api and is_attachment_export_path(decoded_path):
+                query, state, digest = attachment_export_credential(query)
+                env['WEBA_EXPORT_QUERY_STATE'] = state
+                env['WEBA_EXPORT_HEADER_PRESENT'] = '1' if authorization else '0'
+                if state != 'none':
+                    env['WEBA_API_TOKEN_DIGEST'] = digest
             env.update(REQUEST_METHOD=self.command, SCRIPT_NAME='/', PATH_INFO=decoded_path,
-                       QUERY_STRING=url.query, SERVER_NAME=self.server.server_address[0],
+                       QUERY_STRING=query, SERVER_NAME=self.server.server_address[0],
                        SERVER_PORT=str(self.server.server_port), SERVER_PROTOCOL='HTTP/1.1',
                        REMOTE_ADDR=self.client_address[0], GATEWAY_INTERFACE='CGI/1.1')
             for key in ['Host', 'Cookie', 'User-Agent', 'Accept', 'Accept-Language']:

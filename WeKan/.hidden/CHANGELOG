@@ -1,4 +1,10 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Attachment JSON export: Add source-shaped private-board endpoint with scoped
+  query token hashing/scrubbing, full-board/live-file guards and final locked
+  auth/policy/size checks. Preserve empty/binary fields and opaque failures.
+  Verify CGI boundary, real HTTP rollback/negatives and 126 source outcomes;
+  retain public/storage/field/UI/full-suite follow-up.
+
 - Import/export switches: Add persisted admin-only independent disable flags and
   native JSON/board-copy gates with locked final checks. Clear revoked forms,
   preserve pending copies and dirty setting changes. Verify native rollback,

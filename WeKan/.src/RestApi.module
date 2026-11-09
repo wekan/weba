@@ -49,6 +49,11 @@ Public Sub Main()
     Reply(200, item)
     Return
   Endif
+  fields = Split(Request.Path, "/", "", True)
+  If IsAttachmentExport(fields) Then
+    ExportAttachment(fields)
+    Return
+  Endif
   username = ApiTokens.Authenticate()
   If Not username Then
     Reply(401, ErrorData("Invalid credentials"))
@@ -624,4 +629,71 @@ Private Function RawDownload() As Boolean
     If Error Then Return False
   Next
   Return count = 1 And value = "1"
+End
+
+Private Function IsAttachmentExport(fields As String[]) As Boolean
+  Dim path As String
+  If fields.Count <> 6 Then Return False
+  If fields[0] <> "api" Or fields[1] <> "boards" Or fields[3] <> "attachments" Or fields[5] <> "export" Then Return False
+  path = "/api/boards/" & fields[2] & "/attachments/" & fields[4] & "/export"
+  Return Request.Path = path Or Request.Path = path & "/"
+End
+
+Private Sub ExportAttachment(fields As String[])
+  Dim boardId As Integer
+  Dim actor As String
+  Dim state As String = Env["WEBA_EXPORT_QUERY_STATE"]
+  Dim outcome As Collection
+  If Request.Method <> "GET" Then
+    ReplyExport(405, ErrorData("Method not allowed"))
+    Return
+  Endif
+  If Not ImportExportPolicy.ExportAllowed() Then
+    ReplyPlain(403, "Export is disabled by the administrator.")
+    Return
+  Endif
+  boardId = AttachmentExport.BoardId(fields[2])
+  If boardId = 0 Then
+    ReplyExport(404, ErrorData("Not found"))
+    Return
+  Endif
+  If state = "too-long" Or state = "bad-query" Then
+    ReplyExport(400, ErrorData("Bad request"))
+    Return
+  Endif
+  actor = ApiTokens.Authenticate()
+  If Not actor Then
+    If state = "none" And Env["WEBA_EXPORT_HEADER_PRESENT"] <> "1" Then
+      ReplyExport(403, ErrorData("Forbidden"))
+    Else
+      ReplyExport(401, ErrorData("Invalid token"))
+    Endif
+    Return
+  Endif
+  WebIdentity.AuthenticateApi(actor)
+  outcome = AttachmentExport.Read(boardId, fields[4])
+  If outcome["plain"] = True Then
+    ReplyPlain(outcome["status"], outcome["data"]["error"])
+  Else
+    ReplyExport(outcome["status"], outcome["data"])
+  Endif
+End
+
+Private Sub ReplyPlain(status As Integer, message As String)
+  Print "Status: " & CStr(status)
+  Print "Content-Type: text/plain; charset=utf-8"
+  Print "Cache-Control: no-store"
+  Print "X-Content-Type-Options: nosniff"
+  Print
+  Write message
+End
+
+Private Sub ReplyExport(status As Integer, data As Variant)
+  Dim text As String = JSON.Encode(data)
+  Print "Status: " & CStr(status)
+  Print "Content-Type: application/json; charset=utf-8"
+  Print "Cache-Control: no-store"
+  Print "X-Content-Type-Options: nosniff"
+  Print
+  Print text
 End
