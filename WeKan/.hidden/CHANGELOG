@@ -1,4 +1,7 @@
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Selected board archive: Add revision-bound native confirmation/cancel over
+  private IDs and atomic batch archiving, clearing selection only on success.
+  Verify readonly/stale/forged denial and exact selected owner writes in browsers.
 - Selected board stars: Add atomic mixed/all-starred sidebar toggles over private
   selection IDs. Verify readonly/personal isolation, no redundant star writes,
   partial/final-access rollback and native source/package browser controls.

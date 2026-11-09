@@ -1195,3 +1195,25 @@ personal isolation and that existing stars are not redundantly written. The
 source/package selection browser test checks a 30-board retained set, mixed and
 all-starred captions, revoked off-page denial and forged control events. This
 covers the star action; other selection sidebar actions remain in TODO.md.
+
+
+### Selected board archive confirmation
+
+Move Board to Archive in the selection sidebar opens a native confirmation
+checkbox with Archive and Cancel. Confirmation captures a server-private
+selection revision; changing selection, disabling the mode or entering Archive
+cancels it. A forged or stale Confirm cannot archive another selection.
+
+Confirm passes the retained server-owned IDs to the atomic batch service. Every
+board requires management access; a readonly board rejects the whole set.
+Cancellation and unchecked confirmation write nothing. Successful archiving
+clears selection and closes confirmation; failure preserves the selection for
+correction or retry. Current Archive hides this action and rejects forged events.
+
+selection-archive.browser.cjs checks two users against actual native controls and
+independent SQL state: confirmation/cancel, readonly batch denial, revision
+invalidation, exact selected owner archive, clear/reload and forged Archive
+commands. test-live includes it for source and packaged apps; run separately with
+`python3 tests/run-http.py --selection-archive` (add `--archive`). Native batch
+service tests separately cover rollback and late authorization. Full original
+sidebar callbacks and remaining batch actions stay in TODO.md.

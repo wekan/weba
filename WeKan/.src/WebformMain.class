@@ -33,6 +33,7 @@ Private $entryBaseline As Collection
 Private $detailFormBase As Collection
 Private $boardSelection As Collection
 Private $overviewSidebar As String = "search"
+Private $selectedArchiveRevision As Long = -1
 Private $catalogData As Collection
 Private $catalogSort As String = "custom"
 Private $catalogPage As Integer = 1
@@ -2553,6 +2554,8 @@ Private Sub UpdateSelectionControls()
   BoardSelectionPanel.Visible = IsOverview() And active And $overviewSidebar = "selection"
   BoardSearchPanel.Visible = IsOverview() And Not BoardSelectionPanel.Visible
   SelectedBoardsCount.Text = Str(BoardSelection.Count(SelectionState()))
+  ArchiveSelectedBoards.Visible = IsOverview() And Not $archive And active
+  If Not IsOverview() Or $archive Or Not active Or $selectedArchiveRevision <> BoardSelection.Revision(SelectionState()) Then CancelSelectedArchive_Click()
   StarSelectedBoards.Visible = IsOverview() And Not $archive And active
   StarSelectedBoards.Text = "Star the selected boards"
   Try SetSelectedStarCaption()
@@ -2627,6 +2630,40 @@ End
 Public Sub StarSelectedBoards_Click()
   If Not IsOverview() Or $archive Then Error.Raise("Select active boards first")
   BoardSpaces.ToggleSelectedStars(BoardSelection.ActionIds(SelectionState()))
+  RefreshTree()
+Catch
+  Notice.Text = Error.Text
+  RefreshCatalogVisual()
+End
+
+
+Public Sub ArchiveSelectedBoards_Click()
+  If Not IsOverview() Or $archive Then Error.Raise("Select active boards first")
+  BoardSelection.ActionIds(SelectionState())
+  $selectedArchiveRevision = BoardSelection.Revision(SelectionState())
+  SelectedArchiveConfirmation.Value = False
+  SelectedArchivePanel.Show()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub CancelSelectedArchive_Click()
+  $selectedArchiveRevision = -1
+  SelectedArchiveConfirmation.Value = False
+  SelectedArchivePanel.Hide()
+End
+
+Public Sub ConfirmSelectedArchive_Click()
+  Dim ids As Integer[]
+  Dim source As String
+  If Not IsOverview() Or $archive Then Error.Raise("Select active boards first")
+  ids = BoardSelection.ActionIds(SelectionState())
+  If $selectedArchiveRevision < 0 Or $selectedArchiveRevision <> BoardSelection.Revision(SelectionState()) Then Error.Raise("Board selection changed")
+  If Not SelectedArchiveConfirmation.Value Then Error.Raise("Confirm board archive")
+  source = If($view = "Starred", "starred", If($spaceMenu > 0, "workspace", "remaining"))
+  BoardSpaces.DropBoards(ids, "archive", 0, source)
+  BoardSelection.Clear(SelectionState())
+  CancelSelectedArchive_Click()
   RefreshTree()
 Catch
   Notice.Text = Error.Text

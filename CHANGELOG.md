@@ -2,6 +2,13 @@
 
 This work adds the following features and fixes:
 
+- Add selected-board archive confirmation/cancel in the native sidebar. Bind
+  confirmation to the private selection revision, cancel it on selection/scope
+  changes and derive IDs on the server. Use the atomic batch archive service and
+  clear selection only after success. Verify readonly whole-batch denial, stale
+  confirmation, exact owner selection, reload and forged Archive events in real
+  source/packaged browsers. Thanks to xet7.
+
 - Add the native selected-board sidebar star toggle: fill missing stars in mixed
   selections and clear all when every selected board is starred. Use private
   selection IDs, current account/sorted board locks and final access checks.

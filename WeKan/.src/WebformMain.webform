@@ -828,6 +828,22 @@
           { StarSelectedBoards WebButton
             Text = ("Star the selected boards")
           }
+          { ArchiveSelectedBoards WebButton
+            Text = ("Move Board to Archive")
+          }
+          { SelectedArchivePanel WebContainer
+            Arrangement = Arrange.Vertical
+            Visible = False
+            { SelectedArchiveConfirmation WebCheckBox
+              Text = ("Are you sure you want to archive this board?")
+            }
+            { ConfirmSelectedArchive WebButton
+              Text = ("Archive")
+            }
+            { CancelSelectedArchive WebButton
+              Text = ("Cancel")
+            }
+          }
           { BoardSelectionHint WebLabel
             Text = ("Click checkboxes to select boards")
           }

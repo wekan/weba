@@ -1,0 +1,26 @@
+// Native, revision-bound batch archive confirmation and server permission guards.
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('node:module'),{execFileSync}=require('node:child_process');
+(async()=>{
+ let source=process.env.WEKAN_SOURCE,ancestor=path.resolve(__dirname,'..');while(!source&&path.dirname(ancestor)!==ancestor){if(fs.existsSync(path.join(ancestor,'tests/playwright/fixtures.js')))source=ancestor;else ancestor=path.dirname(ancestor);}
+ const {chromium,expect}=createRequire(path.join(source,'tests/playwright/fixtures.js'))('@playwright/test');
+ const fixture=(mode,user='rest-other',extra={})=>JSON.parse(execFileSync(process.env.GBX,['-s','BoardCatalogFixture',process.env.WEBA_TEST_PROJECT],{encoding:'utf8',env:{...process.env,WEBA_API_REQUEST:'0',WEBA_CATALOG_MODE:mode,WEBA_TEST_USER:user,...extra}}));
+ const ids=fixture('seed-selection-basic').ids.map(String),control=name=>`[id$=".${name}"]`,entry=name=>`[id$=".${name}:entry"]`,box=id=>`.weba-board-tile-group[data-board-id="${id}"] .weba-board-select`;
+ const archived=()=>fixture('read').rawArchived;let browser,readerContext,ownerContext;const errors=[];
+ try{
+  browser=await chromium.connectOverCDP(process.env.WEBA_BROWSER_URL);readerContext=await browser.newContext({viewport:{width:1440,height:1000}});ownerContext=await browser.newContext({viewport:{width:1440,height:1000}});
+  const settle=page=>page.waitForFunction(()=>window.gw&&gw.commands.length===0),click=async(page,name)=>{await settle(page);await page.locator(control(name)).click();await settle(page);};
+  const forge=async(page,name)=>{await page.evaluate(name=>gw.raise(document.querySelector(`[id$=".${name}"]`).id,'click',[]),name);await settle(page);};
+  async function login(context,user){const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));await page.goto(process.env.WEBA_TEST_URL);await page.waitForFunction(()=>window.webaI18n);await page.evaluate(()=>webaI18n.setLanguage('en'));await page.locator(entry('WebTextName')).fill(user);await page.locator(entry('WebTextPass')).fill(process.env.WEBA_TEST_PASSWORD);await click(page,'WebButtonLogin');await click(page,'SortBoards');await click(page,'SortCustom');await click(page,'MultiBoards');for(const id of ids.slice(0,2)){await page.locator(box(id)).check();await settle(page);}return page;}
+  const reader=await login(readerContext,'rest-member'),owner=await login(ownerContext,'rest-other');
+  const baseline=archived();await click(reader,'ArchiveSelectedBoards');await click(reader,'ConfirmSelectedArchive');await expect(reader.locator(control('Notice'))).toContainText('Confirm board archive');expect(archived()).toEqual(baseline);
+  await click(reader,'CancelSelectedArchive');await expect(reader.locator(control('SelectedArchivePanel'))).toBeHidden();expect(archived()).toEqual(baseline);
+  await click(reader,'ArchiveSelectedBoards');await reader.locator(control('SelectedArchiveConfirmation')+' input').check();await settle(reader);await click(reader,'ConfirmSelectedArchive');await expect(reader.locator(control('Notice'))).toContainText('Board permission denied');expect(archived()).toEqual(baseline);await expect(reader.locator(control('SelectedBoardsCount'))).toHaveText('2');
+  await click(owner,'ArchiveSelectedBoards');await owner.locator(control('SelectedArchiveConfirmation')+' input').check();await settle(owner);
+  await owner.locator(box(ids[2])).check();await settle(owner);await expect(owner.locator(control('SelectedArchivePanel'))).toBeHidden();await forge(owner,'ConfirmSelectedArchive');await expect(owner.locator(control('Notice'))).toContainText('Board selection changed');expect(archived()).toEqual(baseline);
+  await owner.locator(box(ids[2])).uncheck();await settle(owner);await click(owner,'ArchiveSelectedBoards');await owner.locator(control('SelectedArchiveConfirmation')+' input').check();await settle(owner);await click(owner,'ConfirmSelectedArchive');await expect.poll(()=>ids.slice(0,2).every(id=>archived()[id]===true)).toBe(true);expect(archived()[ids[2]]).toBe(false);await expect(owner.locator(control('SelectedBoardsCount'))).toHaveText('0');await expect(owner.locator(control('SelectedArchivePanel'))).toBeHidden();
+  await click(owner,'Archive');await expect(owner.locator(control('ArchiveSelectedBoards'))).toBeHidden();const after=archived();await forge(owner,'ArchiveSelectedBoards');await expect(owner.locator(control('Notice'))).toContainText('Select active boards first');await forge(owner,'ConfirmSelectedArchive');expect(archived()).toEqual(after);
+  await owner.reload();await expect(owner.locator('.weba-content')).toHaveAttribute('data-multi-active','false');expect(archived()).toEqual(after);expect(errors).toEqual([]);
+  console.log('Selected archive browser: confirmation/cancel, readonly whole-batch denial, revision invalidation/stale confirm, exact selected owner archive, clear/reload and forged Archive guards passed');
+ }finally{if(readerContext)await readerContext.close();if(ownerContext)await ownerContext.close();if(browser)await browser.close();}
+})().catch(error=>{let message=error.stack||String(error);if(process.env.WEBA_TEST_PASSWORD)message=message.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(message);process.exitCode=1;});
