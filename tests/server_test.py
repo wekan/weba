@@ -89,6 +89,84 @@ class CgiDeadlineTest(unittest.TestCase):
                     except ProcessLookupError:
                         pass
 
+    def test_success_waits_for_delayed_descendant_body(self):
+        script = (
+            'import os,subprocess,sys; '
+            'os.write(1,b"Content-Type: text/html\\r\\n\\r\\n"); '
+            'subprocess.Popen([sys.executable,"-c",'
+            '"import os,time; time.sleep(.15); os.write(1,b\\"<html><title>Complete</title></html>\\")"])'
+        )
+        result = server.run_application([sys.executable, '-c', script],
+                                        input=b'', env=os.environ.copy(), timeout=5)
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.stdout, b'Content-Type: text/html\r\n\r\n<html><title>Complete</title></html>')
+
+    def test_delayed_body_is_complete_over_http(self):
+        with tempfile.TemporaryDirectory() as work:
+            application = Path(work) / 'delayed.py'
+            application.write_text(
+                'import os,subprocess,sys\n'
+                'os.write(1,b"Content-Type: text/html\\r\\n\\r\\n")\n'
+                'subprocess.Popen([sys.executable,"-c",'
+                '"import os,time; time.sleep(.15); os.write(1,b\\"<html><title>Complete</title></html>\\")"])\n'
+            )
+            env = {**os.environ, 'TMPDIR': work}
+            with ThreadingHTTPServer(('127.0.0.1', 0), server.handler(application, sys.executable, env)) as host:
+                thread = threading.Thread(target=host.serve_forever, daemon=True)
+                thread.start()
+                try:
+                    with urllib.request.urlopen('http://127.0.0.1:' + str(host.server_port) + '/', timeout=5) as response:
+                        self.assertEqual(response.status, 200)
+                        self.assertEqual(response.read(), b'<html><title>Complete</title></html>')
+                finally:
+                    host.shutdown()
+                    thread.join(timeout=5)
+
+    @unittest.skipUnless(os.name == 'posix', 'POSIX detached-process deadline')
+    def test_detached_descendant_cannot_extend_timeout(self):
+        with tempfile.TemporaryDirectory() as work:
+            pid_file = Path(work) / 'detached.pid'
+            script = (
+                'import subprocess,sys,time; '
+                'child=subprocess.Popen([sys.executable,"-c","import time; time.sleep(60)"],start_new_session=True); '
+                'open(sys.argv[1],"w").write(str(child.pid)); time.sleep(60)'
+            )
+            started = time.monotonic()
+            try:
+                with self.assertRaises(server.subprocess.TimeoutExpired):
+                    server.run_application([sys.executable, '-c', script, str(pid_file)],
+                                           input=b'', env={**os.environ, 'TMPDIR': work}, timeout=1)
+                self.assertTrue(pid_file.exists())
+                self.assertLess(time.monotonic() - started, 5)
+            finally:
+                if pid_file.exists():
+                    try:
+                        os.kill(int(pid_file.read_text()), signal.SIGTERM)
+                    except ProcessLookupError:
+                        pass
+
+    def test_exited_parent_with_hung_writer_reaches_deadline(self):
+        with tempfile.TemporaryDirectory() as work:
+            pid_file = Path(work) / 'writer.pid'
+            script = (
+                'import os,subprocess,sys; os.write(1,b"Content-Type: text/html\\r\\n\\r\\n"); '
+                'child=subprocess.Popen([sys.executable,"-c","import time; time.sleep(60)"]); '
+                'open(sys.argv[1],"w").write(str(child.pid))'
+            )
+            started = time.monotonic()
+            try:
+                with self.assertRaises(server.subprocess.TimeoutExpired):
+                    server.run_application([sys.executable, '-c', script, str(pid_file)],
+                                           input=b'', env={**os.environ, 'TMPDIR': work}, timeout=1)
+                self.assertTrue(pid_file.exists())
+                self.assertLess(time.monotonic() - started, 5)
+            finally:
+                if pid_file.exists():
+                    try:
+                        os.kill(int(pid_file.read_text()), signal.SIGTERM)
+                    except ProcessLookupError:
+                        pass
+
     def test_success_returns_actual_cgi_output(self):
         result = server.run_application([sys.executable, '-c', 'print("Content-Type: text/plain\\r\\n\\r\\nOK",end="")'],
                                         input=b'', env=os.environ.copy(), timeout=5)

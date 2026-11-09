@@ -17,6 +17,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import os
 import subprocess
+import signal
 import urllib.parse
 
 
@@ -107,18 +108,32 @@ def attachment_disposition(filename):
 
 
 def run_application(command, *, input, env, timeout=30):
-    """A CGI descendant must not hold capture pipes open after a timeout.
+    """Capture the complete response, including descendant writes, by a deadline.
 
-    TemporaryFile is private/unlinked on supported Linux runtimes. File-backed
-    output allows subprocess.run to kill/wait only for the direct process,
-    without a descendant keeping communicate() blocked on inherited stdout.
+    EOF belongs to all writers, not just the direct CGI process. A private
+    stderr file keeps runtime diagnostics out of responses and avoids waiting
+    for inherited stderr handles. Kill the request group on timeout, then close
+    unbuffered capture pipes without waiting for detached descendants.
     """
-    with tempfile.TemporaryFile(dir=env.get('TMPDIR')) as output, tempfile.TemporaryFile(dir=env.get('TMPDIR')) as errors:
-        result = subprocess.run(command, input=input, env=env, stdout=output, stderr=errors, timeout=timeout)
-        output.seek(0)
-        result.stdout = output.read()
-        # CGI stderr can contain sensitive runtime diagnostics. Do not log it.
-        return result
+    with tempfile.TemporaryFile(dir=env.get('TMPDIR')) as errors:
+        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                   stderr=errors, env=env, start_new_session=True, bufsize=0)
+        try:
+            output, _ = process.communicate(input=input, timeout=timeout)
+        except subprocess.TimeoutExpired:
+            if os.name == 'posix':
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+            if process.poll() is None:
+                process.kill()
+            process.wait(timeout=1)
+            for stream in (process.stdin, process.stdout):
+                if stream is not None:
+                    stream.close()
+            raise
+        return subprocess.CompletedProcess(command, process.returncode, stdout=output)
 
 
 class LoginThrottle:

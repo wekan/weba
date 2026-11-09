@@ -2,6 +2,13 @@
 
 This work adds the following features and fixes:
 
+- Wait for complete CGI response output, including descendant writers, before
+  serializing HTTP headers/body. Retain the request deadline, terminate the
+  request process group on timeout, close capture pipes without waiting for
+  detached writers and keep stderr private. Verify delayed bodies over actual
+  HTTP and inherited/detached/exited-parent timeout cases. Thanks to xet7.
+
+
 - Add native workspace edit form/required name/icon/submit semantics with source
   selectors, translated labels and preserved native drafts. Bind captured values
   to the open revision, actor/session and private target; refuse forged legacy
