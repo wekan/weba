@@ -2,6 +2,15 @@
 
 This work adds the following features and fixes:
 
+- Persist source-default-false alwaysShowCodeAsText with typed admin-only audited
+  saves and actor/session/role/value transaction rechecks. Add Global Admin /
+  Security controls and a live reader boolean snapshot applied before rendering.
+  Preserve dirty settings drafts and clear denied panels. Verify write and late
+  role/session/value rollback/retry, forged denial, live two-session/reload
+  rendering and mobile/Finnish controls (165 keys/237 catalogs). Keep other
+  Markdown setting/card-title/iconColor bridges and full source transport pending.
+  Thanks to xet7.
+
 - Render workspace icons through the unchanged source Markdown viewer/helper
   and sanitizer, with literal names, safe raw storage, default folders and native
   link selection. Retain all source plugins and local policy snapshots. Import

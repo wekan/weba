@@ -522,8 +522,9 @@ show the source folder glyph. The bundle includes Markdown/emoji/math/highlight/
 task-list/hidden-link handling and exact source security rules. Native icon links
 select the workspace without navigating. Raw icon values remain text in native
 controls/SQL and are sanitized before insertion into the visible icon container.
-The local policy snapshot adapter is not a native Global Admin, DDP, external-rule
-or reactive card-title bridge; those integrations and icon colors remain open.
+The raw-code flag is now driven by a native Global Admin setting; only its
+boolean snapshot is sent to readers. External-rule/URL-scheme policies, reactive
+card-title resolution, icon colors and full source DDP integration remain open.
 
 Rebuild with `node tools/import-wekan-markdown.cjs /path/to/wekan` using that
 checkout's installed dependencies. The source copies, hashes and dependency
@@ -533,6 +534,18 @@ compares 112 bundled outputs with the unchanged parent helper/sanitizer and
 checks injection/form/URL guards. Full original popup/transport integration
 remains pending.
 
+Global Admin / Security exposes **Always show all code as plain text** with an
+explicit Save. `MarkdownPolicy` persists its source-default-false boolean and
+private actor/time audit. Saves require a typed boolean, current admin/session
+identity and locked/final rechecks, rolling back data/audit after write or late
+role/session/value failures. A hidden read-only boolean snapshot updates the
+source renderer live; a reader reload starts with the persisted policy. Settings
+fields refresh when clean and retain drafts; losing admin access hides/clears the
+panel and forged saves fail. Labels use 165 imported keys across 237 catalogs.
+`MarkdownPolicyTest` and `markdown-policy.browser.cjs` cover defaults, private
+audit, denied/failed writes, retry, two-session raw/rendered updates, reload,
+external refresh, dirty drafts, demotion, mobile layout and Finnish controls.
+Run `python3 tests/run-http.py --markdown-policy [--archive]`, or `test-live`.
 
 `BoardOrderTest` covers per-user readonly access, filtered rank merge, invalid/
 foreign/revoked/archive/mode rejection, injected write rollback/retry and account/
@@ -1072,7 +1085,7 @@ it for source and packaged apps. Run it separately with the documented Gambas
 and Chromium environment using `python3 tests/run-http.py --workspaces`, adding
 `--archive` for the package.
 
-Markdown settings/card resolver/icon-color bridges and production transport/
+Other Markdown settings/card resolver/icon-color bridges and production transport/
 routing parity remain open. Creation now uses a real form, required textarea and submit input with
 revision/session/parent-bound native submission. The unchanged original Latin
 callback passes through explicit native password-session and client-locale
@@ -1968,7 +1981,7 @@ A selected live attachment now has an Export button in the native details pane.
 It downloads wekan-attachment.json with the same five-field source JSON as the
 attachment-export API, preserving exact bytes, empty data and literal Unicode
 metadata. The button uses the existing native icon/keyboard controls and source
-Export caption (now included in 163 keys across 237 catalogs). Owner and readonly full-board
+Export caption (now included in 165 keys across 237 catalogs). Owner and readonly full-board
 members can export; assigned-only members cannot, even when raw flags also make
 them board administrators.
 

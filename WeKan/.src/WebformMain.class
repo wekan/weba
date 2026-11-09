@@ -64,6 +64,7 @@ Private $spaceCarets As New Collection
 Private $spaceCollapsed As Collection
 Private $spaceCounts As Collection
 Private $spaceNames As New Collection
+Private $markdownRawBase As Boolean
 Private $workspaceRevision As Long
 Private $workspaceActor As String
 Private $workspaceGeneration As Long
@@ -166,6 +167,7 @@ Public Sub BoardPoll_Timer()
   ValidateTransferPanel()
   ValidateBoardCreation()
   ValidateImportExportPolicy()
+  ValidateMarkdownPolicy()
   ValidateAttachmentAllowance()
   ValidateBoardCopy()
   ValidateDeleteListPanel()
@@ -272,6 +274,7 @@ Public Sub Boards_Select()
   PasswordPolicyPanel.Hide()
   BoardCreationPanel.Hide()
   ImportExportPanel.Hide()
+  MarkdownPanel.Hide()
   TransferLimitsPanel.Hide()
   PermanentDeletePanel.Hide()
   RecoveryPanel.Hide()
@@ -497,6 +500,7 @@ Private Sub ShowView(view As String)
   PasswordPolicyPanel.Hide()
   BoardCreationPanel.Hide()
   ImportExportPanel.Hide()
+  MarkdownPanel.Hide()
   TransferLimitsPanel.Hide()
   PermanentDeletePanel.Hide()
   RecoveryPanel.Hide()
@@ -523,6 +527,7 @@ Public Sub Home_Click()
   PasswordPolicyPanel.Hide()
   BoardCreationPanel.Hide()
   ImportExportPanel.Hide()
+  MarkdownPanel.Hide()
   TransferLimitsPanel.Hide()
   PermanentDeletePanel.Hide()
   RecoveryPanel.Hide()
@@ -546,6 +551,7 @@ Public Sub Archive_Click()
   PasswordPolicyPanel.Hide()
   BoardCreationPanel.Hide()
   ImportExportPanel.Hide()
+  MarkdownPanel.Hide()
   TransferLimitsPanel.Hide()
   PermanentDeletePanel.Hide()
   RecoveryPanel.Hide()
@@ -764,6 +770,7 @@ End
 Public Sub PasswordLength_Click()
   BoardCreationPanel.Hide()
   ImportExportPanel.Hide()
+  MarkdownPanel.Hide()
   If Not WebDatabase.GetIsAdmin(WebIdentity.Username) Then Error.Raise("Administrator required")
   PolicyEnforce.Value = WebDatabase.PasswordLengthEnforced()
   PolicyMinimum.Text = Str(WebDatabase.PasswordMinLength())
@@ -826,6 +833,7 @@ Private Sub UpdateHeader()
   ViewMenu.Text = If($view = "Boards", "View", $view)
   ValidateBoardCreation()
   ValidateImportExportPolicy()
+  ValidateMarkdownPolicy()
 End
 
 Public Sub Remaining_Click()
@@ -2948,6 +2956,7 @@ Public Sub PermanentDeleteSettings_Click()
   PasswordPolicyPanel.Hide()
   BoardCreationPanel.Hide()
   ImportExportPanel.Hide()
+  MarkdownPanel.Hide()
   TransferLimitsPanel.Hide()
   RecoveryPanel.Hide()
   PermanentDeletePanel.Show()
@@ -2969,6 +2978,7 @@ Public Sub RecoveryEvents_Click()
   PasswordPolicyPanel.Hide()
   BoardCreationPanel.Hide()
   ImportExportPanel.Hide()
+  MarkdownPanel.Hide()
   TransferLimitsPanel.Hide()
   PermanentDeletePanel.Hide()
   RecoveryTree.Clear()
@@ -3244,6 +3254,7 @@ Public Sub AttachmentTransferSettings_Click()
   PasswordPolicyPanel.Hide()
   BoardCreationPanel.Hide()
   ImportExportPanel.Hide()
+  MarkdownPanel.Hide()
   PermanentDeletePanel.Hide()
   RecoveryPanel.Hide()
   TransferLimitsPanel.Show()
@@ -3478,6 +3489,7 @@ Public Sub BoardCreationSettings_Click()
   PermanentDeletePanel.Hide()
   RecoveryPanel.Hide()
   ImportExportPanel.Hide()
+  MarkdownPanel.Hide()
   BoardCreationPanel.Show()
   PaneTitle.Text = "Visibility"
 Catch
@@ -3490,6 +3502,7 @@ Public Sub SaveBoardCreation_Click()
   Notice.Text = "Saved"
   ValidateBoardCreation()
   ValidateImportExportPolicy()
+  ValidateMarkdownPolicy()
 Catch
   Notice.Text = Error.Text
 End
@@ -3502,6 +3515,7 @@ Private Sub ValidateBoardCreation()
   If Not admin And BoardCreationPanel.Visible Then
     BoardCreationPanel.Hide()
     ImportExportPanel.Hide()
+    MarkdownPanel.Hide()
     CreationAdminOnly.Value = False
     $creationBase = False
   Endif
@@ -3618,6 +3632,7 @@ Public Sub SaveImportExport_Click()
   Notice.Text = "Saved"
   ValidateBoardCreation()
   ValidateImportExportPolicy()
+  ValidateMarkdownPolicy()
   ValidateBoardCopy()
 Catch
   Notice.Text = Error.Text
@@ -3628,6 +3643,7 @@ Private Sub ValidateImportExportPolicy()
   ImportExportSettings.Visible = admin
   If Not admin Then
     ImportExportPanel.Hide()
+    MarkdownPanel.Hide()
     DisableAllImport.Value = False
     DisableAllExport.Value = False
     $exchangeImportBase = False
@@ -3645,4 +3661,45 @@ Private Sub ValidateImportExportPolicy()
   Endif
   If ContextMenu.Visible Then ContextExport.Visible = ImportExportPolicy.ExportAllowed() And ($contextKind = "card" Or BoardAccess.Can($contextBoard, "seesAllCards"))
   UpdateAttachmentExportControl()
+End
+
+Public Sub MarkdownSettings_Click()
+  Dim data As Collection = MarkdownPolicy.Settings()
+  AlwaysShowCodeAsText.Value = data["alwaysShowCodeAsText"]
+  $markdownRawBase = AlwaysShowCodeAsText.Value
+  ContentRow.Hide()
+  BoardCreationPanel.Hide()
+  PasswordPolicyPanel.Hide()
+  TransferLimitsPanel.Hide()
+  PermanentDeletePanel.Hide()
+  RecoveryPanel.Hide()
+  ImportExportPanel.Hide()
+  MarkdownPanel.Show()
+  PaneTitle.Text = "Security"
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub SaveMarkdown_Click()
+  MarkdownPolicy.Save(AlwaysShowCodeAsText.Value)
+  $markdownRawBase = AlwaysShowCodeAsText.Value
+  Notice.Text = "Saved"
+  ValidateMarkdownPolicy()
+Catch
+  Notice.Text = Error.Text
+End
+
+Private Sub ValidateMarkdownPolicy()
+  Dim admin As Boolean = WebDatabase.GetIsAdmin(WebIdentity.Username)
+  Dim value As Boolean = MarkdownPolicy.AlwaysRaw()
+  MarkdownSettings.Visible = admin
+  MarkdownPolicySnapshot.Text = If(value, "1", "0")
+  If Not admin Then
+    MarkdownPanel.Hide()
+    AlwaysShowCodeAsText.Value = False
+    $markdownRawBase = False
+  Else If MarkdownPanel.Visible And AlwaysShowCodeAsText.Value = $markdownRawBase Then
+    AlwaysShowCodeAsText.Value = value
+    $markdownRawBase = value
+  Endif
 End

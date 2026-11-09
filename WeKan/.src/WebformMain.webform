@@ -709,6 +709,9 @@
           Text = ("Visibility")
           Tooltip = ("Only admins can create boards")
         }
+        { MarkdownSettings WebButton
+          Text = ("Security")
+        }
         { ImportExportSettings WebButton
           Text = ("Import / Export")
         }
@@ -1026,6 +1029,24 @@
         }
         { RecoveryTree WebTree
           Class = "weba-user-text"
+        }
+      }
+      { MarkdownPolicySnapshot WebLabel
+        Class = "weba-user-text"
+        Visible = False
+      }
+      { MarkdownPanel WebContainer
+        Arrangement = Arrange.Vertical
+        Visible = False
+        Class = "weba-settings-panel"
+        { MarkdownHeading WebLabel
+          Text = ("Security")
+        }
+        { AlwaysShowCodeAsText WebCheckBox
+          Text = ("Always show all code as plain text")
+        }
+        { SaveMarkdown WebButton
+          Text = ("Save")
         }
       }
       { ImportExportPanel WebContainer

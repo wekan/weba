@@ -1,0 +1,30 @@
+Public Sub Main()
+  Dim mode As String = Env["WEBA_MARKDOWN_MODE"]
+  Dim data As New Collection
+  Dim db As Connection
+  Dim r As Result
+  Dim node As Collection
+  If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
+  Session["username"] = "rest-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("rest-owner")
+  db = WebDatabase.OpenConnection()
+  MarkdownPolicy.OpenStore()
+  If mode = "demote" Or mode = "promote" Then db.Exec("UPDATE users SET admin=&1 WHERE username='rest-owner'", mode = "promote")
+  If mode = "save" Then MarkdownPolicy.Save(Env["WEBA_MARKDOWN_RAW"] = "1")
+  If mode = "cleanup" Then
+    Session["username"] = "rest-member"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("rest-member")
+    BoardSpaces.Remove(CInt(Env["WEBA_MARKDOWN_SPACE"]))
+  Endif
+  If mode = "seed" Then
+    Session["username"] = "rest-member"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("rest-member")
+    data["id"] = BoardSpaces.Add("Markdown policy workspace")
+    BoardSpaces.Edit(data["id"], "Markdown policy workspace", "**Policy bold**")
+  Endif
+  r = db.Find("markdown_settings", "id=1")
+  data.Add(r!always_raw, "raw")
+  data.Add(r!actor, "actor")
+  data.Add(r!changed_ms, "changed")
+  Print JSON.Encode(data)
+End

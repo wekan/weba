@@ -132,9 +132,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   drafts and clickable close controls. Delayed-width/async-error tests, full
   local/test-live and existing layout regressions pass. Original suite counts
   remain unchanged.
-- Next workspace parity: native Markdown settings/card-title resolver/icon-color
-  bridges and actual production transport/routing beyond the six adapter-backed
-  spec 39 callbacks. Rendered/sanitized source viewer icons are in CHANGELOG.md.
+- Next workspace parity: remaining external-link/URL-scheme Markdown settings,
+  card-title resolver/icon-color bridges and actual production transport/routing beyond the six adapter-backed
+  spec 39 callbacks. Rendered/sanitized source viewer icons are in CHANGELOG.md. The
+  native persisted raw-code flag, admin guards, live snapshot and audit are there too.
 
 - Documented personal rank merging, readonly/sorted/archive boundaries, fresh
   transaction checks, cleanup, expected-order focus and trusted browser evidence.

@@ -423,14 +423,27 @@ A WeakMap plus renderer/policy generations prevents observer loops and redundant
 rendering, while native text refreshes rebuild missing structure. The standalone
 Blaze/HTML/ReactiveVar adapters supply synchronous content/policy snapshots, not
 DDP or native persisted admin settings. All source plugins are retained. Native
-settings, external-rule/card-title bridges and iconColor remain open.
+external-rule/URL-scheme/card-title bridges and iconColor remain open. The
+raw-code boolean now comes from native persisted settings as described below.
 `tools/import-wekan-markdown.cjs` imports source bytes, bundles installed parent
 dependencies and records hashes/versions and license notices. The oracle test
 compares 112 full/raw/custom/forbidden-scheme outputs against the parent source;
 real browser cases exercise persisted formatting, emoji, links, default folders,
 policy changes, hidden-link warnings, and executable/form/clobber injection.
 Builds carry the prebuilt assets and need no Node.js at runtime.
-Native Markdown policy/card resolver/icon-color bridges and broader original
+`MarkdownPolicy` stores `always_raw`, actor and UTC milliseconds in a typed
+singleton table. Null means source-default false. `Settings` protects audit with
+the admin guard, while `AlwaysRaw` supplies the nonsecret public boolean. Save
+locks actor/settings rows and rechecks identity, admin and persisted value before
+commit; late role/session/value changes or SQL failure roll back the audit too.
+Global Admin / Security loads/saves the flag. `ValidateMarkdownPolicy` refreshes
+the hidden reader snapshot and clean admin checkbox, retaining dirty drafts and
+clearing denied panels. `ui.js` applies a changed snapshot before rendering icons,
+so new/reloaded readers honor the persisted flag. The synchronous source adapter
+is reused; no source code changes or new HTTP setting route are introduced.
+Native and two-browser tests cover the transaction and live/control boundaries.
+165 source caption keys are copied verbatim across all 237 catalogs.
+Remaining Markdown settings/card resolver/icon-color bridges and broader original
 UI/API/security suites remain explicit TODO requirements. Folding/counts and native tree
 gestures are described below.
 
@@ -1148,7 +1161,7 @@ A selected live attachment now has an Export button in the native details pane.
 It downloads wekan-attachment.json with the same five-field source JSON as the
 attachment-export API, preserving exact bytes, empty data and literal Unicode
 metadata. The button uses the existing native icon/keyboard controls and source
-Export caption (now included in 163 keys across 237 catalogs). Owner and readonly full-board
+Export caption (now included in 165 keys across 237 catalogs). Owner and readonly full-board
 members can export; assigned-only members cannot, even when raw flags also make
 them board administrators.
 

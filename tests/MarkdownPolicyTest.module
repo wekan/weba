@@ -1,0 +1,79 @@
+Public Sub Main()
+  Dim db As Connection
+  Dim data As Collection
+  Dim before As String
+  Dim denied As Boolean
+  Dim value As Variant
+  WebDatabase.Register("markdown-admin", "x")
+  WebDatabase.Register("markdown-normal", "x")
+  SignIn("markdown-normal")
+  If MarkdownPolicy.AlwaysRaw() Then Error.Raise("Raw markdown default changed")
+  db = WebDatabase.OpenConnection()
+  before = Frame()
+  Try MarkdownPolicy.Save(True)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Normal user changed Markdown policy")
+  Try data = MarkdownPolicy.Settings()
+  denied = Error
+  If Not denied Then Error.Raise("Policy audit leaked")
+  SignIn("markdown-admin")
+  For Each value In [Null, "true", 0]
+    Try MarkdownPolicy.Save(value)
+    denied = Error
+    If Not denied Or Frame() <> before Then Error.Raise("Untyped flag accepted")
+  Next
+  MarkdownPolicy.Save(True)
+  data = MarkdownPolicy.Settings()
+  If Not data["alwaysShowCodeAsText"] Or data["actor"] <> "markdown-admin" Or data["changedMs"] <= 0 Then Error.Raise("Policy audit missing")
+  SignIn("markdown-normal")
+  If Not MarkdownPolicy.AlwaysRaw() Then Error.Raise("Public setting not readable")
+  SignIn("markdown-admin")
+  before = Frame()
+  db.Exec("CREATE TRIGGER markdown_write_fail BEFORE UPDATE ON markdown_settings BEGIN SELECT RAISE(ABORT,'injected'); END")
+  Try MarkdownPolicy.Save(False)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Failed setting save changed audit")
+  db.Exec("DROP TRIGGER markdown_write_fail")
+  MarkdownPolicy.Save(False)
+  before = Frame()
+  db.Exec("CREATE TRIGGER markdown_late_admin AFTER UPDATE OF always_raw ON markdown_settings BEGIN UPDATE users SET admin=0 WHERE username='markdown-admin'; END")
+  Try MarkdownPolicy.Save(True)
+  denied = Error
+  If Not denied Or Frame() <> before Or Not WebDatabase.GetIsAdmin("markdown-admin") Then Error.Raise("Late role loss did not roll back")
+  db.Exec("DROP TRIGGER markdown_late_admin")
+  db.Exec("CREATE TRIGGER markdown_late_session AFTER UPDATE OF always_raw ON markdown_settings BEGIN UPDATE account_sessions SET generation=generation+1 WHERE username='markdown-admin'; END")
+  Try MarkdownPolicy.Save(True)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Late session change did not roll back")
+  db.Exec("DROP TRIGGER markdown_late_session")
+  db.Exec("CREATE TRIGGER markdown_late_value AFTER UPDATE OF always_raw ON markdown_settings WHEN NEW.always_raw=1 BEGIN UPDATE markdown_settings SET always_raw=0 WHERE id=1; END")
+  Try MarkdownPolicy.Save(True)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Late flag change did not roll back")
+  db.Exec("DROP TRIGGER markdown_late_value")
+  MarkdownPolicy.Save(True)
+  If Not MarkdownPolicy.AlwaysRaw() Then Error.Raise("Retry failed")
+  Print "Markdown policy: false/null defaults, typed admin-only audited writes, public boolean/no audit leak, write failure and late role/session/value rollback/retry passed"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End
+
+Private Function Frame() As String
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim r As Result
+  Dim row As Collection
+  Dim rows As New Variant[]
+  r = db.Find("markdown_settings", "id=1")
+  row = New Collection
+  row.Add(r!always_raw, "raw")
+  row.Add(r!actor, "actor")
+  row.Add(r!changed_ms, "changed")
+  rows.Add(row)
+  r = db.Find("users", "username=&1", "markdown-admin")
+  rows.Add(CBool(r!admin))
+  rows.Add(WebDatabase.SessionGeneration("markdown-admin"))
+  Return JSON.Encode(rows)
+End
