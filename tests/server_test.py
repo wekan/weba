@@ -32,6 +32,46 @@ class PortHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
 
+class BoardViewTransportTest(unittest.TestCase):
+    def test_explicit_nulls_arrays_and_unknown_fields_keep_source_decisions(self):
+        body = {'defaultPublicBoardView': None,
+                'boardViewSettings': {'board-view-table': {'showOnPublic': None, 'showOnPrivate': [None, True]},
+                                      'board-view-cal': {'showOnPublic': [['TRUE']]}, 'bad': None},
+                'boardViewOrder': [None, 'board-view-table'], 'unused': None}
+        actual = json.loads(server.canonical_board_view_policy(json.dumps(body).encode(), 'application/json'))
+        self.assertIs(actual['defaultPublicBoardView'], False)
+        self.assertEqual(actual['boardViewSettings']['board-view-table'], {'showOnPublic': False, 'showOnPrivate': False})
+        self.assertIs(actual['boardViewSettings']['board-view-cal']['showOnPublic'], True)
+        self.assertIs(actual['boardViewSettings']['bad'], False)
+        self.assertEqual(actual['boardViewOrder'], [False, 'board-view-table'])
+        self.assertNotIn('unused', actual)
+        overflow = b'{"unused":1e309,"boardViewSettings":{"board-view-table":{"unused":1e309,"showOnPublic":true}}}'
+        actual = json.loads(server.canonical_board_view_policy(overflow, 'application/json'))
+        self.assertEqual(actual, {'boardViewSettings': {'board-view-table': {'showOnPublic': True}}})
+
+    def test_structured_strings_forms_and_duplicate_fields_remain_distinct(self):
+        import urllib.parse
+        body = urllib.parse.urlencode([('defaultPublicBoardView', 'a'), ('defaultPublicBoardView', 'b'),
+                                      ('boardViewSettings', '{"board-view-table":{"showOnPublic":null}}'),
+                                      ('boardViewOrder', 'board-view-table, board-view-cal')]).encode()
+        actual = urllib.parse.parse_qsl(server.canonical_board_view_policy(body, 'application/x-www-form-urlencoded').decode())
+        self.assertEqual(actual[:2], [('defaultPublicBoardView', 'a'), ('defaultPublicBoardView', 'b')])
+        self.assertFalse(json.loads(actual[2][1])['board-view-table']['showOnPublic'])
+        self.assertEqual(json.loads(actual[3][1]), ['board-view-table', 'board-view-cal'])
+        duplicate = b'boardViewOrder=board-view-table&boardViewOrder=board-view-cal'
+        self.assertEqual(server.canonical_board_view_policy(duplicate, 'application/x-www-form-urlencoded'), duplicate)
+        unicode_csv = json.dumps({'boardViewOrder': '\ufeffboard-view-table,\u00a0board-view-cal'}).encode()
+        actual_csv = json.loads(server.canonical_board_view_policy(unicode_csv, 'application/json'))
+        self.assertEqual(json.loads(actual_csv['boardViewOrder']), ['board-view-table', 'board-view-cal'])
+        actual = json.loads(server.canonical_board_view_policy(b'{"boardViewOrder":"\\"board-view-table\\""}', 'application/json'))
+        self.assertEqual(json.loads(actual['boardViewOrder']), 'board-view-table')
+
+    def test_invalid_json_stays_invalid_and_other_content_types_stay_unchanged(self):
+        for body in [b'{broken', b'{"x":undefined}', b'{"x":NaN}', b'{"x":Infinity}']:
+            self.assertEqual(server.canonical_board_view_policy(body, 'application/json'), b'!')
+        self.assertEqual(server.canonical_board_view_policy(b'unchanged', 'text/plain'), b'unchanged')
+
+
 class ServerPortTest(unittest.TestCase):
     def test_occupied_preferred_port_falls_back_to_a_serving_port(self):
         with ThreadingHTTPServer(('127.0.0.1', 0), PortHandler) as occupied:

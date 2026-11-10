@@ -1372,3 +1372,52 @@ Public Function ListApiAttachments(board As String, lane As String, list As Stri
   $apiMemberBoard = 0
   Return AttachmentReads.ListFiles(board, lane, list, card)
 End
+
+' This source route asks raw active-member isAdmin, not a card write role.
+Private Function ViewPolicyFlags(boardId As Integer) As Collection
+  Dim actor As String = WebIdentity.Username
+  Dim r As Result
+  Dim roleKey As String
+  If Not actor Then Return Null
+  OpenStore()
+  r = $db.Find("kb_boards", "id=&1", boardId)
+  If Not r.Available Or IsRemoved(boardId, actor) Then Return Null
+  If r!owner = actor Then
+    roleKey = "board-admin"
+  Else
+    r = $db.Find("kb_members", "board_id=&1 AND username=&2", boardId, actor)
+    If Not r.Available Then Return Null
+    roleKey = CStr(r!role)
+  Endif
+  Return ApiMemberRoles.MemberData(boardId, actor, roleKey)
+End
+
+Public Function CanManageViewPolicy(boardId As Integer) As Boolean
+  Dim flags As Collection
+  If Not WebIdentity.Username Then Return False
+  If WebDatabase.GetIsAdmin(WebIdentity.Username) Then Return True
+  flags = ViewPolicyFlags(boardId)
+  If Not flags Then Return False
+  Return flags["isAdmin"] = True
+End
+
+Public Function ViewPolicyApiAccess(boardId As Integer, writable As Boolean) As Collection
+  Dim actor As String = WebIdentity.Username
+  Dim flags As Collection
+  Dim flag As String
+  If Env["WEBA_API_REQUEST"] <> "1" Then Return ApiFailure(403, "API context required")
+  If Not actor Or ApiTokens.Authenticate() <> actor Then Return ApiFailure(401, "Invalid credentials")
+  OpenStore()
+  If Not $db.Find("kb_boards", "id=&1", boardId).Available Then Return ApiFailure(404, "Board not found")
+  If WebDatabase.GetIsAdmin(actor) Then Return ApiAnswer(200, True)
+  flags = ViewPolicyFlags(boardId)
+  If Not flags Then Return ApiFailure(403, "Forbidden")
+  If writable Then
+    If flags["isAdmin"] <> True Then Return ApiFailure(403, "Forbidden")
+  Else
+    For Each flag In ["isNoComments", "isCommentOnly", "isWorker", "isNormalAssignedOnly", "isCommentAssignedOnly", "isReadAssignedOnly"]
+      If flags[flag] = True Then Return ApiFailure(403, "Forbidden")
+    Next
+  Endif
+  Return ApiAnswer(200, True)
+End

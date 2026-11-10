@@ -78,6 +78,72 @@ def attachment_export_credential(query):
     return clean, 'token', hashlib.sha256(value.encode()).hexdigest()
 
 
+def canonical_board_view_policy(body, content_type):
+    """Keep source coercion/nulls across Gambas 3.20's reused JSON decoder."""
+    def invalid_constant(value):
+        raise ValueError('Invalid JSON number')
+
+    def decode(value):
+        return json.loads(value, parse_constant=invalid_constant)
+
+    def shown(value):
+        # String(array).toLowerCase() is "true" only for a single element
+        # recursively stringifying to true; a longer array contains a comma.
+        while isinstance(value, list) and len(value) == 1:
+            value = value[0]
+        return value is True or isinstance(value, str) and value.lower() == 'true'
+
+    def structured(key, value):
+        if value is None:
+            return False  # Preserve an invalid explicit null as an invalid type.
+        if key == 'boardViewSettings' and isinstance(value, dict):
+            for view, entry in value.items():
+                if entry is None:
+                    value[view] = False
+                elif isinstance(entry, dict):
+                    value[view] = {flag: shown(entry[flag]) for flag in
+                                   ('showOnPublic', 'showOnPrivate') if flag in entry}
+        if key == 'boardViewOrder' and isinstance(value, list):
+            return [False if item is None else item for item in value]
+        return value
+
+    def field(key, value):
+        if key in ('boardViewSettings', 'boardViewOrder'):
+            if isinstance(value, str):
+                try:
+                    return json.dumps(structured(key, decode(value)), separators=(',', ':'))
+                except (ValueError, TypeError):
+                    if key == 'boardViewOrder':
+                        whitespace = '\u0009\u000a\u000b\u000c\u000d \u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000\ufeff'
+                        return json.dumps([part.strip(whitespace) for part in value.split(',')])
+                    return value
+            return structured(key, value)
+        if key in ('defaultPublicBoardView', 'defaultPrivateBoardView') and value is None:
+            return False
+        return value
+
+    mime = content_type.split(';', 1)[0].strip().lower()
+    try:
+        if mime == 'application/json':
+            value = decode(body)
+            if not isinstance(value, dict):
+                return body
+            return json.dumps({key: field(key, item) for key, item in value.items() if key in
+                               ('boardViewSettings', 'boardViewOrder', 'defaultPublicBoardView', 'defaultPrivateBoardView')},
+                              separators=(',', ':')).encode()
+        if mime == 'application/x-www-form-urlencoded':
+            pairs = urllib.parse.parse_qsl(body.decode('utf-8'), keep_blank_values=True,
+                                          errors='strict', max_num_fields=10000)
+            counts = {}
+            for key, _ in pairs:
+                counts[key] = counts.get(key, 0) + 1
+            return urllib.parse.urlencode([(key, field(key, value) if counts[key] == 1 else value)
+                                          for key, value in pairs]).encode()
+    except (ValueError, TypeError, UnicodeError, RecursionError):
+        return b'!'  # No valid recognized request; authorization still runs first.
+    return body
+
+
 def canonical_card_dates(body):
     """Preserve card date numbers and supplementary description characters.
 
@@ -635,6 +701,10 @@ def handler(application, runner, environment):
                         self.send_error(400)
                     return
                 pieces = decoded_path.strip('/').split('/')
+                if (api and self.command == 'PUT' and len(pieces) == 4
+                        and pieces[:2] == ['api', 'boards'] and pieces[3] == 'boardViewSettings'):
+                    body = canonical_board_view_policy(body, self.headers.get('Content-Type', ''))
+                    length = len(body)
                 if (api and self.command == 'PUT' and len(pieces) == 7
                         and pieces[0:2] == ['api', 'boards'] and pieces[3] == 'lists' and pieces[5] == 'cards'
                         and self.headers.get('Content-Type', '').split(';', 1)[0].strip().lower() == 'application/json'):

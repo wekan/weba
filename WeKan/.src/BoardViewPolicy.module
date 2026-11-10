@@ -211,7 +211,10 @@ End
 
 Private Sub RequireManager(boardId As Integer)
   If Not WebIdentity.Username Then Error.Raise("Sign in required")
-  If Not WebDatabase.GetIsAdmin(WebIdentity.Username) Then BoardAccess.Require(boardId, "manageBoard")
+  If Env["WEBA_API_REQUEST"] = "1" Then
+    If ApiTokens.Authenticate() <> WebIdentity.Username Then Error.Raise("Invalid credentials")
+  Endif
+  If Not BoardAccess.CanManageViewPolicy(boardId) Then Error.Raise("Board management required")
   If Not WebDatabase.OpenConnection().Find("kb_boards", "id=&1", boardId).Available Then Error.Raise("Board not accessible")
 End
 
@@ -272,4 +275,49 @@ Catch
   failure = Error.Text
   If transaction Then Try DatabaseTransactions.Rollback($db)
   Error.Raise(failure)
+End
+
+Public Function ReadApi(boardId As Integer) As Collection
+  Dim result As Collection = BoardAccess.ViewPolicyApiAccess(boardId, False)
+  Dim data As Collection
+  If result["status"] <> 200 Then Return result
+  data = Snapshot(ReadRaw(boardId))
+  result = BoardAccess.ViewPolicyApiAccess(boardId, False)
+  If result["status"] <> 200 Then Return result
+  result["data"] = data
+  Return result
+Catch
+  Return ApiError(500, "Board view settings read failed")
+End
+
+Public Function SaveApi(boardId As Integer, input As Collection) As Collection
+  Dim result As Collection = BoardAccess.ViewPolicyApiAccess(boardId, True)
+  Dim data As Collection
+  Dim message As String
+  If result["status"] <> 200 Then Return result
+  data = Save(boardId, input)
+  result["data"] = data
+  Return result
+Catch
+  message = Error.Text
+  Select message
+    Case "Unknown board view", "Invalid board view settings", "Invalid board view order", "Cannot hide the default board view", "No recognized board view settings"
+      Return ApiError(400, message)
+    Case "Invalid credentials", "Sign in required"
+      Return ApiError(401, "Invalid credentials")
+    Case "Board management required", "Forbidden"
+      Return ApiError(403, "Forbidden")
+    Case "Board not accessible"
+      Return ApiError(404, "Board not found")
+  End Select
+  Return ApiError(500, "Board view settings update failed")
+End
+
+Private Function ApiError(status As Integer, message As String) As Collection
+  Dim result As New Collection
+  Dim data As New Collection
+  data["error"] = message
+  result["status"] = status
+  result["data"] = data
+  Return result
 End

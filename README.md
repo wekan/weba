@@ -849,8 +849,44 @@ late owner/principal loss and purge rollback; 188 native cases match unchanged
 source snapshot/request helpers. Guest browsers cover live hidden/order/default/
 reload/fallback behavior with existing navigation and privacy checks. The full
 local suite (66 host tests) and focused source/packaged guest suites pass. Manager
-editing UI/REST, signed-in view consumption, instance features, policy copy/import
+editing UI, signed-in view consumption, instance features, policy copy/import
 and full original Meteor actions remain pending.
+
+The source-shaped REST endpoints are
+`GET /api/boards/:boardId/boardViewSettings` and
+`PUT /api/boards/:boardId/boardViewSettings`. Both require enabled API and a
+current bearer; a native UI cookie or public board does not authenticate REST.
+GET uses the whole-board source raw-flag read gate, so ordinary/read-only/admin
+members pass unless an excluded raw flag narrows them. PUT instead requires an
+active raw `isAdmin` member or site admin, allowing assigned board admins to
+manage settings even when whole-board GET is refused. Site admins retain their
+source exception without membership. This route uses that precise management
+rule independently of card-write capabilities.
+
+Return every known view's public/private show flags, resolved defaults, complete
+order and keys. Accept partial JSON and URL-encoded requests, including JSON text
+for structured fields and source CSV order fallback. Validate defaults before
+show flags and normalize order; refuse unknown views, hidden defaults and requests
+with no recognized effects. The native service rechecks the current bearer and
+manager scope under actor/board locks before commit. Host normalization is
+restricted to this PUT route: it preserves explicit nulls/source boolean coercion
+across Gambas 3.20's reused decoder, source Unicode CSV trimming, duplicate form
+values and invalid-type/strict-JSON decisions. GET initializes no policy row or
+table. Failure responses hide internal SQL details; injected late role/token loss
+rolls back the policy and other transaction changes before a valid retry.
+
+HTTP tests cover normalized DTOs, read/admin/raw/assigned/inactive/public scope,
+JSON/form/null/order/duplicate parsing, no-op and invalid/default-hide refusal,
+auth order, no-write failures and atomic role/token revocation. Another 536 actual
+HTTP outcomes match unchanged source GET/PUT and Authentication bodies over all
+256 built-in raw flag sets plus inactive/nonmember/site-admin and coercion cases.
+SQL IDs, implicit native owner membership, bearer-to-source user context/cache and
+no-op security logging are explicit test adapters. A real signed-in browser also
+verifies its UI cookie cannot authenticate this REST route. The full local suite
+(69 host tests), focused source/packaged API checks and focused source/packaged
+guest browser suites pass. Manager UI, signed-in
+view rendering, instance settings, policy copy/import and full custom-role/OAuth/
+DDP/eventlog integration remain pending.
 
 Selected guest cards now show comments and checklists through the same final
 public/card scope guards. Only the selected board/card's records are queried;

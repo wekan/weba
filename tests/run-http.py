@@ -7,7 +7,7 @@ root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(root / 'runtime'))
 from server import handler
 
-if any(mode in sys.argv for mode in ('--guest-boards', '--public-boards', '--board-visibility', '--card-routes', '--board-links', '--board-menu', '--board-routes', '--home-external', '--home-drops', '--home-presentation', '--home-login', '--home', '--workspace-urls', '--overview-entry', '--original-catalog', '--markdown-policy', '--live', '--overview-live', '--catalog', '--board-order', '--workspaces', '--workspace-order', '--board-drops', '--board-selection', '--selection-archive', '--board-purge', '--list-delete-api', '--list-deletion', '--attachment-lifecycle', '--attachment-delete-api', '--attachment-upload-api', '--attachment-upload', '--attachment-reads-api', '--attachment-reads', '--transfer-policy-api', '--transfer-policy', '--board-allowance', '--board-copy', '--selected-copy', '--copy-options', '--board-creation', '--single-copy', '--import-export-policy', '--attachment-export-api', '--attachment-export')) and '--members' not in sys.argv:
+if any(mode in sys.argv for mode in ('--view-policy-api', '--guest-boards', '--public-boards', '--board-visibility', '--card-routes', '--board-links', '--board-menu', '--board-routes', '--home-external', '--home-drops', '--home-presentation', '--home-login', '--home', '--workspace-urls', '--overview-entry', '--original-catalog', '--markdown-policy', '--live', '--overview-live', '--catalog', '--board-order', '--workspaces', '--workspace-order', '--board-drops', '--board-selection', '--selection-archive', '--board-purge', '--list-delete-api', '--list-deletion', '--attachment-lifecycle', '--attachment-delete-api', '--attachment-upload-api', '--attachment-upload', '--attachment-reads-api', '--attachment-reads', '--transfer-policy-api', '--transfer-policy', '--board-allowance', '--board-copy', '--selected-copy', '--copy-options', '--board-creation', '--single-copy', '--import-export-policy', '--attachment-export-api', '--attachment-export')) and '--members' not in sys.argv:
     sys.argv.append('--members')
 
 base_env = os.environ.copy()
@@ -64,7 +64,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             disabled_thread = threading.Thread(target=disabled.serve_forever, daemon=True)
             disabled_thread.start()
             try:
-                for route in ['/api/users/rest-owner/boards', '/%61pi/users/rest-owner/boards', '/API/users/rest-owner/boards', '/api/boards/1/lists', '/api/boards/1/swimlanes', '/api/boards/1/cards_count', '/api/boards/1/lists/1/cards', '/api/cards/1', '/api/boards/1/lists/1/cards/1', '/api/boards/1/lists/1/cards/1/archive', '/api/attachment/list/1', '/api/attachment/info/1', '/api/attachment/download/1?raw=1', '/api/boards/1/attachments', '/api/attachment/upload', '/api/boards/1/attachments/1/export?authToken=unused']:
+                for route in ['/api/users/rest-owner/boards', '/%61pi/users/rest-owner/boards', '/API/users/rest-owner/boards', '/api/boards/1/boardViewSettings', '/api/boards/1/lists', '/api/boards/1/swimlanes', '/api/boards/1/cards_count', '/api/boards/1/lists/1/cards', '/api/cards/1', '/api/boards/1/lists/1/cards/1', '/api/boards/1/lists/1/cards/1/archive', '/api/attachment/list/1', '/api/attachment/info/1', '/api/attachment/download/1?raw=1', '/api/boards/1/attachments', '/api/attachment/upload', '/api/boards/1/attachments/1/export?authToken=unused']:
                     try:
                         urllib.request.urlopen('http://127.0.0.1:' + str(disabled.server_port) + route, timeout=10)
                     except urllib.error.HTTPError as error:
@@ -88,6 +88,9 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
         elif '--attachment-export-api' in sys.argv:
             subprocess.run([sys.executable, str(root / 'tests/api-attachment-export.test.py')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/attachment-export-conformance.test.cjs')], check=True, env=env)
+        elif '--view-policy-api' in sys.argv:
+            subprocess.run([sys.executable, str(root / 'tests/api-board-view-policy.test.py')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-view-rest-conformance.test.cjs')], check=True, env=env)
         elif '--guest-boards' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/guest-boards.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/public-attachments.browser.cjs')], check=True, env=env)
@@ -254,6 +257,8 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             subprocess.run([sys.executable, str(root / 'tests/api-dates.test.py')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/api-description.test.py')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/api-board-reads.test.py')], check=True, env=env)
+            subprocess.run([sys.executable, str(root / 'tests/api-board-view-policy.test.py')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-view-rest-conformance.test.cjs')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/api-list-times.test.py')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/api-list-delete.test.py')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/api-attachment-delete.test.py')], check=True, env=env)

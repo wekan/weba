@@ -2,6 +2,27 @@
 
 This work adds the following features and fixes:
 
+- Add authenticated GET/PUT `/api/boards/:boardId/boardViewSettings` with the
+  source normalized 40-view snapshot and partial-write rules. Keep whole-board
+  GET raw-role scope separate from active raw-isAdmin/site-admin PUT authority;
+  public visibility and UI cookies grant no REST access, while assigned board
+  admins can update settings under the source management rule. Recheck bearer,
+  actor/generation/role/owner and written state before atomic commit. Accept
+  JSON/form structured fields, defaults-before-hide, null/boolean coercion and
+  normalized JSON/CSV order; preserve duplicate form-value semantics. Work
+  around Gambas reused-decoder null loss through route-specific host transport
+  normalization, strict JSON and exact source whitespace/coercion decisions.
+  Reject malformed/no-recognized/default-hide requests with sanitized errors;
+  keep legacy GET free of policy initialization and roll back late token/role
+  loss and injected SQL failure. Compare 536 actual HTTP outcomes with unchanged
+  source route/Authentication bodies over all 256 raw flag sets and additional
+  scope/coercion cases, with explicit SQL-ID/owner/bearer/cache/logger adapters.
+  The complete local suite (69 host tests), focused source/packaged API checks
+  and focused source/packaged guest browser suites pass.
+  Manager UI, signed-in policy rendering, instance feature/copy/import, custom
+  role/OAuth/DDP/eventlog and full original source integration remain pending.
+  Thanks to xet7.
+
 - Persist native board-view policy for all 40 source views: separate public/
   private visibility and defaults, source order normalization including older
   defaults, source boolean coercion and default-before-hide validation. Guard

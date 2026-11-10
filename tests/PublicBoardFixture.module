@@ -17,7 +17,9 @@ Public Sub Main()
   Session["username"] = "rest-other"
   Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
   db = WebDatabase.OpenConnection()
-  If mode = "seed" Then
+  If mode = "view-api-seed" Then
+    data["boardId"] = KanbanStore.AddBoard("View API isolated board")
+  Else If mode = "seed" Then
     For i = 1 To 24
       id = KanbanStore.AddBoard("Discover UI " & Format(i, "00"))
       ids.Add(id)
@@ -100,7 +102,8 @@ Public Sub Main()
   Endif
   data["boardCount"] = db.Find("kb_boards").Count
   data["cardCount"] = db.Find("kb_cards").Count
-  data["visibilityCount"] = db.Find("kb_board_visibility").Count
+  data["visibilityCount"] = 0
+  If db.Tables.Exist("kb_board_visibility") Then data["visibilityCount"] = db.Find("kb_board_visibility").Count
   data["memberCount"] = db.Find("kb_members").Count
   Print JSON.Encode(data)
 End

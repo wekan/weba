@@ -96,6 +96,34 @@ Public Sub Main()
     Return
   Endif
   fields = Split(Request.Path, "/", "", True)
+  If fields.Count = 4 Then
+    If fields[0] = "api" And fields[1] = "boards" And fields[3] = "boardViewSettings" Then
+      If Request.Method <> "GET" And Request.Method <> "PUT" Then
+        Reply(405, ErrorData("Method not allowed"))
+        Return
+      Endif
+      Try boardId = PositiveId(fields[2])
+      If Error Then
+        Reply(400, ErrorData("Invalid board ID"))
+        Return
+      Endif
+      If Request.Method = "GET" Then
+        outcome = BoardViewPolicy.ReadApi(boardId)
+      Else
+        outcome = BoardAccess.ViewPolicyApiAccess(boardId, True)
+        If outcome["status"] <> 200 Then
+          Reply(outcome["status"], outcome["data"])
+          Return
+        Endif
+        payload = BoardViewBody()
+        If Not payload Then Return
+        outcome = BoardViewPolicy.SaveApi(boardId, payload)
+      Endif
+      Reply(outcome["status"], outcome["data"])
+      Return
+    Endif
+  Endif
+  fields = Split(Request.Path, "/", "", True)
   If fields.Count >= 4 And fields.Count <= 7 Then
     If fields[0] = "api" And fields[1] = "attachment" And fields[2] = "list" Then
       If Request.Method <> "GET" Then
@@ -696,4 +724,76 @@ Private Sub ReplyExport(status As Integer, data As Variant)
   Print "X-Content-Type-Options: nosniff"
   Print
   Print text
+End
+
+Private Function BoardViewBody() As Collection
+  Dim payload As Collection
+  Dim field As String
+  Dim value As Variant
+  Dim validated As Variant
+  Dim text As String
+  Dim pair As String
+  Dim splitAt As Integer
+  Dim name As String
+  Dim items As Variant[]
+  Dim words As String[]
+  Dim i As Integer
+  If LCase(Split(Request.ContentType, ";")[0]) = "application/json" Then
+    payload = JsonBody(True)
+    If Not payload Then Return Null
+  Else If LCase(Split(Request.ContentType, ";")[0]) = "application/x-www-form-urlencoded" Then
+    If Request.ContentLength <= 0 Or Request.ContentLength > 1048576 Then
+      Reply(400, ErrorData("Invalid body length"))
+      Return Null
+    Endif
+    payload = New Collection
+    text = Read Request.ContentLength
+    For Each pair In Split(text, "&")
+      splitAt = InStr(pair, "=")
+      name = Cgi.Decode(Replace(If(splitAt > 0, Left(pair, splitAt - 1), pair), "+", " "))
+      value = ""
+      If splitAt > 0 Then value = Cgi.Decode(Replace(Mid(pair, splitAt + 1), "+", " "))
+      If payload.Exist(name) Then
+        items = Null
+        If TypeOf(payload[name]) = gb.Object Then
+          If payload[name] Is Variant[] Then items = payload[name]
+        Endif
+        If Not items Then
+          items = New Variant[]
+          items.Add(payload[name])
+          payload[name] = items
+        Endif
+        items.Add(value)
+      Else
+        payload.Add(value, name)
+      Endif
+    Next
+  Else
+    Reply(415, ErrorData("Expected JSON or form body"))
+    Return Null
+  Endif
+  For Each field In ["boardViewSettings", "boardViewOrder"]
+    If TypeOf(payload[field]) <> gb.String Then Continue
+    text = payload[field]
+    Try value = JSON.Decode(text, True)
+    If Not Error Then
+      Try validated = JSON.Decode(text)
+      If Not Error Then
+        payload.Remove(field)
+        payload.Add(value, field)
+        Continue
+      Endif
+    Endif
+    If field = "boardViewOrder" Then
+      words = Split(text, ",")
+      For i = 0 To words.Max
+        words[i] = Trim(words[i])
+      Next
+      payload[field] = words
+    Endif
+  Next
+  Return payload
+Catch
+  Reply(400, ErrorData("Invalid board view body"))
+  Return Null
 End
