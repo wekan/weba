@@ -3699,6 +3699,7 @@ Private Sub ValidateMarkdownPolicy()
   Dim admin As Boolean = WebDatabase.GetIsAdmin(WebIdentity.Username)
   Dim value As Boolean = MarkdownPolicy.AlwaysRaw()
   ValidateExternalLinks(admin)
+  MarkdownTitlesSnapshot.Text = Replace(JSON.Encode(BoardLive.CardTitles($archive)), " ", "\\u0020")
   MarkdownSettings.Visible = admin
   MarkdownPolicySnapshot.Text = If(value, "1", "0")
   MarkdownUrlSnapshot.Text = Replace(JSON.Encode(MarkdownPolicy.UrlSchemes()), " ", "\\u0020")

@@ -421,13 +421,13 @@ only through the bundled unchanged source helper/sanitizer. Empty icons show a
 folder; icon links keep native workspace selection without following their URL.
 A WeakMap plus renderer/policy generations prevents observer loops and redundant
 rendering, while native text refreshes rebuild missing structure. The standalone
-Blaze/HTML/ReactiveVar adapters supply synchronous content/policy snapshots, not
-DDP or native persisted admin settings. All source plugins are retained. Native
-external-rule/URL-scheme/card-title bridges and iconColor remain open. The
-raw-code boolean now comes from native persisted settings as described below.
+Blaze/HTML/ReactiveVar adapters supply synchronous content/policy snapshots
+without source DDP. All source plugins are retained. Native persisted raw-code,
+URL-scheme and external-rule settings and readable title snapshots are described
+below. IconColor and original source publication/card routing remain open.
 `tools/import-wekan-markdown.cjs` imports source bytes, bundles installed parent
 dependencies and records hashes/versions and license notices. The oracle test
-compares 112 full/raw/custom/forbidden-scheme outputs against the parent source;
+compares 136 full/raw/custom/forbidden-scheme/title outputs against the parent source;
 real browser cases exercise persisted formatting, emoji, links, default folders,
 policy changes, hidden-link warnings, and executable/form/clobber injection.
 Builds carry the prebuilt assets and need no Node.js at runtime.
@@ -471,7 +471,19 @@ and loss of admin clears all fields. Browser tests verify exact trimmed multilin
 snapshots, alias/prefix/rule links, existing-link protection, unsafe targets,
 disable/live/reload, denied saves and accessible Finnish/mobile controls. The
 trusted fixture adapts empty JSON values back into typed string collections.
-Remaining card resolver/icon-color bridges and broader original
+`BoardLive.CardTitles` uses the same current active/archive-context board and
+card queries as native navigation, exposing only readable IDs/titles and applying
+raw assigned-only and deleted-list filters. Empty or stale sessions return no
+map. A private JSON snapshot (spaces escaped before WebLabel HTML rendering)
+updates the standalone source helper's `resolveCardTitle` through `setCardTitles`.
+The resolver accepts only own string-valued keys; source URL parsing, existing-link
+protection, bracket/backslash escaping and sanitization remain unchanged. Snapshot
+changes advance the existing icon render generation before decoration. Native
+and real browser tests cover private scope, no read writes, rename, archive/list/
+assignment/membership/session loss, literal anchors, hostile labels and recovery.
+The oracle adds 24 title-resolution cases for 136 source comparisons. This is a
+native navigation bridge, not source Meteor subscription/card-route parity.
+Remaining icon-color bridges and broader original
 UI/API/security suites remain explicit TODO requirements. Folding/counts and native tree
 gestures are described below.
 

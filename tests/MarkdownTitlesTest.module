@@ -1,0 +1,86 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim visible As Integer
+  Dim hidden As Integer
+  Dim privateBoard As Integer
+  Dim privateCard As Integer
+  Dim flags As Collection
+  Dim titles As Collection
+  Dim before As String
+  Dim db As Connection
+  Dim listId As Integer
+  Dim r As Result
+  Dim count As Integer
+  WebDatabase.Register("titles-owner", "x")
+  WebDatabase.Register("titles-reader", "x")
+  SignIn("titles-owner")
+  boardId = KanbanStore.AddBoard("Shared titles")
+  BoardAccess.SetMember(boardId, "titles-reader", "board-admin")
+  visible = KanbanStore.SaveCard(boardId, 0, "Visible ] title \\", "", "Default", "Todo", "titles-reader", "", "")
+  hidden = KanbanStore.SaveCard(boardId, 0, "HIDDEN-TITLE-CANARY", "", "Default", "Doing", "titles-owner", "", "")
+  flags = ApiMemberRoles.FlagsFor("board-admin")
+  flags["isNormalAssignedOnly"] = True
+  ApiMemberRoles.Save(boardId, "titles-reader", flags)
+  privateBoard = KanbanStore.AddBoard("Private titles")
+  privateCard = KanbanStore.SaveCard(privateBoard, 0, "PRIVATE-TITLE-CANARY", "", "Default", "Todo", "", "", "")
+  db = WebDatabase.OpenConnection()
+  r = db.Find("kb_history")
+  count = r.Count
+  SignIn("titles-reader")
+  titles = BoardLive.CardTitles(False)
+  If titles.Count <> 1 Or Not titles.Exist(CStr(visible)) Or titles.Exist(CStr(hidden)) Or titles.Exist(CStr(privateCard)) Then Error.Raise("Title scope leak")
+  before = JSON.Encode(titles)
+  If JSON.Encode(BoardLive.CardTitles(False)) <> before Then Error.Raise("Unstable title snapshot")
+  r = db.Find("kb_history")
+  If r.Count <> count Then Error.Raise("Title read wrote activity")
+  SignIn("titles-owner")
+  KanbanStore.SaveCard(boardId, hidden, "Changed hidden title", "", "Default", "Doing", "titles-owner", "", "")
+  SignIn("titles-reader")
+  If JSON.Encode(BoardLive.CardTitles(False)) <> before Then Error.Raise("Hidden title influenced snapshot")
+  SignIn("titles-owner")
+  KanbanStore.SaveCard(boardId, visible, "Renamed 🚀", "", "Default", "Todo", "titles-reader", "", "")
+  SignIn("titles-reader")
+  titles = BoardLive.CardTitles(False)
+  If titles[CStr(visible)] <> "Renamed 🚀" Then Error.Raise("Rename missed")
+  SignIn("titles-owner")
+  KanbanStore.SaveCard(boardId, visible, "Renamed 🚀", "", "Default", "Todo", "titles-owner", "", "")
+  SignIn("titles-reader")
+  titles = BoardLive.CardTitles(False)
+  If titles.Count Then Error.Raise("Assignment loss retained titles")
+  SignIn("titles-owner")
+  KanbanStore.SaveCard(boardId, visible, "Renamed 🚀", "", "Default", "Todo", "titles-reader", "", "")
+  KanbanStore.ArchiveCard(boardId, visible, True)
+  SignIn("titles-reader")
+  titles = BoardLive.CardTitles(False)
+  If titles.Count Then Error.Raise("Archived card retained active title")
+  SignIn("titles-owner")
+  KanbanStore.ArchiveBoard(boardId, True)
+  SignIn("titles-reader")
+  titles = BoardLive.CardTitles(True)
+  If Not titles.Exist(CStr(visible)) Or titles.Exist(CStr(hidden)) Then Error.Raise("Archive navigation context changed")
+  SignIn("titles-owner")
+  KanbanStore.ArchiveBoard(boardId, False)
+  KanbanStore.ArchiveCard(boardId, visible, False)
+  r = KanbanStore.Lists(boardId, "Default")
+  listId = r!id
+  ListDeletion.SoftRemove(boardId, listId)
+  SignIn("titles-reader")
+  titles = BoardLive.CardTitles(False)
+  If titles.Exist(CStr(visible)) Then Error.Raise("Deleted-list title retained")
+  SignIn("titles-owner")
+  ListDeletion.Restore(boardId, listId)
+  BoardAccess.RemoveMember(boardId, "titles-reader")
+  SignIn("titles-reader")
+  titles = BoardLive.CardTitles(False)
+  If titles.Count Then Error.Raise("Revoked member retained titles")
+  SignIn("titles-owner")
+  db.Exec("UPDATE account_sessions SET generation=generation+1 WHERE username='titles-owner'")
+  titles = BoardLive.CardTitles(False)
+  If titles.Count Then Error.Raise("Stale session retained titles")
+  Print "Markdown titles: navigation-only readable projection, assigned raw-admin/private isolation, read stability/no activity, rename/assignment loss/archive/deleted-list/revocation/session clearing passed"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

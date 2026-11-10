@@ -2,6 +2,16 @@
 
 This work adds the following features and fixes:
 
+- Connect workspace Markdown card-title resolution to private readable native
+  navigation snapshots for the current active/archive context. Keep raw assigned-
+  only, board access, deleted-list and session guards; add no title lookup API.
+  Reuse unchanged source URL matching, existing-link protection, title escaping
+  and sanitization; update renamed titles live and fall back after access loss.
+  Verify private/unassigned isolation, read-only snapshots, archive/list/member/
+  session clearing, hostile labels and real reload/fallback/recovery/mobile flows.
+  Expand the source renderer oracle to 136 outputs. Icon color and original
+  Meteor publications/card routing remain pending. Thanks to xet7.
+
 - Persist the four external-tracker Markdown settings with typed atomic saves,
   private actor/time audit, source UTF-16 limits and locked/final identity/admin/
   value checks. Add Unicode-trimmed Security fields, lossless public live snapshots,

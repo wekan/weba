@@ -12,3 +12,10 @@ export function configure(options={}){
 // Exact source parser; administrators cannot enable forbidden handlers.
 import {parseAllowedUrlSchemes} from '../../vendor/wekan-markdown/urlSchemeAllowlist.js';
 export const parseUrlSchemes=parseAllowedUrlSchemes;
+
+// Native navigation supplies only titles readable in the current archive context.
+export function setCardTitles(titles={}){
+  titles=titles&&typeof titles==='object'?titles:{};
+  Markdown.resolveCardTitle=id=>Object.prototype.hasOwnProperty.call(titles,id)&&typeof titles[id]==='string'?titles[id]:undefined;
+  window.dispatchEvent(new CustomEvent('weba-workspace-markdown-changed'));
+}

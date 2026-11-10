@@ -1,0 +1,57 @@
+Public Sub Main()
+  Dim mode As String = Env["WEBA_TITLES_MODE"]
+  Dim boardId As Integer = Val(Env["WEBA_TITLES_BOARD"])
+  Dim cardId As Integer = Val(Env["WEBA_TITLES_CARD"])
+  Dim otherId As Integer = Val(Env["WEBA_TITLES_OTHER"])
+  Dim data As New Collection
+  Dim flags As Collection
+  Dim db As Connection
+  Dim t As Table
+  Dim r As Result
+  If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
+  Session["username"] = "rest-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("rest-owner")
+  db = WebDatabase.OpenConnection()
+  If mode = "seed" Then
+    boardId = KanbanStore.AddBoard("Markdown title shared board")
+    BoardAccess.SetMember(boardId, "rest-member", "board-admin")
+    cardId = KanbanStore.SaveCard(boardId, 0, "Readable title 🚀", "", "Default", "Todo", "rest-member", "", "")
+    data["hidden"] = KanbanStore.SaveCard(boardId, 0, "HIDDEN-TITLE-CANARY", "", "Default", "Doing", "rest-owner", "", "")
+    flags = ApiMemberRoles.FlagsFor("board-admin")
+    flags["isNormalAssignedOnly"] = True
+    ApiMemberRoles.Save(boardId, "rest-member", flags)
+    otherId = KanbanStore.AddBoard("Markdown private title board")
+    data["privateCard"] = KanbanStore.SaveCard(otherId, 0, "PRIVATE-TITLE-CANARY", "", "Default", "Todo", "", "", "")
+    data["board"] = boardId
+    data["card"] = cardId
+    data["other"] = otherId
+    Session["username"] = "rest-member"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("rest-member")
+    data["space"] = BoardSpaces.Add("Markdown title workspace")
+    BoardSpaces.Edit(data["space"], "Markdown title workspace", "/b/" & Str(boardId) & "/slug/" & Str(cardId) & "#comment-abc /b/" & Str(boardId) & "/slug/" & Str(data["hidden"]) & " /b/" & Str(otherId) & "/slug/" & Str(data["privateCard"]))
+  Else If mode = "rename" Then
+    KanbanStore.SaveCard(boardId, cardId, Env["WEBA_TITLES_TEXT"], "", "Default", "Todo", "rest-member", "", "")
+  Else If mode = "unassign" Or mode = "assign" Then
+    r = db.Find("kb_cards", "id=&1", cardId)
+    KanbanStore.SaveCard(boardId, cardId, r!title, "", "Default", "Todo", If(mode = "assign", "rest-member", "rest-owner"), "", "")
+  Else If mode = "archive" Or mode = "restore" Then
+    KanbanStore.ArchiveCard(boardId, cardId, mode = "archive")
+  Else If mode = "revoke" Then
+    BoardAccess.RemoveMember(boardId, "rest-member")
+  Else If mode = "grant" Then
+    BoardAccess.SetMember(boardId, "rest-member", "board-admin")
+    flags = ApiMemberRoles.FlagsFor("board-admin")
+    flags["isNormalAssignedOnly"] = True
+    ApiMemberRoles.Save(boardId, "rest-member", flags)
+  Else If mode = "cleanup" Then
+    If boardId <= 0 Or otherId <= 0 Then Error.Raise("Fixture boards required")
+    For Each t In db.Tables
+      If t.Fields.Exist("board_id") Then db.Delete(t.Name, "board_id=&1 OR board_id=&2", boardId, otherId)
+    Next
+    db.Delete("kb_boards", "id=&1 OR id=&2", boardId, otherId)
+    Session["username"] = "rest-member"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("rest-member")
+    BoardSpaces.Remove(CInt(Env["WEBA_TITLES_SPACE"]))
+  Endif
+  Print JSON.Encode(data)
+End

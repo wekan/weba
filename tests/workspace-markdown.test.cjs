@@ -52,6 +52,13 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),asse
    total++;
   }
  }
+ const titleCases=['/b/board/slug/42','https://example.test/b/b/slug/42#comment-abc','[keep](/b/b/slug/42)','/b/b/slug/hidden','/b/b/slug/toString','/b/b/slug/42 /b/b/slug/42#activity-abc'];
+ bundled.window.webaWorkspaceMarkdown.configure({alwaysShowCodeAsText:false,urlSchemes:[],externalLinkPattern:{prefix:'',urlTemplate:''},externalLinkRules:{rules:'',aliases:''}});
+ for(const [key,value] of Object.entries({alwaysShowCodeAsText:false,urlSchemes:[],externalLinkPattern:{prefix:'',urlTemplate:''},externalLinkRules:{rules:'',aliases:''}}))context.originalMarkdown[key].set(value);
+ for(const title of ['Current title','Changed ] slash \\\\', '<img src=x onerror=alert(1)> **bold** 🚀','']){
+  const titles={'42':title};bundled.window.webaWorkspaceMarkdown.setCardTitles(titles);context.originalMarkdown.resolveCardTitle=id=>Object.hasOwn(titles,id)?titles[id]:undefined;
+  for(const text of titleCases){assert.equal(bundled.window.webaWorkspaceMarkdown.render(text),helper.call({templateContentBlock:text}),'title bridge: '+text);total++;}
+ }
  console.log('Workspace Markdown: '+total+' bundle outputs match unchanged source viewer/helper/sanitizer with explicit synchronous Blaze/ReactiveVar adapters; source hashes, full/raw/custom-scheme policies and executable/form injection guards passed');
  }finally{bundled.window.close();original.window.close();}
 })().catch(error=>{console.error(error.stack||String(error));process.exitCode=1;});

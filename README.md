@@ -522,15 +522,16 @@ show the source folder glyph. The bundle includes Markdown/emoji/math/highlight/
 task-list/hidden-link handling and exact source security rules. Native icon links
 select the workspace without navigating. Raw icon values remain text in native
 controls/SQL and are sanitized before insertion into the visible icon container.
-The raw-code flag is now driven by a native Global Admin setting; only its
-boolean snapshot is sent to readers. External-rule/URL-scheme policies, reactive
-card-title resolution, icon colors and full source DDP integration remain open.
+Native Global Admin settings drive raw-code, URL-scheme and external-rule
+policies through nonsecret reader snapshots. Readable native navigation titles
+now drive reactive card-title labels as described below. Icon colors and full
+source DDP integration remain open.
 
 Rebuild with `node tools/import-wekan-markdown.cjs /path/to/wekan` using that
 checkout's installed dependencies. The source copies, hashes and dependency
 versions live in `vendor/wekan-markdown/manifest.json`; deployed notices are in
 `WeKan/.public/workspace-markdown-LICENSES.txt`. `workspace-markdown.test.cjs`
-compares 112 bundled outputs with the unchanged parent helper/sanitizer and
+compares 136 bundled outputs with the unchanged parent helper/sanitizer and
 checks injection/form/URL guards. Full original popup/transport integration
 remains pending.
 
@@ -579,6 +580,23 @@ combined links and aliases, protected links, unsafe targets, live/reload/disable
 clean/dirty groups, forged/demoted saves and mobile/Finnish controls. The fixture
 explicitly rebuilds typed strings after Gambas JSON decoding of empty values;
 this is a disposable test adapter, not a production settings API.
+
+Workspace Markdown card URLs now use the source `resolveCardTitle` bridge.
+`BoardLive.CardTitles` projects only the same card IDs/titles already used in
+native navigation for the current active/archive context. Existing board access,
+raw assigned-only flags and deleted-list filters apply; no new title lookup API
+or public/global title cache is introduced. A lossless per-session JSON snapshot
+feeds an own-key/string-only resolver in the bundled unchanged source helper.
+Title changes refresh icons live. Missing, deleted, unassigned or revoked targets
+fall back to the original URL; the source keeps comment/activity anchors,
+existing-link protection and bracket/backslash escaping. Source sanitization
+still applies to title markup. Native tests cover private/assigned-only scope,
+read stability/no activity, rename, assignment loss, archive context, deleted
+lists and revoked membership/sessions. Real browser tests cover current titles,
+private snapshot/page isolation, hostile labels, reload and live fallback/recovery.
+The source oracle now compares 136 outputs, including 24 card-title cases.
+This bridges native navigation snapshots; original Meteor publications, IDs and
+card route transport remain pending.
 
 `BoardOrderTest` covers per-user readonly access, filtered rank merge, invalid/
 foreign/revoked/archive/mode rejection, injected write rollback/retry and account/
@@ -1118,7 +1136,7 @@ it for source and packaged apps. Run it separately with the documented Gambas
 and Chromium environment using `python3 tests/run-http.py --workspaces`, adding
 `--archive` for the package.
 
-Other Markdown settings/card resolver/icon-color bridges and production transport/
+Other Markdown settings/icon-color bridges and production transport/
 routing parity remain open. Creation now uses a real form, required textarea and submit input with
 revision/session/parent-bound native submission. The unchanged original Latin
 callback passes through explicit native password-session and client-locale

@@ -36,7 +36,7 @@
     };
   }
   const icons={Swimlanes:'th-large',Kanban:'trello',Calendar:'calendar',Gantt:'bar-chart',TableView:'table',Charts:'pie-chart',ContextMembers:'users',CardMembersButton:'users',CardAssigneesButton:'user',ContextAssignees:'user',AddCardPerson:'user-plus',RemoveCardPerson:'user-times',ContextAssignSelf:'user-plus',SaveMember:'save',RemoveMember:'user-times',ImportBoard:'download',ContextDelete:'trash-o',ContextRename:'pencil',ContextCopy:'clipboard',ContextMove:'arrow-up',ContextColor:'paint-brush',ContextStar:'star-o',ContextWatch:'eye-slash',ContextWip:'ban',ContextDescription:'align-left',ContextHistory:'history',ContextExport:'upload',ContextArchive:'archive',ContextRestore:'undo',ContextAddCard:'plus',ContextAddList:'plus',ContextAddLane:'plus',Starred:'star',BoardSettings:'cog',ArchivedItems:'archive',ContextComments:'comment-o',ContextChecklists:'check-square-o',ContextChecklistItems:'check',ContextSubtasks:'sitemap',ContextDependencies:'link',ContextFields:'list-alt',ContextTime:'clock-o',ContextAttachments:'paperclip',CardComments:'comment-o',CardChecklists:'check-square-o',CardChecklistItems:'check',CardSubtasks:'sitemap',CardDependencies:'link',CardFields:'list-alt',CardTime:'clock-o',CardAttachments:'paperclip',DetailStart:'play',DetailStop:'stop',DetailExport:'upload',DetailDownload:'download',DetailDelete:'trash-o'};
-  let markdownGeneration=0,appliedMarkdownRaw=null,appliedMarkdownSchemes=null,appliedExternalLinks=null;
+  let markdownGeneration=0,appliedMarkdownRaw=null,appliedMarkdownSchemes=null,appliedExternalLinks=null,appliedCardTitles=null;
   function syncMarkdownPolicy(){
     const snapshot=document.querySelector('[id$=".MarkdownPolicySnapshot"]');if(!snapshot||!root.webaWorkspaceMarkdown)return;
     const raw=snapshot.textContent.trim()==='1';
@@ -48,6 +48,11 @@
     const snapshot=document.querySelector('[id$=".MarkdownExternalSnapshot"]');if(!snapshot?.textContent||!root.webaWorkspaceMarkdown||appliedExternalLinks===snapshot.textContent)return;
     const data=JSON.parse(snapshot.textContent);appliedExternalLinks=snapshot.textContent;
     root.webaWorkspaceMarkdown.configure({externalLinkPattern:{prefix:data.externalLinkPatternPrefix||'',urlTemplate:data.externalLinkPatternUrl||''},externalLinkRules:{rules:data.externalLinkRules||'',aliases:data.externalLinkIdentifierAliases||''}});
+  }
+  function syncCardTitles(){
+    const snapshot=document.querySelector('[id$=".MarkdownTitlesSnapshot"]');if(!snapshot?.textContent||!root.webaWorkspaceMarkdown||appliedCardTitles===snapshot.textContent)return;
+    const titles=JSON.parse(snapshot.textContent);appliedCardTitles=snapshot.textContent;
+    root.webaWorkspaceMarkdown.setCardTitles(titles);
   }
   const workspaceIconState=new WeakMap();
   function workspaceIcons(){
@@ -160,6 +165,7 @@
     for(const name of ["ExternalPrefix","ExternalUrl","ExternalRules","ExternalAliases"]){const field=document.querySelector(`textarea[id$=".${name}"]`),label=document.querySelector(`[id$=".${name}Label"]`);if(field&&label&&field.getAttribute("aria-labelledby")!==label.id)field.setAttribute("aria-labelledby",label.id);}
     syncMarkdownPolicy();
     syncExternalLinks();
+    syncCardTitles();
     workspaceIcons();
     sortControls();
     const boardSearch=document.querySelector('[id$=".BoardSearch:entry"]');

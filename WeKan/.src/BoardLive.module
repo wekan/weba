@@ -80,3 +80,21 @@ Private Function Rows(r As Result, fields As String[]) As Variant[]
   Next
   Return resultRows
 End
+
+' Same readable card projection as native navigation, for the source viewer bridge.
+Public Function CardTitles(archived As Boolean) As Collection
+  Dim actor As String = WebIdentity.Username
+  Dim data As New Collection
+  Dim boards As Result
+  Dim cards As Result
+  If Not actor Then Return data
+  boards = KanbanStore.Boards(archived)
+  For Each boards
+    cards = KanbanStore.Cards(boards!id, archived)
+    For Each cards
+      data.Add(CStr(cards!title), CStr(cards!id))
+    Next
+  Next
+  If WebIdentity.Username <> actor Then Error.Raise("Session changed")
+  Return data
+End

@@ -1043,6 +1043,10 @@
         Class = "weba-user-text"
         Visible = False
       }
+      { MarkdownTitlesSnapshot WebLabel
+        Class = "weba-user-text"
+        Visible = False
+      }
       { MarkdownPanel WebContainer
         Arrangement = Arrange.Vertical
         Visible = False

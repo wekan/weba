@@ -5,7 +5,7 @@
     "node": "26.13.0"
   },
   "adapters": {
-    "entry.js": "e0d81eff2c6f10a45e1d683364f3f4f0530fad3586b23f8c54c3ad50db504134",
+    "entry.js": "d5f30cf444015fcd37680754fb70fc598cc08673896cffc2ee0610b2e78309d5",
     "meteor-adapter.js": "7f3bc58aa07bc9688ff8f043368ec6c0c13a69ed1ffc7c707ec08b176b3a9fdc"
   },
   "sourceFiles": {
@@ -26,5 +26,5 @@
     "temml": "0.14.0",
     "uc.micro": "3.0.0"
   },
-  "bundleSha256": "2ff5cbaa19b564baad01df6abc775ebed9e2b9c403714cbb24e220f2a4d41600"
+  "bundleSha256": "748db908317023c71e48b7d0c14429ce53af8bcf771bdc39071723e1307ec273"
 }
