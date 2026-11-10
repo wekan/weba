@@ -12,6 +12,12 @@ Public Sub Main()
   db = WebDatabase.OpenConnection()
   MarkdownPolicy.OpenStore()
   If mode = "demote" Or mode = "promote" Then db.Exec("UPDATE users SET admin=&1 WHERE username='rest-owner'", mode = "promote")
+  If mode = "color" Then
+    Session["username"] = "rest-member"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("rest-member")
+    node = BoardSpaces.Record(CInt(Env["WEBA_MARKDOWN_SPACE"]))
+    BoardSpaces.Edit(CInt(Env["WEBA_MARKDOWN_SPACE"]), node["name"], node["icon"], Env["WEBA_MARKDOWN_COLOR"])
+  Endif
   If mode = "icon" Then
     Session["username"] = "rest-member"
     Session["auth_generation"] = WebDatabase.SessionGeneration("rest-member")

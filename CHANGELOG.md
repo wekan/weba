@@ -2,6 +2,17 @@
 
 This work adds the following features and fixes:
 
+- Preserve and render private workspace iconColor metadata with an additive table,
+  typed optional native edits, omission-versus-empty clearing, fresh final owner/
+  session/value guards and atomic name/icon/color rollback. Keep color across
+  ordinary source-style edits and reparenting; clean subtree/account deletion.
+  Apply lossless row snapshots only through a single CSS color property on source
+  Markdown/default-folder wrappers, rejecting extra declarations without requests.
+  Verify native failures/privacy/lifecycle and real source-helper edit preservation,
+  live/reload/mobile colors and malicious metadata. The source has no current
+  color picker, so none is added. Original profile transport remains pending.
+  Thanks to xet7.
+
 - Connect workspace Markdown card-title resolution to private readable native
   navigation snapshots for the current active/archive context. Keep raw assigned-
   only, board access, deleted-list and session guards; add no title lookup API.

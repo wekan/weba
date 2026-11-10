@@ -2583,6 +2583,10 @@ Private Sub AddSpaceRows(nodes As Variant[], depth As Integer, Optional parentId
     iconSource.Text = CStr(node["icon"])
     iconSource.Class = "weba-space-icon-source weba-user-text"
     iconSource.Visible = False
+    iconSource = New WebLabel(row)
+    iconSource.Text = Replace(JSON.Encode(CStr(node["iconColor"])), " ", "\\u0020")
+    iconSource.Class = "weba-space-icon-color weba-user-text"
+    iconSource.Visible = False
     button = New WebButton(row) As "OpenPersonalWorkspace"
     button.Text = caption
     button.Tooltip = CStr(node["name"])

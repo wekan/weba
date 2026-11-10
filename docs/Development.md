@@ -424,7 +424,8 @@ rendering, while native text refreshes rebuild missing structure. The standalone
 Blaze/HTML/ReactiveVar adapters supply synchronous content/policy snapshots
 without source DDP. All source plugins are retained. Native persisted raw-code,
 URL-scheme and external-rule settings and readable title snapshots are described
-below. IconColor and original source publication/card routing remain open.
+below. Icon-color metadata persistence/rendering is covered below too; original
+source publication/card routing remain open.
 `tools/import-wekan-markdown.cjs` imports source bytes, bundles installed parent
 dependencies and records hashes/versions and license notices. The oracle test
 compares 136 full/raw/custom/forbidden-scheme/title outputs against the parent source;
@@ -483,7 +484,22 @@ and real browser tests cover private scope, no read writes, rename, archive/list
 assignment/membership/session loss, literal anchors, hostile labels and recovery.
 The oracle adds 24 title-resolution cases for 136 source comparisons. This is a
 native navigation bridge, not source Meteor subscription/card-route parity.
-Remaining icon-color bridges and broader original
+`kb_board_space_icons` is an additive private `(username, space_id)` color
+metadata table. Optional typed `BoardSpaces.Edit` color text preserves on omission/
+null and explicitly clears on empty string; TypeOf distinguishes Gambas empty
+strings from null. Edits recheck current identity, row owner, name/icon and supplied
+color after writes before commit. Trigger tests prove write and late owner/session/
+value failures roll back the whole edit; reparent keeps metadata and subtree/account
+cleanup removes it. Record/Tree return only owner-scoped colors. The current source
+name/icon form preserves existing color, verified with its unchanged update helper;
+no source-missing color picker or public settings route is added.
+Hidden lossless row JSON drives only `element.style.color` on the formatted icon
+or default source emoji-icon folder wrapper. The render cache includes color for
+live updates. Invalid values are retained in storage but never interpreted as
+CSS declaration lists/HTML; real browser tests check no injected background/request,
+private isolation, reload, default clear and mobile behavior. Original profile-tree
+transport/import remains pending.
+Remaining broader original
 UI/API/security suites remain explicit TODO requirements. Folding/counts and native tree
 gestures are described below.
 

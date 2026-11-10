@@ -524,8 +524,8 @@ select the workspace without navigating. Raw icon values remain text in native
 controls/SQL and are sanitized before insertion into the visible icon container.
 Native Global Admin settings drive raw-code, URL-scheme and external-rule
 policies through nonsecret reader snapshots. Readable native navigation titles
-now drive reactive card-title labels as described below. Icon colors and full
-source DDP integration remain open.
+now drive reactive card-title labels as described below. Private icon-color
+metadata is preserved and rendered too; full source DDP integration remains open.
 
 Rebuild with `node tools/import-wekan-markdown.cjs /path/to/wekan` using that
 checkout's installed dependencies. The source copies, hashes and dependency
@@ -597,6 +597,26 @@ private snapshot/page isolation, hostile labels, reload and live fallback/recove
 The source oracle now compares 136 outputs, including 24 card-title cases.
 This bridges native navigation snapshots; original Meteor publications, IDs and
 card route transport remain pending.
+
+Source workspace `iconColor` metadata now has private native persistence in the
+additive `kb_board_space_icons` table. `BoardSpaces.Edit` accepts an optional typed
+color string: omission/null preserves existing metadata, while an explicit empty
+string clears it. Ordinary source-style name/icon edits preserve the color. The
+same transaction rolls back name, icon and color after write or late owner,
+session or value failure. Reparenting keeps it; subtree and account deletion
+remove it. Readable personal Record/Tree snapshots carry only the owner's data.
+The source edit form has no current color picker, so this bridge adds none and
+exposes no new HTTP route. Original profile-tree transport/import remains open.
+
+A lossless hidden row snapshot applies the value through `element.style.color`
+on the source `.workspace-icon-value` or default `.emoji-icon` folder wrapper.
+It never interpolates raw CSS declarations or HTML. Invalid color values remain
+literal metadata but the browser rejects their style; another declaration or
+URL cannot be appended. Color changes refresh the icon live and survive reload.
+Native tests cover private/type/late guards, explicit clear and lifecycle cleanup;
+browser tests compare ordinary edit preservation with unchanged source
+`updateSpaceInTree`, check Markdown/default folder colors, user isolation,
+reload/mobile and malicious declaration no-network behavior.
 
 `BoardOrderTest` covers per-user readonly access, filtered rank merge, invalid/
 foreign/revoked/archive/mode rejection, injected write rollback/retry and account/
@@ -1136,7 +1156,7 @@ it for source and packaged apps. Run it separately with the documented Gambas
 and Chromium environment using `python3 tests/run-http.py --workspaces`, adding
 `--archive` for the package.
 
-Other Markdown settings/icon-color bridges and production transport/
+Remaining production transport/
 routing parity remain open. Creation now uses a real form, required textarea and submit input with
 revision/session/parent-bound native submission. The unchanged original Latin
 callback passes through explicit native password-session and client-locale

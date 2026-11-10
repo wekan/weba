@@ -1,0 +1,86 @@
+Public Sub Main()
+  Dim id As Integer
+  Dim child As Integer
+  Dim row As Collection
+  Dim tree As Variant[]
+  Dim db As Connection
+  Dim r As Result
+  Dim denied As Boolean
+  Dim before As String
+  Dim trigger As String
+  WebDatabase.Register("color-owner", "x")
+  WebDatabase.Register("color-other", "x")
+  SignIn("color-owner")
+  id = BoardSpaces.Add("Color root")
+  child = BoardSpaces.Add("Child", id)
+  row = BoardSpaces.Record(id)
+  If CStr(row["iconColor"]) <> "" Then Error.Raise("Default color changed")
+  BoardSpaces.Edit(id, "Color root", "**icon**", "rebeccapurple")
+  BoardSpaces.Edit(id, "Renamed", "📁")
+  row = BoardSpaces.Record(id)
+  If row["iconColor"] <> "rebeccapurple" Or row["icon"] <> "📁" Then Error.Raise("Ordinary edit lost color")
+  tree = BoardSpaces.Tree()
+  If tree[0]["iconColor"] <> "rebeccapurple" Then Error.Raise("Tree lost metadata")
+  db = WebDatabase.OpenConnection()
+  before = Frame()
+  Try BoardSpaces.Edit(id, "Forged", "x", True)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Untyped color changed data")
+  SignIn("color-other")
+  Try BoardSpaces.Edit(id, "Foreign", "x", "red")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Foreign color changed data")
+  tree = BoardSpaces.Tree()
+  If tree.Count Then Error.Raise("Foreign color tree leaked")
+  SignIn("color-owner")
+  For Each trigger In ["BEFORE INSERT ON kb_board_space_icons BEGIN SELECT RAISE(ABORT,'injected'); END", "AFTER INSERT ON kb_board_space_icons BEGIN UPDATE kb_board_spaces SET username='color-other' WHERE id=NEW.space_id; END", "AFTER INSERT ON kb_board_space_icons BEGIN UPDATE account_sessions SET generation=generation+1 WHERE username='color-owner'; END", "AFTER INSERT ON kb_board_space_icons WHEN NEW.icon_color='blue' BEGIN UPDATE kb_board_space_icons SET icon_color='red' WHERE space_id=NEW.space_id; END"]
+    db.Exec("CREATE TRIGGER workspace_color_failure " & trigger)
+    Try BoardSpaces.Edit(id, "Changed", "x", "blue")
+    denied = Error
+    If Not denied Or Frame() <> before Then Error.Raise("Color failure did not roll back name/icon/color/identity")
+    db.Exec("DROP TRIGGER workspace_color_failure")
+  Next
+  BoardSpaces.Edit(id, "Renamed", "📁", "red; background-image:url(https://example.invalid/x)")
+  row = BoardSpaces.Record(id)
+  If row["iconColor"] <> "red; background-image:url(https://example.invalid/x)" Then Error.Raise("Raw metadata was rewritten")
+  BoardSpaces.Edit(id, "Renamed", "📁", "")
+  row = BoardSpaces.Record(id)
+  If CStr(row["iconColor"]) <> "" Then Error.Raise("Explicit clear failed")
+  BoardSpaces.Edit(child, "Child", "", "#123456")
+  BoardSpaces.Move(child, 0)
+  row = BoardSpaces.Record(child)
+  If row["iconColor"] <> "#123456" Then Error.Raise("Reparent lost metadata")
+  BoardSpaces.Move(child, id)
+  BoardSpaces.Remove(id)
+  r = db.Find("kb_board_space_icons", "username='color-owner'")
+  If r.Count Then Error.Raise("Subtree removal retained colors")
+  id = BoardSpaces.Add("Account color")
+  BoardSpaces.Edit(id, "Account color", "", "blue")
+  db.Exec("UPDATE users SET admin=1 WHERE username='color-other'")
+  SignIn("color-other")
+  WebDatabase.DeleteUser("color-owner")
+  r = db.Find("kb_board_space_icons", "username='color-owner'")
+  If r.Count Then Error.Raise("Account removal retained colors")
+  Print "Workspace icon colors: additive defaults, name/icon edit preservation, private tree/typed/foreign denial, write/late owner-session-value rollback, raw metadata/explicit clear, subtree/account cleanup passed"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End
+
+Private Function Frame() As String
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim rows As New Variant[]
+  Dim r As Result
+  r = db.Find("kb_board_spaces", "ORDER BY id")
+  For Each r
+    rows.Add([CStr(r!id), CStr(r!username), CStr(r!name), CStr(r!icon)])
+  Next
+  r = db.Find("kb_board_space_icons", "ORDER BY username,space_id")
+  For Each r
+    rows.Add([CStr(r!username), CStr(r!space_id), CStr(r!icon_color)])
+  Next
+  rows.Add(WebDatabase.SessionGeneration("color-owner"))
+  Return JSON.Encode(rows)
+End

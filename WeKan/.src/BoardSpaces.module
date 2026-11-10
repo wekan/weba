@@ -24,6 +24,14 @@ Private Sub OpenStore()
     t.PrimaryKey = ["id"]
     t.Update()
   Endif
+  If Not $db.Tables.Exist("kb_board_space_icons") Then
+    t = $db.Tables.Add("kb_board_space_icons")
+    t.Fields.Add("username", db.String, 255)
+    t.Fields.Add("space_id", db.Integer)
+    t.Fields.Add("icon_color", db.String)
+    t.PrimaryKey = ["username", "space_id"]
+    t.Update()
+  Endif
   If Not $db.Tables.Exist("kb_board_space_collapsed") Then
     t = $db.Tables.Add("kb_board_space_collapsed")
     t.Fields.Add("username", db.String, 255)
@@ -81,6 +89,7 @@ Public Function Record(spaceId As Integer) As Collection
   data["parentId"] = r!parent_id
   data.Add(CStr(r!name), "name")
   data.Add(CStr(r!icon), "icon")
+  data.Add(ReadIconColor(spaceId, username), "iconColor")
   Return data
 End
 
@@ -104,6 +113,7 @@ Public Function Tree() As Variant[]
     row.Add(CStr(r!id), "id")
     row.Add(CStr(r!name), "name")
     If CStr(r!icon) Then row.Add(CStr(r!icon), "icon")
+    If ReadIconColor(r!id, username) Then row.Add(ReadIconColor(r!id, username), "iconColor")
     row["children"] = New Variant[]
     nodes[CStr(r!id)] = row
     parents[CStr(r!id)] = r!parent_id
@@ -246,12 +256,19 @@ Catch
   Error.Raise(failure)
 End
 
-Public Sub Edit(spaceId As Integer, name As String, Optional icon As String)
+Private Function ReadIconColor(spaceId As Integer, username As String) As String
+  Dim r As Result = $db.Find("kb_board_space_icons", "username=&1 AND space_id=&2", username, spaceId)
+  If r.Available Then Return r!icon_color
+  Return ""
+End
+
+Public Sub Edit(spaceId As Integer, name As String, Optional icon As String, Optional iconColor As Variant = Null)
   Dim username As String = Principal()
   Dim r As Result
   Dim transaction As Boolean
   Dim failure As String
   name = Trim(name)
+  If TypeOf(iconColor) <> TypeOf(Null) And TypeOf(iconColor) <> gb.String Then Error.Raise("Expected icon color text")
   If Not name Then Error.Raise("Enter a workspace name")
   Node(spaceId, username)
   username = BeginChange()
@@ -261,6 +278,22 @@ Public Sub Edit(spaceId As Integer, name As String, Optional icon As String)
   r["name"] = name
   r["icon"] = icon
   r.Update()
+  If TypeOf(iconColor) = gb.String Then
+    $db.Delete("kb_board_space_icons", "username=&1 AND space_id=&2", username, spaceId)
+    If CStr(iconColor) Then
+      r = $db.Create("kb_board_space_icons")
+      r["username"] = username
+      r["space_id"] = spaceId
+      r["icon_color"] = iconColor
+      r.Update()
+    Endif
+  Endif
+  If WebIdentity.Username <> username Or Not WebDatabase.UserExists(username) Then Error.Raise("Sign in required")
+  r = Node(spaceId, username)
+  If CStr(r!name) <> name Or CStr(r!icon) <> icon Then Error.Raise("Workspace changed")
+  If TypeOf(iconColor) = gb.String Then
+    If ReadIconColor(spaceId, username) <> CStr(iconColor) Then Error.Raise("Workspace color changed")
+  Endif
   DatabaseTransactions.Commit($db)
   transaction = False
 Catch
@@ -583,6 +616,7 @@ Public Sub Remove(spaceId As Integer)
   For cursor = ids.Max To 0 Step -1
     $db.Delete("kb_board_space_assignments", "username=&1 AND space_id=&2", username, ids[cursor])
     $db.Delete("kb_board_space_collapsed", "username=&1 AND space_id=&2", username, ids[cursor])
+    $db.Delete("kb_board_space_icons", "username=&1 AND space_id=&2", username, ids[cursor])
     $db.Delete("kb_board_spaces", "username=&1 AND id=&2", username, ids[cursor])
   Next
   DatabaseTransactions.Commit($db)

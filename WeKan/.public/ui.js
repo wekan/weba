@@ -59,19 +59,20 @@
     for(const row of document.querySelectorAll('.weba-space-row')){
       const button=row.querySelector('.weba-space-open'),source=row.querySelector('.weba-space-icon-source');
       const holder=button?.querySelector('.gw-button-text');if(!button||!source||!holder)continue;
+      const colorSource=row.querySelector(".weba-space-icon-color"),color=colorSource?.textContent?JSON.parse(colorSource.textContent):'';
       const text=source.textContent,name=button.title,prior=workspaceIconState.get(button);
-      if(prior?.text===text&&prior.name===name&&prior.generation===markdownGeneration&&holder.querySelector('.workspace-name'))continue;
+      if(prior?.text===text&&prior.name===name&&prior.color===color&&prior.generation===markdownGeneration&&holder.querySelector('.workspace-name'))continue;
       const icon=document.createElement('span');icon.className='workspace-icon';icon.setAttribute('aria-hidden','true');
       if(text){
-        const value=document.createElement('span');value.className='workspace-icon-value';
+        const value=document.createElement('span');value.className='workspace-icon-value';value.style.color=color;
         if(root.webaWorkspaceMarkdown)value.innerHTML=root.webaWorkspaceMarkdown.render(text);else value.textContent=text;
         icon.append(value);
-      }else{const folder=document.createElement('i');folder.className='fa fa-folder';icon.append(folder);}
+      }else{const value=document.createElement('span');value.className='emoji-icon';value.style.color=color;const folder=document.createElement('i');folder.className='fa fa-folder';value.append(folder);icon.append(value);}
       icon.addEventListener('click',event=>event.preventDefault());
       const label=document.createElement('span');label.className='workspace-name';label.textContent=name;
       if(text)holder.replaceChildren(icon,document.createTextNode(' '),label);else holder.replaceChildren(icon,label);
       if(button.getAttribute('aria-label')!==name)button.setAttribute('aria-label',name);
-      workspaceIconState.set(button,{text,name,generation:markdownGeneration});
+      workspaceIconState.set(button,{text,name,color,generation:markdownGeneration});
     }
   }
   function loadWorkspaceMarkdown(){
