@@ -642,6 +642,9 @@
     Class = "weba-user-text"
     Visible = False
   }
+  { LoginLandingAction WebTextBox
+    Visible = False
+  }
   { EntryRouteAction WebTextBox
     Visible = False
   }

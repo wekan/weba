@@ -101,7 +101,11 @@
     if(deferredOverview){const pending=deferredOverview;if(sendOverviewPath(pending.route,pending.source)){deferredOverview=null;entrySent=true;try{root.sessionStorage.removeItem(entryKey);}catch(_){}}return;}
     if(entrySent)return;
     let route=initialEntry;try{const stored=root.sessionStorage.getItem(entryKey);route=route||(overviewSections.includes(stored)?{section:stored,path:''}:JSON.parse(stored||'null'));}catch(_){}
-    if(!route){entrySent=true;return;}
+    if(!route){
+      const landing=document.querySelector('[id$=".LoginLandingAction"]');
+      if(root.location.pathname==='/'&&landing)root.gw.update(landing.id,'text','open');
+      entrySent=true;return;
+    }
     if(sendOverviewPath(route,'entry')){entrySent=true;try{root.sessionStorage.removeItem(entryKey);}catch(_){}}
   }
   const icons={Swimlanes:'th-large',Kanban:'trello',Calendar:'calendar',Gantt:'bar-chart',TableView:'table',Charts:'pie-chart',ContextMembers:'users',CardMembersButton:'users',CardAssigneesButton:'user',ContextAssignees:'user',AddCardPerson:'user-plus',RemoveCardPerson:'user-times',ContextAssignSelf:'user-plus',SaveMember:'save',RemoveMember:'user-times',ImportBoard:'download',ContextDelete:'trash-o',ContextRename:'pencil',ContextCopy:'clipboard',ContextMove:'arrow-up',ContextColor:'paint-brush',ContextStar:'star-o',ContextWatch:'eye-slash',ContextWip:'ban',ContextDescription:'align-left',ContextHistory:'history',ContextExport:'upload',ContextArchive:'archive',ContextRestore:'undo',ContextAddCard:'plus',ContextAddList:'plus',ContextAddLane:'plus',Starred:'star',HomeBoards:'home',BoardSettings:'cog',ArchivedItems:'archive',ContextComments:'comment-o',ContextChecklists:'check-square-o',ContextChecklistItems:'check',ContextSubtasks:'sitemap',ContextDependencies:'link',ContextFields:'list-alt',ContextTime:'clock-o',ContextAttachments:'paperclip',CardComments:'comment-o',CardChecklists:'check-square-o',CardChecklistItems:'check',CardSubtasks:'sitemap',CardDependencies:'link',CardFields:'list-alt',CardTime:'clock-o',CardAttachments:'paperclip',DetailStart:'play',DetailStop:'stop',DetailExport:'upload',DetailDownload:'download',DetailDelete:'trash-o'};

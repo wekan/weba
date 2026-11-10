@@ -57,6 +57,8 @@ Private $catalogPage As Integer = 1
 Private $catalogTotal As Integer
 Private $spaceMenu As Integer
 Private $overviewRouteToken As String
+Private $landingConsumed As Boolean
+Private $landingContext As String
 Private $spacesState As String
 Private $spaceRows As New WebContainer[]
 Private $spaceButtons As New Collection
@@ -97,6 +99,21 @@ Public Sub _HandleMessage()
     Return
   Endif
   Super._HandleMessage()
+End
+
+Private Function LandingContext() As String
+  Return CStr($board) & "|" & $view & "|" & CStr($spaceMenu)
+End
+
+Public Sub _BeforeRender()
+  ' Read the current CGI frame: Request's convenience properties may be cached.
+  If CGI["REQUEST_METHOD"] = "GET" And CGI["PATH_INFO"] = "/" Then
+    $landingConsumed = False
+    $landingContext = LandingContext()
+  Else If Not $landingContext Then
+    $landingContext = LandingContext()
+  Endif
+  Super._BeforeRender()
 End
 
 Public Sub WebForm_Event()
@@ -265,6 +282,7 @@ Public Sub Boards_Select()
   Dim parts As String[]
   Dim c As Result
   If Not Boards.Key Then Return
+  $landingConsumed = True
   $card = 0
   If Left(Boards.Key, 1) = "b" Then
     $board = CInt(Mid(Boards.Key, 2))
@@ -3862,6 +3880,7 @@ Public Sub EntryRouteAction_Change()
   Else If fields.Count <> 2 Then
     Error.Raise("Unknown overview entry")
   Endif
+  $landingConsumed = True
   $overviewRouteToken = fields[1]
   Select section
     Case "remaining"
@@ -3880,6 +3899,39 @@ Public Sub EntryRouteAction_Change()
     Case Else
       Error.Raise("Unknown overview entry")
   End Select
+Catch
+  Notice.Text = Error.Text
+End
+
+
+Public Sub LoginLandingAction_Change()
+  Dim command As String = LoginLandingAction.Text
+  Dim boardId As Integer
+  If Not WebIdentity.Username Then Error.Raise("Sign in required")
+  If Not command Then Return
+  LoginLandingAction.Text = ""
+  If command <> "open" Then Error.Raise("Invalid login landing")
+  If $landingConsumed Then Return
+  $landingConsumed = True
+  ' An ordinary navigation that already won the race must stay selected.
+  If LandingContext() <> $landingContext Then Return
+  boardId = HomeBoard.Visible()
+  If Not boardId Then
+    If $board > 0 Then
+      If Not BoardAccess.Role($board) Then
+        Home_Click()
+      Else If WorkspaceStore.Archived($board, "board", $board) <> $archive Then
+        Home_Click()
+      Endif
+    Endif
+    Return
+  Endif
+  Home_Click()
+  $board = boardId
+  $archive = False
+  $view = "Swimlanes"
+  $card = 0
+  RefreshTree()
 Catch
   Notice.Text = Error.Text
 End

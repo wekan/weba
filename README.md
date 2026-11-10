@@ -604,8 +604,17 @@ exactly one board and retains a refused multi-board selection. Home remains
 independent of stars/workspaces, updates on external preference/access changes,
 and has no Add Board tile. Archived/deleted IDs remain saved until explicitly
 cleared. Native generic drag commands from Home are refused while the source
-Remove-bar gesture is pending. Home login auto-opening, Home-first Starred
-presentation/badge and original profile/DDP transport remain TODO.
+Remove-bar gesture is pending. First native root landing after login or full
+page reload now opens the current readable active Home board once. All Boards
+remains usable afterward; named section entries win, ordinary mark changes do
+not navigate an already open page, and stale archived/revoked marks fall back.
+Gambas can retain forms across reloads, so only a fresh root HTML response rearms
+the consumed decision; native event requests cannot rearm it. The landing command
+accepts no caller board ID. Native board navigation keeps its existing URL.
+When no readable active Home is available, an existing native board retains its reload state.
+Home-first Starred presentation/badge, full original board routes/profile/DDP and
+Sandstorm single-board convenience remain TODO. Run
+`python3 tests/run-http.py --home-login [--archive]` for login/reload coverage.
 Run `python3 tests/run-http.py --home [--archive]` for the browser regression.
 
 The installed host now supports direct GET entry at `/allboards/remaining`,

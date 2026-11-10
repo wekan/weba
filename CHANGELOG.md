@@ -2,6 +2,21 @@
 
 This work adds the following features and fixes:
 
+- Open the current user's readable active Home board on the first native root
+  landing after login/full page reload. Rearm only for root HTML responses,
+  because Gambas can retain forms across reloads; native event requests keep
+  the one-time decision consumed. Avoid queuing an unchanged overview redraw
+  during full-page rendering, which detached the first workspace drag target.
+  Retain the native board reload state when no readable active Home is available.
+  Keep All Boards usable and named section entries authoritative. Leave an open
+  page in place when the Home preference changes.
+  Reject malformed/replayed landing commands, accept no caller board ID and
+  retain stale marks while falling back after archive/access loss. Verify
+  readonly/private, zero/default, reload/new-login, named-section, replay,
+  live clear and mobile behavior in source and packaged browsers. Native board
+  navigation remains at its existing URL; original board routes/profile/DDP and
+  Sandstorm single-board convenience remain pending. Thanks to xet7.
+
 - Preserve the current workspace URI/history when a pending target disappears,
   including a redundant click on the selected workspace during deletion. Treat
   the safe native index fallback as an entry acknowledgement rather than a new
