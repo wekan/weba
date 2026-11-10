@@ -427,6 +427,7 @@ Private Function LoadBoardOverview() As Collection
       data = BoardCatalog.Page(params, $archive)
     Endif
   Endif
+  If $view = "Starred" Then data["ids"] = HomeBoard.PresentStarred(data["ids"], BoardSearch.Text)
   $catalogTotal = data["total"]
   lastPage = Max(1, Int(($catalogTotal + 24) / 25))
   BoardPageLabel.Text = Str($catalogPage) & " / " & Str(lastPage) & " · " & Str($catalogTotal)
@@ -604,7 +605,9 @@ Public Sub Visual_Render()
   Dim overviewData As Collection
   Dim overviewIds As Integer[]
   Dim boardColor As String = "#2980b9"
+  Dim homeId As Integer
   If Not WebIdentity.Username Then Return
+  homeId = HomeBoard.Saved()
   ' Capture before rendering: a concurrent mutation after this read must be
   ' noticed by the next tick, even if it races the render queries.
   $liveState = ""
@@ -657,7 +660,7 @@ Public Sub Visual_Render()
         If WorkspaceStore.Setting(b!id, "board", b!id, "star") <> "1" Then Continue
       Endif
       If Not $board And ($view = "Boards" Or $view = "Archive" Or $view = "Starred" Or $view = "Home") Then
-        tiles[CStr(b!id)] = "<li data-selected=\"" & If(BoardSelection.IsSelected(SelectionState(), b!id), "true", "false") & "\" class=\"weba-board-tile-group js-board\" data-board-id=\"" & Str(b!id) & "\">" & If(IsOverview() And $view <> "Home", "<button type=\"button\" class=\"weba-drag-handle weba-board-drag fa fa-arrows\" data-drag-kind=\"board\" aria-label=\"Sort boards\"></button>", "") & "<button style=\"background-color:" & Html(WorkspaceStore.Setting(b!id, "board", b!id, "color", "#2980b9")) & "\" type=\"button\" class=\"weba-board-tile\" data-board-key=\"b" & Str(b!id) & "\"><strong class=\"board-list-item-name\">" & Html(b!title) & "</strong></button><button class=\"weba-board-context fa fa-bars\" data-context-kind=\"board\" data-context-id=\"" & Str(b!id) & "\" aria-label=\"Board menu\"></button></li>"
+        tiles[CStr(b!id)] = "<li data-selected=\"" & If(BoardSelection.IsSelected(SelectionState(), b!id), "true", "false") & "\" class=\"weba-board-tile-group js-board\" data-board-id=\"" & Str(b!id) & "\">" & If(IsOverview() And $view <> "Home", "<button type=\"button\" class=\"weba-drag-handle weba-board-drag fa fa-arrows\" data-drag-kind=\"board\" aria-label=\"Sort boards\"></button>", "") & "<button style=\"background-color:" & Html(WorkspaceStore.Setting(b!id, "board", b!id, "color", "#2980b9")) & "\" type=\"button\" class=\"weba-board-tile\" data-board-key=\"b" & Str(b!id) & "\"><strong class=\"board-list-item-name\">" & Html(b!title) & "</strong>" & If(b!id = homeId, "<span class=\"board-home-badge\" role=\"img\" title=\"Home board (opened after login)\" aria-label=\"Home board (opened after login)\"><i class=\"fa fa-home\" aria-hidden=\"true\"></i></span>", "") & "</button><button class=\"weba-board-context fa fa-bars\" data-context-kind=\"board\" data-context-id=\"" & Str(b!id) & "\" aria-label=\"Board menu\"></button></li>"
         Continue
       Endif
       Print "<h3>" & Html(b!title) & "</h3>"

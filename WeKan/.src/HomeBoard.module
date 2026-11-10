@@ -111,3 +111,31 @@ Catch
   If transaction Then Try DatabaseTransactions.Rollback($db)
   Error.Raise(failure)
 End
+
+
+' Source withHomeFirst is a presentation transform after server paging.
+' Raw catalog totals and stored stars/ranks remain unchanged.
+Public Function PresentStarred(ids As Integer[], search As String) As Integer[]
+  Dim result As New Integer[]
+  Dim homeId As Integer
+  Dim id As Integer
+  If Not ids Then Error.Raise("Invalid board page")
+  If SearchActive(search) Then Return ids.Copy()
+  homeId = Visible()
+  If Not homeId Then Return ids.Copy()
+  result.Add(homeId)
+  For Each id In ids
+    If id <> homeId Then result.Add(id)
+  Next
+  Return result
+End
+
+
+Private Function SearchActive(text As String) As Boolean
+  Dim whitespace As Integer[] = [9, 10, 11, 12, 13, 32, 160, 5760, 8192, 8193, 8194, 8195, 8196, 8197, 8198, 8199, 8200, 8201, 8202, 8232, 8233, 8239, 8287, 12288, 65279]
+  Dim index As Integer
+  For index = 1 To String.Len(text)
+    If whitespace.Find(String.Code(text, index)) < 0 Then Return True
+  Next
+  Return False
+End

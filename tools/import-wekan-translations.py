@@ -45,7 +45,7 @@ aliases = {
     'Mon': 'monday', 'Tue': 'tuesday', 'Wed': 'wednesday', 'Thu': 'thursday',
     'Fri': 'friday', 'Sat': 'saturday', 'Sun': 'sunday',
 }
-texts = {'Please select only one board', 'Unlimited', 'Maximum file size', 'Blocked', 'GB', 'MB', 'Bytes', 'Board administrator', 'Normal', 'Normal (assigned cards only)',
+texts = {'Home board (opened after login)', 'Please select only one board', 'Unlimited', 'Maximum file size', 'Blocked', 'GB', 'MB', 'Bytes', 'Board administrator', 'Normal', 'Normal (assigned cards only)',
          'No comments', 'Comment only', 'Comment (assigned cards only)',
          'Worker', 'Read only', 'Read (assigned cards only)', 'Language', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'}
 controls = set()

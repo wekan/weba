@@ -612,10 +612,22 @@ Gambas can retain forms across reloads, so only a fresh root HTML response rearm
 the consumed decision; native event requests cannot rearm it. The landing command
 accepts no caller board ID. Native board navigation keeps its existing URL.
 When no readable active Home is available, an existing native board retains its reload state.
-Home-first Starred presentation/badge, full original board routes/profile/DDP and
+Full original board routes/profile/DDP and
 Sandstorm single-board convenience remain TODO. Run
 `python3 tests/run-http.py --home-login [--archive]` for login/reload coverage.
 Run `python3 tests/run-http.py --home [--archive]` for the browser regression.
+
+Starred now applies the unchanged source Home-first presentation rule after
+catalog paging: readable active Home appears first even when unstarred, once
+per rendered page. A title search suppresses this insertion. Raw server counts
+and page bounds remain unchanged, so a Home tile can be additional to a page.
+The saved mark also appears as a top-center translated badge wherever that
+board is visible, including Archive. Changing Home updates badges/order live;
+viewing it changes no stars, workspace assignments or personal ranks.
+`node tests/home-presentation-conformance.test.cjs` compares 288 actual native
+outputs with the unchanged source helper using explicit SQL/cache/ID adapters.
+Run `python3 tests/run-http.py --home-presentation [--archive]` for real paging,
+lifecycle, translation and mobile geometry coverage.
 
 The installed host now supports direct GET entry at `/allboards/remaining`,
 `/allboards/starred`, `/allboards/archive` and `/allboards/home`, including one trailing slash and

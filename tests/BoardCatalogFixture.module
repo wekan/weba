@@ -8,6 +8,7 @@ Public Sub Main()
   Dim title As String
   Dim raw As New Variant[]
   Dim row As Collection
+  Dim pageParams As New Collection
   If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
   Session["username"] = If(Env["WEBA_TEST_USER"], Env["WEBA_TEST_USER"], "rest-other")
   Session["auth_generation"] = WebDatabase.SessionGeneration(Session["username"])
@@ -40,6 +41,20 @@ Public Sub Main()
   Next
   data["recoveryEvents"] = raw
   raw = New Variant[]
+  If Env["WEBA_CATALOG_MODE"] = "seed-home-presentation" Then
+    For index = 0 To 26
+      boardId = KanbanStore.AddBoard("Home projection " & If(index = 0, "mark", Format(index, "00")))
+      BoardAccess.SetMember(boardId, "rest-member", "read-only")
+      ids.Add(boardId)
+    Next
+    Session["username"] = "rest-member"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("rest-member")
+    For index = 1 To 26
+      WorkspaceStore.SetSetting(ids[index], "board", ids[index], "star", "1")
+    Next
+    HomeBoard.SetBoard(ids[0])
+    data["ids"] = ids
+  Endif
   If Env["WEBA_CATALOG_MODE"] = "seed-order" Then
     For Each title In ["Order Alpha", "Order Bravo", "Order Charlie"]
       boardId = KanbanStore.AddBoard(title)
@@ -158,6 +173,10 @@ Public Sub Main()
     row.Add(CStr(r!space_id), CStr(r!board_id))
   Next
   data["rawAssignments"] = row
+  If Env["WEBA_CATALOG_MODE"] = "cleanup-home-presentation" Then
+    CleanupHomeFixture(True)
+    BoardCatalog.SetSortBy(Env["WEBA_HOME_SORT"])
+  Endif
   If Env["WEBA_CATALOG_MODE"] = "cleanup-home" Then
     CleanupHomeFixture()
     BoardCatalog.SetSortBy(Env["WEBA_HOME_SORT"])
@@ -168,13 +187,15 @@ Public Sub Main()
   Endif
   data["home"] = HomeBoard.Saved()
   data["homeVisible"] = HomeBoard.Visible()
+  pageParams["menu"] = "starred"
+  data["starredTotal"] = BoardCatalog.Page(pageParams)["total"]
   data["positions"] = BoardOrder.Positions()
   data["sortBy"] = BoardCatalog.SortBy()
   Print JSON.Encode(data)
 End
 
 
-Private Sub CleanupHomeFixture()
+Private Sub CleanupHomeFixture(Optional presentation As Boolean)
   Dim db As Connection = WebDatabase.OpenConnection()
   Dim ids As Integer[] = New Integer[]
   Dim rawId As Variant
@@ -185,11 +206,15 @@ Private Sub CleanupHomeFixture()
     id = CInt(rawId)
     r = db.Find("kb_boards", "id=&1", id)
     If Not r.Available Then Error.Raise("Missing Home fixture board")
-    If ["Order Alpha", "Order Bravo", "Order Charlie", "Order private"].Find(CStr(r!title)) < 0 Then Error.Raise("Not a Home fixture board")
-    If r!owner <> "rest-other" And r!owner <> "rest-owner" Then Error.Raise("Not a Home fixture owner")
+    If presentation Then
+      If Left(CStr(r!title), Len("Home projection ")) <> "Home projection " Or r!owner <> "rest-other" Then Error.Raise("Not a Home presentation fixture board")
+    Else
+      If ["Order Alpha", "Order Bravo", "Order Charlie", "Order private"].Find(CStr(r!title)) < 0 Then Error.Raise("Not a Home fixture board")
+      If r!owner <> "rest-other" And r!owner <> "rest-owner" Then Error.Raise("Not a Home fixture owner")
+    Endif
     ids.Add(id)
   Next
-  If ids.Count <> 4 Then Error.Raise("Invalid Home fixture cleanup")
+  If ids.Count <> If(presentation, 27, 4) Then Error.Raise("Invalid Home fixture cleanup")
   For Each id In ids
     For Each t In db.Tables
       If t.Fields.Exist("board_id") Then db.Delete(t.Name, "board_id=&1", id)

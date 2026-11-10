@@ -21,6 +21,7 @@ done
 
 "${NODE:-node}" "$root/tests/native-scope-conformance.test.cjs"
 "${NODE:-node}" "$root/tests/board-catalog-conformance.test.cjs"
+"${NODE:-node}" "$root/tests/home-presentation-conformance.test.cjs"
 "${NODE:-node}" "$root/tests/board-space-counts-conformance.test.cjs"
 "${NODE:-node}" "$root/tests/workspace-drop-conformance.test.cjs"
 "${NODE:-node}" "$root/tests/board-drop-conformance.test.cjs"

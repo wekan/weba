@@ -132,9 +132,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   drafts and clickable close controls. Delayed-width/async-error tests, full
   local/test-live and existing layout regressions pass. Original suite counts
   remain unchanged.
-- Next Home parity: Home-first Starred presentation, board badge,
-  drag-to-Home and confirmed Remove bar. Private native preference persistence,
-  lifecycle/rollback tests, Home sidebar/count/catalog, guarded one-selection
+- Next Home parity: drag-to-Home and confirmed Remove bar. Private native preference persistence,
+  lifecycle/rollback tests, Home sidebar/count/catalog, Home-first Starred
+  presentation and translated saved-mark badge, guarded one-selection
   toggle, /allboards/home entry/menu/history and native root login/reload opening
   are recorded in CHANGELOG.md; original board URL routing, Sandstorm single-board
   convenience and original defaultBoardId/DDP transport remain open.

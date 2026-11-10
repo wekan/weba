@@ -2,6 +2,18 @@
 
 This work adds the following features and fixes:
 
+- Match source Home-first Starred presentation after raw paging, including an
+  unstarred readable active Home, per-page deduplication and the source Unicode
+  search guard. Preserve raw query totals, page bounds, stars, placement and
+  ranks. Render the saved Home mark as a translated top-center accessible badge
+  on visible tiles, including Archive, with live replacement and access changes.
+  Compare 288 native outputs with the unchanged source withHomeFirst using
+  explicit numeric-ID/private-cache adapters and verify read-only state/input
+  stability. Test actual Custom/A-Z/Z-A pages, search, badge lifecycle, Finnish
+  accessibility and mobile geometry in browsers. Import the existing badge
+  caption verbatim across 237 catalogs. Home drag/Remove bar and original board
+  URL/profile/DDP/Sandstorm transport remain pending. Thanks to xet7.
+
 - Open the current user's readable active Home board on the first native root
   landing after login/full page reload. Rearm only for root HTML responses,
   because Gambas can retain forms across reloads; native event requests keep

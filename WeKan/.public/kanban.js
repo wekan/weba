@@ -11,6 +11,7 @@
       const data = section.querySelector('.weba-data'), report = section.querySelector('.weba-report');
       if (!data || !report) return;
       report.replaceChildren(); data.hidden = false;
+      data.querySelectorAll('.board-home-badge').forEach(badge=>{const label=t('Home board (opened after login)');badge.title=label;badge.setAttribute('aria-label',label);});
       data.querySelectorAll('[data-drag-kind="board"]').forEach(handle=>{const label=t(section.dataset.boardReorder==='true'?'Sort boards':'Move')+': '+(handle.closest('.weba-board-tile-group')?.querySelector('strong')?.textContent||'');handle.title=label;handle.setAttribute('aria-label',label);});
       data.querySelectorAll('.weba-board-tile-group').forEach(group=>{
         const active=section.dataset.multiActive==='true';

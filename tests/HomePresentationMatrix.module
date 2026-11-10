@@ -1,0 +1,106 @@
+Public Sub Main()
+  Dim a As Integer
+  Dim b As Integer
+  Dim foreign As Integer
+  Dim state As String
+  Dim db As Connection
+  Dim data As New Collection
+  Dim rows As New Variant[]
+  Dim row As Collection
+  Dim cases As Variant[]
+  Dim item As Collection
+  Dim actual As Collection
+  Dim outputs As Variant[]
+  Dim ids As Integer[]
+  Dim index As Variant
+  Dim before As String
+  Dim inputFrame As String
+  WebDatabase.Register("hp-owner", "x")
+  WebDatabase.Register("hp-reader", "x")
+  WebDatabase.Register("hp-other", "x")
+  SignIn("hp-owner")
+  a = KanbanStore.AddBoard("Home presentation A")
+  b = KanbanStore.AddBoard("Home presentation B")
+  BoardAccess.SetMember(a, "hp-reader", "read-only")
+  BoardAccess.SetMember(b, "hp-reader", "read-only")
+  SignIn("hp-other")
+  foreign = KanbanStore.AddBoard("PRIVATE-HOME-PRESENTATION")
+  SignIn("hp-reader")
+  HomeBoard.SetBoard(a)
+  BoardOrder.Positions()
+  WorkspaceStore.SetSetting(b, "board", b, "star", "1")
+  cases = JSON.Decode(File.Load(".public/home-presentation-cases.json"))
+  db = WebDatabase.OpenConnection()
+  For Each state In ["active", "archived", "revoked", "foreign", "none", "deleted"]
+    SignIn("hp-owner")
+    db.Exec("UPDATE kb_boards SET archived=&1 WHERE id=&2", False, a)
+    BoardAccess.SetMember(a, "hp-reader", "read-only")
+    SignIn("hp-reader")
+    HomeBoard.SetBoard(a)
+    If state = "archived" Then db.Exec("UPDATE kb_boards SET archived=&1 WHERE id=&2", True, a)
+    If state = "revoked" Then
+      SignIn("hp-owner")
+      BoardAccess.RemoveMember(a, "hp-reader")
+      SignIn("hp-reader")
+    Endif
+    If state = "foreign" Then db.Exec("UPDATE kb_default_boards SET board_id=&1 WHERE username=&2", foreign, "hp-reader")
+    If state = "none" Then HomeBoard.Clear(a)
+    If state = "deleted" Then db.Delete("kb_boards", "id=&1", a)
+    row = New Collection
+    row["state"] = state
+    row["actor"] = "hp-reader"
+    row["saved"] = HomeBoard.Saved()
+    row["boards"] = RawRows(db.Find("kb_boards", "ORDER BY id"), ["id", "owner", "archived"])
+    row["members"] = RawRows(db.Find("kb_members", "ORDER BY board_id,username"), ["board_id", "username", "role"])
+    row["removed"] = RawRows(db.Find("kb_removed_members", "ORDER BY board_id,username"), ["board_id", "username"])
+    before = Frame()
+    outputs = New Variant[]
+    For Each item In cases
+      ids = New Integer[]
+      For Each index In item["ids"]
+        ids.Add(If(index = 0, a, b))
+      Next
+      inputFrame = JSON.Encode(ids)
+      actual = New Collection
+      actual["ids"] = ids.Copy()
+      actual["search"] = item["search"]
+      actual["actual"] = HomeBoard.PresentStarred(ids, item["search"])
+      If JSON.Encode(ids) <> inputFrame Then Error.Raise("Presentation mutated input page")
+      outputs.Add(actual)
+    Next
+    If Frame() <> before Then Error.Raise("Presentation changed persistent state")
+    row["cases"] = outputs
+    rows.Add(row)
+  Next
+  data["rows"] = rows
+  Print JSON.Encode(data)
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End
+
+Private Function RawRows(r As Result, fields As String[]) As Variant[]
+  Dim rows As New Variant[]
+  Dim row As Collection
+  Dim field As String
+  For Each r
+    row = New Collection
+    For Each field In fields
+      row.Add(r[field], field)
+    Next
+    rows.Add(row)
+  Next
+  Return rows
+End
+
+Private Function Frame() As String
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim data As New Variant[]
+  data.Add(RawRows(db.Find("kb_default_boards", "ORDER BY username"), ["username", "board_id"]))
+  data.Add(RawRows(db.Find("kb_user_meta", "ORDER BY username,board_id,setting"), ["username", "board_id", "setting", "value"]))
+  data.Add(RawRows(db.Find("kb_board_order", "ORDER BY username,board_id"), ["username", "board_id", "sort_order"]))
+  data.Add(RawRows(db.Find("kb_history", "ORDER BY id"), ["id", "board_id"]))
+  Return JSON.Encode(data)
+End
