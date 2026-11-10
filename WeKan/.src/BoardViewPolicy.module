@@ -1,0 +1,275 @@
+' Source view decisions, independent of renderer availability and edit transport.
+Export
+Private $definition As Collection
+Private $db As Connection
+
+Private Function Definition() As Collection
+  If Not $definition Then $definition = JSON.Decode(File.Load(".public/board-views.json"))
+  Return $definition
+End
+
+Public Function Keys() As String[]
+  Dim result As New String[]
+  Dim item As Collection
+  For Each item In Definition()["views"]
+    result.Add(item["view"])
+  Next
+  Return result
+End
+
+Private Function Known(value As Variant) As Boolean
+  If TypeOf(value) <> gb.String Then Return False
+  Return Keys().Find(CStr(value)) >= 0
+End
+
+Private Function IsCollection(value As Variant) As Boolean
+  If TypeOf(value) <> gb.Object Then Return False
+  Return value Is Collection
+End
+
+Private Function IsArray(value As Variant) As Boolean
+  If TypeOf(value) <> gb.Object Then Return False
+  Return value Is Variant[] Or value Is String[]
+End
+
+Public Function NormalizeOrder(value As Variant) As String[]
+  Dim result As New String[]
+  Dim older As New String[]
+  Dim key As String
+  Dim entry As Variant
+  If IsArray(value) Then
+    For Each entry In value
+      If Not Known(entry) Then Continue
+      If result.Find(CStr(entry)) < 0 Then result.Add(CStr(entry))
+    Next
+  Endif
+  For Each key In Definition()["order"]
+    If result.Find(key) >= 0 Or Definition()["later"].Find(key) < 0 Then older.Add(key)
+  Next
+  If result.Count > 0 And JSON.Encode(result) = JSON.Encode(older) Then result.Clear()
+  For Each key In Definition()["order"]
+    If result.Find(key) < 0 Then result.Add(key)
+  Next
+  For Each key In Keys()
+    If result.Find(key) < 0 Then result.Add(key)
+  Next
+  Return result
+End
+
+Public Function Snapshot(doc As Collection) As Collection
+  Dim data As New Collection
+  Dim table As New Collection
+  Dim entry As Collection
+  Dim key As String
+  Dim side As String
+  Dim field As String
+  Dim raw As Variant
+  For Each key In Keys()
+    entry = New Collection
+    For Each side In ["Public", "Private"]
+      field = "showOn" & side
+      raw = Null
+      If IsCollection(doc["boardViewSettings"]) Then
+        If IsCollection(doc["boardViewSettings"][key]) Then raw = doc["boardViewSettings"][key][field]
+      Endif
+      entry[field] = True
+      If TypeOf(raw) = gb.Boolean Then entry[field] = CBool(raw)
+    Next
+    table[key] = entry
+  Next
+  data["boardViewSettings"] = table
+  For Each side In ["Public", "Private"]
+    field = "default" & side & "BoardView"
+    data[field] = "board-view-swimlanes"
+    If Known(doc[field]) Then data[field] = doc[field]
+  Next
+  data["boardViewOrder"] = NormalizeOrder(doc["boardViewOrder"])
+  data["keys"] = Keys()
+  Return data
+End
+
+Private Function WireString(value As Variant) As String
+  Dim rows As New String[]
+  Dim item As Variant
+  If IsNull(value) Then Return "null"
+  If TypeOf(value) = gb.Boolean Then Return If(CBool(value), "true", "false")
+  If TypeOf(value) <> gb.Object Then Return CStr(value)
+  If value Is Collection Then Return "[object Object]"
+  If value Is Variant[] Then
+    For Each item In value
+      rows.Add(If(IsNull(item), "", WireString(item)))
+    Next
+    Return rows.Join(",")
+  Endif
+  Return CStr(value)
+End
+
+' Match source request ordering/coercion; reject a no-recognized-field write.
+Public Function Prepare(doc As Collection, input As Collection) As Collection
+  Dim data As Collection = Snapshot(doc)
+  Dim field As String
+  Dim side As String
+  Dim view As String
+  Dim raw As Variant
+  Dim entry As Variant
+  Dim changed As Boolean
+  Dim shown As Boolean
+  For Each side In ["Public", "Private"]
+    field = "default" & side & "BoardView"
+    If Not input.Exist(field) Then Continue
+    If Not Known(input[field]) Then Error.Raise("Unknown board view")
+    view = input[field]
+    data[field] = view
+    data["boardViewSettings"][view]["showOn" & side] = True
+    changed = True
+  Next
+  If input.Exist("boardViewSettings") Then
+    raw = input["boardViewSettings"]
+    If Not IsCollection(raw) Then Error.Raise("Invalid board view settings")
+    For Each view In raw.Keys
+      If Not Known(view) Then Error.Raise("Unknown board view")
+      entry = raw[view]
+      If Not IsCollection(entry) Then Error.Raise("Invalid board view settings")
+      For Each side In ["Public", "Private"]
+        field = "showOn" & side
+        If Not entry.Exist(field) Then Continue
+        shown = LCase(WireString(entry[field])) = "true"
+        If Not shown And data["default" & side & "BoardView"] = view Then Error.Raise("Cannot hide the default board view")
+        data["boardViewSettings"][view][field] = shown
+        changed = True
+      Next
+    Next
+  Endif
+  If input.Exist("boardViewOrder") Then
+    raw = input["boardViewOrder"]
+    If Not IsArray(raw) Then Error.Raise("Invalid board view order")
+    For Each entry In raw
+      If Not Known(entry) Then Error.Raise("Unknown board view")
+    Next
+    data["boardViewOrder"] = NormalizeOrder(raw)
+    changed = True
+  Endif
+  If Not changed Then Error.Raise("No recognized board view settings")
+  Return data
+End
+
+Private Function ReadRaw(boardId As Integer) As Collection
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim r As Result
+  Dim data As Collection
+  If Not db.Find("kb_boards", "id=&1", boardId).Available Then Error.Raise("Board not accessible")
+  If Not db.Tables.Exist("kb_board_view_policy") Then Return New Collection
+  r = db.Find("kb_board_view_policy", "board_id=&1", boardId)
+  If Not r.Available Then Return New Collection
+  Try data = JSON.Decode(CStr(r!settings))
+  If Error Or Not data Then Return New Collection
+  Return data
+End
+
+Public Function Settings(boardId As Integer) As Collection
+  If Not WebIdentity.Username Then Error.Raise("Sign in required")
+  BoardAccess.RequireRead(boardId)
+  Return Snapshot(ReadRaw(boardId))
+End
+
+Public Function Resolve(data As Collection, requested As String, side As String, allowed As String[]) As String
+  Dim field As String = If(side = "public", "Public", "Private")
+  Dim fallback As String = data["default" & field & "BoardView"]
+  If Known(requested) Then
+    If allowed.Find(requested) >= 0 And data["boardViewSettings"][requested]["showOn" & field] = True Then Return requested
+  Endif
+  If allowed.Find(fallback) >= 0 And data["boardViewSettings"][fallback]["showOn" & field] = True Then Return fallback
+  Return "board-view-swimlanes"
+End
+
+Public Function Guest(boardId As Integer) As Collection
+  Dim data As Collection
+  Dim result As New Collection
+  Dim rows As New String[]
+  Dim names As New Collection
+  Dim view As String
+  Dim allowed As New String[]
+  If Env["WEBA_API_REQUEST"] = "1" Or WebIdentity.Username Then Error.Raise("Guest context required")
+  If BoardVisibility.Permission(boardId) <> "public" Then Error.Raise("Board not accessible")
+  For Each view In ["Swimlanes", "Lists", "Table", "Calendar"]
+    names["board-view-" & If(view = "Calendar", "cal", LCase(view))] = view
+  Next
+  For Each view In names.Keys
+    allowed.Add(view)
+  Next
+  data = Snapshot(ReadRaw(boardId))
+  For Each view In data["boardViewOrder"]
+    If names.Exist(view) Then
+      If data["boardViewSettings"][view]["showOnPublic"] = True Then rows.Add(names[view])
+    Endif
+  Next
+  result["views"] = rows
+  result["defaultView"] = names[Resolve(data, "", "public", allowed)]
+  If BoardVisibility.Permission(boardId) <> "public" Or WebIdentity.Username Then Error.Raise("Board not accessible")
+  Return result
+End
+
+Private Sub RequireManager(boardId As Integer)
+  If Not WebIdentity.Username Then Error.Raise("Sign in required")
+  If Not WebDatabase.GetIsAdmin(WebIdentity.Username) Then BoardAccess.Require(boardId, "manageBoard")
+  If Not WebDatabase.OpenConnection().Find("kb_boards", "id=&1", boardId).Available Then Error.Raise("Board not accessible")
+End
+
+Private Sub OpenStore()
+  Dim t As Table
+  If $db Then Return
+  $db = WebDatabase.OpenConnection()
+  If Not $db.Tables.Exist("kb_board_view_policy") Then
+    t = $db.Tables.Add("kb_board_view_policy")
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("settings", db.String)
+    t.Fields.Add("actor", db.String, 255)
+    t.Fields.Add("changed_ms", db.Long)
+    t.PrimaryKey = ["board_id"]
+    t.Update()
+  Endif
+Catch
+  $db = Null
+  Error.Propagate()
+End
+
+Public Function Save(boardId As Integer, input As Collection) As Collection
+  Dim actor As String = WebIdentity.Username
+  Dim generation As Long
+  Dim owner As String
+  Dim transaction As Boolean
+  Dim data As Collection
+  Dim r As Result
+  Dim failure As String
+  RequireManager(boardId)
+  generation = WebDatabase.SessionGeneration(actor)
+  OpenStore()
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+  RequireManager(boardId)
+  If WebIdentity.Username <> actor Or WebDatabase.SessionGeneration(actor) <> generation Then Error.Raise("Sign in required")
+  owner = CStr($db.Find("kb_boards", "id=&1", boardId)!owner)
+  data = Prepare(ReadRaw(boardId), input)
+  r = $db.Edit("kb_board_view_policy", "board_id=&1", boardId)
+  If Not r.Available Then
+    r = $db.Create("kb_board_view_policy")
+    r["board_id"] = boardId
+  Endif
+  r["settings"] = JSON.Encode(data)
+  r["actor"] = actor
+  r["changed_ms"] = ItemChanges.UtcNow()
+  r.Update()
+  RequireManager(boardId)
+  If WebIdentity.Username <> actor Or WebDatabase.SessionGeneration(actor) <> generation Then Error.Raise("Sign in required")
+  If CStr($db.Find("kb_boards", "id=&1", boardId)!owner) <> owner Then Error.Raise("Board owner changed")
+  If JSON.Encode(Snapshot(ReadRaw(boardId))) <> JSON.Encode(data) Then Error.Raise("Board view settings changed")
+  DatabaseTransactions.Commit($db)
+  transaction = False
+  Return data
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End

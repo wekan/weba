@@ -805,8 +805,8 @@ Calendar using four fixed native buttons. Each event performs the same fresh
 anonymous public/card read; it cannot submit an arbitrary view or mutation.
 Retain the selected view while opening/closing cards and navigating same-board
 history. Permission loss clears both data and view controls; guarded Refresh
-restores them. This is document-local state, initially Swimlanes, without writes
-to user profiles or board settings.
+restores them. The requested view is document-local state, initially the public
+policy default (legacy Swimlanes), without writes to user profiles or board settings.
 
 Shared Table/Calendar/Gantt report cards now expose canonical semantic anchors
 with routing IDs and literal-user-text protection, so keyboard opening uses the
@@ -818,10 +818,39 @@ and real guest browser checks cover all four views, mounted-view/card history,
 keyboard/new-tab, dated/undated month navigation, idle DOM preservation,
 translated controls/columns versus literal card titles, mobile, forged commands
 and privacy/recovery. The complete local suite (66 host tests) and focused
-source/packaged guest browser suites pass. Source board/instance view
-visibility/default/order,
-remaining guest views, richer date/calendar models and original Meteor actions
+source/packaged guest browser suites pass. Manager view-policy editing/REST,
+instance feature controls, remaining guest views, richer date/calendar models
+and original Meteor actions
 remain pending.
+
+`BoardViewPolicy` persists normalized settings for all 40 source view keys in
+`kb_board_view_policy`, with separate public/private show flags and defaults,
+full source order and actor/time attribution. Missing fields mean shown and
+Swimlanes is the absent/unknown default; preserve older default-order insertion
+and normalize duplicate/unknown stored order entries. Write preparation applies
+new defaults (also showing them) before show flags, refuses hiding that side's
+default, and matches source boolean coercion. Signed-in read guards and manager
+writes are separate from the public guest projection. Manager saves lock the
+current actor and board and recheck identity, generation, role, owner and written
+state before commit. Reads do not initialize policy tables or rows. Board purge
+includes policy atomically without touching unselected policy rows.
+
+Guest snapshots contain only public native view names in source order and an
+effective default; private settings remain absent. Initial entry/reload selects
+that default. Keep a valid current view across default changes; hiding it falls
+back live. Hide unavailable controls, reorder retained native controls, and
+resolve even forged clicks on hidden controls through fresh policy. Source
+`allowView` is adapted to the four currently implemented native renderers, so
+unsupported source defaults use the source's core Swimlanes last resort. This
+availability adapter does not implement instance feature settings. Import source
+metadata with `node tools/import-board-views.cjs /path/to/wekan`. Native tests
+cover scope, default/readonly/anonymous refusals, missing schema, failed writes,
+late owner/principal loss and purge rollback; 188 native cases match unchanged
+source snapshot/request helpers. Guest browsers cover live hidden/order/default/
+reload/fallback behavior with existing navigation and privacy checks. The full
+local suite (66 host tests) and focused source/packaged guest suites pass. Manager
+editing UI/REST, signed-in view consumption, instance features, policy copy/import
+and full original Meteor actions remain pending.
 
 Selected guest cards now show comments and checklists through the same final
 public/card scope guards. Only the selected board/card's records are queried;

@@ -5,7 +5,7 @@ Private $token As String
 Private $data As Collection
 Private $state As String
 Private $refusedCard As Boolean
-Private $view As String = "Swimlanes"
+Private $view As String
 
 Public Sub _HandleMessage()
   If CGI["WEBA_NATIVE_PASSIVE"] = "1" Then
@@ -40,6 +40,7 @@ Public Sub OpenRoute(boardText As String, cardText As String, token As String)
   Notice.Text = If(refusedCard, "Card not accessible", "")
   $token = token
   $data = data
+  $view = data["viewPolicy"]["defaultView"]
   $state = JSON.Encode(data)
 End
 
@@ -66,6 +67,12 @@ Private Sub Acknowledge()
   CloseEditor.Visible = Not IsNull($data) And $cardText <> ""
   GuestRetry.Visible = IsNull($data)
   GuestViews.Visible = Not IsNull($data)
+  If $data Then
+    GuestSwimlanes.Visible = $data["viewPolicy"]["views"].Find("Swimlanes") >= 0
+    GuestLists.Visible = $data["viewPolicy"]["views"].Find("Lists") >= 0
+    GuestTable.Visible = $data["viewPolicy"]["views"].Find("Table") >= 0
+    GuestCalendar.Visible = $data["viewPolicy"]["views"].Find("Calendar") >= 0
+  Endif
 End
 
 Private Sub RefreshGuest()
@@ -91,6 +98,7 @@ Private Sub RefreshGuest()
     GuestSurface.Refresh()
     Return
   Endif
+  If data["viewPolicy"]["views"].Find($view) < 0 Then $view = data["viewPolicy"]["defaultView"]
   state = JSON.Encode(data)
   If state = $state And $data Then
     Acknowledge()
@@ -110,7 +118,7 @@ Public Sub EntryRouteAction_Change()
   If fields.Count < 3 Or fields.Count > 4 Then Return
   If fields[0] <> "board" Or Not fields[1] Or Len(fields[1]) > 128 Then Return
   $refusedCard = False
-  If fields[2] <> $boardText Then $view = "Swimlanes"
+  If fields[2] <> $boardText Then $view = ""
   $boardText = fields[2]
   $cardText = ""
   If fields.Count = 4 Then $cardText = fields[3]
@@ -155,7 +163,7 @@ Public Sub GuestSurface_Render()
   Dim kind As String
   If Not $data Then Return
   Print "<script>" & File.Load(".public/kanban.js") & "</script>"
-  Print "<section class='weba-content weba-guest-board' data-view='" & Html($view) & "' data-board='" & CStr($data["id"]) & "' data-board-color='" & Html($data["color"]) & "' data-editable='false' data-card-move='false'>"
+  Print "<section class='weba-content weba-guest-board' data-view='" & Html($view) & "' data-guest-view-order='" & Html(JSON.Encode($data["viewPolicy"]["views"])) & "' data-board='" & CStr($data["id"]) & "' data-board-color='" & Html($data["color"]) & "' data-editable='false' data-card-move='false'>"
   If $cardText Then
     card = $data["card"]
     Print "<article class='weba-guest-detail weba-user-text'><h2>" & Html(card["title"]) & "</h2><p>" & Html(card["description"]) & "</p><p>" & Html(card["status"]) & " · " & Html(card["assignee"]) & " · " & Html(card["labels"]) & " · " & Html(card["due_day"]) & "</p></article>"

@@ -2,6 +2,27 @@
 
 This work adds the following features and fixes:
 
+- Persist native board-view policy for all 40 source views: separate public/
+  private visibility and defaults, source order normalization including older
+  defaults, source boolean coercion and default-before-hide validation. Guard
+  manager writes under actor/board locks with final identity/generation/owner/
+  role/state checks and rollback; keep legacy policy reads free of schema/row
+  initialization. Expose only available public view names/default to anonymous
+  readers, enforce live hiding/order/current-view fallback and default-on-entry/
+  reload in the guest form, and recheck hidden-control clicks. Preserve valid
+  current views when only the default changes. Register policy with atomic board
+  purge and preserve unselected policies. Verify native scope/no-write, invalid
+  default, readonly/anonymous, attribution, failed write/retry and late owner/
+  principal rollback; compare 188 native cases with unchanged source snapshot/
+  request helpers and test live guest policy controls and navigation in browser.
+  The complete local suite (66 host tests) and focused source/packaged guest
+  browser suites pass.
+  Native renderer availability is an explicit four-view allow predicate; source
+  metadata retains every view. Manager editing UI/REST, signed-in consumption,
+  instance feature policy, copy/import integration and original Meteor actions
+  remain pending.
+  Thanks to xet7.
+
 - Expose read-only native Lists, Swimlanes, Table and due-day Calendar in the
   guest form using four fixed own-control click handlers and fresh public/card
   read checks. Keep the current view while opening/closing cards and moving

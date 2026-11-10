@@ -38,6 +38,8 @@ Public Sub Main()
     data["commentId"] = commentId
     data["checklistId"] = checklistId
     data["itemId"] = itemId
+  Else If mode = "view-policy" Then
+    BoardViewPolicy.Save(id, JSON.Decode(Env["WEBA_PUBLIC_VIEW_POLICY"], True))
   Else If mode = "guest-views" Then
     cardId = Val(Env["WEBA_PUBLIC_CARD"])
     db.Exec("UPDATE kb_cards SET title='Calendar',description='Literal <script>canary</script>',due_day=&1 WHERE board_id=&2 AND id=&3", Env["WEBA_PUBLIC_DUE"], id, cardId)

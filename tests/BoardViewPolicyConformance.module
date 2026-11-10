@@ -1,0 +1,21 @@
+Public Sub Main()
+  Dim rows As Variant[] = JSON.Decode(Env["WEBA_VIEW_CASES"], True)
+  Dim results As New Variant[]
+  Dim row As Collection
+  For Each row In rows
+    results.Add(Outcome(row))
+  Next
+  Print JSON.Encode(results)
+End
+
+Private Function Outcome(row As Collection) As Collection
+  Dim result As New Collection
+  Dim doc As Collection = row["doc"]
+  If row.Exist("input") Then doc = BoardViewPolicy.Prepare(doc, row["input"])
+  result["snapshot"] = BoardViewPolicy.Snapshot(doc)
+  Return result
+Catch
+  result["error"] = True
+  If Env["WEBA_VIEW_DEBUG"] = "1" Then result["message"] = Error.Text
+  Return result
+End

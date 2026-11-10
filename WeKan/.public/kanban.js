@@ -11,6 +11,14 @@
       const data = section.querySelector('.weba-data'), report = section.querySelector('.weba-report');
       if (!data || !report) return;
       report.replaceChildren(); data.hidden = false;
+      if(section.dataset.guestViewOrder){
+        const controls=document.querySelector('[id$=".GuestViews"]');
+        for(const view of JSON.parse(section.dataset.guestViewOrder)){
+          if(!['Swimlanes','Lists','Table','Calendar'].includes(view))continue;
+          const button=document.querySelector('[id$=".Guest'+view+'"]');
+          if(controls&&button&&button.parentElement===controls)controls.append(button);
+        }
+      }
       data.querySelectorAll('.weba-home-remove-label').forEach(el=>{el.textContent=t('Remove from Home');});
       data.querySelectorAll('.weba-home-empty').forEach(el=>{el.textContent=t('Drag only one board here to open it after login');});
       data.querySelectorAll('.board-home-badge').forEach(badge=>{const label=t('Home board (opened after login)');badge.title=label;badge.setAttribute('aria-label',label);});

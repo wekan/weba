@@ -50,6 +50,7 @@ Public Function Load(boardText As String, Optional cardText As String) As Collec
   archived = CBool(r!archived)
   data["archived"] = archived
   data["color"] = Color(db, boardId, "board", boardId)
+  data["viewPolicy"] = BoardViewPolicy.Guest(boardId)
   If db.Tables.Exist("kb_lanes") Then
     r = db.Find("kb_lanes", "board_id=&1 ORDER BY id", boardId)
     For Each r

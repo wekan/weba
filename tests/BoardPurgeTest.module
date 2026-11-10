@@ -29,6 +29,8 @@ Public Sub Main()
   CardContent.AddFile(a, cardId, "bytes.bin", "a" & Chr(0) & "b")
   BoardSpaces.Assign(a, BoardSpaces.Add("Keep workspace"))
   WorkspaceStore.SetSetting(a, "board", a, "star", "1")
+  BoardViewPolicy.Save(a, JSON.Decode("{\"defaultPublicBoardView\":\"board-view-table\"}"))
+  BoardViewPolicy.Save(active, JSON.Decode("{\"defaultPublicBoardView\":\"board-view-cal\"}"))
   WorkspaceStore.SetArchived(a, "board", a, True)
   WorkspaceStore.SetArchived(b, "board", b, True)
   ids = [b, a]
@@ -133,6 +135,7 @@ Public Sub Main()
   If r.Count Then Error.Raise("Purge left personal metadata")
   r = db.Find("kb_boards", "id=&1", active)
   If Not r.Available Or r!archived Then Error.Raise("Purge touched an unselected active board")
+  If db.Find("kb_board_view_policy", "board_id=&1", a).Count Or Not db.Find("kb_board_view_policy", "board_id=&1", active).Available Then Error.Raise("Purge view-policy scope failed")
   RecoveryStore.SetEnabled(False)
   If RecoveryStore.CanPurge() Then Error.Raise("Disable did not close gate")
   Print "Board purge: explicit disabled/default/global gates, bounded/deduplicated archive-only selection, legacy/stale denial, atomic content/settings/audit rollback, late state/role/flag guards, retry and durable cleanup audits passed"
@@ -171,7 +174,7 @@ Private Function Snapshot() As String
   Dim tableName As String
   Dim field As String
   Dim fields As String[]
-  For Each tableName In ["users", "recovery_settings", "kb_boards", "kb_cards", "kb_files", "kb_user_meta", "kb_board_space_assignments"]
+  For Each tableName In ["users", "recovery_settings", "kb_boards", "kb_cards", "kb_files", "kb_user_meta", "kb_board_space_assignments", "kb_board_view_policy"]
     Select tableName
       Case "users"
         fields = ["username", "admin"]
@@ -185,6 +188,8 @@ Private Function Snapshot() As String
         fields = ["id", "board_id", "card_id", "filename"]
       Case "kb_user_meta"
         fields = ["board_id", "kind", "item_id", "username", "setting", "value"]
+      Case "kb_board_view_policy"
+        fields = ["board_id", "settings", "actor", "changed_ms"]
       Case "kb_board_space_assignments"
         fields = ["board_id", "username", "space_id"]
     End Select

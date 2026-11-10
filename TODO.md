@@ -163,7 +163,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   recorded there too. Public guest downloads now use a dedicated guarded path
   with native policy and assigned-member scope, recorded there too. Remaining
   guest views beyond native Lists/Swimlanes/Table/due-day Calendar, source
-  board/instance view visibility/default/order settings, source-defined child
+  board-view manager UI/REST, signed-in view policy, instance feature controls
+  and policy copy/import integration beyond the native persisted public/private
+  policy and live guest enforcement in CHANGELOG.md, source-defined child
   models, storage/cover/download models and
   source backgrounds/templates/global-sort fields, global visibility/editing controls,
   first-edit membership, import/copy and original publication/ReportPages

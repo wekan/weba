@@ -1,0 +1,81 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim data As Collection
+  Dim guest As Collection
+  Dim db As Connection
+  Dim denied As Boolean
+  Dim before As String
+  Dim generation As Long
+  WebDatabase.Register("view-global", "x")
+  WebDatabase.Register("view-owner", "x")
+  WebDatabase.Register("view-reader", "x")
+  SignIn("view-owner")
+  boardId = KanbanStore.AddBoard("View policy")
+  BoardVisibility.SaveBoard(boardId, "public", False)
+  BoardAccess.SetMember(boardId, "view-reader", "read-only")
+  db = WebDatabase.OpenConnection()
+  If db.Tables.Exist("kb_board_view_policy") Then Error.Raise("Read fixture preinitialized policy")
+  data = BoardViewPolicy.Settings(boardId)
+  If data["keys"].Count <> 40 Or data["boardViewOrder"].Count <> 40 Then Error.Raise("Source key inventory changed")
+  Session["username"] = ""
+  Try BoardViewPolicy.Settings(boardId)
+  denied = Error
+  If Not denied Then Error.Raise("Anonymous settings read exposed private side")
+  guest = BoardViewPolicy.Guest(boardId)
+  If guest["defaultView"] <> "Swimlanes" Or guest["views"].Count <> 4 Then Error.Raise("Legacy public view defaults changed")
+  If db.Tables.Exist("kb_board_view_policy") Then Error.Raise("Policy read initialized table")
+  SignIn("view-owner")
+  data = BoardViewPolicy.Save(boardId, JSON.Decode("{\"defaultPublicBoardView\":\"board-view-table\",\"defaultPrivateBoardView\":\"board-view-cal\",\"boardViewSettings\":{\"board-view-swimlanes\":{\"showOnPublic\":false}},\"boardViewOrder\":[\"board-view-table\",\"board-view-table\",\"board-view-cal\"]}"))
+  If data["boardViewOrder"][0] <> "board-view-table" Or data["boardViewOrder"].Count <> 40 Then Error.Raise("Order was not normalized")
+  before = Frame(boardId)
+  Try BoardViewPolicy.Save(boardId, JSON.Decode("{\"boardViewSettings\":{\"board-view-table\":{\"showOnPublic\":false}}}"))
+  denied = Error
+  If Not denied Or Frame(boardId) <> before Then Error.Raise("Default hide was not atomically refused")
+  SignIn("view-reader")
+  BoardViewPolicy.Settings(boardId)
+  Try BoardViewPolicy.Save(boardId, JSON.Decode("{\"defaultPublicBoardView\":\"board-view-lists\"}"))
+  denied = Error
+  If Not denied Or Frame(boardId) <> before Then Error.Raise("Readonly policy write succeeded")
+  Session["username"] = ""
+  guest = BoardViewPolicy.Guest(boardId)
+  If guest["defaultView"] <> "Table" Or guest["views"][0] <> "Table" Or guest["views"].Find("Swimlanes") >= 0 Then Error.Raise("Guest side/default/order mismatch")
+  If guest.Count <> 2 Or InStr(JSON.Encode(guest), "Private") Then Error.Raise("Guest projection exposed private policy")
+  If Frame(boardId) <> before Then Error.Raise("Policy read wrote settings")
+  SignIn("view-owner")
+  db.Exec("CREATE TRIGGER fail_view_policy BEFORE UPDATE ON kb_board_view_policy BEGIN SELECT RAISE(ABORT,'private-policy-canary'); END")
+  Try BoardViewPolicy.Save(boardId, JSON.Decode("{\"defaultPublicBoardView\":\"board-view-lists\"}"))
+  denied = Error
+  If Not denied Or Frame(boardId) <> before Then Error.Raise("Failed policy write did not roll back")
+  db.Exec("DROP TRIGGER fail_view_policy")
+  db.Exec("CREATE TRIGGER lose_view_owner AFTER UPDATE ON kb_board_view_policy BEGIN UPDATE kb_boards SET owner='view-reader' WHERE id=NEW.board_id; END")
+  Try BoardViewPolicy.Save(boardId, JSON.Decode("{\"defaultPublicBoardView\":\"board-view-lists\"}"))
+  denied = Error
+  If Not denied Or Frame(boardId) <> before Or db.Find("kb_boards", "id=&1", boardId)!owner <> "view-owner" Then Error.Raise("Late owner loss was not rolled back")
+  db.Exec("DROP TRIGGER lose_view_owner")
+  generation = WebDatabase.SessionGeneration("view-owner")
+  db.Exec("CREATE TRIGGER lose_view_actor AFTER UPDATE ON kb_board_view_policy BEGIN UPDATE account_sessions SET generation=generation+1 WHERE username='view-owner'; END")
+  Try BoardViewPolicy.Save(boardId, JSON.Decode("{\"defaultPublicBoardView\":\"board-view-lists\"}"))
+  denied = Error
+  If Not denied Or Frame(boardId) <> before Or WebDatabase.SessionGeneration("view-owner") <> generation Then Error.Raise("Late principal loss was not rolled back")
+  db.Exec("DROP TRIGGER lose_view_actor")
+  BoardViewPolicy.Save(boardId, JSON.Decode("{\"defaultPublicBoardView\":\"board-view-lists\"}"))
+  SignIn("view-global")
+  data = BoardViewPolicy.Save(boardId, JSON.Decode("{\"defaultPrivateBoardView\":\"board-view-table\"}"))
+  If db.Find("kb_board_view_policy", "board_id=&1", boardId)!actor <> "view-global" Then Error.Raise("Manager attribution missing")
+  Session["username"] = ""
+  db.Exec("UPDATE kb_board_visibility SET permission='private' WHERE board_id=&1", boardId)
+  Try BoardViewPolicy.Guest(boardId)
+  denied = Error
+  If Not denied Then Error.Raise("Private policy guest read accepted")
+  Print "Board view policy: complete source keys/default/order, no-init guest reads, exact public-only projection, default-before-hide, readonly/anonymous denial, manager attribution, rollback/retry and late owner/principal revocation passed"
+End
+
+Private Sub SignIn(actor As String)
+  Session["username"] = actor
+  Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+End
+
+Private Function Frame(boardId As Integer) As String
+  Dim r As Result = WebDatabase.OpenConnection().Find("kb_board_view_policy", "board_id=&1", boardId)
+  Return CStr(r!settings) & "|" & CStr(r!actor) & "|" & CStr(r!changed_ms)
+End
