@@ -21,9 +21,12 @@ assert.equal(request.headers['X-WeBa-Request'],'1');
 assert.equal(request.headers['Content-Type'],'application/x-www-form-urlencoded;charset=UTF-8');
 assert.deepEqual(JSON.parse(new URLSearchParams(request.body).get('c')),command);
 assert.ok(!request.url.includes('private'));
+const namespace=window.document.createElement('meta');namespace.name='weba-page';namespace.content='opaque-document';window.document.head.append(namespace);
+const namespaced=new window.XMLHttpRequest();namespaced.open('GET','/x?c=%5B%5D');namespaced.send();
+assert.equal(namespaced.headers['X-WeBa-Page'],'opaque-document');
 const upload=new window.XMLHttpRequest();const form=new window.FormData();form.append('file','bytes');
 upload.open('POST','/upload:123',true);upload.send(form);
-assert.equal(upload.headers['X-WeBa-Request'],'1');assert.equal(upload.body,form);
+assert.equal(upload.headers['X-WeBa-Page'],'opaque-document');assert.equal(upload.headers['X-WeBa-Request'],'1');assert.equal(upload.body,form);
 assert.equal(upload.headers['Content-Type'],undefined,'browser must supply the multipart boundary');
 for(const url of ['https://attacker.invalid/x?c=private','/i18n/fi.json']){
  const other=new window.XMLHttpRequest();other.open('GET',url);other.send();

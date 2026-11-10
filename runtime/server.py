@@ -190,6 +190,122 @@ class NativeRequestCoordinator:
                 self.locks[index].release()
 
 
+class NativeDocuments:
+    """Opaque document routing, bound to a separate HttpOnly login cookie.
+
+    The page token is a routing namespace, never an authentication credential.
+    Each page owns one Gambas GUI process; API requests never consult this map.
+    """
+    def __init__(self):
+        self.pages = {}
+        self.lock = threading.Lock()
+
+    @staticmethod
+    def cookies(header):
+        values = SimpleCookie()
+        try:
+            values.load(header)
+        except CookieError:
+            values.clear()
+        return values
+
+    @staticmethod
+    def native_name(name):
+        return name == 'GBSESSIONID' or (name.startswith('GBSESSIONID-') and
+            name[12:] and all(char in '0123456789ABCDEF' for char in name[12:]))
+
+    @classmethod
+    def identity(cls, header):
+        cookie = cls.cookies(header).get('WEBA_UI_AUTH')
+        raw = cookie.value if cookie else ''
+        if not re.fullmatch(r'[A-Za-z0-9_-]{43}', raw):
+            return ''
+        return hashlib.sha256(raw.encode()).hexdigest()
+
+    def select(self, token, header):
+        identity = self.identity(header)
+        with self.lock:
+            page = self.pages.get(token)
+            if not page or page['identity'] != identity:
+                return None
+            page['seen'] = time.monotonic()
+            return page.copy()
+
+    def remember(self, token, headers, incoming, previous=None):
+        cookies = self.cookies(incoming)
+        native = previous['cookie'] if previous else None
+        for key, value in headers:
+            if key.lower() != 'set-cookie':
+                continue
+            for name, cookie in self.cookies(value).items():
+                if self.native_name(name) and cookie.value:
+                    native = (name, cookie.value)
+                if name == 'WEBA_UI_AUTH':
+                    cookies[name] = cookie.value
+        if not native:
+            return
+        identity = self.identity(cookies.output(header='', sep=';'))
+        now = time.monotonic()
+        with self.lock:
+            self.pages[token] = dict(
+                cookie=native, identity=identity,
+                authenticated=bool(identity) or bool(previous and previous.get('authenticated')),
+                seen=now, pulse=self.pages.get(token, {}).get('pulse', 0))
+            # Inactive GUI processes have already timed out. No fixed tab limit.
+            for key in list(self.pages):
+                if self.pages[key]['seen'] < now - 1200:
+                    del self.pages[key]
+
+    def keep_peers(self, token, incoming, environment, command, coordinator):
+        identity = self.identity(incoming)
+        if not identity:
+            return
+        now = time.monotonic()
+        with self.lock:
+            peers = []
+            for key, page in self.pages.items():
+                if key != token and page['identity'] == identity and page.get('pulse', 0) < now - 10:
+                    page['pulse'] = now
+                    peers.append((key, page.copy()))
+        if not peers:
+            return
+
+        def pulse():
+            for key, page in peers:
+                env = environment.copy()
+                env.update(HTTP_COOKIE=self.cookie_header(incoming, page), WEBA_COMMAND_FILE='',
+                           PATH_INFO='/x', REQUEST_METHOD='GET', CONTENT_LENGTH='0', CONTENT_TYPE='',
+                           QUERY_STRING=urllib.parse.urlencode({'c': '["weba-passive"]'}),
+                           WEBA_NATIVE_PASSIVE='1', WEBA_NATIVE_NOW=str(int(time.time())))
+                try:
+                    result = coordinator.run(command, input=b'', env=env, timeout=5)
+                    # Gambas replies with reload for an expired/missing process.
+                    # Do not renew a dead page's registry lease indefinitely.
+                    if result.returncode or b'location.reload' in result.stdout:
+                        self.forget(key)
+                        continue
+                    with self.lock:
+                        if key in self.pages:
+                            self.pages[key]['seen'] = time.monotonic()
+                except (OSError, RuntimeError, subprocess.TimeoutExpired):
+                    pass  # A closed or timed-out document cannot affect the requesting page.
+        threading.Thread(target=pulse, daemon=True).start()
+
+    def forget(self, token):
+        with self.lock:
+            self.pages.pop(token, None)
+
+    def cookie_header(self, incoming, page):
+        cookies = self.cookies(incoming)
+        for name in list(cookies):
+            if self.native_name(name):
+                del cookies[name]
+        if page:
+            name, value = page['cookie']
+            cookies[name] = value
+        return cookies.output(header='', sep=';').strip()
+
+
 class LoginThrottle:
     """Bounded per-peer login window; forwarded identity headers are untrusted."""
     def __init__(self, clock=time.monotonic, limit=5, window=60, capacity=4096):
@@ -220,6 +336,7 @@ class LoginThrottle:
 def handler(application, runner, environment):
     login_throttle = LoginThrottle()
     native_requests = NativeRequestCoordinator()
+    documents = NativeDocuments()
     class GambasHandler(BaseHTTPRequestHandler):
         def do_GET(self): self.run_cgi()
         def do_POST(self): self.run_cgi()
@@ -266,7 +383,7 @@ def handler(application, runner, environment):
                     if port != self.server.server_port:
                         raise ValueError('Untrusted port')
                     origin = ('http', host, port)
-                native = url.path in ('/x', '/c') or url.path.startswith(('/upload:', '/call:'))
+                native = url.path in ('/x', '/c', '/_weba/page-close') or url.path.startswith(('/upload:', '/call:'))
                 if not native:
                     return True
                 if self.command != 'POST':
@@ -409,7 +526,54 @@ def handler(application, runner, environment):
                        REMOTE_ADDR=self.client_address[0], GATEWAY_INTERFACE='CGI/1.1')
             for key in ['Host', 'Cookie', 'User-Agent', 'Accept', 'Accept-Language']:
                 if key in self.headers: env['HTTP_' + key.upper().replace('-', '_')] = self.headers[key]
+            native = decoded_path in ('/x', '/c', '/_weba/page-close') or decoded_path.startswith(('/upload:', '/call:'))
+            document = not api and self.command == 'GET' and (decoded_path == '/' or entry_section)
+            page_token = self.headers.get('X-WeBa-Page', '')
+            incoming = self.headers.get('Cookie', '')
+            page = documents.select(page_token, incoming) if page_token else None
+            # Legacy native clients can still address their one registered GUI.
+            if native and not page_token:
+                cookies = documents.cookies(incoming)
+                with documents.lock:
+                    candidates = [(key, value) for key, value in documents.pages.items()
+                                  if value['identity'] == documents.identity(incoming)
+                                  and value['cookie'][0] in cookies
+                                  and cookies[value['cookie'][0]].value == value['cookie'][1]]
+                if len(candidates) == 1:
+                    page_token, page = candidates[0]
+            if native and not page:
+                if decoded_path == '/x' and page_token:
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'text/javascript;charset=utf-8')
+                    self.send_header('Cache-Control', 'no-store')
+                    self.end_headers()
+                    self.wfile.write(b'location.reload(true);')
+                else:
+                    self.send_error(403, 'Document session unavailable')
+                return
+            if not api:
+                token = secrets.token_urlsafe(32)
+                env.update(WEBA_NATIVE_AUTH='1', WEBA_NATIVE_NOW=str(int(time.time())),
+                           WEBA_NATIVE_AUTH_DIGEST=documents.identity(incoming),
+                           WEBA_NATIVE_NEW_TOKEN=token,
+                           WEBA_NATIVE_NEW_DIGEST=hashlib.sha256(token.encode()).hexdigest(),
+                           WEBA_NATIVE_PASSIVE='0')
+                if native or document:
+                    env['HTTP_COOKIE'] = documents.cookie_header(incoming, page)
+                if document and not page:
+                    page_token = secrets.token_urlsafe(32)
             try:
+                # Native callbacks bypass application form-event authentication.
+                if not api and document and page and (env['WEBA_NATIVE_AUTH_DIGEST'] or page.get('authenticated')):
+                    probe = run_application([runner, '-s', 'NativeAuthProbe', str(application)], input=b'', env=env, timeout=30)
+                    if probe.returncode or not probe.stdout.startswith(b'Status: 204'):
+                        if document:
+                            page = None
+                            page_token = secrets.token_urlsafe(32)
+                            env['HTTP_COOKIE'] = documents.cookie_header(incoming, None)
+                        else:
+                            self.send_error(401, 'Sign in required')
+                            return
                 length = int(self.headers.get('Content-Length', '0'))
                 upload = decoded_path == '/api/attachment/upload' and self.command == 'POST'
                 native_upload = decoded_path.startswith('/upload:') and self.command == 'POST'
@@ -463,6 +627,15 @@ def handler(application, runner, environment):
                     command_text = urllib.parse.urlencode({'c': fields['c'][0]}, quote_via=urllib.parse.quote)
                     env.update(QUERY_STRING='', REQUEST_METHOD='GET', CONTENT_LENGTH='0', CONTENT_TYPE='')
                     body = b''
+                if not api and (decoded_path == '/c' or decoded_path.startswith(('/upload:', '/call:'))):
+                    probe = run_application([runner, '-s', 'NativeAuthProbe', str(application)], input=b'', env=env, timeout=30)
+                    if probe.returncode or not probe.stdout.startswith(b'Status: 204'):
+                        self.send_error(401, 'Sign in required')
+                        return
+                closing = decoded_path == '/_weba/page-close'
+                if closing:
+                    env.update(PATH_INFO='/~logout', REQUEST_METHOD='GET', QUERY_STRING='', CONTENT_LENGTH='0', CONTENT_TYPE='')
+                    body = b''
                 command = [runner, '-s', 'RestApi', str(application)] if api else [runner, str(application)]
                 if command_text is not None and len(command_text.encode()) > 32768:
                     # NamedTemporaryFile creates mode 0600 and deletes even on
@@ -480,6 +653,11 @@ def handler(application, runner, environment):
                     if command_text is not None:
                         env['QUERY_STRING'] = command_text
                     result = native_requests.run(command, input=body, env=env, timeout=30)
+                if closing:
+                    documents.forget(page_token)
+                    self.send_response(204)
+                    self.end_headers()
+                    return
                 boundaries = [(result.stdout.find(separator), separator)
                               for separator in (b'\r\n\r\n', b'\n\n')
                               if result.stdout.find(separator) >= 0]
@@ -507,6 +685,23 @@ def handler(application, runner, environment):
                         parsed.append(('Content-Disposition', attachment_disposition(filename)))
                     elif key.lower() not in ['content-length', 'connection', 'transfer-encoding']:
                         parsed.append((key, value.strip()))
+                if not api and (native or document):
+                    parsed = [(key, value) for key, value in parsed if key.lower() not in ('cache-control', 'expires')]
+                    parsed.append(('Cache-Control', 'no-store'))
+                    if not closing:
+                        documents.keep_peers(page_token, incoming, env, [runner, str(application)], native_requests)
+                    documents.remember(page_token, parsed, incoming, page)
+                    if document and status == 200 and any(key.lower() == 'content-type' and 'text/html' in value for key, value in parsed):
+                        marker = ('<meta name="weba-page" content="' + page_token + '">').encode()
+                        body = body.replace(b'<head>', b'<head>' + marker, 1)
+                    secured = []
+                    for key, value in parsed:
+                        if key.lower() == 'set-cookie' and value.startswith('WEBA_UI_AUTH='):
+                            value += '; SameSite=Lax; HttpOnly'
+                            if environment.get('WEBA_PUBLIC_URL', '').startswith('https://'):
+                                value += '; Secure'
+                        secured.append((key, value))
+                    parsed = secured
                 if login and status == 200:
                     login_throttle.success(self.client_address[0])
                 self.send_response(status)

@@ -456,12 +456,16 @@ class CardDateTransportTest(unittest.TestCase):
 
 class NativeOriginTest(unittest.TestCase):
     def request(self, method='POST', path='/x', headers=None, environment=None):
-        cls = server.handler(Path('/unused.gambas'), 'unused-runner', environment or {})
+        documents = server.NativeDocuments()
+        documents.remember('test-page', [('Set-Cookie', 'GBSESSIONID=test-native; Path=/')], '')
+        with patch.object(server, 'NativeDocuments', return_value=documents):
+            cls = server.handler(Path('/unused.gambas'), 'unused-runner', environment or {})
         request = object.__new__(cls)
         request.path = path
         request.command = method
         request.headers = Message()
         defaults = {'Host': '127.0.0.1:8080', 'X-WeBa-Request': '1',
+                    'X-WeBa-Page': 'test-page', 'Cookie': 'GBSESSIONID=test-native',
                     'Content-Type': 'application/x-www-form-urlencoded'}
         defaults.update(headers or {})
         for key, value in defaults.items():

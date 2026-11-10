@@ -7,6 +7,7 @@ Private Function Username_Read() As String
   Dim username As String
   Dim generation As Long
   If Env["WEBA_API_REQUEST"] = "1" Then Return $apiUsername
+  If NativeAuth.Enabled() Then Return NativeAuth.Username()
   username = Session["username"]
   If Not username Then Return ""
   generation = WebDatabase.SessionGeneration(username)

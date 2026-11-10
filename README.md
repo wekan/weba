@@ -210,6 +210,30 @@ credentials and form commands stay in request bodies. Native uploads/callbacks u
 the same request-header/origin check. Large text updates use private mode-0600
 request files that are removed after the request, including timeout/failure.
 
+Each ordinary HTML navigation gets its own native GUI process. The rendered
+`weba-page` meta value routes native requests through `X-WeBa-Page`; it is an
+opaque document namespace, not a login credential. The host binds that namespace
+to the incoming shared UI cookie and selects only its registered native process.
+Raw single-document clients can supply the same header when fetching a snapshot;
+ordinary browser navigations create a fresh form. Closing a document releases only
+its GUI process through the protected `/_weba/page-close` endpoint. The internal
+Gambas logout path remains inaccessible to external requests.
+
+Shared login uses a separate random `WEBA_UI_AUTH` HttpOnly, SameSite=Lax cookie
+(`Secure` with an HTTPS public origin). Only its digest, account generation and
+idle expiry are stored in `native_ui_sessions`. It is separate from REST bearer
+tokens. Native callback/upload paths check this credential before dispatch;
+stale document tokens cannot authorize another browser. Logout revokes the shared
+credential so peer tabs return to login. A successful own-password change rotates
+the retained cookie's generation within the password transaction; other browser
+credentials are revoked by the account epoch. Active requests keep sibling GUI
+processes alive with clean passive pulses that perform no form actions and do not
+renew authentication expiry. Expired peer namespaces are retired when Gambas
+requests a reload. Native HTML and command replies use `no-store`.
+The real cookie, API token and credentials never enter board URLs or the page
+routing token. Use the runtime host for these boundaries; embedded IDE serving
+does not provide this document/authentication protocol.
+
 For a named reverse proxy or a different external port, configure the exact
 public root origin, for example `WEBA_PUBLIC_URL=https://boards.example.org`.
 Forwarded host/scheme/IP headers are not trusted implicitly. Direct local runs
@@ -654,7 +678,7 @@ Gambas can retain forms across reloads, so only a fresh root HTML response rearm
 the consumed decision; native event requests cannot rearm it. The landing command
 accepts no caller board ID. Native board navigation now records its canonical
 `/b/:id/:slug` URL.
-When no readable active Home is available, an existing native board retains its reload state.
+An explicit readable board URL retains its board on reload even without a saved Home.
 Original public/card routes, full Meteor/FlowRouter/profile/DDP and
 Sandstorm single-board convenience remain TODO. Run
 `python3 tests/run-http.py --home-login [--archive]` for login/reload coverage.
@@ -677,7 +701,7 @@ and reloading an explicit board keeps it when the Home preference changes; a
 fresh root entry is what applies the new Home. The private route snapshot and
 shared intent token acknowledge tile, automatic Home and native board changes
 before recording URLs. Back/Forward uses the same server guards, stale replies
-cannot win history, and the cached root board waits for the landing decision.
+cannot win history, and a root entry waits for the landing decision.
 Same-board entries preserve the native view/draft DOM and refresh their route
 title from the freshly authorized resolver before canonicalizing short URLs. Denied or live-revoked
 entries keep their requested URL while clearing board state; reload retries
@@ -685,6 +709,19 @@ fresh authorization. This is native SQL/private-board routing, not original
 FlowRouter/DDP or public/card routes. `BoardRouteTest`, host path/method/query
 checks, twelve unchanged source slug/path comparisons and real
 `python3 tests/run-http.py --board-routes [--archive]` cover these boundaries.
+
+Catalog board tiles are real anchors with `/b/:id` fallback URLs. The bundled
+source slug helper upgrades their hrefs to canonical board paths when available.
+Primary unmodified activation uses the guarded native route acknowledgement;
+Ctrl/Command, Shift, middle click, explicit targets/downloads and browser link
+operations retain ordinary anchor behavior. Enter activates the link; Space does
+not act like a button. The anchor is `draggable="false"` inside its existing
+sortable parent, preserving native HTML5 and pointer/touch board gestures. Each
+new tab shares login but keeps its selection, route and private form state.
+`python3 tests/run-http.py --board-links [--archive]` verifies semantic links,
+new-tab/opener state, keyboard activation, HttpOnly UI/API separation, background
+GUI keepalive, tab close and shared logout. Original public/card routes and full
+Meteor/FlowRouter callbacks remain open.
 
 Board-menu Archive now opens a native confirmation with a literal board name,
 translated source warning, explicit Archive/Cancel and keyboard Escape/Close.

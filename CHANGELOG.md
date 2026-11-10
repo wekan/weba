@@ -2,6 +2,29 @@
 
 This work adds the following features and fixes:
 
+- Render native catalog board tiles as real canonical links with a short board
+  URL fallback, browser Ctrl/Command/middle-click new tabs and Enter activation.
+  Preserve Space behavior and sortable-parent HTML5/pointer/touch gestures.
+  Give each document a private native GUI process so opening another tab cannot
+  reset the opener's selection, route or private form state. Share login through
+  a separate random HttpOnly, SameSite UI cookie with HTTPS Secure protection,
+  digest-only persistence, account-generation/idle checks and shared logout;
+  keep REST bearer credentials separate. Bind opaque page routing namespaces to
+  the shared credential, check callbacks/uploads before dispatch, retain only
+  the current browser credential inside an atomic own-password change, and
+  clear account-deletion references. Close only the departing document's GUI;
+  use throttled passive peer pulses without renewing idle authentication or
+  executing actions, and retire expired peer namespaces. Keep native HTML and
+  command replies out of caches. Verify native authentication/expiry/owner and
+  password rollback guards, forged namespace/callback refusal, cookie/API and
+  transport boundaries, real new tabs with usable opener selection, background
+  lifetime, tab close and shared logout. Wait for pending fresh-form workspace
+  snapshots in browser assertions and scope duplicate fixture titles by ID.
+  The complete local suite (64 host tests) and complete final source/packaged
+  browser suites pass. Original public/card routes and full Meteor/FlowRouter/
+  DDP callbacks remain pending.
+  Thanks to xet7.
+
 - Confirm native board-menu archive through a private board/actor/session/view
   binding, with cancellation, Escape, context/navigation invalidation and replay
   refusal. Catalog archive stays in its current section; archiving the open board

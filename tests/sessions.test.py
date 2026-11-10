@@ -16,6 +16,7 @@ DATABASE = Path(os.environ['WEBA_DB_HOST']) / os.environ['WEBA_DB_NAME']
 
 class Native:
     def __init__(self, username, password):
+        self.page_token = ""
         self.client = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
         page = self.get()
         self.prefix = re.search(r'id="(@\d+)\.WebTextName"', page)[1]
@@ -29,12 +30,14 @@ class Native:
         self.command(['raise', None, 'open', [], False])
 
     def get(self):
-        return self.client.open(BASE, timeout=15).read().decode()
+        page = self.client.open(urllib.request.Request(BASE, headers={'X-WeBa-Page': self.page_token}), timeout=15).read().decode()
+        self.page_token = re.search(r'<meta name="weba-page" content="([A-Za-z0-9_-]+)">', page)[1]
+        return page
 
     def command(self, value):
         request = urllib.request.Request(BASE+'/x',
             data=urllib.parse.urlencode({'c': json.dumps(value)}).encode(),
-            headers={'Content-Type': 'application/x-www-form-urlencoded', 'X-WeBa-Request': '1'})
+            headers={'Content-Type': 'application/x-www-form-urlencoded', 'X-WeBa-Request': '1', 'X-WeBa-Page': self.page_token})
         return self.client.open(request, timeout=15).read().decode()
 
     def set(self, field, value):

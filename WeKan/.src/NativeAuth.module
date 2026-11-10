@@ -1,0 +1,126 @@
+' Shared browser login is independent of each document's native GUI process.
+Export
+Public Bootstrapping As Boolean
+Private $db As Connection
+
+Public Function Enabled() As Boolean
+  Return CGI["WEBA_NATIVE_AUTH"] = "1" And Env["WEBA_API_REQUEST"] <> "1"
+End
+
+Private Sub OpenStore()
+  Dim table As Table
+  If $db Then Return
+  $db = WebDatabase.OpenConnection()
+  If Not $db.Tables.Exist("native_ui_sessions") Then
+    table = $db.Tables.Add("native_ui_sessions")
+    table.Fields.Add("digest", db.String, 64)
+    table.Fields.Add("username", db.String, 255)
+    table.Fields.Add("generation", db.Long)
+    table.Fields.Add("expires_at", db.Long)
+    table.Fields.Add("idle_seconds", db.Integer)
+    table.PrimaryKey = ["digest"]
+    table.Update()
+  Endif
+End
+
+Private Function Clock() As Long
+  Dim value As Long = CLong(CGI["WEBA_NATIVE_NOW"])
+  If value <= 0 Then Error.Raise("Native authentication clock unavailable")
+  Return value
+End
+
+' The host hashes only the HttpOnly UI cookie; API bearer credentials never enter here.
+Public Function Authenticate() As String
+  Dim digest As String = CGI["WEBA_NATIVE_AUTH_DIGEST"]
+  Dim row As Result
+  Dim actor As String
+  Dim generation As Long
+  Dim stamp As Long
+  If Not Enabled() Or Len(digest) <> 64 Then Return ""
+  OpenStore()
+  stamp = Clock()
+  row = $db.Find("native_ui_sessions", "digest=&1 AND expires_at>&2", digest, stamp)
+  If Not row.Available Then Return ""
+  actor = row!username
+  generation = row!generation
+  If Not WebDatabase.UserExists(actor) Or generation <= 0 Then Return ""
+  If generation <> WebDatabase.SessionGeneration(actor) Then Return ""
+  If CGI["WEBA_NATIVE_PASSIVE"] <> "1" And row!expires_at <= stamp + Max(1, row!idle_seconds Div 2) Then
+    $db.Exec("UPDATE native_ui_sessions SET expires_at=&1 WHERE digest=&2 AND generation=&3 AND expires_at>&4", stamp + row!idle_seconds, digest, generation, stamp)
+  Endif
+  Return actor
+End
+
+Public Function Username() As String
+  Dim actor As String
+  Dim digest As String = CGI["WEBA_NATIVE_AUTH_DIGEST"]
+  If Not Enabled() Then Return ""
+  If Session.Exist("native_ui_owner") Then
+    If Session["native_ui_owner"] <> digest Then Return ""
+  Endif
+  actor = Authenticate()
+  If Not actor Then Return ""
+  If Not Session.Exist("native_ui_owner") Then
+    Session["native_ui_owner"] = digest
+    Session["username"] = actor
+    Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+    Session.Timeout = ModVar.SessionTimeout
+  Endif
+  Return actor
+End
+
+' Only called after the existing credential verifier returns this generation.
+Public Sub SignIn(actor As String, generation As Long)
+  Dim token As String = CGI["WEBA_NATIVE_NEW_TOKEN"]
+  Dim digest As String = CGI["WEBA_NATIVE_NEW_DIGEST"]
+  Dim row As Result
+  Dim transaction As Boolean
+  Dim failure As String
+  If Not Enabled() Then Return
+  If Len(token) <> 43 Or Len(digest) <> 64 Then Error.Raise("Native authentication entropy unavailable")
+  OpenStore()
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  If Not WebDatabase.UserExists(actor) Or generation <= 0 Or generation <> WebDatabase.SessionGeneration(actor) Then Error.Raise("Sign in required")
+  $db.Delete("native_ui_sessions", "expires_at<=&1", Clock())
+  row = $db.Create("native_ui_sessions")
+  row["digest"] = digest
+  row["username"] = actor
+  row["generation"] = generation
+  row["idle_seconds"] = Max(1, ModVar.SessionTimeout)
+  row["expires_at"] = Clock() + Max(1, ModVar.SessionTimeout)
+  row.Update()
+  DatabaseTransactions.Commit($db)
+  transaction = False
+  Session["native_ui_owner"] = digest
+  CGI["WEBA_NATIVE_AUTH_DIGEST"] = digest
+  Response.SetCookie("WEBA_UI_AUTH", token, "", "/",, True)
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+' Called inside the password transaction, never resurrecting a revoked cookie.
+Public Sub Retain(actor As String, previous As Long, generation As Long)
+  Dim digest As String = CGI["WEBA_NATIVE_AUTH_DIGEST"]
+  Dim row As Result
+  If Not Enabled() Then Return
+  If Len(digest) <> 64 Or Session["native_ui_owner"] <> digest Then Error.Raise("Sign in required")
+  OpenStore()
+  row = $db.Edit("native_ui_sessions", "digest=&1 AND username=&2 AND generation=&3 AND expires_at>&4", digest, actor, previous, Clock())
+  If Not row.Available Then Error.Raise("Sign in required")
+  row["generation"] = generation
+  row["expires_at"] = Clock() + row!idle_seconds
+  row.Update()
+End
+
+Public Sub Logout()
+  Dim digest As String = CGI["WEBA_NATIVE_AUTH_DIGEST"]
+  If Not Enabled() Then Return
+  OpenStore()
+  If Len(digest) = 64 And Session["native_ui_owner"] = digest Then $db.Delete("native_ui_sessions", "digest=&1", digest)
+  Response.RemoveCookie("WEBA_UI_AUTH", "", "", "/")
+  CGI["WEBA_NATIVE_AUTH_DIGEST"] = ""
+End

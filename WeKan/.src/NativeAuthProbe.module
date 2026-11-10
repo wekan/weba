@@ -1,0 +1,11 @@
+' Host-only credential check for native callback/upload paths that bypass form events.
+Public Sub Main()
+  If NativeAuth.Authenticate() Then
+    Print "Status: 204 No Content"
+  Else
+    Print "Status: 401 Unauthorized"
+  Endif
+  Print "Content-Type: text/plain"
+  Print "Cache-Control: no-store"
+  Print ""
+End

@@ -3,11 +3,17 @@ from pathlib import Path
 BASE=os.environ.get('WEBA_TEST_URL','http://127.0.0.1:8100')
 username='http-'+uuid.uuid4().hex[:12]
 jar=http.cookiejar.CookieJar(); client=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
-def get(path='/'): return client.open(BASE+path,timeout=15).read().decode()
+page_token=''
+def get(path='/'):
+ global page_token
+ page=client.open(urllib.request.Request(BASE+path,headers={'X-WeBa-Page':page_token}),timeout=15).read().decode()
+ marker=re.search(r'<meta name="weba-page" content="([A-Za-z0-9_-]+)">',page)
+ if marker: page_token=marker[1]
+ return page
 def command(c):
  data=urllib.parse.urlencode({'c':json.dumps(c)}).encode()
  request=urllib.request.Request(BASE+'/x',data=data,headers={
-  'Content-Type':'application/x-www-form-urlencoded', 'X-WeBa-Request':'1'})
+  'Content-Type':'application/x-www-form-urlencoded', 'X-WeBa-Request':'1', 'X-WeBa-Page':page_token})
  return client.open(request,timeout=15).read().decode()
 # Development routes must never expose the real CGI environment or mutate a
 # session. Check the installed host with an actual Gambas project/archive.

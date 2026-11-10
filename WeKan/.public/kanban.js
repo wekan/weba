@@ -36,7 +36,9 @@
         if(input&&input.checked===selectionFocus.checked){root.webaSelectionFocus=null;root.requestAnimationFrame(()=>{if(input.isConnected&&document.activeElement===document.body)input.focus({preventScroll:true});});}
       }
       data.querySelectorAll('[data-board-key]').forEach(tile => {
-        tile.onclick = () => {
+        if(tile.tagName==='A'){tile.onclick=null;return;}
+        tile.onclick = event => {
+          if(event.defaultPrevented||event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;
           if (root.gw && section.dataset.tree) root.gw.update(section.dataset.tree, '$' + btoa(tile.dataset.boardKey), null);
         };
       });

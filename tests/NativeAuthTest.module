@@ -1,0 +1,52 @@
+' Disposable native UI cookie store; API credentials never enter this protocol.
+Public Sub Main()
+  Dim db As Connection
+  Dim generation As Long
+  Dim before As Long
+  Dim denied As Boolean
+  WebDatabase.Register("ui-owner", "x")
+  Session["username"] = "ui-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("ui-owner")
+  WebDatabase.NewUser("ui-other", "x", False)
+  db = WebDatabase.OpenConnection()
+  CGI["WEBA_NATIVE_AUTH"] = "1"
+  CGI["WEBA_NATIVE_NOW"] = "1000"
+  If WebIdentity.Username Then Error.Raise("Legacy native username authenticated without UI cookie")
+  CGI["WEBA_NATIVE_NEW_TOKEN"] = String$(43, "a")
+  CGI["WEBA_NATIVE_NEW_DIGEST"] = String$(64, "a")
+  NativeAuth.SignIn("ui-owner", WebDatabase.SessionGeneration("ui-owner"))
+  If WebIdentity.Username <> "ui-owner" Then Error.Raise("Verified UI login failed")
+  generation = WebDatabase.SessionGeneration("ui-owner")
+  before = db.Find("native_ui_sessions", "digest=&1", String$(64, "a"))!expires_at
+  CGI["WEBA_NATIVE_NOW"] = "1020"
+  CGI["WEBA_NATIVE_PASSIVE"] = "1"
+  If Not NativeAuth.Authenticate() Then Error.Raise("Valid passive check failed")
+  If db.Find("native_ui_sessions", "digest=&1", String$(64, "a"))!expires_at <> before Then Error.Raise("Passive GUI request renewed authentication")
+  CGI["WEBA_NATIVE_PASSIVE"] = "0"
+  If Not NativeAuth.Authenticate() Then Error.Raise("Valid active check failed")
+  If db.Find("native_ui_sessions", "digest=&1", String$(64, "a"))!expires_at <= before Then Error.Raise("Active GUI request failed to renew authentication")
+  CGI["WEBA_NATIVE_NEW_TOKEN"] = String$(43, "b")
+  CGI["WEBA_NATIVE_NEW_DIGEST"] = String$(64, "b")
+  NativeAuth.SignIn("ui-other", WebDatabase.SessionGeneration("ui-other"))
+  CGI["WEBA_NATIVE_AUTH_DIGEST"] = String$(64, "a")
+  If WebIdentity.Username Then Error.Raise("GUI process adopted another cookie's owner")
+  CGI["WEBA_NATIVE_AUTH_DIGEST"] = String$(64, "b")
+  If WebIdentity.Username <> "ui-other" Then Error.Raise("Second verified sign in failed")
+  If Not WebDatabase.SetPassword("ui-other", "x", "y") Then Error.Raise("Current native password change failed")
+  If WebIdentity.Username <> "ui-other" Then Error.Raise("Current UI cookie was not retained")
+  If db.Find("native_ui_sessions", "digest=&1", String$(64, "b"))!generation <> WebDatabase.SessionGeneration("ui-other") Then Error.Raise("Retained cookie generation was not rotated")
+  db.Exec("CREATE TRIGGER fail_ui_password BEFORE UPDATE OF generation ON native_ui_sessions BEGIN SELECT RAISE(ABORT,'UI retention failure'); END")
+  Try WebDatabase.SetPassword("ui-other", "y", "z")
+  denied = Error
+  If Not denied Or Not WebDatabase.Login("ui-other", "y") Or WebIdentity.Username <> "ui-other" Then Error.Raise("Failed retention did not roll back password and generation")
+  db.Exec("DROP TRIGGER fail_ui_password")
+  NativeAuth.Logout()
+  If WebIdentity.Username Or db.Find("native_ui_sessions", "digest=&1", String$(64, "b")).Available Then Error.Raise("Logout retained UI authority")
+  CGI["WEBA_NATIVE_AUTH_DIGEST"] = String$(64, "a")
+  CGI["WEBA_NATIVE_NOW"] = "2000"
+  If NativeAuth.Authenticate() Then Error.Raise("Expired UI cookie authenticated")
+  CGI["WEBA_NATIVE_NOW"] = "1020"
+  db.Exec("UPDATE account_sessions SET generation=generation+100 WHERE username='ui-owner'")
+  If NativeAuth.Authenticate() Then Error.Raise("Revoked account generation authenticated")
+  Print "Native UI auth: independent HttpOnly credential store, immutable GUI owner, active/passive expiry, current-password retention, atomic failure, logout and epoch rejection passed"
+End

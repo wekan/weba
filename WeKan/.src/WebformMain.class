@@ -103,6 +103,12 @@ Public Sub _HandleMessage()
     Response.End
     Return
   Endif
+  If CGI["WEBA_NATIVE_PASSIVE"] = "1" Then
+    Response.ContentType = "text/javascript;charset=utf-8"
+    Response.Begin
+    Response.End
+    Return
+  Endif
   Super._HandleMessage()
 End
 
@@ -407,6 +413,7 @@ Catch
 End
 
 Public Sub Logout_Click()
+  NativeAuth.Logout()
   Session.Abandon()
   WebForm.Goto(WebformLogin)
 End
@@ -677,7 +684,7 @@ Public Sub Visual_Render()
         If WorkspaceStore.Setting(b!id, "board", b!id, "star") <> "1" Then Continue
       Endif
       If Not $board And ($view = "Boards" Or $view = "Archive" Or $view = "Starred" Or $view = "Home") Then
-        tiles[CStr(b!id)] = "<li data-selected=\"" & If(BoardSelection.IsSelected(SelectionState(), b!id), "true", "false") & "\" draggable=\"true\" class=\"weba-board-tile-group js-board\" data-board-id=\"" & Str(b!id) & "\">" & If(IsOverview(), "<button type=\"button\" class=\"weba-drag-handle weba-board-drag fa fa-arrows\" data-drag-kind=\"board\" aria-label=\"Sort boards\"></button>", "") & "<button style=\"background-color:" & Html(WorkspaceStore.Setting(b!id, "board", b!id, "color", "#2980b9")) & "\" type=\"button\" class=\"weba-board-tile\" data-board-key=\"b" & Str(b!id) & "\"><strong class=\"board-list-item-name\">" & Html(b!title) & "</strong>" & If(b!id = homeId, "<span class=\"board-home-badge\" role=\"img\" title=\"Home board (opened after login)\" aria-label=\"Home board (opened after login)\"><i class=\"fa fa-home\" aria-hidden=\"true\"></i></span>", "") & "</button><button class=\"weba-board-context fa fa-bars\" data-context-kind=\"board\" data-context-id=\"" & Str(b!id) & "\" aria-label=\"Board menu\"></button></li>"
+        tiles[CStr(b!id)] = "<li data-selected=\"" & If(BoardSelection.IsSelected(SelectionState(), b!id), "true", "false") & "\" draggable=\"true\" class=\"weba-board-tile-group js-board\" data-board-id=\"" & Str(b!id) & "\">" & If(IsOverview(), "<button type=\"button\" class=\"weba-drag-handle weba-board-drag fa fa-arrows\" data-drag-kind=\"board\" aria-label=\"Sort boards\"></button>", "") & "<a href=\"/b/" & Str(b!id) & "\" draggable=\"false\" style=\"background-color:" & Html(WorkspaceStore.Setting(b!id, "board", b!id, "color", "#2980b9")) & "\" class=\"weba-board-tile\" data-board-key=\"b" & Str(b!id) & "\"><strong class=\"board-list-item-name\">" & Html(b!title) & "</strong>" & If(b!id = homeId, "<span class=\"board-home-badge\" role=\"img\" title=\"Home board (opened after login)\" aria-label=\"Home board (opened after login)\"><i class=\"fa fa-home\" aria-hidden=\"true\"></i></span>", "") & "</a><button type=\"button\" class=\"weba-board-context fa fa-bars\" data-context-kind=\"board\" data-context-id=\"" & Str(b!id) & "\" aria-label=\"Board menu\"></button></li>"
         Continue
       Endif
       Print "<h3>" & Html(b!title) & "</h3>"
@@ -4101,4 +4108,10 @@ Public Sub LoginLandingAction_Change()
   RefreshTree()
 Catch
   Notice.Text = Error.Text
+End
+
+
+Public Sub Reload()
+  If NativeAuth.Bootstrapping Then Return
+  Super.Reload()
 End

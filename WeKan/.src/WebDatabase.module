@@ -356,6 +356,7 @@ Private Sub CleanupUserReferences(username As String)
       Next
     Next
   Endif
+  If $hConn.Tables.Exist("native_ui_sessions") Then $hConn.Delete("native_ui_sessions", "username=&1", username)
   If $hConn.Tables.Exist("kb_members") Then $hConn.Delete("kb_members", "username = &1", username)
   If $hConn.Tables.Exist("kb_member_flags") Then $hConn.Delete("kb_member_flags", "username = &1", username)
   If $hConn.Tables.Exist("kb_removed_members") Then $hConn.Delete("kb_removed_members", "username = &1", username)
@@ -451,6 +452,7 @@ Private Function ChangeCredential(username As String, newpass As String, oldpass
   Dim passwordHash As String
   Dim generation As Long
   Dim keepCurrent As Boolean
+  Dim previousGeneration As Long
   RequirePassword(newpass)
   passwordHash = Crypt.Sha256(newpass)
   keepCurrent = Not reset And Env["WEBA_API_REQUEST"] <> "1" And WebIdentity.Username = username
@@ -476,7 +478,9 @@ Private Function ChangeCredential(username As String, newpass As String, oldpass
     Endif
   Endif
   $hConn.Exec("UPDATE users SET password = &1 WHERE username = &2", passwordHash, username)
+  previousGeneration = SessionGeneration(username)
   generation = RotateSessionGeneration(username)
+  If keepCurrent Then NativeAuth.Retain(username, previousGeneration, generation)
   ApiTokens.RevokeUser(username)
   DatabaseTransactions.Commit($hConn)
   transaction = False

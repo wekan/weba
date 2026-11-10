@@ -27,6 +27,8 @@
       const state=requests.get(this);
       if(state){
         this.setRequestHeader('X-WeBa-Request','1');
+        const page=root.document?.querySelector('meta[name="weba-page"]')?.content;
+        if(page)this.setRequestHeader('X-WeBa-Page',page);
         if(state.body!==undefined){
           this.setRequestHeader('Content-Type','application/x-www-form-urlencoded;charset=UTF-8');
           body=state.body;
@@ -35,6 +37,10 @@
       return send.call(this,body);
     };
   }
+  root.addEventListener?.('pagehide',event=>{
+    const page=root.document?.querySelector('meta[name="weba-page"]')?.content;
+    if(!event.persisted&&page&&root.fetch)root.fetch('/_weba/page-close',{method:'POST',keepalive:true,redirect:'manual',credentials:'same-origin',headers:{'X-WeBa-Request':'1','X-WeBa-Page':page},body:''}).catch(()=>{});
+  });
   const entryKey='weba-overview-entry',overviewSections=['remaining','starred','archive','home','workspaces','board'];
   let entrySent=false,overviewPending=null,overviewObserved=null,overviewIntent=0,deferredOverview=null,navigationObserved=null;
   function overviewRouteAtPath(){try{
@@ -264,6 +270,12 @@
     syncCardTitles();
     workspaceIcons();
     sortControls();
+    const boardUrls=root.webaWorkspaceMarkdown?.boardUrls;
+    if(boardUrls)document.querySelectorAll('a.weba-board-tile[data-board-key]').forEach(link=>{
+      const id=/^b([1-9]\d*)$/.exec(link.dataset.boardKey)?.[1],title=link.querySelector('.board-list-item-name')?.textContent;
+      if(!id||title===undefined)return;
+      const path=boardUrls.path(id,title);if(link.getAttribute('href')!==path)link.setAttribute('href',path);
+    });
     const boardSearch=document.querySelector('[id$=".BoardSearch:entry"]');
     if(boardSearch&&!boardSearch.classList.contains("js-board-search-input"))boardSearch.classList.add("js-board-search-input");
     const remaining=document.querySelector('[id$=".Remaining"]');
@@ -312,6 +324,7 @@
       const tile=event.target.closest?.('[data-board-key]');
       if(tile){
         if(root.webaDrag?.clickSuppressed){event.preventDefault();event.stopImmediatePropagation();return;}
+        if(event.defaultPrevented||event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey||tile.target&&tile.target!=='_self'||tile.hasAttribute('download'))return;
         const id=/^b([1-9]\d*)$/.exec(tile.dataset.boardKey)?.[1];
         if(id&&!tile.disabled){event.preventDefault();event.stopImmediatePropagation();sendOverviewRoute('board','menu',id);}return;
       }

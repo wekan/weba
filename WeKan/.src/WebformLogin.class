@@ -82,6 +82,7 @@ Private Sub Login()
   generation = WebDatabase.LoginGeneration(sUsername, sPassword)
   If generation Then
 
+    NativeAuth.SignIn(sUsername, generation)
     ' Create a new Session
     Session["auth_generation"] = generation
     Session["username"] = sUsername
@@ -180,4 +181,19 @@ Public Sub LanguageSelector_Render()
   Print "<link rel=\"stylesheet\" href=\"fontawesome.css\">"
   Print "<script>" & File.Load(".public/i18n-catalog.js") & File.Load(".public/i18n.js") & File.Load(".public/ui.js") & "</script>"
   Print "<select data-weba-language aria-label=\"Language\" style=\"width:100%;height:32px;background:white;color:black\"></select>"
+End
+
+
+Public Sub Render()
+  If NativeAuth.Enabled() And WebIdentity.Username Then
+    NativeAuth.Bootstrapping = True
+    WebForm.Current = WebformMain
+    NativeAuth.Bootstrapping = False
+    WebformMain.Render()
+    Return
+  Endif
+  Super.Render()
+Catch
+  NativeAuth.Bootstrapping = False
+  Error.Propagate()
 End
