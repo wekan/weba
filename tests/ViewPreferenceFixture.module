@@ -23,6 +23,39 @@ Public Sub Main()
   If Not user Then user = "rest-member"
   Session["username"] = user
   Session["auth_generation"] = WebDatabase.SessionGeneration(user)
+  If mode = "signed-cleanup" Then
+    Session["username"] = "rest-owner"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("rest-owner")
+    WebDatabase.DeleteUser("rest-signed-view-member")
+    WebDatabase.DeleteUser("rest-signed-view-visitor")
+    Print "{}"
+    Return
+  Endif
+  If mode = "signed-seed" Then
+    WebDatabase.Register("rest-signed-view-member", Env["WEBA_TEST_PASSWORD"])
+    WebDatabase.Register("rest-signed-view-visitor", Env["WEBA_TEST_PASSWORD"])
+    Session["username"] = "rest-other"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+    id = KanbanStore.AddBoard("Signed policy board")
+    BoardAccess.SetMember(id, "rest-signed-view-member", "read-only")
+    BoardVisibility.SaveBoard(id, "public", False)
+    data["board"] = id
+    data["card"] = KanbanStore.SaveCard(id, 0, "Signed policy card", "Body", "Default", "Todo", "", "", "")
+    Print JSON.Encode(data)
+    Return
+  Endif
+  If mode = "signed-policy" Or mode = "signed-revoke" Or mode = "signed-grant" Or mode = "signed-private" Or mode = "signed-public" Or mode = "signed-worker" Then
+    Session["username"] = "rest-other"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+    If mode = "signed-policy" Then BoardViewPolicy.Save(id, JSON.Decode(Env["WEBA_PREF_VALUE"], True))
+    If mode = "signed-revoke" Then BoardAccess.RemoveMember(id, "rest-signed-view-member")
+    If mode = "signed-worker" Then BoardAccess.SetMember(id, "rest-signed-view-member", "normal")
+    If mode = "signed-grant" Then BoardAccess.SetMember(id, "rest-signed-view-member", "read-only")
+    If mode = "signed-private" Then BoardVisibility.SavePermission(id, "private")
+    If mode = "signed-public" Then BoardVisibility.SavePermission(id, "public")
+    Print "{}"
+    Return
+  Endif
   If mode = "seed" Then
     Session["username"] = "rest-other"
     Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")

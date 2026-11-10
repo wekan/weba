@@ -10,6 +10,11 @@ for(const item of metadata.views)for(const side of ['Public','Private']){
 }
 for(const raw of [true,false,'TRUE','false',' true ',[],[true],[['TRUE']],{},null,1])cases.push({doc:{},input:{boardViewSettings:{'board-view-table':{showOnPublic:raw}}}});
 for(const input of [{},{unknown:true},{boardViewSettings:{}},{boardViewSettings:{'bad':{}}},{boardViewSettings:{'board-view-table':null}},{boardViewSettings:null},{defaultPrivateBoardView:23},{boardViewOrder:['bad']},{boardViewOrder:[null]},{boardViewOrder:'board-view-table'},{boardViewOrder:[]},{boardViewOrder:['board-view-table','board-view-table','board-view-cal']},{defaultPublicBoardView:'board-view-table',boardViewSettings:{'board-view-swimlanes':{showOnPublic:false}}}])cases.push({doc:{},input});
+for(const side of ['public','private'])for(const item of metadata.views)for(const allowed of [metadata.views.map(v=>v.view),['board-view-swimlanes','board-view-table'],[]]){
+ const doc={permission:side,defaultPublicBoardView:'board-view-table',defaultPrivateBoardView:'board-view-cal',boardViewSettings:{[item.view]:{showOnPublic:false,showOnPrivate:false}},boardViewOrder:['board-view-table','board-view-cal']};
+ cases.push({doc,requested:item.view,side,allowed});
+}
+cases.push({doc:{boardViewSettings:{'board-view-swimlanes':{showOnPublic:false}},defaultPublicBoardView:'bad'},requested:'bad',side:'public',allowed:[]});
 const work=fs.mkdtempSync(path.join(process.env.TMPDIR,'weba-view-conformance.'));
 try{
  fs.cpSync(path.join(root,'WeKan/.src'),path.join(work,'.src'),{recursive:true});fs.cpSync(path.join(root,'WeKan/.public'),path.join(work,'.public'),{recursive:true});fs.copyFileSync(path.join(root,'WeKan/.project'),path.join(work,'.project'));fs.copyFileSync(path.join(__dirname,'BoardViewPolicyConformance.module'),path.join(work,'.src/BoardViewPolicyConformance.module'));
@@ -17,7 +22,8 @@ try{
  let count=0;
  for(let start=0;start<cases.length;start+=20){const batch=cases.slice(start,start+20),native=JSON.parse(execFileSync(process.env.GBX||'gbx3',['-s','BoardViewPolicyConformance',work],{encoding:'utf8',env:{...process.env,WEBA_VIEW_CASES:JSON.stringify(batch)}}));
   batch.forEach((row,i)=>{let doc=structuredClone(row.doc),error=false;if('input'in row){const result=original.boardViewSettingsRequest(doc,row.input);if(result.error||!Object.keys(result.$set).length)error=true;else for(const[key,value]of Object.entries(result.$set)){const parts=key.split('.');let target=doc;for(const part of parts.slice(0,-1))target=target[part]??={};target[parts.at(-1)]=value;}}
+   if('requested'in row){const allow=v=>row.allowed.includes(v),doc={...row.doc,permission:row.side};assert.deepEqual(native[i],{views:original.visibleBoardViews(doc,row.side,allow).map(v=>v.view),view:original.resolveBoardView(doc,row.requested,allow),audience:row.side},JSON.stringify(row));count++;return;}
    assert.deepEqual(native[i],error?{error:true}:{snapshot:original.boardViewSettingsSnapshot(doc)},JSON.stringify(row));count++;});
  }
- console.log(`Board view policy source conformance: ${count} native snapshots/request results match unchanged source helpers for every view/side, missing/corrupt defaults, older/default/custom order, duplicate/unknown keys, default-before-hide and source boolean coercion; native storage/renderer availability remain explicit adapters`);
+ console.log(`Board view policy source conformance: ${count} native snapshots/request/presentation results match unchanged source helpers for every view/side, missing/corrupt defaults, older/default/custom order, duplicate/unknown keys, default-before-hide and source boolean coercion; native storage/renderer availability remain explicit adapters`);
 }finally{fs.rmSync(work,{recursive:true,force:true});}

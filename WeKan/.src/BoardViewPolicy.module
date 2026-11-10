@@ -182,6 +182,59 @@ Public Function Resolve(data As Collection, requested As String, side As String,
   Return "board-view-swimlanes"
 End
 
+Public Function Audience(boardId As Integer) As String
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim actor As String = WebIdentity.Username
+  Dim r As Result
+  If BoardVisibility.Permission(boardId) <> "public" Then Return "private"
+  If Not actor Then Return "public"
+  If Not WebDatabase.UserExists(actor) Then Return "public"
+  If db.Tables.Exist("kb_removed_members") Then
+    If db.Find("kb_removed_members", "board_id=&1 AND username=&2", boardId, actor).Available Then Return "public"
+  Endif
+  r = db.Find("kb_boards", "id=&1", boardId)
+  If Not r.Available Then Error.Raise("Board not accessible")
+  If r!owner = actor Then Return "private"
+  If db.Tables.Exist("kb_members") Then
+    If db.Find("kb_members", "board_id=&1 AND username=&2", boardId, actor).Available Then Return "private"
+  Endif
+  Return "public"
+End
+
+' Restrict only renderer availability here; stored preferences remain untouched.
+Public Function Presentation(data As Collection, requested As String, side As String, allowed As String[]) As Collection
+  Dim result As New Collection
+  Dim rows As New String[]
+  Dim key As String
+  Dim field As String = If(side = "public", "showOnPublic", "showOnPrivate")
+  For Each key In data["boardViewOrder"]
+    If allowed.Find(key) < 0 Then Continue
+    If data["boardViewSettings"][key][field] = True Then rows.Add(key)
+  Next
+  result["views"] = rows
+  result["view"] = Resolve(data, requested, side, allowed)
+  result["audience"] = side
+  Return result
+End
+
+Public Function Current(boardId As Integer, requested As String) As Collection
+  Dim allowed As New String[]
+  Dim data As Collection
+  Dim name As String
+  Dim actor As String = WebIdentity.Username
+  Dim side As String
+  If Env["WEBA_API_REQUEST"] = "1" Or Not actor Then Error.Raise("Sign in required")
+  BoardAccess.RequireRead(boardId)
+  For Each name In BoardViewPreference.Names()
+    allowed.Add(BoardViewPreference.Canonical(name))
+  Next
+  side = Audience(boardId)
+  data = Presentation(Snapshot(ReadRaw(boardId)), requested, side, allowed)
+  BoardAccess.RequireRead(boardId)
+  If WebIdentity.Username <> actor Or Audience(boardId) <> side Then Error.Raise("Board context changed")
+  Return data
+End
+
 Public Function Guest(boardId As Integer) As Collection
   Dim data As Collection
   Dim result As New Collection

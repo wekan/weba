@@ -930,10 +930,21 @@ Native view switches persist on the current board, or as shared when off a
 board. Board/card entries, reload, restore/copy/import/Home destinations and
 cross-board tree selection read the relevant preference. Peer preference changes
 refresh the native report without discarding a mounted card editor or unsaved
-description. The add-card action may temporarily show Swimlanes without changing
-the saved choice. This preference stage leaves signed-in policy visibility/
-audience/default resolution to the next integration step; it does not overwrite
-personal choices with a policy fallback.
+description. The add-card action requests a temporary Swimlanes layout without
+changing the saved choice; board policy resolves that request too.
+
+Signed-in rendering and view menus apply fresh board policy on entries, menu
+opens, render and live polling. Active members of a public board use its private
+settings, regardless of role flags. Public nonmembers/removed members use its
+public settings; site-admin status alone grants no membership. Native owner and
+member pointers adapt the source member list, with removal markers taking
+precedence. Menus show the allowed six native renderers in source policy order,
+including DOM/keyboard order. A hidden saved choice renders the audience default
+or the core Swimlanes fallback; re-enabling the stored choice restores it without
+a write. Forged hidden control clicks do not change preferences. Fresh readable
+board checks guard projections, and live policy/audience changes preserve mounted
+card drafts. Table/report links anchor their editor to the actual link when no
+Kanban card wrapper exists.
 
 Native tests cover precedence, user/read-only/anonymous scope, missing schema,
 unsupported/legacy values, late generation rollback/retry and lifecycle cleanup.
@@ -942,9 +953,16 @@ and Utils.storedBoardView bodies over every known view and private board/shared
 and user-isolation cases. Numeric SQL IDs/profile maps and absent browser,
 pending-choice and publication layers are explicit adapters. Real browser tests
 cover route/reload/per-board isolation, fresh-board shared fallback, peer changes,
-card history and unsaved drafts, and mobile/Finnish. Signed-in board-policy
-consumption, browser/localStorage/published-profile/DDP bridges and remaining
-renderers remain pending.
+card history and unsaved drafts, and mobile/Finnish. Native audience tests include
+readonly/unknown-role active membership, removed members, site admins, pure reads
+and unreadable/anonymous denial. 429 source helper comparisons now cover native
+snapshots, requests and ordered presentation/fallbacks for all 40 keys and both
+policy sides, including unavailable/default/core fallback cases. Browser policy
+tests cover member/private vs visitor/public menus, live hide/show/default/order,
+forged no-write, saved-choice recovery, membership loss/regrant, mounted drafts,
+privacy, reload and Finnish/mobile. The six-renderer availability list is an
+explicit adapter; source instance feature flags, browser/localStorage/published-
+profile/DDP bridges and remaining renderers remain pending.
 
 Selected guest cards now show comments and checklists through the same final
 public/card scope guards. Only the selected board/card's records are queried;

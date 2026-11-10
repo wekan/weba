@@ -1,0 +1,57 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim data As Collection
+  Dim db As Connection
+  Dim r As Result
+  Dim denied As Boolean
+  WebDatabase.Register("signed-view-admin", "x")
+  WebDatabase.Register("signed-view-owner", "x")
+  WebDatabase.Register("signed-view-reader", "x")
+  WebDatabase.Register("signed-view-visitor", "x")
+  SignIn("signed-view-owner")
+  boardId = KanbanStore.AddBoard("Signed view audience")
+  BoardVisibility.SaveBoard(boardId, "public", False)
+  BoardAccess.SetMember(boardId, "signed-view-reader", "read-only")
+  db = WebDatabase.OpenConnection()
+  data = BoardViewPolicy.Current(boardId, "board-view-table")
+  If data["audience"] <> "private" Or data["view"] <> "board-view-table" Then Error.Raise("Owner audience changed")
+  If db.Tables.Exist("kb_board_view_policy") Then Error.Raise("Policy presentation initialized store")
+  BoardViewPolicy.Save(boardId, JSON.Decode("{\"defaultPublicBoardView\":\"board-view-cal\",\"defaultPrivateBoardView\":\"board-view-table\",\"boardViewSettings\":{\"board-view-lists\":{\"showOnPrivate\":false},\"board-view-swimlanes\":{\"showOnPublic\":false}},\"boardViewOrder\":[\"board-view-table\",\"board-view-cal\"]}"))
+  SignIn("signed-view-reader")
+  BoardViewPreference.Save(boardId, "board-view-lists")
+  data = BoardViewPolicy.Current(boardId, BoardViewPreference.Stored(boardId))
+  If data["audience"] <> "private" Or data["view"] <> "board-view-table" Or data["views"].Find("board-view-lists") >= 0 Then Error.Raise("Readonly private fallback failed")
+  If BoardViewPreference.Stored(boardId) <> "board-view-lists" Then Error.Raise("Fallback overwrote private preference")
+  If data["views"][0] <> "board-view-table" Then Error.Raise("Visible order changed")
+  SignIn("signed-view-visitor")
+  data = BoardViewPolicy.Current(boardId, "board-view-swimlanes")
+  If data["audience"] <> "public" Or data["view"] <> "board-view-cal" Then Error.Raise("Public visitor fallback failed")
+  SignIn("signed-view-admin")
+  If BoardViewPolicy.Audience(boardId) <> "public" Then Error.Raise("Site admin invented membership")
+  SignIn("signed-view-owner")
+  BoardAccess.RemoveMember(boardId, "signed-view-reader")
+  SignIn("signed-view-reader")
+  data = BoardViewPolicy.Current(boardId, "board-view-swimlanes")
+  If data["audience"] <> "public" Then Error.Raise("Removed membership retained private side")
+  SignIn("signed-view-owner")
+  BoardAccess.SetMember(boardId, "signed-view-reader", "normal")
+  db.Exec("UPDATE kb_members SET role=&1 WHERE board_id=&2 AND username=&3", "unknown-legacy-role", boardId, "signed-view-reader")
+  SignIn("signed-view-reader")
+  If BoardViewPolicy.Audience(boardId) <> "private" Then Error.Raise("Unknown active role lost membership audience")
+  SignIn("signed-view-owner")
+  BoardVisibility.SavePermission(boardId, "private")
+  SignIn("signed-view-visitor")
+  Try BoardViewPolicy.Current(boardId, "board-view-table")
+  denied = Error
+  If Not denied Then Error.Raise("Policy projection leaked unreadable board")
+  Session["username"] = ""
+  Try BoardViewPolicy.Current(boardId, "board-view-table")
+  denied = Error
+  If Not denied Then Error.Raise("Anonymous signed projection allowed")
+  Print "Signed board views: audience/readonly/private/public/site-admin/removed/unknown-role, ordered fallback without preference writes, pure reads and unreadable/anonymous denial passed"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

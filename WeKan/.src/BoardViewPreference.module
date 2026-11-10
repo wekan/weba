@@ -83,6 +83,10 @@ Catch
   Error.Raise(failure)
 End
 
+Public Function Names() As String[]
+  Return ["Swimlanes", "Lists", "Table", "Calendar", "Gantt", "Charts"]
+End
+
 Public Function Canonical(name As String) As String
   Select name
     Case "Swimlanes"
@@ -103,7 +107,7 @@ End
 
 Public Function NativeName(key As String) As String
   Dim name As String
-  For Each name In ["Swimlanes", "Lists", "Table", "Calendar", "Gantt", "Charts"]
+  For Each name In Names()
     If Canonical(name) = key Then Return name
   Next
   Return "Swimlanes"

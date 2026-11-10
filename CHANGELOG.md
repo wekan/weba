@@ -2,6 +2,25 @@
 
 This work adds the following features and fixes:
 
+- Apply board-view public/private audience, ordered visible choices and fallback
+  defaults to signed-in native board rendering, navigation, menu opens, live
+  updates and temporary add-card layouts. Active membership selects the private
+  side regardless of role flags; public nonmembers and removed members use the
+  public side, and site-admin status does not invent membership. Preserve saved
+  choices while hidden so re-enabling a view restores them, and refuse forged
+  hidden choices without preference writes. Keep mounted unsaved card drafts
+  during policy changes. Fix Table/report card links using their own popup
+  anchor when no Kanban card wrapper exists. Verify native audience/read scope,
+  429 unchanged-source snapshot/request/presentation cases across all 40 keys,
+  and real readonly/member/nonmember, live membership/policy, ordering, draft,
+  reload and Finnish/mobile browser behavior. The full local suite (69 host
+  tests) and complete source/packaged browser suites pass. Fixture cleanup
+  removes dedicated users and makes their board private so discovery is isolated.
+  Availability is the six native
+  renderers; original instance feature flags, other renderers and full Meteor
+  profile/publication/ReportPages integration remain pending.
+  Thanks to xet7.
+
 - Persist private current-user board-view preferences with per-board choices
   ahead of a shared fallback and core default. Retain all 40 known source view
   IDs, ignore invalid legacy fallbacks and preserve unsupported choices behind

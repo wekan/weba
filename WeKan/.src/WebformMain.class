@@ -3,6 +3,7 @@
 Export
 
 Private $viewPreferenceState As String
+Private $viewMenuState As String
 Private $publicData As Collection
 Private $publicState As String
 Private $publicPage As Integer = 1
@@ -704,10 +705,16 @@ Public Sub Visual_Render()
   Dim overviewIds As Integer[]
   Dim boardColor As String = "#2980b9"
   Dim homeId As Integer
+  Dim presentation As Collection
   If Not WebIdentity.Username Then Return
   If $view = "Public" Then
     RenderPublic()
     Return
+  Endif
+  If $board > 0 And BoardViewPreference.Canonical($view) Then
+    presentation = BoardViewPolicy.Current($board, BoardViewPreference.Canonical($view))
+    $view = BoardViewPreference.NativeName(presentation["view"])
+    ApplyViewMenu(presentation["views"])
   Endif
   homeId = HomeBoard.Saved()
   ' Capture before rendering: a concurrent mutation after this read must be
@@ -1045,6 +1052,7 @@ End
 Public Sub ViewMenu_Click()
   If $view = "Public" Then Return
   BoardSortMenu.Hide()
+  RefreshViewPreference()
   Views.Visible = Not Views.Visible
   AccountMenu.Hide()
 End
@@ -1941,7 +1949,7 @@ Public Sub ContextAddCard_Click()
   Dim laneRows As Result
   $board = $contextBoard
   PreferredBoardView()
-  $view = "Swimlanes"
+  $view = BoardViewPreference.NativeName(BoardViewPolicy.Current($board, "board-view-swimlanes")["view"])
   If $contextKind = "list" Then
     r = WorkspaceStore.Record($contextBoard, "list", $contextId)
   Else If $contextKind = "lane" Then
@@ -4658,27 +4666,73 @@ Private Sub BoardViewsError(message As String)
   Endif
 End
 
+Private Sub ApplyViewMenu(keys As String[])
+  Dim controls As New Collection
+  Dim name As String
+  Dim key As String
+  Dim button As WebButton
+  Dim state As String = JSON.Encode(keys)
+  If state = $viewMenuState Then Return
+  $viewMenuState = state
+  controls["Swimlanes"] = Swimlanes
+  controls["Lists"] = Kanban
+  controls["Table"] = TableView
+  controls["Calendar"] = Calendar
+  controls["Gantt"] = Gantt
+  controls["Charts"] = Charts
+  For Each name In controls.Keys
+    button = controls[name]
+    button.Visible = keys.Find(BoardViewPreference.Canonical(name)) >= 0
+  Next
+  For Each key In keys
+    button = controls[BoardViewPreference.NativeName(key)]
+    button.Raise()
+  Next
+End
+
 Private Function PreferredBoardView() As String
   Dim key As String = BoardViewPreference.Stored($board)
-  $viewPreferenceState = CStr($board) & "|" & key
-  Return BoardViewPreference.NativeName(key)
+  Dim data As Collection
+  Dim keys As New String[]
+  Dim name As String
+  Dim state As String
+  If $board > 0 Then
+    data = BoardViewPolicy.Current($board, key)
+  Else
+    For Each name In BoardViewPreference.Names()
+      keys.Add(BoardViewPreference.Canonical(name))
+    Next
+    data = New Collection
+    data["views"] = keys
+    data["view"] = key
+  Endif
+  state = CStr($board) & "|" & key & "|" & JSON.Encode(data)
+  If state <> $viewPreferenceState Then ApplyViewMenu(data["views"])
+  $viewPreferenceState = state
+  Return BoardViewPreference.NativeName(data["view"])
 End
 
 Private Sub RefreshViewPreference()
-  Dim key As String = BoardViewPreference.Stored($board)
-  Dim state As String = CStr($board) & "|" & key
-  If state = $viewPreferenceState Then Return
-  $viewPreferenceState = state
+  Dim before As String = $viewPreferenceState
+  Dim view As String = PreferredBoardView()
+  If before = $viewPreferenceState Then Return
   If Not BoardViewPreference.Canonical($view) Then Return
-  $view = BoardViewPreference.NativeName(key)
+  $view = view
   UpdateHeader()
   Visual.Refresh()
 End
 
 Private Function SaveViewPreference(key As String) As Boolean
-  If $board > 0 Then BoardAccess.RequireRead($board)
+  Dim data As Collection
+  If $board > 0 Then
+    data = BoardViewPolicy.Current($board, key)
+    If data["views"].Find(key) < 0 Then
+      RefreshViewPreference()
+      Return False
+    Endif
+  Endif
   BoardViewPreference.Save($board, key)
-  $viewPreferenceState = CStr($board) & "|" & key
+  PreferredBoardView()
   Return True
 Catch
   Notice.Text = "Error"

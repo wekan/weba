@@ -11,7 +11,15 @@ End
 Private Function Outcome(row As Collection) As Collection
   Dim result As New Collection
   Dim doc As Collection = row["doc"]
+  Dim allowed As New String[]
+  Dim key As String
   If row.Exist("input") Then doc = BoardViewPolicy.Prepare(doc, row["input"])
+  If row.Exist("requested") Then
+    For Each key In row["allowed"]
+      allowed.Add(key)
+    Next
+    Return BoardViewPolicy.Presentation(BoardViewPolicy.Snapshot(doc), row["requested"], row["side"], allowed)
+  Endif
   result["snapshot"] = BoardViewPolicy.Snapshot(doc)
   Return result
 Catch

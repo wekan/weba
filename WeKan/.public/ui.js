@@ -334,7 +334,7 @@
         if(root.webaDrag?.clickSuppressed){event.preventDefault();event.stopImmediatePropagation();return;}
         if(event.defaultPrevented||event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey||cardLink.target&&cardLink.target!=='_self'||cardLink.hasAttribute('download'))return;
         const board=cardLink.closest('.weba-content')?.dataset.board,id=cardLink.dataset.cardId;
-        if(/^[1-9]\d*$/.test(board||'')&&/^[1-9]\d*$/.test(id||'')){event.preventDefault();event.stopImmediatePropagation();entrySent=true;deferredOverview=null;root.webaPopup?.rememberEditor(cardLink.closest('.weba-card'));sendOverviewRoute('board','menu',board,id);}return;
+        if(/^[1-9]\d*$/.test(board||'')&&/^[1-9]\d*$/.test(id||'')){event.preventDefault();event.stopImmediatePropagation();entrySent=true;deferredOverview=null;root.webaPopup?.rememberEditor(cardLink.closest('.weba-card')||cardLink);sendOverviewRoute('board','menu',board,id);}return;
       }
       const tile=event.target.closest?.('[data-board-key]');
       if(tile){
