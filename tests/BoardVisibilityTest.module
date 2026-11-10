@@ -1,0 +1,117 @@
+' Disposable policy/storage tests; public UI/ACL wiring is a subsequent integration.
+Public Sub Main()
+  Dim boardId As Integer
+  Dim db As Connection
+  Dim permission As String
+  Dim signedIn As Boolean
+  Dim denied As Boolean
+  Dim before As String
+  Dim trigger As String
+  Dim value As Variant
+  WebDatabase.Register("visibility-admin", "x")
+  WebDatabase.Register("visibility-owner", "x")
+  WebDatabase.Register("visibility-reader", "x")
+  SignIn("visibility-owner")
+  boardId = KanbanStore.AddBoard("Visibility policy test")
+  BoardAccess.SetMember(boardId, "visibility-reader", "read-only")
+  db = WebDatabase.OpenConnection()
+  If BoardVisibility.Permission(boardId) <> "private" Or BoardVisibility.BoardEditing(boardId) Then Error.Raise("Legacy board defaults are not private/disabled")
+  If BoardVisibility.PrivateOnly() Or BoardVisibility.InstanceEditing() Then Error.Raise("Fresh policy defaults changed")
+  For Each permission In ["private", "instance", "public", "unknown", "PUBLIC", ""]
+    For Each signedIn In [False, True]
+      If BoardVisibility.ReadableWithoutMembership(permission, signedIn) <> (permission = "public" Or (permission = "instance" And signedIn)) Then Error.Raise("Visibility decision changed")
+    Next
+  Next
+  If BoardVisibility.EditingDecision("public", False, True, False) Then Error.Raise("Global editing default bypassed")
+  If Not BoardVisibility.EditingDecision("instance", False, True, True) Then Error.Raise("Explicit open-board editing denied")
+  If BoardVisibility.EditingDecision("private", False, True, True) Then Error.Raise("Private board became instance-editable")
+  If BoardVisibility.EditingDecision("public", True, True, True) Then Error.Raise("Archived board became instance-editable")
+  If BoardVisibility.EditingDecision("public", False, "true", True) Then Error.Raise("Untyped board toggle accepted")
+  If BoardVisibility.EditingDecision("public", False, True, 1) Then Error.Raise("Untyped global toggle accepted")
+  BoardVisibility.SaveBoard(boardId, "public", True)
+  If BoardVisibility.Permission(boardId) <> "public" Or Not BoardVisibility.BoardEditing(boardId) Then Error.Raise("Board settings did not persist")
+  before = Snapshot()
+  For Each value In [Null, True, 1, "", "PUBLIC", "invalid"]
+    Try BoardVisibility.SaveBoard(boardId, value, False)
+    denied = Error
+    If Not denied Or Snapshot() <> before Then Error.Raise("Malformed visibility changed storage")
+  Next
+  Try BoardVisibility.SaveBoard(boardId, "private", "false")
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Untyped editing flag changed storage")
+  For Each trigger In ["BEFORE UPDATE ON kb_board_visibility BEGIN SELECT RAISE(ABORT,'visibility failed'); END", "AFTER UPDATE ON kb_board_visibility BEGIN UPDATE kb_boards SET owner='visibility-admin'; END", "AFTER UPDATE ON kb_board_visibility BEGIN UPDATE account_sessions SET generation=generation+1 WHERE username='visibility-owner'; END", "AFTER UPDATE ON kb_board_visibility BEGIN UPDATE board_visibility_settings SET private_only=1 WHERE id=1; END", "AFTER UPDATE ON kb_board_visibility BEGIN UPDATE kb_board_visibility SET permission='private'; END"]
+    db.Exec("CREATE TRIGGER fail_visibility " & trigger)
+    Try BoardVisibility.SaveBoard(boardId, "instance", False)
+    denied = Error
+    If Not denied Or Snapshot() <> before Then Error.Raise("Visibility late/failure guard did not roll back all state")
+    db.Exec("DROP TRIGGER fail_visibility")
+  Next
+  SignIn("visibility-reader")
+  Try BoardVisibility.SaveBoard(boardId, "private", False)
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Readonly member changed board permission")
+  Try BoardVisibility.SavePolicy(True, True)
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Nonadmin changed global visibility policy")
+  SignIn("visibility-admin")
+  ' Source global administrators can change board visibility without membership.
+  If BoardAccess.Role(boardId) Then Error.Raise("Admin fixture unexpectedly has membership")
+  BoardVisibility.SaveBoard(boardId, "instance", False)
+  BoardVisibility.SavePolicy(True, True)
+  If BoardVisibility.Permission(boardId) <> "instance" Then Error.Raise("Private-only policy silently changed existing boards")
+  If BoardVisibility.ImportPermission("public") <> "private" Or BoardVisibility.ImportPermission("instance") <> "private" Then Error.Raise("Import policy bypassed private-only")
+  If BoardVisibility.ImportPermission(Null) <> "private" Then Error.Raise("Legacy import default changed")
+  before = Snapshot()
+  Try BoardVisibility.SaveBoard(boardId, "public", True)
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Explicit visibility bypassed private-only")
+  For Each value In [Null, "true", 1]
+    Try BoardVisibility.SavePolicy(value, False)
+    denied = Error
+    If Not denied Or Snapshot() <> before Then Error.Raise("Untyped global policy changed state")
+  Next
+  For Each trigger In ["BEFORE UPDATE ON board_visibility_settings BEGIN SELECT RAISE(ABORT,'policy failed'); END", "AFTER UPDATE ON board_visibility_settings BEGIN UPDATE users SET admin=0 WHERE username='visibility-admin'; END", "AFTER UPDATE ON board_visibility_settings BEGIN UPDATE account_sessions SET generation=generation+1 WHERE username='visibility-admin'; END", "AFTER UPDATE ON board_visibility_settings BEGIN UPDATE board_visibility_settings SET instance_editing=1; END"]
+    db.Exec("CREATE TRIGGER fail_visibility_policy " & trigger)
+    Try BoardVisibility.SavePolicy(False, False)
+    denied = Error
+    If Not denied Or Snapshot() <> before Then Error.Raise("Global policy failure/late guard did not roll back")
+    db.Exec("DROP TRIGGER fail_visibility_policy")
+  Next
+  BoardVisibility.SavePolicy(False, False)
+  If BoardVisibility.ImportPermission("public") <> "public" Or BoardVisibility.ImportPermission("instance") <> "instance" Then Error.Raise("Allowed import permission changed")
+  SignIn("visibility-owner")
+  BoardAccess.SetMember(boardId, "visibility-admin", "board-admin")
+  KanbanStore.ArchiveBoard(boardId, True)
+  SignIn("visibility-admin")
+  RecoveryStore.SetEnabled(True)
+  BoardPurge.DeleteBoards([boardId])
+  If db.Find("kb_board_visibility", "board_id=&1", boardId).Available Then Error.Raise("Purged board retained stale public visibility")
+  Print "Visibility policy/storage: source decisions, legacy defaults, typed manager/admin settings, private-only import/update distinction, atomic failure/late owner/role/epoch/policy/value guards and purge cleanup passed; ACL/UI integration pending"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End
+
+Private Function Snapshot() As String
+  Dim data As New Collection
+  Dim rows As Variant[]
+  Dim table As String
+  Dim row As Collection
+  Dim r As Result
+  Dim field As ResultField
+  For Each table In ["kb_board_visibility", "board_visibility_settings", "kb_boards", "users", "account_sessions"]
+    rows = New Variant[]
+    r = WebDatabase.OpenConnection().Find(table, "1=1")
+    For Each r
+      row = New Collection
+      For Each field In r.Fields
+        row[field.Name] = r[field.Name]
+      Next
+      rows.Add(row)
+    Next
+    data[table] = rows
+  Next
+  Return JSON.Encode(data)
+End

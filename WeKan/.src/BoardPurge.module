@@ -1,6 +1,6 @@
 ' Explicit Global Admin purge for bounded archived-board selections.
 Export
-Private $tables As String[] = ["kb_attachment_data", "kb_attachment_deletions", "kb_attachment_history", "kb_deleted_items", "kb_delete_batches", "kb_entries", "kb_files", "kb_card_lists", "kb_cards", "kb_lists", "kb_lanes", "kb_meta", "kb_history", "kb_order", "kb_activity", "kb_members", "kb_removed_members", "kb_member_flags", "kb_user_meta", "kb_card_assignees", "kb_card_members", "kb_card_people_order", "kb_card_people_sequence", "kb_card_dates", "kb_card_archive", "kb_item_changes", "kb_retired_authors", "kb_board_space_assignments", "kb_board_order"]
+Private $tables As String[] = ["kb_attachment_data", "kb_attachment_deletions", "kb_attachment_history", "kb_deleted_items", "kb_delete_batches", "kb_entries", "kb_files", "kb_card_lists", "kb_cards", "kb_lists", "kb_lanes", "kb_meta", "kb_history", "kb_order", "kb_activity", "kb_members", "kb_removed_members", "kb_member_flags", "kb_user_meta", "kb_card_assignees", "kb_card_members", "kb_card_people_order", "kb_card_people_sequence", "kb_card_dates", "kb_card_archive", "kb_item_changes", "kb_retired_authors", "kb_board_space_assignments", "kb_board_order", "kb_board_visibility"]
 
 Public Function DeleteBoards(ids As Integer[]) As Integer
   Dim db As Connection

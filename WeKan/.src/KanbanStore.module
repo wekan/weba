@@ -107,10 +107,32 @@ Private Sub RequireUser()
   OpenDatabase()
 End
 
-Public Function Boards(Optional archived As Boolean = False, Optional descending As Boolean) As Result
+Public Function Boards(Optional archived As Boolean = False, Optional descending As Boolean, Optional selectedBoard As Integer, Optional includeOpenStars As Boolean) As Result
+  Dim related As String
   RequireUser()
   BoardAccess.OpenStore()
-  Return $db.Find("kb_boards", "archived = &1 AND NOT EXISTS (SELECT 1 FROM kb_removed_members d WHERE d.board_id = kb_boards.id AND d.username = &2) AND (owner = &2 OR id IN (SELECT board_id FROM kb_members WHERE username = &2 AND role IN ('board-admin','normal','no-comments','comment-only','read-only','normal-assigned-only','comment-assigned-only','read-assigned-only','worker'))) ORDER BY title " & If(descending, "DESC", "ASC") & ", id ASC", archived, WebIdentity.Username)
+  related = "(owner = &2 OR id IN (SELECT board_id FROM kb_members WHERE username = &2 AND role IN ('board-admin','normal','no-comments','comment-only','read-only','normal-assigned-only','comment-assigned-only','read-assigned-only','worker')))"
+  If includeOpenStars And $db.Tables.Exist("kb_board_visibility") Then
+    related = "(" & related & " OR id IN (SELECT s.board_id FROM kb_user_meta s INNER JOIN kb_board_visibility v ON v.board_id=s.board_id WHERE s.username=&2 AND s.kind='board' AND s.setting='star' AND s.value='1' AND v.permission IN ('public','instance')))"
+  Endif
+  If selectedBoard > 0 Then BoardAccess.RequireRead(selectedBoard)
+  Return $db.Find("kb_boards", "archived=&1 AND ((NOT EXISTS (SELECT 1 FROM kb_removed_members d WHERE d.board_id=kb_boards.id AND d.username=&2) AND " & related & ") OR id=&3) ORDER BY title " & If(descending, "DESC", "ASC") & ", id ASC", archived, WebIdentity.Username, selectedBoard)
+End
+
+Public Function BoardRows(ids As Integer[], archived As Boolean) As Result
+  Dim id As Integer
+  Dim keys As New String[]
+  Dim seen As New Collection
+  RequireUser()
+  BoardAccess.OpenStore()
+  For Each id In ids
+    If id <= 0 Or seen.Exist(CStr(id)) Then Continue
+    If Not BoardAccess.CanRead(id) Then Continue
+    keys.Add(CStr(id))
+    seen[CStr(id)] = True
+  Next
+  If Not keys.Count Then Return $db.Find("kb_boards", "id<0")
+  Return $db.Find("kb_boards", "archived=&1 AND id IN (" & keys.Join(",") & ") ORDER BY title,id", archived)
 End
 
 Public Sub RequireBoard(boardId As Integer)

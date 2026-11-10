@@ -138,12 +138,34 @@ Private Sub RememberRemoval(boardId As Integer, username As String, flags As Col
   r.Update()
 End
 
+Public Function CanRead(boardId As Integer) As Boolean
+  Dim actor As String = WebIdentity.Username
+  OpenStore()
+  If Not $db.Find("kb_boards", "id=&1", boardId).Available Then Return False
+  If Role(boardId) Then Return True
+  Return BoardVisibility.ReadableWithoutMembership(BoardVisibility.Permission(boardId), actor <> "")
+Catch
+  Return False
+End
+
 Public Function Can(boardId As Integer, capability As String) As Boolean
   Dim roleKey As String = Role(boardId)
   Dim caps As Collection
   Dim flags As Collection
   Dim flag As String
-  If Not roleKey Then Return False
+  If Not roleKey Then
+    If capability <> "seesAllCards" Then Return False
+    If Not CanRead(boardId) Then Return False
+    ' Open-board reading does not invent a membership or grant editing. Raw
+    ' assigned-only scope still narrows an active member with an unknown role.
+    If Not WebIdentity.Username Or IsRemoved(boardId, WebIdentity.Username) Then Return True
+    If Not $db.Find("kb_members", "board_id=&1 AND username=&2", boardId, WebIdentity.Username).Available Then Return True
+    flags = ApiMemberRoles.MemberData(boardId, WebIdentity.Username, "")
+    For Each flag In ["isNormalAssignedOnly", "isCommentAssignedOnly", "isReadAssignedOnly"]
+      If flags[flag] = True Then Return False
+    Next
+    Return True
+  Endif
   caps = $roles[roleKey]
   If capability = "seesAllCards" Then
     ' Card scope narrows the canonical role independently. In particular,
@@ -160,7 +182,7 @@ Public Function Can(boardId As Integer, capability As String) As Boolean
 End
 
 Public Sub RequireRead(boardId As Integer)
-  If Not Role(boardId) Then Error.Raise("Board not accessible")
+  If Not CanRead(boardId) Then Error.Raise("Board not accessible")
 End
 
 Public Sub Require(boardId As Integer, capability As String)

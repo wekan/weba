@@ -146,7 +146,13 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   and full original FlowRouter/DDP callbacks remain open.
   Other board drop destinations remain same-form. The 60-case unchanged source
   Home/Remove callback adapter proof does not claim original Meteor wiring.
-- Next board navigation parity: public/instance access, desktop multiple-card
+- Completed native private-default visibility/policy storage and separate
+  public/instance read authorization, signed-in open-board/card resolution,
+  selected rows/open favorites, assigned/inactive-member scope and unchanged
+  default/whole-board REST boundaries; recorded in CHANGELOG.md. Guest route/UI,
+  public discovery, policy controls, first-edit membership and import/copy
+  integration remain open.
+- Next board navigation parity: remaining public/instance UI, desktop multiple-card
   windows, container/reveal routes and full original FlowRouter/subscription
   and action callbacks. Native canonical/short board entries, acknowledged
   tile/Home/history, confirmed catalog/open-board archive, restored-board

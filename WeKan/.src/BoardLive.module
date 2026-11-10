@@ -40,7 +40,7 @@ Public Function State(boardId As Integer, archived As Boolean) As String
 End
 
 Public Function Overview(archived As Boolean) As String
-  Dim boards As Result = KanbanStore.Boards(archived)
+  Dim boards As Result = KanbanStore.Boards(archived, False, 0, True)
   Dim positions As Collection = BoardOrder.Positions()
   Dim data As New Variant[]
   Dim row As Collection

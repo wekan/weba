@@ -1,0 +1,225 @@
+' Native storage for the source private/instance/public and instance-editing policy.
+Export
+Private $db As Connection
+
+Public Sub OpenStore()
+  Dim t As Table
+  If $db Then Return
+  BoardAccess.OpenStore()
+  $db = WebDatabase.OpenConnection()
+  If Not $db.Tables.Exist("board_visibility_settings") Then
+    t = $db.Tables.Add("board_visibility_settings")
+    t.Fields.Add("id", db.Integer)
+    t.Fields.Add("private_only", db.Boolean)
+    t.Fields.Add("instance_editing", db.Boolean)
+    t.Fields.Add("actor", db.String, 255)
+    t.Fields.Add("changed_ms", db.Long)
+    t.PrimaryKey = ["id"]
+    t.Update()
+  Endif
+  If Not $db.Tables.Exist("kb_board_visibility") Then
+    t = $db.Tables.Add("kb_board_visibility")
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("permission", db.String, 16)
+    t.Fields.Add("instance_editing", db.Boolean)
+    t.Fields.Add("actor", db.String, 255)
+    t.Fields.Add("changed_ms", db.Long)
+    t.PrimaryKey = ["board_id"]
+    t.Update()
+  Endif
+  If Not $db.Find("board_visibility_settings", "id=1").Available Then
+    Try $db.Exec("INSERT INTO board_visibility_settings (id) SELECT 1 WHERE NOT EXISTS (SELECT 1 FROM board_visibility_settings WHERE id=1)")
+    If Error Then
+      If Not $db.Find("board_visibility_settings", "id=1").Available Then Error.Propagate()
+    Endif
+  Endif
+Catch
+  $db = Null
+  Error.Propagate()
+End
+
+Public Function ReadableWithoutMembership(permission As String, signedIn As Boolean) As Boolean
+  Return permission = "public" Or (permission = "instance" And signedIn)
+End
+
+Public Function IsOpen(permission As String) As Boolean
+  Return permission = "public" Or permission = "instance"
+End
+
+Public Function EditingDecision(permission As String, archived As Variant, boardAllows As Variant, globalAllows As Variant) As Boolean
+  If Not IsOpen(permission) Then Return False
+  If TypeOf(archived) = gb.Boolean Then
+    If CBool(archived) Then Return False
+  Endif
+  If TypeOf(boardAllows) <> gb.Boolean Or TypeOf(globalAllows) <> gb.Boolean Then Return False
+  Return CBool(boardAllows) And CBool(globalAllows)
+End
+
+Public Function Permission(boardId As Integer) As String
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim r As Result
+  If Not db.Find("kb_boards", "id=&1", boardId).Available Then Error.Raise("Board not accessible")
+  If Not db.Tables.Exist("kb_board_visibility") Then Return "private"
+  r = db.Find("kb_board_visibility", "board_id=&1", boardId)
+  If Not r.Available Then Return "private"
+  If ["private", "instance", "public"].Find(CStr(r!permission)) < 0 Then Return "private"
+  Return r!permission
+End
+
+Public Function BoardEditing(boardId As Integer) As Boolean
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim r As Result
+  Permission(boardId)
+  If Not db.Tables.Exist("kb_board_visibility") Then Return False
+  r = db.Find("kb_board_visibility", "board_id=&1", boardId)
+  If Not r.Available Then Return False
+  If IsNull(r!instance_editing) Then Return False
+  Return r!instance_editing
+End
+
+Public Function PrivateOnly() As Boolean
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim r As Result
+  If Not db.Tables.Exist("board_visibility_settings") Then Return False
+  r = db.Find("board_visibility_settings", "id=1")
+  If Not r.Available Then Return False
+  If IsNull(r!private_only) Then Return False
+  Return r!private_only
+End
+
+Public Function InstanceEditing() As Boolean
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim r As Result
+  If Not db.Tables.Exist("board_visibility_settings") Then Return False
+  r = db.Find("board_visibility_settings", "id=1")
+  If Not r.Available Then Return False
+  If IsNull(r!instance_editing) Then Return False
+  Return r!instance_editing
+End
+
+Public Function PermissionUnderPolicy(permission As String, privateBoardsOnly As Boolean) As String
+  If IsOpen(permission) And privateBoardsOnly Then Return "private"
+  Return permission
+End
+
+Public Function Settings() As Collection
+  Dim data As New Collection
+  Dim r As Result
+  RecoveryStore.RequireAdmin()
+  OpenStore()
+  r = $db.Find("board_visibility_settings", "id=1")
+  data["privateOnly"] = PrivateOnly()
+  data["allowInstanceEditing"] = InstanceEditing()
+  data.Add(r!actor, "actor")
+  data.Add(r!changed_ms, "changedMs")
+  Return data
+End
+
+Public Function BoardSettings(boardId As Integer) As Collection
+  Dim data As New Collection
+  RequireManager(boardId)
+  data["permission"] = Permission(boardId)
+  data["allowsInstanceEditing"] = BoardEditing(boardId)
+  data["privateOnly"] = PrivateOnly()
+  data["allowInstanceEditing"] = InstanceEditing()
+  Return data
+End
+
+Public Function ImportPermission(value As Variant) As String
+  If IsNull(value) Then Return "private"
+  If TypeOf(value) <> gb.String Then Error.Raise("Unknown board permission")
+  If ["private", "instance", "public"].Find(CStr(value)) < 0 Then Error.Raise("Unknown board permission")
+  Return PermissionUnderPolicy(CStr(value), PrivateOnly())
+End
+
+' A private policy lock can be shared by import/copy and editing transactions.
+Public Sub Lock()
+  OpenStore()
+  $db.Exec("UPDATE board_visibility_settings SET id=id WHERE id=1")
+End
+
+Public Sub SavePolicy(privateBoardsOnly As Variant, allowInstanceEditing As Variant)
+  Dim actor As String = WebIdentity.Username
+  Dim generation As Long
+  Dim transaction As Boolean
+  Dim r As Result
+  Dim failure As String
+  RecoveryStore.RequireAdmin()
+  generation = WebDatabase.SessionGeneration(actor)
+  If TypeOf(privateBoardsOnly) <> gb.Boolean Or TypeOf(allowInstanceEditing) <> gb.Boolean Then Error.Raise("Expected boolean settings")
+  OpenStore()
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  Lock()
+  If WebIdentity.Username <> actor Or WebDatabase.SessionGeneration(actor) <> generation Then Error.Raise("Administrator required")
+  RecoveryStore.RequireAdmin()
+  r = $db.Edit("board_visibility_settings", "id=1")
+  r["private_only"] = privateBoardsOnly
+  r["instance_editing"] = allowInstanceEditing
+  r["actor"] = actor
+  r["changed_ms"] = ItemChanges.UtcNow()
+  r.Update()
+  If WebIdentity.Username <> actor Or WebDatabase.SessionGeneration(actor) <> generation Then Error.Raise("Administrator required")
+  RecoveryStore.RequireAdmin()
+  If PrivateOnly() <> privateBoardsOnly Or InstanceEditing() <> allowInstanceEditing Then Error.Raise("Visibility settings changed")
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+Private Sub RequireManager(boardId As Integer)
+  If Not WebIdentity.Username Then Error.Raise("Sign in required")
+  If Not WebDatabase.GetIsAdmin(WebIdentity.Username) Then BoardAccess.Require(boardId, "manageBoard")
+  If Not WebDatabase.OpenConnection().Find("kb_boards", "id=&1", boardId).Available Then Error.Raise("Board not accessible")
+End
+
+Public Sub SaveBoard(boardId As Integer, value As Variant, allowInstanceEditing As Variant)
+  Dim actor As String = WebIdentity.Username
+  Dim generation As Long
+  Dim transaction As Boolean
+  Dim r As Result
+  Dim owner As String
+  Dim failure As String
+  RequireManager(boardId)
+  If TypeOf(value) <> gb.String Then Error.Raise("Unknown board permission")
+  If ["private", "instance", "public"].Find(CStr(value)) < 0 Then Error.Raise("Unknown board permission")
+  If TypeOf(allowInstanceEditing) <> gb.Boolean Then Error.Raise("Expected a boolean setting")
+  generation = WebDatabase.SessionGeneration(actor)
+  OpenStore()
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  Lock()
+  $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+  RequireManager(boardId)
+  If WebIdentity.Username <> actor Or WebDatabase.SessionGeneration(actor) <> generation Then Error.Raise("Sign in required")
+  If PrivateOnly() And IsOpen(CStr(value)) Then Error.Raise("Only private boards are allowed")
+  r = $db.Find("kb_boards", "id=&1", boardId)
+  owner = CStr(r!owner)
+  r = $db.Edit("kb_board_visibility", "board_id=&1", boardId)
+  If Not r.Available Then
+    r = $db.Create("kb_board_visibility")
+    r["board_id"] = boardId
+  Endif
+  r["permission"] = value
+  r["instance_editing"] = allowInstanceEditing
+  r["actor"] = actor
+  r["changed_ms"] = ItemChanges.UtcNow()
+  r.Update()
+  RequireManager(boardId)
+  If WebIdentity.Username <> actor Or WebDatabase.SessionGeneration(actor) <> generation Then Error.Raise("Sign in required")
+  r = $db.Find("kb_boards", "id=&1", boardId)
+  If CStr(r!owner) <> owner Then Error.Raise("Board owner changed")
+  If PrivateOnly() And IsOpen(CStr(value)) Then Error.Raise("Only private boards are allowed")
+  If Permission(boardId) <> value Or BoardEditing(boardId) <> allowInstanceEditing Then Error.Raise("Board visibility changed")
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End

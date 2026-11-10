@@ -156,7 +156,7 @@ Private Sub RefreshTree()
   Dim unavailable As Boolean
   Dim overviewSnapshot As String
   If $board Then
-    If Not BoardAccess.Role($board) Then
+    If Not BoardAccess.CanRead($board) Then
       unavailable = True
     Else
       unavailable = WorkspaceStore.Archived($board, "board", $board) <> $archive
@@ -179,7 +179,7 @@ Private Sub RefreshTree()
   RefreshDeletedListPanel()
   If IsOverview() Then overviewSnapshot = BoardLive.Overview($archive)
   Boards.Clear()
-  b = KanbanStore.Boards($archive)
+  b = KanbanStore.Boards($archive, False, $board, True)
   For Each b
     If b!id = $board Then $boardTitle = b!title
     Boards.Add("b" & b!id, b!title, "Icons/16x16/folder.png")
@@ -219,7 +219,7 @@ Public Sub BoardPoll_Timer()
   Endif
   If $board > 0 Then
     If $view <> "Profile" And $view <> "Admin panel" Then
-      If Not BoardAccess.Role($board) Then
+      If Not BoardAccess.CanRead($board) Then
         RefreshTree()
         Return
       Endif
@@ -269,7 +269,7 @@ End
 
 Private Sub ValidateOpenCards()
   If $workspaceBoard > 0 And BoardWorkspacePanel.Visible Then
-    If Not BoardAccess.Role($workspaceBoard) Then
+    If Not BoardAccess.CanRead($workspaceBoard) Then
       BoardWorkspacePanel.Hide()
       BoardWorkspaceName.Text = ""
       WorkspaceDestination.Clear()
@@ -695,7 +695,11 @@ Public Sub Visual_Render()
       overviewData = $catalogData
       overviewIds = overviewData["ids"]
     Endif
-    b = KanbanStore.Boards($archive, IsOverview() And $catalogSort = "title-desc")
+    If IsOverview() Then
+      b = KanbanStore.BoardRows(overviewIds, $archive)
+    Else
+      b = KanbanStore.Boards($archive, False, $board, True)
+    Endif
     If $board Then
       Print "<div class=\"weba-layout\" hidden>"
       lane = KanbanStore.Lanes($board)
@@ -950,10 +954,8 @@ Private Sub UpdateHeader()
   UpdateSpaceSelection()
   PageTitle.Text = If($view = "Boards", "All Boards", $view)
   If $board And $view <> "Profile" And $view <> "Admin panel" Then
-    b = KanbanStore.Boards($archive)
-    For Each b
-      If b!id = $board Then PageTitle.Text = b!title
-    Next
+    b = WorkspaceStore.Record($board, "board", $board)
+    PageTitle.Text = b!title
   Endif
   PageTitle.Tooltip = PageTitle.Text
   ViewMenu.Text = If($view = "Boards", "View", $view)
@@ -2607,7 +2609,7 @@ Private Sub RefreshLiveMembers()
   Dim data As Collection
   If $membersBoard <= 0 Then Return
   If Not MembersPanel.Visible Then Return
-  If Not BoardAccess.Role($membersBoard) Then
+  If Not BoardAccess.CanRead($membersBoard) Then
     CloseStaleMembers()
     If $board = 0 Then RefreshTree()
     Return
@@ -2720,7 +2722,7 @@ End
 
 Public Sub RemoveMember_Click()
   BoardAccess.RemoveMember($membersBoard, MemberUsername.Text)
-  If Not BoardAccess.Role($membersBoard) Then
+  If Not BoardAccess.CanRead($membersBoard) Then
     CloseStaleMembers()
   Else
     RefreshMembers()
@@ -4208,7 +4210,7 @@ Public Sub LoginLandingAction_Change()
   boardId = HomeBoard.Visible()
   If Not boardId Then
     If $board > 0 Then
-      If Not BoardAccess.Role($board) Then
+      If Not BoardAccess.CanRead($board) Then
         Home_Click()
       Else If WorkspaceStore.Archived($board, "board", $board) <> $archive Then
         Home_Click()

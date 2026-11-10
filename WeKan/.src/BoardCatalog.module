@@ -110,7 +110,7 @@ Private Function SelectBoards(params As Collection, archived As Boolean, paged A
   If menu = "home" Then homeId = HomeBoard.Visible()
   assignments = BoardSpaces.Assignments()
   offset = CLong(pageNumber - 1) * perPage
-  r = KanbanStore.Boards(archived, sortBy = "title-desc")
+  r = KanbanStore.Boards(archived, sortBy = "title-desc", 0, True)
   For Each r
     include = True
     If search Then

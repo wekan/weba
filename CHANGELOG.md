@@ -2,6 +2,26 @@
 
 This work adds the following features and fixes:
 
+- Add native private-default board visibility and global private-only/instance-
+  editing policy storage, with strict typed manager/site-admin setters, ordered
+  locks, final actor/epoch/owner/policy/value guards and rollback. Keep legacy
+  boards private, read checks free of visibility-schema writes, and purge stale
+  visibility with board content. Match source private-only import normalization
+  and strict editing-policy helpers without enabling nonmember editing yet.
+  Separate public/instance readability from real membership and mutation roles;
+  retain active assigned-only card scope and inactive nonmember read semantics.
+  Let signed-in native board/card routes, selected-board rows and readable open
+  favorites use that scope while keeping unrelated open boards out of personal
+  catalogs and preserving default enumeration and whole-board REST guards.
+  Verify native policy/late-change/rollback/privacy tests with native sessions
+  and separate API principals, plus 774 unchanged source helper outcomes.
+  The complete local suite (64 host tests) and complete source/packaged browser
+  suites pass.
+  Guest/public page and anonymous route/form integration, policy controls,
+  first-edit membership, import/copy wiring and full original Meteor callbacks
+  remain pending.
+  Thanks to xet7.
+
 - Add signed-in native `/b/:boardId/:slug/:cardId` entries with strict canonical
   IDs, GET-only root HTML/query stripping and malformed/encoded-slash/overflow
   alias refusal. Resolve a card's current readable destination with final

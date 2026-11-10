@@ -1,0 +1,47 @@
+Public Sub Main()
+  Dim data As New Collection
+  Dim readable As New Variant[]
+  Dim editing As New Variant[]
+  Dim imports As New Variant[]
+  Dim row As Collection
+  Dim permission As String
+  Dim signedIn As Boolean
+  Dim privateOnly As Boolean
+  Dim archived As Variant
+  Dim boardAllows As Variant
+  Dim globalAllows As Variant
+  For Each permission In ["private", "instance", "public", "", "PUBLIC", "unknown"]
+    For Each signedIn In [False, True]
+      row = New Collection
+      row["permission"] = permission
+      row["signedIn"] = signedIn
+      row["readable"] = BoardVisibility.ReadableWithoutMembership(permission, signedIn)
+      row["open"] = BoardVisibility.IsOpen(permission)
+      readable.Add(row)
+    Next
+    For Each privateOnly In [False, True]
+      row = New Collection
+      row["permission"] = permission
+      row["privateOnly"] = privateOnly
+      row["stored"] = BoardVisibility.PermissionUnderPolicy(permission, privateOnly)
+      imports.Add(row)
+    Next
+    For Each archived In [Null, False, True, 1, "true"]
+      For Each boardAllows In [Null, False, True, 1, "true"]
+        For Each globalAllows In [Null, False, True, 1, "true"]
+          row = New Collection
+          row["permission"] = permission
+          row.Add(archived, "archived")
+          row.Add(boardAllows, "boardAllows")
+          row.Add(globalAllows, "globalAllows")
+          row["editable"] = BoardVisibility.EditingDecision(permission, archived, boardAllows, globalAllows)
+          editing.Add(row)
+        Next
+      Next
+    Next
+  Next
+  data["readable"] = readable
+  data["editing"] = editing
+  data["imports"] = imports
+  Print JSON.Encode(data)
+End

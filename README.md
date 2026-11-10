@@ -670,6 +670,39 @@ form: no source-form/session or authorization adapter. Native parser, role,
 rollback and event negatives run in the local suite. Other cross-document board
 destinations and original Meteor integration remain pending.
 
+Native board visibility now has a private-default storage and read-access
+foundation. `BoardVisibility` persists board private/instance/public permissions,
+board instance-editing allowances and global private-only/instance-editing policy
+in normalized tables. Legacy boards remain private. Read-only checks do not
+create visibility tables. Manager/site-admin writes use strict input types,
+account/policy/board locks, fresh identity/permission/owner/value checks and atomic
+rollback; global settings require a current site administrator. Private-only
+policy rejects explicit open-board changes while the source import-policy helper
+coerces imported open permissions to private. Existing open boards retain their
+permission when the policy changes. Purging a board removes its visibility row.
+
+`BoardAccess.CanRead` separates readable public/instance boards from actual
+membership. Signed-in nonmembers can resolve native public/instance board and
+card routes without gaining mutation capabilities or joining the board. Active
+assigned-only members keep their card restrictions; inactive public members read
+as nonmembers. Native selected-board rendering and readable open favorites work
+without adding unrelated open boards to personal catalogs. Default/API board
+enumeration and whole-board REST membership/site-admin authorization remain
+separate. The backend also recognizes anonymous public readability, but the
+native guest page, anonymous route/form integration and public discovery page
+are still pending. Current UI entry routes still require sign-in.
+
+`BoardVisibilityTest` checks defaults, strict values, administrator/manager
+boundaries, private-only policy and late SQL/owner/epoch/policy/privilege/value
+rollback. `BoardVisibilityReadTest` runs with native sessions and separate API
+principals for assigned/inactive scope, favorites, selected rows, revocation and
+whole-board REST refusal. Another 774 actual native outcomes match unchanged
+source read/open, strict instance-editing and private-only import helpers.
+The complete local suite (including 64 host tests) and complete source/packaged
+browser suites pass. Policy controls, join-on-first-edit, import/copy integration
+and original Meteor publications/callbacks remain pending; persisted editing
+flags alone do not grant nonmembers editing.
+
 First native root landing after login or full
 page reload now opens the current readable active Home board once. All Boards
 remains usable afterward; named section entries win, ordinary mark changes do

@@ -1,0 +1,98 @@
+' Read access is independent of membership, mutation capability and whole-board REST.
+Public Sub Main()
+  Dim pub As Integer
+  Dim inst As Integer
+  Dim hidden As Integer
+  Dim shown As Integer
+  Dim secret As Integer
+  Dim r As Result
+  Dim db As Connection
+  Dim data As Collection
+  Dim args As New Collection
+  Dim denied As Boolean
+  Dim capability As String
+  WebDatabase.Register("visibility-read-admin", "x")
+  WebDatabase.Register("visibility-read-owner", "x")
+  WebDatabase.Register("visibility-read-visitor", "x")
+  WebDatabase.Register("visibility-read-assigned", "x")
+  SignIn("visibility-read-owner")
+  pub = KanbanStore.AddBoard("Public readable board")
+  inst = KanbanStore.AddBoard("Instance readable board")
+  hidden = KanbanStore.AddBoard("Private canary board")
+  BoardVisibility.SaveBoard(pub, "public", False)
+  BoardVisibility.SaveBoard(inst, "instance", False)
+  r = KanbanStore.Lanes(pub)
+  r = KanbanStore.Lists(pub, "Default")
+  shown = KanbanStore.SaveCard(pub, 0, "Assigned public card", "", "Default", "Todo", "", "", "", r!id)
+  secret = KanbanStore.SaveCard(pub, 0, "Other public card", "", "Default", "Todo", "", "", "", r!id)
+  BoardAccess.SetMember(pub, "visibility-read-assigned", "read-assigned-only")
+  BoardAccess.SetAssignees(pub, shown, ["visibility-read-assigned"])
+  db = WebDatabase.OpenConnection()
+  SignIn("")
+  If Not BoardAccess.CanRead(pub) Or BoardAccess.CanRead(inst) Or BoardAccess.CanRead(hidden) Then Error.Raise("Anonymous visibility boundary failed")
+  BoardAccess.RequireCard(pub, secret)
+  For Each capability In ["comment", "write", "moveCard", "manageBoard"]
+    If BoardAccess.Can(pub, capability) Then Error.Raise("Anonymous public read granted a mutation capability")
+  Next
+  SignIn("visibility-read-visitor")
+  If BoardAccess.Role(pub) Or BoardAccess.Role(inst) Then Error.Raise("Open-board reading invented membership")
+  If Not BoardAccess.CanRead(pub) Or Not BoardAccess.CanRead(inst) Or BoardAccess.CanRead(hidden) Then Error.Raise("Signed-in open-board boundary failed")
+  data = BoardRoute.Resolve(CStr(inst))
+  If data["id"] <> inst Then Error.Raise("Instance board route refused a signed-in reader")
+  data = CardRoute.Resolve(CStr(pub), CStr(secret))
+  If data["cardId"] <> secret Then Error.Raise("Public card route refused a signed-in reader")
+  If KanbanStore.Boards().Count <> 0 Then Error.Raise("Unrelated open boards entered personal/default board query")
+  If KanbanStore.Boards(False, False, pub).Count <> 1 Then Error.Raise("Readable selected board missing from navigation")
+  Try KanbanStore.Boards(False, False, hidden)
+  denied = Error
+  If Not denied Then Error.Raise("Selected-board query bypassed private visibility")
+  args["menu"] = "remaining"
+  If BoardCatalog.Page(args)["total"] <> 0 Then Error.Raise("Unstarred public boards entered relationship catalog")
+  WorkspaceStore.SetSetting(pub, "board", pub, "star", "1")
+  If BoardCatalog.Page(args)["total"] <> 1 Then Error.Raise("Readable public favorite absent from catalog")
+  If KanbanStore.Boards().Count <> 0 Then Error.Raise("UI favorites broadened default/API board enumeration")
+  If KanbanStore.BoardRows([pub, pub, inst, hidden], False).Count <> 2 Then Error.Raise("Rendered board rows leaked private IDs or duplicated rows")
+  If db.Find("kb_members", "board_id=&1 AND username=&2", pub, "visibility-read-visitor").Available Then Error.Raise("Reading/starring silently joined the board")
+  For Each capability In ["comment", "write", "moveCard", "manageBoard"]
+    If BoardAccess.Can(pub, capability) Then Error.Raise("Public favorite granted a mutation capability")
+  Next
+  If Env["WEBA_API_REQUEST"] = "1" Then
+    data = BoardAccess.ReadApiBoard(pub, "board")
+    If data["status"] <> 403 Then Error.Raise("Public UI visibility broadened whole-board REST authorization")
+    data = BoardAccess.ReadApiBoard(inst, "board")
+    If data["status"] <> 403 Then Error.Raise("Instance UI visibility broadened whole-board REST authorization")
+  Endif
+  SignIn("visibility-read-assigned")
+  If Not BoardAccess.CanRead(pub) Or BoardAccess.Can(pub, "seesAllCards") Then Error.Raise("Public board bypassed active assigned-only scope")
+  BoardAccess.RequireCard(pub, shown)
+  Try BoardAccess.RequireCard(pub, secret)
+  denied = Error
+  If Not denied Then Error.Raise("Assigned-only reader received other public cards")
+  db.Exec("INSERT INTO kb_member_flags (board_id,username,flag) VALUES (&1,&2,&3)", pub, "visibility-read-assigned", "isReadAssignedOnly")
+  db.Exec("UPDATE kb_members SET role='unsupported-custom' WHERE board_id=&1 AND username=&2", pub, "visibility-read-assigned")
+  If BoardAccess.Can(pub, "seesAllCards") Then Error.Raise("Unknown public member role bypassed raw assigned scope")
+  SignIn("visibility-read-owner")
+  db.Exec("UPDATE kb_members SET role='read-assigned-only' WHERE board_id=&1 AND username=&2", pub, "visibility-read-assigned")
+  BoardAccess.RemoveMember(pub, "visibility-read-assigned")
+  SignIn("visibility-read-assigned")
+  If Not BoardAccess.CanRead(pub) Or Not BoardAccess.Can(pub, "seesAllCards") Then Error.Raise("Inactive public member was not treated as a nonmember reader")
+  If BoardAccess.Can(pub, "write") Then Error.Raise("Removed member regained editing")
+  SignIn("visibility-read-owner")
+  BoardVisibility.SaveBoard(pub, "private", False)
+  SignIn("visibility-read-visitor")
+  If BoardAccess.CanRead(pub) Then Error.Raise("Public-to-private transition retained nonmember access")
+  If BoardCatalog.Page(args)["total"] <> 0 Then Error.Raise("Private favorite leaked into catalog")
+  If Not BoardAccess.CanRead(inst) Then Error.Raise("Unrelated instance visibility changed")
+  SignIn("")
+  If BoardAccess.CanRead(inst) Then Error.Raise("Instance board became anonymous after logout")
+  Print "Visibility read foundation: anonymous/public vs signed-in/instance, no synthetic membership or writes, source assigned/inactive scope, selected rows, private favorite/catalog and unchanged whole-board REST guards passed; guest/public page and editing integration pending"
+End
+
+Private Sub SignIn(username As String)
+  If Env["WEBA_API_REQUEST"] = "1" Then
+    WebIdentity.AuthenticateApi(username)
+  Else
+    Session["username"] = username
+    If username Then Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+  Endif
+End
