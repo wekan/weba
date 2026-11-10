@@ -2,6 +2,12 @@
 
 Export
 
+Private $featureActor As String
+Private $featureGeneration As Long
+Private $featureBase As Collection
+Private $featureDraft As Collection
+Private $featureSelected As Integer
+Private $featureLoading As Boolean
 Private $viewPreferenceState As String
 Private $viewMenuState As String
 Private $publicData As Collection
@@ -231,6 +237,7 @@ Public Sub BoardPoll_Timer()
   ValidateRecoveryPanels()
   ValidateTransferPanel()
   ValidateBoardCreation()
+  ValidateInstanceFeatures()
   ValidateImportExportPolicy()
   ValidateMarkdownPolicy()
   ValidateAttachmentAllowance()
@@ -249,6 +256,7 @@ Public Sub BoardPoll_Timer()
       UpdateHeader()
     Endif
   Endif
+  If $board = 0 Then RefreshViewPreference()
   If $board > 0 Then
     If $view <> "Profile" And $view <> "Admin panel" Then
       If Not BoardAccess.CanRead($board) Then
@@ -372,6 +380,7 @@ Public Sub Boards_Select()
   AccountPanel.Hide()
   PasswordPolicyPanel.Hide()
   BoardCreationPanel.Hide()
+  ClearInstanceFeatures()
   ImportExportPanel.Hide()
   MarkdownPanel.Hide()
   TransferLimitsPanel.Hide()
@@ -622,6 +631,7 @@ Private Sub ShowView(view As String)
   AdminPanel.Visible = False
   PasswordPolicyPanel.Hide()
   BoardCreationPanel.Hide()
+  ClearInstanceFeatures()
   ImportExportPanel.Hide()
   MarkdownPanel.Hide()
   TransferLimitsPanel.Hide()
@@ -650,6 +660,7 @@ Private Sub ResetHome()
   AdminPanel.Hide()
   PasswordPolicyPanel.Hide()
   BoardCreationPanel.Hide()
+  ClearInstanceFeatures()
   ImportExportPanel.Hide()
   MarkdownPanel.Hide()
   TransferLimitsPanel.Hide()
@@ -679,6 +690,7 @@ Public Sub Archive_Click()
   AdminPanel.Hide()
   PasswordPolicyPanel.Hide()
   BoardCreationPanel.Hide()
+  ClearInstanceFeatures()
   ImportExportPanel.Hide()
   MarkdownPanel.Hide()
   TransferLimitsPanel.Hide()
@@ -715,6 +727,8 @@ Public Sub Visual_Render()
     presentation = BoardViewPolicy.Current($board, BoardViewPreference.Canonical($view))
     $view = BoardViewPreference.NativeName(presentation["view"])
     ApplyViewMenu(presentation["views"])
+  Else If $board = 0 And BoardViewPreference.Canonical($view) Then
+    $view = PreferredBoardView()
   Endif
   homeId = HomeBoard.Saved()
   ' Capture before rendering: a concurrent mutation after this read must be
@@ -918,6 +932,7 @@ End
 
 Public Sub PasswordLength_Click()
   BoardCreationPanel.Hide()
+  ClearInstanceFeatures()
   ImportExportPanel.Hide()
   MarkdownPanel.Hide()
   If Not WebDatabase.GetIsAdmin(WebIdentity.Username) Then Error.Raise("Administrator required")
@@ -1017,6 +1032,7 @@ Private Sub UpdateHeader()
   PageTitle.Tooltip = PageTitle.Text
   ViewMenu.Text = If($view = "Boards", "View", $view)
   ValidateBoardCreation()
+  ValidateInstanceFeatures()
   ValidateImportExportPolicy()
   ValidateMarkdownPolicy()
   PublicControls.Visible = $view = "Public"
@@ -3348,6 +3364,7 @@ Public Sub PermanentDeleteSettings_Click()
   ContentRow.Hide()
   PasswordPolicyPanel.Hide()
   BoardCreationPanel.Hide()
+  ClearInstanceFeatures()
   ImportExportPanel.Hide()
   MarkdownPanel.Hide()
   TransferLimitsPanel.Hide()
@@ -3370,6 +3387,7 @@ Public Sub RecoveryEvents_Click()
   ContentRow.Hide()
   PasswordPolicyPanel.Hide()
   BoardCreationPanel.Hide()
+  ClearInstanceFeatures()
   ImportExportPanel.Hide()
   MarkdownPanel.Hide()
   TransferLimitsPanel.Hide()
@@ -3646,6 +3664,7 @@ Public Sub AttachmentTransferSettings_Click()
   ContentRow.Hide()
   PasswordPolicyPanel.Hide()
   BoardCreationPanel.Hide()
+  ClearInstanceFeatures()
   ImportExportPanel.Hide()
   MarkdownPanel.Hide()
   PermanentDeletePanel.Hide()
@@ -3873,6 +3892,7 @@ Public Sub CopyAttachments_Click()
 End
 
 Public Sub BoardCreationSettings_Click()
+  ClearInstanceFeatures()
   Dim data As Collection = BoardCreation.Settings()
   CreationAdminOnly.Value = data["adminOnly"]
   $creationBase = CreationAdminOnly.Value
@@ -3894,6 +3914,7 @@ Public Sub SaveBoardCreation_Click()
   $creationBase = CreationAdminOnly.Value
   Notice.Text = "Saved"
   ValidateBoardCreation()
+  ValidateInstanceFeatures()
   ValidateImportExportPolicy()
   ValidateMarkdownPolicy()
 Catch
@@ -3907,6 +3928,7 @@ Private Sub ValidateBoardCreation()
   BoardCreationSettings.Visible = admin
   If Not admin And BoardCreationPanel.Visible Then
     BoardCreationPanel.Hide()
+  ClearInstanceFeatures()
     ImportExportPanel.Hide()
     MarkdownPanel.Hide()
     CreationAdminOnly.Value = False
@@ -4008,6 +4030,7 @@ Public Sub ImportExportSettings_Click()
   $exchangeExportBase = DisableAllExport.Value
   ContentRow.Hide()
   BoardCreationPanel.Hide()
+  ClearInstanceFeatures()
   PasswordPolicyPanel.Hide()
   TransferLimitsPanel.Hide()
   PermanentDeletePanel.Hide()
@@ -4024,6 +4047,7 @@ Public Sub SaveImportExport_Click()
   $exchangeExportBase = DisableAllExport.Value
   Notice.Text = "Saved"
   ValidateBoardCreation()
+  ValidateInstanceFeatures()
   ValidateImportExportPolicy()
   ValidateMarkdownPolicy()
   ValidateBoardCopy()
@@ -4066,6 +4090,7 @@ Public Sub MarkdownSettings_Click()
   LoadExternalLinks(ExternalLinkPolicy.Settings())
   ContentRow.Hide()
   BoardCreationPanel.Hide()
+  ClearInstanceFeatures()
   PasswordPolicyPanel.Hide()
   TransferLimitsPanel.Hide()
   PermanentDeletePanel.Hide()
@@ -4702,9 +4727,11 @@ Private Function PreferredBoardView() As String
     For Each name In BoardViewPreference.Names()
       keys.Add(BoardViewPreference.Canonical(name))
     Next
+    keys = InstanceFeatures.AllowedViews(keys)
     data = New Collection
     data["views"] = keys
     data["view"] = key
+    If keys.Find(key) < 0 Then data["view"] = "board-view-swimlanes"
   Endif
   state = CStr($board) & "|" & key & "|" & JSON.Encode(data)
   If state <> $viewPreferenceState Then ApplyViewMenu(data["views"])
@@ -4730,6 +4757,9 @@ Private Function SaveViewPreference(key As String) As Boolean
       RefreshViewPreference()
       Return False
     Endif
+  Else If InstanceFeatures.AllowedViews([key]).Count = 0 Then
+    RefreshViewPreference()
+    Return False
   Endif
   BoardViewPreference.Save($board, key)
   PreferredBoardView()
@@ -4737,4 +4767,158 @@ Private Function SaveViewPreference(key As String) As Boolean
 Catch
   Notice.Text = "Error"
   Return False
+End
+
+Private Sub BindInstanceFeatures()
+  If Not InstanceFeaturesPanel.Visible Or Not $featureDraft Then Error.Raise("Feature form changed")
+  If WebIdentity.Username <> $featureActor Or WebDatabase.SessionGeneration($featureActor) <> $featureGeneration Then Error.Raise("Feature form changed")
+  RecoveryStore.RequireAdmin()
+End
+
+Private Sub CaptureInstanceFeatures()
+  If Not $featureDraft Then Return
+  $featureDraft["approvalRequired"] = FeatureApprovalRequired.Value
+  $featureDraft["previewAdmins"] = FeaturePreviewAdmins.Value
+  $featureDraft["pilotUsernames"] = FeaturePilotUsernames.Text
+End
+
+Private Sub FillInstanceFeatures()
+  Dim labels As New String[]
+  Dim item As Collection
+  $featureLoading = True
+  For Each item In InstanceFeatures.Definition()["features"]
+    labels.Add(InstanceFeatures.Definition()["captions"][item["labelKey"]])
+  Next
+  FeatureChoice.List = labels
+  FeatureChoice.Index = $featureSelected
+  item = InstanceFeatures.Definition()["features"][$featureSelected]
+  FeatureDescription.Text = InstanceFeatures.Definition()["captions"][item["descKey"]]
+  FeatureEnabled.Value = $featureDraft["states"][item["key"]]
+  FeatureAwaiting.Visible = InstanceFeatures.Awaiting(InstanceFeatures.Setting(), item["key"])
+  FeatureApprovalRequired.Value = $featureDraft["approvalRequired"]
+  FeaturePreviewAdmins.Value = $featureDraft["previewAdmins"]
+  FeaturePilotUsernames.Text = $featureDraft["pilotUsernames"]
+  $featureLoading = False
+Catch
+  $featureLoading = False
+  Error.Propagate()
+End
+
+Public Sub InstanceFeatureSettings_Click()
+  Dim changes As Collection = InstanceFeatures.Settings()
+  ContentRow.Hide()
+  PasswordPolicyPanel.Hide()
+  TransferLimitsPanel.Hide()
+  PermanentDeletePanel.Hide()
+  RecoveryPanel.Hide()
+  ImportExportPanel.Hide()
+  MarkdownPanel.Hide()
+  BoardCreationPanel.Hide()
+  ClearInstanceFeatures()
+  $featureActor = WebIdentity.Username
+  $featureGeneration = WebDatabase.SessionGeneration($featureActor)
+  $featureBase = FeatureForm(changes)
+  $featureDraft = FeatureForm(changes)
+  $featureSelected = 0
+  InstanceFeaturesPanel.Show()
+  FillInstanceFeatures()
+  PaneTitle.Text = "Features"
+Catch
+  Notice.Text = "Error"
+End
+
+Private Sub ClearInstanceFeatures()
+  InstanceFeaturesPanel.Hide()
+  FeatureChoice.Clear()
+  FeatureDescription.Text = ""
+  FeaturePilotUsernames.Text = ""
+  FeatureUnknown.Text = ""
+  FeatureUnknown.Hide()
+  FeatureUnknownLabel.Hide()
+  FeatureAwaiting.Hide()
+  FeatureEnabled.Value = False
+  FeatureApprovalRequired.Value = False
+  FeaturePreviewAdmins.Value = False
+  $featureBase = Null
+  $featureDraft = Null
+  $featureActor = ""
+  $featureGeneration = 0
+End
+
+Public Sub FeatureChoice_Click()
+  If $featureLoading Then Return
+  BindInstanceFeatures()
+  If FeatureChoice.Index < 0 Or FeatureChoice.Index >= InstanceFeatures.Keys().Count Then Error.Raise("Unknown feature")
+  CaptureInstanceFeatures()
+  $featureSelected = FeatureChoice.Index
+  FillInstanceFeatures()
+Catch
+  ClearInstanceFeatures()
+  Notice.Text = "Error"
+End
+
+Public Sub FeatureEnabled_Click()
+  If $featureLoading Then Return
+  BindInstanceFeatures()
+  $featureDraft["states"][InstanceFeatures.Keys()[$featureSelected]] = FeatureEnabled.Value
+Catch
+  ClearInstanceFeatures()
+  Notice.Text = "Error"
+End
+
+Public Sub SaveInstanceFeatures_Click()
+  Dim unknown As String[]
+  BindInstanceFeatures()
+  CaptureInstanceFeatures()
+  unknown = InstanceFeatures.Save($featureDraft, True)
+  $featureBase = FeatureForm(InstanceFeatures.Settings())
+  $featureDraft = FeatureForm($featureBase)
+  FillInstanceFeatures()
+  FeatureUnknownLabel.Visible = unknown.Count > 0
+  FeatureUnknown.Visible = unknown.Count > 0
+  FeatureUnknown.Text = unknown.Join(", ")
+  Notice.Text = "Saved"
+Catch
+  Notice.Text = "Error"
+End
+
+Private Sub ValidateInstanceFeatures()
+  Dim changes As Collection
+  InstanceFeatureSettings.Visible = WebDatabase.GetIsAdmin(WebIdentity.Username)
+  If Not InstanceFeaturesPanel.Visible Then Return
+  BindInstanceFeatures()
+  CaptureInstanceFeatures()
+  If JSON.Encode($featureBase) <> JSON.Encode($featureDraft) Then Return
+  changes = FeatureForm(InstanceFeatures.Settings())
+  If JSON.Encode(changes) = JSON.Encode($featureBase) Then Return
+  $featureBase = FeatureForm(changes)
+  $featureDraft = FeatureForm(changes)
+  FillInstanceFeatures()
+Catch
+  ClearInstanceFeatures()
+End
+
+Public Sub CloseInstanceFeatures_Click()
+  ClearInstanceFeatures()
+  ContentRow.Show()
+  PaneTitle.Text = ""
+  UpdateHeader()
+End
+
+Public Sub FeaturePilotUsernames_Change()
+  If $featureLoading Then Return
+  BindInstanceFeatures()
+  CaptureInstanceFeatures()
+Catch
+  ClearInstanceFeatures()
+End
+
+Private Function FeatureForm(changes As Collection) As Collection
+  Dim result As Collection = JSON.Decode(JSON.Encode(changes), True)
+  ' Native textarea emptiness is Null; keep clean/draft comparisons canonical.
+  If Not CStr(result["pilotUsernames"]) Then
+    result.Remove("pilotUsernames")
+    result.Add(Null, "pilotUsernames")
+  Endif
+  Return result
 End

@@ -1,0 +1,63 @@
+Public Sub Main()
+  Dim mode As String = Env["WEBA_FEATURE_MODE"]
+  Dim id As Integer = Val(Env["WEBA_FEATURE_BOARD"])
+  Dim data As New Collection
+  Dim changes As Collection
+  Dim key As String
+  If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
+  Session["username"] = "rest-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("rest-owner")
+  If mode = "seed" Then
+    WebDatabase.Register("rest-feature-admin", Env["WEBA_TEST_PASSWORD"])
+    WebDatabase.Register("rest-feature-user", Env["WEBA_TEST_PASSWORD"])
+    WebDatabase.Register("rest-feature-pilot", Env["WEBA_TEST_PASSWORD"])
+    WebDatabase.SetIsAdmin("rest-feature-admin", True)
+    Session["username"] = "rest-other"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+    id = KanbanStore.AddBoard("Feature UI board")
+    BoardAccess.SetMember(id, "rest-feature-user", "normal")
+    BoardAccess.SetMember(id, "rest-feature-pilot", "read-only")
+    BoardVisibility.SaveBoard(id, "public", False)
+    data["card"] = KanbanStore.SaveCard(id, 0, "Feature UI card", "Body", "Default", "Todo", "", "", "")
+    BoardViewPolicy.Save(id, JSON.Decode("{\"defaultPublicBoardView\":\"board-view-table\",\"defaultPrivateBoardView\":\"board-view-table\"}"))
+    Session["username"] = "rest-feature-user"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("rest-feature-user")
+    BoardViewPreference.Save(id, "board-view-table")
+    Session["username"] = "rest-feature-pilot"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("rest-feature-pilot")
+    BoardViewPreference.Save(id, "board-view-table")
+    Session["username"] = "rest-feature-admin"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("rest-feature-admin")
+    BoardViewPreference.Save(id, "board-view-table")
+    data["board"] = id
+    Print JSON.Encode(data)
+    Return
+  Endif
+  If mode = "demote" Then WebDatabase.SetIsAdmin("rest-feature-admin", False)
+  If mode = "fail" Then WebDatabase.OpenConnection().Exec("CREATE TRIGGER feature_ui_fail BEFORE UPDATE ON instance_feature_settings BEGIN SELECT RAISE(ABORT,'PRIVATE-FEATURE-SQL-CANARY'); END")
+  If mode = "retry" Or mode = "cleanup" Then WebDatabase.OpenConnection().Exec("DROP TRIGGER IF EXISTS feature_ui_fail")
+  If mode = "save" Then InstanceFeatures.Save(JSON.Decode(Env["WEBA_FEATURE_VALUE"], True))
+  If mode = "cleanup" Then
+    changes = InstanceFeatures.Settings()
+    For Each key In InstanceFeatures.Keys()
+      changes["states"][key] = True
+    Next
+    changes["approvalRequired"] = False
+    changes["previewAdmins"] = False
+    changes["pilotUsernames"] = ""
+    InstanceFeatures.Save(changes)
+    WebDatabase.DeleteUser("rest-feature-admin")
+    WebDatabase.DeleteUser("rest-feature-user")
+    WebDatabase.DeleteUser("rest-feature-pilot")
+    Session["username"] = "rest-other"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+    BoardVisibility.SavePermission(id, "private")
+    Print "{}"
+    Return
+  Endif
+  data["settings"] = InstanceFeatures.Settings()
+  data["raw"] = InstanceFeatures.Setting()
+  Print JSON.Encode(data)
+Catch
+  Print "{\"error\":true}"
+End

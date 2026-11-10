@@ -819,7 +819,7 @@ keyboard/new-tab, dated/undated month navigation, idle DOM preservation,
 translated controls/columns versus literal card titles, mobile, forged commands
 and privacy/recovery. The complete local suite (66 host tests) and focused
 source/packaged guest browser suites pass. Original view-policy popup/drag callbacks,
-instance feature controls, remaining guest views, richer date/calendar models
+original instance-feature Meteor integration, remaining guest views, richer date/calendar models
 and original Meteor actions
 remain pending.
 
@@ -842,14 +842,15 @@ back live. Hide unavailable controls, reorder retained native controls, and
 resolve even forged clicks on hidden controls through fresh policy. Source
 `allowView` is adapted to the four currently implemented native renderers, so
 unsupported source defaults use the source's core Swimlanes last resort. This
-availability adapter does not implement instance feature settings. Import source
+availability adapter is now filtered by native instance feature settings described
+below. Import source
 metadata with `node tools/import-board-views.cjs /path/to/wekan`. Native tests
 cover scope, default/readonly/anonymous refusals, missing schema, failed writes,
 late owner/principal loss and purge rollback; 188 native cases match unchanged
 source snapshot/request helpers. Guest browsers cover live hidden/order/default/
 reload/fallback behavior with existing navigation and privacy checks. The full
 local suite (66 host tests) and focused source/packaged guest suites pass. Manager
-drag/original popup interactions, signed-in view consumption, instance features, policy copy/import
+drag/original popup interactions, original Meteor view/feature wiring, policy copy/import
 and full original Meteor actions remain pending.
 
 The source-shaped REST endpoints are
@@ -910,7 +911,7 @@ directions, idle/clean/dirty behavior, concurrent updates, guest propagation,
 failed save/retry, readonly/stale/navigation/demotion denial and Finnish/mobile
 popup behavior. The complete local suite (69 host tests) and complete source/
 packaged browser suites pass. The native form batches edits across view selections. The original popup grid,
-signed-in view-policy rendering, instance feature filtering, drag/
+original Meteor view/feature rendering, drag/
 original popup callbacks, policy copy/import and full source integration remain
 pending.
 
@@ -961,8 +962,51 @@ policy sides, including unavailable/default/core fallback cases. Browser policy
 tests cover member/private vs visitor/public menus, live hide/show/default/order,
 forged no-write, saved-choice recovery, membership loss/regrant, mounted drafts,
 privacy, reload and Finnish/mobile. The six-renderer availability list is an
-explicit adapter; source instance feature flags, browser/localStorage/published-
+explicit adapter, now filtered by native instance flags; browser/localStorage/published-
 profile/DDP bridges and remaining renderers remain pending.
+
+`InstanceFeatures` imports all 16 source feature groups and their captions from
+`models/lib/instanceFeatures.js` with `tools/import-instance-features.cjs`.
+Settings and pilot usernames live in separate portable `instance_feature_settings`
+and `instance_feature_pilots` tables. Reads leave missing schema untouched. Strict
+boolean decisions take precedence; without an explicit decision, a new catalog
+key waits only when approval is required and that key is absent from the saved
+known-key list. Saving records every current group and known key. Pilot users and
+site admins with admin preview enabled can see disabled features. Availability
+never grants board/card access or editing; core Swimlanes and Lists remain on.
+Fresh signed-in and anonymous view projections filter the native renderer set
+through these decisions, retaining hidden preferences for later restoration.
+The native off-board view menu also filters availability and refuses disabled
+forged choices without rewriting the shared preference; existing off-board
+rendering remains a native adapter, rather than the original board-only menu.
+
+The native Admin / Features form edits each group's retained decision, source
+caption/description, approval policy, admin preview and pilot list. It is bound to
+the opening actor/session generation and fresh site-admin authority. Clean forms
+refresh externally; whole dirty drafts stay intact until saved. Closing or losing
+admin authority clears pilot names and private drafts. Save locks and rechecks
+actor/settings/affected user rows, writes decisions and pilot replacement
+atomically, returns unknown names in source order, and rolls back late demotion,
+session loss, changed pilots or failed SQL. Omitted pilot input leaves pilots
+alone; an empty list clears them. Native empty textarea values serialize as null,
+so the native form uses an explicit empty-list adapter and canonical blank draft
+state; the ordinary service still rejects explicit null. Unicode pilot separators
+match ECMAScript whitespace/comma/semicolon, with deduplication and a 500-name
+bound. Deleting/recreating an account clears its pilot flag.
+
+Native tests cover pure reads, admin/nonadmin/anonymous scope, pilot updates,
+unknown/omitted/empty lists, non-granted edit rights, late demotion/session rollback,
+retry and account recreation. 1,809 unchanged-source comparisons cover all groups,
+strict/corrupt state types, approval/known keys, previews, core views, complete
+save modifiers and bounded Unicode pilot lists. Captions and the 268-key/237-locale
+translation output come directly from source. Native browser checks cover the
+bound form, all retained choices, live signed/guest defaults and hidden controls,
+previews, unsaved card drafts, literal unknown names, SQL failure/retry, clean/dirty
+refresh and demotion/mobile/Finnish behavior. The complete local suite (69 host
+tests) and complete source and packaged browser suites pass against final code.
+Remaining source renderers and
+non-view feature actions, card-field policy, original admin layout and the full
+Meteor method/publication bridge remain open.
 
 Selected guest cards now show comments and checklists through the same final
 public/card scope guards. Only the selected board/card's records are queried;

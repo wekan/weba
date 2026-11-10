@@ -1,0 +1,202 @@
+{
+  "features": [
+    {
+      "key": "views-table",
+      "labelKey": "feature-views-table",
+      "descKey": "feature-views-table-desc",
+      "views": [
+        "board-view-table"
+      ]
+    },
+    {
+      "key": "views-calendar",
+      "labelKey": "feature-views-calendar",
+      "descKey": "feature-views-calendar-desc",
+      "views": [
+        "board-view-cal",
+        "board-view-calendar-mode",
+        "board-view-multiboard-cal"
+      ]
+    },
+    {
+      "key": "views-time",
+      "labelKey": "feature-views-time",
+      "descKey": "feature-views-time-desc",
+      "views": [
+        "board-view-time",
+        "board-view-timeline"
+      ]
+    },
+    {
+      "key": "views-overview",
+      "labelKey": "feature-views-overview",
+      "descKey": "feature-views-overview-desc",
+      "views": [
+        "board-view-stats",
+        "board-view-group-by-assignee",
+        "board-view-roadmap",
+        "board-view-dashboard",
+        "board-view-bigboard"
+      ]
+    },
+    {
+      "key": "views-gantt",
+      "labelKey": "feature-views-gantt",
+      "descKey": "feature-views-gantt-desc",
+      "views": [
+        "board-view-gantt",
+        "board-view-gantt-frappe",
+        "board-view-gantt-dhtmlx"
+      ]
+    },
+    {
+      "key": "views-scrum",
+      "labelKey": "feature-views-scrum",
+      "descKey": "feature-views-scrum-desc",
+      "views": [
+        "board-view-product-backlog",
+        "board-view-sprints",
+        "board-view-sprint-report",
+        "board-view-velocity"
+      ]
+    },
+    {
+      "key": "views-flow-charts",
+      "labelKey": "feature-views-flow-charts",
+      "descKey": "feature-views-flow-charts-desc",
+      "views": [
+        "board-view-burndown",
+        "board-view-burnup",
+        "board-view-cumulative-flow",
+        "board-view-control-chart",
+        "board-view-cycle-time",
+        "board-view-flow-efficiency",
+        "board-view-lead-time",
+        "board-view-throughput-histogram",
+        "board-view-wip-run",
+        "board-view-pulse",
+        "board-view-aging-wip",
+        "board-view-blocker-analysis",
+        "board-view-monte-carlo",
+        "board-view-process-behavior",
+        "board-view-size-cycle-time"
+      ]
+    },
+    {
+      "key": "views-map",
+      "labelKey": "feature-views-map",
+      "descKey": "feature-views-map-desc",
+      "views": [
+        "board-view-map"
+      ]
+    },
+    {
+      "key": "views-email",
+      "labelKey": "feature-views-email",
+      "descKey": "feature-views-email-desc",
+      "views": [
+        "board-view-email"
+      ]
+    },
+    {
+      "key": "views-chat",
+      "labelKey": "feature-views-chat",
+      "descKey": "feature-views-chat-desc",
+      "views": [
+        "board-view-chat"
+      ]
+    },
+    {
+      "key": "views-version-control",
+      "labelKey": "feature-views-version-control",
+      "descKey": "feature-views-version-control-desc",
+      "views": [
+        "board-view-version-control"
+      ]
+    },
+    {
+      "key": "views-column-sets",
+      "labelKey": "feature-views-column-sets",
+      "descKey": "feature-views-column-sets-desc",
+      "views": [
+        "board-view-column-sets"
+      ]
+    },
+    {
+      "key": "rule-suggestions",
+      "labelKey": "feature-rule-suggestions",
+      "descKey": "feature-rule-suggestions-desc",
+      "views": []
+    },
+    {
+      "key": "board-summary",
+      "labelKey": "feature-board-summary",
+      "descKey": "feature-board-summary-desc",
+      "views": []
+    },
+    {
+      "key": "since-last-visit",
+      "labelKey": "feature-since-last-visit",
+      "descKey": "feature-since-last-visit-desc",
+      "views": []
+    },
+    {
+      "key": "search-phrases",
+      "labelKey": "feature-search-phrases",
+      "descKey": "feature-search-phrases-desc",
+      "views": []
+    }
+  ],
+  "keys": [
+    "views-table",
+    "views-calendar",
+    "views-time",
+    "views-overview",
+    "views-gantt",
+    "views-scrum",
+    "views-flow-charts",
+    "views-map",
+    "views-email",
+    "views-chat",
+    "views-version-control",
+    "views-column-sets",
+    "rule-suggestions",
+    "board-summary",
+    "since-last-visit",
+    "search-phrases"
+  ],
+  "captions": {
+    "feature-views-table": "Table view",
+    "feature-views-table-desc": "The board as a sortable table of cards.",
+    "feature-views-calendar": "Calendar views",
+    "feature-views-calendar-desc": "Calendar and multi-board calendar.",
+    "feature-views-time": "Time views",
+    "feature-views-time-desc": "Time and Timeline.",
+    "feature-views-overview": "Overview views",
+    "feature-views-overview-desc": "Statistics, group by assignee, roadmap, dashboard and big board.",
+    "feature-views-gantt": "Gantt views",
+    "feature-views-gantt-desc": "The three Gantt chart views.",
+    "feature-views-scrum": "Scrum views",
+    "feature-views-scrum-desc": "Product backlog, sprints, sprint report and velocity.",
+    "feature-views-flow-charts": "Flow charts",
+    "feature-views-flow-charts-desc": "Burndown, burnup, cumulative flow, cycle and lead time, throughput, aging, blockers, Monte Carlo and the other flow metrics.",
+    "feature-views-map": "Map view",
+    "feature-views-map-desc": "Cards as markers on an uploaded image.",
+    "feature-views-email": "Email view",
+    "feature-views-email-desc": "The board as a mailbox: the email list is the Inbox, lists are folders, labels are labels, and members write and answer email from the board's address.",
+    "feature-views-chat": "Chat view",
+    "feature-views-chat-desc": "The board as a chat workspace: workspaces, boards, swimlanes, lists and cards as a tree of channels, the card in the middle and its comments as chat messages.",
+    "feature-views-version-control": "Version Control view",
+    "feature-views-version-control-desc": "The board as a GitHub or Gitea issue tracker: cards as issues, labels and milestones, comments as the conversation, attachments as files, and the board history with undo.",
+    "feature-views-column-sets": "Column sets",
+    "feature-views-column-sets-desc": "The same cards in several named sets of columns - by completion, priority, milestone or anything else - moved between columns by dragging.",
+    "feature-rule-suggestions": "Rule suggestions",
+    "feature-rule-suggestions-desc": "Board menu → Rules suggests rules from what people on the board keep doing by hand.",
+    "feature-board-summary": "Summary",
+    "feature-board-summary-desc": "Board menu → Summary shows what each person did on the board in the last day or week, and what they have overdue.",
+    "feature-since-last-visit": "Since your last visit",
+    "feature-since-last-visit-desc": "Board menu → Since your last visit lists what others changed on the board since you last had it open.",
+    "feature-search-phrases": "Search phrases",
+    "feature-search-phrases-desc": "Global search understands plain phrases such as \"my overdue cards\" and turns them into its operators."
+  }
+}

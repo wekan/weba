@@ -2,6 +2,30 @@
 
 This work adds the following features and fixes:
 
+- Add instance feature policy and a bound site-admin form for all 16 source
+  feature groups, per-group descriptions/decisions, approval of new catalog
+  entries, admin previews and pilot usernames. Match strict source booleans,
+  known-key snapshots, unknown-user results and bounded Unicode name parsing.
+  Persist settings/pilots atomically with actor/generation/admin rechecks, retain
+  dirty drafts and refresh clean forms, clear private pilot fields on close or
+  demotion, and keep failed writes opaque and retryable. Pure reads create no
+  feature rows; account deletion/recreation clears pilot privileges. Apply fresh
+  availability to signed-in/guest board menus/fallbacks and native off-board
+  menus, refusing disabled forged choices without preference writes. Retain
+  personal view choices and mounted drafts; core Lists/Swimlanes stay available
+  and preview never grants board reads or editing. Import 268 source keys across
+  237 catalogs. Verify native store/scope/rollback/lifecycle behavior and 1,809
+  unchanged-source feature decision/modifier/pilot cases. The complete local
+  suite (69 host tests) and complete source/packaged browser suites pass,
+  including all retained decisions, previews, board/off-board forgery refusal,
+  draft preservation, fault/retry, dirty/clean refresh and Finnish/mobile.
+  Native empty textarea
+  values use an explicit null-to-empty-list form adapter; strict service input
+  still rejects null. Other source renderers/non-view feature actions, card-field
+  policy, original admin page layout and Meteor methods/publications remain
+  pending.
+  Thanks to xet7.
+
 - Apply board-view public/private audience, ordered visible choices and fallback
   defaults to signed-in native board rendering, navigation, menu opens, live
   updates and temporary add-card layouts. Active membership selects the private

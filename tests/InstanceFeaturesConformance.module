@@ -1,0 +1,32 @@
+Public Sub Main()
+  Dim rows As Variant[] = JSON.Decode(Env["WEBA_FEATURE_CASES"], True)
+  Dim results As New Variant[]
+  Dim row As Collection
+  For Each row In rows
+    results.Add(Outcome(row))
+  Next
+  Print JSON.Encode(results)
+End
+Private Function Outcome(row As Collection) As Collection
+  Dim result As New Collection
+  Dim setting As Collection
+  Dim user As Collection
+  If row.Exist("changes") Then
+    result["modifier"] = InstanceFeatures.Prepare(row["changes"])
+  Else If row.Exist("pilots") Then
+    result["pilots"] = InstanceFeatures.PilotNames(row["pilots"])
+  Else
+    setting = row["setting"]
+    user = row["user"]
+    If Not setting Then setting = New Collection
+    If Not user Then user = New Collection
+    result["enabled"] = InstanceFeatures.Enabled(setting, row["key"])
+    result["awaiting"] = InstanceFeatures.Awaiting(setting, row["key"])
+    result["preview"] = InstanceFeatures.Preview(setting, user)
+    result["available"] = InstanceFeatures.Available(setting, user, row["key"])
+    result["view"] = InstanceFeatures.ViewAvailable(setting, user, row["view"])
+  Endif
+  Return result
+Catch
+  Return ["error": True]
+End

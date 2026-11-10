@@ -1,0 +1,292 @@
+' Optional feature availability is independent of board/card authorization.
+Export
+Private $definition As Collection
+Private $db As Connection
+
+Public Function Definition() As Collection
+  If Not $definition Then $definition = JSON.Decode(File.Load(".public/instance-features.json"), True)
+  Return $definition
+End
+
+Public Function Keys() As String[]
+  Dim result As New String[]
+  Dim key As String
+  For Each key In Definition()["keys"]
+    result.Add(key)
+  Next
+  Return result
+End
+
+Private Function IsMap(value As Variant) As Boolean
+  If TypeOf(value) <> gb.Object Then Return False
+  Return value Is Collection
+End
+
+Private Function IsTrue(value As Variant) As Boolean
+  If TypeOf(value) <> gb.Boolean Then Return False
+  Return CBool(value)
+End
+
+Public Function Awaiting(policy As Collection, key As String) As Boolean
+  Dim value As Variant
+  Dim known As Variant
+  If Keys().Find(key) < 0 Then Return False
+  If Not IsTrue(policy["featureApprovalRequired"]) Then Return False
+  If IsMap(policy["featureStates"]) Then
+    value = policy["featureStates"][key]
+    If TypeOf(value) = gb.Boolean Then Return False
+  Endif
+  known = policy["featureKnownKeys"]
+  If TypeOf(known) = gb.Object Then
+    If known Is Variant[] Or known Is String[] Then
+      For Each value In known
+        If TypeOf(value) = gb.String Then
+          If CStr(value) = key Then Return False
+        Endif
+      Next
+    Endif
+  Endif
+  Return True
+End
+
+Public Function Enabled(policy As Collection, key As String) As Boolean
+  Dim value As Variant
+  If Keys().Find(key) < 0 Then Return True
+  If IsMap(policy["featureStates"]) Then
+    value = policy["featureStates"][key]
+    If TypeOf(value) = gb.Boolean Then Return CBool(value)
+  Endif
+  Return Not Awaiting(policy, key)
+End
+
+Public Function Preview(policy As Collection, user As Collection) As Boolean
+  If IsTrue(user["featurePreview"]) Then Return True
+  Return IsTrue(user["isAdmin"]) And IsTrue(policy["featurePreviewAdmins"])
+End
+
+Public Function Available(policy As Collection, user As Collection, key As String) As Boolean
+  Return Enabled(policy, key) Or Preview(policy, user)
+End
+
+Public Function ViewAvailable(policy As Collection, user As Collection, view As String) As Boolean
+  Dim feature As Collection
+  Dim key As String
+  For Each feature In Definition()["features"]
+    For Each key In feature["views"]
+      If key = view Then Return Available(policy, user, feature["key"])
+    Next
+  Next
+  Return True
+End
+
+Public Function Prepare(changes As Collection) As Collection
+  Dim result As New Collection
+  Dim states As New Collection
+  Dim key As String
+  If Not IsMap(changes["states"]) Then Error.Raise("Invalid feature settings")
+  If TypeOf(changes["approvalRequired"]) <> gb.Boolean Or TypeOf(changes["previewAdmins"]) <> gb.Boolean Then Error.Raise("Invalid feature settings")
+  For Each key In changes["states"].Keys
+    If Keys().Find(key) < 0 Then Error.Raise("Unknown feature")
+  Next
+  For Each key In Keys()
+    If TypeOf(changes["states"][key]) <> gb.Boolean Then Error.Raise("Invalid feature settings")
+    states[key] = changes["states"][key]
+  Next
+  result["featureStates"] = states
+  result["featureApprovalRequired"] = changes["approvalRequired"]
+  result["featurePreviewAdmins"] = changes["previewAdmins"]
+  result["featureKnownKeys"] = Keys()
+  Return result
+End
+
+Public Function PilotNames(value As Variant) As String[]
+  Dim result As New String[]
+  Dim name As String
+  Dim text As String
+  If TypeOf(value) <> gb.String Then Return result
+  text = CStr(value)
+  ' ECMAScript whitespace, comma and semicolon; do not split a username on ZWSP.
+  For Each name In ["\t", "\n", Chr(11), Chr(12), "\r", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "　", "﻿", ",", ";"]
+    text = Replace(text, name, " ")
+  Next
+  For Each name In Split(text, " ", "", True)
+    If result.Find(name) < 0 Then result.Add(name)
+    If result.Count = 500 Then Exit
+  Next
+  Return result
+End
+
+Public Function Setting() As Collection
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim r As Result
+  Dim result As Collection
+  If Not db.Tables.Exist("instance_feature_settings") Then Return New Collection
+  r = db.Find("instance_feature_settings", "id=1")
+  If Not r.Available Then Return New Collection
+  Try result = JSON.Decode(r!settings_json, True)
+  If Error Or Not result Then Return New Collection
+  Return result
+End
+
+Public Function CurrentUser() As Collection
+  Dim result As New Collection
+  Dim actor As String = WebIdentity.Username
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim r As Result
+  If Not actor Then Return result
+  If Not db.Tables.Exist("users") Then Return result
+  r = db.Find("users", "username=&1", actor)
+  If Not r.Available Then Return result
+  result["isAdmin"] = CBool(r!admin)
+  If db.Tables.Exist("instance_feature_pilots") Then result["featurePreview"] = db.Find("instance_feature_pilots", "username=&1", actor).Available
+  Return result
+End
+
+Public Function AllowedViews(views As String[]) As String[]
+  Dim policy As Collection = Setting()
+  Dim user As Collection = CurrentUser()
+  Dim result As New String[]
+  Dim key As String
+  For Each key In views
+    If ViewAvailable(policy, user, key) Then result.Add(key)
+  Next
+  Return result
+End
+
+Private Sub OpenStore()
+  Dim t As Table
+  If $db Then Return
+  $db = WebDatabase.OpenConnection()
+  If Not $db.Tables.Exist("instance_feature_settings") Then
+    t = $db.Tables.Add("instance_feature_settings")
+    t.Fields.Add("id", db.Integer)
+    t.Fields.Add("settings_json", db.String)
+    t.Fields.Add("actor", db.String, 255)
+    t.Fields.Add("changed_ms", db.Long)
+    t.PrimaryKey = ["id"]
+    t.Update()
+  Endif
+  If Not $db.Tables.Exist("instance_feature_pilots") Then
+    t = $db.Tables.Add("instance_feature_pilots")
+    t.Fields.Add("username", db.String, 255)
+    t.PrimaryKey = ["username"]
+    t.Update()
+  Endif
+  If Not $db.Find("instance_feature_settings", "id=1").Available Then
+    Try $db.Exec("INSERT INTO instance_feature_settings (id) SELECT 1 WHERE NOT EXISTS (SELECT 1 FROM instance_feature_settings WHERE id=1)")
+    If Error Then
+      If Not $db.Find("instance_feature_settings", "id=1").Available Then Error.Propagate()
+    Endif
+  Endif
+Catch
+  $db = Null
+  Error.Propagate()
+End
+
+Private Function StoredPilots() As String[]
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim result As New String[]
+  Dim r As Result
+  If Not db.Tables.Exist("instance_feature_pilots") Then Return result
+  r = db.Exec("SELECT p.username FROM instance_feature_pilots p INNER JOIN users u ON u.username=p.username ORDER BY p.username LIMIT 500")
+  For Each r
+    result.Add(r!username)
+  Next
+  Return result
+End
+
+Public Function Settings() As Collection
+  Dim policy As Collection
+  Dim changes As New Collection
+  Dim states As New Collection
+  Dim key As String
+  RecoveryStore.RequireAdmin()
+  policy = Setting()
+  For Each key In Keys()
+    states[key] = Enabled(policy, key)
+  Next
+  changes["states"] = states
+  changes["approvalRequired"] = IsTrue(policy["featureApprovalRequired"])
+  changes["previewAdmins"] = IsTrue(policy["featurePreviewAdmins"])
+  changes["pilotUsernames"] = StoredPilots().Join("\n")
+  Return changes
+End
+
+Private Sub CheckAdmin(actor As String, generation As Long)
+  If WebIdentity.Username <> actor Or WebDatabase.SessionGeneration(actor) <> generation Then Error.Raise("Administrator required")
+  RecoveryStore.RequireAdmin()
+End
+
+Public Function Save(changes As Collection, Optional nativeEmptyPilots As Boolean) As String[]
+  Dim actor As String = WebIdentity.Username
+  Dim generation As Long
+  Dim nextSetting As Collection
+  Dim wanted As String[]
+  Dim actual As New String[]
+  Dim unknown As New String[]
+  Dim name As String
+  Dim key As String
+  Dim r As Result
+  Dim transaction As Boolean
+  Dim failure As String
+  RecoveryStore.RequireAdmin()
+  generation = WebDatabase.SessionGeneration(actor)
+  nextSetting = Prepare(changes)
+  For Each key In changes.Keys
+    If ["states", "approvalRequired", "previewAdmins", "pilotUsernames"].Find(key) < 0 Then Error.Raise("Invalid feature settings")
+  Next
+  If changes.Exist("pilotUsernames") Then
+    If TypeOf(changes["pilotUsernames"]) <> gb.String Then
+      If Not nativeEmptyPilots Or Not IsNull(changes["pilotUsernames"]) Then Error.Raise("Invalid pilot usernames")
+    Endif
+    wanted = PilotNames(changes["pilotUsernames"])
+  Endif
+  OpenStore()
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  $db.Exec("UPDATE instance_feature_settings SET id=id WHERE id=1")
+  CheckAdmin(actor, generation)
+  If wanted Then
+    wanted.Sort()
+    For Each name In wanted
+      $db.Exec("UPDATE users SET username=username WHERE username=&1", name)
+      If WebDatabase.UserExists(name) Then
+        actual.Add(name)
+      Else
+        unknown.Add(name)
+      Endif
+    Next
+    ' Preserve the source changes order of unknown names, not the lock order.
+    unknown.Clear()
+    For Each name In PilotNames(changes["pilotUsernames"])
+      If actual.Find(name) < 0 Then unknown.Add(name)
+    Next
+    $db.Exec("DELETE FROM instance_feature_pilots")
+    For Each name In actual
+      r = $db.Create("instance_feature_pilots")
+      r["username"] = name
+      r.Update()
+    Next
+  Endif
+  r = $db.Edit("instance_feature_settings", "id=1")
+  r["settings_json"] = JSON.Encode(nextSetting)
+  r["actor"] = actor
+  r["changed_ms"] = ItemChanges.UtcNow()
+  r.Update()
+  CheckAdmin(actor, generation)
+  If JSON.Encode(Setting()) <> JSON.Encode(nextSetting) Then Error.Raise("Feature settings changed")
+  If wanted Then
+    If JSON.Encode(StoredPilots()) <> JSON.Encode(actual) Then Error.Raise("Pilot users changed")
+    For Each name In actual
+      If Not WebDatabase.UserExists(name) Then Error.Raise("Pilot user changed")
+    Next
+  Endif
+  DatabaseTransactions.Commit($db)
+  transaction = False
+  Return unknown
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End

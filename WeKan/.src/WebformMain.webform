@@ -830,6 +830,9 @@
         { AdminUsers WebButton
           Text = ("People")
         }
+        { InstanceFeatureSettings WebButton
+          Text = ("Features")
+        }
         { BoardCreationSettings WebButton
           Text = ("Visibility")
           Tooltip = ("Only admins can create boards")
@@ -1262,6 +1265,53 @@
         }
         { SaveImportExport WebButton
           Text = ("Save")
+        }
+      }
+      { InstanceFeaturesPanel WebContainer
+        Arrangement = Arrange.Vertical
+        Visible = False
+        Class = "weba-settings-panel"
+        { CloseInstanceFeatures WebButton
+          Text = ("Close")
+        }
+        { InstanceFeaturesHeading WebLabel
+          Text = ("Features")
+        }
+        { FeatureChoice WebComboBox
+          Tooltip = ("Features")
+        }
+        { FeatureDescription WebLabel
+        }
+        { FeatureAwaiting WebLabel
+          Text = ("(new, waiting for approval)")
+        }
+        { FeatureEnabled WebCheckBox
+          Text = ("Enabled")
+        }
+        { FeatureApprovalRequired WebCheckBox
+          Text = ("Keep features added by WeKan updates disabled until an administrator enables them")
+        }
+        { FeaturePreviewAdmins WebCheckBox
+          Text = ("Administrators see disabled features, to try them first")
+        }
+        { FeaturePilotLabel WebLabel
+          Text = ("Pilot users who also see disabled features")
+        }
+        { FeaturePilotUsernames WebTextArea
+          Height = "100px"
+          Tooltip = ("Usernames, separated by commas")
+          Class = "weba-user-text"
+        }
+        { SaveInstanceFeatures WebButton
+          Text = ("Save")
+        }
+        { FeatureUnknownLabel WebLabel
+          Text = ("Saved. These usernames were not found:")
+          Visible = False
+        }
+        { FeatureUnknown WebLabel
+          Class = "weba-user-text"
+          Visible = False
         }
       }
       { BoardCreationPanel WebContainer

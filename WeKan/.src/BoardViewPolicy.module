@@ -229,6 +229,7 @@ Public Function Current(boardId As Integer, requested As String) As Collection
     allowed.Add(BoardViewPreference.Canonical(name))
   Next
   side = Audience(boardId)
+  allowed = InstanceFeatures.AllowedViews(allowed)
   data = Presentation(Snapshot(ReadRaw(boardId)), requested, side, allowed)
   BoardAccess.RequireRead(boardId)
   If WebIdentity.Username <> actor Or Audience(boardId) <> side Then Error.Raise("Board context changed")
@@ -250,9 +251,10 @@ Public Function Guest(boardId As Integer) As Collection
   For Each view In names.Keys
     allowed.Add(view)
   Next
+  allowed = InstanceFeatures.AllowedViews(allowed)
   data = Snapshot(ReadRaw(boardId))
   For Each view In data["boardViewOrder"]
-    If names.Exist(view) Then
+    If names.Exist(view) And allowed.Find(view) >= 0 Then
       If data["boardViewSettings"][view]["showOnPublic"] = True Then rows.Add(names[view])
     Endif
   Next

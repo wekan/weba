@@ -168,7 +168,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   view-policy integration beyond the native signed-in audience/ordered menu/
   default enforcement and per-board/shared preferences in CHANGELOG.md,
   browser/profile/DDP preference bridges and
-  instance feature controls
+  instance feature integration beyond the native 16-group admin policy/pilot/
+  preview form and signed-in/guest view filtering recorded in CHANGELOG.md
   and policy copy/import integration beyond the native persisted public/private
   policy and live guest enforcement in CHANGELOG.md, source-defined child
   models, storage/cover/download models and

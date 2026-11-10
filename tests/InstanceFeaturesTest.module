@@ -1,0 +1,81 @@
+Public Sub Main()
+  Dim db As Connection
+  Dim changes As Collection
+  Dim before As String
+  Dim denied As Boolean
+  Dim unknown As String[]
+  Dim boardId As Integer
+  Dim generation As Long
+  WebDatabase.Register("feature-admin", "x")
+  WebDatabase.Register("feature-user", "x")
+  WebDatabase.Register("feature-pilot", "x")
+  SignIn("feature-admin")
+  db = WebDatabase.OpenConnection()
+  If InstanceFeatures.Setting().Count Then Error.Raise("Legacy feature settings changed")
+  If db.Tables.Exist("instance_feature_settings") Or db.Tables.Exist("instance_feature_pilots") Then Error.Raise("Feature read initialized schema")
+  changes = InstanceFeatures.Settings()
+  For Each before In InstanceFeatures.Keys()
+    changes["states"][before] = False
+  Next
+  changes["approvalRequired"] = True
+  changes["pilotUsernames"] = "feature-pilot,missing,missing"
+  unknown = InstanceFeatures.Save(changes)
+  If unknown.Count <> 1 Or unknown[0] <> "missing" Then Error.Raise("Unknown pilot result changed")
+  If InstanceFeatures.Setting()["featureKnownKeys"].Count <> 16 Then Error.Raise("Save did not record catalog")
+  boardId = KanbanStore.AddBoard("Feature scope")
+  BoardVisibility.SaveBoard(boardId, "public", False)
+  SignIn("feature-pilot")
+  If Not InstanceFeatures.ViewAvailable(InstanceFeatures.Setting(), InstanceFeatures.CurrentUser(), "board-view-table") Then Error.Raise("Pilot preview missing")
+  If BoardAccess.Can(boardId, "write") Then Error.Raise("Feature preview granted board editing")
+  SignIn("feature-user")
+  If InstanceFeatures.AllowedViews(["board-view-table", "board-view-swimlanes", "board-view-lists"]).Count <> 2 Then Error.Raise("Core/disabled availability wrong")
+  before = JSON.Encode(InstanceFeatures.Setting())
+  Try InstanceFeatures.Save(changes)
+  denied = Error
+  If Not denied Or before <> JSON.Encode(InstanceFeatures.Setting()) Then Error.Raise("Nonadmin changed instance features")
+  Try InstanceFeatures.Settings()
+  denied = Error
+  If Not denied Then Error.Raise("Pilot usernames leaked to nonadmin")
+  SignIn("feature-admin")
+  changes["previewAdmins"] = True
+  changes.Remove("pilotUsernames")
+  InstanceFeatures.Save(changes)
+  If Not InstanceFeatures.Preview(InstanceFeatures.Setting(), InstanceFeatures.CurrentUser()) Then Error.Raise("Admin preview missing")
+  If InstanceFeatures.Settings()["pilotUsernames"] <> "feature-pilot" Then Error.Raise("Omitted pilot field cleared pilots")
+  before = JSON.Encode(InstanceFeatures.Settings())
+  db.Exec("CREATE TRIGGER feature_late_demotion AFTER UPDATE ON instance_feature_settings BEGIN UPDATE users SET admin=0 WHERE username='feature-admin'; END")
+  changes["pilotUsernames"] = "feature-user"
+  Try InstanceFeatures.Save(changes)
+  denied = Error
+  If Not denied Or Not WebDatabase.GetIsAdmin("feature-admin") Or before <> JSON.Encode(InstanceFeatures.Settings()) Then Error.Raise("Late demotion was not atomic")
+  db.Exec("DROP TRIGGER feature_late_demotion")
+  generation = WebDatabase.SessionGeneration("feature-admin")
+  db.Exec("CREATE TRIGGER feature_late_generation AFTER UPDATE ON instance_feature_settings BEGIN UPDATE account_sessions SET generation=generation+1 WHERE username='feature-admin'; END")
+  Try InstanceFeatures.Save(changes)
+  denied = Error
+  If Not denied Or WebDatabase.SessionGeneration("feature-admin") <> generation Or before <> JSON.Encode(InstanceFeatures.Settings()) Then Error.Raise("Late session loss was not atomic")
+  db.Exec("DROP TRIGGER feature_late_generation")
+  InstanceFeatures.Save(changes)
+  If InstanceFeatures.Settings()["pilotUsernames"] <> "feature-user" Then Error.Raise("Failed-save retry did not replace pilots")
+  changes = InstanceFeatures.Settings()
+  changes.Remove("pilotUsernames")
+  changes.Add(Null, "pilotUsernames")
+  Try InstanceFeatures.Save(changes)
+  denied = Error
+  If Not denied Then Error.Raise("Strict service accepted null pilot input")
+  InstanceFeatures.Save(changes, True)
+  If InstanceFeatures.Settings()["pilotUsernames"] Then Error.Raise("Native empty pilot adapter did not clear pilots")
+  changes["pilotUsernames"] = "feature-user"
+  InstanceFeatures.Save(changes)
+  WebDatabase.DeleteUser("feature-user")
+  WebDatabase.Register("feature-user", "x")
+  SignIn("feature-user")
+  If InstanceFeatures.CurrentUser()["featurePreview"] = True Then Error.Raise("Recreated account inherited pilot state")
+  Session["username"] = ""
+  If InstanceFeatures.AllowedViews(["board-view-table"]).Count Then Error.Raise("Anonymous preview gained optional view")
+  Print "Instance feature store: pure reads, admin/ordinary/anonymous gates, pilots/replacement/omission/unknowns, no edit authority, core availability, late demotion rollback/retry and account recreation passed"
+End
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

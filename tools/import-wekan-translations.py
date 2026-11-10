@@ -56,6 +56,11 @@ for view in json.loads((root / 'WeKan/.public/board-views.json').read_text())['v
     caption = english[view['labelKey']]
     texts.add(caption)
     aliases[caption] = view['labelKey']
+for feature in json.loads((root / 'WeKan/.public/instance-features.json').read_text())['features']:
+    for key in [feature['labelKey'], feature['descKey']]:
+        caption = english[key]
+        texts.add(caption)
+        aliases[caption] = key
 controls = set()
 for path in (root / 'WeKan/.src').glob('*.webform'):
     current = ''
@@ -88,6 +93,9 @@ for text in sorted(texts):
 controls -= {'AccountToggle', 'PageTitle', 'PaneTitle', 'Status', 'Boards', 'WebLabelVersion', 'ContextTitle', 'ActionTitle', 'DetailsTitle'}
 controls.add('MemberRole')
 controls.add('BoardPermission')
+controls.update({'FeatureChoice', 'FeatureDescription'})
+controls.discard('FeatureUnknown')
+controls.discard('FeaturePilotUsernames')
 controls.update({'BoardViewChoice', 'BoardDefaultPublic', 'BoardDefaultPrivate'})
 controls.discard('BoardViewsName')
 controls.discard('BoardVisibilityName')
