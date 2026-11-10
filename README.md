@@ -723,6 +723,46 @@ new-tab/opener state, keyboard activation, HttpOnly UI/API separation, backgroun
 GUI keepalive, tab close and shared logout. Original public/card routes and full
 Meteor/FlowRouter callbacks remain open.
 
+Signed-in native card entries use `/b/:boardId/:slug/:cardId`. The host serves
+only root HTML for valid GET entries, strips query commands and rejects malformed,
+overflow, multiply encoded and encoded-slash aliases or mutation methods.
+`CardRoute.Resolve` looks up only the card's destination key before checking its
+current board/card scope, then rechecks identity, destination and archive state.
+Canonical native IDs, current membership and assigned-only restrictions apply.
+A readable moved card opens in its current board and gets its canonical URL.
+Missing or unreadable cards keep a readable URL board mounted without exposing
+the destination; denied boards fall back safely while retaining the requested
+URI. These are native private-board permissions, not public/instance visibility.
+
+List/swimlane minicards are whole-card anchors, including ordinary browser
+modified clicks on the card body. Menu/drag controls and unrelated links retain
+their own behavior. Enter activates a card link; Space keeps normal link behavior.
+Mouse surface dragging still works and ordinary touch keeps its scroll/handle
+rules. Card entries survive login/reload, and same-board/same-card entries keep
+the mounted board, view and unsaved draft. Open/close requests use the private
+navigation intent token; newer card clicks win delayed menu replies without
+extra history entries. Closing a card returns to its board; Back/Forward reopens
+or closes through fresh guards. New-card creation clears the previous route.
+
+An explicitly opened card remains readable across external archive/restore
+changes independently of the board grid's archive filter. Its edit/restore
+controls refresh without dropping the panel or URI. The source user archive
+action closes the card and goes to its board; native user archive follows that
+navigation, while user restore keeps its card open. Access loss still clears
+private fields and panels. Fixed archive/restore captions reuse existing
+translations; card titles and editor values stay literal.
+
+`CardRouteTest`, strict host alias cases and
+`python3 tests/run-http.py --card-routes [--archive]` verify these guards and real
+browser flows, including whole-card Ctrl-click, keyboard, same-board drafts,
+latest-menu races, archive/read-scope changes, moved/private/missing/revoked
+cards and Finnish/mobile controls. Twelve native SQL/pure cases execute the
+unchanged source moved-target helper using explicit ID/readable-fixture adapters;
+twelve card paths match unchanged `buildCardRelativeUrl` with the existing source
+slug helper. This does not execute production Meteor publication/FlowRouter
+wiring. Public/instance access, desktop multiple-card windows, container/reveal
+routes and remaining original action/transport callbacks are still open.
+
 Board-menu Archive now opens a native confirmation with a literal board name,
 translated source warning, explicit Archive/Cancel and keyboard Escape/Close.
 The private form binds the board, principal/session generation and current view;

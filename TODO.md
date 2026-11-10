@@ -142,15 +142,19 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   with fresh native session/membership/archive checks, as recorded there too.
   Native canonical/short board URLs, explicit login/reload priority, ID-scoped
   access and acknowledged tile/Home/history navigation are recorded there too;
-  original public/card routes and full FlowRouter/DDP callbacks remain open.
+  native signed-in card routes are recorded there too; public/instance access
+  and full original FlowRouter/DDP callbacks remain open.
   Other board drop destinations remain same-form. The 60-case unchanged source
   Home/Remove callback adapter proof does not claim original Meteor wiring.
-- Next board navigation parity: original public/card routes and full
-  FlowRouter/subscription behavior. Native canonical/short entries,
-  acknowledged tile/Home/history, private confirmed catalog/open-board archive,
-  restored-board navigation and real tile-link/modified-click semantics with
-  isolated document GUI state and shared revocable login are in CHANGELOG.md;
-  do not treat those as proof of every original board action callback.
+- Next board navigation parity: public/instance access, desktop multiple-card
+  windows, container/reveal routes and full original FlowRouter/subscription
+  and action callbacks. Native canonical/short board entries, acknowledged
+  tile/Home/history, confirmed catalog/open-board archive, restored-board
+  navigation, real board/card links and signed-in card deep entries are in
+  CHANGELOG.md, including private current-destination checks, moved-card routes,
+  same-board/draft and archive-read scope, close/history/latest-intent behavior,
+  document isolation and shared revocable login. Do not treat native/private
+  helper adapters as production Meteor publications or every source callback.
 - Next workspace parity: Templates and remaining production transport/routing beyond
   the six adapter-backed spec 39 callbacks. Production direct GET entry for
   Remaining/Starred/Archive with login/reload, acknowledged menu URL updates and

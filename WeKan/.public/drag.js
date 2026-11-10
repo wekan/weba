@@ -22,7 +22,7 @@
     else if(kind==='board'||pointerType==='mouse'&&board&&target.closest('.weba-board-tile')){kind='board';element=board;}
     else if(kind==='lane')element=handle.closest('.weba-swimlane');
     else if(kind==='list')element=handle.closest('.weba-column');
-    else if(kind==='card'||(pointerType==='mouse'&&card&&!target.closest('button,input,textarea,a,select'))){kind='card';element=card;}
+    else if(kind==='card'||(pointerType==='mouse'&&card&&!target.closest('button,input,textarea,a:not(.weba-card-link),select'))){kind='card';element=card;}
     const section=kind==='workspace'?document.querySelector('.weba-content'):element?.closest('.weba-content');
     if(!element||!section||!section.dataset.drag)return null;
     if(!enabled(section,kind))return null;

@@ -15,6 +15,12 @@ function event(type,target,x,y,extra={}){const e=new w.Event(type,{bubbles:true,
 assert.equal(w.webaDrag.identify(cards[0],'touch'),null,'ordinary card touch remains native scroll');
 assert.equal(w.webaDrag.identify(cards[0],'mouse').kind,'card','mouse can drag the card surface');
 assert.equal(w.webaDrag.identify(handle,'touch').kind,'card');
+const cardLink=d.createElement('a');cardLink.className='weba-card-link';cardLink.innerHTML='<strong>One</strong>';cards[0].append(cardLink);
+assert.equal(w.webaDrag.identify(cardLink.firstElementChild,'mouse').kind,'card','native card link title retains mouse surface dragging');
+assert.equal(w.webaDrag.identify(cardLink.firstElementChild,'touch'),null,'ordinary card-link touch keeps native scroll');
+const otherLink=d.createElement('a');otherLink.textContent='External';cards[0].append(otherLink);
+assert.equal(w.webaDrag.identify(otherLink,'mouse'),null,'unrelated links do not start card drags');
+
 event('pointerdown',cards[0],10,30);event('pointermove',d,330,80);event('pointerup',d,330,80);assert.equal(calls.length,0);
 event('pointerdown',handle,10,30);event('pointermove',d,14,32);event('pointerup',d,14,32);assert.equal(calls.length,0,'small movement is not a drag');
 event('pointerdown',handle,10,30);event('pointermove',d,330,80);assert.equal(w.webaDrag.active,true);event('pointerup',d,330,80);

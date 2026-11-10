@@ -39,6 +39,12 @@ def board_entry(path):
     return bool(match and int(match[1]) <= 2147483647)
 
 
+def card_entry(path):
+    """The source card route is /b/:boardId/:slug/:cardId, not a CGI path."""
+    match = re.fullmatch(r'/b/([1-9][0-9]{0,9})/([^/]+)/([1-9][0-9]{0,9})/?', path)
+    return bool(match and int(match[1]) <= 2147483647 and int(match[3]) <= 2147483647)
+
+
 def is_attachment_export_path(path):
     parts = path.split('/')
     if len(parts) == 8 and parts[-1] == '':
@@ -467,7 +473,7 @@ def handler(application, runner, environment):
                 return
             if not self._request_allowed(url._replace(path=decoded_path)):
                 return
-            entry_section = all_boards_entry_section(decoded_path) or ('board' if board_entry(decoded_path) else None)
+            entry_section = all_boards_entry_section(decoded_path) or ('board' if board_entry(decoded_path) or card_entry(decoded_path) else None)
             if (decoded_path == '/b' or decoded_path.startswith('/b/')) and not entry_section:
                 self.send_error(404)
                 return
@@ -479,7 +485,8 @@ def handler(application, runner, environment):
                     single_path = None if re.search(r'%(?![0-9A-Fa-f]{2})', url.path) else urllib.parse.unquote(url.path, errors='strict')
                 except UnicodeError:
                     single_path = None
-                if single_path != decoded_path:
+                if single_path != decoded_path or (card_entry(decoded_path) and re.search(r'%2f', url.path, re.IGNORECASE)):
+                    # An encoded board-slug slash must not become a card-route separator.
                     self.send_error(404)
                     return
                 if self.command != 'GET':

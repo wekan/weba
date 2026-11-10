@@ -1,0 +1,45 @@
+' Resolve a card in its current authorized board, never trusting the URL's old board.
+Export
+
+Public Function Resolve(boardText As String, cardText As String) As Collection
+  Dim actor As String = WebIdentity.Username
+  Dim requested As Integer = CanonicalId(boardText)
+  Dim cardId As Integer = CanonicalId(cardText)
+  Dim db As Connection
+  Dim row As Result
+  Dim boardId As Integer
+  Dim data As Collection
+  If Not actor Then Error.Raise("Sign in required")
+  BoardAccess.OpenStore()
+  db = WebDatabase.OpenConnection()
+  ' Read only the ownership key until the current destination scope is checked.
+  row = db.Exec("SELECT board_id FROM kb_cards WHERE id=&1", cardId)
+  If Not row.Available Then Error.Raise("Card not accessible")
+  If IsNull(row!board_id) Then Error.Raise("Card not accessible")
+  boardId = row!board_id
+  If boardId <= 0 Then Error.Raise("Card not accessible")
+  BoardAccess.RequireCard(boardId, cardId)
+  data = BoardRoute.Resolve(CStr(boardId))
+  row = db.Find("kb_cards", "id=&1 AND board_id=&2", cardId, boardId)
+  If Not row.Available Then Error.Raise("Card not accessible")
+  data["cardId"] = cardId
+  data["cardArchived"] = CBool(row!archived)
+  data["moved"] = requested <> boardId
+  If WebIdentity.Username <> actor Then Error.Raise("Sign in required")
+  BoardAccess.RequireCard(boardId, cardId)
+  row = db.Exec("SELECT board_id,archived FROM kb_cards WHERE id=&1", cardId)
+  If Not row.Available Then Error.Raise("Card not accessible")
+  If row!board_id <> boardId Or CBool(row!archived) <> data["cardArchived"] Then Error.Raise("Card not accessible")
+  Return data
+Catch
+  If Not WebIdentity.Username Or WebIdentity.Username <> actor Then Error.Raise("Sign in required")
+  Error.Raise("Card not accessible")
+End
+
+Private Function CanonicalId(text As String) As Integer
+  Dim id As Integer
+  Try id = CInt(text)
+  If Error Then Error.Raise("Card not accessible")
+  If id <= 0 Or CStr(id) <> text Then Error.Raise("Card not accessible")
+  Return id
+End

@@ -44,6 +44,8 @@
   const entryKey='weba-overview-entry',overviewSections=['remaining','starred','archive','home','workspaces','board'];
   let entrySent=false,overviewPending=null,overviewObserved=null,overviewIntent=0,deferredOverview=null,navigationObserved=null;
   function overviewRouteAtPath(){try{
+    const card=/^\/b\/([1-9]\d{0,9})\/([^/]+)\/([1-9]\d{0,9})\/?$/.exec(decodeURIComponent(root.location.pathname));
+    if(card&&Number(card[1])<=2147483647&&Number(card[3])<=2147483647)return {section:'board',id:card[1],path:card[2],card:card[3]};
     const board=/^\/b\/([1-9]\d{0,9})(?:\/([^/]+))?\/?$/.exec(decodeURIComponent(root.location.pathname));
     if(board&&Number(board[1])<=2147483647)return {section:'board',id:board[1],path:board[2]||''};
     const match=/^\/allboards\/(remaining|starred|archive|home|workspaces)(?:\/(.*))?$/.exec(decodeURIComponent(root.location.pathname));
@@ -62,13 +64,13 @@
   function rememberOverviewState(ack,push,home=false){
     if(ack.section==='board'){
       const urls=root.webaWorkspaceMarkdown?.boardUrls;if(!urls)return false;
-      const route=overviewRouteAtPath(),path=urls.path(ack.boardId,ack.boardTitle),state={webaOverviewSection:'board',webaBoardId:ack.boardId};
+      const route=overviewRouteAtPath(),path=urls.path(ack.boardId,ack.boardTitle)+(ack.cardId?'/'+encodeURIComponent(ack.cardId):''),state={webaOverviewSection:'board',webaBoardId:ack.boardId};
       if(push&&root.location.pathname+root.location.search+root.location.hash!==path){
         if(root.location.pathname==='/'&&!root.history.state?.webaOverviewSection)root.history.replaceState({...root.history.state,webaOverviewSection:'remaining'},'',root.location.href);
         root.history.pushState(state,'',path);
       }else{
         // Explicit human slugs resolve by ID and remain stable through renames.
-        const address=route?.section==='board'&&route.id===ack.boardId&&route.path?root.location.href:path;
+        const address=route?.section==='board'&&route.id===ack.boardId&&route.path&&String(route.card||'')===String(ack.cardId||'')?root.location.href:path;
         root.history.replaceState({...root.history.state,...state},'',address);
       }
       return true;
@@ -88,7 +90,8 @@
     if(!overviewSections.includes(section)){overviewObserved=null;return;}
     if(section==='workspaces'&&!workspaceUrls())return;
     if(section==='board'&&root.location.pathname==='/'&&!ack.landingReady&&!overviewPending)return;
-    const id=section==='board'?ack.boardId||'':section==='workspaces'?ack.workspaceId||'':'',key=section+':'+id+':'+revision;
+    const id=section==='board'?ack.boardId||'':section==='workspaces'?ack.workspaceId||'':'',key=section+':'+id+':'+(ack.cardId||'')+':'+revision;
+    if(overviewPending?.card&&ack.token===overviewPending.token&&!ack.cardId){overviewPending=null;overviewObserved=key;navigationObserved=revision;return;}
     if(overviewPending?.section==='board'&&ack.token===overviewPending.token&&section!=='board'){overviewPending=null;overviewObserved=key;navigationObserved=revision;return;}
     if(overviewPending?.section==='workspaces'&&overviewPending.id&&workspaceUrls()&&!workspaceUrls().slugs(ack.tree||[],overviewPending.id)){
       // A vanished target is a safe native fallback, not a new history intent.
@@ -99,23 +102,24 @@
       if(resolved&&resolved!==id){sendOverviewRoute('workspaces','entry',resolved);return;}
     }
     if(overviewPending){
-      if(overviewPending.section!==section||overviewPending.token!==ack.token||overviewPending.id!==id)return;
+      if(overviewPending.section!==section||overviewPending.token!==ack.token||(overviewPending.card?String(overviewPending.card)!==String(ack.cardId||''):overviewPending.id!==id))return;
       if(!rememberOverviewState(ack,overviewPending.source==='menu'))return;
       overviewPending=null;overviewObserved=key;navigationObserved=revision;return;
     }
+    if(!overviewPending&&overviewRouteAtPath()?.card&&!ack.cardId&&!nativeChanged){overviewObserved=key;navigationObserved=revision;return;}
     if(overviewObserved===key){workspaceTrail(ack);return;}
     const first=overviewObserved===null,vanished=section==='workspaces'&&!id&&overviewObserved?.startsWith('workspaces:')||section!=='board'&&overviewObserved?.startsWith('board:')&&overviewRouteAtPath()?.section==='board'&&!nativeChanged;if(rememberOverviewState(ack,nativeChanged||section==='board'&&root.location.pathname==='/'||!first&&!vanished,nativeChanged&&ack.navigationHome)){overviewObserved=key;navigationObserved=revision;}
   }
-  function sendOverviewRoute(section,source,workspaceId=''){
+  function sendOverviewRoute(section,source,workspaceId='',card=''){
     const target=document.querySelector('[id$=".EntryRouteAction"]');if(!target||!root.gw?.update||!overviewSections.includes(section))return false;
     let id=['workspaces','board'].includes(section)?String(workspaceId||''):'';
     if(section==='workspaces'&&id&&source==='menu'&&workspaceUrls()){const tree=overviewAck()?.tree||[],slugs=workspaceUrls().slugs(tree,id);if(slugs)id=workspaceUrls().resolve(tree,slugs.join('/'))||id;}
     const token=String(Date.now())+'-'+String(++overviewIntent);
-    overviewPending={section,source,token,id};root.gw.update(target.id,'text',section+'|'+token+(['workspaces','board'].includes(section)?'|'+(id||(section==='workspaces'?'0':'')):''));return true;
+    overviewPending={section,source,token,id,card};root.gw.update(target.id,'text',section+'|'+token+(['workspaces','board'].includes(section)?'|'+(id||(section==='workspaces'?'0':'')):'')+(section==='board'&&card?'|'+card:''));return true;
   }
   function sendOverviewPath(route,source){
     if(!route||!overviewSections.includes(route.section))return false;
-    if(route.section==='board')return sendOverviewRoute('board',source,route.id);
+    if(route.section==='board')return sendOverviewRoute('board',source,route.id,route.card||'');
     if(route.section==='workspaces'){
       const ack=overviewAck();if(!workspaceUrls()||!Array.isArray(ack?.tree)){deferredOverview={route,source};return false;}
       return sendOverviewRoute(route.section,source,workspaceUrls().resolve(ack.tree,route.path||''));
@@ -276,6 +280,7 @@
       if(!id||title===undefined)return;
       const path=boardUrls.path(id,title);if(link.getAttribute('href')!==path)link.setAttribute('href',path);
     });
+    if(boardUrls){const ack=overviewAck();if(ack?.boardId)document.querySelectorAll('a.weba-card-link[data-card-id]').forEach(link=>{const path=boardUrls.path(ack.boardId,ack.boardTitle)+'/'+encodeURIComponent(link.dataset.cardId);if(link.getAttribute('href')!==path)link.setAttribute('href',path);});}
     const boardSearch=document.querySelector('[id$=".BoardSearch:entry"]');
     if(boardSearch&&!boardSearch.classList.contains("js-board-search-input"))boardSearch.classList.add("js-board-search-input");
     const remaining=document.querySelector('[id$=".Remaining"]');
@@ -321,6 +326,15 @@
   function start(){
     document.addEventListener('click',event=>{
       if(event.target.closest?.('[id$=".ConfirmBoardArchive"],[id$=".ContextRestore"]')){overviewPending=null;deferredOverview=null;entrySent=true;}
+      if(event.target.closest?.('[id$=".CloseEditor"]')){const ack=overviewAck();if(ack?.boardId&&ack.cardId){event.preventDefault();event.stopImmediatePropagation();entrySent=true;deferredOverview=null;sendOverviewRoute('board','menu',ack.boardId);return;}}
+      const cardLink=event.target.closest?.('a.weba-card-link[data-card-id]');
+      if(cardLink){
+        if(event.target.closest('button,input,textarea,select')||event.target.closest('a')!==cardLink)return;
+        if(root.webaDrag?.clickSuppressed){event.preventDefault();event.stopImmediatePropagation();return;}
+        if(event.defaultPrevented||event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey||cardLink.target&&cardLink.target!=='_self'||cardLink.hasAttribute('download'))return;
+        const board=cardLink.closest('.weba-content')?.dataset.board,id=cardLink.dataset.cardId;
+        if(/^[1-9]\d*$/.test(board||'')&&/^[1-9]\d*$/.test(id||'')){event.preventDefault();event.stopImmediatePropagation();entrySent=true;deferredOverview=null;root.webaPopup?.rememberEditor(cardLink.closest('.weba-card'));sendOverviewRoute('board','menu',board,id);}return;
+      }
       const tile=event.target.closest?.('[data-board-key]');
       if(tile){
         if(root.webaDrag?.clickSuppressed){event.preventDefault();event.stopImmediatePropagation();return;}

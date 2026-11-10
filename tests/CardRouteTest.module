@@ -1,0 +1,70 @@
+Public Sub Main()
+  Dim a As Integer
+  Dim b As Integer
+  Dim hidden As Integer
+  Dim cardId As Integer
+  Dim listId As Integer
+  Dim row As Result
+  Dim data As Collection
+  Dim text As String
+  Dim denied As Boolean
+  Dim db As Connection
+  WebDatabase.Register("card-route-owner", "x")
+  WebDatabase.Register("card-route-reader", "x")
+  WebDatabase.Register("card-route-other", "x")
+  SignIn("card-route-owner")
+  a = KanbanStore.AddBoard("Card route Alpha")
+  b = KanbanStore.AddBoard("Card route Bravo 🚀 <literal>")
+  hidden = KanbanStore.AddBoard("Private destination canary")
+  BoardAccess.SetMember(a, "card-route-reader", "read-only")
+  BoardAccess.SetMember(b, "card-route-reader", "read-only")
+  row = KanbanStore.Lanes(a)
+  row = KanbanStore.Lists(a, "Default")
+  listId = row!id
+  cardId = KanbanStore.SaveCard(a, 0, "Route card", "Private card content", "Default", "Todo", "", "", "", listId)
+  SignIn("card-route-reader")
+  data = CardRoute.Resolve(CStr(a), CStr(cardId))
+  If data["id"] <> a Or data["cardId"] <> cardId Or data["moved"] Or data["cardArchived"] Then Error.Raise("Readonly card route failed")
+  For Each text In ["", "0", "-1", "+1", "0" & CStr(cardId), "1.0", "1e0", "2147483648", "2147483647", "__proto__"]
+    Try CardRoute.Resolve(CStr(a), text)
+    denied = Error
+    If Not denied Then Error.Raise("Invalid or missing card route accepted")
+  Next
+  db = WebDatabase.OpenConnection()
+  db.Exec("UPDATE kb_cards SET board_id=&1 WHERE id=&2", b, cardId)
+  data = CardRoute.Resolve(CStr(a), CStr(cardId))
+  If Not data["moved"] Or data["id"] <> b Or data["title"] <> "Card route Bravo 🚀 <literal>" Then Error.Raise("Readable moved card destination failed")
+  db.Exec("UPDATE kb_cards SET archived=1 WHERE id=&1", cardId)
+  data = CardRoute.Resolve(CStr(a), CStr(cardId))
+  If Not data["cardArchived"] Or data["archived"] Then Error.Raise("Archived card was conflated with archived board")
+  db.Exec("UPDATE kb_cards SET board_id=&1 WHERE id=&2", hidden, cardId)
+  Try CardRoute.Resolve(CStr(a), CStr(cardId))
+  denied = Error
+  If Not denied Then Error.Raise("Unreadable moved card disclosed its destination")
+  db.Exec("UPDATE kb_cards SET board_id=&1,archived=0 WHERE id=&2", b, cardId)
+  SignIn("card-route-owner")
+  BoardAccess.SetMember(b, "card-route-reader", "read-assigned-only")
+  SignIn("card-route-reader")
+  Try CardRoute.Resolve(CStr(a), CStr(cardId))
+  denied = Error
+  If Not denied Then Error.Raise("Assigned-only member read an unassigned card route")
+  SignIn("card-route-owner")
+  BoardAccess.SetAssignees(b, cardId, ["card-route-reader"])
+  SignIn("card-route-reader")
+  data = CardRoute.Resolve(CStr(a), CStr(cardId))
+  If data["id"] <> b Then Error.Raise("Assigned card route failed")
+  db.Exec("UPDATE account_sessions SET generation=generation+1 WHERE username='card-route-reader'")
+  Try CardRoute.Resolve(CStr(a), CStr(cardId))
+  denied = Error
+  If Not denied Then Error.Raise("Revoked session read a card route")
+  Session["username"] = ""
+  Try CardRoute.Resolve(CStr(a), CStr(cardId))
+  denied = Error
+  If Not denied Then Error.Raise("Anonymous private card route accepted")
+  Print "Card routes: readonly identity, canonical IDs, moved readable destination, private destination refusal, independent archived state, assigned-only and revoked/anonymous guards passed"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

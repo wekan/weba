@@ -610,7 +610,7 @@ class AllBoardsEntryTest(unittest.TestCase):
 
     def test_board_entries_are_readonly_root_shells_without_query_commands(self):
         result = SimpleNamespace(returncode=0, stdout=b'Content-Type: text/html\r\n\r\n<html>entry</html>')
-        for path in ('/b/1', '/b/1/', '/b/2147483647/board', '/b/1/name/', '/%62/1/slug', '/b/1/%E8%88%B9'):
+        for path in ('/b/1', '/b/1/', '/b/2147483647/board', '/b/1/name/', '/%62/1/slug', '/b/1/%E8%88%B9', '/b/1/slug/2', '/b/1/slug/2147483647/', '/b/2147483647/slug/1'):
             with self.subTest(path=path):
                 request = self.request(path + '?c=forged-command&private=canary')
                 with patch.object(server, 'run_application', return_value=result) as run:
@@ -622,7 +622,7 @@ class AllBoardsEntryTest(unittest.TestCase):
                 self.assertEqual(env['WEBA_API_REQUEST'], '0')
 
     def test_board_entries_reject_invalid_aliases_and_mutation_methods(self):
-        for path, method, code in [('/b/1/slug', 'POST', 405), ('/b/1', 'DELETE', 405), ('/b', 'GET', 404), ('/b/0', 'GET', 404), ('/b/01/name', 'GET', 404), ('/b/2147483648/name', 'GET', 404), ('/b/-1/name', 'GET', 404), ('/b/1/slug/card', 'GET', 404), ('/b/1/%252e%252e', 'GET', 404), ('/b/1/%ZZ', 'GET', 404), ('/b/1/%FF', 'GET', 404)]:
+        for path, method, code in [('/b/1/slug', 'POST', 405), ('/b/1', 'DELETE', 405), ('/b', 'GET', 404), ('/b/0', 'GET', 404), ('/b/01/name', 'GET', 404), ('/b/2147483648/name', 'GET', 404), ('/b/-1/name', 'GET', 404), ('/b/1/slug/card', 'GET', 404), ('/b/1/slug/0', 'GET', 404), ('/b/1/slug/01', 'GET', 404), ('/b/1/slug/2147483648', 'GET', 404), ('/b/1/slug/2', 'POST', 405), ('/b/1/slug/2', 'DELETE', 405), ('/b/1/slug/2/extra', 'GET', 404), ('/b/1/slug/%2532', 'GET', 404), ('/b/1/slug%2F2', 'GET', 404), ('/b%2F1/slug/2', 'GET', 404), ('/b/1/%252e%252e', 'GET', 404), ('/b/1/%ZZ', 'GET', 404), ('/b/1/%FF', 'GET', 404)]:
             with self.subTest(path=path, method=method):
                 request = self.request(path, method)
                 with patch.object(server, 'run_application') as run:

@@ -2,6 +2,30 @@
 
 This work adds the following features and fixes:
 
+- Add signed-in native `/b/:boardId/:slug/:cardId` entries with strict canonical
+  IDs, GET-only root HTML/query stripping and malformed/encoded-slash/overflow
+  alias refusal. Resolve a card's current readable destination with final
+  identity/scope/destination/state rechecks. Redirect readable moved cards;
+  keep a readable URL board for missing or unreadable cards without disclosing
+  the destination, and clear denied private state while retaining the URI.
+  Render whole-card links with native modifier/Ctrl body-click and keyboard
+  behavior, separate menu/drag controls and retained mouse/touch gestures.
+  Preserve login/reload entries, mounted same-board state and unsaved drafts;
+  acknowledge open/close intents and let newer card clicks win delayed menus
+  without extra history. Keep explicitly routed cards readable on external
+  archive/restore independently of the board filter, refreshing controls and
+  retaining their panel/URI. User archive closes to its board; restore keeps the
+  card open. Clear previous route state for new-card creation and reuse existing
+  translated captions while preserving literal content. Verify native malformed,
+  private/assigned/revoked guards, twelve unchanged moved-target helper native
+  SQL/pure cases, twelve unchanged source card URL comparisons and real
+  source/packaged login/history/draft/whole-link/keyboard/race/archive/privacy/
+  Finnish/mobile flows. The complete local suite (64 host tests) and complete
+  source/packaged browser suites pass. Public/instance visibility, desktop
+  multiple-card windows, container/reveal routes and full original Meteor/
+  FlowRouter/subscription/action wiring remain pending.
+  Thanks to xet7.
+
 - Render native catalog board tiles as real canonical links with a short board
   URL fallback, browser Ctrl/Command/middle-click new tabs and Enter activation.
   Preserve Space behavior and sortable-parent HTML5/pointer/touch gestures.

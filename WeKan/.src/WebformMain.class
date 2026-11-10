@@ -34,6 +34,9 @@ Private $action As String
 Private $browsingArchive As Boolean
 Private $listId As Integer
 Private $card As Integer
+Private $routeCard As Integer
+Private $routeCardBoard As Integer
+Private $routeCardArchived As Boolean
 Private $view As String = "Boards"
 Private $boardTitle As String
 Private $archive As Boolean
@@ -233,6 +236,12 @@ Public Sub BoardPoll_Timer()
     state = BoardLive.Overview($archive)
     If state <> $overviewState Then RefreshTree()
   Endif
+  If $routeCard > 0 And $card > 0 Then
+    If Not OpenCardVisible($board, $card, $archive) Then
+      ValidateOpenCards()
+      UpdateHeader()
+    Endif
+  Endif
   RefreshLiveDetails()
   RefreshLiveCardPeople()
   RefreshLiveMembers()
@@ -242,6 +251,20 @@ End
 
 Private Function IsOverview() As Boolean
   Return $board = 0 And ($view = "Boards" Or $view = "Archive" Or $view = "Starred" Or $view = "Home")
+End
+
+Private Function OpenCardVisible(boardId As Integer, cardId As Integer, archived As Boolean) As Boolean
+  Dim row As Result
+  If $routeCard = cardId And $routeCardBoard = boardId And $card = cardId And $board = boardId Then
+    ' An explicit card subscription is not filtered by the grid's archive state.
+    BoardAccess.RequireCard(boardId, cardId)
+    row = WorkspaceStore.Record(boardId, "card", cardId)
+    $routeCardArchived = CBool(row!archived)
+    Return True
+  Endif
+  Return BoardLive.Visible(boardId, cardId, archived)
+Catch
+  Return False
 End
 
 Private Sub ValidateOpenCards()
@@ -255,7 +278,7 @@ Private Sub ValidateOpenCards()
     Endif
   Endif
   If $card > 0 Then
-    If Not BoardLive.Visible($board, $card, $archive) Then
+    If Not OpenCardVisible($board, $card, $archive) Then
       $card = 0
       Editor.Hide()
       $draft = Null
@@ -267,7 +290,7 @@ Private Sub ValidateOpenCards()
     Endif
   Endif
   If $detailsCard > 0 Then
-    If Not BoardLive.Visible($detailsBoard, $detailsCard, $archive) Then
+    If Not OpenCardVisible($detailsBoard, $detailsCard, $archive) Then
       $detailsCard = 0
       DetailsPanel.Hide()
       DetailTree.Clear()
@@ -276,12 +299,12 @@ Private Sub ValidateOpenCards()
     Endif
   Endif
   If $peopleCard > 0 Then
-    If Not BoardLive.Visible($peopleBoard, $peopleCard, $archive) Then
+    If Not OpenCardVisible($peopleBoard, $peopleCard, $archive) Then
       CloseStaleCardPeople()
     Endif
   Endif
   If $contextKind = "card" Then
-    If Not BoardLive.Visible($contextBoard, $contextId, $archive) Then
+    If Not OpenCardVisible($contextBoard, $contextId, $archive) Then
       $contextId = 0
       $contextKind = ""
       ContextMenu.Hide()
@@ -296,6 +319,8 @@ Public Sub Boards_Select()
   If Not Boards.Key Then Return
   CloseBoardArchive_Click()
   $landingConsumed = True
+  $routeCard = 0
+  $routeCardBoard = 0
   $card = 0
   If Left(Boards.Key, 1) = "b" Then
     $board = CInt(Mid(Boards.Key, 2))
@@ -327,6 +352,9 @@ End
 
 Private Sub LoadCardDraft()
   $draft = CardDraft.Read($board, $card)
+  $routeCard = $card
+  $routeCardBoard = $board
+  $routeCardArchived = WorkspaceStore.Archived($board, "card", $card)
   $listId = $draft["listId"]
   CardTitle.Text = $draft["title"]
   Description.Text = $draft["description"]
@@ -346,6 +374,7 @@ Catch
 End
 
 Public Sub NewCard_Click()
+  Dim hadCard As Boolean = $card > 0
   Dim laneRows As Result
   Dim listRows As Result
   Dim found As Boolean
@@ -367,20 +396,24 @@ Public Sub NewCard_Click()
     Notice.Text = "Add a list first"
     Return
   Endif
+  ClearCardEditor()
   Editor.Show()
-  $card = 0
-  $draft = Null
+  If hadCard Then
+    $navigationRevision += 1
+    $navigationHome = False
+  Endif
   UpdateCardActions()
   CardTitle.Text = ""
   Description.Text = ""
   Assignee.Text = WebIdentity.Username
   Labels.Text = ""
   DueDay.Text = ""
+  UpdateHeader()
 End
 
 Public Sub SaveCard_Click()
   $card = KanbanStore.SaveCard($board, $card, CardTitle.Text, Description.Text, Lane.Text, Status.Text, Assignee.Text, Labels.Text, DueDay.Text, $listId, $draft)
-  If BoardLive.Visible($board, $card, $archive) Then
+  If OpenCardVisible($board, $card, $archive) Then
     LoadCardDraft()
   Else
     Editor.Hide()
@@ -395,9 +428,16 @@ Catch
 End
 
 Public Sub ArchiveCard_Click()
-  KanbanStore.ArchiveCard($board, $card, Not $archive)
-  $card = 0
-  Editor.Hide()
+  Dim restoring As Boolean = If($routeCard = $card And $routeCardBoard = $board, $routeCardArchived, $archive)
+  KanbanStore.ArchiveCard($board, $card, Not restoring)
+  If restoring Then
+    $routeCardArchived = False
+  Else
+    ' The source archive action closes its card and navigates to the board.
+    ClearCardEditor()
+    $navigationRevision += 1
+    $navigationHome = False
+  Endif
   UpdateCardActions()
   RefreshTree()
 Catch
@@ -868,6 +908,7 @@ Private Sub UpdateHeader()
   Endif
   If $board > 0 And $view <> "Profile" And $view <> "Admin panel" Then routeSection = "board"
   routeAck["boardId"] = If(routeSection = "board", CStr($board), "")
+  routeAck["cardId"] = If(routeSection = "board" And $card > 0 And Editor.Visible, CStr($card), "")
   routeAck["boardTitle"] = If(routeSection = "board", $boardTitle, "")
   routeAck["boardArchived"] = If(routeSection = "board", $archive, False)
   routeAck["navigationRevision"] = $navigationRevision
@@ -950,7 +991,33 @@ Public Sub CloseSidebar_Click()
 End
 
 Public Sub CloseEditor_Click()
+  Dim hadCard As Boolean = $card > 0
+  ClearCardEditor()
+  If hadCard Then
+    $navigationRevision += 1
+    $navigationHome = False
+  Endif
+  UpdateHeader()
+End
+
+Private Sub ClearCardEditor()
+  $routeCard = 0
+  $routeCardBoard = 0
   Editor.Hide()
+  $card = 0
+  $draft = Null
+  CardTitle.Text = ""
+  Description.Text = ""
+  Assignee.Text = ""
+  Labels.Text = ""
+  DueDay.Text = ""
+  DetailsPanel.Hide()
+  $detailsCard = 0
+  $detailState = ""
+  DetailTree.Clear()
+  DetailTitle.Text = ""
+  DetailBody.Text = ""
+  CloseStaleCardPeople()
 End
 
 Public Sub AddBoard_Click()
@@ -1652,7 +1719,13 @@ Public Sub ContextArchive_Click()
   Endif
   WorkspaceStore.SetArchived($contextBoard, $contextKind, $contextId, True)
   ContextMenu.Hide()
-  Editor.Hide()
+  If $contextKind = "card" And $board = $contextBoard Then
+    ClearCardEditor()
+    $navigationRevision += 1
+    $navigationHome = False
+  Else
+    Editor.Hide()
+  Endif
   If $contextKind = "board" And $board = $contextBoard Then $board = 0
   RefreshTree()
 Catch
@@ -1845,7 +1918,7 @@ Private Sub RefreshLiveDetails()
   Dim data As Collection
   If $detailsCard <= 0 Then Return
   If Not DetailsPanel.Visible Then Return
-  If Not BoardLive.Visible($detailsBoard, $detailsCard, $archive) Then
+  If Not OpenCardVisible($detailsBoard, $detailsCard, $archive) Then
     ValidateOpenCards()
     Return
   Endif
@@ -2317,10 +2390,13 @@ Catch
 End
 
 Private Sub UpdateCardActions()
-  Dim writable As Boolean = BoardAccess.Can($board, "write")
+  Dim permitted As Boolean = BoardAccess.Can($board, "write")
+  Dim cardArchived As Boolean = $routeCard = $card And $routeCardBoard = $board And $routeCardArchived
+  Dim writable As Boolean = permitted And Not cardArchived
   SaveCard.Enabled = writable
-  ArchiveCard.Enabled = writable And $card > 0
-  NewCard.Enabled = writable And Not $archive
+  ArchiveCard.Enabled = permitted And $card > 0
+  ArchiveCard.Text = If(cardArchived Or $archive, "Restore", "Archive")
+  NewCard.Enabled = permitted And Not $archive
   ArchiveBoard.Enabled = BoardAccess.Can($board, "manageBoard")
   CardTitle.ReadOnly = Not writable
   Description.ReadOnly = Not writable
@@ -2403,7 +2479,7 @@ Private Sub RefreshLiveCardPeople()
   Dim data As Collection
   If $peopleCard <= 0 Then Return
   If Not CardPeoplePanel.Visible Then Return
-  If Not BoardLive.Visible($peopleBoard, $peopleCard, $archive) Then
+  If Not OpenCardVisible($peopleBoard, $peopleCard, $archive) Then
     CloseStaleCardPeople()
     ValidateOpenCards()
     Return
@@ -3999,25 +4075,40 @@ Public Sub EntryRouteAction_Change()
   Dim workspaceId As Integer
   Dim boardData As Collection
   Dim boardEntryStarted As Boolean
+  Dim cardEntry As Boolean
+  Dim cardFailure As String
   Dim failure As String
   If Not WebIdentity.Username Then Error.Raise("Sign in required")
   If Not section Then Return
   ' Empty the command after capture; identical later entries must raise Change.
   EntryRouteAction.Text = ""
-  If fields.Count < 2 Or fields.Count > 3 Then Error.Raise("Unknown overview entry")
+  If fields.Count < 2 Or fields.Count > 4 Then Error.Raise("Unknown overview entry")
   section = fields[0]
   If Not fields[1] Or Len(fields[1]) > 128 Then Error.Raise("Unknown overview entry")
   If ["remaining", "starred", "archive", "home", "workspaces", "board"].Find(section) < 0 Then Error.Raise("Unknown overview entry")
   CloseBoardArchive_Click()
   If section = "board" Then
-    If fields.Count <> 3 Then Error.Raise("Unknown board entry")
+    If fields.Count <> 3 And fields.Count <> 4 Then Error.Raise("Unknown board entry")
     boardEntryStarted = True
-    boardData = BoardRoute.Resolve(fields[2])
+    cardEntry = fields.Count = 4
+    If cardEntry Then
+      Try boardData = CardRoute.Resolve(fields[2], fields[3])
+      If Error Then
+        cardFailure = Error.Text
+        ' An unreadable moved card must not disclose its destination. Keep a
+        ' readable URL board mounted, as the source empty publication does.
+        boardData = BoardRoute.Resolve(fields[2])
+      Endif
+    Else
+      boardData = BoardRoute.Resolve(fields[2])
+    Endif
     $landingConsumed = True
     If $board = boardData["id"] And $archive = boardData["archived"] And $view <> "Profile" And $view <> "Admin panel" Then
       $boardTitle = boardData["title"]
       $overviewRouteToken = fields[1]
+      ApplyCardRoute(boardData, cardEntry)
       UpdateHeader()
+      If cardFailure Then Notice.Text = cardFailure
       Return
     Endif
     ' Clear previous editors before selecting a different route. Its temporary
@@ -4028,7 +4119,9 @@ Public Sub EntryRouteAction_Change()
     $archive = boardData["archived"]
     $view = "Swimlanes"
     $card = 0
+    ApplyCardRoute(boardData, cardEntry)
     RefreshTree()
+    If cardFailure Then Notice.Text = cardFailure
     Return
   Endif
   If section = "workspaces" Then
@@ -4073,6 +4166,30 @@ Catch
   Notice.Text = failure
 End
 
+
+Private Sub ApplyCardRoute(data As Collection, requested As Boolean)
+  Dim cardId As Integer
+  If data.Exist("cardId") Then cardId = data["cardId"]
+  If Not requested Or cardId <= 0 Then
+    If $card > 0 Then ClearCardEditor()
+    Return
+  Endif
+  If $card = cardId And Editor.Visible Then
+    $routeCard = cardId
+    $routeCardBoard = $board
+    $routeCardArchived = data["cardArchived"]
+    UpdateCardActions()
+    Return
+  Endif
+  ClearCardEditor()
+  $routeCard = cardId
+  $routeCardBoard = $board
+  $routeCardArchived = data["cardArchived"]
+  $card = cardId
+  LoadCardDraft()
+  Editor.Show()
+  UpdateCardActions()
+End
 
 Public Sub LoginLandingAction_Change()
   Dim command As String = LoginLandingAction.Text

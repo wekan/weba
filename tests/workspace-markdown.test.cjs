@@ -36,6 +36,9 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),asse
  const sourceBoardPath=vm.runInNewContext('(function(){'+boardModel.slice(start+signature.length,end)+'})');
  const boardTitles=['Renkaan Vaihto','Backend & QA','🚀','船','Проект','','東京','<img onerror=alert(1)>','a/b','Café % 100','niño','..'];
  for(const title of boardTitles){const sourceTitleSlug=sourceSlug.call({isSet:false,field:()=>({isSet:true,value:title})});assert.equal(bundled.window.webaWorkspaceMarkdown.boardUrls.path('123',title),sourceBoardPath.call({_id:'123',slug:sourceTitleSlug}));}
+ const cardUrl=req(path.join(source,'models/lib/cardUrl.js')).buildCardRelativeUrl;
+ for(const title of boardTitles){const boardSlug=sourceSlug.call({isSet:false,field:()=>({isSet:true,value:title})});assert.equal(bundled.window.webaWorkspaceMarkdown.boardUrls.path('123',title)+'/456',cardUrl({_id:'456',boardId:'123'},{_id:'123',slug:boardSlug}));}
+ console.log('Native card URL composition: '+boardTitles.length+' board titles match unchanged source buildCardRelativeUrl; native numeric-ID adapter explicit');
  console.log('Board URL bundle: '+boardTitles.length+' title paths match unchanged board schema autoValue and originRelativeUrl with installed limax; native numeric-ID adapter explicit');
  console.log('Workspace URL bundle: 22 path/resolution/name results match unchanged source helpers and installed limax; source/dependency hashes verified');
  let helper;const context={DOMPurify:req('dompurify')(original.window),MarkdownIt:req('markdown-it'),markdownItEmoji:req('markdown-it-emoji'),

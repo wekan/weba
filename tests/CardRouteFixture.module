@@ -1,0 +1,78 @@
+' Test-only project fixture; no production RPC or data is used.
+Public Sub Main()
+  Dim data As New Collection
+  Dim resolved As Collection
+  Dim seed As Collection
+  Dim boardId As Integer
+  Dim sourceBoard As Integer
+  Dim targetBoard As Integer
+  Dim title As String
+  Dim ids As New Integer[]
+  Dim cards As New Integer[]
+  Dim r As Result
+  Dim db As Connection
+  Dim t As Table
+  Dim mode As String = Env["WEBA_CARD_ROUTE_MODE"]
+  If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
+  Session["username"] = "rest-other"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+  db = WebDatabase.OpenConnection()
+  If mode = "seed" Then
+    For Each title In ["Deep route Alpha", "Deep route Bravo", "Deep route PRIVATE-CANARY"]
+      boardId = KanbanStore.AddBoard(title)
+      ids.Add(boardId)
+      r = KanbanStore.Lanes(boardId)
+      r = KanbanStore.Lists(boardId, "Default")
+      cards.Add(KanbanStore.SaveCard(boardId, 0, title & " card", "Deep card body", "Default", "Todo", "", "", "", r!id))
+      If ids.Count < 3 Then BoardAccess.SetMember(boardId, "rest-member", "read-only")
+    Next
+    data["boards"] = ids
+    data["cards"] = cards
+  Else
+    seed = JSON.Decode(Env["WEBA_CARD_ROUTE_SEED"])
+    ids = New Integer[]
+    For Each boardId In seed["boards"]
+      r = db.Find("kb_boards", "id=&1 AND owner=&2", boardId, "rest-other")
+      If Not r.Available Then Error.Raise("Missing fixture board")
+      If Left(CStr(r!title), Len("Deep route ")) <> "Deep route " Then Error.Raise("Not a deep route fixture")
+      ids.Add(boardId)
+    Next
+    If ids.Count <> 3 Then Error.Raise("Invalid fixture scope")
+    boardId = seed["cards"][0]
+    If mode = "move" Or mode = "private" Then
+      r = db.Find("kb_cards", "id=&1", boardId)
+      sourceBoard = r!board_id
+      targetBoard = ids[If(mode = "move", 1, 2)]
+      r = KanbanStore.Lists(targetBoard, "Default")
+      WorkspaceActions.Move(sourceBoard, "card", boardId, targetBoard, "Default", r!id)
+    Endif
+    If mode = "archive" Or mode = "restore" Then
+      r = db.Find("kb_cards", "id=&1", boardId)
+      KanbanStore.ArchiveCard(r!board_id, boardId, mode = "archive")
+    Endif
+    If mode = "revoke" Then BoardAccess.RemoveMember(ids[0], "rest-member")
+    If mode = "grant" Then BoardAccess.SetMember(ids[0], "rest-member", "read-only")
+    If mode = "resolve" Then
+      Session["username"] = "rest-member"
+      Session["auth_generation"] = WebDatabase.SessionGeneration("rest-member")
+      Try resolved = CardRoute.Resolve(CStr(ids[0]), CStr(boardId))
+      If Error Then
+        data["allowed"] = False
+      Else
+        data["allowed"] = True
+        data["boardId"] = resolved["id"]
+        data["moved"] = resolved["moved"]
+        data["cardArchived"] = resolved["cardArchived"]
+      Endif
+    Endif
+    If mode = "cleanup" Then
+      For Each boardId In ids
+        For Each t In db.Tables
+          If t.Fields.Exist("board_id") Then db.Delete(t.Name, "board_id=&1", boardId)
+        Next
+        db.Delete("kb_boards", "id=&1", boardId)
+      Next
+    Endif
+  Endif
+  Print JSON.Encode(data)
+End
