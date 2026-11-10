@@ -36,7 +36,7 @@
     if(drag){const bar=drag.section.querySelector('.js-home-remove');if(bar)bar.hidden=true;drag.section.classList.remove('weba-home-drag');drag.ghost.remove();drag.placeholder.remove();drag.element.classList.remove('weba-drag-origin');}
     drag=null;pending=null;document.body.classList.remove('weba-is-dragging');
   }
-  function begin(){
+  function begin(native=false){
     const state=pending;if(!state)return;
     const rect=state.element.getBoundingClientRect();
     const ghost=state.element.cloneNode(true);ghost.removeAttribute('id');ghost.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));
@@ -47,12 +47,12 @@
     const placeholder=document.createElement('div');placeholder.className='weba-drop-placeholder';
     placeholder.style.height=Math.min(rect.height,200)+'px';placeholder.style.width=rect.width+'px';
     state.element.classList.add('weba-drag-origin');document.body.classList.add('weba-is-dragging');
-    drag={...state,ghost,placeholder,dx:state.startX-rect.left,dy:state.startY-rect.top,target:null};
-    try{state.handle?.setPointerCapture(state.pointerId);}catch(_){}
+    drag={...state,native,ghost,placeholder,dx:state.startX-rect.left,dy:state.startY-rect.top,target:null};
+    if(!native){try{state.handle?.setPointerCapture(state.pointerId);}catch(_){}}
     if(state.kind==='board'&&state.source==='home'){
       state.section.classList.add('weba-home-drag');const bar=state.section.querySelector('.js-home-remove');if(bar)bar.hidden=false;
     }
-    tick();
+    if(native)ghost.hidden=true;else tick();
   }
   function insert(parent,before){if(drag.placeholder.parentNode!==parent||drag.placeholder.nextSibling!==before)parent.insertBefore(drag.placeholder,before);}
   function workspaceRows(section){
@@ -201,11 +201,64 @@
   }
   function move(event){
     const state=drag||pending;if(!state||state.pointerId!==event.pointerId)return;
+    // Native desktop board drags own their stream; touch and other kinds keep
+    // the pointer engine. Never prevent the move that lets the UA start HTML5.
+    if(state.native||state.kind==='board'&&state.pointerType==='mouse'&&state.element.draggable)return;
     state.x=event.clientX;state.y=event.clientY;
     if(!drag&&Math.hypot(state.x-state.startX,state.y-state.startY)>=threshold)begin();
     if(drag){drag.x=event.clientX;drag.y=event.clientY;event.preventDefault();}
   }
-  function up(event){if((drag||pending)?.pointerId===event.pointerId){if(drag){drag.x=event.clientX;drag.y=event.clientY;}finish();}}
+  function up(event){if(drag?.native)return;if((drag||pending)?.pointerId===event.pointerId){if(drag){drag.x=event.clientX;drag.y=event.clientY;}finish();}}
+  // MIME is interoperability metadata, never authorization. Only this live
+  // form's accepted mouse pickup may submit its server-bound origin/revision.
+  // Cross-document drags are deliberately refused until their transport exists.
+  const fromHome='application/x-board-from-home',fromRemaining='application/x-board-from-remaining',fromWorkspace='application/x-board-from-workspace',archivedMulti='application/x-archived-board-multi',multi='application/x-board-multi';
+  function nativeStart(event){
+    const state=pending,element=event.target.closest('.weba-board-tile-group');
+    if(!element)return;
+    if(!state||drag||state.kind!=='board'||state.element!==element||state.pointerType!=='mouse'||!element.draggable||!event.dataTransfer){event.preventDefault();return;}
+    try{
+      const dt=event.dataTransfer,id=element.dataset.boardId;
+      let payload=id;
+      if(state.group){
+        const ids=JSON.parse(state.section.dataset.selectionIds||'null');
+        if(!Array.isArray(ids)||ids.length!==Number(state.group.count)||!ids.every(v=>Number.isSafeInteger(v)&&v>0)||new Set(ids).size!==ids.length||!ids.includes(Number(id)))throw Error('Invalid selection snapshot');
+        payload=JSON.stringify(ids.map(String));
+      }
+      dt.clearData();dt.setData('text/plain',payload);
+      if(state.group)dt.setData(multi,'true');
+      if(state.source==='home')dt.setData(fromHome,'1');
+      if(state.source==='remaining')dt.setData(fromRemaining,'1');
+      if(state.source==='workspace')dt.setData(fromWorkspace,'1');
+      if(state.archivedMulti)dt.setData(archivedMulti,'1');
+      dt.effectAllowed='all';
+      const rect=element.getBoundingClientRect();dt.setDragImage(element,rect.width/2,rect.height/2);
+      state.payload=payload;begin(true);
+    }catch(_){event.preventDefault();reset();}
+  }
+  function nativeOver(event){
+    if(!drag?.native)return;
+    const dt=event.dataTransfer;
+    // The drag data store is protected here: only inspect types, never getData.
+    const types=Array.from(dt?.types||[]);
+    drag.x=event.clientX;drag.y=event.clientY;locate(drag.x,drag.y);
+    if(!types.includes('text/plain')||drag.source==='home'&&!types.includes(fromHome)||drag.archivedMulti&&!types.includes(archivedMulti)||drag.group&&!types.includes(multi)){drag.target=null;drag.placeholder.remove();clearWorkspaceMark();return;}
+    if(!drag.target)return;
+    event.preventDefault();event.stopPropagation();
+    dt.dropEffect=drag.target.drop==='home'?'link':'move';
+  }
+  function nativeDrop(event){
+    if(!drag?.native)return;
+    nativeOver(event);
+    if(!event.defaultPrevented||!drag.target){finish(true);return;}
+    try{
+      // Payload changes must not redirect even a valid local pickup. The actual
+      // selected IDs and freshness are checked again by BoardSelection.DropIds.
+      const dt=event.dataTransfer;
+      if(dt.getData('text/plain')!==drag.payload||Boolean(drag.group)!==(dt.getData(multi)==='true')){finish(true);return;}
+      finish();
+    }catch(_){finish(true);}
+  }
   function keyboard(event){
     const handle=event.target.closest('.weba-drag-handle');if(!handle||!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key))return;
     const state=identify(handle,'keyboard');if(!state)return;
@@ -291,10 +344,14 @@
     document.addEventListener('pointerdown',down);
     document.addEventListener('pointermove',move,{passive:false});
     document.addEventListener('pointerup',up);
-    document.addEventListener('pointercancel',()=>finish(true));
+    document.addEventListener('pointercancel',()=>{if(!drag?.native)finish(true);});
+    document.addEventListener('dragstart',nativeStart);
+    document.addEventListener('dragover',nativeOver);
+    document.addEventListener('drop',nativeDrop);
+    document.addEventListener('dragend',()=>{if(drag?.native)finish(true);});
     document.addEventListener('keydown',event=>{if(event.key==='Escape'&&(drag||pending)){event.preventDefault();event.stopImmediatePropagation();finish(true);}else keyboard(event);},true);
     document.addEventListener('click',event=>{if(Date.now()<suppressUntil||event.target.closest('.weba-drag-handle')){event.preventDefault();event.stopImmediatePropagation();}},true);
-    root.addEventListener('blur',()=>finish(true));
+    root.addEventListener('blur',()=>{if(!drag?.native)finish(true);});
   }
   root.webaDrag={identify,restoreFocus,restoreWorkspaceFocus,workspaceDropPosition,cancel:()=>finish(true),get active(){return !!drag;},get clickSuppressed(){return Date.now()<suppressUntil;},threshold};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();

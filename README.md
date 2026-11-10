@@ -616,8 +616,17 @@ captured server-side selection revision. Archive multi drags cannot set Home.
 touch gestures, native forgery denial and Finnish captions. The 60-case
 `tests/home-drop-conformance.test.cjs` runs unchanged source Home/Remove callback
 bodies with explicit DOM/DataTransfer, confirmation, selection and synchronous
-method adapters; the product still uses its native pointer/wire transport.
-Original production HTML5 MIME/Meteor integration remains pending.
+method adapters. Desktop mouse board drags now use real HTML5 events and the
+original text/plain, multi and source MIME markers. Touch retains the pointer
+engine and handle-only pickup. Native desktop hover reads protected-store types
+only; drop checks its captured payload before sending the existing private
+origin/selection-revision command. The browser's pointercancel does not abort an
+HTML5 drag; drop/end/Escape clean up without a second submission. Detached
+origins, tampered payloads, malformed selection snapshots and external drags
+without a local mouse pickup cannot submit. The selected-ID DOM snapshot is MIME
+metadata only; the server derives actual group IDs from private selection state.
+Same-form HTML5 is implemented; cross-document and original Meteor integration
+remain pending.
 
 First native root landing after login or full
 page reload now opens the current readable active Home board once. All Boards

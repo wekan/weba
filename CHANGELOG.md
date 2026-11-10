@@ -2,6 +2,20 @@
 
 This work adds the following features and fixes:
 
+- Use real desktop HTML5 board drags with the original single/multi and
+  Home/Remaining/workspace/Archive-multi MIME markers. Share native target,
+  reorder and confirmation policy with touch, while keeping ordinary touch
+  scrolling and handle pickup. Inspect only protected-store types on hover;
+  validate the captured payload on drop and submit the existing server-bound
+  visible origin/selection revision. Preserve native drag state through the
+  browser's pointercancel and submit once, then clean up on drop/end/Escape.
+  Refuse changed payloads, missing markers, detached origins, invalid selection
+  snapshots and drags without a local mouse pickup. Verify event-level MIME,
+  protected-store, tamper/cancel and detached-origin negatives, real Chromium
+  MIME payloads and full source/packaged mouse/grouped/trusted-touch regressions.
+  Full local and live suites pass. Cross-document and original Meteor/profile/DDP
+  transport remain pending. Thanks to xet7.
+
 - Add native mouse/touch drops onto Home as idempotent replacement, with one-board
   enforcement, retained multi-selection refusal and successful grouped reset.
   Draw a full-width Remove bar only during a Home-origin board drag; refuse every
