@@ -1,0 +1,19 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),{execFileSync}=require('node:child_process');
+let source=process.env.WEKAN_SOURCE,ancestor=path.resolve(__dirname,'..');while(!source&&path.dirname(ancestor)!==ancestor){if(fs.existsSync(path.join(ancestor,'client/components/boards/boardsList.js')))source=ancestor;else ancestor=path.dirname(ancestor);}if(!source)throw Error('Original Home callbacks required');
+const raw=fs.readFileSync(path.join(source,'client/components/boards/boardsList.js'),'utf8'),match=raw.match(/const ARCHIVED_MULTI_BOARD_DRAG = '([^']+)';/);assert.ok(match);const fnStart=raw.indexOf('function isArchivedMultiBoardDrag('),fnEnd=raw.indexOf('\n}',fnStart);assert.ok(fnStart>=0&&fnEnd>fnStart);
+const helpers='const ARCHIVED_MULTI_BOARD_DRAG='+JSON.stringify(match[1])+';\n'+raw.slice(fnStart,fnEnd+2);
+function callback(remove,context){const signature=remove?"  'drop .js-home-remove'(evt) {":"  'drop .js-home-menu'(evt) {",start=raw.indexOf(signature),end=raw.indexOf('\n  },',start);assert.ok(start>=0&&end>start);return vm.runInNewContext(helpers+'\n(evt)=>{'+raw.slice(start+signature.length,end)+'\n}',context);}
+const cases=[];for(const initial of [0,1,2])for(const ids of [[0],[1],[0,1]])for(const multi of [false,true]){if(ids.length>1&&!multi)continue;for(const archivedMulti of [false,true])cases.push({initial,ids,multi,archivedMulti,remove:false,confirm:true});for(const confirm of [false,true])cases.push({initial,ids,multi,remove:true,confirm,archivedMulti:false});}
+const root=path.resolve(__dirname,'..'),work=fs.mkdtempSync(path.join(process.env.TMPDIR,'weba-home-drop-source.'));
+try{
+ for(const name of ['.src','.public'])fs.cpSync(path.join(root,'WeKan',name),path.join(work,name),{recursive:true});fs.copyFileSync(path.join(root,'WeKan/.project'),path.join(work,'.project'));fs.copyFileSync(path.join(__dirname,'HomeDropMatrix.module'),path.join(work,'.src/HomeDropMatrix.module'));fs.writeFileSync(path.join(work,'.public/home-drop-cases.json'),JSON.stringify(cases));execFileSync(process.env.GBC||'gbc3',['-j','1','-a',work],{stdio:'inherit'});
+ const rows=JSON.parse(execFileSync(process.env.GBX||'gbx3',['-s','HomeDropMatrix',work],{encoding:'utf8',env:{...process.env,WEBA_API_REQUEST:'0',WEBA_DB_TYPE:'sqlite3',WEBA_DB_HOST:work,WEBA_DB_NAME:'database.db',WEBA_DB_USER:'',WEBA_DB_PASSWORD:''}}));assert.equal(rows.length,cases.length);
+ for(let i=0;i<cases.length;i++){
+  const c=cases[i],row=rows[i],ids=row.ids.map(String),alerts=[];let saved=String(row.before||''),reset=false;
+  const context={confirm:()=>c.confirm,TAPi18n:{__:key=>key==='select-only-one-board'?'Please select only one board':key},alert:text=>alerts.push(text),errorMessage:error=>error.message,draggingFromHome:{set(){}},BoardMultiSelection:{reset(){reset=true;}},Meteor:{call:(method,id,done)=>{if(method==='setDefaultBoard')saved=id;else if(method==='clearDefaultBoard'){if(saved===id)saved='';}else throw Error(method);if(done)done(null);}}};
+  const evt={preventDefault(){},stopPropagation(){},currentTarget:{classList:{remove(){}}},originalEvent:{dataTransfer:{types:c.archivedMulti?[match[1]]:[],getData:type=>type==='text/plain'?(c.multi?JSON.stringify(ids):ids[0]):type==='application/x-board-multi'&&c.multi?'1':''}}};
+  callback(c.remove,context)(evt);assert.equal(row.after,Number(saved||0),JSON.stringify(c));assert.deepEqual(row.error?[row.error]:[],alerts,JSON.stringify(c));assert.equal(row.reset,reset,JSON.stringify(c));
+ }
+ console.log('Home drop conformance: '+cases.length+' native SQL outcomes/reset decisions match unchanged source Home/Remove callbacks with explicit DOM/DataTransfer, confirmation, selection and synchronous method adapters; native scope/rollback and real pointer/touch checks are separate, original HTML5/Meteor transport remains pending');
+}finally{fs.rmSync(work,{recursive:true,force:true});}

@@ -295,6 +295,7 @@
         if(id){event.preventDefault();event.stopImmediatePropagation();sendOverviewRoute('workspaces','menu',id);}return;
       }
       const button=event.target.closest?.('[id$=".Home"],[id$=".Remaining"],[id$=".Starred"],[id$=".HomeBoards"],[id$=".Archive"]');if(!button)return;
+      if(root.webaDrag?.clickSuppressed){event.preventDefault();event.stopImmediatePropagation();return;}
       const name=button.id.slice(button.id.lastIndexOf('.')+1),section=({Home:'remaining',Remaining:'remaining',Starred:'starred',HomeBoards:'home',Archive:'archive'})[name];
       if(section&&!button.disabled&&!button.classList.contains('gw-disabled')&&button.getAttribute('aria-disabled')!=='true'){event.preventDefault();event.stopImmediatePropagation();sendOverviewRoute(section,'menu');}
     },true);

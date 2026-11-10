@@ -11,6 +11,8 @@
       const data = section.querySelector('.weba-data'), report = section.querySelector('.weba-report');
       if (!data || !report) return;
       report.replaceChildren(); data.hidden = false;
+      data.querySelectorAll('.weba-home-remove-label').forEach(el=>{el.textContent=t('Remove from Home');});
+      data.querySelectorAll('.weba-home-empty').forEach(el=>{el.textContent=t('Drag only one board here to open it after login');});
       data.querySelectorAll('.board-home-badge').forEach(badge=>{const label=t('Home board (opened after login)');badge.title=label;badge.setAttribute('aria-label',label);});
       data.querySelectorAll('[data-drag-kind="board"]').forEach(handle=>{const label=t(section.dataset.boardReorder==='true'?'Sort boards':'Move')+': '+(handle.closest('.weba-board-tile-group')?.querySelector('strong')?.textContent||'');handle.title=label;handle.setAttribute('aria-label',label);});
       data.querySelectorAll('.weba-board-tile-group').forEach(group=>{

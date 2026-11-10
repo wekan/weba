@@ -28,12 +28,12 @@
     if(!enabled(section,kind))return null;
     const group=kind==='board'&&section.dataset.multiActive==='true'&&element.dataset.selected==='true'
       ?{revision:section.dataset.selectionRevision,count:section.dataset.selectionCount}:null;
-    return {kind,element,section,handle,group};
+    return {kind,element,section,handle,group,source:section.dataset.boardSource,archivedMulti:section.dataset.boardSource==='archive'&&section.dataset.multiActive==='true'};
   }
   function reset(){
     if(frame)root.cancelAnimationFrame(frame);frame=0;
     clearWorkspaceMark();
-    if(drag){drag.ghost.remove();drag.placeholder.remove();drag.element.classList.remove('weba-drag-origin');}
+    if(drag){const bar=drag.section.querySelector('.js-home-remove');if(bar)bar.hidden=true;drag.section.classList.remove('weba-home-drag');drag.ghost.remove();drag.placeholder.remove();drag.element.classList.remove('weba-drag-origin');}
     drag=null;pending=null;document.body.classList.remove('weba-is-dragging');
   }
   function begin(){
@@ -49,6 +49,9 @@
     state.element.classList.add('weba-drag-origin');document.body.classList.add('weba-is-dragging');
     drag={...state,ghost,placeholder,dx:state.startX-rect.left,dy:state.startY-rect.top,target:null};
     try{state.handle?.setPointerCapture(state.pointerId);}catch(_){}
+    if(state.kind==='board'&&state.source==='home'){
+      state.section.classList.add('weba-home-drag');const bar=state.section.querySelector('.js-home-remove');if(bar)bar.hidden=false;
+    }
     tick();
   }
   function insert(parent,before){if(drag.placeholder.parentNode!==parent||drag.placeholder.nextSibling!==before)parent.insertBefore(drag.placeholder,before);}
@@ -64,7 +67,7 @@
     return 'inside';
   }
   function clearWorkspaceMark(){
-    if(drag?.marked){drag.marked.classList.remove('weba-space-drop-before','weba-space-drop-after','weba-space-drop-inside','weba-board-drop-target');drag.marked=null;}
+    if(drag?.marked){drag.marked.classList.remove('weba-space-drop-before','weba-space-drop-after','weba-space-drop-inside','weba-board-drop-target','is-over');drag.marked=null;}
   }
   function validWorkspaceTarget(rows,source,target){
     const byId=new Map(rows.map(row=>[row.dataset.workspaceId,row]));
@@ -91,15 +94,23 @@
       if(drag.marked!==row||!row.classList.contains(cls)){clearWorkspaceMark();row.classList.add(cls);drag.marked=row;}
       drag.target={id:row.dataset.workspaceId,position};return;
     }
+    if(drag.kind==='board'&&drag.source==='home'){
+      const bar=hit?.closest('.js-home-remove');
+      if(bar&&drag.section.contains(bar)&&!bar.hidden){
+        if(drag.marked!==bar){clearWorkspaceMark();bar.classList.add('is-over');drag.marked=bar;}
+        drag.placeholder.remove();drag.target={drop:'home-remove',id:'0'};return;
+      }
+      clearWorkspaceMark();drag.target=null;drag.placeholder.remove();return;
+    }
     if(drag.kind==='board'&&drag.section.dataset.boardDrop==='true'){
       const row=hit?.closest('.weba-space-row');
-      const menu=hit?.closest('[id$=".Remaining"],[id$=".Starred"],[id$=".Archive"]');
+      const menu=hit?.closest('[id$=".Remaining"],[id$=".Starred"],[id$=".Archive"],[id$=".HomeBoards"]');
       let target,id='0';
       if(row&&workspaceRows(drag.section).includes(row)){target='workspace';id=row.dataset.workspaceId;}
       else if(menu){
-        target=menu.id.endsWith('.Remaining')?'remaining':menu.id.endsWith('.Starred')?'starred':'archive';
+        target=menu.id.endsWith('.Remaining')?'remaining':menu.id.endsWith('.Starred')?'starred':menu.id.endsWith('.HomeBoards')?'home':'archive';
         const source=drag.section.dataset.boardSource;
-        if(target==='starred'&&!['remaining','workspace'].includes(source)||target==='archive'&&source==='archive')target=null;
+        if(target==='starred'&&!['remaining','workspace'].includes(source)||target==='archive'&&source==='archive'||target==='home'&&drag.archivedMulti)target=null;
       }
       if(target){
         const node=row||menu,cls='weba-board-drop-target';
@@ -168,6 +179,7 @@
     if(cancel||!target)return;
     if(state.kind==='workspace')send(state.section,'workspace',[state.element.dataset.workspaceId,target.id,target.position,'']);
     else if(state.kind==='board'&&target.drop){
+      if(target.drop==='home-remove'&&!root.confirm(t('Remove this board from Home? The board itself is not deleted.')))return;
       if(target.drop==='archive'&&!root.confirm(t('Are you sure you want to archive this board?')))return;
       send(state.section,state.group?'board-multi-drop':'board-drop',[state.element.dataset.boardId,target.drop,target.id,state.group?state.group.revision:'']);
     }

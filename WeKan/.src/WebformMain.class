@@ -614,7 +614,7 @@ Public Sub Visual_Render()
   If $board Then $liveState = BoardLive.State($board, $archive)
   Print "<script>" & File.Load(".public/kanban.js") & "</script>"
   If $board Then boardColor = WorkspaceStore.Setting($board, "board", $board, "color", "#2980b9")
-  Print "<section data-multi-active=\"" & If(IsOverview() And BoardSelection.Active(SelectionState()), "true", "false") & "\" data-selection-count=\"" & Str(BoardSelection.Count(SelectionState())) & "\" data-selection-revision=\"" & Str(BoardSelection.Revision(SelectionState())) & "\" data-selection-action=\"" & Html(BoardSelectionAction.Name) & "\" data-board-drop=\"" & If(IsOverview() And $view <> "Home", "true", "false") & "\" data-board-source=\"" & If($archive, "archive", If($view = "Starred", "starred", If($spaceMenu > 0, "workspace", "remaining"))) & "\" data-workspace-reorder=\"" & If(IsOverview() And $view <> "Home", "true", "false") & "\" data-board-reorder=\"" & If(IsOverview() And $view <> "Home" And Not $archive And $catalogSort = "custom", "true", "false") & "\" data-board-color=\"" & Html(boardColor) & "\" data-context=\"" & Html(ContextAction.Name) & "\" data-drag=\"" & Html(DragAction.Name) & "\" data-board=\"" & Str($board) & "\" data-action=\"" & Html(BoardAction.Name) & "\" data-card-move=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "moveCard"), "true", "false") & "\" data-editable=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "write"), "true", "false") & "\" class=\"weba-content\" data-tree=\"" & Html(Boards.Name) & "\" data-view=\"" & Html($view) & "\">"
+  Print "<section data-multi-active=\"" & If(IsOverview() And BoardSelection.Active(SelectionState()), "true", "false") & "\" data-selection-count=\"" & Str(BoardSelection.Count(SelectionState())) & "\" data-selection-revision=\"" & Str(BoardSelection.Revision(SelectionState())) & "\" data-selection-action=\"" & Html(BoardSelectionAction.Name) & "\" data-board-drop=\"" & If(IsOverview(), "true", "false") & "\" data-board-source=\"" & If($view = "Home", "home", If($archive, "archive", If($view = "Starred", "starred", If($spaceMenu > 0, "workspace", "remaining")))) & "\" data-workspace-reorder=\"" & If(IsOverview(), "true", "false") & "\" data-board-reorder=\"" & If(IsOverview() And $view <> "Home" And Not $archive And $catalogSort = "custom", "true", "false") & "\" data-board-color=\"" & Html(boardColor) & "\" data-context=\"" & Html(ContextAction.Name) & "\" data-drag=\"" & Html(DragAction.Name) & "\" data-board=\"" & Str($board) & "\" data-action=\"" & Html(BoardAction.Name) & "\" data-card-move=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "moveCard"), "true", "false") & "\" data-editable=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "write"), "true", "false") & "\" class=\"weba-content\" data-tree=\"" & Html(Boards.Name) & "\" data-view=\"" & Html($view) & "\">"
   If $view = "Profile" Then
     Print "<p>Signed in as " & Html(WebIdentity.Username) & "</p>"
   Else If $view = "Admin panel" Then
@@ -652,6 +652,10 @@ Public Sub Visual_Render()
       Print "</div>"
     Endif
     Print If(IsOverview(), "<ul class=\"weba-data\" role=\"list\">", "<div class=\"weba-data\">")
+    If IsOverview() And $view = "Home" Then
+      Print "<li class=\"home-remove-target js-home-remove\" hidden><i class=\"fa fa-trash\" aria-hidden=\"true\"></i><span class=\"weba-home-remove-label\">Remove from Home</span></li>"
+      If overviewIds.Count = 0 Then Print "<li class=\"board-list-item-empty weba-home-empty\">Drag only one board here to open it after login</li>"
+    Endif
     For Each b
       If $board And b!id <> $board Then Continue
       If IsOverview() Then
@@ -660,7 +664,7 @@ Public Sub Visual_Render()
         If WorkspaceStore.Setting(b!id, "board", b!id, "star") <> "1" Then Continue
       Endif
       If Not $board And ($view = "Boards" Or $view = "Archive" Or $view = "Starred" Or $view = "Home") Then
-        tiles[CStr(b!id)] = "<li data-selected=\"" & If(BoardSelection.IsSelected(SelectionState(), b!id), "true", "false") & "\" class=\"weba-board-tile-group js-board\" data-board-id=\"" & Str(b!id) & "\">" & If(IsOverview() And $view <> "Home", "<button type=\"button\" class=\"weba-drag-handle weba-board-drag fa fa-arrows\" data-drag-kind=\"board\" aria-label=\"Sort boards\"></button>", "") & "<button style=\"background-color:" & Html(WorkspaceStore.Setting(b!id, "board", b!id, "color", "#2980b9")) & "\" type=\"button\" class=\"weba-board-tile\" data-board-key=\"b" & Str(b!id) & "\"><strong class=\"board-list-item-name\">" & Html(b!title) & "</strong>" & If(b!id = homeId, "<span class=\"board-home-badge\" role=\"img\" title=\"Home board (opened after login)\" aria-label=\"Home board (opened after login)\"><i class=\"fa fa-home\" aria-hidden=\"true\"></i></span>", "") & "</button><button class=\"weba-board-context fa fa-bars\" data-context-kind=\"board\" data-context-id=\"" & Str(b!id) & "\" aria-label=\"Board menu\"></button></li>"
+        tiles[CStr(b!id)] = "<li data-selected=\"" & If(BoardSelection.IsSelected(SelectionState(), b!id), "true", "false") & "\" class=\"weba-board-tile-group js-board\" data-board-id=\"" & Str(b!id) & "\">" & If(IsOverview(), "<button type=\"button\" class=\"weba-drag-handle weba-board-drag fa fa-arrows\" data-drag-kind=\"board\" aria-label=\"Sort boards\"></button>", "") & "<button style=\"background-color:" & Html(WorkspaceStore.Setting(b!id, "board", b!id, "color", "#2980b9")) & "\" type=\"button\" class=\"weba-board-tile\" data-board-key=\"b" & Str(b!id) & "\"><strong class=\"board-list-item-name\">" & Html(b!title) & "</strong>" & If(b!id = homeId, "<span class=\"board-home-badge\" role=\"img\" title=\"Home board (opened after login)\" aria-label=\"Home board (opened after login)\"><i class=\"fa fa-home\" aria-hidden=\"true\"></i></span>", "") & "</button><button class=\"weba-board-context fa fa-bars\" data-context-kind=\"board\" data-context-id=\"" & Str(b!id) & "\" aria-label=\"Board menu\"></button></li>"
         Continue
       Endif
       Print "<h3>" & Html(b!title) & "</h3>"
@@ -1030,12 +1034,21 @@ Private Sub DropCatalogBoard(boardId As Integer, target As String, spaceId As In
   Dim ids As Integer[]
   Dim source As String
   If Not IsOverview() Then Error.Raise("Select All Boards first")
+  If target = "home" Or target = "home-remove" Then
+    ValidateHomeDrop(target, spaceId)
+  Else If $view = "Home" Then
+    Error.Raise("Invalid Home board drop")
+  Endif
   data = LoadBoardOverview()
   ids = data["ids"]
   If ids.Find(boardId) < 0 Then Error.Raise("Invalid board drop")
   source = If($archive, "archive", If($view = "Starred", "starred", If($spaceMenu > 0, "workspace", "remaining")))
   If BoardSelection.Active(SelectionState()) And BoardSelection.IsSelected(SelectionState(), boardId) Then Error.Raise("Board selection changed")
-  BoardSpaces.DropBoard(boardId, target, spaceId, source)
+  If target = "home" Or target = "home-remove" Then
+    HomeBoard.Drop([boardId], target = "home-remove")
+  Else
+    BoardSpaces.DropBoard(boardId, target, spaceId, source)
+  Endif
   RefreshTree()
 End
 
@@ -1045,13 +1058,32 @@ Private Sub DropSelectedBoards(boardId As Integer, target As String, spaceId As 
   Dim visible As Integer[]
   Dim source As String
   If Not IsOverview() Then Error.Raise("Select All Boards first")
+  If target = "home" Or target = "home-remove" Then
+    ValidateHomeDrop(target, spaceId)
+  Else If $view = "Home" Then
+    Error.Raise("Invalid Home board drop")
+  Endif
   data = LoadBoardOverview()
   visible = data["ids"]
   ids = BoardSelection.DropIds(SelectionState(), boardId, revision, visible)
   source = If($archive, "archive", If($view = "Starred", "starred", If($spaceMenu > 0, "workspace", "remaining")))
-  BoardSpaces.DropBoards(ids, target, spaceId, source)
+  If target = "home" Or target = "home-remove" Then
+    HomeBoard.Drop(ids, target = "home-remove")
+    BoardSelection.Clear(SelectionState())
+  Else
+    BoardSpaces.DropBoards(ids, target, spaceId, source)
+  Endif
   If target = "remaining" Or target = "archive" Then BoardSelection.Clear(SelectionState())
   RefreshTree()
+End
+
+Private Sub ValidateHomeDrop(target As String, spaceId As Integer)
+  If spaceId <> 0 Then Error.Raise("Invalid Home board drop")
+  If target = "home-remove" Then
+    If $view <> "Home" Then Error.Raise("Invalid Home board drop")
+  Else
+    If $view = "Home" Or ($archive And BoardSelection.Active(SelectionState())) Then Error.Raise("Invalid Home board drop")
+  Endif
 End
 
 Public Sub DragAction_Change()
@@ -1062,7 +1094,7 @@ Public Sub DragAction_Change()
   DragAction.Text = ""
   fields = Split(wire, "|")
   If fields.Count <> 5 Then Error.Raise("Invalid drag action")
-  If $view = "Home" Then Error.Raise("Invalid Home board drop")
+  If $view = "Home" And fields[0] <> "workspace" And fields[0] <> "board-drop" And fields[0] <> "board-multi-drop" Then Error.Raise("Invalid Home board drop")
   If fields[0] = "board-multi-drop" Then
     DropSelectedBoards(CInt(UnBase64(fields[1])), UnBase64(fields[2]), CInt(UnBase64(fields[3])), CLong(UnBase64(fields[4])))
     Return

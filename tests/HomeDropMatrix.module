@@ -1,0 +1,50 @@
+Public Sub Main()
+  Dim a As Integer
+  Dim b As Integer
+  Dim ids As Integer[]
+  Dim item As Collection
+  Dim row As Collection
+  Dim rows As New Variant[]
+  Dim index As Variant
+  Dim savedId As Integer
+  Dim denied As Boolean
+  Dim failure As String
+  WebDatabase.Register("hm-owner", "x")
+  WebDatabase.Register("hm-reader", "x")
+  SignIn("hm-owner")
+  a = KanbanStore.AddBoard("Home matrix Alpha")
+  b = KanbanStore.AddBoard("Home matrix Bravo")
+  BoardAccess.SetMember(a, "hm-reader", "read-only")
+  BoardAccess.SetMember(b, "hm-reader", "read-only")
+  SignIn("hm-reader")
+  For Each item In JSON.Decode(File.Load(".public/home-drop-cases.json"))
+    savedId = HomeBoard.Saved()
+    If savedId Then HomeBoard.Clear(savedId)
+    If item["initial"] = 1 Then HomeBoard.SetBoard(a)
+    If item["initial"] = 2 Then HomeBoard.SetBoard(b)
+    ids = New Integer[]
+    For Each index In item["ids"]
+      ids.Add(If(index = 0, a, b))
+    Next
+    row = New Collection
+    row["before"] = HomeBoard.Saved()
+    row["ids"] = ids.Copy()
+    failure = ""
+    denied = False
+    If (item["remove"] And item["confirm"]) Or (Not item["remove"] And Not item["archivedMulti"]) Then
+      Try HomeBoard.Drop(ids, item["remove"])
+      denied = Error
+      If denied Then failure = Error.Text
+    Endif
+    row["after"] = HomeBoard.Saved()
+    row["error"] = failure
+    row["reset"] = item["multi"] And Not denied And ((item["remove"] And item["confirm"]) Or (Not item["remove"] And Not item["archivedMulti"]))
+    rows.Add(row)
+  Next
+  Print JSON.Encode(rows)
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

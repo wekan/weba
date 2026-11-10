@@ -603,8 +603,23 @@ readable board. Its catalog supports global title search; Multi-Selection toggle
 exactly one board and retains a refused multi-board selection. Home remains
 independent of stars/workspaces, updates on external preference/access changes,
 and has no Add Board tile. Archived/deleted IDs remain saved until explicitly
-cleared. Native generic drag commands from Home are refused while the source
-Remove-bar gesture is pending. First native root landing after login or full
+cleared. Dropping one board onto Home replaces the mark without toggling it.
+Multiple selected boards are refused with the source warning and retain their
+selection. A board picked up in Home gets only the full-width Remove bar as a
+board destination; the bar appears only during that drag, becomes red under the
+pointer and asks before clearing the matching mark. Escape/cancel preserves it,
+and the board remains in its workspace or Remaining. Workspace tree ordering
+continues to work in Home. The empty Home instruction is shown when applicable.
+Native commands validate source view, visible origin, reserved fields and the
+captured server-side selection revision. Archive multi drags cannot set Home.
+`python3 tests/run-http.py --home-drops [--archive]` covers mouse/grouped/trusted
+touch gestures, native forgery denial and Finnish captions. The 60-case
+`tests/home-drop-conformance.test.cjs` runs unchanged source Home/Remove callback
+bodies with explicit DOM/DataTransfer, confirmation, selection and synchronous
+method adapters; the product still uses its native pointer/wire transport.
+Original production HTML5 MIME/Meteor integration remains pending.
+
+First native root landing after login or full
 page reload now opens the current readable active Home board once. All Boards
 remains usable afterward; named section entries win, ordinary mark changes do
 not navigate an already open page, and stale archived/revoked marks fall back.

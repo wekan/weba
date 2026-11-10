@@ -139,3 +139,24 @@ Private Function SearchActive(text As String) As Boolean
   Next
   Return False
 End
+
+
+Public Sub Drop(ids As Integer[], remove As Boolean)
+  Dim actor As String = Principal()
+  Dim seen As New Collection
+  Dim id As Integer
+  Dim savedId As Integer
+  If Not ids Then Error.Raise("Invalid board drop")
+  If ids.Count = 0 Then Error.Raise("Invalid board drop")
+  For Each id In ids
+    If id <= 0 Or seen.Exist(CStr(id)) Then Error.Raise("Invalid board drop")
+    seen[CStr(id)] = True
+  Next
+  If Not remove Then
+    If ids.Count <> 1 Then Error.Raise("Please select only one board")
+    SetBoard(ids[0])
+  Else
+    savedId = Saved()
+    If savedId > 0 And ids.Find(savedId) >= 0 Then Clear(savedId)
+  Endif
+End

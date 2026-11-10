@@ -132,12 +132,12 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   drafts and clickable close controls. Delayed-width/async-error tests, full
   local/test-live and existing layout regressions pass. Original suite counts
   remain unchanged.
-- Next Home parity: drag-to-Home and confirmed Remove bar. Private native preference persistence,
-  lifecycle/rollback tests, Home sidebar/count/catalog, Home-first Starred
-  presentation and translated saved-mark badge, guarded one-selection
-  toggle, /allboards/home entry/menu/history and native root login/reload opening
-  are recorded in CHANGELOG.md; original board URL routing, Sandstorm single-board
-  convenience and original defaultBoardId/DDP transport remain open.
+- Next Home parity: original HTML5/MIME event and Meteor transport, original board
+  URL/profile/DDP and Sandstorm single-board convenience. Native Home preference,
+  catalog/count, Starred presentation/badge, selection toggle and login/reload
+  opening, pointer/touch drop replacement, confirmed drag-only Remove bar and
+  empty instruction are recorded in CHANGELOG.md. The 60-case unchanged source
+  Home/Remove callback adapter proof does not claim production HTML5/Meteor wiring.
 - Next workspace parity: Templates and remaining production transport/routing beyond
   the six adapter-backed spec 39 callbacks. Production direct GET entry for
   Remaining/Starred/Archive with login/reload, acknowledged menu URL updates and

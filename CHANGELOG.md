@@ -2,6 +2,21 @@
 
 This work adds the following features and fixes:
 
+- Add native mouse/touch drops onto Home as idempotent replacement, with one-board
+  enforcement, retained multi-selection refusal and successful grouped reset.
+  Draw a full-width Remove bar only during a Home-origin board drag; refuse every
+  other board target, show red only under the pointer and confirm before clearing
+  the matching private mark. Preserve the board, stars and workspace assignment.
+  Restore workspace ordering in Home, prevent release-click navigation, show the
+  source empty instruction and translate all three captions across 237 catalogs.
+  Derive source context/visible origin/selection revision server-side, refuse
+  Archive multi, malformed/reserved/stale commands and roll back write/session
+  failures. Verify native policy/gesture negatives, 60 SQL outcomes/reset decisions
+  against unchanged source callbacks through explicit DOM/DataTransfer/method
+  adapters, and real grouped/cancel/Escape/Finnish trusted-touch behavior.
+  Original production HTML5 MIME/Meteor, board URL/profile/DDP and Sandstorm
+  transport remain pending. Thanks to xet7.
+
 - Match source Home-first Starred presentation after raw paging, including an
   unstarred readable active Home, per-page deduplication and the source Unicode
   search guard. Preserve raw query totals, page bounds, stars, placement and

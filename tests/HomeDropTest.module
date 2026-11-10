@@ -1,0 +1,81 @@
+Public Sub Main()
+  Dim a As Integer
+  Dim b As Integer
+  Dim db As Connection
+  Dim denied As Boolean
+  Dim trigger As String
+  Dim before As String
+  Dim emptyIds As New Integer[]
+  WebDatabase.Register("hd-owner", "x")
+  WebDatabase.Register("hd-reader", "x")
+  WebDatabase.Register("hd-other", "x")
+  SignIn("hd-owner")
+  a = KanbanStore.AddBoard("Home drop Alpha")
+  b = KanbanStore.AddBoard("Home drop Bravo")
+  BoardAccess.SetMember(a, "hd-reader", "read-only")
+  BoardAccess.SetMember(b, "hd-reader", "read-only")
+  SignIn("hd-reader")
+  HomeBoard.Drop([a], False)
+  HomeBoard.Drop([a], False)
+  If HomeBoard.Saved() <> a Then Error.Raise("Home drop toggled instead of replaced")
+  HomeBoard.Drop([b], False)
+  If HomeBoard.Saved() <> b Then Error.Raise("Home drop did not replace")
+  HomeBoard.Drop([a], True)
+  If HomeBoard.Saved() <> b Then Error.Raise("Nonmatching Remove cleared Home")
+  before = CStr(HomeBoard.Saved())
+  Try HomeBoard.Drop([a, b], False)
+  denied = Error
+  If Not denied Or CStr(HomeBoard.Saved()) <> before Then Error.Raise("Multiple Home drop chose a board")
+  Try HomeBoard.Drop(emptyIds, False)
+  denied = Error
+  If Not denied Then Error.Raise("Empty Home drop accepted")
+  Try HomeBoard.Drop(Null, True)
+  denied = Error
+  If Not denied Then Error.Raise("Null Remove accepted")
+  Try HomeBoard.Drop([a, a], True)
+  denied = Error
+  If Not denied Then Error.Raise("Duplicate Remove accepted")
+  Try HomeBoard.Drop([0], True)
+  denied = Error
+  If Not denied Then Error.Raise("Invalid Remove accepted")
+  db = WebDatabase.OpenConnection()
+  For Each trigger In ["BEFORE DELETE ON kb_default_boards BEGIN SELECT RAISE(ABORT,'injected'); END", "AFTER DELETE ON kb_default_boards BEGIN UPDATE account_sessions SET generation=generation+1 WHERE username='hd-reader'; END"]
+    db.Exec("CREATE TRIGGER home_remove_failure " & trigger)
+    Try HomeBoard.Drop([a, b], True)
+    denied = Error
+    If Not denied Or HomeBoard.Saved() <> b Then Error.Raise("Failed Remove did not roll back")
+    db.Exec("DROP TRIGGER home_remove_failure")
+  Next
+  HomeBoard.Drop([a, b], True)
+  If HomeBoard.Saved() Then Error.Raise("Grouped Remove retained matching mark")
+  HomeBoard.Drop([a], False)
+  SignIn("hd-owner")
+  KanbanStore.ArchiveBoard(a, True)
+  SignIn("hd-reader")
+  Try HomeBoard.Drop([a], False)
+  denied = Error
+  If Not denied Or HomeBoard.Saved() <> a Then Error.Raise("Archived Home drop accepted or mark lost")
+  HomeBoard.Drop([a], True)
+  If HomeBoard.Saved() Then Error.Raise("Archived stale mark cannot be removed")
+  SignIn("hd-other")
+  db.Exec("UPDATE users SET admin=1 WHERE username='hd-other'")
+  Try HomeBoard.Drop([b], False)
+  denied = Error
+  If Not denied Or HomeBoard.Saved() Then Error.Raise("Global nonmember set foreign Home")
+  SignIn("hd-reader")
+  HomeBoard.Drop([b], False)
+  SignIn("hd-other")
+  HomeBoard.Drop([b], True)
+  SignIn("hd-reader")
+  If HomeBoard.Saved() <> b Then Error.Raise("Remove crossed principals")
+  Session["username"] = ""
+  Try HomeBoard.Drop([b], True)
+  denied = Error
+  If Not denied Then Error.Raise("Anonymous Remove accepted")
+  Print "Home drops: readonly idempotent replacement, retained multi/invalid denial, conditional/group clearing, write/session rollback, archived stale clear, global nonmember and cross-principal/anonymous guards passed"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End
