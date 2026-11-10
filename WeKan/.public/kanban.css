@@ -244,3 +244,7 @@ body.weba-is-dragging:has(.weba-home-drag .home-remove-target.is-over) *{cursor:
 .weba-public-board-row{color:white;cursor:pointer}
 .weba-public-board-row a{color:inherit;display:block}
 [id$=".PublicControls"]{flex-wrap:wrap;padding:8px;gap:6px;min-width:0}
+
+.weba-guest-board{display:flex;flex-wrap:wrap;align-content:flex-start;gap:12px;padding:12px;overflow:auto;box-sizing:border-box;height:100%}
+.weba-guest-detail{display:block;box-sizing:border-box;padding:14px;border:1px solid #bbb;border-radius:4px;background:white;color:#222;overflow-wrap:anywhere;white-space:pre-wrap}
+.weba-guest-detail{width:100%}

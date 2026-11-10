@@ -154,9 +154,12 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   translated choices are recorded there too. Native signed-in `/public`
   discovery now has its own read-only ten-row/search table, strict minimal
   service projection and native route/history flow, recorded in CHANGELOG.md.
-  Guest board/card UI, source backgrounds/templates/global-sort fields,
-  global visibility/editing controls, first-edit membership, import/copy and
-  original publication/ReportPages integration remain open.
+  Native anonymous public board/core-card entries, separate read-only form,
+  closed command dispatcher, history/reload/privacy and login handoff are
+  recorded there too. Guest child panels/downloads/additional views, source
+  backgrounds/templates/global-sort fields, global visibility/editing controls,
+  first-edit membership, import/copy and original publication/ReportPages
+  integration remain open.
 - Next board navigation parity: remaining public/instance UI, desktop multiple-card
   windows, container/reveal routes and full original FlowRouter/subscription
   and action callbacks. Native canonical/short board entries, acknowledged

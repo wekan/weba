@@ -2,7 +2,7 @@
   "source": "wekan/wekan imports/i18n",
   "englishSha256": "e2d69d7470e6ea08c5d7b3e669580832198b155217b533ba2d2ef0dcb163160b",
   "languages": 237,
-  "keys": 183,
+  "keys": 184,
   "unmapped": [
     "Account",
     "Add a list first",
@@ -16,6 +16,7 @@
     "Board refresh failed",
     "Card detail type",
     "Card details refresh failed",
+    "Card not accessible",
     "Card people refresh failed",
     "Card saved",
     "Cards by status",

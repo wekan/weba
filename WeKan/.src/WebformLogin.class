@@ -192,6 +192,14 @@ Public Sub Render()
     WebformMain.Render()
     Return
   Endif
+  If NativeAuth.Enabled() And CGI["WEBA_GUEST_BOARD"] And CGI["WEBA_GUEST_SIGNIN"] <> "1" Then
+    Try WebformGuest.OpenRoute(CGI["WEBA_GUEST_BOARD"], CGI["WEBA_GUEST_CARD"], "guest-entry")
+    If Not Error Then
+      WebForm.Current = WebformGuest
+      WebformGuest.Render()
+      Return
+    Endif
+  Endif
   Super.Render()
 Catch
   NativeAuth.Bootstrapping = False

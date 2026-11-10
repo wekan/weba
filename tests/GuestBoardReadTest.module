@@ -1,0 +1,80 @@
+Public Sub Main()
+  Dim pub As Integer
+  Dim inst As Integer
+  Dim hidden As Integer
+  Dim destination As Integer
+  Dim card As Integer
+  Dim archivedCard As Integer
+  Dim db As Connection
+  Dim data As Collection
+  Dim row As Result
+  Dim denied As Boolean
+  Dim text As String
+  Dim before As String
+  WebDatabase.Register("guest-owner", "x")
+  Session["username"] = "guest-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("guest-owner")
+  pub = KanbanStore.AddBoard("Guest public <literal>")
+  inst = KanbanStore.AddBoard("INSTANCE-PRIVATE-CANARY")
+  hidden = KanbanStore.AddBoard("PRIVATE-BOARD-CANARY")
+  destination = KanbanStore.AddBoard("Public destination")
+  BoardVisibility.SaveBoard(pub, "public", False)
+  BoardVisibility.SaveBoard(inst, "instance", True)
+  BoardVisibility.SaveBoard(destination, "public", False)
+  card = KanbanStore.SaveCard(pub, 0, "Guest card", "Guest body <literal>", "Default", "Todo", "", "", "")
+  archivedCard = KanbanStore.SaveCard(pub, 0, "Archived guest card", "Retained archived body", "Default", "Todo", "", "", "")
+  KanbanStore.ArchiveCard(pub, archivedCard, True)
+  db = WebDatabase.OpenConnection()
+  Session["username"] = ""
+  before = Snapshot()
+  data = GuestBoardRead.Load(CStr(pub))
+  If data["cards"].Count <> 1 Or data["cardId"] <> 0 Then Error.Raise("Guest board archive filter failed")
+  data = GuestBoardRead.Load(CStr(pub), CStr(archivedCard))
+  If data["card"]["description"] <> "Retained archived body" Or Not data["card"]["archived"] Then Error.Raise("Explicit archived card not readable")
+  For Each text In ["0", "01", "+1", "1.0", "1e0", "2147483648", CStr(inst), CStr(hidden)]
+    Try GuestBoardRead.Load(text)
+    denied = Error
+    If Not denied Then Error.Raise("Guest read accepted malformed/private/instance board")
+  Next
+  If Snapshot() <> before Then Error.Raise("Guest reads changed storage")
+  db.Exec("UPDATE kb_cards SET board_id=&1 WHERE id=&2", destination, card)
+  data = GuestBoardRead.Load(CStr(pub), CStr(card))
+  If data["id"] <> destination Or data["card"]["title"] <> "Guest card" Then Error.Raise("Readable moved guest card did not resolve current destination")
+  db.Exec("UPDATE kb_cards SET board_id=&1 WHERE id=&2", hidden, card)
+  Try GuestBoardRead.Load(CStr(pub), CStr(card))
+  denied = Error
+  If Not denied Or InStr(Error.Text, "PRIVATE") Then Error.Raise("Guest card disclosed its private destination")
+  Session["username"] = "guest-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("guest-owner")
+  Try GuestBoardRead.Load(CStr(pub))
+  denied = Error
+  If Not denied Then Error.Raise("Authenticated principal entered anonymous-only projection")
+  BoardVisibility.SavePermission(pub, "private")
+  Session["username"] = ""
+  Try GuestBoardRead.Load(CStr(pub), CStr(archivedCard))
+  denied = Error
+  If Not denied Then Error.Raise("Public-to-private transition retained guest details")
+  Print "Anonymous projection: public-only scope, canonical IDs, no synthetic principal/writes, active vs explicit archived card scope, current public moved destination/private refusal and live permission revocation passed"
+End
+
+Private Function Snapshot() As String
+  Dim data As New Collection
+  Dim rows As Variant[]
+  Dim name As String
+  Dim r As Result
+  Dim row As Collection
+  Dim field As ResultField
+  For Each name In ["kb_boards", "kb_cards", "kb_lists", "kb_members", "kb_board_visibility", "kb_activity", "account_sessions"]
+    rows = New Variant[]
+    r = WebDatabase.OpenConnection().Find(name, "TRUE ORDER BY 1")
+    For Each r
+      row = New Collection
+      For Each field In r.Fields
+        row.Add(r[field.Name], field.Name)
+      Next
+      rows.Add(row)
+    Next
+    data[name] = rows
+  Next
+  Return JSON.Encode(data)
+End

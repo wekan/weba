@@ -540,6 +540,17 @@ def handler(application, runner, environment):
                 if key in self.headers: env['HTTP_' + key.upper().replace('-', '_')] = self.headers[key]
             native = decoded_path in ('/x', '/c', '/_weba/page-close') or decoded_path.startswith(('/upload:', '/call:'))
             document = not api and self.command == 'GET' and (decoded_path == '/' or entry_section)
+            env.update(WEBA_GUEST_BOARD='', WEBA_GUEST_CARD='', WEBA_GUEST_SIGNIN='0')
+            if document and (board_entry(decoded_path) or card_entry(decoded_path)):
+                parts = decoded_path.strip('/').split('/')
+                env['WEBA_GUEST_BOARD'] = parts[1]
+                if card_entry(decoded_path):
+                    env['WEBA_GUEST_CARD'] = parts[3]
+                try:
+                    sign_in = urllib.parse.parse_qs(url.query, keep_blank_values=True, max_num_fields=1000).get('signin', [])
+                except ValueError:
+                    sign_in = []
+                env['WEBA_GUEST_SIGNIN'] = '1' if sign_in == ['1'] else '0'
             page_token = self.headers.get('X-WeBa-Page', '')
             incoming = self.headers.get('Cookie', '')
             page = documents.select(page_token, incoming) if page_token else None

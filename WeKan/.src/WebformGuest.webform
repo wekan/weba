@@ -1,0 +1,44 @@
+# Gambas Form File 3.0
+{ WebForm WebForm
+  Title = ("WeKan")
+  Class = "weba-shell weba-guest-shell"
+  Height = "100vh"
+  Arrangement = Arrange.Vertical
+  { BoardPoll WebTimer
+    Delay = 1000
+    Enabled = True
+  }
+  { Header WebContainer
+    Class = "weba-topbar"
+    Arrangement = Arrange.Horizontal
+    { PageTitle WebLabel
+      Class = "weba-user-text"
+      Expand = True
+    }
+    { LanguageSelector WebContainer
+      Width = "180px"
+    }
+    { GuestSignIn WebButton
+      Text = ("Login")
+    }
+  }
+  { Notice WebLabel
+  }
+  { GuestRetry WebButton
+    Text = ("Refresh")
+    Visible = False
+  }
+  { OverviewRouteState WebLabel
+    Visible = False
+  }
+  { EntryRouteAction WebTextBox
+    Visible = False
+  }
+  { CloseEditor WebButton
+    Text = ("Close")
+    Visible = False
+  }
+  { GuestSurface WebContainer
+    Expand = True
+  }
+}

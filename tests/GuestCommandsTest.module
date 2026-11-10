@@ -1,0 +1,30 @@
+Public Sub Main()
+  Dim guest As WebForm = WebformGuest
+  Dim login As WebForm = WebformLogin
+  Dim foreignName As String = login.Name & ".WebTextName"
+  Dim command As Variant[]
+  If Not WebControl.FromName(foreignName) Then Error.Raise("Foreign control fixture missing")
+  Check(guest, ["raise", Null, "open", Null, Null], True)
+  Check(guest, ["raise", Null, "open", ["forged"], Null], False)
+  Check(guest, ["update", guest.Name & ".EntryRouteAction", "text", "board|test|1", True], True)
+  Check(guest, ["update", guest.Name & ".EntryRouteAction", "text", String(257, "x"), True], False)
+  Check(guest, ["update", foreignName, "text", "forged", True], False)
+  Check(guest, ["update", guest.Name & ".EntryRouteAction", "value", True, True], False)
+  Check(guest, ["raise", guest.Name & ".GuestSignIn", "click", Null, Null], True)
+  Check(guest, ["raise", guest.Name & ".GuestRetry", "click", [], True], True)
+  Check(guest, ["raise", guest.Name & ".GuestSignIn", "click", ["forged"], True], False)
+  Check(guest, ["raise", guest.Name & ".GuestSignIn", "activate", Null, Null], False)
+  Check(guest, ["finish", "forged", "click", Null, Null], False)
+  Check(guest, ["update", Null, "#focus", foreignName, True], False)
+  Check(guest, ["update", Null, "#focus", guest.Name & ".GuestSignIn", True], True)
+  Check(guest, ["update", Null, "#windows", [login.Name], True], False)
+  CGI["WEBA_COMMAND_FILE"] = "/not-read"
+  CGI["QUERY_STRING"] = "c=" & URL.Encode(JSON.Encode(["raise", Null, "open", Null, Null]))
+  If GuestCommands.Allowed(guest) Then Error.Raise("Guest accepted large-file command dispatch")
+  Print "Guest dispatch: own-control allowlist, null/empty native button shapes, typed bounded routes, foreign forms/focus/windows/events/finish/large payload refusal passed"
+End
+
+Private Sub Check(form As WebForm, command As Variant[], expected As Boolean)
+  CGI["QUERY_STRING"] = "c=" & URL.Encode(JSON.Encode(command))
+  If GuestCommands.Allowed(form) <> expected Then Error.Raise("Guest dispatch decision failed: " & CStr(command[0]) & "/" & CStr(command[2]))
+End

@@ -4,6 +4,7 @@ Public Sub Main()
   Dim id As Integer = Val(Env["WEBA_PUBLIC_ID"])
   Dim ids As New Integer[]
   Dim data As New Collection
+  Dim cardId As Integer
   Dim i As Integer
   Dim r As Result
   Dim db As Connection
@@ -18,7 +19,8 @@ Public Sub Main()
       BoardVisibility.SaveBoard(id, If(i = 24, "private", If(i = 21, "instance", "public")), False)
       WorkspaceStore.SetSetting(id, "board", id, "description", "Literal <details> public description " & CStr(i))
       WorkspaceStore.SetSetting(id, "board", id, "color", "#315579")
-      KanbanStore.SaveCard(id, 0, "DISCOVERY-CARD-PRIVATE-CANARY", "NEVER-ON-PUBLIC-TABLE", "Default", "Todo", "", "", "")
+      cardId = KanbanStore.SaveCard(id, 0, "DISCOVERY-CARD-PRIVATE-CANARY", "NEVER-ON-PUBLIC-TABLE", "Default", "Todo", "", "", "")
+      If i = 1 Then data["cardId"] = cardId
       If i = 22 Then db.Exec("UPDATE kb_boards SET title='^Discover UI helper^' WHERE id=&1", id)
       If i = 23 Then KanbanStore.ArchiveBoard(id, True)
     Next

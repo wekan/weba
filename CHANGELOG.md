@@ -2,6 +2,29 @@
 
 This work adds the following features and fixes:
 
+- Add native anonymous public board and core card entries in a separate
+  read-only guest form. Derive initial board/card IDs from validated host paths,
+  retain private/instance login refusal and use an explicit login entry without
+  inventing an account, membership or authentication cookie. Check current public
+  permission before and after read-only projections, canonical IDs, soft-delete
+  and archived/list/lane scope, native ordering and safe colors. Resolve moved
+  cards only into public destinations; preserve a readable URL board and generic
+  refusal for missing/inaccessible cards. Reuse the native kanban renderer with
+  no mutation/context targets, retaining card links, close/history/reload and
+  live permission clearing/retry. Keep login handoff on the requested card.
+  Gate native dispatch through an own-form command allowlist, bounded typed
+  routes and native null/empty button arguments; refuse foreign controls/focus,
+  windows, arbitrary properties/events, completion and large-command dispatch.
+  Keep callback/upload host authentication intact. Verify native read-only and
+  dispatcher negatives, host path context, actual guest navigation/privacy/
+  credential/forgery/callback/upload/login and Finnish/mobile cases. The complete
+  local suite (66 host tests) and source/packaged browser suites pass; final
+  source/packaged focused checks and all-catalog tests also pass after the
+  source Refresh caption correction. Guest child
+  panels/downloads/additional views, source backgrounds/templates and full
+  original Meteor publication/action integration remain pending.
+  Thanks to xet7.
+
 - Add native signed-in `/public` discovery as its own read-only table with
   ten-row paging and submitted literal title search. Derive public/instance
   scope on the server, exclude archived/private/helper boards, accept no caller

@@ -1,0 +1,51 @@
+' The native dispatcher can address controls on other forms: guests use a closed set.
+Export
+
+Public Function Allowed(form As WebForm) As Boolean
+  Dim raw As String
+  Dim command As Variant
+  Dim control As WebControl
+  Dim name As String
+  Dim target As String
+  If CGI["WEBA_COMMAND_FILE"] Then Return False
+  raw = CGI["QUERY_STRING"]
+  If Left(raw, 2) <> "c=" Then Return False
+  command = JSON.Decode(URL.Decode(Mid(raw, 3)))
+  If Not (command Is Variant[]) Then Return False
+  If command.Count <> 5 Then Return False
+  If TypeOf(command[0]) <> gb.String Or TypeOf(command[2]) <> gb.String Then Return False
+  If IsNull(command[1]) Then
+    If command[0] = "raise" And command[2] = "open" Then
+      If IsNull(command[3]) Then Return True
+      If Not (command[3] Is Variant[]) Then Return False
+      Return command[3].Count = 0
+    Endif
+    If command[0] <> "update" Or command[2] <> "#focus" Or TypeOf(command[3]) <> gb.String Then Return False
+    target = command[3]
+    If Not target Then Return True
+    target = Split(target, ":")[0]
+    control = WebControl.FromName(target)
+    If Not control Then Return False
+    Return control.Form = form
+  Endif
+  If TypeOf(command[1]) <> gb.String Then Return False
+  target = command[1]
+  If InStr(target, "|") Or InStr(target, ":") Then Return False
+  control = WebControl.FromName(target)
+  If Not control Then Return False
+  If control.Form <> form Then Return False
+  name = Mid(target, RInStr(target, ".") + 1)
+  If command[0] = "update" Then
+    Return name = "EntryRouteAction" And command[2] = "text" And TypeOf(command[3]) = gb.String And Len(CStr(command[3])) <= 256
+  Endif
+  If command[0] <> "raise" Then Return False
+  If Not IsNull(command[3]) Then
+    If Not (command[3] Is Variant[]) Then Return False
+    If command[3].Count <> 0 Then Return False
+  Endif
+  If name = "BoardPoll" Then Return command[2] = "timer"
+  If ["GuestSignIn", "GuestRetry", "CloseEditor"].Find(name) >= 0 Then Return command[2] = "click"
+  Return False
+Catch
+  Return False
+End

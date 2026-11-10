@@ -1,0 +1,158 @@
+' Anonymous UI reads only. No synthetic account, membership, API authority or writes.
+Export
+
+Private Function Id(text As String) As Integer
+  Dim value As Integer
+  Try value = CInt(text)
+  If Error Then Error.Raise("Board not accessible")
+  If value <= 0 Or CStr(value) <> text Then Error.Raise("Board not accessible")
+  Return value
+End
+
+Private Sub RequireGuest()
+  If Env["WEBA_API_REQUEST"] = "1" Or WebIdentity.Username <> "" Then Error.Raise("Guest context required")
+End
+
+Private Sub RequirePublic(boardId As Integer)
+  RequireGuest()
+  If BoardVisibility.Permission(boardId) <> "public" Then Error.Raise("Board not accessible")
+End
+
+Private Function Live(db As Connection, kind As String, aliasName As String) As String
+  If Not db.Tables.Exist("kb_deleted_items") Then Return "TRUE"
+  Return ListDeletion.LiveSql(kind, aliasName)
+End
+
+Public Function Load(boardText As String, Optional cardText As String) As Collection
+  Dim boardId As Integer = Id(boardText)
+  Dim cardId As Integer
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim data As New Collection
+  Dim rows As New Variant[]
+  Dim lanes As New Variant[]
+  Dim lists As New Variant[]
+  Dim row As Collection
+  Dim r As Result
+  Dim target As Result
+  Dim archived As Boolean
+  Dim key As String
+  RequireGuest()
+  If cardText Then
+    cardId = Id(cardText)
+    target = db.Exec("SELECT board_id FROM kb_cards WHERE id=&1 AND " & Live(db, "card", "kb_cards"), cardId)
+    If Not target.Available Then Error.Raise("Card not accessible")
+    boardId = target!board_id
+  Endif
+  RequirePublic(boardId)
+  r = db.Find("kb_boards", "id=&1", boardId)
+  data["id"] = boardId
+  data["title"] = CStr(r!title)
+  archived = CBool(r!archived)
+  data["archived"] = archived
+  data["color"] = Color(db, boardId, "board", boardId)
+  If db.Tables.Exist("kb_lanes") Then
+    r = db.Find("kb_lanes", "board_id=&1 ORDER BY id", boardId)
+    For Each r
+      If Hidden(db, boardId, "lane", r!id) Then Continue
+      row = New Collection
+      row["id"] = r!id
+      row["title"] = CStr(r!title)
+      row["order"] = Position(db, boardId, "lane", CStr(r!title), r!id)
+      lanes.Add(row)
+    Next
+  Endif
+  data["lanes"] = lanes
+  If db.Tables.Exist("kb_lists") Then
+    r = db.Find("kb_lists", "board_id=&1 AND " & Live(db, "list", "kb_lists") & " ORDER BY sort_order,id", boardId)
+    For Each r
+      If Hidden(db, boardId, "list", r!id) Then Continue
+      row = New Collection
+      row["order"] = Position(db, boardId, "list", CStr(r!title), r!id)
+      For Each key In ["id", "title", "lane"]
+        row.Add(r[key], key)
+      Next
+      lists.Add(row)
+    Next
+  Endif
+  r = db.Find("kb_cards", "board_id=&1 AND archived=&2 AND " & Live(db, "card", "kb_cards") & " ORDER BY id", boardId, archived)
+  For Each r
+    row = Card(r)
+    If Not archived And row["listId"] > 0 Then
+      If Hidden(db, boardId, "list", row["listId"]) Then Continue
+      target = db.Find("kb_lists", "board_id=&1 AND id=&2", boardId, row["listId"])
+      If target.Available Then
+        target = db.Find("kb_lanes", "board_id=&1 AND title=&2", boardId, target!lane)
+        If target.Available Then
+          If Hidden(db, boardId, "lane", target!id) Then Continue
+        Endif
+      Endif
+    Endif
+    rows.Add(row)
+  Next
+  data["cards"] = rows
+  data["lists"] = lists
+  data["cardId"] = cardId
+  If cardId > 0 Then
+    r = db.Find("kb_cards", "id=&1 AND board_id=&2 AND " & Live(db, "card", "kb_cards"), cardId, boardId)
+    If Not r.Available Then Error.Raise("Card not accessible")
+    data["card"] = Card(r)
+  Endif
+  RequirePublic(boardId)
+  r = db.Find("kb_boards", "id=&1", boardId)
+  If CBool(r!archived) <> archived Then Error.Raise("Board access changed")
+  If cardId > 0 Then
+    target = db.Find("kb_cards", "id=&1 AND board_id=&2 AND " & Live(db, "card", "kb_cards"), cardId, boardId)
+    If Not target.Available Then Error.Raise("Card not accessible")
+    If CBool(target!archived) <> data["card"]["archived"] Then Error.Raise("Card access changed")
+  Endif
+  Return data
+Catch
+  If cardText Then Error.Raise("Card not accessible")
+  Error.Raise("Board not accessible")
+End
+
+Private Function Card(r As Result) As Collection
+  Dim data As New Collection
+  Dim key As String
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim cardLink As Result
+  data["listId"] = 0
+  If db.Tables.Exist("kb_card_lists") Then
+    cardLink = db.Find("kb_card_lists", "board_id=&1 AND card_id=&2", r!board_id, r!id)
+    If cardLink.Available Then data["listId"] = cardLink!list_id
+  Endif
+  data["order"] = Position(db, r!board_id, "card", CStr(r!id), r!id)
+  data["color"] = Color(db, r!board_id, "card", r!id)
+  For Each key In ["id", "title", "description", "lane", "status", "assignee", "labels", "due_day", "archived"]
+    data.Add(r[key], key)
+  Next
+  Return data
+End
+
+Private Function Hidden(db As Connection, boardId As Integer, kind As String, itemId As Integer) As Boolean
+  If Not db.Tables.Exist("kb_meta") Then Return False
+  Return db.Find("kb_meta", "board_id=&1 AND kind=&2 AND item_id=&3 AND setting='archived' AND value='1'", boardId, kind, itemId).Available
+End
+
+Private Function Position(db As Connection, boardId As Integer, kind As String, item As String, fallback As Integer) As Integer
+  Dim r As Result
+  If Not db.Tables.Exist("kb_order") Then Return fallback
+  r = db.Find("kb_order", "board_id=&1 AND kind=&2 AND item=&3", boardId, kind, item)
+  If r.Available Then Return r!sort_order
+  Return fallback
+End
+
+Private Function Color(db As Connection, boardId As Integer, kind As String, itemId As Integer) As String
+  Dim r As Result
+  Dim value As String
+  Dim i As Integer
+  If Not db.Tables.Exist("kb_meta") Then Return ""
+  r = db.Find("kb_meta", "board_id=&1 AND kind=&2 AND item_id=&3 AND setting='color'", boardId, kind, itemId)
+  If Not r.Available Then Return ""
+  value = CStr(r!value)
+  If Len(value) <> 7 Or Left(value) <> "#" Then Return ""
+  For i = 2 To 7
+    If InStr("0123456789abcdef", LCase(Mid(value, i, 1))) = 0 Then Return ""
+  Next
+  Return value
+End

@@ -688,10 +688,8 @@ assigned-only members keep their card restrictions; inactive public members read
 as nonmembers. Native selected-board rendering and readable open favorites work
 without adding unrelated open boards to personal catalogs. Default/API board
 enumeration and whole-board REST membership/site-admin authorization remain
-separate. The backend also recognizes anonymous public readability, but the
-native guest page and anonymous route/form integration are still pending.
-The signed-in native Public discovery page is described below. Current UI entry
-routes still require sign-in.
+separate. Core native guest board/card entries and signed-in Public discovery
+are described below. Guest child models and full source route/form integration remain pending.
 
 `BoardVisibilityTest` checks defaults, strict values, administrator/manager
 boundaries, private-only policy and late SQL/owner/epoch/policy/privilege/value
@@ -722,7 +720,7 @@ saves, policy refusal, live clean/dirty refresh, demotion cleanup, public readon
 routes and immediate private-transition revocation, plus Finnish mobile geometry.
 The same check runs in the complete source/packaged browser suites. The complete
 local suite (64 host tests) and complete source/packaged browser suites pass. Anonymous
-board/card UI, global visibility controls and first-edit membership remain
+guest child models, global visibility controls and first-edit membership remain
 pending; this editor does not expose the editing allowance. Native signed-in
 Public discovery is described below.
 
@@ -759,8 +757,48 @@ history navigation, paging/search, private-safe rows, stale-panel cleanup, denie
 forged actions, public/instance links, live exclusions, colors and Finnish/mobile
 presentation. The complete local suite (65 host tests), complete source/packaged
 browser runs and final focused source check with the final caption catalogs pass.
-The native UI still requires sign-in; anonymous public board/card
-forms, Sandstorm convenience and first-edit membership are separate remaining work.
+The discovery page still requires sign-in. Anonymous board/card entries are
+described below; Sandstorm convenience and first-edit membership remain open.
+
+Anonymous `/b/:id[/slug]` and `/b/:id/:slug/:cardId` entries now render a
+separate native guest form when the destination board is public. Private and
+instance boards retain the login form. The host supplies only validated path IDs
+to the initial renderer; `?signin=1` requests the login form and never changes read
+permissions. Authenticated UI cookies continue into the ordinary native editor.
+There is no guest account, membership, bearer credential or UI login cookie.
+
+`GuestBoardRead` is an anonymous-only, public-only read projection. It checks
+current public permission before and after reading, validates canonical numeric
+IDs, excludes soft-deleted cards/lists, preserves native ordering and safe colors,
+filters active cards from archived lists/lanes and supports explicit archived-card
+reads independently of the board filter. A moved card resolves only into a
+currently public destination. Missing or inaccessible cards can leave a readable
+URL board visible with a generic refusal and retained URI. Live public-to-private
+changes clear the guest board/detail; Refresh can retry after access returns.
+
+The guest form reuses the native kanban renderer with its mutation capabilities
+and context action targets absent. Card links, close, Back/Forward and reload use
+the same acknowledged route flow. A private command allowlist precedes Gambas's
+cross-form dispatcher: only this form's bounded route text, timer, close/retry and
+login buttons, and safe own-control focus are accepted. Foreign controls/focus,
+window manipulation, arbitrary events/properties, upload completion and large
+command-file dispatch are refused. Native callbacks/uploads still require their
+existing authenticated host probe. The login button uses an explicit fresh login
+entry and retains the requested card through successful authentication.
+
+`GuestBoardReadTest` verifies anonymous/public scope, strict IDs, no storage
+writes or synthetic principal, active/archived scope, current moved destinations,
+private/instance and authenticated-context refusal, and permission revocation.
+`GuestCommandsTest` uses real own/foreign form controls to verify the allowlist.
+`python3 tests/run-http.py --guest-boards [--archive]` exercises actual guest kanban/
+card/history/reload, credential and write-control absence, forged cross-form and
+callback/upload refusal, privacy/retry, missing-card fallback, login handoff and
+Finnish/mobile layout. The complete local suite (66 host tests) and complete
+source/packaged browser suites pass. Final focused source/packaged checks and
+all-catalog translation checks also pass with the source Refresh caption.
+The current guest surface covers kanban and core card
+fields; child panels, attachment downloads, additional views, source backgrounds/
+templates and full Meteor publications/actions remain pending.
 
 First native root landing after login or full
 page reload now opens the current readable active Home board once. All Boards
@@ -771,7 +809,7 @@ the consumed decision; native event requests cannot rearm it. The landing comman
 accepts no caller board ID. Native board navigation now records its canonical
 `/b/:id/:slug` URL.
 An explicit readable board URL retains its board on reload even without a saved Home.
-Original public/card routes, full Meteor/FlowRouter/profile/DDP and
+Original Meteor public/card routes, FlowRouter/profile/DDP and
 Sandstorm single-board convenience remain TODO. Run
 `python3 tests/run-http.py --home-login [--archive]` for login/reload coverage.
 Run `python3 tests/run-http.py --home [--archive]` for the browser regression.
@@ -798,7 +836,7 @@ Same-board entries preserve the native view/draft DOM and refresh their route
 title from the freshly authorized resolver before canonicalizing short URLs. Denied or live-revoked
 entries keep their requested URL while clearing board state; reload retries
 fresh authorization. This is native SQL/private-board routing, not original
-FlowRouter/DDP or public/card routes. `BoardRouteTest`, host path/method/query
+production Meteor FlowRouter/DDP routes. `BoardRouteTest`, host path/method/query
 checks, twelve unchanged source slug/path comparisons and real
 `python3 tests/run-http.py --board-routes [--archive]` cover these boundaries.
 
@@ -812,7 +850,7 @@ sortable parent, preserving native HTML5 and pointer/touch board gestures. Each
 new tab shares login but keeps its selection, route and private form state.
 `python3 tests/run-http.py --board-links [--archive]` verifies semantic links,
 new-tab/opener state, keyboard activation, HttpOnly UI/API separation, background
-GUI keepalive, tab close and shared logout. Original public/card routes and full
+GUI keepalive, tab close and shared logout. Original Meteor public/card routes and full
 Meteor/FlowRouter callbacks remain open.
 
 Signed-in native card entries use `/b/:boardId/:slug/:cardId`. The host serves
@@ -820,11 +858,13 @@ only root HTML for valid GET entries, strips query commands and rejects malforme
 overflow, multiply encoded and encoded-slash aliases or mutation methods.
 `CardRoute.Resolve` looks up only the card's destination key before checking its
 current board/card scope, then rechecks identity, destination and archive state.
-Canonical native IDs, current membership and assigned-only restrictions apply.
+Canonical native IDs, current readability and active-member assigned-only
+restrictions apply; signed-in public/instance reads do not invent membership.
 A readable moved card opens in its current board and gets its canonical URL.
 Missing or unreadable cards keep a readable URL board mounted without exposing
 the destination; denied boards fall back safely while retaining the requested
-URI. These are native private-board permissions, not public/instance visibility.
+URI. These are native permissions. Anonymous public entries use the separate
+guest read projection described above.
 
 List/swimlane minicards are whole-card anchors, including ordinary browser
 modified clicks on the card body. Menu/drag controls and unrelated links retain
@@ -852,7 +892,7 @@ cards and Finnish/mobile controls. Twelve native SQL/pure cases execute the
 unchanged source moved-target helper using explicit ID/readable-fixture adapters;
 twelve card paths match unchanged `buildCardRelativeUrl` with the existing source
 slug helper. This does not execute production Meteor publication/FlowRouter
-wiring. Public/instance access, desktop multiple-card windows, container/reveal
+wiring. Guest child models, desktop multiple-card windows, container/reveal
 routes and remaining original action/transport callbacks are still open.
 
 Board-menu Archive now opens a native confirmation with a literal board name,

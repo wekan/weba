@@ -637,6 +637,19 @@ class AllBoardsEntryTest(unittest.TestCase):
                 self.assertEqual(env['QUERY_STRING'], '')
                 self.assertEqual(env['WEBA_API_REQUEST'], '0')
 
+    def test_guest_entry_context_is_derived_from_validated_path_only(self):
+        result = SimpleNamespace(returncode=0, stdout=b'Content-Type: text/html\r\n\r\n<html>entry</html>')
+        for path, board, card, signin in [('/b/12/title/34', '12', '34', '0'), ('/b/12/title?signin=1&c=forged', '12', '', '1'), ('/b/12/title?signin=1&signin=0', '12', '', '0'), ('/?WEBA_GUEST_BOARD=12', '', '', '0')]:
+            request = self.request(path)
+            with patch.object(server, 'run_application', return_value=result) as run:
+                request._run_cgi()
+            env = run.call_args.kwargs['env']
+            self.assertEqual(env['WEBA_GUEST_BOARD'], board)
+            self.assertEqual(env['WEBA_GUEST_CARD'], card)
+            self.assertEqual(env['WEBA_GUEST_SIGNIN'], signin)
+            if board:
+                self.assertEqual(env['QUERY_STRING'], '')
+
     def test_board_entries_reject_invalid_aliases_and_mutation_methods(self):
         for path, method, code in [('/b/1/slug', 'POST', 405), ('/b/1', 'DELETE', 405), ('/b', 'GET', 404), ('/b/0', 'GET', 404), ('/b/01/name', 'GET', 404), ('/b/2147483648/name', 'GET', 404), ('/b/-1/name', 'GET', 404), ('/b/1/slug/card', 'GET', 404), ('/b/1/slug/0', 'GET', 404), ('/b/1/slug/01', 'GET', 404), ('/b/1/slug/2147483648', 'GET', 404), ('/b/1/slug/2', 'POST', 405), ('/b/1/slug/2', 'DELETE', 405), ('/b/1/slug/2/extra', 'GET', 404), ('/b/1/slug/%2532', 'GET', 404), ('/b/1/slug%2F2', 'GET', 404), ('/b%2F1/slug/2', 'GET', 404), ('/b/1/%252e%252e', 'GET', 404), ('/b/1/%ZZ', 'GET', 404), ('/b/1/%FF', 'GET', 404)]:
             with self.subTest(path=path, method=method):

@@ -1,0 +1,170 @@
+Export
+Private $boardText As String
+Private $cardText As String
+Private $token As String
+Private $data As Collection
+Private $state As String
+Private $refusedCard As Boolean
+
+Public Sub _HandleMessage()
+  If CGI["WEBA_NATIVE_PASSIVE"] = "1" Then
+    Response.ContentType = "text/javascript;charset=utf-8"
+    Response.Begin
+    Response.End
+    Return
+  Endif
+  If Not GuestCommands.Allowed(Me) Then
+    Response.Status = "403 Forbidden"
+    Response.ContentType = "text/javascript;charset=utf-8"
+    Response.Begin
+    Response.End
+    Return
+  Endif
+  Super._HandleMessage()
+End
+
+Public Sub OpenRoute(boardText As String, cardText As String, token As String)
+  Dim data As Collection
+  Dim refusedCard As Boolean
+  Try data = GuestBoardRead.Load(boardText, cardText)
+  If Error Then
+    If Not cardText Then Error.Propagate()
+    data = GuestBoardRead.Load(boardText)
+    refusedCard = True
+  Endif
+  $boardText = CStr(data["id"])
+  $cardText = cardText
+  If refusedCard Then $cardText = ""
+  $refusedCard = refusedCard
+  Notice.Text = If(refusedCard, "Card not accessible", "")
+  $token = token
+  $data = data
+  $state = JSON.Encode(data)
+End
+
+Public Sub WebForm_Open()
+  RefreshGuest()
+End
+
+Private Sub Acknowledge()
+  Dim ack As New Collection
+  ack["token"] = $token
+  ack["section"] = If($data, "board", "")
+  ack["landingReady"] = True
+  If $data Then
+    ack["boardId"] = CStr($data["id"])
+    ack["boardTitle"] = $data["title"]
+    ack["boardArchived"] = $data["archived"]
+    ack["cardId"] = If($cardText, $cardText, "")
+    PageTitle.Text = $data["title"]
+  Else
+    PageTitle.Text = ""
+  Endif
+  ack["tree"] = New Variant[]
+  OverviewRouteState.Text = Replace(JSON.Encode(ack), " ", "\\u0020")
+  CloseEditor.Visible = Not IsNull($data) And $cardText <> ""
+  GuestRetry.Visible = IsNull($data)
+End
+
+Private Sub RefreshGuest()
+  Dim data As Collection
+  Dim state As String
+  Try data = GuestBoardRead.Load($boardText, $cardText)
+  If Error And $cardText <> "" Then
+    Try data = GuestBoardRead.Load($boardText)
+    If Not Error Then
+      $cardText = ""
+      $refusedCard = True
+      Notice.Text = "Card not accessible"
+    Endif
+  Else If Not Error Then
+    If $cardText Then $refusedCard = False
+    If Not $refusedCard Then Notice.Text = ""
+  Endif
+  If Not data Then
+    $data = Null
+    $state = ""
+    Notice.Text = If($cardText, "Card not accessible", "Board not accessible")
+    Acknowledge()
+    GuestSurface.Refresh()
+    Return
+  Endif
+  state = JSON.Encode(data)
+  If state = $state And $data Then
+    Acknowledge()
+    Return
+  Endif
+  $boardText = CStr(data["id"])
+  $data = data
+  $state = state
+  Acknowledge()
+  GuestSurface.Refresh()
+End
+
+Public Sub EntryRouteAction_Change()
+  Dim fields As String[] = Split(EntryRouteAction.Text, "|")
+  Dim data As Collection
+  EntryRouteAction.Text = ""
+  If fields.Count < 3 Or fields.Count > 4 Then Return
+  If fields[0] <> "board" Or Not fields[1] Or Len(fields[1]) > 128 Then Return
+  $refusedCard = False
+  $boardText = fields[2]
+  $cardText = ""
+  If fields.Count = 4 Then $cardText = fields[3]
+  $token = fields[1]
+  RefreshGuest()
+End
+
+Public Sub BoardPoll_Timer()
+  RefreshGuest()
+End
+
+Public Sub GuestRetry_Click()
+  RefreshGuest()
+End
+
+Public Sub CloseEditor_Click()
+  $refusedCard = False
+  $cardText = ""
+  RefreshGuest()
+End
+
+Public Sub GuestSignIn_Click()
+  WebForm.Exec("location.href=location.pathname+'?signin=1';")
+End
+
+Public Sub LanguageSelector_Render()
+  Print "<base href='/'>"
+  Print "<link rel='stylesheet' href='kanban.css'>"
+  Print "<link rel='stylesheet' href='fontawesome.css'>"
+  Print "<script>" & File.Load(".public/i18n-catalog.js") & File.Load(".public/i18n.js") & File.Load(".public/ui.js") & "</script>"
+  Print "<select data-weba-language aria-label='Language' style='width:100%;height:32px'></select>"
+End
+
+Public Sub GuestSurface_Render()
+  Dim card As Collection
+  Dim lane As Collection
+  Dim list As Collection
+  If Not $data Then Return
+  Print "<script>" & File.Load(".public/kanban.js") & "</script>"
+  Print "<section class='weba-content weba-guest-board' data-view='Swimlanes' data-board='" & CStr($data["id"]) & "' data-board-color='" & Html($data["color"]) & "' data-editable='false' data-card-move='false'>"
+  If $cardText Then
+    card = $data["card"]
+    Print "<article class='weba-guest-detail weba-user-text'><h2>" & Html(card["title"]) & "</h2><p>" & Html(card["description"]) & "</p><p>" & Html(card["status"]) & " · " & Html(card["assignee"]) & " · " & Html(card["labels"]) & " · " & Html(card["due_day"]) & "</p></article>"
+  Endif
+  Print "<div class='weba-layout' hidden>"
+  For Each lane In $data["lanes"]
+    Print "<section data-lane='" & Html(lane["title"]) & "' data-lane-id='" & CStr(lane["id"]) & "' data-order='" & CStr(lane["order"]) & "'>"
+    For Each list In $data["lists"]
+      If list["lane"] <> lane["title"] Then Continue
+      Print "<span data-list='" & Html(list["title"]) & "' data-list-id='" & CStr(list["id"]) & "' data-order='" & CStr(list["order"]) & "'></span>"
+    Next
+    Print "</section>"
+  Next
+  Print "</div><div class='weba-data'>"
+  For Each card In $data["cards"]
+    Print "<article class='weba-card' data-card-key='c" & CStr(card["id"]) & ":" & CStr($data["id"]) & "' data-card-id='" & CStr(card["id"]) & "' data-lane='" & Html(card["lane"]) & "' data-status='" & Html(card["status"]) & "' data-due='" & Html(card["due_day"]) & "' data-list-id='" & CStr(card["listId"]) & "' data-order='" & CStr(card["order"]) & "' data-color='" & Html(card["color"]) & "'><strong>" & Html(card["title"]) & "</strong><p>" & Html(card["description"]) & "</p><small>" & Html(card["assignee"]) & " · " & Html(card["labels"]) & " · " & Html(card["due_day"]) & "</small></article>"
+  Next
+  Print "</div><div class='weba-report'></div></section>"
+  WebForm.Exec("window.webaRender && window.webaRender();")
+End
