@@ -1,0 +1,45 @@
+' Only copied into disposable HTTP test projects.
+Public Sub Main()
+  Dim mode As String = Env["WEBA_VISIBILITY_MODE"]
+  Dim id As Integer = Val(Env["WEBA_VISIBILITY_BOARD"])
+  Dim data As New Collection
+  Dim row As Collection
+  Dim rows As New Variant[]
+  Dim r As Result
+  Dim field As ResultField
+  Dim db As Connection
+  If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
+  Session["username"] = "rest-other"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+  db = WebDatabase.OpenConnection()
+  If mode = "seed" Then
+    WebDatabase.Register("rest-visibility-reader", Env["WEBA_TEST_PASSWORD"])
+    WebDatabase.Register("rest-visibility-visitor", Env["WEBA_TEST_PASSWORD"])
+    id = KanbanStore.AddBoard("Public")
+    BoardAccess.SetMember(id, "rest-member", "board-admin")
+    BoardAccess.SetMember(id, "rest-visibility-reader", "read-only")
+    data["cardId"] = KanbanStore.SaveCard(id, 0, "VISIBILITY-CARD-CANARY", "Literal board body", "Default", "Todo", "", "", "")
+    BoardVisibility.SaveBoard(id, "private", True)
+  Endif
+  If mode = "public" Or mode = "private" Or mode = "instance" Then BoardVisibility.SavePermission(id, mode)
+  If mode = "demote" Then BoardAccess.SetMember(id, "rest-member", "read-only")
+  If mode = "manager" Then BoardAccess.SetMember(id, "rest-member", "board-admin")
+  If mode = "policy-on" Or mode = "policy-off" Then
+    Session["username"] = "rest-owner"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("rest-owner")
+    BoardVisibility.SavePolicy(mode = "policy-on", False)
+  Endif
+  data["boardId"] = id
+  data["permission"] = BoardVisibility.Permission(id)
+  data["editing"] = BoardVisibility.BoardEditing(id)
+  r = db.Find("kb_board_visibility", "board_id=&1", id)
+  For Each r
+    row = New Collection
+    For Each field In r.Fields
+      row.Add(r[field.Name], field.Name)
+    Next
+    rows.Add(row)
+  Next
+  data["rows"] = rows
+  Print JSON.Encode(data)
+End

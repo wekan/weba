@@ -699,9 +699,30 @@ principals for assigned/inactive scope, favorites, selected rows, revocation and
 whole-board REST refusal. Another 774 actual native outcomes match unchanged
 source read/open, strict instance-editing and private-only import helpers.
 The complete local suite (including 64 host tests) and complete source/packaged
-browser suites pass. Policy controls, join-on-first-edit, import/copy integration
+browser suites pass. Global policy/editing controls, join-on-first-edit, import/copy integration
 and original Meteor publications/callbacks remain pending; persisted editing
 flags alone do not grant nonmembers editing.
+
+The native board menu now exposes Visibility to board managers and readable-board
+site administrators. The popup selects Private, Signed-in users or Public with
+existing WeKan captions for all 237 native catalogs. A private binding captures
+the board, actor, account generation and navigation context; stale, closed,
+replayed, foreign-context and demoted saves are refused server-side. A permission-
+only save reads and preserves the board's editing allowance under the existing
+transaction lock. Private-only policy rejects open permissions with no audit or
+permission writes. Clean choices follow external changes while dirty choices
+remain intact; losing authority clears the popup and its private binding.
+Navigation, Escape and close controls retire it. Fixed choices translate while
+the board name remains literal, including a board named Public.
+
+`python3 tests/run-http.py --board-visibility [--archive]` exercises real manager,
+readonly and signed-in nonmember pages: persisted changes, forged/replayed/stale
+saves, policy refusal, live clean/dirty refresh, demotion cleanup, public readonly
+routes and immediate private-transition revocation, plus Finnish mobile geometry.
+The same check runs in the complete source/packaged browser suites. The complete
+local suite (64 host tests) and complete source/packaged browser suites pass. Anonymous
+board/card UI, public discovery, global visibility controls and first-edit
+membership remain pending; this editor does not expose the editing allowance.
 
 First native root landing after login or full
 page reload now opens the current readable active Home board once. All Boards

@@ -149,8 +149,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Completed native private-default visibility/policy storage and separate
   public/instance read authorization, signed-in open-board/card resolution,
   selected rows/open favorites, assigned/inactive-member scope and unchanged
-  default/whole-board REST boundaries; recorded in CHANGELOG.md. Guest route/UI,
-  public discovery, policy controls, first-edit membership and import/copy
+  default/whole-board REST boundaries; recorded in CHANGELOG.md. The native
+  board-menu visibility editor, private stale-form guards, live refresh and
+  translated choices are recorded there too. Guest route/UI, public discovery,
+  global visibility/editing controls, first-edit membership and import/copy
   integration remain open.
 - Next board navigation parity: remaining public/instance UI, desktop multiple-card
   windows, container/reveal routes and full original FlowRouter/subscription

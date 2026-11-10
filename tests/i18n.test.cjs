@@ -6,7 +6,7 @@ const publicDir=path.join(__dirname,'../WeKan/.public');
 const dom = new JSDOM(`<div id="@1.LanguageSelector"><select data-weba-language></select></div>
 <div id="@1.WebLabelUser">Username</div><button id="@1.WebButtonLogin">Login</button>
 <div id="@1.PageTitle">Boards</div><div id="@1.ContextTitle">Boards</div><div id="@1.ActionTitle">Boards</div><div id="@1.DetailsTitle">Boards</div><input id="@1.WebTextName" value="Username">
-<div id="@1.MemberBoardName">Members</div><div id="@1.MembersTree" class="gw-tree">Normal</div><div id="@1.MemberRole"><select><option value="Read only">Read only</option></select></div>
+<div id="@1.BoardVisibilityName" class="weba-user-text">Public</div><div id="@1.BoardPermission"><select><option value="Public">Public</option><option value="Private">Private</option><option value="Signed-in users">Signed-in users</option></select></div><div id="@1.MemberBoardName">Members</div><div id="@1.MembersTree" class="gw-tree">Normal</div><div id="@1.MemberRole"><select><option value="Read only">Read only</option></select></div>
 <div id="@1.CardPeopleHeading">Members</div><div id="@1.CardPeopleName">Members</div><div id="@1.CardPeopleTree" class="gw-tree">Normal</div>
 <div id="@1.CardPersonChoice"><select><option value="Normal">Normal</option></select></div><button id="@1.AddCardPerson">Add</button>
 <div id="@1.PaneTitle" class="weba-user-text">Members</div>
@@ -39,6 +39,11 @@ window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
   assert.equal(doc.getElementById('@1.WebLabelUser').textContent,fi[key]);
   assert.equal(doc.getElementById('@1.MemberRole').textContent,api.t('Read only'),'fixed role caption translated');
   assert.equal(doc.getElementById('@1.MemberRole').querySelector('option').value,'Read only','role wire value stays stable');
+  assert.equal(doc.getElementById('@1.BoardVisibilityName').textContent,'Public','visibility board name stays literal');
+  for(const [value,key] of [['Private','private'],['Signed-in users','instance'],['Public','public']]){
+    const option=doc.querySelector(`[id="@1.BoardPermission"] option[value="${value}"]`);
+    assert.equal(option.textContent,fi[key]);assert.equal(option.value,value,'visibility wire values stay stable');
+  }
   assert.equal(doc.getElementById('@1.MemberBoardName').textContent,'Members','user board name stays unchanged');
   assert.equal(doc.getElementById('@1.MembersTree').textContent,'Normal','user identities stay unchanged');
   assert.equal(doc.getElementById('@1.CardPeopleHeading').textContent,api.t('Members'),'card-member heading translated');

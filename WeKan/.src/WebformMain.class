@@ -2,6 +2,11 @@
 
 Export
 
+Private $visibilityBoard As Integer
+Private $visibilityActor As String
+Private $visibilityGeneration As Long
+Private $visibilityContext As String
+Private $visibilityBase As Integer
 Private $boardArchive As Collection
 Private $boardArchiveContext As String
 Private $boardArchiveHome As Boolean
@@ -204,6 +209,7 @@ Public Sub BoardPoll_Timer()
   ValidateImportExportPolicy()
   ValidateMarkdownPolicy()
   ValidateAttachmentAllowance()
+  ValidateBoardVisibility()
   ValidateBoardCopy()
   ValidateDeleteListPanel()
   RefreshDeletedListPanel()
@@ -893,6 +899,7 @@ Catch
 End
 
 Private Sub UpdateHeader()
+  ValidateBoardVisibility()
   Dim routeSection As String
   Dim routeAck As New Collection
   Dim b As Result
@@ -993,6 +1000,7 @@ Public Sub CloseSidebar_Click()
 End
 
 Public Sub CloseEditor_Click()
+  CloseBoardVisibility_Click()
   Dim hadCard As Boolean = $card > 0
   ClearCardEditor()
   If hadCard Then
@@ -1272,6 +1280,8 @@ Private Sub OpenContext(kind As String, itemId As Integer, boardId As Integer)
   $contextId = itemId
   ContextTitle.Text = r!title
   ContextMenu.Show()
+  CloseBoardVisibility_Click()
+  ContextVisibility.Visible = kind = "board" And (manager Or WebDatabase.GetIsAdmin(WebIdentity.Username))
   ContextWorkspace.Visible = kind = "board"
   ContextMembers.Visible = kind = "board" Or kind = "card"
   ContextAssignees.Visible = kind = "card"
@@ -4233,4 +4243,62 @@ End
 Public Sub Reload()
   If NativeAuth.Bootstrapping Then Return
   Super.Reload()
+End
+
+Public Sub ContextVisibility_Click()
+  Dim data As Collection
+  If $contextKind <> "board" Or $contextId <> $contextBoard Then Error.Raise("Board not accessible")
+  data = BoardVisibility.BoardSettings($contextBoard)
+  CloseBoardVisibility_Click()
+  $visibilityBoard = $contextBoard
+  $visibilityActor = WebIdentity.Username
+  $visibilityGeneration = WebDatabase.SessionGeneration($visibilityActor)
+  $visibilityContext = LandingContext()
+  BoardVisibilityName.Text = WorkspaceStore.Record($visibilityBoard, "board", $visibilityBoard)!title
+  BoardPermission.List = ["Private", "Signed-in users", "Public"]
+  BoardPermission.Index = ["private", "instance", "public"].Find(data["permission"])
+  $visibilityBase = BoardPermission.Index
+  ContextMenu.Hide()
+  BoardVisibilityPanel.Show()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub CloseBoardVisibility_Click()
+  BoardVisibilityPanel.Hide()
+  BoardVisibilityName.Text = ""
+  BoardPermission.Clear()
+  $visibilityBoard = 0
+  $visibilityActor = ""
+  $visibilityContext = ""
+  $visibilityGeneration = 0
+  $visibilityBase = -1
+End
+
+Private Sub ValidateBoardVisibility()
+  Dim data As Collection
+  If ContextMenu.Visible Then ContextVisibility.Visible = $contextKind = "board" And (BoardAccess.Can($contextBoard, "manageBoard") Or WebDatabase.GetIsAdmin(WebIdentity.Username))
+  If Not BoardVisibilityPanel.Visible Then Return
+  If LandingContext() <> $visibilityContext Or $visibilityBoard <= 0 Or WebIdentity.Username <> $visibilityActor Or WebDatabase.SessionGeneration($visibilityActor) <> $visibilityGeneration Then Error.Raise("Sign in required")
+  data = BoardVisibility.BoardSettings($visibilityBoard)
+  BoardVisibilityName.Text = WorkspaceStore.Record($visibilityBoard, "board", $visibilityBoard)!title
+  If BoardPermission.Index = $visibilityBase Then
+    BoardPermission.Index = ["private", "instance", "public"].Find(data["permission"])
+    $visibilityBase = BoardPermission.Index
+  Endif
+Catch
+  CloseBoardVisibility_Click()
+End
+
+Public Sub SaveBoardVisibility_Click()
+  Dim id As Integer = $visibilityBoard
+  If Not BoardVisibilityPanel.Visible Or id <= 0 Then Error.Raise("Board not accessible")
+  If LandingContext() <> $visibilityContext Or WebIdentity.Username <> $visibilityActor Or WebDatabase.SessionGeneration($visibilityActor) <> $visibilityGeneration Then Error.Raise("Sign in required")
+  If BoardPermission.Index < 0 Or BoardPermission.Index > 2 Then Error.Raise("Unknown board permission")
+  BoardVisibility.SavePermission(id, ["private", "instance", "public"][BoardPermission.Index])
+  CloseBoardVisibility_Click()
+  Notice.Text = "Saved"
+  RefreshTree()
+Catch
+  Notice.Text = Error.Text
 End

@@ -208,6 +208,29 @@
       Text = ("Delete")
     }
   }
+  { BoardVisibilityPanel WebContainer
+    Class = "weba-action-panel"
+    Arrangement = Arrange.Vertical
+    Width = "340px"
+    Visible = False
+    Ignore = True
+    Spacing = True
+    { CloseBoardVisibility WebButton
+      Class = "weba-icon-only weba-popup-close fa fa-times-thin"
+      Tooltip = ("Close")
+    }
+    { BoardVisibilityHeading WebLabel
+      Text = ("Visibility")
+    }
+    { BoardVisibilityName WebLabel
+      Class = "weba-user-text"
+    }
+    { BoardPermission WebComboBox
+    }
+    { SaveBoardVisibility WebButton
+      Text = ("Save")
+    }
+  }
   { BoardWorkspacePanel WebContainer
     Class = "weba-action-panel"
     Arrangement = Arrange.Vertical
@@ -528,6 +551,9 @@
     }
     { ContextWip WebButton
       Text = ("Work in progress limit")
+    }
+    { ContextVisibility WebButton
+      Text = ("Visibility")
     }
     { ContextAllowsAttachments WebButton
       Text = ("Attachments")

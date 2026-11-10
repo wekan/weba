@@ -2,6 +2,23 @@
 
 This work adds the following features and fixes:
 
+- Add the native board-menu Visibility editor for board managers and readable-
+  board site administrators. Bind the board, actor, account generation and
+  navigation context privately; refuse readonly/forged, closed/replayed,
+  navigated and demoted saves with fresh server authorization. Persist Private,
+  Signed-in users and Public while preserving the current editing allowance
+  under the transaction lock. Keep private-only refusal atomic. Refresh clean
+  choices from external changes while preserving dirty selections; clear stale
+  private state and support Escape/close and anchored mobile popup behavior.
+  Import three source captions for all 237 native catalogs, preserving option
+  wire values and literal board names. Verify native lock-time allowance
+  preservation and real manager/readonly/nonmember browser paths, live policy/
+  scope changes, private-transition revocation, stale saves and Finnish mobile
+  presentation. Complete local (64 host tests) and source/packaged browser
+  suites pass. Guest/public discovery, global policy/editing controls,
+  first-edit membership and full original callbacks remain pending.
+  Thanks to xet7.
+
 - Add native private-default board visibility and global private-only/instance-
   editing policy storage, with strict typed manager/site-admin setters, ordered
   locks, final actor/epoch/owner/policy/value guards and rollback. Keep legacy

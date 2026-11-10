@@ -177,7 +177,15 @@ Private Sub RequireManager(boardId As Integer)
   If Not WebDatabase.OpenConnection().Find("kb_boards", "id=&1", boardId).Available Then Error.Raise("Board not accessible")
 End
 
+Public Sub SavePermission(boardId As Integer, value As Variant)
+  SaveBoardInternal(boardId, value, Null, True)
+End
+
 Public Sub SaveBoard(boardId As Integer, value As Variant, allowInstanceEditing As Variant)
+  SaveBoardInternal(boardId, value, allowInstanceEditing, False)
+End
+
+Private Sub SaveBoardInternal(boardId As Integer, value As Variant, allowInstanceEditing As Variant, preserveEditing As Boolean)
   Dim actor As String = WebIdentity.Username
   Dim generation As Long
   Dim transaction As Boolean
@@ -187,7 +195,7 @@ Public Sub SaveBoard(boardId As Integer, value As Variant, allowInstanceEditing 
   RequireManager(boardId)
   If TypeOf(value) <> gb.String Then Error.Raise("Unknown board permission")
   If ["private", "instance", "public"].Find(CStr(value)) < 0 Then Error.Raise("Unknown board permission")
-  If TypeOf(allowInstanceEditing) <> gb.Boolean Then Error.Raise("Expected a boolean setting")
+  If Not preserveEditing And TypeOf(allowInstanceEditing) <> gb.Boolean Then Error.Raise("Expected a boolean setting")
   generation = WebDatabase.SessionGeneration(actor)
   OpenStore()
   DatabaseTransactions.Begin($db)
@@ -200,6 +208,7 @@ Public Sub SaveBoard(boardId As Integer, value As Variant, allowInstanceEditing 
   If PrivateOnly() And IsOpen(CStr(value)) Then Error.Raise("Only private boards are allowed")
   r = $db.Find("kb_boards", "id=&1", boardId)
   owner = CStr(r!owner)
+  If preserveEditing Then allowInstanceEditing = BoardEditing(boardId)
   r = $db.Edit("kb_board_visibility", "board_id=&1", boardId)
   If Not r.Available Then
     r = $db.Create("kb_board_visibility")
