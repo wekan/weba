@@ -1,0 +1,75 @@
+' Private signed-in profile choice; unset is distinct from explicit false.
+Export
+
+Private Function Actor() As String
+  Dim value As String = WebIdentity.Username
+  If Env["WEBA_API_REQUEST"] = "1" Or Not value Then Error.Raise("Sign in required")
+  If Not WebDatabase.UserExists(value) Then Error.Raise("Sign in required")
+  Return value
+End
+
+Private Sub CheckActor(expectedActor As String, generation As Long)
+  If Not expectedActor Or generation <= 0 Then Error.Raise("Sign in required")
+  If Actor() <> expectedActor Or WebDatabase.SessionGeneration(expectedActor) <> generation Then Error.Raise("Sign in required")
+End
+
+Private Function ReadValue(conn As Connection, username As String) As Variant
+  Dim r As Result
+  If Not conn.Tables.Exist("kb_drag_handle_preferences") Then Return Null
+  r = conn.Find("kb_drag_handle_preferences", "username=&1", username)
+  If Not r.Available Then Return Null
+  Return DragHandles.ReadPreference(r!preference)
+End
+
+Public Function Stored() As Variant
+  Dim username As String = Actor()
+  Dim generation As Long = WebDatabase.SessionGeneration(username)
+  Dim value As Variant = ReadValue(WebDatabase.OpenConnection(), username)
+  CheckActor(username, generation)
+  Return value
+End
+
+Private Sub OpenStore(conn As Connection)
+  Dim t As Table
+  ' Check every time: an enclosing transaction may have rolled back first DDL.
+  If conn.Tables.Exist("kb_drag_handle_preferences") Then Return
+  t = conn.Tables.Add("kb_drag_handle_preferences")
+  t.Fields.Add("username", db.String, 255)
+  t.Fields.Add("preference", db.String)
+  t.PrimaryKey = ["username"]
+  t.Update()
+End
+
+Public Sub Save(value As Variant, expectedActor As String, generation As Long)
+  Dim conn As Connection
+  Dim r As Result
+  Dim transaction As Boolean
+  Dim failure As String
+  Dim text As String
+  If TypeOf(value) <> gb.Boolean Then Error.Raise("Invalid drag handle preference")
+  CheckActor(expectedActor, generation)
+  conn = WebDatabase.OpenConnection()
+  DatabaseTransactions.Begin(conn)
+  transaction = True
+  conn.Exec("UPDATE users SET username=username WHERE username=&1", expectedActor)
+  CheckActor(expectedActor, generation)
+  OpenStore(conn)
+  r = conn.Edit("kb_drag_handle_preferences", "username=&1", expectedActor)
+  If Not r.Available Then
+    r = conn.Create("kb_drag_handle_preferences")
+    r["username"] = expectedActor
+  Endif
+  text = If(value, "true", "false")
+  r["preference"] = text
+  r.Update()
+  CheckActor(expectedActor, generation)
+  r = conn.Find("kb_drag_handle_preferences", "username=&1", expectedActor)
+  If Not r.Available Then Error.Raise("Drag handle preference changed")
+  If r!preference <> text Then Error.Raise("Drag handle preference changed")
+  DatabaseTransactions.Commit(conn)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback(conn)
+  Error.Raise(failure)
+End

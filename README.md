@@ -2843,6 +2843,15 @@ models, whole-board source formats and batch export remain pending.
 
 The native `DragHandles` decision helper matches the source three-state rule:
 explicit on/off wins on every device; unset or malformed values follow touch
-capability. The 42-case source comparison covers 126 native outputs. Profile
-storage, browser device detection and gesture integration remain pending; this
-helper does not yet change rendered handles or drag behavior.
+capability. The 42-case source comparison covers 126 native outputs. Private profile
+storage is described below; browser device detection and gesture integration
+remain pending. The helper does not yet change rendered handles or drag behavior.
+
+`DragHandlePreference` now stores the signed-in native profile choice privately
+per account. `Stored()` returns Boolean or null without creating preference
+schema/rows; `Save(value, capturedActor, capturedGeneration)` requires an actual
+Boolean and a fresh matching browser identity. Atomic writes recheck the session
+and stored value; deletion removes only that account's preference. API bearer
+identities cannot use this browser profile service. Native tests cover first-DDL
+rollback/retry, injected SQL/value/session failures, account switching and
+recreation. Browser toggle/device detection and gesture integration remain open.

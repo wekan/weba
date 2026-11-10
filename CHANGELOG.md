@@ -2,6 +2,20 @@
 
 This work adds the following features and fixes:
 
+- Store native signed-in drag-handle choices privately per account, retaining
+  explicit false separately from an unset preference. Bind writes to the
+  captured account/session generation, validate Booleans before schema creation,
+  lock the actor and verify both session and persisted value before commit.
+  Keep preference reads free of schema/row creation; recover first-schema writes
+  after enclosing rollback. Remove preferences on account deletion without
+  affecting other accounts or giving a recreated account its predecessor's
+  choice. Verify SQL failure, changed stored values and late-session rollback,
+  stale account/generation callbacks, malformed inputs and anonymous/API denial.
+  The full local suite, including 69 host tests and existing gesture/security
+  regressions, passes. Browser toggle/device detection and rendered gesture
+  integration remain open.
+  Thanks to xet7.
+
 - Add the pure native three-state drag-handle preference decision helper. Match
   unchanged source normalization and resolution for explicit on/off, unset,
   legacy strings and malformed values on mouse/touch devices. Verify 42 native

@@ -1,0 +1,125 @@
+Public Sub Main()
+  Dim db As Connection
+  Dim generation As Long
+  Dim denied As Boolean
+  Dim value As Variant
+  Dim invalid As New Variant[]
+  Dim objectValue As New Collection
+  Dim arrayValue As New Variant[]
+  Dim before As String
+  WebDatabase.Register("handle-admin", "x")
+  WebDatabase.Register("handle-user", "x")
+  WebDatabase.Register("handle-other", "x")
+  If Env["WEBA_API_REQUEST"] = "1" Then
+    WebIdentity.AuthenticateApi("handle-user")
+    generation = WebDatabase.SessionGeneration("handle-user")
+    Try DragHandlePreference.Stored()
+    denied = Error
+    If Not denied Then Error.Raise("API identity read browser preference")
+    Try DragHandlePreference.Save(True, "handle-user", generation)
+    denied = Error
+    If Not denied Or WebDatabase.OpenConnection().Tables.Exist("kb_drag_handle_preferences") Then Error.Raise("API identity wrote browser preference")
+    Print "Drag handle preferences: API identity cannot read/write private browser preferences or initialize schema"
+    Return
+  Endif
+  SignIn("handle-user")
+  generation = WebDatabase.SessionGeneration("handle-user")
+  db = WebDatabase.OpenConnection()
+  value = DragHandlePreference.Stored()
+  If Not IsNull(value) Or db.Tables.Exist("kb_drag_handle_preferences") Then Error.Raise("Read initialized preference or lost unset")
+  Try DragHandlePreference.Save("false", "handle-user", generation)
+  denied = Error
+  If Not denied Or db.Tables.Exist("kb_drag_handle_preferences") Then Error.Raise("String input created preference")
+  ' First DDL is inside the caller's transaction and must recover after rollback.
+  DatabaseTransactions.Begin(db)
+  DragHandlePreference.Save(True, "handle-user", generation)
+  DatabaseTransactions.Rollback(db)
+  If Not IsNull(DragHandlePreference.Stored()) Then Error.Raise("Outer rollback retained preference")
+  DragHandlePreference.Save(False, "handle-user", generation)
+  value = DragHandlePreference.Stored()
+  If TypeOf(value) <> gb.Boolean Then Error.Raise("Explicit false became unset")
+  If value Then Error.Raise("Explicit false changed")
+  If DragHandles.Resolve(value, True) Then Error.Raise("Explicit false failed on touch")
+  SignIn("handle-other")
+  If Not IsNull(DragHandlePreference.Stored()) Then Error.Raise("Another account inherited preference")
+  before = Frame()
+  Try DragHandlePreference.Save(True, "handle-user", generation)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Old account callback wrote data")
+  DragHandlePreference.Save(True, "handle-other", WebDatabase.SessionGeneration("handle-other"))
+  SignIn("handle-user")
+  before = Frame()
+  db.Exec("CREATE TRIGGER fail_handle BEFORE UPDATE ON kb_drag_handle_preferences BEGIN SELECT RAISE(ABORT,'private detail'); END")
+  Try DragHandlePreference.Save(True, "handle-user", generation)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("SQL failure persisted preference")
+  db.Exec("DROP TRIGGER fail_handle")
+  db.Exec("CREATE TRIGGER change_handle AFTER UPDATE ON kb_drag_handle_preferences BEGIN UPDATE kb_drag_handle_preferences SET preference='corrupt' WHERE username=NEW.username; END")
+  Try DragHandlePreference.Save(True, "handle-user", generation)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Changed stored preference accepted")
+  db.Exec("DROP TRIGGER change_handle")
+  db.Exec("CREATE TRIGGER lose_handle_actor AFTER UPDATE ON kb_drag_handle_preferences BEGIN UPDATE account_sessions SET generation=generation+1 WHERE username=NEW.username; END")
+  Try DragHandlePreference.Save(True, "handle-user", generation)
+  denied = Error
+  If Not denied Or Frame() <> before Or WebDatabase.SessionGeneration("handle-user") <> generation Then Error.Raise("Late actor loss did not roll back")
+  db.Exec("DROP TRIGGER lose_handle_actor")
+  DragHandlePreference.Save(True, "handle-user", generation)
+  If Not DragHandlePreference.Stored() Then Error.Raise("Retry failed")
+  db.Exec("UPDATE kb_drag_handle_preferences SET preference='FALSE' WHERE username='handle-user'")
+  If Not IsNull(DragHandlePreference.Stored()) Then Error.Raise("Malformed stored value became explicit")
+  DragHandlePreference.Save(False, "handle-user", generation)
+  before = Frame()
+  invalid.Add(Null)
+  invalid.Add("true")
+  invalid.Add(0)
+  invalid.Add(1)
+  invalid.Add(objectValue)
+  invalid.Add(arrayValue)
+  For Each value In invalid
+    Try DragHandlePreference.Save(value, "handle-user", generation)
+    denied = Error
+    If Not denied Or Frame() <> before Then Error.Raise("Malformed input accepted")
+  Next
+  db.Exec("UPDATE account_sessions SET generation=generation+1 WHERE username='handle-user'")
+  Try DragHandlePreference.Stored()
+  denied = Error
+  If Not denied Then Error.Raise("Stale session read accepted")
+  SignIn("handle-user")
+  Try DragHandlePreference.Save(True, "handle-user", generation)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Old generation callback accepted")
+  Session["username"] = ""
+  Try DragHandlePreference.Stored()
+  denied = Error
+  If Not denied Then Error.Raise("Anonymous read accepted")
+  Try DragHandlePreference.Save(True, "handle-user", generation)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Anonymous write accepted")
+  SignIn("handle-admin")
+  WebDatabase.DeleteUser("handle-user")
+  If db.Find("kb_drag_handle_preferences", "username='handle-user'").Count Then Error.Raise("Deleted account retained preference")
+  If Not db.Find("kb_drag_handle_preferences", "username='handle-other'").Available Then Error.Raise("Deletion erased another account preference")
+  WebDatabase.Register("handle-user", "new")
+  SignIn("handle-user")
+  If Not IsNull(DragHandlePreference.Stored()) Then Error.Raise("Recreated account inherited preference")
+  Try DragHandlePreference.Save(True, "handle-user", generation)
+  denied = Error
+  If Not denied Or Not IsNull(DragHandlePreference.Stored()) Then Error.Raise("Recreated account accepted old callback")
+  DragHandlePreference.Save(False, "handle-user", WebDatabase.SessionGeneration("handle-user"))
+  Print "Drag handle preferences: no-init/unset reads, strict explicit false on touch, account isolation, first-schema outer rollback/retry, SQL/stored-value/late-session rollback, malformed inputs, stale/anonymous denial and deletion/recreation isolation passed"
+End
+
+Private Sub SignIn(actor As String)
+  Session["username"] = actor
+  Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+End
+
+Private Function Frame() As String
+  Dim rows As New Variant[]
+  Dim r As Result = WebDatabase.OpenConnection().Find("kb_drag_handle_preferences", "TRUE ORDER BY username")
+  For Each r
+    rows.Add([r!username, r!preference])
+  Next
+  Return JSON.Encode(rows)
+End
