@@ -123,6 +123,7 @@
   "disable-all-export": "禁用所有导出",
   "disable-all-import": "禁用所有导入",
   "done": "完毕",
+  "drag-to-reorder": "拖动来调换次序。向上搭向下箭头键一趟移动一个位置。",
   "dueCards-title": "到期卡片",
   "duplicate-board": "复制看板",
   "edit": "编辑",

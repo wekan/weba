@@ -246,6 +246,12 @@
     }
     { BoardDefaultPrivate WebComboBox
     }
+    { BoardViewOrderAction WebTextBox
+      Visible = False
+    }
+    { BoardViewOrderList WebContainer
+      Class = "weba-view-order-area"
+    }
     { BoardViewUp WebButton
       Text = ("Move up")
     }

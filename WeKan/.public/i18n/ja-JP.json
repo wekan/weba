@@ -123,6 +123,7 @@
   "disable-all-export": "すべてのエクスポートを無効化",
   "disable-all-import": "すべてのインポートを無効化",
   "done": "完了",
+  "drag-to-reorder": "ドラッグして並べ替えます。上矢印キーと下矢印キーで1つずつ移動します。",
   "dueCards-title": "期限切れカード",
   "duplicate-board": "ボードの複製",
   "edit": "編集",

@@ -1,0 +1,19 @@
+Public Sub Main()
+  Dim rows As Variant[] = JSON.Decode(Env["WEBA_VIEW_ORDER_CASES"], True)
+  Dim results As New Variant[]
+  Dim row As Collection
+  Dim allowed As String[]
+  Dim key As String
+  For Each row In rows
+    allowed = New String[]
+    For Each key In row["allowed"]
+      allowed.Add(key)
+    Next
+    If row["op"] = "drag" Then
+      results.Add(BoardViewPolicy.ReorderVisible(row["order"], row["dropped"], allowed))
+    Else
+      results.Add(BoardViewPolicy.Move(row["order"], row["view"], row["direction"], allowed))
+    Endif
+  Next
+  Print JSON.Encode(results)
+End

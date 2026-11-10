@@ -123,6 +123,7 @@
   "disable-all-export": "Inaktivera all export",
   "disable-all-import": "Inaktivera all import",
   "done": "Färdig",
+  "drag-to-reorder": "Dra för att ändra ordningen. Uppåt- och nedåtpilarna flyttar ett steg.",
   "dueCards-title": "Kort med förfallodatum",
   "duplicate-board": "Duplicera tavla",
   "edit": "Redigera",

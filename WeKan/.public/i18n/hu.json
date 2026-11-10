@@ -123,6 +123,7 @@
   "disable-all-export": "Az összes exportálás letiltása",
   "disable-all-import": "Az összes importálás letiltása",
   "done": "Kész",
+  "drag-to-reorder": "Húzza az átrendezéshez. A fel és le nyílbillentyűk egy hellyel mozgatnak.",
   "dueCards-title": "Határidős Kártyák",
   "duplicate-board": "Tábla duplikálása",
   "edit": "Szerkesztés",

@@ -21,6 +21,11 @@ Private $viewPolicyContext As String
 Private $viewPolicyBase As Collection
 Private $viewPolicyDraft As Collection
 Private $viewPolicyOrder As String[]
+Private $viewPolicyAllowed As String[]
+Private $viewPolicyCaptions As Collection
+Private $viewDefaultPublicKeys As String[]
+Private $viewDefaultPrivateKeys As String[]
+Private $viewPolicyRevision As Long
 Private $viewPolicySelected As String
 Private $viewPolicyLoading As Boolean
 Private $visibilityBoard As Integer
@@ -1153,7 +1158,7 @@ Public Sub LanguageSelector_Render()
   Print "<base href=\"/\">"
   Print "<link rel=\"stylesheet\" href=\"kanban.css\">"
   Print "<link rel=\"stylesheet\" href=\"fontawesome.css\">"
-  Print "<script>" & File.Load(".public/i18n-catalog.js") & File.Load(".public/i18n.js") & File.Load(".public/ui.js") & File.Load(".public/popup.js") & File.Load(".public/drag.js") & "</script>"
+  Print "<script>" & File.Load(".public/i18n-catalog.js") & File.Load(".public/i18n.js") & File.Load(".public/ui.js") & File.Load(".public/popup.js") & File.Load(".public/drag.js") & File.Load(".public/board-view-order.js") & "</script>"
   Print "<select data-weba-language aria-label=\"Language\" style=\"width:100%;height:32px;background:white;color:black\"></select>"
 End
 
@@ -4505,28 +4510,47 @@ Private Sub FillBoardViews()
   Dim english As Collection = JSON.Decode(File.Load(".public/i18n/en.json"))
   Dim captions As New Collection
   Dim labels As New String[]
+  Dim publicLabels As String[]
+  Dim privateLabels As String[]
   Dim item As Collection
   Dim key As String
   $viewPolicyLoading = True
   $viewPolicyOrder = New String[]
+  $viewPolicyAllowed = InstanceFeatures.AllowedViews(BoardViewPolicy.Keys())
   For Each item In definitions["views"]
     captions[item["view"]] = english[item["labelKey"]]
     If Not captions[item["view"]] Then captions[item["view"]] = item["view"]
   Next
   For Each key In $viewPolicyDraft["boardViewOrder"]
+    If $viewPolicyAllowed.Find(key) < 0 Then Continue
     $viewPolicyOrder.Add(key)
     labels.Add(captions[key])
   Next
+  $viewPolicyCaptions = captions
+  If $viewPolicyOrder.Find($viewPolicySelected) < 0 Then $viewPolicySelected = $viewPolicyOrder[0]
   BoardViewChoice.List = labels
-  BoardDefaultPublic.List = labels
-  BoardDefaultPrivate.List = labels
+  publicLabels = labels.Copy()
+  privateLabels = labels.Copy()
+  $viewDefaultPublicKeys = $viewPolicyOrder.Copy()
+  $viewDefaultPrivateKeys = $viewPolicyOrder.Copy()
+  If $viewDefaultPublicKeys.Find($viewPolicyDraft["defaultPublicBoardView"]) < 0 Then
+    $viewDefaultPublicKeys.Add("", 0)
+    publicLabels.Add("—", 0)
+  Endif
+  If $viewDefaultPrivateKeys.Find($viewPolicyDraft["defaultPrivateBoardView"]) < 0 Then
+    $viewDefaultPrivateKeys.Add("", 0)
+    privateLabels.Add("—", 0)
+  Endif
+  BoardDefaultPublic.List = publicLabels
+  BoardDefaultPrivate.List = privateLabels
   BoardViewChoice.Index = $viewPolicyOrder.Find($viewPolicySelected)
-  BoardDefaultPublic.Index = $viewPolicyOrder.Find($viewPolicyDraft["defaultPublicBoardView"])
-  BoardDefaultPrivate.Index = $viewPolicyOrder.Find($viewPolicyDraft["defaultPrivateBoardView"])
+  BoardDefaultPublic.Index = Max(0, $viewDefaultPublicKeys.Find($viewPolicyDraft["defaultPublicBoardView"]))
+  BoardDefaultPrivate.Index = Max(0, $viewDefaultPrivateKeys.Find($viewPolicyDraft["defaultPrivateBoardView"]))
   BoardShowPublic.Value = $viewPolicyDraft["boardViewSettings"][$viewPolicySelected]["showOnPublic"]
   BoardShowPrivate.Value = $viewPolicyDraft["boardViewSettings"][$viewPolicySelected]["showOnPrivate"]
   BoardViewUp.Enabled = BoardViewChoice.Index > 0
   BoardViewDown.Enabled = BoardViewChoice.Index < $viewPolicyOrder.Max
+  RefreshBoardViewOrder()
   $viewPolicyLoading = False
 Catch
   $viewPolicyLoading = False
@@ -4570,6 +4594,13 @@ Public Sub CloseBoardViews_Click()
   $viewPolicyBase = Null
   $viewPolicyDraft = Null
   $viewPolicyOrder = Null
+  $viewPolicyAllowed = Null
+  $viewPolicyCaptions = Null
+  $viewDefaultPublicKeys = Null
+  $viewDefaultPrivateKeys = Null
+  Inc $viewPolicyRevision
+  BoardViewOrderAction.Text = ""
+  BoardViewOrderList.Refresh()
   $viewPolicySelected = ""
 End
 
@@ -4578,6 +4609,7 @@ Private Sub ValidateBoardViews()
   If ContextMenu.Visible Then ContextBoardViews.Visible = $contextKind = "board" And BoardAccess.CanManageViewPolicy($contextBoard)
   If Not BoardViewsPanel.Visible Then Return
   data = BoundBoardViews()
+  If JSON.Encode(InstanceFeatures.AllowedViews(BoardViewPolicy.Keys())) <> JSON.Encode($viewPolicyAllowed) Then FillBoardViews()
   BoardViewsName.Text = WorkspaceStore.Record($viewPolicyBoard, "board", $viewPolicyBoard)!title
   If BoardViewPolicy.Difference($viewPolicyBase, $viewPolicyDraft).Count = 0 Then
     If JSON.Encode(data) <> JSON.Encode($viewPolicyBase) Then
@@ -4592,7 +4624,7 @@ End
 
 Public Sub BoardViewChoice_Click()
   If $viewPolicyLoading Then Return
-  BoundBoardViews()
+  CheckBoardViewOrder()
   If BoardViewChoice.Index < 0 Or BoardViewChoice.Index > $viewPolicyOrder.Max Then Error.Raise("Unknown board view")
   $viewPolicySelected = $viewPolicyOrder[BoardViewChoice.Index]
   FillBoardViews()
@@ -4601,12 +4633,13 @@ Catch
 End
 
 Private Sub StageBoardViewShown(side As String, shown As Boolean)
-  BoundBoardViews()
+  CheckBoardViewOrder()
   If Not shown And $viewPolicyDraft["default" & side & "BoardView"] = $viewPolicySelected Then
     FillBoardViews()
     Return
   Endif
   $viewPolicyDraft["boardViewSettings"][$viewPolicySelected]["showOn" & side] = shown
+  RefreshBoardViewOrder()
 End
 
 Public Sub BoardShowPublic_Click()
@@ -4625,9 +4658,12 @@ End
 
 Private Sub StageBoardViewDefault(side As String, index As Integer)
   Dim key As String
-  BoundBoardViews()
-  If index < 0 Or index > $viewPolicyOrder.Max Then Error.Raise("Unknown board view")
-  key = $viewPolicyOrder[index]
+  Dim keys As String[]
+  CheckBoardViewOrder()
+  keys = If(side = "Public", $viewDefaultPublicKeys, $viewDefaultPrivateKeys)
+  If index < 0 Or index > keys.Max Then Error.Raise("Unknown board view")
+  key = keys[index]
+  If Not key Then Return
   $viewPolicyDraft["default" & side & "BoardView"] = key
   $viewPolicyDraft["boardViewSettings"][key]["showOn" & side] = True
   FillBoardViews()
@@ -4648,15 +4684,8 @@ Catch
 End
 
 Private Sub MoveBoardView(step As Integer)
-  Dim index As Integer
-  Dim key As String
-  BoundBoardViews()
-  index = $viewPolicyOrder.Find($viewPolicySelected)
-  If index < 0 Or index + step < 0 Or index + step > $viewPolicyOrder.Max Then Return
-  key = $viewPolicyOrder[index + step]
-  $viewPolicyOrder[index + step] = $viewPolicySelected
-  $viewPolicyOrder[index] = key
-  $viewPolicyDraft["boardViewOrder"] = $viewPolicyOrder
+  CheckBoardViewOrder()
+  $viewPolicyDraft["boardViewOrder"] = BoardViewPolicy.Move($viewPolicyDraft["boardViewOrder"], $viewPolicySelected, If(step < 0, "up", "down"), $viewPolicyAllowed)
   FillBoardViews()
 End
 
@@ -4921,4 +4950,80 @@ Private Function FeatureForm(changes As Collection) As Collection
     result.Add(Null, "pilotUsernames")
   Endif
   Return result
+End
+
+Private Sub RefreshBoardViewOrder()
+  Inc $viewPolicyRevision
+  BoardViewOrderList.Refresh()
+End
+
+Private Sub CheckBoardViewOrder()
+  BoundBoardViews()
+  If JSON.Encode(InstanceFeatures.AllowedViews(BoardViewPolicy.Keys())) <> JSON.Encode($viewPolicyAllowed) Then
+    FillBoardViews()
+    Error.Raise("Board view settings changed")
+  Endif
+End
+
+Public Sub BoardViewOrderList_Render()
+  Dim english As Collection
+  Dim key As String
+  If Not BoardViewsPanel.Visible Or Not $viewPolicyDraft Then Return
+  BoundBoardViews()
+  english = JSON.Decode(File.Load(".public/i18n/en.json"))
+  Print "<div class='weba-view-order-list js-board-view-sortable' role='list' data-command='" & Html(BoardViewOrderAction.Name) & "' data-revision='" & CStr($viewPolicyRevision) & "'>"
+  For Each key In $viewPolicyOrder
+    Print "<div class='weba-view-order-row js-board-view-row' role='listitem' data-view='" & Html(key) & "'>"
+    Print "<button type='button' class='weba-view-order-handle js-board-view-order-handle fa fa-arrows' data-caption='" & Html(english["drag-to-reorder"]) & "'></button>"
+    Print "<button type='button' class='weba-view-order-label' data-caption='" & Html($viewPolicyCaptions[key]) & "'>" & Html($viewPolicyCaptions[key]) & "</button></div>"
+  Next
+  Print "</div>"
+End
+
+Public Sub BoardViewOrderAction_Change()
+  Dim command As String = BoardViewOrderAction.Text
+  Dim fields As String[]
+  Dim key As String
+  Dim values As Variant
+  Dim before As String
+  Dim afterOrder As String[]
+  Dim failure As String
+  If Not command Then Return
+  BoardViewOrderAction.Text = ""
+  CheckBoardViewOrder()
+  If Len(command) > 8192 Then Error.Raise("Unknown board view")
+  fields = Split(command, "|")
+  If fields.Count < 3 Or fields.Count > 4 Then Error.Raise("Unknown board view")
+  If fields[1] <> CStr($viewPolicyRevision) Then Error.Raise("Board view settings changed")
+  before = JSON.Encode($viewPolicyDraft["boardViewOrder"])
+  Select fields[0]
+    Case "drag"
+      If fields.Count <> 3 Then Error.Raise("Unknown board view")
+      values = JSON.Decode(UnBase64(fields[2]), True)
+      afterOrder = BoardViewPolicy.ReorderVisible($viewPolicyDraft["boardViewOrder"], values, $viewPolicyAllowed)
+      $viewPolicyDraft["boardViewOrder"] = afterOrder
+    Case "move", "select"
+      key = UnBase64(fields[2])
+      If $viewPolicyAllowed.Find(key) < 0 Then Error.Raise("Unknown board view")
+      If fields[0] = "move" Then
+        If fields.Count <> 4 Then Error.Raise("Unknown board view")
+        If ["up", "down"].Find(fields[3]) < 0 Then Error.Raise("Unknown board view")
+      Else If fields.Count <> 3 Then
+        Error.Raise("Unknown board view")
+      Endif
+      $viewPolicySelected = key
+      If fields[0] = "move" Then $viewPolicyDraft["boardViewOrder"] = BoardViewPolicy.Move($viewPolicyDraft["boardViewOrder"], key, fields[3], $viewPolicyAllowed)
+    Case Else
+      Error.Raise("Unknown board view")
+  End Select
+  FillBoardViews()
+Catch
+  failure = Error.Text
+  Try BoundBoardViews()
+  If Error Then
+    CloseBoardViews_Click()
+  Else
+    RefreshBoardViewOrder()
+  Endif
+  BoardViewsError(failure)
 End

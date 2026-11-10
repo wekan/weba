@@ -123,6 +123,7 @@
   "disable-all-export": "Tüm dışa aktarmayı devre dışı bırak",
   "disable-all-import": "Tüm içe aktarmayı devre dışı bırak",
   "done": "Tamam",
+  "drag-to-reorder": "Sıralamayı değiştirmek için sürükleyin. Yukarı ve aşağı ok tuşları bir adım taşır.",
   "dueCards-title": "Son Kartlar",
   "duplicate-board": "Panoyu Çoğalt",
   "edit": "Düzenle",

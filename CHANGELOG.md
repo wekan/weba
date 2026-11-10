@@ -2,6 +2,27 @@
 
 This work adds the following features and fixes:
 
+- Add a native manager view-order list with desktop handle dragging, trusted
+  touch, Up/Down keyboard moves and retained focus/scroll. Use the source's two
+  distinct algorithms: drag fills only offered slots, while keyboard insertion
+  steps past instance-disabled views. Filter editor rows/default choices by
+  current instance availability while retaining all 40 stored entries and hidden
+  defaults; show an unselected placeholder for an unavailable default instead of
+  implying a replacement. Stage changes in the private batch draft until Save.
+  Bind commands to actor/session/current readable board/raw-manager authority and
+  captured draft revision; refuse stale, hidden, closed, demoted and readonly
+  events, invalidate on feature changes and clear private state on close. Cancel
+  Escape/outside/multitouch/DOM teardown without writes; ordinary scrolling stays
+  native. Import 269 source keys across 237 catalogs. Verify 7,200 unchanged-source
+  drag/move outcomes, gesture cleanup and real filtered/default/draft/Save/focus/
+  replay/role/feature/Finnish/mobile browser behavior. The full local suite
+  (69 host tests) and complete source/packaged browser suites pass against final
+  code. Execute original sortable
+  stop and keyboard callbacks through explicit native command adapters. The native
+  handle list and batch Save are adapters; the original jQuery/Blaze/Meteor popup,
+  shared showDragHandles preferences and remaining source view renderers stay open.
+  Thanks to xet7.
+
 - Preserve all 40 normalized board-view entries, public/private defaults and
   order through whole-board native export, empty/full-option copy and weba-2
   import. Keep personal preferences, instance feature policy, permissions and

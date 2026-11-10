@@ -123,6 +123,7 @@
   "disable-all-export": "모든 내보내기 비활성화",
   "disable-all-import": "모든 가져오기 비활성화",
   "done": "완료",
+  "drag-to-reorder": "드래그하여 순서를 바꾸세요. 위쪽 및 아래쪽 화살표 키로 한 칸씩 이동합니다.",
   "dueCards-title": "마감 카드",
   "duplicate-board": "보드 복사",
   "edit": "수정",

@@ -123,6 +123,7 @@
   "disable-all-export": "Poista kaikki vienti käytöstä",
   "disable-all-import": "Poista kaikki tuonti käytöstä",
   "done": "Valmis",
+  "drag-to-reorder": "Järjestä uudelleen vetämällä. Ylä- ja alanuolinäppäimet siirtävät yhden askeleen.",
   "dueCards-title": "Eräpäivä kortit",
   "duplicate-board": "Tee kaksoiskappale taulusta",
   "edit": "Muokkaa",

@@ -998,7 +998,7 @@ Native tests cover pure reads, admin/nonadmin/anonymous scope, pilot updates,
 unknown/omitted/empty lists, non-granted edit rights, late demotion/session rollback,
 retry and account recreation. 1,809 unchanged-source comparisons cover all groups,
 strict/corrupt state types, approval/known keys, previews, core views, complete
-save modifiers and bounded Unicode pilot lists. Captions and the 268-key/237-locale
+save modifiers and bounded Unicode pilot lists. Captions and the 269-key/237-locale
 translation output come directly from source. Native browser checks cover the
 bound form, all retained choices, live signed/guest defaults and hidden controls,
 previews, unsaved card drafts, literal unknown names, SQL failure/retry, clean/dirty
@@ -1007,6 +1007,43 @@ tests) and complete source and packaged browser suites pass against final code.
 Remaining source renderers and
 non-view feature actions, card-field policy, original admin layout and the full
 Meteor method/publication bridge remain open.
+
+The manager editor now offers a scrollable native order list as well as its
+per-view draft controls. Instance-disabled views are not rows or default choices;
+the complete 40-view draft remains intact. An unavailable stored default appears
+as `—` and is retained until a manager deliberately chooses an offered view.
+Desktop/touch handles drag offered rows into their old offered slots, retaining
+hidden positions. Up/Down uses the source insertion rule, stepping past hidden
+views rather than swapping adjacent raw array entries. Both algorithms are native
+ports checked against unchanged source functions over 7,200 cases covering every
+key, availability sets, older/custom/corrupt order, malformed/duplicate/missing
+rows and move boundaries.
+
+Every gesture carries the opening document's server-owned action target and draft
+revision. The native handler rechecks current actor/generation, board/navigation,
+read scope, raw manager authority and current instance availability before staging
+any change. Close, row/default edits, availability refresh and reordering invalidate
+old gesture revisions. Invalid commands do not mutate hidden settings or persist
+anything; Save still writes only the existing guarded draft delta. Feature changes
+refresh the offered projection while preserving dirty settings and defaults.
+Native pointer handling retains ordinary scrolling outside handles, uses a movement
+threshold, scrolls the order list near its edges, rejects outside drops and cancels
+Escape/multitouch/pointer cancellation, hidden/replaced DOM or resize. Keyboard
+focus and list scroll follow the acknowledged row. Labels/tooltips come from source
+translations (269 keys/237 catalogs), and board titles remain literal user text.
+
+DOM gesture tests cover captured commands, acknowledgement focus, translation,
+Escape/outside/cancel/multitouch/stale/detached cleanup and ordinary scroll. Real
+browser tests cover feature-filtered rows, hidden default retention, exact source
+keyboard/drag order, private draft versus Save, stale revision/availability, hidden,
+closed, readonly and demoted commands, Escape/outside cancellation, focused rows,
+trusted touch and Finnish/mobile behavior. The full local suite (69 host tests)
+and complete source/packaged browser suites pass against final code. They also
+execute the unchanged original
+`reorderOnDrop` stop and keyboard callbacks through a native command adapter.
+This does not install the original jQuery sortable/Blaze/Meteor transport or the
+shared `Utils.showDragHandles` preference: native ordering currently uses explicit
+handles and the existing batch Save. Those original UI integrations remain open.
 
 Whole-board native export/copy/import now preserves the four source document
 fields: `boardViewSettings`, `defaultPublicBoardView`, `defaultPrivateBoardView`

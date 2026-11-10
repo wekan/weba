@@ -123,6 +123,7 @@
   "disable-all-export": "Vypnout veškerý export",
   "disable-all-import": "Vypnout veškerý import",
   "done": "Hotovo",
+  "drag-to-reorder": "Přetažením změňte pořadí. Klávesy se šipkami nahoru a dolů posunou položku o jednu pozici.",
   "dueCards-title": "Termín karet",
   "duplicate-board": "Duplikovat tablo",
   "edit": "Upravit",

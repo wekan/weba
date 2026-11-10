@@ -56,6 +56,60 @@ Public Function NormalizeOrder(value As Variant) As String[]
   Return result
 End
 
+Public Function ReorderVisible(order As Variant, dropped As Variant, allowed As String[]) As String[]
+  Dim result As String[] = NormalizeOrder(order)
+  Dim shown As New String[]
+  Dim incoming As New String[]
+  Dim seen As New Collection
+  Dim key As String
+  Dim value As Variant
+  Dim index As Integer
+  Dim nextIndex As Integer
+  For Each key In result
+    If allowed.Find(key) >= 0 Then shown.Add(key)
+  Next
+  If IsArray(dropped) Then
+    For Each value In dropped
+      If Not Known(value) Then Continue
+      key = CStr(value)
+      If shown.Find(key) >= 0 Then incoming.Add(key)
+    Next
+  Endif
+  If incoming.Count <> shown.Count Then Return result
+  For Each key In incoming
+    If seen.Exist(key) Then Return result
+    seen[key] = True
+  Next
+  For index = 0 To result.Max
+    If allowed.Find(result[index]) < 0 Then Continue
+    result[index] = incoming[nextIndex]
+    Inc nextIndex
+  Next
+  Return result
+End
+
+Public Function Move(order As Variant, view As Variant, direction As Variant, allowed As String[]) As String[]
+  Dim result As String[] = NormalizeOrder(order)
+  Dim fromIndex As Integer
+  Dim shift As Integer = 1
+  Dim toIndex As Integer
+  If TypeOf(view) <> gb.String Then Return result
+  fromIndex = result.Find(CStr(view))
+  If TypeOf(direction) = gb.String Then
+    If CStr(direction) = "up" Then shift = -1
+  Endif
+  toIndex = fromIndex + shift
+  If fromIndex < 0 Then Return result
+  While toIndex >= 0 And toIndex < result.Count
+    If allowed.Find(result[toIndex]) >= 0 Then Break
+    toIndex += shift
+  Wend
+  If toIndex < 0 Or toIndex >= result.Count Then Return result
+  result.Remove(fromIndex)
+  result.Add(CStr(view), toIndex)
+  Return result
+End
+
 Public Function Snapshot(doc As Collection) As Collection
   Dim data As New Collection
   Dim table As New Collection

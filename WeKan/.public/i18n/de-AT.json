@@ -123,6 +123,7 @@
   "disable-all-export": "Gesamten Export deaktivieren",
   "disable-all-import": "Gesamten Import deaktivieren",
   "done": "Erledigt",
+  "drag-to-reorder": "Zum Umordnen ziehen. Die Pfeiltasten nach oben und unten verschieben um einen Schritt.",
   "dueCards-title": "Fällige Karten",
   "duplicate-board": "Board duplizieren",
   "edit": "Bearbeiten",

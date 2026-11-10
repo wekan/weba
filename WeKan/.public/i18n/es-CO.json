@@ -123,6 +123,7 @@
   "disable-all-export": "Deshabilitar toda exportación",
   "disable-all-import": "Deshabilitar toda importación",
   "done": "Hecho",
+  "drag-to-reorder": "Arrastre para reordenar. Las teclas de flecha arriba y abajo desplazan una posición.",
   "dueCards-title": "Tarjetas Vencidas",
   "duplicate-board": "Duplicar tablero",
   "edit": "Editar",

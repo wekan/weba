@@ -123,6 +123,7 @@
   "disable-all-export": "Keela kogu eksport",
   "disable-all-import": "Keela kogu import",
   "done": "Valmis",
+  "drag-to-reorder": "Järjekorra muutmiseks lohista. Üles- ja allanooleklahvid liigutavad ühe koha võrra.",
   "dueCards-title": "Due Kaardid",
   "duplicate-board": "Duplikaat Board",
   "edit": "Muuda",

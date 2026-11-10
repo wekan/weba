@@ -12003,3 +12003,14 @@ ul, #myUL {
   content: "\f06e";
 }
 .weba-password-toggle.fa-eye-slash::before { content: "\f070"; }
+
+.weba-view-order-list { max-height: 190px; overflow-y: auto; overscroll-behavior: contain; border: 1px solid #aaa; border-radius: 3px; margin-block: .4rem; }
+.weba-view-order-row { display: flex; align-items: center; min-height: 34px; gap: .4rem; padding: 2px 4px; box-sizing: border-box; }
+.weba-view-order-row button { background: transparent; border: 0; color: inherit; min-height: 30px; }
+.weba-view-order-handle { flex: 0 0 30px; cursor: grab; touch-action: none; }
+.weba-view-order-label { flex: 1; text-align: start; cursor: pointer; overflow-wrap: anywhere; touch-action: pan-y; }
+.weba-view-order-row button:focus-visible { outline: 2px solid #2980b9; outline-offset: -2px; }
+.weba-view-order-origin { opacity: .4; }
+.weba-view-order-marker { border-top: 3px solid #2980b9; height: 0; pointer-events: none; }
+.weba-view-order-ghost { position: fixed; pointer-events: none; z-index: 100000; max-width: 280px; background: white; color: #222; border: 1px solid #2980b9; opacity: .9; }
+.weba-view-order-dragging { user-select: none; }

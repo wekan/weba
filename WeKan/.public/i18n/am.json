@@ -123,6 +123,7 @@
   "disable-all-export": "ሁሉንም ወደ ውጭ መላክ አሰናክል",
   "disable-all-import": "ሁሉንም ማስመጣት አሰናክል",
   "done": "ተጠናቋል",
+  "drag-to-reorder": "ቅደም ተከተሉን ለመቀየር ይጎትቱ። ወደ ላይ እና ወደ ታች የቀስት ቁልፎች በአንድ ቦታ ያንቀሳቅሳሉ።",
   "dueCards-title": "የሚያበቁ ካርዶች",
   "duplicate-board": "ሰሌዳን አባዛ",
   "edit": "አርትዕ",

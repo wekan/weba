@@ -123,6 +123,7 @@
   "disable-all-export": "Désactiver tous les exports",
   "disable-all-import": "Désactiver tous les imports",
   "done": "Fait",
+  "drag-to-reorder": "Faites glisser pour réorganiser. Les touches fléchées Haut et Bas déplacent d’un cran.",
   "dueCards-title": "Cartes Échues",
   "duplicate-board": "Dupliquer le tableau",
   "edit": "Modifier",

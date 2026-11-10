@@ -123,6 +123,7 @@
   "disable-all-export": "Desactiva tota l'exportació",
   "disable-all-import": "Desactiva tota la importació",
   "done": "Fet",
+  "drag-to-reorder": "Arrossegueu per canviar l’ordre. Les tecles de fletxa amunt i avall mouen una posició.",
   "dueCards-title": "Fitxes pendents",
   "duplicate-board": "Tauler duplicat",
   "edit": "Edita",

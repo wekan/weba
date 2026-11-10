@@ -123,6 +123,7 @@
   "disable-all-export": "Disable all export",
   "disable-all-import": "Disable all import",
   "done": "Done",
+  "drag-to-reorder": "Drag to reorder. Up and Down arrow keys move one step.",
   "dueCards-title": "Due Cards",
   "duplicate-board": "Duplicate Board",
   "edit": "Edit",

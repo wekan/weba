@@ -123,6 +123,7 @@
   "disable-all-export": "Desactivar totas las exportacions",
   "disable-all-import": "Desactivar totas las importacions",
   "done": "Acabat",
+  "drag-to-reorder": "Lisatz per cambiar l’òrdre. Las tòcas de flècha cap amont e cap aval desplaçan d’una posicion.",
   "dueCards-title": "Cartas a vencer",
   "duplicate-board": "Duplicar tablèu",
   "edit": "Modificar",

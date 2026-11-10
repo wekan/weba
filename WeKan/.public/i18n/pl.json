@@ -123,6 +123,7 @@
   "disable-all-export": "Wyłącz cały eksport",
   "disable-all-import": "Wyłącz cały import",
   "done": "Zakończone",
+  "drag-to-reorder": "Przeciągnij, aby zmienić kolejność. Klawisze strzałek w górę i w dół przesuwają o jedną pozycję.",
   "dueCards-title": "Karty oczekujące",
   "duplicate-board": "Duplikuj tablicę",
   "edit": "Edytuj",

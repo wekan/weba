@@ -1,0 +1,46 @@
+Public Sub Main()
+  Dim mode As String = Env["WEBA_ORDER_MODE"]
+  Dim id As Integer = Val(Env["WEBA_ORDER_BOARD"])
+  Dim data As New Collection
+  Dim changes As Collection
+  Dim key As String
+  If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
+  Session["username"] = "rest-other"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+  If mode = "seed" Then
+    WebDatabase.Register("rest-order-manager", Env["WEBA_TEST_PASSWORD"])
+    WebDatabase.Register("rest-order-reader", Env["WEBA_TEST_PASSWORD"])
+    id = KanbanStore.AddBoard("View order <literal>")
+    BoardAccess.SetMember(id, "rest-order-manager", "board-admin")
+    BoardAccess.SetMember(id, "rest-order-reader", "read-only")
+    BoardVisibility.SavePermission(id, "public")
+    BoardViewPolicy.Save(id, JSON.Decode("{\"defaultPublicBoardView\":\"board-view-table\",\"defaultPrivateBoardView\":\"board-view-gantt\"}"))
+    data["board"] = id
+  Endif
+  If mode = "demote" Then BoardAccess.SetMember(id, "rest-order-manager", "read-only")
+  If mode = "promote" Then BoardAccess.SetMember(id, "rest-order-manager", "board-admin")
+  If mode = "features-off" Or mode = "features-on" Or mode = "cleanup" Then
+    Session["username"] = "rest-owner"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("rest-owner")
+    changes = InstanceFeatures.Settings()
+    changes.Remove("pilotUsernames")
+    For Each key In ["views-table", "views-calendar", "views-time", "views-gantt"]
+      changes["states"][key] = mode <> "features-off"
+    Next
+    InstanceFeatures.Save(changes)
+    Session["username"] = "rest-other"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+  Endif
+  If mode = "cleanup" Then
+    BoardVisibility.SavePermission(id, "private")
+    Session["username"] = "rest-owner"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("rest-owner")
+    WebDatabase.DeleteUser("rest-order-manager")
+    WebDatabase.DeleteUser("rest-order-reader")
+    Print "{}"
+    Return
+  Endif
+  data["policy"] = BoardViewPolicy.Settings(id)
+  data["allowed"] = InstanceFeatures.AllowedViews(BoardViewPolicy.Keys())
+  Print JSON.Encode(data)
+End
