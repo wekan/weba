@@ -1278,6 +1278,20 @@ entry and reload, encoded/trailing paths, denied section input, viewer/assets an
 mobile. Host tests prove root-only dispatch, empty CGI query and non-GET/encoding
 refusal. Included in full live source/package runs and `--overview-entry`.
 
-This initial production entry phase does not complete menu/history navigation,
-workspace slug resolution, Home/Templates or original Meteor route/DDP transport.
-Those remain explicit TODO work.
+The three supported overview menus now use the same consumed route command for
+click, entry and popstate. A unique per-document intent token accompanies the
+section; the native handler validates the two-field shape, known section and
+bounded nonempty token after current-identity checks. `OverviewRouteState` sends
+only the current supported native section and correlation token in private lossless
+JSON. The client waits for a matching pair, not merely an already-visible section:
+a delayed Back reply must not acknowledge a newer Forward just because its target
+was visible before either request ran. Menu clicks push only a changed source path;
+popstate updates metadata without push. The initial root frame keeps its URL and
+stores its acknowledged section. Disabled controls are not intercepted. These are
+UI correlation tokens, not authentication or authorization credentials.
+`overview-history.browser.cjs` compares source paths, tests exact history lengths,
+root preservation, Back/Forward, a held old native request followed by newer
+Forward, reload, malformed/forbidden input, and mobile. Both entry and history run
+in focused `--overview-entry` and full source/package live modes.
+Workspace slug URLs and their history, Home/Templates, other-page navigation and
+original Meteor route/DDP transport remain explicit TODO work.

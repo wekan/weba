@@ -56,6 +56,7 @@ Private $catalogSort As String = "custom"
 Private $catalogPage As Integer = 1
 Private $catalogTotal As Integer
 Private $spaceMenu As Integer
+Private $overviewRouteToken As String
 Private $spacesState As String
 Private $spaceRows As New WebContainer[]
 Private $spaceButtons As New Collection
@@ -795,8 +796,22 @@ Catch
 End
 
 Private Sub UpdateHeader()
+  Dim routeSection As String
+  Dim routeAck As New Collection
   Dim b As Result
   Dim overview As Boolean = Not $board And ($view = "Boards" Or $view = "Archive" Or $view = "Starred")
+  If overview Then
+    If $view = "Archive" Then
+      routeSection = "archive"
+    Else If $view = "Starred" Then
+      routeSection = "starred"
+    Else If $spaceMenu = 0 Then
+      routeSection = "remaining"
+    Endif
+  Endif
+  routeAck.Add(routeSection, "section")
+  routeAck.Add($overviewRouteToken, "token")
+  OverviewRouteState.Text = Replace(JSON.Encode(routeAck), " ", "\\u0020")
   ViewMenu.Visible = $view <> "Profile" And $view <> "Admin panel"
   AddBoard.Visible = ViewMenu.Visible And BoardCreation.Allowed()
   HeaderSearch.Visible = ViewMenu.Visible
@@ -3778,11 +3793,17 @@ Catch
 End
 
 Public Sub EntryRouteAction_Change()
+  Dim fields As String[] = Split(EntryRouteAction.Text, "|")
   Dim section As String = EntryRouteAction.Text
   If Not WebIdentity.Username Then Error.Raise("Sign in required")
   If Not section Then Return
   ' Empty the command after capture; identical later entries must raise Change.
   EntryRouteAction.Text = ""
+  If fields.Count <> 2 Then Error.Raise("Unknown overview entry")
+  section = fields[0]
+  If Not fields[1] Or Len(fields[1]) > 128 Then Error.Raise("Unknown overview entry")
+  If ["remaining", "starred", "archive"].Find(section) < 0 Then Error.Raise("Unknown overview entry")
+  $overviewRouteToken = fields[1]
   Select section
     Case "remaining"
       Home_Click()

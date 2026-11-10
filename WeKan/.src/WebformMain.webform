@@ -638,6 +638,10 @@
       Expand = True
     }
   }
+  { OverviewRouteState WebLabel
+    Class = "weba-user-text"
+    Visible = False
+  }
   { EntryRouteAction WebTextBox
     Visible = False
   }

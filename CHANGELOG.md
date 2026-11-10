@@ -2,6 +2,15 @@
 
 This work adds the following features and fixes:
 
+- Synchronize Remaining/Starred/Archive menu URLs and Back/Forward with guarded
+  native section/token acknowledgements. Preserve the root frame, push only a
+  changed source path and never add frames for popstate. Ignore older replies
+  until the latest intent matches; fix the delayed Back/newer Forward race that
+  added duplicate entries. Retain current identity/static section guards and
+  reject malformed/forbidden commands. Test source paths, exact history lengths,
+  delayed requests, reload and mobile in real browsers. Workspace and other-page
+  routing/history remain pending. Thanks to xet7.
+
 - Add production direct GET entry for source Remaining/Starred/Archive URLs with
   validated per-tab login handoff, authenticated reload and guarded native
   section dispatch and consumed-command clearing for repeat entry after manual

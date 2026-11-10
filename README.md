@@ -612,8 +612,17 @@ set a same-origin root asset base, so CSS, translations, native resources and th
 viewer bundle load from nested addresses. Browser/host tests cover these paths,
 forged section denial, no missing assets and mobile entry. Run
 `python3 tests/run-http.py --overview-entry [--archive]` with the usual test env.
-This is initial section entry routing: menu URL updates, Back/Forward, workspace
-slug paths, Home/Templates and complete source route/DDP integration remain TODO.
+Supported Remaining/Starred/Archive menu clicks now push their source paths only
+when the path changes. The original root URL stays intact in its first frame.
+Back/Forward restores its section through the same guarded native command without
+adding frames. Commands carry a per-intent correlation token; a lossless private
+native acknowledgement must match both section and token before updating history,
+so an older response cannot add entries after a newer Forward intent. Repeated
+clicks do not duplicate history. Reload and malformed/forbidden commands are tested,
+as are delayed old requests and mobile navigation. The token correlates UI intent;
+current native identity and existing data permissions remain the authority.
+Workspace slug URLs and their history, Home/Templates, other page routes and
+complete source route/DDP integration remain TODO.
 
 Source workspace `iconColor` metadata now has private native persistence in the
 additive `kb_board_space_icons` table. `BoardSpaces.Edit` accepts an optional typed
