@@ -248,3 +248,7 @@ body.weba-is-dragging:has(.weba-home-drag .home-remove-target.is-over) *{cursor:
 .weba-guest-board{display:flex;flex-wrap:wrap;align-content:flex-start;gap:12px;padding:12px;overflow:auto;box-sizing:border-box;height:100%}
 .weba-guest-detail{display:block;box-sizing:border-box;padding:14px;border:1px solid #bbb;border-radius:4px;background:white;color:#222;overflow-wrap:anywhere;white-space:pre-wrap}
 .weba-guest-detail{width:100%}
+
+.weba-guest-children{width:100%;box-sizing:border-box;padding:12px;background:white;overflow-wrap:anywhere}
+.weba-guest-comment,.weba-guest-checklist{border-bottom:1px solid #ddd;padding:8px;white-space:pre-wrap}
+.weba-guest-checklist ul{list-style:none;padding-inline-start:8px}

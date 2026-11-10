@@ -5,6 +5,11 @@ Public Sub Main()
   Dim destination As Integer
   Dim card As Integer
   Dim archivedCard As Integer
+  Dim commentId As Integer
+  Dim checklistId As Integer
+  Dim itemId As Integer
+  Dim foreignCard As Integer
+  Dim foreignChecklist As Integer
   Dim db As Connection
   Dim data As Collection
   Dim row As Result
@@ -23,12 +28,39 @@ Public Sub Main()
   BoardVisibility.SaveBoard(destination, "public", False)
   card = KanbanStore.SaveCard(pub, 0, "Guest card", "Guest body <literal>", "Default", "Todo", "", "", "")
   archivedCard = KanbanStore.SaveCard(pub, 0, "Archived guest card", "Retained archived body", "Default", "Todo", "", "", "")
-  KanbanStore.ArchiveCard(pub, archivedCard, True)
   db = WebDatabase.OpenConnection()
+  If db.Tables.Exist("kb_entries") Then Error.Raise("Missing-schema fixture was preinitialized")
+  Session["username"] = ""
+  data = GuestBoardRead.Load(CStr(pub), CStr(card))
+  If data["children"]["comments"].Count Or data["children"]["checklists"].Count Then Error.Raise("Missing child schema returned content")
+  If db.Tables.Exist("kb_entries") Or db.Tables.Exist("kb_files") Then Error.Raise("Guest read initialized mutable child schema")
+  Session["username"] = "guest-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("guest-owner")
+  KanbanStore.ArchiveCard(pub, archivedCard, True)
+  commentId = CardContent.Save(pub, card, 0, "comment", "", "Guest comment <literal>", 0, False, 0)
+  checklistId = CardContent.Save(pub, card, 0, "checklist", "Comments", "", 0, False, 0)
+  itemId = CardContent.Save(pub, card, 0, "checkitem", "Guest task", "Task body", checklistId, True, 0)
+  foreignCard = KanbanStore.SaveCard(hidden, 0, "Hidden card", "", "Default", "Todo", "", "", "")
+  foreignChecklist = CardContent.Save(hidden, foreignCard, 0, "checklist", "PRIVATE-CHECKLIST-CANARY", "", 0, False, 0)
+  CardContent.Save(hidden, foreignCard, 0, "comment", "", "PRIVATE-COMMENT-CANARY", 0, False, 0)
+  db.Exec("INSERT INTO kb_entries (board_id,card_id,kind,parent_id,title,body,done) VALUES (&1,&2,'checkitem',&3,'ORPHAN-CANARY','',0)", pub, card, foreignChecklist)
+  db.Exec("UPDATE kb_entries SET author='' WHERE id=&1", commentId)
+  RetiredAuthors.Remember("entry", commentId, pub, card, "Retained <author>")
   Session["username"] = ""
   before = Snapshot()
   data = GuestBoardRead.Load(CStr(pub))
   If data["cards"].Count <> 1 Or data["cardId"] <> 0 Then Error.Raise("Guest board archive filter failed")
+  If data.Exist("children") Then Error.Raise("Board grid fetched selected-card children")
+  data = GuestBoardRead.Load(CStr(pub), CStr(card))
+  If data["children"]["comments"].Count <> 1 Or data["children"]["checklists"].Count <> 1 Then Error.Raise("Guest child scope incorrect")
+  If data["children"]["comments"][0]["author"] <> "Retained <author>" Then Error.Raise("Retained author missing")
+  If data["children"]["checklists"][0]["items"].Count <> 1 Then Error.Raise("Foreign/orphan checklist child leaked")
+  If Not data["children"]["checklists"][0]["items"][0]["done"] Then Error.Raise("Checklist completion lost")
+  If InStr(JSON.Encode(data), "CANARY") Then Error.Raise("Guest projection leaked foreign/orphan content")
+  db.Exec("UPDATE kb_retired_authors SET board_id=&1 WHERE item_id=&2", hidden, commentId)
+  data = GuestBoardRead.Load(CStr(pub), CStr(card))
+  If data["children"]["comments"][0]["author"] <> "" Then Error.Raise("Foreign retained author leaked")
+  db.Exec("UPDATE kb_retired_authors SET board_id=&1 WHERE item_id=&2", pub, commentId)
   data = GuestBoardRead.Load(CStr(pub), CStr(archivedCard))
   If data["card"]["description"] <> "Retained archived body" Or Not data["card"]["archived"] Then Error.Raise("Explicit archived card not readable")
   For Each text In ["0", "01", "+1", "1.0", "1e0", "2147483648", CStr(inst), CStr(hidden)]
@@ -54,7 +86,7 @@ Public Sub Main()
   Try GuestBoardRead.Load(CStr(pub), CStr(archivedCard))
   denied = Error
   If Not denied Then Error.Raise("Public-to-private transition retained guest details")
-  Print "Anonymous projection: public-only scope, canonical IDs, no synthetic principal/writes, active vs explicit archived card scope, current public moved destination/private refusal and live permission revocation passed"
+  Print "Anonymous projection: selected comment/checklist/parent and retained-author scope, missing-schema/no-write reads, public-only scope, canonical IDs, no synthetic principal/writes, active vs explicit archived card scope, current public moved destination/private refusal and live permission revocation passed"
 End
 
 Private Function Snapshot() As String
@@ -64,7 +96,7 @@ Private Function Snapshot() As String
   Dim r As Result
   Dim row As Collection
   Dim field As ResultField
-  For Each name In ["kb_boards", "kb_cards", "kb_lists", "kb_members", "kb_board_visibility", "kb_activity", "account_sessions"]
+  For Each name In ["kb_boards", "kb_cards", "kb_lists", "kb_members", "kb_board_visibility", "kb_activity", "account_sessions", "kb_entries", "kb_retired_authors"]
     rows = New Variant[]
     r = WebDatabase.OpenConnection().Find(name, "TRUE ORDER BY 1")
     For Each r

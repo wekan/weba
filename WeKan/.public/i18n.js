@@ -45,7 +45,7 @@
         state[attr] = {source,translated}; attributes.set(control,state);
       }
     });
-    for(const [selector,text] of [['.weba-public-heading','Public'],['.weba-public-board-caption','Board'],['.weba-public-description-caption','Description'],['.weba-public-empty','No results']]){
+    for(const [selector,text] of [['.weba-guest-comments-title','Comments'],['.weba-guest-checklists-title','Checklists'],['.weba-public-heading','Public'],['.weba-public-board-caption','Board'],['.weba-public-description-caption','Description'],['.weba-public-empty','No results']]){
       document.querySelectorAll(selector).forEach(el=>{const caption=translate(text);if(el.textContent!==caption)el.textContent=caption;});
     }
     // Dynamic workspace rows have generated native IDs; translate only their

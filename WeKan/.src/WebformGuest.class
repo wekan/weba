@@ -145,12 +145,28 @@ Public Sub GuestSurface_Render()
   Dim card As Collection
   Dim lane As Collection
   Dim list As Collection
+  Dim comment As Collection
+  Dim checklist As Collection
+  Dim item As Collection
   If Not $data Then Return
   Print "<script>" & File.Load(".public/kanban.js") & "</script>"
   Print "<section class='weba-content weba-guest-board' data-view='Swimlanes' data-board='" & CStr($data["id"]) & "' data-board-color='" & Html($data["color"]) & "' data-editable='false' data-card-move='false'>"
   If $cardText Then
     card = $data["card"]
     Print "<article class='weba-guest-detail weba-user-text'><h2>" & Html(card["title"]) & "</h2><p>" & Html(card["description"]) & "</p><p>" & Html(card["status"]) & " · " & Html(card["assignee"]) & " · " & Html(card["labels"]) & " · " & Html(card["due_day"]) & "</p></article>"
+    Print "<section class='weba-guest-children'><h3 class='weba-guest-comments-title'>Comments</h3>"
+    For Each comment In $data["children"]["comments"]
+      Print "<article class='weba-guest-comment weba-user-text' data-entry-id='" & CStr(comment["id"]) & "'><header>" & Html(comment["author"]) & " · " & Html(Str(comment["createdAt"])) & "</header><p>" & Html(comment["body"]) & "</p></article>"
+    Next
+    Print "<h3 class='weba-guest-checklists-title'>Checklists</h3>"
+    For Each checklist In $data["children"]["checklists"]
+      Print "<section class='weba-guest-checklist weba-user-text' data-entry-id='" & CStr(checklist["id"]) & "'><h4>" & Html(checklist["title"]) & "</h4><ul>"
+      For Each item In checklist["items"]
+        Print "<li data-entry-id='" & CStr(item["id"]) & "'><label><input type='checkbox' disabled" & If(item["done"], " checked", "") & "> " & Html(item["title"]) & "</label><p>" & Html(item["body"]) & "</p></li>"
+      Next
+      Print "</ul></section>"
+    Next
+    Print "</section>"
   Endif
   Print "<div class='weba-layout' hidden>"
   For Each lane In $data["lanes"]

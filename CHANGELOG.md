@@ -2,6 +2,25 @@
 
 This work adds the following features and fixes:
 
+- Show native selected-card guest comments and checklists without new mutation
+  targets. Scope child reads to the current public board/card, include only
+  checklist items with a valid parent on that same card, and scope retained
+  author text by kind/item/board/card. Keep board-grid child reads absent and
+  return empty sections on legacy databases without initializing mutable child
+  tables. Render escaped literal text, author/time and disabled completion
+  states; translate fixed headings while preserving user checklist titles.
+  Retain idle DOM and update edited/deleted children live, clearing them on
+  public-access loss and restoring them through the existing read guards.
+  Verify native missing-schema/no-write, foreign/orphan/provenance/completion
+  negatives and real browser literal/script-like text, translated/literal
+  captions, disabled states, idle stability, edits/deletion and privacy/recovery.
+  The complete local suite (66 host tests) and complete source/packaged browser
+  suites pass.
+  Native entry-ID order, flat child records and retained author names are
+  explicit adapters. Other child models/downloads, rich text, source checklist
+  ordering and full original Meteor publications/actions remain pending.
+  Thanks to xet7.
+
 - Add native anonymous public board and core card entries in a separate
   read-only guest form. Derive initial board/card IDs from validated host paths,
   retain private/instance login refusal and use an explicit login entry without

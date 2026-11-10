@@ -96,6 +96,7 @@ Public Function Load(boardText As String, Optional cardText As String) As Collec
     r = db.Find("kb_cards", "id=&1 AND board_id=&2 AND " & Live(db, "card", "kb_cards"), cardId, boardId)
     If Not r.Available Then Error.Raise("Card not accessible")
     data["card"] = Card(r)
+    data["children"] = Children(db, boardId, cardId)
   Endif
   RequirePublic(boardId)
   r = db.Find("kb_boards", "id=&1", boardId)
@@ -155,4 +156,50 @@ Private Function Color(db As Connection, boardId As Integer, kind As String, ite
     If InStr("0123456789abcdef", LCase(Mid(value, i, 1))) = 0 Then Return ""
   Next
   Return value
+End
+
+' Selected-card children only; never call mutable model initialization on a read.
+Private Function Children(db As Connection, boardId As Integer, cardId As Integer) As Collection
+  Dim data As New Collection
+  Dim comments As New Variant[]
+  Dim checklists As New Variant[]
+  Dim parents As New Collection
+  Dim row As Collection
+  Dim r As Result
+  Dim author As Result
+  Dim items As Variant[]
+  data["comments"] = comments
+  data["checklists"] = checklists
+  If Not db.Tables.Exist("kb_entries") Then Return data
+  r = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind='checklist' ORDER BY id", boardId, cardId)
+  For Each r
+    row = New Collection
+    row["id"] = r!id
+    row["title"] = CStr(r!title)
+    row["items"] = New Variant[]
+    parents[CStr(r!id)] = row
+    checklists.Add(row)
+  Next
+  r = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind IN ('comment','checkitem') ORDER BY id", boardId, cardId)
+  For Each r
+    row = New Collection
+    row["id"] = r!id
+    row["body"] = CStr(r!body)
+    If r!kind = "comment" Then
+      row["author"] = CStr(r!author)
+      row.Add(r!created_at, "createdAt")
+      If Not row["author"] And db.Tables.Exist("kb_retired_authors") Then
+        author = db.Find("kb_retired_authors", "kind='entry' AND item_id=&1 AND board_id=&2 AND card_id=&3", r!id, boardId, cardId)
+        If author.Available Then row["author"] = CStr(author!display_name)
+      Endif
+      comments.Add(row)
+    Else
+      If Not parents.Exist(CStr(r!parent_id)) Then Continue
+      row["title"] = CStr(r!title)
+      row["done"] = CBool(r!done)
+      items = parents[CStr(r!parent_id)]["items"]
+      items.Add(row)
+    Endif
+  Next
+  Return data
 End

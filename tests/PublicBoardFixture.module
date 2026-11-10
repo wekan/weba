@@ -4,6 +4,9 @@ Public Sub Main()
   Dim id As Integer = Val(Env["WEBA_PUBLIC_ID"])
   Dim ids As New Integer[]
   Dim data As New Collection
+  Dim commentId As Integer
+  Dim checklistId As Integer
+  Dim itemId As Integer
   Dim cardId As Integer
   Dim i As Integer
   Dim r As Result
@@ -25,6 +28,22 @@ Public Sub Main()
       If i = 23 Then KanbanStore.ArchiveBoard(id, True)
     Next
     data["ids"] = ids
+  Else If mode = "guest-children" Then
+    cardId = Val(Env["WEBA_PUBLIC_CARD"])
+    commentId = CardContent.Save(id, cardId, 0, "comment", "", "Comment <script>literal</script>", 0, False, 0)
+    checklistId = CardContent.Save(id, cardId, 0, "checklist", "Comments", "", 0, False, 0)
+    itemId = CardContent.Save(id, cardId, 0, "checkitem", "Task <literal>", "Notes", checklistId, True, 0)
+    data["commentId"] = commentId
+    data["checklistId"] = checklistId
+    data["itemId"] = itemId
+  Else If mode = "children-update" Then
+    cardId = Val(Env["WEBA_PUBLIC_CARD"])
+    CardContent.Save(id, cardId, Val(Env["WEBA_PUBLIC_COMMENT"]), "comment", "", "Updated guest comment", 0, False, 0)
+    CardContent.Save(id, cardId, Val(Env["WEBA_PUBLIC_ITEM"]), "checkitem", "Updated task", "", Val(Env["WEBA_PUBLIC_CHECKLIST"]), False, 0)
+  Else If mode = "children-delete" Then
+    cardId = Val(Env["WEBA_PUBLIC_CARD"])
+    CardContent.DeleteEntry(id, cardId, Val(Env["WEBA_PUBLIC_COMMENT"]))
+    CardContent.DeleteEntry(id, cardId, Val(Env["WEBA_PUBLIC_CHECKLIST"]))
   Else If mode = "private" Or mode = "public" Or mode = "instance" Then
     BoardVisibility.SavePermission(id, mode)
   Else If mode = "rename" Then

@@ -156,7 +156,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   service projection and native route/history flow, recorded in CHANGELOG.md.
   Native anonymous public board/core-card entries, separate read-only form,
   closed command dispatcher, history/reload/privacy and login handoff are
-  recorded there too. Guest child panels/downloads/additional views, source
+  recorded there too. Native selected-card guest comments/checklists, scoped
+  parent/author reads, disabled completion and live privacy are recorded there
+  too. Remaining guest child models/downloads/additional views, source
   backgrounds/templates/global-sort fields, global visibility/editing controls,
   first-edit membership, import/copy and original publication/ReportPages
   integration remain open.

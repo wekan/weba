@@ -796,9 +796,30 @@ callback/upload refusal, privacy/retry, missing-card fallback, login handoff and
 Finnish/mobile layout. The complete local suite (66 host tests) and complete
 source/packaged browser suites pass. Final focused source/packaged checks and
 all-catalog translation checks also pass with the source Refresh caption.
-The current guest surface covers kanban and core card
-fields; child panels, attachment downloads, additional views, source backgrounds/
-templates and full Meteor publications/actions remain pending.
+The guest surface covers kanban/core card fields and the comments/checklists
+below. Other child models, attachment downloads, additional views, source
+backgrounds/templates and full Meteor publications/actions remain pending.
+
+Selected guest cards now show comments and checklists through the same final
+public/card scope guards. Only the selected board/card's records are queried;
+checklist items must have a checklist parent on that same board/card. Foreign or
+orphaned records are excluded. Comments retain their native author and creation
+time; retained author text is read only from matching kind/item/board/card
+provenance. No mutable child-store initialization is called: legacy databases
+without child tables return empty sections without creating them. The board grid
+does not fetch children.
+
+Comment and checklist text is escaped and stays literal. Only the Comments and
+Checklists headings translate; a checklist named Comments remains unchanged.
+Completion is displayed by disabled checkboxes with no mutation target. Idle
+polls retain the DOM, while external edits/deletion update the selected panel;
+permission loss clears the children with the card. `GuestBoardReadTest` adds
+missing-schema/no-write, foreign/orphan/provenance and completion-state checks;
+the guest browser test covers literal script-like text, fixed-heading versus
+user-title translation, disabled state, stable idle DOM, live edits/deletion and
+privacy/recovery. The complete local suite (66 host tests) and complete source/
+packaged browser suites pass. These are native flat-entry and retained-name adapters, not the
+original Meteor child publications, rich-text viewer or checklist ordering model.
 
 First native root landing after login or full
 page reload now opens the current readable active Home board once. All Boards
