@@ -35,10 +35,10 @@
       return send.call(this,body);
     };
   }
-  const entryKey='weba-overview-entry',overviewSections=['remaining','starred','archive','workspaces'];
+  const entryKey='weba-overview-entry',overviewSections=['remaining','starred','archive','home','workspaces'];
   let entrySent=false,overviewPending=null,overviewObserved=null,overviewIntent=0,deferredOverview=null;
   function overviewRouteAtPath(){try{
-    const match=/^\/allboards\/(remaining|starred|archive|workspaces)(?:\/(.*))?$/.exec(decodeURIComponent(root.location.pathname));
+    const match=/^\/allboards\/(remaining|starred|archive|home|workspaces)(?:\/(.*))?$/.exec(decodeURIComponent(root.location.pathname));
     return match&&(match[1]==='workspaces'||!match[2])?{section:match[1],path:match[2]||''}:null;
   }catch(_){return null;}}
   function overviewAck(){const el=document.querySelector('[id$=".OverviewRouteState"]');return el?.textContent?JSON.parse(el.textContent):null;}
@@ -104,7 +104,7 @@
     if(!route){entrySent=true;return;}
     if(sendOverviewPath(route,'entry')){entrySent=true;try{root.sessionStorage.removeItem(entryKey);}catch(_){}}
   }
-  const icons={Swimlanes:'th-large',Kanban:'trello',Calendar:'calendar',Gantt:'bar-chart',TableView:'table',Charts:'pie-chart',ContextMembers:'users',CardMembersButton:'users',CardAssigneesButton:'user',ContextAssignees:'user',AddCardPerson:'user-plus',RemoveCardPerson:'user-times',ContextAssignSelf:'user-plus',SaveMember:'save',RemoveMember:'user-times',ImportBoard:'download',ContextDelete:'trash-o',ContextRename:'pencil',ContextCopy:'clipboard',ContextMove:'arrow-up',ContextColor:'paint-brush',ContextStar:'star-o',ContextWatch:'eye-slash',ContextWip:'ban',ContextDescription:'align-left',ContextHistory:'history',ContextExport:'upload',ContextArchive:'archive',ContextRestore:'undo',ContextAddCard:'plus',ContextAddList:'plus',ContextAddLane:'plus',Starred:'star',BoardSettings:'cog',ArchivedItems:'archive',ContextComments:'comment-o',ContextChecklists:'check-square-o',ContextChecklistItems:'check',ContextSubtasks:'sitemap',ContextDependencies:'link',ContextFields:'list-alt',ContextTime:'clock-o',ContextAttachments:'paperclip',CardComments:'comment-o',CardChecklists:'check-square-o',CardChecklistItems:'check',CardSubtasks:'sitemap',CardDependencies:'link',CardFields:'list-alt',CardTime:'clock-o',CardAttachments:'paperclip',DetailStart:'play',DetailStop:'stop',DetailExport:'upload',DetailDownload:'download',DetailDelete:'trash-o'};
+  const icons={Swimlanes:'th-large',Kanban:'trello',Calendar:'calendar',Gantt:'bar-chart',TableView:'table',Charts:'pie-chart',ContextMembers:'users',CardMembersButton:'users',CardAssigneesButton:'user',ContextAssignees:'user',AddCardPerson:'user-plus',RemoveCardPerson:'user-times',ContextAssignSelf:'user-plus',SaveMember:'save',RemoveMember:'user-times',ImportBoard:'download',ContextDelete:'trash-o',ContextRename:'pencil',ContextCopy:'clipboard',ContextMove:'arrow-up',ContextColor:'paint-brush',ContextStar:'star-o',ContextWatch:'eye-slash',ContextWip:'ban',ContextDescription:'align-left',ContextHistory:'history',ContextExport:'upload',ContextArchive:'archive',ContextRestore:'undo',ContextAddCard:'plus',ContextAddList:'plus',ContextAddLane:'plus',Starred:'star',HomeBoards:'home',BoardSettings:'cog',ArchivedItems:'archive',ContextComments:'comment-o',ContextChecklists:'check-square-o',ContextChecklistItems:'check',ContextSubtasks:'sitemap',ContextDependencies:'link',ContextFields:'list-alt',ContextTime:'clock-o',ContextAttachments:'paperclip',CardComments:'comment-o',CardChecklists:'check-square-o',CardChecklistItems:'check',CardSubtasks:'sitemap',CardDependencies:'link',CardFields:'list-alt',CardTime:'clock-o',CardAttachments:'paperclip',DetailStart:'play',DetailStop:'stop',DetailExport:'upload',DetailDownload:'download',DetailDelete:'trash-o'};
   let markdownGeneration=0,appliedMarkdownRaw=null,appliedMarkdownSchemes=null,appliedExternalLinks=null,appliedCardTitles=null;
   function syncMarkdownPolicy(){
     const snapshot=document.querySelector('[id$=".MarkdownPolicySnapshot"]');if(!snapshot||!root.webaWorkspaceMarkdown)return;
@@ -290,8 +290,8 @@
         const id=workspace.closest('.weba-space-row')?.className.match(/\bweba-space-id-(\d+)\b/)?.[1];
         if(id){event.preventDefault();event.stopImmediatePropagation();sendOverviewRoute('workspaces','menu',id);}return;
       }
-      const button=event.target.closest?.('[id$=".Home"],[id$=".Remaining"],[id$=".Starred"],[id$=".Archive"]');if(!button)return;
-      const name=button.id.slice(button.id.lastIndexOf('.')+1),section=({Home:'remaining',Remaining:'remaining',Starred:'starred',Archive:'archive'})[name];
+      const button=event.target.closest?.('[id$=".Home"],[id$=".Remaining"],[id$=".Starred"],[id$=".HomeBoards"],[id$=".Archive"]');if(!button)return;
+      const name=button.id.slice(button.id.lastIndexOf('.')+1),section=({Home:'remaining',Remaining:'remaining',Starred:'starred',HomeBoards:'home',Archive:'archive'})[name];
       if(section&&!button.disabled&&!button.classList.contains('gw-disabled')&&button.getAttribute('aria-disabled')!=='true'){event.preventDefault();event.stopImmediatePropagation();sendOverviewRoute(section,'menu');}
     },true);
     root.addEventListener('popstate',event=>{

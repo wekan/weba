@@ -178,7 +178,13 @@ Public Sub BoardPoll_Timer()
   If IsOverview() And $archive Then
     If RecoveryStore.CanPurge() <> $purgeAllowed Then RefreshCatalogVisual()
   Endif
-  If RefreshSpaces() And IsOverview() Then RefreshTree()
+  If RefreshSpaces() Then
+    If IsOverview() Then
+      RefreshTree()
+    Else
+      UpdateHeader()
+    Endif
+  Endif
   If $board > 0 Then
     If $view <> "Profile" And $view <> "Admin panel" Then
       If Not BoardAccess.Role($board) Then
@@ -206,7 +212,7 @@ Catch
 End
 
 Private Function IsOverview() As Boolean
-  Return $board = 0 And ($view = "Boards" Or $view = "Archive" Or $view = "Starred")
+  Return $board = 0 And ($view = "Boards" Or $view = "Archive" Or $view = "Starred" Or $view = "Home")
 End
 
 Private Sub ValidateOpenCards()
@@ -390,6 +396,7 @@ Private Function LoadBoardOverview() As Collection
   If $view <> "Starred" And $spaceMenu > 0 Then params["menu"] = CStr($spaceMenu)
   If $view = "Boards" And $spaceMenu < 0 Then params["menu"] = "workspaces"
   If $view = "Archive" Then params["menu"] = "archive"
+  If $view = "Home" Then params["menu"] = "home"
   params["page"] = $catalogPage
   If $catalogSort = "custom" Then
     data = BoardCatalog.Unpaged(params, $archive)
@@ -586,7 +593,7 @@ Public Sub Visual_Render()
   If $board Then $liveState = BoardLive.State($board, $archive)
   Print "<script>" & File.Load(".public/kanban.js") & "</script>"
   If $board Then boardColor = WorkspaceStore.Setting($board, "board", $board, "color", "#2980b9")
-  Print "<section data-multi-active=\"" & If(IsOverview() And BoardSelection.Active(SelectionState()), "true", "false") & "\" data-selection-count=\"" & Str(BoardSelection.Count(SelectionState())) & "\" data-selection-revision=\"" & Str(BoardSelection.Revision(SelectionState())) & "\" data-selection-action=\"" & Html(BoardSelectionAction.Name) & "\" data-board-drop=\"" & If(IsOverview(), "true", "false") & "\" data-board-source=\"" & If($archive, "archive", If($view = "Starred", "starred", If($spaceMenu > 0, "workspace", "remaining"))) & "\" data-workspace-reorder=\"" & If(IsOverview(), "true", "false") & "\" data-board-reorder=\"" & If(IsOverview() And Not $archive And $catalogSort = "custom", "true", "false") & "\" data-board-color=\"" & Html(boardColor) & "\" data-context=\"" & Html(ContextAction.Name) & "\" data-drag=\"" & Html(DragAction.Name) & "\" data-board=\"" & Str($board) & "\" data-action=\"" & Html(BoardAction.Name) & "\" data-card-move=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "moveCard"), "true", "false") & "\" data-editable=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "write"), "true", "false") & "\" class=\"weba-content\" data-tree=\"" & Html(Boards.Name) & "\" data-view=\"" & Html($view) & "\">"
+  Print "<section data-multi-active=\"" & If(IsOverview() And BoardSelection.Active(SelectionState()), "true", "false") & "\" data-selection-count=\"" & Str(BoardSelection.Count(SelectionState())) & "\" data-selection-revision=\"" & Str(BoardSelection.Revision(SelectionState())) & "\" data-selection-action=\"" & Html(BoardSelectionAction.Name) & "\" data-board-drop=\"" & If(IsOverview() And $view <> "Home", "true", "false") & "\" data-board-source=\"" & If($archive, "archive", If($view = "Starred", "starred", If($spaceMenu > 0, "workspace", "remaining"))) & "\" data-workspace-reorder=\"" & If(IsOverview() And $view <> "Home", "true", "false") & "\" data-board-reorder=\"" & If(IsOverview() And $view <> "Home" And Not $archive And $catalogSort = "custom", "true", "false") & "\" data-board-color=\"" & Html(boardColor) & "\" data-context=\"" & Html(ContextAction.Name) & "\" data-drag=\"" & Html(DragAction.Name) & "\" data-board=\"" & Str($board) & "\" data-action=\"" & Html(BoardAction.Name) & "\" data-card-move=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "moveCard"), "true", "false") & "\" data-editable=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "write"), "true", "false") & "\" class=\"weba-content\" data-tree=\"" & Html(Boards.Name) & "\" data-view=\"" & Html($view) & "\">"
   If $view = "Profile" Then
     Print "<p>Signed in as " & Html(WebIdentity.Username) & "</p>"
   Else If $view = "Admin panel" Then
@@ -631,8 +638,8 @@ Public Sub Visual_Render()
       Else If $view = "Starred" Then
         If WorkspaceStore.Setting(b!id, "board", b!id, "star") <> "1" Then Continue
       Endif
-      If Not $board And ($view = "Boards" Or $view = "Archive" Or $view = "Starred") Then
-        tiles[CStr(b!id)] = "<li data-selected=\"" & If(BoardSelection.IsSelected(SelectionState(), b!id), "true", "false") & "\" class=\"weba-board-tile-group js-board\" data-board-id=\"" & Str(b!id) & "\">" & If(IsOverview(), "<button type=\"button\" class=\"weba-drag-handle weba-board-drag fa fa-arrows\" data-drag-kind=\"board\" aria-label=\"Sort boards\"></button>", "") & "<button style=\"background-color:" & Html(WorkspaceStore.Setting(b!id, "board", b!id, "color", "#2980b9")) & "\" type=\"button\" class=\"weba-board-tile\" data-board-key=\"b" & Str(b!id) & "\"><strong class=\"board-list-item-name\">" & Html(b!title) & "</strong></button><button class=\"weba-board-context fa fa-bars\" data-context-kind=\"board\" data-context-id=\"" & Str(b!id) & "\" aria-label=\"Board menu\"></button></li>"
+      If Not $board And ($view = "Boards" Or $view = "Archive" Or $view = "Starred" Or $view = "Home") Then
+        tiles[CStr(b!id)] = "<li data-selected=\"" & If(BoardSelection.IsSelected(SelectionState(), b!id), "true", "false") & "\" class=\"weba-board-tile-group js-board\" data-board-id=\"" & Str(b!id) & "\">" & If(IsOverview() And $view <> "Home", "<button type=\"button\" class=\"weba-drag-handle weba-board-drag fa fa-arrows\" data-drag-kind=\"board\" aria-label=\"Sort boards\"></button>", "") & "<button style=\"background-color:" & Html(WorkspaceStore.Setting(b!id, "board", b!id, "color", "#2980b9")) & "\" type=\"button\" class=\"weba-board-tile\" data-board-key=\"b" & Str(b!id) & "\"><strong class=\"board-list-item-name\">" & Html(b!title) & "</strong></button><button class=\"weba-board-context fa fa-bars\" data-context-kind=\"board\" data-context-id=\"" & Str(b!id) & "\" aria-label=\"Board menu\"></button></li>"
         Continue
       Endif
       Print "<h3>" & Html(b!title) & "</h3>"
@@ -800,10 +807,12 @@ Private Sub UpdateHeader()
   Dim routeSection As String
   Dim routeAck As New Collection
   Dim b As Result
-  Dim overview As Boolean = Not $board And ($view = "Boards" Or $view = "Archive" Or $view = "Starred")
+  Dim overview As Boolean = Not $board And ($view = "Boards" Or $view = "Archive" Or $view = "Starred" Or $view = "Home")
   If overview Then
     If $view = "Archive" Then
       routeSection = "archive"
+    Else If $view = "Home" Then
+      routeSection = "home"
     Else If $view = "Starred" Then
       routeSection = "starred"
     Else If $spaceMenu = 0 Then
@@ -818,9 +827,11 @@ Private Sub UpdateHeader()
   routeAck["tree"] = BoardSpaces.Tree()
   OverviewRouteState.Text = Replace(JSON.Encode(routeAck), " ", "\\u0020")
   ViewMenu.Visible = $view <> "Profile" And $view <> "Admin panel"
-  AddBoard.Visible = ViewMenu.Visible And BoardCreation.Allowed()
+  AddBoard.Visible = ViewMenu.Visible And BoardCreation.Allowed() And $view <> "Home"
   HeaderSearch.Visible = ViewMenu.Visible
   Remaining.Class = If($view = "Boards" And $spaceMenu = 0, "weba-active", "")
+  HomeBoards.Class = If($view = "Home", "weba-active", "")
+  HomeBoardsCount.Text = If(HomeBoard.Visible(), "1", "0")
   Archive.Class = If($view = "Archive", "weba-active", "")
   BoardNavigation.Visible = $view <> "Admin panel"
   AdminNavigation.Visible = $view = "Admin panel"
@@ -1030,6 +1041,7 @@ Public Sub DragAction_Change()
   DragAction.Text = ""
   fields = Split(wire, "|")
   If fields.Count <> 5 Then Error.Raise("Invalid drag action")
+  If $view = "Home" Then Error.Raise("Invalid Home board drop")
   If fields[0] = "board-multi-drop" Then
     DropSelectedBoards(CInt(UnBase64(fields[1])), UnBase64(fields[2]), CInt(UnBase64(fields[3])), CLong(UnBase64(fields[4])))
     Return
@@ -2517,7 +2529,7 @@ Private Function RefreshSpaces() As Boolean
   Dim row As WebContainer
   $spaceCollapsed = BoardSpaces.Collapsed()
   $spaceCounts = BoardSpaces.Counts()
-  state = JSON.Encode(tree) & JSON.Encode(BoardSpaces.Assignments()) & JSON.Encode($spaceCollapsed) & JSON.Encode($spaceCounts)
+  state = CStr(HomeBoard.Saved()) & ":" & CStr(HomeBoard.Visible()) & ":" & JSON.Encode(tree) & JSON.Encode(BoardSpaces.Assignments()) & JSON.Encode($spaceCollapsed) & JSON.Encode($spaceCounts)
   If state = $spacesState Then Return False
   For Each row In $spaceRows
     row.Delete()
@@ -2861,9 +2873,37 @@ Private Sub UpdateSelectionControls()
   If $selectedCopy Then
     If Not IsOverview() Or $archive Or Not active Or $selectedCopy["revision"] <> BoardSelection.Revision(SelectionState()) Then CancelSelectedCopy_Click()
   Endif
+  HomeSelectedBoards.Visible = IsOverview() And Not $archive And active
+  HomeSelectedBoards.Text = "Set as Home board (opened after login)"
+  Try SetHomeCaption()
   StarSelectedBoards.Visible = IsOverview() And Not $archive And active
   StarSelectedBoards.Text = "Star the selected boards"
   Try SetSelectedStarCaption()
+End
+
+Private Sub SetHomeCaption()
+  Dim ids As Integer[] = BoardSelection.Ids(SelectionState())
+  If ids.Count = 1 Then
+    If HomeBoard.Saved() = ids[0] Then HomeSelectedBoards.Text = "Unset as Home board"
+  Endif
+End
+
+Public Sub HomeSelectedBoards_Click()
+  Dim ids As Integer[]
+  If Not IsOverview() Or $archive Then Error.Raise("Select active boards first")
+  If Not BoardSelection.Active(SelectionState()) Then Error.Raise("Activate multi-selection first")
+  ids = BoardSelection.Ids(SelectionState())
+  If ids.Count <> 1 Then Error.Raise("Please select only one board")
+  HomeBoard.Toggle(ids[0])
+  RefreshTree()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub HomeBoards_Click()
+  Home_Click()
+  $view = "Home"
+  RefreshTree()
 End
 
 Public Sub MultiBoards_Click()
@@ -3550,10 +3590,10 @@ Private Sub ValidateBoardCreation()
     CreationAdminOnly.Value = BoardCreation.AdminOnly()
     $creationBase = CreationAdminOnly.Value
   Endif
-  AddBoard.Visible = ViewMenu.Visible And allowed
-  AddBoardTile.Visible = allowed
-  NewBoard.Visible = allowed
-  BoardTitle.Visible = allowed
+  AddBoard.Visible = ViewMenu.Visible And allowed And $view <> "Home"
+  AddBoardTile.Visible = allowed And $view <> "Home"
+  NewBoard.Visible = allowed And $view <> "Home"
+  BoardTitle.Visible = allowed And $view <> "Home"
   ImportBoard.Visible = allowed And canImport
   DuplicateSelectedBoards.Visible = IsOverview() And Not $archive And BoardSelection.Active(SelectionState()) And allowed And canImport
   If ContextMenu.Visible And $contextKind = "board" Then ContextCopy.Visible = allowed And canImport And BoardAccess.Can($contextBoard, "manageBoard") And BoardAccess.Can($contextBoard, "seesAllCards")
@@ -3808,7 +3848,7 @@ Public Sub EntryRouteAction_Change()
   If fields.Count < 2 Or fields.Count > 3 Then Error.Raise("Unknown overview entry")
   section = fields[0]
   If Not fields[1] Or Len(fields[1]) > 128 Then Error.Raise("Unknown overview entry")
-  If ["remaining", "starred", "archive", "workspaces"].Find(section) < 0 Then Error.Raise("Unknown overview entry")
+  If ["remaining", "starred", "archive", "home", "workspaces"].Find(section) < 0 Then Error.Raise("Unknown overview entry")
   If section = "workspaces" Then
     If fields.Count <> 3 Then Error.Raise("Unknown overview entry")
     If fields[2] = "0" Then
@@ -3828,6 +3868,8 @@ Public Sub EntryRouteAction_Change()
       Home_Click()
     Case "starred"
       Starred_Click()
+    Case "home"
+      HomeBoards_Click()
     Case "archive"
       Archive_Click()
     Case "workspaces"

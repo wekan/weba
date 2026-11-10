@@ -158,7 +158,42 @@ Public Sub Main()
     row.Add(CStr(r!space_id), CStr(r!board_id))
   Next
   data["rawAssignments"] = row
+  If Env["WEBA_CATALOG_MODE"] = "cleanup-home" Then
+    CleanupHomeFixture()
+    BoardCatalog.SetSortBy(Env["WEBA_HOME_SORT"])
+  Endif
+  If Env["WEBA_CATALOG_MODE"] = "set-home" Then HomeBoard.SetBoard(CInt(Env["WEBA_SPACE_BOARD"]))
+  If Env["WEBA_CATALOG_MODE"] = "clear-home" Then
+    If HomeBoard.Saved() Then HomeBoard.Clear(HomeBoard.Saved())
+  Endif
+  data["home"] = HomeBoard.Saved()
+  data["homeVisible"] = HomeBoard.Visible()
   data["positions"] = BoardOrder.Positions()
   data["sortBy"] = BoardCatalog.SortBy()
   Print JSON.Encode(data)
+End
+
+
+Private Sub CleanupHomeFixture()
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim ids As Integer[] = New Integer[]
+  Dim rawId As Variant
+  Dim id As Integer
+  Dim r As Result
+  Dim t As Table
+  For Each rawId In JSON.Decode(Env["WEBA_HOME_IDS"])
+    id = CInt(rawId)
+    r = db.Find("kb_boards", "id=&1", id)
+    If Not r.Available Then Error.Raise("Missing Home fixture board")
+    If ["Order Alpha", "Order Bravo", "Order Charlie", "Order private"].Find(CStr(r!title)) < 0 Then Error.Raise("Not a Home fixture board")
+    If r!owner <> "rest-other" And r!owner <> "rest-owner" Then Error.Raise("Not a Home fixture owner")
+    ids.Add(id)
+  Next
+  If ids.Count <> 4 Then Error.Raise("Invalid Home fixture cleanup")
+  For Each id In ids
+    For Each t In db.Tables
+      If t.Fields.Exist("board_id") Then db.Delete(t.Name, "board_id=&1", id)
+    Next
+    db.Delete("kb_boards", "id=&1", id)
+  Next
 End

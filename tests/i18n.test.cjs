@@ -22,6 +22,7 @@ window.eval(fs.readFileSync(path.join(publicDir,'i18n.js'),'utf8'));
 window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
 (async()=>{
   const api=window.webaI18n, doc=window.document;
+  for(const [text,key] of Object.entries({'Home':'home','Set as Home board (opened after login)':'set-selected-home','Unset as Home board':'unset-selected-home','Please select only one board':'select-only-one-board'}))assert.equal(window.webaI18nCatalog.lookup[text],key);
   await api.setLanguage('fi-FI');
   assert.equal(api.language,'fi');
   const fi=JSON.parse(fs.readFileSync(path.join(publicDir,'i18n/fi.json'),'utf8'));

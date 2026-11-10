@@ -1,0 +1,68 @@
+Public Sub Main()
+  Dim a As Integer
+  Dim b As Integer
+  Dim space As Integer
+  Dim params As New Collection
+  Dim data As Collection
+  Dim before As String
+  Dim db As Connection
+  WebDatabase.Register("hc-owner", "x")
+  WebDatabase.Register("hc-reader", "x")
+  SignIn("hc-owner")
+  a = KanbanStore.AddBoard("Home Alpha")
+  b = KanbanStore.AddBoard("Home Bravo")
+  BoardAccess.SetMember(a, "hc-reader", "read-only")
+  BoardAccess.SetMember(b, "hc-reader", "read-only")
+  SignIn("hc-reader")
+  params["menu"] = "home"
+  data = BoardCatalog.Page(params)
+  If data["total"] Or data["ids"].Count Then Error.Raise("Empty Home leaked boards")
+  space = BoardSpaces.Add("Workspace")
+  BoardSpaces.Assign(a, space)
+  WorkspaceStore.SetSetting(a, "board", a, "star", "1")
+  HomeBoard.SetBoard(a)
+  data = BoardCatalog.Page(params)
+  If data["total"] <> 1 Or data["ids"][0] <> a Then Error.Raise("Placed/starred Home missing")
+  params["page"] = 2
+  data = BoardCatalog.Page(params)
+  If data["total"] <> 1 Or data["ids"].Count Then Error.Raise("Home paging failed")
+  data = BoardCatalog.Unpaged(params)
+  If data["ids"].Count <> 1 Or data["ids"][0] <> a Then Error.Raise("Home unpaged failed")
+  params["page"] = 1
+  params["search"] = "Bravo"
+  data = BoardCatalog.Page(params)
+  If data["total"] <> 1 Or data["ids"][0] <> b Then Error.Raise("Home search did not span categories")
+  params.Remove("search")
+  HomeBoard.SetBoard(b)
+  data = BoardCatalog.Page(params)
+  If data["total"] <> 1 Or data["ids"][0] <> b Then Error.Raise("Replacement not reflected")
+  SignIn("hc-owner")
+  data = BoardCatalog.Page(params)
+  If data["total"] Then Error.Raise("Foreign Home leaked")
+  KanbanStore.ArchiveBoard(b, True)
+  SignIn("hc-reader")
+  data = BoardCatalog.Page(params)
+  If data["total"] Then Error.Raise("Archived Home visible")
+  data = BoardCatalog.Page(params, True)
+  If data["total"] Then Error.Raise("Archive context exposed stale Home")
+  If HomeBoard.Saved() <> b Then Error.Raise("Read deleted stale preference")
+  SignIn("hc-owner")
+  KanbanStore.ArchiveBoard(b, False)
+  BoardAccess.RemoveMember(b, "hc-reader")
+  SignIn("hc-reader")
+  data = BoardCatalog.Page(params)
+  If data["total"] Then Error.Raise("Revoked Home visible")
+  If HomeBoard.Saved() <> b Then Error.Raise("Revocation deleted preference")
+  BoardAccess.RequireRead(a)
+  If WorkspaceStore.Setting(a, "board", a, "star") <> "1" Then Error.Raise("Home changed star")
+  If BoardSpaces.Assignments()[CStr(a)] <> CStr(space) Then Error.Raise("Home changed placement")
+  Session["username"] = ""
+  data = BoardCatalog.Page(params)
+  If data["total"] Then Error.Raise("Anonymous Home leaked")
+  Print "Home catalog: empty/private/readonly, independent placement/stars, paged/unpaged, global search, live replace, archived/revoked stale and anonymous cases passed"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

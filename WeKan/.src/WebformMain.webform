@@ -672,6 +672,17 @@
         { Remaining WebButton
           Text = ("Remaining")
         }
+        { HomeBoardsRow WebContainer
+          Arrangement = Arrange.Horizontal
+          { HomeBoards WebButton
+            Text = ("Home")
+            Expand = True
+          }
+          { HomeBoardsCount WebLabel
+            Text = "0"
+            Width = "24px"
+          }
+        }
         { WorkspacesHeader WebContainer
           Class = "workspaces-header"
           Arrangement = Arrange.Horizontal
@@ -1216,6 +1227,9 @@
         { BoardSelectionPanel WebContainer
           Arrangement = Arrange.Vertical
           Visible = False
+          { HomeSelectedBoards WebButton
+            Text = ("Set as Home board (opened after login)")
+          }
           { StarSelectedBoards WebButton
             Text = ("Star the selected boards")
           }

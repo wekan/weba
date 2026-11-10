@@ -78,6 +78,7 @@ Private Function SelectBoards(params As Collection, archived As Boolean, paged A
   Dim total As Integer
   Dim offset As Long
   Dim include As Boolean
+  Dim homeId As Integer
   Dim assignments As Collection
   If Not params Then Error.Raise("Invalid board page")
   For Each key In params.Keys
@@ -106,6 +107,7 @@ Private Function SelectBoards(params As Collection, archived As Boolean, paged A
   data["ids"] = ids
   data["total"] = 0
   If Not WebIdentity.Username Then Return data
+  If menu = "home" Then homeId = HomeBoard.Visible()
   assignments = BoardSpaces.Assignments()
   offset = CLong(pageNumber - 1) * perPage
   r = KanbanStore.Boards(archived, sortBy = "title-desc")
@@ -117,6 +119,8 @@ Private Function SelectBoards(params As Collection, archived As Boolean, paged A
       include = True
     Else If menu = "starred" Then
       include = WorkspaceStore.Setting(r!id, "board", r!id, "star") = "1"
+    Else If menu = "home" Then
+      include = r!id = homeId
     Else If menu = "remaining" Then
       include = Not assignments.Exist(CStr(r!id))
     Else

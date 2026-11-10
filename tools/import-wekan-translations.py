@@ -30,6 +30,7 @@ aliases = {
     'Normal (assigned cards only)': 'normal-assigned-only',
     'Comment (assigned cards only)': 'comment-assigned-only',
     'Read (assigned cards only)': 'read-assigned-only',
+    'Home': 'home', 'Please select only one board': 'select-only-one-board',
     'Repeat password': 'password-again', 'Create account': 'create-account',
     'Back to login': 'login', 'Archive': 'archived-items', 'Remaining': 'allboards.remaining',
     'Table': 'board-view-table', 'Admin panel': 'admin-panel', 'Admin Panel': 'admin-panel',
@@ -44,7 +45,7 @@ aliases = {
     'Mon': 'monday', 'Tue': 'tuesday', 'Wed': 'wednesday', 'Thu': 'thursday',
     'Fri': 'friday', 'Sat': 'saturday', 'Sun': 'sunday',
 }
-texts = {'Unlimited', 'Maximum file size', 'Blocked', 'GB', 'MB', 'Bytes', 'Board administrator', 'Normal', 'Normal (assigned cards only)',
+texts = {'Please select only one board', 'Unlimited', 'Maximum file size', 'Blocked', 'GB', 'MB', 'Bytes', 'Board administrator', 'Normal', 'Normal (assigned cards only)',
          'No comments', 'Comment only', 'Comment (assigned cards only)',
          'Worker', 'Read only', 'Read (assigned cards only)', 'Language', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'}
 controls = set()

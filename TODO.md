@@ -132,10 +132,11 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   drafts and clickable close controls. Delayed-width/async-error tests, full
   local/test-live and existing layout regressions pass. Original suite counts
   remain unchanged.
-- Next Home parity: sidebar/count, catalog, one-selection toggle, guarded route/history,
-  login opening, drag-to-Home and confirmed Remove bar. Private native preference
-  persistence and lifecycle/rollback tests are recorded in CHANGELOG.md; source
-  defaultBoardId/DDP transport remains open.
+- Next Home parity: login opening, Home-first Starred presentation, board badge,
+  drag-to-Home and confirmed Remove bar. Private native preference persistence,
+  lifecycle/rollback tests, Home sidebar/count/catalog, guarded one-selection
+  toggle and /allboards/home entry/menu/history are recorded in CHANGELOG.md;
+  original defaultBoardId/DDP transport remains open.
 - Next workspace parity: Templates and remaining production transport/routing beyond
   the six adapter-backed spec 39 callbacks. Production direct GET entry for
   Remaining/Starred/Archive with login/reload, acknowledged menu URL updates and

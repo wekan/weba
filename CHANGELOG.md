@@ -8,6 +8,19 @@ This work adds the following features and fixes:
   menu navigation. Reproduce the race with a held native request and verify
   unchanged history/URI in source and packaged browsers. Thanks to xet7.
 
+- Connect the native Home preference to an always-present Home sidebar/count,
+  active readable catalog and one-board Multi-Selection toggle. Preserve stars,
+  workspace placement and global search; retain multi-selection on refusal.
+  Refresh Home after another session changes its mark or board visibility.
+  Hide Add Board in Home and refuse generic Home-origin drag commands while
+  the dedicated Remove gesture is pending. Add source-shaped /allboards/home
+  GET entry, login handoff, guarded native section acknowledgement, menu/history
+  and reload. Import the four captions verbatim from 237 source catalogs.
+  Cover native paging/privacy and real browser live/archive/revocation/search/
+  history/mobile flows. Login default opening, Home-first Starred presentation,
+  badge and drag/Remove bar plus original profile/DDP transport remain pending.
+  Thanks to xet7.
+
 - Add a private native Home-board preference, independent of stars and workspace
   placement. Support idempotent replacement, selection-style toggle and conditional
   stale-ID clearing for the current principal. Require active readable targets

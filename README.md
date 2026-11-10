@@ -598,8 +598,18 @@ The source oracle now compares 136 outputs, including 24 card-title cases.
 This bridges native navigation snapshots; original Meteor publications, IDs and
 card route transport remain pending.
 
+The Home sidebar row shows the current private Home mark as zero or one active
+readable board. Its catalog supports global title search; Multi-Selection toggles
+exactly one board and retains a refused multi-board selection. Home remains
+independent of stars/workspaces, updates on external preference/access changes,
+and has no Add Board tile. Archived/deleted IDs remain saved until explicitly
+cleared. Native generic drag commands from Home are refused while the source
+Remove-bar gesture is pending. Home login auto-opening, Home-first Starred
+presentation/badge and original profile/DDP transport remain TODO.
+Run `python3 tests/run-http.py --home [--archive]` for the browser regression.
+
 The installed host now supports direct GET entry at `/allboards/remaining`,
-`/allboards/starred` and `/allboards/archive`, including one trailing slash and
+`/allboards/starred`, `/allboards/archive` and `/allboards/home`, including one trailing slash and
 single percent encoding. These paths match the unchanged source `allBoardsPath`
 helper. The host dispatches only root HTML, removes entry query parameters before
 CGI and refuses non-GET or multiply encoded aliases; native commands still use
@@ -612,7 +622,7 @@ set a same-origin root asset base, so CSS, translations, native resources and th
 viewer bundle load from nested addresses. Browser/host tests cover these paths,
 forged section denial, no missing assets and mobile entry. Run
 `python3 tests/run-http.py --overview-entry [--archive]` with the usual test env.
-Supported Remaining/Starred/Archive menu clicks now push their source paths only
+Supported Remaining/Starred/Archive/Home menu clicks now push their source paths only
 when the path changes. The original root URL stays intact in its first frame.
 Back/Forward restores its section through the same guarded native command without
 adding frames. Commands carry a per-intent correlation token; a lossless private

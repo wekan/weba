@@ -27,7 +27,7 @@ def all_boards_entry_section(path):
     """Implemented native section entrypoints; never an arbitrary CGI alias."""
     if path == '/allboards/workspaces' or path.startswith('/allboards/workspaces/'):
         return 'workspaces'
-    for section in ('remaining', 'starred', 'archive'):
+    for section in ('remaining', 'starred', 'archive', 'home'):
         if path in ('/allboards/' + section, '/allboards/' + section + '/'):
             return section
     return None
@@ -345,6 +345,9 @@ def handler(application, runner, environment):
             if not self._request_allowed(url._replace(path=decoded_path)):
                 return
             entry_section = all_boards_entry_section(decoded_path)
+            if decoded_path.startswith("/allboards/home/") and not entry_section:
+                self.send_error(404)
+                return
             if entry_section:
                 try:
                     single_path = None if re.search(r'%(?![0-9A-Fa-f]{2})', url.path) else urllib.parse.unquote(url.path, errors='strict')
