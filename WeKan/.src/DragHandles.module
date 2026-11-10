@@ -1,0 +1,16 @@
+' Pure source-compatible three-state preference; no storage or device reads.
+Export
+
+Public Function ReadPreference(stored As Variant) As Variant
+  If TypeOf(stored) = gb.Boolean Then Return stored
+  If TypeOf(stored) = gb.String Then
+    If stored = "true" Then Return True
+    If stored = "false" Then Return False
+  Endif
+  Return Null
+End
+
+Public Function Resolve(preference As Variant, isTouchScreen As Boolean) As Boolean
+  If TypeOf(preference) = gb.Boolean Then Return preference
+  Return isTouchScreen
+End

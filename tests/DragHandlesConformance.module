@@ -1,0 +1,14 @@
+Public Sub Main()
+  Dim rows As Variant[] = JSON.Decode(Env["WEBA_DRAG_HANDLE_CASES"], True)
+  Dim results As New Variant[]
+  Dim row As Collection
+  Dim result As Collection
+  For Each row In rows
+    result = New Collection
+    result.Add(DragHandles.ReadPreference(row["stored"]), "read")
+    result.Add(DragHandles.Resolve(row["stored"], row["touch"]), "resolve")
+    result.Add(DragHandles.Resolve(DragHandles.ReadPreference(row["stored"]), row["touch"]), "effective")
+    results.Add(result)
+  Next
+  Print JSON.Encode(results)
+End

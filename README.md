@@ -2840,3 +2840,9 @@ serializer comparisons after sharing the reader.
 This completes the current native attachment-export action. Full original UI
 callbacks, public/instance/Sandstorm/impersonation and board-defined field/storage
 models, whole-board source formats and batch export remain pending.
+
+The native `DragHandles` decision helper matches the source three-state rule:
+explicit on/off wins on every device; unset or malformed values follow touch
+capability. The 42-case source comparison covers 126 native outputs. Profile
+storage, browser device detection and gesture integration remain pending; this
+helper does not yet change rendered handles or drag behavior.

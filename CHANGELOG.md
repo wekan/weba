@@ -2,6 +2,15 @@
 
 This work adds the following features and fixes:
 
+- Add the pure native three-state drag-handle preference decision helper. Match
+  unchanged source normalization and resolution for explicit on/off, unset,
+  legacy strings and malformed values on mouse/touch devices. Verify 42 native
+  cases (126 results) against the source functions, including explicit off on
+  touch. The complete local regression suite, including 69 host tests and
+  existing UI gesture/security checks, passes. This is the decision layer only;
+  profile persistence, device detection
+  and applying it to native gestures remain pending. Thanks to xet7.
+
 - Add a native manager view-order list with desktop handle dragging, trusted
   touch, Up/Down keyboard moves and retained focus/scroll. Use the source's two
   distinct algorithms: drag fills only offered slots, while keyboard insertion

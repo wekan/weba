@@ -83,5 +83,6 @@ python3 "$root/tests/deletion-commit.py" "$project"
 
 "${NODE:-node}" "$root/tests/board-view-policy-conformance.test.cjs"
 "${NODE:-node}" "$root/tests/board-view-order-conformance.test.cjs"
+"${NODE:-node}" "$root/tests/drag-handles-conformance.test.cjs"
 "${NODE:-node}" "$root/tests/board-view-transfer-conformance.test.cjs"
 "${NODE:-node}" "$root/tests/instance-features-conformance.test.cjs"
