@@ -1,0 +1,113 @@
+' Private Home mark; board placement and stars are independent.
+Export
+Private $db As Connection
+
+Private Sub OpenStore()
+  Dim t As Table
+  If $db Then Return
+  BoardAccess.OpenStore()
+  $db = WebDatabase.OpenConnection()
+  If Not $db.Tables.Exist("kb_default_boards") Then
+    t = $db.Tables.Add("kb_default_boards")
+    t.Fields.Add("username", db.String, 255)
+    t.Fields.Add("board_id", db.Integer)
+    t.PrimaryKey = ["username"]
+    t.Update()
+  Endif
+Catch
+  $db = Null
+  Error.Propagate()
+End
+
+Private Function Principal() As String
+  Dim actor As String = WebIdentity.Username
+  If Not actor Then Error.Raise("Sign in required")
+  OpenStore()
+  If Not WebDatabase.UserExists(actor) Then Error.Raise("Sign in required")
+  Return actor
+End
+
+Public Function Saved() As Integer
+  Dim actor As String = Principal()
+  Return ReadSaved(actor)
+End
+
+Private Function ReadSaved(actor As String) As Integer
+  Dim r As Result = $db.Find("kb_default_boards", "username=&1", actor)
+  If r.Available Then Return r!board_id
+  Return 0
+End
+
+Private Sub RequireTarget(boardId As Integer)
+  Dim r As Result
+  If boardId <= 0 Then Error.Raise("Board not accessible")
+  BoardAccess.RequireRead(boardId)
+  r = $db.Find("kb_boards", "id=&1 AND archived=&2", boardId, False)
+  If Not r.Available Then Error.Raise("Board not accessible")
+End
+
+Public Function Visible() As Integer
+  Dim boardId As Integer = Saved()
+  If Not boardId Then Return 0
+  Try RequireTarget(boardId)
+  If Error Then Return 0
+  Return boardId
+End
+
+Public Sub SetBoard(boardId As Integer)
+  Change(boardId, "set")
+End
+
+Public Sub Toggle(boardId As Integer)
+  Change(boardId, "toggle")
+End
+
+Public Sub Clear(boardId As Integer)
+  Change(boardId, "clear")
+End
+
+Private Sub Change(boardId As Integer, mode As String)
+  Dim actor As String = Principal()
+  Dim desired As Integer
+  Dim r As Result
+  Dim transaction As Boolean
+  Dim failure As String
+  If boardId <= 0 Then Error.Raise("Board not accessible")
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  If WebIdentity.Username <> actor Or Not WebDatabase.UserExists(actor) Then Error.Raise("Sign in required")
+  desired = ReadSaved(actor)
+  If mode = "clear" Then
+    If desired <> boardId Then
+      DatabaseTransactions.Commit($db)
+      transaction = False
+      Return
+    Endif
+    desired = 0
+  Else
+    $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+    RequireTarget(boardId)
+    If mode = "toggle" And desired = boardId Then
+      desired = 0
+    Else
+      desired = boardId
+    Endif
+  Endif
+  $db.Delete("kb_default_boards", "username=&1", actor)
+  If desired Then
+    r = $db.Create("kb_default_boards")
+    r["username"] = actor
+    r["board_id"] = desired
+    r.Update()
+  Endif
+  If WebIdentity.Username <> actor Or Not WebDatabase.UserExists(actor) Then Error.Raise("Sign in required")
+  If mode <> "clear" Then RequireTarget(boardId)
+  If ReadSaved(actor) <> desired Then Error.Raise("Home board changed")
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End

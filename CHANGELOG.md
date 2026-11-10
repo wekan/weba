@@ -2,6 +2,17 @@
 
 This work adds the following features and fixes:
 
+- Add a private native Home-board preference, independent of stars and workspace
+  placement. Support idempotent replacement, selection-style toggle and conditional
+  stale-ID clearing for the current principal. Require active readable targets
+  when setting, retain archived/deleted IDs without exposing a visible board, and
+  clean deleted accounts. Lock and recheck identity, membership, archive state and
+  stored value; roll back injected write/access/session/value failures. Verify
+  read-only member support and foreign/anonymous/site-admin denial. Native toggle
+  validates access more strictly than the source toggle RPC. Home UI, routing,
+  login opening, drag/Remove bar and original profile/DDP transport remain pending.
+  Thanks to xet7.
+
 - Add production nested workspace slug URLs with unchanged source URL helpers
   and the same limax slugifier, including Unicode, emoji fallback, duplicate-first
   matching and literal localized partial name trails. Validate canonical owned

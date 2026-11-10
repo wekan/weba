@@ -1,0 +1,76 @@
+Public Sub Main()
+  Dim a As Integer
+  Dim b As Integer
+  Dim hidden As Integer
+  Dim db As Connection
+  Dim denied As Boolean
+  Dim trigger As String
+  WebDatabase.Register("home-owner", "x")
+  WebDatabase.Register("home-reader", "x")
+  WebDatabase.Register("home-other", "x")
+  SignIn("home-other")
+  hidden = KanbanStore.AddBoard("Private")
+  SignIn("home-owner")
+  a = KanbanStore.AddBoard("Alpha")
+  b = KanbanStore.AddBoard("Bravo")
+  BoardAccess.SetMember(a, "home-reader", "read-only")
+  BoardAccess.SetMember(b, "home-reader", "read-only")
+  SignIn("home-reader")
+  If HomeBoard.Saved() Or HomeBoard.Visible() Then Error.Raise("Default is not empty")
+  HomeBoard.SetBoard(a)
+  HomeBoard.SetBoard(a)
+  If HomeBoard.Saved() <> a Or HomeBoard.Visible() <> a Then Error.Raise("Set must replace, not toggle")
+  db = WebDatabase.OpenConnection()
+  db.Exec("CREATE TRIGGER reject_noop_clear BEFORE DELETE ON kb_default_boards BEGIN SELECT RAISE(ABORT,'no-op wrote'); END")
+  HomeBoard.Clear(b)
+  db.Exec("DROP TRIGGER reject_noop_clear")
+  If HomeBoard.Saved() <> a Then Error.Raise("Mismatched clear changed Home")
+  HomeBoard.Toggle(a)
+  If HomeBoard.Saved() Then Error.Raise("Toggle did not clear")
+  HomeBoard.Toggle(a)
+  db = WebDatabase.OpenConnection()
+  Try HomeBoard.SetBoard(hidden)
+  denied = Error
+  If Not denied Or HomeBoard.Saved() <> a Then Error.Raise("Foreign target accepted")
+  Try HomeBoard.SetBoard(0)
+  denied = Error
+  If Not denied Or HomeBoard.Saved() <> a Then Error.Raise("Invalid target accepted")
+  For Each trigger In ["BEFORE INSERT ON kb_default_boards BEGIN SELECT RAISE(ABORT,'injected'); END", "AFTER INSERT ON kb_default_boards BEGIN DELETE FROM kb_members WHERE username='home-reader'; END", "AFTER INSERT ON kb_default_boards BEGIN UPDATE account_sessions SET generation=generation+1 WHERE username='home-reader'; END", "AFTER INSERT ON kb_default_boards BEGIN UPDATE kb_boards SET archived=1 WHERE id=NEW.board_id; END", "AFTER INSERT ON kb_default_boards WHEN NEW.board_id=" & Str(b) & " BEGIN UPDATE kb_default_boards SET board_id=" & Str(a) & " WHERE username=NEW.username; END"]
+    db.Exec("CREATE TRIGGER home_failure " & trigger)
+    Try HomeBoard.SetBoard(b)
+    denied = Error
+    If Not denied Or HomeBoard.Saved() <> a Or HomeBoard.Visible() <> a Then Error.Raise("Failed Home change did not roll back")
+    db.Exec("DROP TRIGGER home_failure")
+  Next
+  HomeBoard.SetBoard(b)
+  SignIn("home-owner")
+  If HomeBoard.Saved() Then Error.Raise("Private mark leaked")
+  KanbanStore.ArchiveBoard(b, True)
+  SignIn("home-reader")
+  If HomeBoard.Saved() <> b Or HomeBoard.Visible() Then Error.Raise("Archive lost mark or remained visible")
+  Try HomeBoard.SetBoard(b)
+  denied = Error
+  If Not denied Then Error.Raise("Archived target accepted")
+  HomeBoard.Clear(b)
+  If HomeBoard.Saved() Then Error.Raise("Stale mark cannot be cleared")
+  HomeBoard.SetBoard(a)
+  db.Delete("kb_boards", "id=&1", a)
+  If HomeBoard.Saved() <> a Or HomeBoard.Visible() Then Error.Raise("Deleted board mark lifecycle changed")
+  Session["username"] = ""
+  Try HomeBoard.Saved()
+  denied = Error
+  If Not denied Then Error.Raise("Anonymous mark exposed")
+  db.Exec("UPDATE users SET admin=1 WHERE username='home-other'")
+  SignIn("home-other")
+  Try HomeBoard.SetBoard(b)
+  denied = Error
+  If Not denied Then Error.Raise("Site admin bypassed board access")
+  WebDatabase.DeleteUser("home-reader")
+  If db.Find("kb_default_boards", "username='home-reader'").Available Then Error.Raise("Deleted account retained Home")
+  Print "Home preference: read-only member replace/toggle/conditional clear, private/anonymous/admin denial, archive/deletion retention, write/access/session/value rollback and account cleanup passed"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End
