@@ -1,0 +1,183 @@
+Public Sub Main()
+  Dim source As Integer
+  Dim target As Integer
+  Dim cardId As Integer
+  Dim legacy As Integer
+  Dim data As Collection
+  Dim expected As Collection
+  Dim text As String
+  Dim child As Collection
+  Dim before As String
+  Dim featureState As String
+  Dim key As String
+  Dim denied As Boolean
+  Dim db As Connection
+  Dim r As Result
+  Dim count As Integer
+  Dim flags As Collection
+  Dim state As Collection
+  WebDatabase.Register("policy-global", "x")
+  WebDatabase.Register("policy-owner", "x")
+  WebDatabase.Register("policy-manager", "x")
+  WebDatabase.Register("policy-reader", "x")
+  SignIn("policy-owner")
+  source = KanbanStore.AddBoard("Policy source")
+  db = WebDatabase.OpenConnection()
+  expected = BoardViewPolicy.Transfer(source)
+  If db.Tables.Exist("kb_board_view_policy") Then Error.Raise("Export read initialized policy schema")
+  text = BoardTransfer.ExportData(source, "board", source)
+  If db.Tables.Exist("kb_board_view_policy") Then Error.Raise("Whole-board export initialized policy schema")
+  data = BoardTransfer.ReadData(text)
+  If Not BoardViewPolicy.HasTransfer(data) Or data.Exist("keys") Then Error.Raise("Legacy whole-board transfer header changed")
+  ' The single-copy dialog starts an outer transaction before the lower
+  ' copy prepares its store. A rollback removes new DDL as well as new rows.
+  state = SingleBoardCopy.NewState(source)
+  db.Exec("CREATE TRIGGER transfer_first_failure BEFORE INSERT ON kb_boards WHEN NEW.title='First policy failure' BEGIN SELECT RAISE(ABORT,'FIRST-POLICY-FAIL'); END")
+  Try legacy = SingleBoardCopy.Copy(state, source, "First policy failure")
+  denied = Error
+  If Not denied Or db.Tables.Exist("kb_board_view_policy") Then Error.Raise("Outer copy rollback retained policy schema")
+  If db.Find("kb_boards", "title=&1", "First policy failure").Available Then Error.Raise("Failed first copy retained board")
+  db.Exec("DROP TRIGGER transfer_first_failure")
+  legacy = SingleBoardCopy.Copy(state, source, "Legacy retry")
+  If JSON.Encode(BoardViewPolicy.Transfer(legacy)) <> JSON.Encode(expected) Then Error.Raise("Legacy retry changed default policy")
+  data = BoardViewPolicy.Settings(source)
+  For Each key In BoardViewPolicy.Keys()
+    data["boardViewSettings"][key]["showOnPublic"] = False
+    data["boardViewSettings"][key]["showOnPrivate"] = False
+  Next
+  data["defaultPublicBoardView"] = "board-view-table"
+  data["defaultPrivateBoardView"] = "board-view-cal"
+  data["boardViewSettings"]["board-view-table"]["showOnPublic"] = True
+  data["boardViewSettings"]["board-view-cal"]["showOnPrivate"] = True
+  data["boardViewSettings"]["board-view-gantt"]["showOnPrivate"] = True
+  data["boardViewOrder"] = ["board-view-gantt", "board-view-table", "board-view-cal"]
+  BoardViewPolicy.Save(source, data)
+  expected = BoardViewPolicy.Transfer(source)
+  BoardViewPreference.Save(source, "board-view-gantt")
+  BoardViewPreference.Save(0, "board-view-stats")
+  BoardAccess.SetMember(source, "policy-manager", "board-admin")
+  BoardAccess.SetMember(source, "policy-reader", "read-only")
+  cardId = KanbanStore.SaveCard(source, 0, "Policy card", "Body", "Default", "Todo", "policy-reader", "", "")
+  SignIn("policy-global")
+  flags = InstanceFeatures.Settings()
+  flags["states"]["views-table"] = False
+  flags["pilotUsernames"] = "policy-owner"
+  InstanceFeatures.Save(flags)
+  featureState = JSON.Encode(InstanceFeatures.Setting())
+  before = featureState
+  SignIn("policy-reader")
+  text = BoardTransfer.ExportData(source, "board", source)
+  data = BoardTransfer.ReadData(text)
+  If JSON.Encode(WithoutKeys(BoardViewPolicy.Snapshot(data))) <> JSON.Encode(expected) Then Error.Raise("Whole-board export lost policy")
+  If data.Exist("keys") Or data.Exist("actor") Or data.Exist("changed_ms") Or data.Exist("boardViewPreferences") Or data.Exist("featureStates") Then Error.Raise("Private transfer fields leaked")
+  target = BoardTransfer.ImportData(text, "Readonly importer policy")
+  CheckTarget(target, expected, "policy-reader")
+  If BoardViewPreference.Stored(target) <> "board-view-swimlanes" Then Error.Raise("Import inherited personal preferences")
+  If JSON.Encode(InstanceFeatures.Setting()) <> before Then Error.Raise("Import changed instance features")
+  SignIn("policy-manager")
+  target = WorkspaceStore.Copy(source, "board", source, "Empty layout policy copy", "", CopyOptions.Defaults(False))
+  CheckTarget(target, expected, "policy-manager")
+  If BoardVisibility.Permission(target) <> "private" Then Error.Raise("Policy copy granted public access")
+  If BoardViewPreference.Stored(target) <> "board-view-swimlanes" Then Error.Raise("Copy inherited personal preferences")
+  before = Frame()
+  Try BoardViewPolicy.InstallTransfer(target, expected)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Transfer overwrote an existing destination policy")
+  SignIn("policy-owner")
+  BoardAccess.SetMember(source, "policy-reader", "read-assigned-only")
+  SignIn("policy-reader")
+  before = Frame()
+  Try BoardTransfer.ExportData(source, "board", source)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Assigned export exposed whole-board policy")
+  child = BoardTransfer.ReadData(BoardTransfer.ExportData(source, "card", cardId))
+  If BoardViewPolicy.HasTransfer(child) Then Error.Raise("Card export included whole-board policy")
+  child["boardViewSettings"] = expected["boardViewSettings"]
+  Try BoardTransfer.ImportData(JSON.Encode(child), "Forged child policy")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Subset policy injection wrote state")
+  SignIn("policy-manager")
+  before = Frame()
+  db.Exec("CREATE TRIGGER transfer_policy_fail BEFORE INSERT ON kb_board_view_policy BEGIN SELECT RAISE(ABORT,'POLICY-FAIL'); END")
+  Try WorkspaceStore.Copy(source, "board", source, "Policy copy failure")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Copy policy failure retained rows")
+  Try BoardTransfer.ImportData(text, "Policy import failure")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Import policy failure retained rows")
+  db.Exec("DROP TRIGGER transfer_policy_fail")
+  db.Exec("CREATE TRIGGER transfer_owner_loss AFTER INSERT ON kb_board_view_policy BEGIN UPDATE kb_boards SET owner='policy-reader' WHERE id=NEW.board_id; END")
+  Try BoardTransfer.ImportData(text, "Owner policy race")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Late destination owner change committed")
+  db.Exec("DROP TRIGGER transfer_owner_loss")
+  db.Exec("CREATE TRIGGER transfer_source_change AFTER INSERT ON kb_board_view_policy WHEN NEW.board_id<>" & CStr(source) & " BEGIN UPDATE kb_board_view_policy SET settings='{}' WHERE board_id=" & CStr(source) & "; END")
+  Try WorkspaceStore.Copy(source, "board", source, "Source policy race")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Late source policy change committed")
+  db.Exec("DROP TRIGGER transfer_source_change")
+  db.Exec("CREATE TRIGGER transfer_session_loss AFTER INSERT ON kb_board_view_policy BEGIN UPDATE account_sessions SET generation=generation+1 WHERE username='policy-manager'; END")
+  Try BoardTransfer.ImportData(text, "Session policy race")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Late import session loss committed")
+  db.Exec("DROP TRIGGER transfer_session_loss")
+  db.Exec("CREATE TRIGGER transfer_destination_change AFTER INSERT ON kb_cards BEGIN UPDATE kb_board_view_policy SET settings='{}' WHERE board_id=NEW.board_id; END")
+  Try BoardTransfer.ImportData(text, "Destination policy race")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Late destination policy change committed")
+  db.Exec("DROP TRIGGER transfer_destination_change")
+  target = BoardTransfer.ImportData(text, "Policy retry")
+  CheckTarget(target, expected, "policy-manager")
+  ' Raw/legacy document semantics normalize on transfer; a hidden default is
+  ' retained instead of being rewritten by the interactive settings API.
+  data = BoardTransfer.ReadData(text)
+  data["boardViewSettings"]["board-view-table"]["showOnPublic"] = False
+  data["boardViewOrder"] = ["bad", "board-view-cal", "board-view-cal"]
+  data["owner"] = "policy-global"
+  data["members"] = ["policy-global"]
+  data["featureStates"] = ["views-table": True]
+  target = BoardTransfer.ImportData(JSON.Encode(data), "Legacy policy data")
+  CheckTarget(target, WithoutKeys(BoardViewPolicy.Snapshot(data)), "policy-manager")
+  If BoardAccess.Role(target) <> "board-admin" Then Error.Raise("Imported authority replaced current owner")
+  If JSON.Encode(InstanceFeatures.Setting()) <> featureState Then Error.Raise("Malicious transfer changed instance features")
+  If db.Find("kb_board_view_preferences").Count <> 2 Then Error.Raise("Transfer wrote personal view preferences")
+  Print "Board policy transfer: four document fields/all40 views/defaults/order, legacy/no-init/export scope, no preferences/features/authority transfer, readonly import/empty copy, hidden defaults, existing-row refusal, SQL/owner/source/session rollback and retry passed"
+End
+Private Function WithoutKeys(data As Collection) As Collection
+  data.Remove("keys")
+  Return data
+End
+Private Sub CheckTarget(id As Integer, expected As Collection, actor As String)
+  Dim r As Result
+  If JSON.Encode(BoardViewPolicy.Transfer(id)) <> JSON.Encode(expected) Then Error.Raise("Destination policy differs")
+  r = WebDatabase.OpenConnection().Find("kb_board_view_policy", "board_id=&1", id)
+  If r!actor <> actor Or r!changed_ms <= 0 Then Error.Raise("Destination policy attribution copied source")
+  If WorkspaceStore.Record(id, "board", id)!owner <> actor Then Error.Raise("Destination authority changed")
+End
+Private Function Frame() As String
+  Dim data As New Collection
+  Dim rows As Variant[]
+  Dim item As Collection
+  Dim r As Result
+  Dim tableName As String
+  Dim field As ResultField
+  Dim db As Connection = WebDatabase.OpenConnection()
+  For Each tableName In ["kb_boards", "kb_board_view_policy", "kb_board_view_preferences", "instance_feature_settings", "instance_feature_pilots", "account_sessions", "kb_members", "kb_member_flags", "kb_cards", "kb_lists", "kb_lanes", "kb_card_lists", "kb_order", "kb_activity", "kb_meta", "kb_user_meta", "kb_board_visibility", "kb_board_space_assignments"]
+    If Not db.Tables.Exist(tableName) Then Continue
+    rows = New Variant[]
+    r = db.Find(tableName)
+    For Each r
+      item = New Collection
+      For Each field In r.Fields
+        item.Add(r[field.Name], field.Name)
+      Next
+      rows.Add(item)
+    Next
+    data[tableName] = rows
+  Next
+  Return JSON.Encode(data)
+End
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

@@ -1008,6 +1008,44 @@ Remaining source renderers and
 non-view feature actions, card-field policy, original admin layout and the full
 Meteor method/publication bridge remain open.
 
+Whole-board native export/copy/import now preserves the four source document
+fields: `boardViewSettings`, `defaultPublicBoardView`, `defaultPrivateBoardView`
+and `boardViewOrder`. Transfer canonicalizes all 40 entries with the unchanged
+source snapshot semantics, including tolerant older/unknown order and legacy
+hidden defaults; it does not replace the document with the renderer's currently
+available views. Personal/shared view preferences, instance feature decisions,
+owner/member authority and source policy actor/timestamps are not transferred. New
+boards keep native private ownership and lazily resolve their own preference
+against the transferred private policy. Native card/list/lane subset exports omit
+whole-board policy; injecting those fields into a subset import is refused.
+
+Copies capture and recheck source policy under the existing board lock, install
+policy regardless of child-copy options and verify the destination before commit.
+Policy import is part of the same transaction as the new board and children.
+Installation requires current actor ownership/admin authority and generation,
+refuses an existing policy row, records current attribution and rechecks the
+written snapshot. Policy write errors become opaque while authorization errors
+remain safe. Copy/import prepare policy schema before their inner operation and recheck
+its existence when a surrounding dialog/batch rollback removed newly created DDL,
+so a failed first operation remains retryable. Export
+reads do not initialize policy storage. Legacy weba-2 bundles without these fields
+remain compatible. Native tests verify scope, private/global/preferences isolation,
+empty-option copy, normalized legacy data, install-once refusal and complete row
+rollback/retry after SQL, owner, source/destination policy and session changes.
+Real browsers verify readonly JSON download, all 40 fields, manager copy with
+failed-write/draft/retry, own private destination defaults without source preference
+inheritance, reload and Finnish/mobile file selection/import. The full local
+suite (69 host tests) and complete source/packaged browser suites pass against
+final code, including first-copy outer transaction/schema rollback and retry.
+
+44 fixture comparisons execute unchanged `Boards.copy`, `Exporter.build` and
+`WekanCreator.createBoardAndLabels` bodies with explicit empty-child, collection,
+SQL/Mongo-ID, title/permission/import-run and secureTransfer-hook adapters. Native
+copy/export policy matches the normalized source result. The current original
+importer drops these fields on 42 fixtures; native **weba-2 import deliberately
+preserves them**. This is not original WeKan-format import support or proof of the
+whole Meteor/storage/transport pipeline; those remain open.
+
 Selected guest cards now show comments and checklists through the same final
 public/card scope guards. Only the selected board/card's records are queried;
 checklist items must have a checklist parent on that same board/card. Foreign or

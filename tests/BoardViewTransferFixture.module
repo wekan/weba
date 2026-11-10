@@ -1,0 +1,53 @@
+Public Sub Main()
+  Dim mode As String = Env["WEBA_VIEW_TRANSFER_MODE"]
+  Dim id As Integer = Val(Env["WEBA_VIEW_TRANSFER_BOARD"])
+  Dim data As New Collection
+  Dim r As Result
+  Dim actor As String = Env["WEBA_VIEW_TRANSFER_USER"]
+  Dim item As Collection
+  Dim rows As New Variant[]
+  Dim name As String
+  Dim db As Connection
+  If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
+  If Not actor Then actor = "rest-view-transfer-manager"
+  If mode = "seed" Then
+    WebDatabase.Register("rest-view-transfer-manager", Env["WEBA_TEST_PASSWORD"])
+    WebDatabase.Register("rest-view-transfer-reader", Env["WEBA_TEST_PASSWORD"])
+    WebDatabase.Register("rest-view-transfer-importer", Env["WEBA_TEST_PASSWORD"])
+  Endif
+  Session["username"] = actor
+  Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+  db = WebDatabase.OpenConnection()
+  If mode = "seed" Then
+    id = KanbanStore.AddBoard("View policy transfer source")
+    BoardAccess.SetMember(id, "rest-view-transfer-reader", "read-only")
+    data["card"] = KanbanStore.SaveCard(id, 0, "Policy transfer card", "Literal body", "Default", "Todo", "", "", "")
+    BoardViewPolicy.Save(id, JSON.Decode("{\"defaultPublicBoardView\":\"board-view-table\",\"defaultPrivateBoardView\":\"board-view-cal\",\"boardViewSettings\":{\"board-view-swimlanes\":{\"showOnPublic\":false,\"showOnPrivate\":false},\"board-view-lists\":{\"showOnPrivate\":false}},\"boardViewOrder\":[\"board-view-gantt\",\"board-view-table\",\"board-view-cal\"]}"))
+    BoardViewPreference.Save(id, "board-view-gantt")
+    data["board"] = id
+  Endif
+  If mode = "fail" Then db.Exec("CREATE TRIGGER view_transfer_ui_fail BEFORE INSERT ON kb_board_view_policy BEGIN SELECT RAISE(ABORT,'PRIVATE-POLICY-TRANSFER-CANARY'); END")
+  If mode = "retry" Or mode = "cleanup" Then db.Exec("DROP TRIGGER IF EXISTS view_transfer_ui_fail")
+  If mode = "cleanup" Then
+    Session["username"] = "rest-owner"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("rest-owner")
+    For Each name In ["rest-view-transfer-manager", "rest-view-transfer-reader", "rest-view-transfer-importer"]
+      WebDatabase.DeleteUser(name)
+    Next
+    Print "{}"
+    Return
+  Endif
+  If id > 0 Then
+    data["policy"] = BoardViewPolicy.Transfer(id)
+    data["owner"] = WorkspaceStore.Record(id, "board", id)!owner
+    data["preference"] = BoardViewPreference.Stored(id)
+  Endif
+  data["features"] = InstanceFeatures.Setting()
+  r = db.Find("kb_boards")
+  data["count"] = r.Count
+  r = db.Find("kb_board_view_policy")
+  data["policyCount"] = r.Count
+  Print JSON.Encode(data)
+Catch
+  Print "{\"error\":true}"
+End

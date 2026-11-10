@@ -15,6 +15,7 @@ Public Function ExportData(boardId As Integer, kind As String, itemId As Integer
   Dim actor As String = WebIdentity.Username
   Dim generation As Long
   Dim text As String
+  Dim viewPolicy As Collection
   Dim transaction As Boolean
   Dim failure As String
   ImportExportPolicy.RequireExport()
@@ -29,7 +30,11 @@ Public Function ExportData(boardId As Integer, kind As String, itemId As Integer
   ImportExportPolicy.RequireExport()
   $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
   BoardAccess.RequireContainer(boardId, kind, itemId)
+  If kind = "board" Then viewPolicy = BoardViewPolicy.Transfer(boardId)
   text = BuildExport(boardId, kind, itemId)
+  If kind = "board" Then
+    If JSON.Encode(BoardViewPolicy.Transfer(boardId)) <> JSON.Encode(viewPolicy) Then Error.Raise("Board policy changed during export")
+  Endif
   If WebIdentity.Username <> actor Or WebDatabase.SessionGeneration(actor) <> generation Then Error.Raise("Sign in required")
   BoardAccess.RequireContainer(boardId, kind, itemId)
   ImportExportPolicy.RequireExport()
@@ -60,6 +65,8 @@ Private Function BuildExport(boardId As Integer, kind As String, itemId As Integ
   Dim listId As Integer
   Dim cover As Integer
   Dim include As Boolean
+  Dim viewPolicy As Collection
+  Dim policyKey As String
   BoardAccess.RequireContainer(boardId, kind, itemId)
   source = WorkspaceStore.Record(boardId, kind, itemId)
   CardContent.OpenStore()
@@ -68,6 +75,12 @@ Private Function BuildExport(boardId As Integer, kind As String, itemId As Integ
   data["format"] = "weba-2"
   data["kind"] = kind
   data["title"] = source!title
+  If kind = "board" Then
+    viewPolicy = BoardViewPolicy.Transfer(boardId)
+    For Each policyKey In viewPolicy.Keys
+      data[policyKey] = viewPolicy[policyKey]
+    Next
+  Endif
   r = BoardAccess.CardRows(boardId)
   For Each r
     listId = KanbanStore.CardListId(boardId, r!id)
@@ -162,6 +175,8 @@ End
 
 Public Function ImportData(text As String, title As String) As Integer
   Dim data As Collection
+  Dim viewPolicy As Collection
+  Dim generation As Long
   Dim laneMap As New Collection
   Dim listMap As New Collection
   Dim cardMap As New Collection
@@ -182,7 +197,14 @@ Public Function ImportData(text As String, title As String) As Integer
   Dim transaction As Boolean
   BoardCreation.Require()
   ImportExportPolicy.RequireImport()
+  generation = WebDatabase.SessionGeneration(actor)
   data = ReadData(text)
+  If BoardViewPolicy.HasTransfer(data) Then
+    If data["kind"] <> "board" Then Error.Raise("Board policy requires a whole-board export")
+    viewPolicy = BoardViewPolicy.Snapshot(data)
+    viewPolicy.Remove("keys")
+    BoardViewPolicy.InitializeTransfer()
+  Endif
   If Not Trim(title) Or String.Len(title) > 255 Then Error.Raise("Enter a valid board title")
   CardContent.OpenStore()
   $db = WebDatabase.OpenConnection()
@@ -195,6 +217,7 @@ Public Function ImportData(text As String, title As String) As Integer
   ImportExportPolicy.RequireImport()
   TransferPolicy.Lock()
   boardId = KanbanStore.AddBoard(title)
+  If viewPolicy Then BoardViewPolicy.InstallTransfer(boardId, viewPolicy)
   For Each item In data["lanes"]
     oldId = CStr(item["id"])
     titleValue = item["title"]
@@ -322,7 +345,10 @@ Public Function ImportData(text As String, title As String) As Integer
   Next
   KanbanStore.Activity(boardId, "Imported weba JSON")
   If data["files"].Count > 0 Then TransferPolicy.RequireTransfer("attachmentsUpload", maxFileBytes)
-  If WebIdentity.Username <> actor Then Error.Raise("Sign in required")
+  If WebIdentity.Username <> actor Or WebDatabase.SessionGeneration(actor) <> generation Then Error.Raise("Sign in required")
+  If viewPolicy Then
+    If JSON.Encode(BoardViewPolicy.Transfer(boardId)) <> JSON.Encode(viewPolicy) Then Error.Raise("Imported board policy changed")
+  Endif
   BoardAccess.Require(boardId, "write")
   BoardCreation.Require()
   ImportExportPolicy.RequireImport()

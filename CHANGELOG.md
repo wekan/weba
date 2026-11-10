@@ -2,6 +2,29 @@
 
 This work adds the following features and fixes:
 
+- Preserve all 40 normalized board-view entries, public/private defaults and
+  order through whole-board native export, empty/full-option copy and weba-2
+  import. Keep personal preferences, instance feature policy, permissions and
+  source actor/time attribution out of the transfer; install once on the new
+  actor-owned destination with fresh owner/session/admin checks and attribution.
+  Guard source/destination policy stability and roll back all new rows on policy
+  write, owner, source-policy, destination-policy or session failure; retain UI
+  copy drafts for opaque-error retry. Recheck schema after enclosing dialog/
+  batch transactions roll back new DDL so first-operation retries work; exports stay pure
+  reads. Legacy bundles without policy retain defaults, and normalized legacy
+  hidden defaults retain their meaning. Card/list/lane exports omit whole-board
+  policy and reject injected policy on subset import. Verify native scope,
+  authority/preferences/global isolation and rollback, 44 unchanged-source copy/
+  export body comparisons, and real readonly download, empty-option copy,
+  failure/retry, own private import, reload and Finnish/mobile file upload.
+  The full local suite (69 host tests) and complete source/packaged browser
+  suites pass against final code, including first outer-dialog schema rollback
+  and retry.
+  Native weba-2 imports preserve policy while the current original WeKan
+  createBoardAndLabels drops it (42 source fixtures); the original-format import
+  bridge and full source child/storage/transport integration remain pending.
+  Thanks to xet7.
+
 - Add instance feature policy and a bound site-admin form for all 16 source
   feature groups, per-group descriptions/decisions, approval of new catalog
   entries, admin previews and pilot usernames. Match strict source booleans,

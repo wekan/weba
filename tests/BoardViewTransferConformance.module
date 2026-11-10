@@ -1,0 +1,35 @@
+Public Sub Main()
+  Dim rows As Variant[] = JSON.Decode(Env["WEBA_POLICY_TRANSFER_CASES"], True)
+  Dim results As New Variant[]
+  Dim document As Collection
+  Dim item As Collection
+  Dim exported As Collection
+  Dim id As Integer
+  Dim target As Integer
+  Dim actor As String = "transfer-oracle-" & Env["WEBA_POLICY_TRANSFER_START"]
+  WebDatabase.Register(actor, "x")
+  Session["username"] = actor
+  Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+  BoardViewPolicy.InitializeTransfer()
+  For Each document In rows
+    id = KanbanStore.AddBoard("Source policy oracle")
+    BoardViewPolicy.InstallTransfer(id, document)
+    exported = BoardTransfer.ReadData(BoardTransfer.ExportData(id, "board", id))
+    item = New Collection
+    item["exported"] = Project(exported)
+    target = WorkspaceStore.Copy(id, "board", id, "Copied policy oracle", "", CopyOptions.Defaults(False))
+    item["copied"] = BoardViewPolicy.Transfer(target)
+    target = BoardTransfer.ImportData(JSON.Encode(exported), "Imported policy oracle")
+    item["imported"] = BoardViewPolicy.Transfer(target)
+    results.Add(item)
+  Next
+  Print JSON.Encode(results)
+End
+Private Function Project(document As Collection) As Collection
+  Dim result As New Collection
+  Dim key As String
+  For Each key In ["boardViewSettings", "defaultPublicBoardView", "defaultPrivateBoardView", "boardViewOrder"]
+    result[key] = document[key]
+  Next
+  Return result
+End

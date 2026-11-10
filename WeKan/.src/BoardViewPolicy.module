@@ -275,7 +275,9 @@ End
 
 Private Sub OpenStore()
   Dim t As Table
-  If $db Then Return
+  If $db Then
+    If $db.Tables.Exist("kb_board_view_policy") Then Return
+  Endif
   $db = WebDatabase.OpenConnection()
   If Not $db.Tables.Exist("kb_board_view_policy") Then
     t = $db.Tables.Add("kb_board_view_policy")
@@ -397,4 +399,77 @@ Public Function Difference(baseline As Collection, draft As Collection) As Colle
   If table.Count Then result["boardViewSettings"] = table
   If JSON.Encode(baseline["boardViewOrder"]) <> JSON.Encode(draft["boardViewOrder"]) Then result["boardViewOrder"] = draft["boardViewOrder"]
   Return result
+End
+
+' Only the source board's four document fields belong in a board transfer.
+Public Function Transfer(boardId As Integer) As Collection
+  Dim result As Collection
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  result = Snapshot(ReadRaw(boardId))
+  result.Remove("keys")
+  Return result
+End
+
+Public Function HasTransfer(document As Collection) As Boolean
+  Dim key As String
+  For Each key In ["boardViewSettings", "defaultPublicBoardView", "defaultPrivateBoardView", "boardViewOrder"]
+    If document.Exist(key) Then Return True
+  Next
+  Return False
+End
+
+' Prepare the store before the inner operation; OpenStore also rechecks schema
+' existence after a surrounding dialog/batch transaction rolls back its DDL.
+Public Sub InitializeTransfer()
+  If Not WebIdentity.Username Then Error.Raise("Sign in required")
+  OpenStore()
+Catch
+  TransferError(Error.Text)
+End
+
+Private Sub RequireTransferOwner(boardId As Integer, actor As String, generation As Long)
+  If Env["WEBA_API_REQUEST"] = "1" Then Error.Raise("Native transfer required")
+  If WebIdentity.Username <> actor Or WebDatabase.SessionGeneration(actor) <> generation Then Error.Raise("Sign in required")
+  BoardAccess.Require(boardId, "manageBoard")
+  If CStr(WebDatabase.OpenConnection().Find("kb_boards", "id=&1", boardId)!owner) <> actor Then Error.Raise("Transfer destination changed")
+End
+
+' Called only with a board just created by the enclosing copy/import operation.
+' Preserve normalized document semantics, including legacy hidden defaults;
+' the manager's interactive partial-update invariants are a separate API.
+Public Sub InstallTransfer(boardId As Integer, document As Collection)
+  Dim actor As String = WebIdentity.Username
+  Dim generation As Long = WebDatabase.SessionGeneration(actor)
+  Dim data As Collection
+  Dim r As Result
+  Dim transaction As Boolean
+  Dim failure As String
+  RequireTransferOwner(boardId, actor, generation)
+  If Not $db Then Error.Raise("Transfer store was not initialized")
+  data = Snapshot(document)
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+  RequireTransferOwner(boardId, actor, generation)
+  If $db.Find("kb_board_view_policy", "board_id=&1", boardId).Available Then Error.Raise("Transfer destination already has policy")
+  r = $db.Create("kb_board_view_policy")
+  r["board_id"] = boardId
+  r["settings"] = JSON.Encode(data)
+  r["actor"] = actor
+  r["changed_ms"] = ItemChanges.UtcNow()
+  r.Update()
+  RequireTransferOwner(boardId, actor, generation)
+  If JSON.Encode(Snapshot(ReadRaw(boardId))) <> JSON.Encode(data) Then Error.Raise("Transferred board policy changed")
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  TransferError(failure)
+End
+
+Private Sub TransferError(message As String)
+  If ["Sign in required", "Board permission denied", "Board not accessible", "Native transfer required", "Transfer destination changed", "Transfer destination already has policy", "Transferred board policy changed"].Find(message) >= 0 Then Error.Raise(message)
+  Error.Raise("Error")
 End

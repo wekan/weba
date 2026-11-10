@@ -301,6 +301,7 @@ End
 
 Public Function Copy(boardId As Integer, kind As String, itemId As Integer, title As String, Optional targetLane As String, Optional options As Collection) As Integer
   Dim fields As Collection
+  Dim viewPolicy As Collection
   Dim actor As String = WebIdentity.Username
   Dim transaction As Boolean
   Dim sourceArchived As Boolean
@@ -327,6 +328,7 @@ Public Function Copy(boardId As Integer, kind As String, itemId As Integer, titl
   If kind = "board" Then
     BoardCreation.Require()
     ImportExportPolicy.RequireImport()
+    BoardViewPolicy.InitializeTransfer()
   Endif
   title = Trim(title)
   If Not title Or String.Len(title) > If(kind = "list", 32, 255) Then Error.Raise("Enter a valid copy title")
@@ -352,6 +354,7 @@ Public Function Copy(boardId As Integer, kind As String, itemId As Integer, titl
     sourceArchived = source!archived
     sourceTitle = source!title
     sourceOwner = source!owner
+    viewPolicy = BoardViewPolicy.Transfer(boardId)
   Endif
   If kind <> "board" Or fields["cards"] Then KanbanStore.PrimeCardLinks(boardId)
   Select kind
@@ -360,6 +363,7 @@ Public Function Copy(boardId As Integer, kind As String, itemId As Integer, titl
       newId = CloneCard(boardId, itemId, boardId, listId, source!lane, source!status, title)
     Case "board"
       newId = KanbanStore.AddBoard(title)
+      BoardViewPolicy.InstallTransfer(newId, viewPolicy)
       If fields["swimlanes"] Then
         laneRows = KanbanStore.Lanes(boardId)
         For Each laneRows
@@ -398,6 +402,8 @@ Public Function Copy(boardId As Integer, kind As String, itemId As Integer, titl
     BoardAccess.Require(sourceId, "manageBoard")
     source = Record(sourceId, "board", sourceId)
     If source!archived <> sourceArchived Or source!title <> sourceTitle Or source!owner <> sourceOwner Then Error.Raise("Source board changed during copy")
+    If JSON.Encode(BoardViewPolicy.Transfer(sourceId)) <> JSON.Encode(viewPolicy) Then Error.Raise("Source board policy changed during copy")
+    If JSON.Encode(BoardViewPolicy.Transfer(newId)) <> JSON.Encode(viewPolicy) Then Error.Raise("Copied board policy changed")
     source = Record(newId, "board", newId)
     If source!owner <> actor Or source!archived Or source!title <> title Then Error.Raise("Copied board changed")
   Endif

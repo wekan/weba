@@ -170,8 +170,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   browser/profile/DDP preference bridges and
   instance feature integration beyond the native 16-group admin policy/pilot/
   preview form and signed-in/guest view filtering recorded in CHANGELOG.md
-  and policy copy/import integration beyond the native persisted public/private
-  policy and live guest enforcement in CHANGELOG.md, source-defined child
+  and original-format policy copy/import integration beyond the native whole-
+  board weba-2 export/copy/import preservation in CHANGELOG.md, source-defined child
   models, storage/cover/download models and
   source backgrounds/templates/global-sort fields, global visibility/editing controls,
   first-edit membership, import/copy and original publication/ReportPages
