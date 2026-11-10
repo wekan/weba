@@ -2,6 +2,11 @@
 
 Export
 
+Private $boardArchive As Collection
+Private $boardArchiveContext As String
+Private $boardArchiveHome As Boolean
+Private $navigationRevision As Long
+Private $navigationHome As Boolean
 Private $membersBoard As Integer
 Private $memberOwner As String
 Private $peopleBoard As Integer
@@ -183,6 +188,7 @@ End
 
 Public Sub BoardPoll_Timer()
   Dim state As String
+  ValidateBoardArchive()
   ValidateRecoveryPanels()
   ValidateTransferPanel()
   ValidateBoardCreation()
@@ -282,6 +288,7 @@ Public Sub Boards_Select()
   Dim parts As String[]
   Dim c As Result
   If Not Boards.Key Then Return
+  CloseBoardArchive_Click()
   $landingConsumed = True
   $card = 0
   If Left(Boards.Key, 1) = "b" Then
@@ -545,7 +552,8 @@ Private Sub ShowView(view As String)
   Visual.Refresh()
 End
 
-Public Sub Home_Click()
+Private Sub ResetHome()
+  CloseBoardArchive_Click()
   Editor.Hide()
   ContentRow.Show()
   PageActions.Show()
@@ -566,10 +574,15 @@ Public Sub Home_Click()
   $view = "Boards"
   $spaceMenu = 0
   $catalogPage = 1
+End
+
+Public Sub Home_Click()
+  ResetHome()
   RefreshTree()
 End
 
 Public Sub Archive_Click()
+  CloseBoardArchive_Click()
   Editor.Hide()
   ContentRow.Show()
   PageActions.Show()
@@ -850,6 +863,8 @@ Private Sub UpdateHeader()
   routeAck["boardId"] = If(routeSection = "board", CStr($board), "")
   routeAck["boardTitle"] = If(routeSection = "board", $boardTitle, "")
   routeAck["boardArchived"] = If(routeSection = "board", $archive, False)
+  routeAck["navigationRevision"] = $navigationRevision
+  routeAck["navigationHome"] = $navigationHome
   routeAck["landingReady"] = $landingConsumed
   routeAck.Add(routeSection, "section")
   routeAck.Add($overviewRouteToken, "token")
@@ -1175,6 +1190,7 @@ Private Sub OpenContext(kind As String, itemId As Integer, boardId As Integer)
       ClearSingleCopy()
     Endif
   Endif
+  CloseBoardArchive_Click()
   $contextBoard = boardId
   $contextKind = kind
   $contextId = itemId
@@ -1616,6 +1632,17 @@ Catch
   Notice.Text = Error.Text
 End
 Public Sub ContextArchive_Click()
+  Dim row As Result
+  If $contextKind = "board" Then
+    $boardArchive = BoardArchive.Prepare($contextBoard)
+    $boardArchiveContext = LandingContext()
+    $boardArchiveHome = $board = $contextBoard And Not IsOverview()
+    row = WorkspaceStore.Record($contextBoard, "board", $contextBoard)
+    BoardArchiveName.Text = row!title
+    ContextMenu.Hide()
+    BoardArchivePanel.Show()
+    Return
+  Endif
   WorkspaceStore.SetArchived($contextBoard, $contextKind, $contextId, True)
   ContextMenu.Hide()
   Editor.Hide()
@@ -1625,6 +1652,21 @@ Catch
   Notice.Text = Error.Text
 End
 Public Sub ContextRestore_Click()
+  Dim data As Collection
+  If $contextKind = "board" Then
+    BoardArchive.Restore($contextBoard)
+    data = BoardRoute.Resolve(CStr($contextBoard))
+    ContextMenu.Hide()
+    ResetHome()
+    $board = data["id"]
+    $archive = False
+    $view = "Swimlanes"
+    $card = 0
+    $navigationHome = False
+    $navigationRevision += 1
+    RefreshTree()
+    Return
+  Endif
   WorkspaceStore.SetArchived($contextBoard, $contextKind, $contextId, False)
   ContextMenu.Hide()
   RefreshTree()
@@ -1632,6 +1674,47 @@ Public Sub ContextRestore_Click()
 Catch
   Notice.Text = Error.Text
 End
+Public Sub CloseBoardArchive_Click()
+  $boardArchive = Null
+  $boardArchiveContext = ""
+  $boardArchiveHome = False
+  BoardArchiveName.Text = ""
+  BoardArchivePanel.Hide()
+End
+
+Public Sub CancelBoardArchive_Click()
+  CloseBoardArchive_Click()
+End
+
+Private Sub ValidateBoardArchive()
+  If Not $boardArchive Then Return
+  Try BoardArchive.Validate($boardArchive)
+  If Error Then
+    CloseBoardArchive_Click()
+    Return
+  Endif
+  If LandingContext() <> $boardArchiveContext Or $contextKind <> "board" Or $contextBoard <> $boardArchive["boardId"] Then CloseBoardArchive_Click()
+End
+
+Public Sub ConfirmBoardArchive_Click()
+  Dim state As Collection = $boardArchive
+  Dim goHome As Boolean = $boardArchiveHome
+  If Not state Then Error.Raise("Board archive confirmation changed")
+  If LandingContext() <> $boardArchiveContext Or $contextKind <> "board" Or $contextBoard <> state["boardId"] Then Error.Raise("Board archive confirmation changed")
+  CloseBoardArchive_Click()
+  BoardArchive.Confirm(state)
+  If goHome Then
+    $navigationHome = True
+    $navigationRevision += 1
+    Home_Click()
+  Else
+    RefreshTree()
+  Endif
+Catch
+  Notice.Text = Error.Text
+  CloseBoardArchive_Click()
+End
+
 Public Sub ContextHistory_Click()
   Dim r As Result
   $browsingArchive = False
@@ -3918,6 +4001,7 @@ Public Sub EntryRouteAction_Change()
   section = fields[0]
   If Not fields[1] Or Len(fields[1]) > 128 Then Error.Raise("Unknown overview entry")
   If ["remaining", "starred", "archive", "home", "workspaces", "board"].Find(section) < 0 Then Error.Raise("Unknown overview entry")
+  CloseBoardArchive_Click()
   If section = "board" Then
     If fields.Count <> 3 Then Error.Raise("Unknown board entry")
     boardEntryStarted = True

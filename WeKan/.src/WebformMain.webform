@@ -65,6 +65,30 @@
       Tooltip = ("Show or hide page sidebar")
     }
   }
+  { BoardArchivePanel WebContainer
+    Class = "weba-action-panel"
+    Arrangement = Arrange.Vertical
+    Width = "340px"
+    Visible = False
+    Ignore = True
+    Spacing = True
+    { CloseBoardArchive WebButton
+      Class = "weba-icon-only weba-popup-close fa fa-times-thin"
+      Tooltip = ("Close")
+    }
+    { BoardArchiveName WebLabel
+      Class = "weba-user-text"
+    }
+    { BoardArchiveWarning WebLabel
+      Text = ("Are you sure you want to archive this board?")
+    }
+    { ConfirmBoardArchive WebButton
+      Text = ("Archive")
+    }
+    { CancelBoardArchive WebButton
+      Text = ("Cancel")
+    }
+  }
   { DeleteListPanel WebContainer
     Class = "weba-action-panel"
     Arrangement = Arrange.Vertical

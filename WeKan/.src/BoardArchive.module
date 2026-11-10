@@ -1,0 +1,70 @@
+ ' Private board-menu confirmation and atomic archive/restore, without placement effects.
+Export
+
+Public Function Prepare(boardId As Integer) As Collection
+  Dim state As New Collection
+  Dim actor As String = WebIdentity.Username
+  If Not actor Then Error.Raise("Sign in required")
+  BoardAccess.Require(boardId, "manageBoard")
+  If WorkspaceStore.Archived(boardId, "board", boardId) Then Error.Raise("Board archive state changed")
+  state["boardId"] = boardId
+  state["username"] = actor
+  state["generation"] = WebDatabase.SessionGeneration(actor)
+  state["done"] = False
+  Validate(state)
+  Return state
+End
+
+Public Sub Validate(state As Collection)
+  If Not state Then Error.Raise("Board archive confirmation changed")
+  If CBool(state["done"]) Then Error.Raise("Board archive confirmation changed")
+  If Not WebIdentity.Username Or state["username"] <> WebIdentity.Username Then Error.Raise("Sign in required")
+  If state["generation"] <> WebDatabase.SessionGeneration(WebIdentity.Username) Then Error.Raise("Sign in required")
+  BoardAccess.Require(CInt(state["boardId"]), "manageBoard")
+  If WorkspaceStore.Archived(CInt(state["boardId"]), "board", CInt(state["boardId"])) Then Error.Raise("Board archive state changed")
+End
+
+Public Sub Confirm(state As Collection)
+  Validate(state)
+  Change(CInt(state["boardId"]), True, 0)
+  state["done"] = True
+End
+
+Public Sub Restore(boardId As Integer)
+  Change(boardId, False)
+End
+
+Private Sub Change(boardId As Integer, desired As Boolean, Optional expected As Integer = -1)
+  Dim actor As String = WebIdentity.Username
+  Dim db As Connection
+  Dim row As Result
+  Dim owner As String
+  Dim transaction As Boolean
+  Dim failure As String
+  If Not actor Then Error.Raise("Sign in required")
+  If boardId <= 0 Then Error.Raise("Board not accessible")
+  BoardAccess.Require(boardId, "manageBoard")
+  db = WebDatabase.OpenConnection()
+  DatabaseTransactions.Begin(db)
+  transaction = True
+  db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+  If WebIdentity.Username <> actor Or Not WebDatabase.UserExists(actor) Then Error.Raise("Sign in required")
+  BoardAccess.Require(boardId, "manageBoard")
+  row = db.Find("kb_boards", "id=&1", boardId)
+  If Not row.Available Then Error.Raise("Board not accessible")
+  owner = row!owner
+  If expected >= 0 And CBool(row!archived) <> CBool(expected) Then Error.Raise("Board archive state changed")
+  If CBool(row!archived) <> desired Then KanbanStore.ArchiveBoard(boardId, desired)
+  If WebIdentity.Username <> actor Or Not WebDatabase.UserExists(actor) Then Error.Raise("Sign in required")
+  BoardAccess.Require(boardId, "manageBoard")
+  row = db.Find("kb_boards", "id=&1", boardId)
+  If Not row.Available Then Error.Raise("Board not accessible")
+  If CBool(row!archived) <> desired Or row!owner <> owner Then Error.Raise("Board archive state changed")
+  DatabaseTransactions.Commit(db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback(db)
+  Error.Raise(failure)
+End

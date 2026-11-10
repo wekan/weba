@@ -7,7 +7,7 @@ root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(root / 'runtime'))
 from server import handler
 
-if any(mode in sys.argv for mode in ('--board-routes', '--home-external', '--home-drops', '--home-presentation', '--home-login', '--home', '--workspace-urls', '--overview-entry', '--original-catalog', '--markdown-policy', '--live', '--overview-live', '--catalog', '--board-order', '--workspaces', '--workspace-order', '--board-drops', '--board-selection', '--selection-archive', '--board-purge', '--list-delete-api', '--list-deletion', '--attachment-lifecycle', '--attachment-delete-api', '--attachment-upload-api', '--attachment-upload', '--attachment-reads-api', '--attachment-reads', '--transfer-policy-api', '--transfer-policy', '--board-allowance', '--board-copy', '--selected-copy', '--copy-options', '--board-creation', '--single-copy', '--import-export-policy', '--attachment-export-api', '--attachment-export')) and '--members' not in sys.argv:
+if any(mode in sys.argv for mode in ('--board-menu', '--board-routes', '--home-external', '--home-drops', '--home-presentation', '--home-login', '--home', '--workspace-urls', '--overview-entry', '--original-catalog', '--markdown-policy', '--live', '--overview-live', '--catalog', '--board-order', '--workspaces', '--workspace-order', '--board-drops', '--board-selection', '--selection-archive', '--board-purge', '--list-delete-api', '--list-deletion', '--attachment-lifecycle', '--attachment-delete-api', '--attachment-upload-api', '--attachment-upload', '--attachment-reads-api', '--attachment-reads', '--transfer-policy-api', '--transfer-policy', '--board-allowance', '--board-copy', '--selected-copy', '--copy-options', '--board-creation', '--single-copy', '--import-export-policy', '--attachment-export-api', '--attachment-export')) and '--members' not in sys.argv:
     sys.argv.append('--members')
 
 base_env = os.environ.copy()
@@ -85,6 +85,8 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
         elif '--attachment-export-api' in sys.argv:
             subprocess.run([sys.executable, str(root / 'tests/api-attachment-export.test.py')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/attachment-export-conformance.test.cjs')], check=True, env=env)
+        elif '--board-menu' in sys.argv:
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-menu.browser.cjs')], check=True, env=env)
         elif '--board-routes' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-routes.browser.cjs')], check=True, env=env)
         elif '--home-external' in sys.argv:
@@ -206,6 +208,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/home-board.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/home-login.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-routes.browser.cjs')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-menu.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/home-presentation.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/home-drops.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/home-external.browser.cjs')], check=True, env=env)

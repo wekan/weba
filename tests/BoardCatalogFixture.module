@@ -131,6 +131,14 @@ Public Sub Main()
     data["ids"] = ids
   Endif
   If Env["WEBA_CATALOG_MODE"] = "create-space" Then data["spaceId"] = BoardSpaces.Add(Env["WEBA_SPACE_NAME"])
+  If Env["WEBA_CATALOG_MODE"] = "menu-manager" Then BoardAccess.SetMember(CInt(Env["WEBA_SPACE_BOARD"]), "rest-owner", Env["WEBA_MENU_ROLE"])
+  If Env["WEBA_CATALOG_MODE"] = "menu-failure" Then
+    If Env["WEBA_MENU_FAILURE"] = "on" Then
+      WebDatabase.OpenConnection().Exec("CREATE TRIGGER fail_menu_activity BEFORE INSERT ON kb_activity WHEN NEW.board_id=" & CStr(CInt(Env["WEBA_SPACE_BOARD"])) & " BEGIN SELECT RAISE(ABORT,'menu transition failed'); END")
+    Else
+      WebDatabase.OpenConnection().Exec("DROP TRIGGER IF EXISTS fail_menu_activity")
+    Endif
+  Endif
   If Env["WEBA_CATALOG_MODE"] = "rename-route-board" Then WorkspaceStore.Rename(CInt(Env["WEBA_SPACE_BOARD"]), "board", CInt(Env["WEBA_SPACE_BOARD"]), Env["WEBA_ROUTE_TITLE"])
   If Env["WEBA_CATALOG_MODE"] = "rename-space" Then BoardSpaces.Edit(CInt(Env["WEBA_SPACE_ID"]), Env["WEBA_SPACE_NAME"])
   If Env["WEBA_CATALOG_MODE"] = "delete-space" Then BoardSpaces.Remove(CInt(Env["WEBA_SPACE_ID"]))

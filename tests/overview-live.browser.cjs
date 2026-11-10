@@ -45,7 +45,7 @@ const secrets=[process.env.WEBA_TEST_PASSWORD];
   await expect(member.locator(control('Boards')+' tr[id]').filter({hasText:'Live overview renamed board'})).toHaveCount(0);
   expect((await api.post(`/api/boards/${board}/members/rest-member/add`,{headers,data:{action:'add',role:'normal'}})).status()).toBe(200);
   await click(member,'Home');await expect(member.locator(tile(board))).toBeVisible();
-  await menu(owner,board);await click(owner,'ContextArchive');
+  await menu(owner,board);await click(owner,'ContextArchive');await click(owner,'ConfirmBoardArchive');
   await member.bringToFront();await expect(member.locator(tile(board))).toHaveCount(0);
   await click(owner,'Archive');await click(member,'Archive');await expect(member.locator(tile(board))).toBeVisible();
   await menu(owner,board);await click(owner,'ContextRestore');

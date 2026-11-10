@@ -36,7 +36,7 @@
     };
   }
   const entryKey='weba-overview-entry',overviewSections=['remaining','starred','archive','home','workspaces','board'];
-  let entrySent=false,overviewPending=null,overviewObserved=null,overviewIntent=0,deferredOverview=null;
+  let entrySent=false,overviewPending=null,overviewObserved=null,overviewIntent=0,deferredOverview=null,navigationObserved=null;
   function overviewRouteAtPath(){try{
     const board=/^\/b\/([1-9]\d{0,9})(?:\/([^/]+))?\/?$/.exec(decodeURIComponent(root.location.pathname));
     if(board&&Number(board[1])<=2147483647)return {section:'board',id:board[1],path:board[2]||''};
@@ -53,7 +53,7 @@
     const title=[root.webaI18n?.t('All Boards')||'All Boards',root.webaI18n?.t('Workspaces')||'Workspaces',...names].join(' / '),el=document.querySelector('[id$=".PageTitle"]');
     if(el&&el.textContent!==title)el.textContent=title;if(el&&el.title!==title)el.title=title;
   }
-  function rememberOverviewState(ack,push){
+  function rememberOverviewState(ack,push,home=false){
     if(ack.section==='board'){
       const urls=root.webaWorkspaceMarkdown?.boardUrls;if(!urls)return false;
       const route=overviewRouteAtPath(),path=urls.path(ack.boardId,ack.boardTitle),state={webaOverviewSection:'board',webaBoardId:ack.boardId};
@@ -69,7 +69,7 @@
     }
     if(ack.section==='workspaces'&&!workspaceUrls())return false;
     const slugs=ack.section==='workspaces'&&ack.workspaceId?workspaceUrls().slugs(ack.tree||[],ack.workspaceId)||[]:[];
-    const path=ack.section==='workspaces'?workspaceUrls().path(ack.tree||[],ack.workspaceId||''):'/allboards/'+ack.section;
+    const path=home?'/':ack.section==='workspaces'?workspaceUrls().path(ack.tree||[],ack.workspaceId||''):'/allboards/'+ack.section;
     const state={webaOverviewSection:ack.section,webaWorkspacePath:slugs.join('/')};
     if(push&&root.location.pathname+root.location.search+root.location.hash!==path)root.history.pushState(state,'',path);
     else root.history.replaceState({...root.history.state,...state},'',root.location.href);
@@ -77,11 +77,13 @@
   }
   function syncOverviewHistory(){
     const ack=overviewAck();if(!ack)return;const section=ack.section;
+    const revision=String(ack.navigationRevision||0);if(navigationObserved===null)navigationObserved=revision;
+    const nativeChanged=navigationObserved!==revision;
     if(!overviewSections.includes(section)){overviewObserved=null;return;}
     if(section==='workspaces'&&!workspaceUrls())return;
     if(section==='board'&&root.location.pathname==='/'&&!ack.landingReady&&!overviewPending)return;
-    const id=section==='board'?ack.boardId||'':section==='workspaces'?ack.workspaceId||'':'',key=section+':'+id;
-    if(overviewPending?.section==='board'&&ack.token===overviewPending.token&&section!=='board'){overviewPending=null;overviewObserved=key;return;}
+    const id=section==='board'?ack.boardId||'':section==='workspaces'?ack.workspaceId||'':'',key=section+':'+id+':'+revision;
+    if(overviewPending?.section==='board'&&ack.token===overviewPending.token&&section!=='board'){overviewPending=null;overviewObserved=key;navigationObserved=revision;return;}
     if(overviewPending?.section==='workspaces'&&overviewPending.id&&workspaceUrls()&&!workspaceUrls().slugs(ack.tree||[],overviewPending.id)){
       // A vanished target is a safe native fallback, not a new history intent.
       sendOverviewRoute('workspaces','entry','');return;
@@ -93,10 +95,10 @@
     if(overviewPending){
       if(overviewPending.section!==section||overviewPending.token!==ack.token||overviewPending.id!==id)return;
       if(!rememberOverviewState(ack,overviewPending.source==='menu'))return;
-      overviewPending=null;overviewObserved=key;return;
+      overviewPending=null;overviewObserved=key;navigationObserved=revision;return;
     }
     if(overviewObserved===key){workspaceTrail(ack);return;}
-    const first=overviewObserved===null,vanished=section==='workspaces'&&!id&&overviewObserved?.startsWith('workspaces:')||section!=='board'&&overviewObserved?.startsWith('board:')&&overviewRouteAtPath()?.section==='board';if(rememberOverviewState(ack,section==='board'&&root.location.pathname==='/'||!first&&!vanished))overviewObserved=key;
+    const first=overviewObserved===null,vanished=section==='workspaces'&&!id&&overviewObserved?.startsWith('workspaces:')||section!=='board'&&overviewObserved?.startsWith('board:')&&overviewRouteAtPath()?.section==='board'&&!nativeChanged;if(rememberOverviewState(ack,nativeChanged||section==='board'&&root.location.pathname==='/'||!first&&!vanished,nativeChanged&&ack.navigationHome)){overviewObserved=key;navigationObserved=revision;}
   }
   function sendOverviewRoute(section,source,workspaceId=''){
     const target=document.querySelector('[id$=".EntryRouteAction"]');if(!target||!root.gw?.update||!overviewSections.includes(section))return false;
@@ -306,6 +308,7 @@
   root.webaUI={decorate,syncColor};
   function start(){
     document.addEventListener('click',event=>{
+      if(event.target.closest?.('[id$=".ConfirmBoardArchive"],[id$=".ContextRestore"]')){overviewPending=null;deferredOverview=null;entrySent=true;}
       const tile=event.target.closest?.('[data-board-key]');
       if(tile){
         if(root.webaDrag?.clickSuppressed){event.preventDefault();event.stopImmediatePropagation();return;}

@@ -2,6 +2,25 @@
 
 This work adds the following features and fixes:
 
+- Confirm native board-menu archive through a private board/actor/session/view
+  binding, with cancellation, Escape, context/navigation invalidation and replay
+  refusal. Catalog archive stays in its current section; archiving the open board
+  goes to native home at `/` without reapplying saved Home during that page.
+  Restore opens the active canonical board and closes its old menu, with no
+  intermediate overview or duplicate same-board history entry. Preserve private
+  stars, workspace placement and saved Home. Serialize archive/restore under
+  account/board locks and recheck identity, role, owner and final state; roll back
+  activity and state together on failures and avoid repeated restore effects.
+  Keep newer menu intents authoritative over delayed responses and allow the
+  first successful native navigation before the URL helper loads. Translate the
+  fixed warning/actions using existing keys across 237 catalogs while preserving
+  literal board names and readable mobile wrapping. Verify native archive and
+  restore rollback/role/session/owner/state/retry negatives, real confirmation,
+  scoped/root/canonical and race behavior, readonly/live demotion refusal and
+  Finnish mobile controls. Full local (54 host tests) and complete source/packaged
+  browser suites pass. Original Meteor/FlowRouter callbacks, public/card routes and real tile-link gestures remain pending.
+  Thanks to xet7.
+
 - Add native `/b/:id/:slug` and short `/b/:id` board entries with current-session
   read checks, canonical native IDs, literal titles and fresh archive context.
   Serve only root HTML for valid GET entries, stripping query commands; refuse

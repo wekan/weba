@@ -686,6 +686,32 @@ FlowRouter/DDP or public/card routes. `BoardRouteTest`, host path/method/query
 checks, twelve unchanged source slug/path comparisons and real
 `python3 tests/run-http.py --board-routes [--archive]` cover these boundaries.
 
+Board-menu Archive now opens a native confirmation with a literal board name,
+translated source warning, explicit Archive/Cancel and keyboard Escape/Close.
+The private form binds the board, principal/session generation and current view;
+context changes or navigation clear it, live permission/state changes close it,
+and a consumed/cancelled confirmation cannot be replayed. The existing catalog
+callback stays in its section after success. Archiving the open board goes to
+native home at `/` (the native Remaining view), keeping the current page's Home
+landing consumed; restoring opens its canonical active board and closes the old
+menu. Typed private navigation revisions distinguish successful action navigation
+from permission-loss fallback, and a later user menu intent wins delayed replies.
+Initial revisions are observed before the optional URL helper arrives, so late
+helper delivery cannot resurrect an obsolete board entry. Same-URL restore does
+not add history and no temporary overview is recorded while opening a restore.
+
+`BoardArchive` locks the current account and board, rechecks fresh session/manage
+permission and owner/state before commit, and wraps the existing board/archive
+activity writes in one transaction. Restore is idempotent. State/activity SQL
+failure and late role/session/owner/state changes roll back; stars, placement and
+saved Home remain untouched. Confirmation checks are private UI state, not a new
+public API. Native negative/rollback/retry tests run in the local suite; real
+`python3 tests/run-http.py --board-menu [--archive]` covers catalog/board/history,
+forgery/cancel/replay/context substitution, live demotion, failed mutation/retry,
+Finnish/mobile and delayed-helper/latest-menu races. The source archive callbacks
+and restore callback were read directly; this native integration does not execute
+them through production Meteor/FlowRouter or implement Sandstorm's restore swap.
+
 Starred now applies the unchanged source Home-first presentation rule after
 catalog paging: readable active Home appears first even when unstarred, once
 per rendered page. A title search suppresses this insertion. Raw server counts

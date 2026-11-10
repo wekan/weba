@@ -1,0 +1,145 @@
+Public Sub Main()
+  Dim a As Integer
+  Dim b As Integer
+  Dim spaceId As Integer
+  Dim state As Collection
+  Dim placements As Collection
+  Dim db As Connection
+  Dim before As String
+  Dim trigger As String
+  Dim denied As Boolean
+  WebDatabase.Register("archive-owner", "x")
+  WebDatabase.Register("archive-manager", "x")
+  WebDatabase.Register("archive-reader", "x")
+  WebDatabase.Register("archive-other", "x")
+  SignIn("archive-owner")
+  a = KanbanStore.AddBoard("Board archive Alpha")
+  b = KanbanStore.AddBoard("Board archive Bravo")
+  BoardAccess.SetMember(a, "archive-manager", "board-admin")
+  BoardAccess.SetMember(a, "archive-reader", "read-only")
+  HomeBoard.SetBoard(b)
+  SignIn("archive-manager")
+  spaceId = BoardSpaces.Add("Archive placement")
+  BoardSpaces.Assign(a, spaceId)
+  WorkspaceStore.Toggle(a, "board", a, "star")
+  HomeBoard.SetBoard(a)
+  db = WebDatabase.OpenConnection()
+  state = BoardArchive.Prepare(a)
+  before = Snapshot()
+  For Each trigger In ["BEFORE INSERT ON kb_activity BEGIN SELECT RAISE(ABORT,'activity failed'); END", "AFTER UPDATE OF archived ON kb_boards WHEN NEW.archived=1 BEGIN UPDATE kb_members SET role='read-only' WHERE board_id=" & CStr(a) & " AND username='archive-manager'; END", "AFTER UPDATE OF archived ON kb_boards WHEN NEW.archived=1 BEGIN UPDATE account_sessions SET generation=generation+1 WHERE username='archive-manager'; END", "AFTER INSERT ON kb_activity BEGIN UPDATE kb_boards SET owner='archive-other' WHERE id=" & CStr(a) & "; END", "AFTER INSERT ON kb_activity BEGIN UPDATE kb_boards SET archived=0 WHERE id=" & CStr(a) & "; END"]
+    db.Exec("CREATE TRIGGER fail_board_archive " & trigger)
+    Try BoardArchive.Confirm(state)
+    denied = Error
+    If Not denied Or Snapshot() <> before Then Error.Raise("Archive failure changed board/activity/role/session/preferences")
+    db.Exec("DROP TRIGGER fail_board_archive")
+  Next
+  BoardArchive.Confirm(state)
+  If Not WorkspaceStore.Archived(a, "board", a) Then Error.Raise("Confirmed archive failed")
+  placements = BoardSpaces.Assignments()
+  If HomeBoard.Saved() <> a Or placements[CStr(a)] <> spaceId Or WorkspaceStore.Setting(a, "board", a, "star") <> "1" Then Error.Raise("Archive changed private organization")
+  before = Snapshot()
+  Try BoardArchive.Confirm(state)
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Archive replay wrote")
+  Try BoardArchive.Prepare(a)
+  denied = Error
+  If Not denied Then Error.Raise("Archived board prepared again")
+  For Each trigger In ["BEFORE INSERT ON kb_activity BEGIN SELECT RAISE(ABORT,'restore activity failed'); END", "AFTER UPDATE OF archived ON kb_boards WHEN NEW.archived=0 BEGIN UPDATE kb_members SET role='read-only' WHERE board_id=" & CStr(a) & " AND username='archive-manager'; END", "AFTER UPDATE OF archived ON kb_boards WHEN NEW.archived=0 BEGIN UPDATE account_sessions SET generation=generation+1 WHERE username='archive-manager'; END", "AFTER INSERT ON kb_activity BEGIN UPDATE kb_boards SET archived=1 WHERE id=" & CStr(a) & "; END"]
+    db.Exec("CREATE TRIGGER fail_board_restore " & trigger)
+    Try BoardArchive.Restore(a)
+    denied = Error
+    If Not denied Or Snapshot() <> before Then Error.Raise("Restore failure changed board/activity/role/session/preferences")
+    db.Exec("DROP TRIGGER fail_board_restore")
+  Next
+  BoardArchive.Restore(a)
+  If WorkspaceStore.Archived(a, "board", a) Then Error.Raise("Restore failed")
+  before = Snapshot()
+  BoardArchive.Restore(a)
+  If Snapshot() <> before Then Error.Raise("Repeated restore wrote business state/activity")
+  state = BoardArchive.Prepare(a)
+  SignIn("archive-reader")
+  Try BoardArchive.Confirm(state)
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Cross actor confirmation accepted")
+  Try BoardArchive.Prepare(a)
+  denied = Error
+  If Not denied Then Error.Raise("Readonly prepare accepted")
+  Try BoardArchive.Restore(a)
+  denied = Error
+  If Not denied Then Error.Raise("Readonly restore accepted")
+  SignIn("archive-other")
+  db.Exec("UPDATE users SET admin=1 WHERE username='archive-other'")
+  Try BoardArchive.Restore(a)
+  denied = Error
+  If Not denied Then Error.Raise("Global nonmember restored board")
+  SignIn("archive-owner")
+  BoardAccess.RemoveMember(a, "archive-manager")
+  SignIn("archive-manager")
+  before = Snapshot()
+  Try BoardArchive.Confirm(state)
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Revoked role confirmed")
+  SignIn("archive-owner")
+  BoardAccess.SetMember(a, "archive-manager", "board-admin")
+  SignIn("archive-manager")
+  state = BoardArchive.Prepare(a)
+  db.Exec("UPDATE account_sessions SET generation=generation+1 WHERE username='archive-manager'")
+  SignIn("archive-manager")
+  before = Snapshot()
+  Try BoardArchive.Confirm(state)
+  denied = Error
+  If Not denied Or Snapshot() <> before Then Error.Raise("Old session confirmation reused")
+  Session["username"] = ""
+  Try BoardArchive.Restore(a)
+  denied = Error
+  If Not denied Then Error.Raise("Anonymous restore accepted")
+  Print "Board archive: private confirmation/replay, readonly/cross-actor/revoked role/session, global nonmember/anonymous, atomic activity/late-role/session/owner/state rollback, retry, idempotent restore and unchanged organization passed"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End
+
+Private Function Snapshot() As String
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim data As New Variant[]
+  Dim rows As Variant[]
+  Dim row As Collection
+  Dim r As Result
+  Dim tableName As String
+  Dim field As String
+  Dim fields As String[]
+  For Each tableName In ["kb_boards", "kb_board_space_assignments", "kb_user_meta", "kb_activity", "kb_removed_members", "kb_members", "kb_board_spaces", "kb_default_boards", "account_sessions"]
+    Select tableName
+      Case "kb_boards"
+        fields = ["id", "owner", "title", "archived"]
+      Case "kb_board_space_assignments"
+        fields = ["username", "board_id", "space_id"]
+      Case "kb_user_meta"
+        fields = ["board_id", "kind", "item_id", "username", "setting", "value"]
+      Case "kb_activity"
+        fields = ["id", "board_id", "actor", "message", "created_at"]
+      Case "kb_removed_members", "kb_members"
+        fields = ["board_id", "username", "role"]
+      Case "kb_default_boards"
+        fields = ["username", "board_id"]
+      Case "account_sessions"
+        fields = ["username", "generation"]
+      Case "kb_board_spaces"
+        fields = ["id", "username", "parent_id", "name", "icon", "sort_order"]
+    End Select
+    rows = New Variant[]
+    r = db.Find(tableName)
+    For Each r
+      row = New Collection
+      For Each field In fields
+        row.Add(r[field], field)
+      Next
+      rows.Add(row)
+    Next
+    data.Add(rows)
+  Next
+  Return JSON.Encode(data)
+End
+

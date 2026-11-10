@@ -232,3 +232,5 @@ ul.weba-data{list-style:none;margin:0;padding:0}
 
 body.weba-is-dragging:has(.weba-home-drag) *{cursor:no-drop!important}
 body.weba-is-dragging:has(.weba-home-drag .home-remove-target.is-over) *{cursor:grabbing!important}
+/* Confirmation captions and literal names must remain readable on mobile. */
+[id$=".BoardArchiveWarning"],[id$=".BoardArchiveName"]{white-space:normal!important;overflow-wrap:anywhere}

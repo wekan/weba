@@ -14,6 +14,7 @@ const dom = new JSDOM(`<div id="@1.LanguageSelector"><select data-weba-language>
 <div id="@1.WorkspaceDestination"><select><option value="0">Remaining</option><option value="1">Members</option></select></div>
 <div id="@1.SubworkspaceNameLabel">Subworkspace name</div>
 <div id="@1.WorkspacePanel" class="weba-workspace-edit"><div id="@1.WorkspaceNameLabel">Workspace name</div></div>
+<div id="@1.BoardArchiveName" class="weba-user-text">Archive</div><div id="@1.BoardArchiveWarning">Are you sure you want to archive this board?</div><button id="@1.ConfirmBoardArchive">Archive</button><button id="@1.CancelBoardArchive">Cancel</button>
 <article class="weba-card"><strong>Username</strong></article>`,{url:'http://localhost',runScripts:'outside-only'});
 const {window}=dom;
 window.fetch=async url=>({ok:true,json:async()=>JSON.parse(fs.readFileSync(path.join(publicDir,url),'utf8'))});
@@ -27,6 +28,10 @@ window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
   assert.equal(api.language,'fi');
   const fi=JSON.parse(fs.readFileSync(path.join(publicDir,'i18n/fi.json'),'utf8'));
   const key=window.webaI18nCatalog.lookup.Username;
+  assert.equal(doc.getElementById('@1.BoardArchiveWarning').textContent,fi['archive-board-confirm']);
+  assert.equal(doc.getElementById('@1.BoardArchiveName').textContent,'Archive','bound board name stays literal');
+  assert.equal(doc.getElementById('@1.ConfirmBoardArchive').textContent,api.t('Archive'));
+  assert.equal(doc.getElementById('@1.CancelBoardArchive').textContent,api.t('Cancel'));
   assert.equal(doc.getElementById('@1.WorkspaceNameLabel').textContent,fi['allboards.edit-workspace-name']);
   assert.equal(doc.getElementById('@1.SubworkspaceNameLabel').textContent,fi['allboards.add-subworkspace-prompt']);
   doc.getElementById('@1.WorkspacePanel').className='weba-workspace-create';await api.setLanguage('fi');

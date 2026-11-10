@@ -145,12 +145,11 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   original public/card routes and full FlowRouter/DDP callbacks remain open.
   Other board destinations remain same-form. The 60-case unchanged source
   Home/Remove callback adapter proof does not claim original Meteor wiring.
-- Next board navigation parity: explicit native board-menu archive/restore
-  transitions (source archive goes home; source restore opens the board), real
-  board-tile link/modified-click semantics, plus original public/card routes and
-  full FlowRouter/subscription behavior. Native
-  canonical/short entries and acknowledged tile/Home/history navigation are in
-  CHANGELOG.md; do not treat those as proof of every board action callback.
+- Next board navigation parity: real board-tile link/modified-click semantics,
+  original public/card routes and full FlowRouter/subscription behavior. Native
+  canonical/short entries, acknowledged tile/Home/history, private confirmed
+  catalog/open-board archive and restored-board navigation are in CHANGELOG.md;
+  do not treat those as proof of every original board action callback.
 - Next workspace parity: Templates and remaining production transport/routing beyond
   the six adapter-backed spec 39 callbacks. Production direct GET entry for
   Remaining/Starred/Archive with login/reload, acknowledged menu URL updates and
