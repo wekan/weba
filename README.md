@@ -598,6 +598,23 @@ The source oracle now compares 136 outputs, including 24 card-title cases.
 This bridges native navigation snapshots; original Meteor publications, IDs and
 card route transport remain pending.
 
+The installed host now supports direct GET entry at `/allboards/remaining`,
+`/allboards/starred` and `/allboards/archive`, including one trailing slash and
+single percent encoding. These paths match the unchanged source `allBoardsPath`
+helper. The host dispatches only root HTML, removes entry query parameters before
+CGI and refuses non-GET or multiply encoded aliases; native commands still use
+the protected POST transport. The browser carries the validated section across
+login in per-tab session storage, then a guarded native action selects the page.
+Authenticated entry and reload reapply the URL's section, including after manual
+navigation; the consumed native command is cleared so identical entries execute.
+Both login/main forms
+set a same-origin root asset base, so CSS, translations, native resources and the
+viewer bundle load from nested addresses. Browser/host tests cover these paths,
+forged section denial, no missing assets and mobile entry. Run
+`python3 tests/run-http.py --overview-entry [--archive]` with the usual test env.
+This is initial section entry routing: menu URL updates, Back/Forward, workspace
+slug paths, Home/Templates and complete source route/DDP integration remain TODO.
+
 Source workspace `iconColor` metadata now has private native persistence in the
 additive `kb_board_space_icons` table. `BoardSpaces.Edit` accepts an optional typed
 color string: omission/null preserves existing metadata, while an explicit empty

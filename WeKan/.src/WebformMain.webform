@@ -638,6 +638,9 @@
       Expand = True
     }
   }
+  { EntryRouteAction WebTextBox
+    Visible = False
+  }
   { DragAction WebTextBox
     Visible = False
   }

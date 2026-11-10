@@ -2,6 +2,16 @@
 
 This work adds the following features and fixes:
 
+- Add production direct GET entry for source Remaining/Starred/Archive URLs with
+  validated per-tab login handoff, authenticated reload and guarded native
+  section dispatch and consumed-command clearing for repeat entry after manual
+  navigation. Keep nested assets at the same-origin root. Whitelist only
+  implemented HTML entries, strip CGI query commands, refuse non-GET/multiply
+  encoded aliases and preserve existing host/native transport protections. Verify
+  source path-helper agreement, real login/assets/mobile and forged-section denial
+  in source/package browsers. Menu URL/history, workspace slug paths, Home/Templates
+  and full original route/DDP integration remain pending. Thanks to xet7.
+
 - Preserve and render private workspace iconColor metadata with an additive table,
   typed optional native edits, omission-versus-empty clearing, fresh final owner/
   session/value guards and atomic name/icon/color rollback. Keep color across

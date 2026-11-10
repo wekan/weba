@@ -898,6 +898,7 @@ Public Sub AdminUsers_Click()
 End
 
 Public Sub LanguageSelector_Render()
+  Print "<base href=\"/\">"
   Print "<link rel=\"stylesheet\" href=\"kanban.css\">"
   Print "<link rel=\"stylesheet\" href=\"fontawesome.css\">"
   Print "<script>" & File.Load(".public/i18n-catalog.js") & File.Load(".public/i18n.js") & File.Load(".public/ui.js") & File.Load(".public/popup.js") & File.Load(".public/drag.js") & "</script>"
@@ -3772,6 +3773,26 @@ Public Sub SaveExternalLinks_Click()
   LoadExternalLinks(ExternalLinkPolicy.Snapshot())
   Notice.Text = "Saved"
   ValidateMarkdownPolicy()
+Catch
+  Notice.Text = Error.Text
+End
+
+Public Sub EntryRouteAction_Change()
+  Dim section As String = EntryRouteAction.Text
+  If Not WebIdentity.Username Then Error.Raise("Sign in required")
+  If Not section Then Return
+  ' Empty the command after capture; identical later entries must raise Change.
+  EntryRouteAction.Text = ""
+  Select section
+    Case "remaining"
+      Home_Click()
+    Case "starred"
+      Starred_Click()
+    Case "archive"
+      Archive_Click()
+    Case Else
+      Error.Raise("Unknown overview entry")
+  End Select
 Catch
   Notice.Text = Error.Text
 End

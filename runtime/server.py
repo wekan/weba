@@ -22,6 +22,14 @@ import signal
 import urllib.parse
 
 
+def all_boards_entry_section(path):
+    """Implemented native section entrypoints; never an arbitrary CGI alias."""
+    for section in ('remaining', 'starred', 'archive'):
+        if path in ('/allboards/' + section, '/allboards/' + section + '/'):
+            return section
+    return None
+
+
 def is_attachment_export_path(path):
     parts = path.split('/')
     if len(parts) == 8 and parts[-1] == '':
@@ -333,6 +341,14 @@ def handler(application, runner, environment):
                 return
             if not self._request_allowed(url._replace(path=decoded_path)):
                 return
+            entry_section = all_boards_entry_section(decoded_path)
+            if entry_section:
+                if urllib.parse.unquote(url.path) != decoded_path:
+                    self.send_error(404)
+                    return
+                if self.command != 'GET':
+                    self.send_error(405)
+                    return
             api = decoded_path.lower() == '/api' or decoded_path.lower().startswith('/api/') or decoded_path.lower() in ('/users/login', '/users/logout')
             login = decoded_path == '/users/login' and self.command == 'POST'
             if login:
@@ -359,7 +375,7 @@ def handler(application, runner, environment):
                     raw = authorization[7:]
                     if len(raw) == 43 and all(c in 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_' for c in raw):
                         env['WEBA_API_TOKEN_DIGEST'] = hashlib.sha256(raw.encode()).hexdigest()
-            query = url.query
+            query = "" if entry_section else url.query
             env['WEBA_EXPORT_QUERY_STATE'] = ''
             env['WEBA_EXPORT_HEADER_PRESENT'] = '0'
             if api and is_attachment_export_path(decoded_path):
@@ -368,7 +384,7 @@ def handler(application, runner, environment):
                 env['WEBA_EXPORT_HEADER_PRESENT'] = '1' if authorization else '0'
                 if state != 'none':
                     env['WEBA_API_TOKEN_DIGEST'] = digest
-            env.update(REQUEST_METHOD=self.command, SCRIPT_NAME='/', PATH_INFO=decoded_path,
+            env.update(REQUEST_METHOD=self.command, SCRIPT_NAME='/', PATH_INFO='/' if entry_section else decoded_path,
                        QUERY_STRING=query, SERVER_NAME=self.server.server_address[0],
                        SERVER_PORT=str(self.server.server_port), SERVER_PROTOCOL='HTTP/1.1',
                        REMOTE_ADDR=self.client_address[0], GATEWAY_INTERFACE='CGI/1.1')

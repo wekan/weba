@@ -569,6 +569,42 @@ class NativeOriginTest(unittest.TestCase):
         self.assertFalse(request._request_allowed(server.urllib.parse.urlsplit('/x')))
 
 
+class AllBoardsEntryTest(unittest.TestCase):
+    def request(self, path, method='GET'):
+        request = NativeOriginTest().request(method, path)
+        request.rfile = io.BytesIO()
+        request.wfile = io.BytesIO()
+        request.client_address = ('127.0.0.1', 12345)
+        request.send_response = Mock()
+        request.send_header = Mock()
+        request.end_headers = Mock()
+        return request
+
+    def test_entry_routes_reach_only_root_html_with_no_query_commands(self):
+        result = SimpleNamespace(returncode=0, stdout=b'Content-Type: text/html\r\n\r\n<html>entry</html>')
+        for section in ('remaining', 'starred', 'archive'):
+            for path in ('/allboards/' + section, '/allboards/' + section + '/', '/%61llboards/' + section):
+                with self.subTest(path=path):
+                    request = self.request(path + '?c=forged-command&native=canary')
+                    with patch.object(server, 'run_application', return_value=result) as run:
+                        request._run_cgi()
+                    request.send_error.assert_not_called()
+                    env = run.call_args.kwargs['env']
+                    self.assertEqual(env['PATH_INFO'], '/')
+                    self.assertEqual(env['QUERY_STRING'], '')
+                    self.assertEqual(env['WEBA_API_REQUEST'], '0')
+                    self.assertEqual(request.wfile.getvalue(), b'<html>entry</html>')
+
+    def test_entry_routes_cannot_be_mutation_or_multiply_encoded_aliases(self):
+        for path, method, code in [('/allboards/starred', 'POST', 405), ('/allboards/archive', 'DELETE', 405), ('/%2561llboards/starred', 'GET', 404), ('/allboards/%252e%252e/private', 'GET', 404)]:
+            with self.subTest(path=path, method=method):
+                request = self.request(path, method)
+                with patch.object(server, 'run_application') as run:
+                    request._run_cgi()
+                request.send_error.assert_called_once_with(code)
+                run.assert_not_called()
+
+
 class DevelopmentRouteTest(unittest.TestCase):
     def test_debug_routes_are_rejected_before_starting_gambas(self):
         cls = server.handler(Path('/unused.gambas'), 'unused-runner',

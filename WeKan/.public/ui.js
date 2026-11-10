@@ -35,6 +35,16 @@
       return send.call(this,body);
     };
   }
+  const entryKey='weba-overview-entry';let entrySent=false;
+  let initialEntry=null;try{initialEntry=/^\/allboards\/(remaining|starred|archive)\/?$/.exec(decodeURIComponent(root.location.pathname))?.[1]||null;}catch(_){}
+  if(initialEntry)try{root.sessionStorage.setItem(entryKey,initialEntry);}catch(_){}
+  function applyEntryRoute(){
+    if(entrySent||!root.gw?.update)return;const target=document.querySelector('[id$=".EntryRouteAction"]');if(!target)return;
+    let section=initialEntry;try{section=section||root.sessionStorage.getItem(entryKey);}catch(_){}
+    if(!['remaining','starred','archive'].includes(section))return;
+    entrySent=true;try{root.sessionStorage.removeItem(entryKey);}catch(_){}
+    root.gw.update(target.id,'text',section);
+  }
   const icons={Swimlanes:'th-large',Kanban:'trello',Calendar:'calendar',Gantt:'bar-chart',TableView:'table',Charts:'pie-chart',ContextMembers:'users',CardMembersButton:'users',CardAssigneesButton:'user',ContextAssignees:'user',AddCardPerson:'user-plus',RemoveCardPerson:'user-times',ContextAssignSelf:'user-plus',SaveMember:'save',RemoveMember:'user-times',ImportBoard:'download',ContextDelete:'trash-o',ContextRename:'pencil',ContextCopy:'clipboard',ContextMove:'arrow-up',ContextColor:'paint-brush',ContextStar:'star-o',ContextWatch:'eye-slash',ContextWip:'ban',ContextDescription:'align-left',ContextHistory:'history',ContextExport:'upload',ContextArchive:'archive',ContextRestore:'undo',ContextAddCard:'plus',ContextAddList:'plus',ContextAddLane:'plus',Starred:'star',BoardSettings:'cog',ArchivedItems:'archive',ContextComments:'comment-o',ContextChecklists:'check-square-o',ContextChecklistItems:'check',ContextSubtasks:'sitemap',ContextDependencies:'link',ContextFields:'list-alt',ContextTime:'clock-o',ContextAttachments:'paperclip',CardComments:'comment-o',CardChecklists:'check-square-o',CardChecklistItems:'check',CardSubtasks:'sitemap',CardDependencies:'link',CardFields:'list-alt',CardTime:'clock-o',CardAttachments:'paperclip',DetailStart:'play',DetailStop:'stop',DetailExport:'upload',DetailDownload:'download',DetailDelete:'trash-o'};
   let markdownGeneration=0,appliedMarkdownRaw=null,appliedMarkdownSchemes=null,appliedExternalLinks=null,appliedCardTitles=null;
   function syncMarkdownPolicy(){
@@ -160,6 +170,7 @@
   }
   function decorate(){
     if(!root.document)return;
+    applyEntryRoute();
     workspaceForm();
     const schemesField=document.querySelector('textarea[id$=".MarkdownSchemes"]'),schemesLabel=document.querySelector('[id$=".MarkdownSchemesHeading"]');
     if(schemesField&&schemesLabel&&schemesField.getAttribute("aria-labelledby")!==schemesLabel.id)schemesField.setAttribute("aria-labelledby",schemesLabel.id);

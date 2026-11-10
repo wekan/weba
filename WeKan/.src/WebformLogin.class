@@ -176,6 +176,7 @@ Public Sub ConfirmPassword_Activate()
 End
 
 Public Sub LanguageSelector_Render()
+  Print "<base href=\"/\">"
   Print "<link rel=\"stylesheet\" href=\"fontawesome.css\">"
   Print "<script>" & File.Load(".public/i18n-catalog.js") & File.Load(".public/i18n.js") & File.Load(".public/ui.js") & "</script>"
   Print "<select data-weba-language aria-label=\"Language\" style=\"width:100%;height:32px;background:white;color:black\"></select>"

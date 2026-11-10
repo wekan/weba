@@ -1253,3 +1253,31 @@ serializer comparisons after sharing the reader.
 This completes the current native attachment-export action. Full original UI
 callbacks, public/instance/Sandstorm/impersonation and board-defined field/storage
 models, whole-board source formats and batch export remain pending.
+
+
+## Native overview URL entry
+
+`runtime/server.py:all_boards_entry_section` whitelists only the implemented
+Remaining/Starred/Archive source URL shapes. GET maps to the root CGI HTML path
+with an empty query; other methods and multiply encoded aliases are refused.
+Existing traversal/development-route, Host/origin and native POST checks still
+run. Arbitrary static paths are not rewritten. Entry queries cannot introduce
+CGI command parameters or API authentication context.
+
+The browser validates/decode-matches those same three sections and stores only
+the section in per-tab sessionStorage during login handoff. Once the signed-in
+hidden `EntryRouteAction` exists, it sends one native text update. Its handler
+requires current identity and statically dispatches to the three existing native
+navigation methods. The handler clears a captured nonempty command, safely
+ignoring its nested empty Change, so reloading an identical URL after manual
+navigation still applies it. Unknown input leaves the page unchanged. Login/main rendering
+sets a same-origin root base before custom assets; nested entry pages therefore
+use the same resource/native command URLs as root. Real browser checks compare
+paths with unchanged source `allBoardsPath`, exercise unauthenticated/authenticated
+entry and reload, encoded/trailing paths, denied section input, viewer/assets and
+mobile. Host tests prove root-only dispatch, empty CGI query and non-GET/encoding
+refusal. Included in full live source/package runs and `--overview-entry`.
+
+This initial production entry phase does not complete menu/history navigation,
+workspace slug resolution, Home/Templates or original Meteor route/DDP transport.
+Those remain explicit TODO work.
