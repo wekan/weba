@@ -248,6 +248,7 @@
   "set-selected-home": "Imposta come taule Home (aperta dopo il login)",
   "set-selected-starred": "Zonte le taulis selezionete ai preferiti",
   "set-selected-unstarred": "Togli le taulis selezionete dai preferiti",
+  "show-desktop-drag-handles": "Mostre maniglie di trascinamento dal desktop",
   "show-on-private-board": "Mostre su la lavagne privade",
   "show-on-public-board": "Mostre su la lavagne publiche",
   "sort-boards": "Ordina taulis",

@@ -248,6 +248,7 @@
   "set-selected-home": "Määra avatahvliks (avatakse pärast sisselogimist)",
   "set-selected-starred": "Märgi valitud tahvlid tähega",
   "set-selected-unstarred": "Eemalda tärn valitud tahvlitelt",
+  "show-desktop-drag-handles": "Näita töölaua lohistuskäepidemeid",
   "show-on-private-board": "Näita privaatsel tahvlil",
   "show-on-public-board": "Näita avalikul tahvlil",
   "sort-boards": "Sorteeri tahvlid",

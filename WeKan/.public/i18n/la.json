@@ -248,6 +248,7 @@
   "set-selected-home": "Constitue tabulam initialem (post ingressum aperitur)",
   "set-selected-starred": "Tabulas electas stella nota",
   "set-selected-unstarred": "Stellas a tabulis electis remove",
+  "show-desktop-drag-handles": "Monstra ansas trahendi in computatro mensali",
   "show-on-private-board": "Monstrare in tabula privata",
   "show-on-public-board": "Monstrare in tabula publica",
   "sort-boards": "Ordina tabulas",

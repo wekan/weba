@@ -248,6 +248,7 @@
   "set-selected-home": "Ange som hemtavla (öppnas efter inloggning)",
   "set-selected-starred": "Stjärnmärk de valda tavlorna",
   "set-selected-unstarred": "Ta bort stjärnmärkningen från de valda tavlorna",
+  "show-desktop-drag-handles": "Visa greppytor i desktop",
   "show-on-private-board": "Visa på privat tavla",
   "show-on-public-board": "Visa på offentlig tavla",
   "sort-boards": "Sortera tavlor",

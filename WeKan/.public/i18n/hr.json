@@ -248,6 +248,7 @@
   "set-selected-home": "Postavi kao početnu ploču (otvara se nakon prijave)",
   "set-selected-starred": "Dodaj oznaku zvjezdice odabranim pločama",
   "set-selected-unstarred": "Ukloni zvjezdicu s odabranih ploča",
+  "show-desktop-drag-handles": "Prikaži ručke za povlačenje na računalu",
   "show-on-private-board": "Prikaži na privatnoj ploči",
   "show-on-public-board": "Prikaži na javnoj ploči",
   "sort-boards": "Sortiraj ploče",

@@ -248,6 +248,7 @@
   "set-selected-home": "تعيين كلوحة رئيسية (تُفتح بعد تسجيل الدخول)",
   "set-selected-starred": "تمييز اللوحات المحددة بنجمة",
   "set-selected-unstarred": "إزالة النجمة من اللوحات المحددة",
+  "show-desktop-drag-handles": "عرض مقابض السحب على سطح المكتب",
   "show-on-private-board": "إظهار على اللوحة الخاصة",
   "show-on-public-board": "إظهار على اللوحة العامة",
   "sort-boards": "فرز اللوحات",

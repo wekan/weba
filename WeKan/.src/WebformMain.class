@@ -150,6 +150,59 @@ Private Function LandingContext() As String
   Return CStr($board) & "|" & $view & "|" & CStr($spaceMenu)
 End
 
+Private $dragHandleActor As String
+Private $dragHandleGeneration As Long
+Private $dragHandleRevision As Long
+Private $dragHandleValue As String
+
+Private Function DragHandleValue() As String
+  Dim value As Variant = DragHandlePreference.Stored()
+  If IsNull(value) Then Return "auto"
+  Return If(value, "true", "false")
+End
+
+Private Sub RefreshDragHandlePreference()
+  Dim value As String = DragHandleValue()
+  If value = $dragHandleValue Then Return
+  $dragHandleValue = value
+  Inc $dragHandleRevision
+  DragHandleState.Refresh()
+  If $view = "Profile" Then DragHandleSettings.Refresh()
+End
+
+Public Sub DragHandleState_Render()
+  Print "<span hidden data-weba-drag-preference=\"" & Html(DragHandleValue()) & "\"></span>"
+End
+
+Public Sub DragHandleSettings_Render()
+  If $view <> "Profile" Or Not $dragHandleActor Then Return
+  If WebIdentity.Username <> $dragHandleActor Or WebDatabase.SessionGeneration($dragHandleActor) <> $dragHandleGeneration Then Return
+  Print "<button type=\"button\" role=\"checkbox\" class=\"weba-drag-preference-toggle\" data-command=\"" & Html(DragHandleAction.Name) & "\" data-revision=\"" & Str($dragHandleRevision) & "\" aria-checked=\"false\"><span data-caption=\"Show desktop drag handles\">Show desktop drag handles</span></button>"
+End
+
+Public Sub DragHandleAction_Change()
+  Dim wire As String = DragHandleAction.Text
+  Dim fields As String[]
+  If Not wire Then Return
+  DragHandleAction.Text = ""
+  If Len(wire) > 64 Then Error.Raise("Error")
+  fields = Split(wire, "|")
+  If $view <> "Profile" Or Not $dragHandleActor Then Error.Raise("Error")
+  If fields.Count <> 2 Then Error.Raise("Error")
+  If fields[0] <> Str($dragHandleRevision) Then Error.Raise("Error")
+  If fields[1] <> "true" And fields[1] <> "false" Then Error.Raise("Error")
+  DragHandlePreference.Save(fields[1] = "true", $dragHandleActor, $dragHandleGeneration)
+  RefreshDragHandlePreference()
+  Notice.Text = "Saved"
+Finally
+  If wire Then
+    Inc $dragHandleRevision
+    DragHandleSettings.Refresh()
+  Endif
+Catch
+  Notice.Text = "Error"
+End
+
 Public Sub _BeforeRender()
   ' Read the current CGI frame: Request's convenience properties may be cached.
   If CGI["REQUEST_METHOD"] = "GET" And CGI["PATH_INFO"] = "/" Then
@@ -170,6 +223,7 @@ Public Sub WebForm_Open()
     WebForm.Goto(WebformLogin)
     Return
   Endif
+  $dragHandleValue = DragHandleValue()
   $boardSelection = BoardSelection.NewState()
   Status.Text = "Todo"
   $catalogSort = BoardCatalog.SortBy()
@@ -234,6 +288,7 @@ End
 
 Public Sub BoardPoll_Timer()
   Dim state As String
+  RefreshDragHandlePreference()
   If $view = "Public" Then
     RefreshPublic(False)
     Return
@@ -632,6 +687,14 @@ Private Sub ShowView(view As String)
   If key Then
     If Not SaveViewPreference(key) Then Return
   Endif
+  $dragHandleActor = ""
+  $dragHandleGeneration = 0
+  Inc $dragHandleRevision
+  DragHandleAction.Text = ""
+  If view = "Profile" Then
+    $dragHandleActor = WebIdentity.Username
+    $dragHandleGeneration = WebDatabase.SessionGeneration($dragHandleActor)
+  Endif
   AccountPanel.Visible = view = "Profile"
   AdminPanel.Visible = False
   PasswordPolicyPanel.Hide()
@@ -645,6 +708,7 @@ Private Sub ShowView(view As String)
   If view = "Admin panel" Then AdminPanel.Visible = WebDatabase.GetIsAdmin(WebIdentity.Username)
   If view = "Profile" Then Fullname.Text = WebDatabase.GetFullname(WebIdentity.Username)
   $view = view
+  DragHandleSettings.Refresh()
   ContentRow.Visible = view <> "Profile"
   PageActions.Visible = view <> "Profile" And view <> "Admin panel"
   Editor.Hide()
@@ -1158,7 +1222,7 @@ Public Sub LanguageSelector_Render()
   Print "<base href=\"/\">"
   Print "<link rel=\"stylesheet\" href=\"kanban.css\">"
   Print "<link rel=\"stylesheet\" href=\"fontawesome.css\">"
-  Print "<script>" & File.Load(".public/i18n-catalog.js") & File.Load(".public/i18n.js") & File.Load(".public/ui.js") & File.Load(".public/popup.js") & File.Load(".public/drag.js") & File.Load(".public/board-view-order.js") & "</script>"
+  Print "<script>" & File.Load(".public/i18n-catalog.js") & File.Load(".public/i18n.js") & File.Load(".public/ui.js") & File.Load(".public/popup.js") & File.Load(".public/drag.js") & File.Load(".public/board-view-order.js") & File.Load(".public/drag-handle-preference.js") & "</script>"
   Print "<select data-weba-language aria-label=\"Language\" style=\"width:100%;height:32px;background:white;color:black\"></select>"
 End
 

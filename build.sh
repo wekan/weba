@@ -52,6 +52,7 @@ tests() {
   "${NODE:-node}" tests/workspace-markdown.test.cjs
   "${NODE:-node}" tests/i18n.test.cjs
   "${NODE:-node}" tests/board-view-order.test.cjs
+  "${NODE:-node}" tests/drag-handle-preference.test.cjs
   "${NODE:-node}" tests/popup.test.cjs
   "${NODE:-node}" tests/roles.test.cjs
   "${NODE:-node}" tests/transport.test.cjs

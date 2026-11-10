@@ -248,6 +248,7 @@
   "set-selected-home": "Ustaw jako tablicę startową (otwieraną po zalogowaniu)",
   "set-selected-starred": "Dodaj zaznaczone tablice do ulubionych",
   "set-selected-unstarred": "Usuń zaznaczone tablice z ulubionych",
+  "show-desktop-drag-handles": "Pokaż przeciągnięcia na pulpit",
   "show-on-private-board": "Pokaż na tablicy prywatnej",
   "show-on-public-board": "Pokaż na tablicy publicznej",
   "sort-boards": "Sortuj tablice",

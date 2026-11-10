@@ -248,6 +248,7 @@
   "set-selected-home": "დაყენდეს მთავარ დაფად (იხსნება შესვლის შემდეგ)",
   "set-selected-starred": "მონიშნეთ არჩეული დაფები ვარსკვლავით",
   "set-selected-unstarred": "ვარსკვლავის მოხსნა არჩეული დაფებიდან",
+  "show-desktop-drag-handles": "გადათრევის სახელურების ჩვენება",
   "show-on-private-board": "ჩვენება პირად დაფაზე",
   "show-on-public-board": "ჩვენება საჯარო დაფაზე",
   "sort-boards": "დაფების დალაგება",

@@ -248,6 +248,7 @@
   "set-selected-home": "Instellen als startbord (geopend na inloggen)",
   "set-selected-starred": "Markeer de geselecteerde borden met een ster",
   "set-selected-unstarred": "Verwijder de ster van de geselecteerde borden",
+  "show-desktop-drag-handles": "Toon sleep gereedschap op werkblad",
   "show-on-private-board": "Tonen op privébord",
   "show-on-public-board": "Tonen op openbaar bord",
   "sort-boards": "Borden sorteren",

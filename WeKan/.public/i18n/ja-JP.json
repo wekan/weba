@@ -248,6 +248,7 @@
   "set-selected-home": "ホームボードに設定(ログイン後に開く)",
   "set-selected-starred": "選択したボードにスターを付ける",
   "set-selected-unstarred": "選択したボードのスターを外す",
+  "show-desktop-drag-handles": "デスクトップへのドラッグハンドルを表示",
   "show-on-private-board": "非公開ボードに表示",
   "show-on-public-board": "公開ボードに表示",
   "sort-boards": "ボードを並べ替え",

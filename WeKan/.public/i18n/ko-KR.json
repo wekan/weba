@@ -248,6 +248,7 @@
   "set-selected-home": "홈 보드로 설정 (로그인 후 열림)",
   "set-selected-starred": "선택한 보드에 별표 지정",
   "set-selected-unstarred": "선택한 보드의 별표 해제",
+  "show-desktop-drag-handles": "데스크톱 드래그 손잡이 표시",
   "show-on-private-board": "비공개 보드에 표시",
   "show-on-public-board": "공개 보드에 표시",
   "sort-boards": "보드 정렬",

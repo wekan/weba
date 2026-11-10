@@ -998,7 +998,7 @@ Native tests cover pure reads, admin/nonadmin/anonymous scope, pilot updates,
 unknown/omitted/empty lists, non-granted edit rights, late demotion/session rollback,
 retry and account recreation. 1,809 unchanged-source comparisons cover all groups,
 strict/corrupt state types, approval/known keys, previews, core views, complete
-save modifiers and bounded Unicode pilot lists. Captions and the 269-key/237-locale
+save modifiers and bounded Unicode pilot lists. Captions and the 270-key/237-locale
 translation output come directly from source. Native browser checks cover the
 bound form, all retained choices, live signed/guest defaults and hidden controls,
 previews, unsaved card drafts, literal unknown names, SQL failure/retry, clean/dirty
@@ -1030,7 +1030,7 @@ Native pointer handling retains ordinary scrolling outside handles, uses a movem
 threshold, scrolls the order list near its edges, rejects outside drops and cancels
 Escape/multitouch/pointer cancellation, hidden/replaced DOM or resize. Keyboard
 focus and list scroll follow the acknowledged row. Labels/tooltips come from source
-translations (269 keys/237 catalogs), and board titles remain literal user text.
+translations (270 keys/237 catalogs), and board titles remain literal user text.
 
 DOM gesture tests cover captured commands, acknowledgement focus, translation,
 Escape/outside/cancel/multitouch/stale/detached cleanup and ordinary scroll. Real
@@ -1042,7 +1042,8 @@ and complete source/packaged browser suites pass against final code. They also
 execute the unchanged original
 `reorderOnDrop` stop and keyboard callbacks through a native command adapter.
 This does not install the original jQuery sortable/Blaze/Meteor transport or the
-shared `Utils.showDragHandles` preference: native ordering currently uses explicit
+shared `Utils.showDragHandles` preference outside the native editor described
+below. The earlier native ordering implementation used explicit
 handles and the existing batch Save. Those original UI integrations remain open.
 
 Whole-board native export/copy/import now preserves the four source document
@@ -2844,8 +2845,8 @@ models, whole-board source formats and batch export remain pending.
 The native `DragHandles` decision helper matches the source three-state rule:
 explicit on/off wins on every device; unset or malformed values follow touch
 capability. The 42-case source comparison covers 126 native outputs. Private profile
-storage is described below; browser device detection and gesture integration
-remain pending. The helper does not yet change rendered handles or drag behavior.
+storage and the native profile toggle are described below. The decision is now
+applied to native board-view ordering; other native gestures remain pending.
 
 `DragHandlePreference` now stores the signed-in native profile choice privately
 per account. `Stored()` returns Boolean or null without creating preference
@@ -2854,4 +2855,14 @@ Boolean and a fresh matching browser identity. Atomic writes recheck the session
 and stored value; deletion removes only that account's preference. API bearer
 identities cannot use this browser profile service. Native tests cover first-DDL
 rollback/retry, injected SQL/value/session failures, account switching and
-recreation. Browser toggle/device detection and gesture integration remain open.
+recreation. The native profile toggle and board-view integration follow.
+
+The Profile page now exposes the translated **Show desktop drag handles** toggle.
+It shows the effective device default when unset and saves an explicit Boolean
+choice on click. Native board-view ordering uses grips when enabled and draggable
+labels with Up/Down keys when disabled. Explicit off works on touch, and keyboard
+focus follows the active control after an acknowledged move. Polling refreshes
+other open tabs without writing a preference; a change cancels pending gestures.
+The captured profile actor/session/revision guards reject stale or closed events,
+with opaque SQL errors and retry. Other native card/list/lane/workspace handles
+and the original Meteor profile/DDP bridge remain pending.

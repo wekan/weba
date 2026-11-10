@@ -248,6 +248,7 @@
   "set-selected-home": "设为主看板（登录后打开）",
   "set-selected-starred": "为所选看板加星标",
   "set-selected-unstarred": "取消所選看板嘅星標",
+  "show-desktop-drag-handles": "顯示桌面拖曳手把",
   "show-on-private-board": "喺私人睇板顯示",
   "show-on-public-board": "喺公開睇板顯示",
   "sort-boards": "排序看板",

@@ -76,7 +76,7 @@ for path in (root / 'WeKan/.src').glob('*.class'):
     texts.update(re.findall(r'\.(?:Text|Tooltip) = "([^"]+)"', path.read_text()))
 report = (root / 'WeKan/.public/kanban.js').read_text()
 texts.update(re.findall(r"add\([^,]+,\s*'[^']+',\s*'([^']+)'", report))
-texts.update(['Drag to reorder. Up and Down arrow keys move one step.', 'Todo', 'Doing', 'Done', 'Card', 'Status', 'Swimlane', 'Due date',
+texts.update(['Show desktop drag handles', 'Drag to reorder. Up and Down arrow keys move one step.', 'Todo', 'Doing', 'Done', 'Card', 'Status', 'Swimlane', 'Due date',
               'No due date', 'Previous month', 'Next month', 'Default', 'All cards',
               'Add card', 'Add list', 'Add swimlane', 'Collapse', 'Uncollapse', 'Close', 'Save', 'Cards',
               'Move card', 'Move list', 'Move swimlane',

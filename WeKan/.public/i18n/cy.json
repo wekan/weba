@@ -248,6 +248,7 @@
   "set-selected-home": "Gosod fel bwrdd Cartref (yn agor ar ôl mewngofnodi)",
   "set-selected-starred": "Serennu'r byrddau a ddewiswyd",
   "set-selected-unstarred": "Tynnu'r seren oddi ar y byrddau a ddewiswyd",
+  "show-desktop-drag-handles": "Dangos dolenni llusgo bwrdd gwaith",
   "show-on-private-board": "Dangos ar fwrdd preifat",
   "show-on-public-board": "Dangos ar fwrdd cyhoeddus",
   "sort-boards": "Trefnu Byrddau",

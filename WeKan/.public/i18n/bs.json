@@ -248,6 +248,7 @@
   "set-selected-home": "Postavi kao početnu tablu (otvara se nakon prijave)",
   "set-selected-starred": "Dodaj oznaku zvjezdice odabranim tablama",
   "set-selected-unstarred": "Ukloni zvjezdicu s odabranih tabli",
+  "show-desktop-drag-handles": "Prikaži ručke za povlačenje u načinu rada za računar",
   "show-on-private-board": "Prikaži na privatnoj tabli",
   "show-on-public-board": "Prikaži na javnoj tabli",
   "sort-boards": "Sortiraj table",

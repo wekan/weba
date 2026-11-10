@@ -248,6 +248,7 @@
   "set-selected-home": "Beállítás kezdőtáblaként (bejelentkezés után nyílik meg)",
   "set-selected-starred": "Csillagozd a kijelölt táblákat",
   "set-selected-unstarred": "Csillag eltávolítása a kijelölt tábláktól",
+  "show-desktop-drag-handles": "Mutassa a fogd-és-vidd eseményeket",
   "show-on-private-board": "Megjelenítés privát táblán",
   "show-on-public-board": "Megjelenítés nyilvános táblán",
   "sort-boards": "Táblák rendezése",

@@ -248,6 +248,7 @@
   "set-selected-home": "ตั้งเป็นบอร์ดหน้าแรก (เปิดหลังเข้าสู่ระบบ)",
   "set-selected-starred": "ติดดาวบอร์ดที่เลือก",
   "set-selected-unstarred": "เอาดาวออกจากบอร์ดที่เลือก",
+  "show-desktop-drag-handles": "แสดงที่จับสำหรับลากบนเดสก์ท็อป",
   "show-on-private-board": "แสดงบนบอร์ดส่วนตัว",
   "show-on-public-board": "แสดงบนบอร์ดสาธารณะ",
   "sort-boards": "เรียงลำดับบอร์ด",

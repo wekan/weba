@@ -248,6 +248,7 @@
   "set-selected-home": "Nustatyti kaip pagrindinę lentą (atveriama po prisijungimo)",
   "set-selected-starred": "Pažymėti pasirinktas lentas žvaigždute",
   "set-selected-unstarred": "Pašalinti žvaigždutę iš pasirinktų lentų",
+  "show-desktop-drag-handles": "Rodyti darbalaukio vilkimo rankenas",
   "show-on-private-board": "Rodyti privačioje lentoje",
   "show-on-public-board": "Rodyti viešoje lentoje",
   "sort-boards": "Rūšiuoti lentas",

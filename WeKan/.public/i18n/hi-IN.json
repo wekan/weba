@@ -248,6 +248,7 @@
   "set-selected-home": "होम बोर्ड के रूप में सेट करें (लॉगिन के बाद खुलता है)",
   "set-selected-starred": "चयनित बोर्ड को स्टार करें",
   "set-selected-unstarred": "चयनित बोर्डों से तारा हटाएँ",
+  "show-desktop-drag-handles": "डेस्कटॉप ड्रैग हैंडल दिखाएँ",
   "show-on-private-board": "निजी बोर्ड पर दिखाएँ",
   "show-on-public-board": "सार्वजनिक बोर्ड पर दिखाएँ",
   "sort-boards": "बोर्ड क्रमबद्ध करें",

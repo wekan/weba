@@ -248,6 +248,7 @@
   "set-selected-home": "Estableix com a tauler d'inici (s'obre després d'iniciar sessió)",
   "set-selected-starred": "Destaca els taulers seleccionats",
   "set-selected-unstarred": "Deixa de destacar els taulers seleccionats",
+  "show-desktop-drag-handles": "Mostra les nanses d'arrossegament de l'escriptori",
   "show-on-private-board": "Mostra al tauler privat",
   "show-on-public-board": "Mostra al tauler públic",
   "sort-boards": "Ordena els taulers",

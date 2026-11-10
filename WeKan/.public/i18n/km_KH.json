@@ -248,6 +248,7 @@
   "set-selected-home": "កំណត់ជាក្តារដើម (បើកបន្ទាប់ពីចូល)",
   "set-selected-starred": "ដាក់ផ្កាយក្តារដែលបានជ្រើសរើស",
   "set-selected-unstarred": "ដកផ្កាយចេញពីក្តារដែលបានជ្រើសរើស",
+  "show-desktop-drag-handles": "បង្ហាញចំណុចទាញអូសលើតុ",
   "show-on-private-board": "បង្ហាញនៅលើក្ដារឯកជន",
   "show-on-public-board": "បង្ហាញនៅលើក្ដារសាធារណៈ",
   "sort-boards": "តម្រៀបក្តារ",

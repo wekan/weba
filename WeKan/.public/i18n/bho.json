@@ -248,6 +248,7 @@
   "set-selected-home": "होम बोर्ड बनाईं (साइन इन के बाद खुली)",
   "set-selected-starred": "चुनल बोर्डन पर तारा लगाईं",
   "set-selected-unstarred": "चुनल बोर्डन से तारा हटाईं",
+  "show-desktop-drag-handles": "डेस्कटॉप खींच पकड़ देखाईं",
   "show-on-private-board": "निजी बोर्ड पर देखाईं",
   "show-on-public-board": "सार्वजनिक बोर्ड पर देखाईं",
   "sort-boards": "बोर्ड क्रम में लगाईं",

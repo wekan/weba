@@ -248,6 +248,7 @@
   "set-selected-home": "Imposta come bacheca Home (aperta dopo il login)",
   "set-selected-starred": "Aggiungi le bacheche selezionate ai preferiti",
   "set-selected-unstarred": "Togli le bacheche selezionate dai preferiti",
+  "show-desktop-drag-handles": "Mostra maniglie di trascinamento del desktop",
   "show-on-private-board": "Mostra su bacheca privata",
   "show-on-public-board": "Mostra su bacheca pubblica",
   "sort-boards": "Ordina bacheche",

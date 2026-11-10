@@ -248,6 +248,7 @@
   "set-selected-home": "Ustaw jako tabula startową (otwieraną po zalogowaniu)",
   "set-selected-starred": "Przidej zaznaczone tabule do ulubionych",
   "set-selected-unstarred": "Wyciep zaznaczone tabule z ulubionych",
+  "show-desktop-drag-handles": "Pokoż przeciągnięcia na pulpit",
   "show-on-private-board": "Pokoż na prywatnyj tabuli",
   "show-on-public-board": "Pokoż na publicznyj tabuli",
   "sort-boards": "Sortuj tabule",

@@ -12014,3 +12014,9 @@ ul, #myUL {
 .weba-view-order-marker { border-top: 3px solid #2980b9; height: 0; pointer-events: none; }
 .weba-view-order-ghost { position: fixed; pointer-events: none; z-index: 100000; max-width: 280px; background: white; color: #222; border: 1px solid #2980b9; opacity: .9; }
 .weba-view-order-dragging { user-select: none; }
+
+.weba-view-order-handle[hidden]{display:none!important}
+.weba-view-order-label.weba-view-order-surface{touch-action:none;cursor:move}
+.weba-drag-preference-state{display:none!important}
+.weba-drag-preference-toggle[aria-checked="true"]::before{content:"✓ ";}
+.weba-drag-preference-toggle[aria-checked="false"]::before{content:"☐ ";}

@@ -248,6 +248,7 @@
   "set-selected-home": "باش تاختا قىلىپ بەلگىلەش (كىرگەندىن كېيىن ئېچىلىدۇ)",
   "set-selected-starred": "تاللانغان تاختىلارغا يۇلتۇز قويۇش",
   "set-selected-unstarred": "تاللانغان تاختايلاردىن يۇلتۇزنى چىقىرىۋېتىش",
+  "show-desktop-drag-handles": "ئۈستەل يۈزى سۆرەش تۇتقۇچىنى كۆرسەت",
   "show-on-private-board": "شەخسىي تاختىدا كۆرسەت",
   "show-on-public-board": "ئاممىۋى تاختىدا كۆرسەت",
   "sort-boards": "تاختىلارنى تەرتىپلەش",

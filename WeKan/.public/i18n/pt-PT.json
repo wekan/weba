@@ -248,6 +248,7 @@
   "set-selected-home": "Definir como quadro inicial (aberto após o início de sessão)",
   "set-selected-starred": "Marcar como favoritos os quadros selecionados",
   "set-selected-unstarred": "Remover os quadros selecionados dos favoritos",
+  "show-desktop-drag-handles": "Mostrar alças de arrasto do desktop",
   "show-on-private-board": "Mostrar no quadro privado",
   "show-on-public-board": "Mostrar no quadro público",
   "sort-boards": "Ordenar quadros",

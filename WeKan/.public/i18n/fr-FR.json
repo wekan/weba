@@ -248,6 +248,7 @@
   "set-selected-home": "Définir comme tableau d'accueil (ouvert après la connexion)",
   "set-selected-starred": "Marquer les tableaux sélectionnés comme favoris",
   "set-selected-unstarred": "Retirer les tableaux sélectionnés des favoris",
+  "show-desktop-drag-handles": "Voir les poignées de déplacement du bureau",
   "show-on-private-board": "Afficher sur tableau privé",
   "show-on-public-board": "Afficher sur tableau public",
   "sort-boards": "Trier les tableaux",

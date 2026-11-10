@@ -248,6 +248,7 @@
   "set-selected-home": "Aseta kotitauluksi (avautuu kirjautumisen jälkeen)",
   "set-selected-starred": "Merkitse valitut taulut tähdellä",
   "set-selected-unstarred": "Poista tähtimerkintä valituilta tauluilta",
+  "show-desktop-drag-handles": "Näytä työpöydän vedon kahvat",
   "show-on-private-board": "Näytä yksityisellä taululla",
   "show-on-public-board": "Näytä julkisella taululla",
   "sort-boards": "Lajittele taulut",

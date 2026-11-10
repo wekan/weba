@@ -26,6 +26,9 @@
     { Brand WebLabel
       Text = ("WeKan ®")
     }
+    { DragHandleState WebContainer
+      Class = "weba-drag-preference-state"
+    }
     { HeaderSpace WebContainer
       Class = "weba-header-space"
       Arrangement = Arrange.Vertical
@@ -1040,6 +1043,11 @@
         Spacing = True
         Arrangement = Arrange.Vertical
         Class = "weba-settings-panel"
+        { DragHandleAction WebTextBox
+          Visible = False
+        }
+        { DragHandleSettings WebContainer
+        }
         { Fullname WebTextBox
           Tooltip = ("Full name")
         }

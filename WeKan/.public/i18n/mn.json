@@ -248,6 +248,7 @@
   "set-selected-home": "Нүүр самбар болгох (нэвтэрсний дараа нээгдэнэ)",
   "set-selected-starred": "Сонгосон самбаруудыг одтой болгох",
   "set-selected-unstarred": "Сонгосон самбаруудаас од хасах",
+  "show-desktop-drag-handles": "Компьютер дээр чирэх бариулыг харуулах",
   "show-on-private-board": "Хувийн самбар дээр харуулах",
   "show-on-public-board": "Нийтийн самбар дээр харуулах",
   "sort-boards": "Самбаруудыг эрэмбэлэх",

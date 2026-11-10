@@ -248,6 +248,7 @@
   "set-selected-home": "Setel sebagai papan Beranda (dibuka setelah login)",
   "set-selected-starred": "Bintangi papan yang terpilih",
   "set-selected-unstarred": "Hapus bintang dari papan yang dipilih",
+  "show-desktop-drag-handles": "Tampilkan gagang seret desktop",
   "show-on-private-board": "Tampilkan di papan pribadi",
   "show-on-public-board": "Tampilkan di papan publik",
   "sort-boards": "Urutkan Papan",

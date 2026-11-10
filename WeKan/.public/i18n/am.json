@@ -248,6 +248,7 @@
   "set-selected-home": "እንደ መነሻ ሰሌዳ አዘጋጅ (ከመግባት በኋላ ይከፈታል)",
   "set-selected-starred": "የተመረጡትን ሰሌዳዎች በኮከብ ለይ",
   "set-selected-unstarred": "ከተመረጡት ሰሌዳዎች ኮከቡን አስወግድ",
+  "show-desktop-drag-handles": "የዴስክቶፕ መጎተቻ መያዣዎችን አሳይ",
   "show-on-private-board": "በግል ሰሌዳ ላይ አሳይ",
   "show-on-public-board": "በይፋዊ ሰሌዳ ላይ አሳይ",
   "sort-boards": "ሰሌዳዎችን ደርድር",

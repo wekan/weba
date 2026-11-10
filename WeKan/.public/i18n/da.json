@@ -248,6 +248,7 @@
   "set-selected-home": "Angiv som hjemtavle (åbnes efter login)",
   "set-selected-starred": "Stjernemarkér de valgte tavler",
   "set-selected-unstarred": "Fjern stjernemarkeringen fra de valgte tavler",
+  "show-desktop-drag-handles": "Vis trække-håndtag for skrivebord",
   "show-on-private-board": "Vis på privat tavle",
   "show-on-public-board": "Vis på offentlig tavle",
   "sort-boards": "Sorter tavler",

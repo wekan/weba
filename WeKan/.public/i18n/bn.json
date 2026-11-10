@@ -248,6 +248,7 @@
   "set-selected-home": "হোম বোর্ড হিসেবে নির্ধারণ করুন (প্রবেশের পরে খোলে)",
   "set-selected-starred": "নির্বাচিত বোর্ডগুলোতে তারকা দিন",
   "set-selected-unstarred": "নির্বাচিত বোর্ডগুলোর তারকা সরান",
+  "show-desktop-drag-handles": "ডেস্কটপে টানার হাতল দেখান",
   "show-on-private-board": "ব্যক্তিগত বোর্ডে দেখান",
   "show-on-public-board": "সর্বজনীন বোর্ডে দেখান",
   "sort-boards": "বোর্ড সাজান",

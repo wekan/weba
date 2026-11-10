@@ -2,6 +2,24 @@
 
 This work adds the following features and fixes:
 
+- Add a native private profile drag-handle toggle using the source's three-state
+  mouse/touch preference rule. Reflect effective state, persist explicit on/off,
+  refresh open tabs without writes and translate the source caption (270 keys
+  across 237 catalogs). Bind commands to the captured account/session, profile
+  context and revision; refuse closed, stale, malformed and revoked events with
+  opaque errors and no writes. Ignore the reentrant empty native field-change
+  event so clearing a command cannot invalidate its own revision. Keep failed
+  saves retryable. Apply the preference to native board-view ordering: show only
+  explicit grips when on; enable label drag and arrow keys when off, retaining
+  keyboard focus and canceling active gestures on preference changes. Verify
+  mouse/touch defaults, explicit off on touch, label drag, cross-tab/reload,
+  readonly personal settings, failure/retry, session and Finnish/mobile behavior.
+  The full local suite (69 host tests) and complete source/packaged browser
+  suites pass against the final code; the new browser integration passes in
+  both forms.
+  Other native card/list/lane/workspace handles and original Meteor/profile/DDP
+  integration remain pending. Thanks to xet7.
+
 - Store native signed-in drag-handle choices privately per account, retaining
   explicit false separately from an unset preference. Bind writes to the
   captured account/session generation, validate Booleans before schema creation,

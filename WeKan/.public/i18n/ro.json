@@ -248,6 +248,7 @@
   "set-selected-home": "Setează ca panou principal (deschis după autentificare)",
   "set-selected-starred": "Marchează cu stea panourile selectate",
   "set-selected-unstarred": "Elimină steaua de pe panourile selectate",
+  "show-desktop-drag-handles": "Afișează mânerele de tragere pe desktop",
   "show-on-private-board": "Afișează pe panou privat",
   "show-on-public-board": "Afișează pe panou public",
   "sort-boards": "Sortează panourile",
