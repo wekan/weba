@@ -29,6 +29,14 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),asse
   assert.equal(bundled.window.webaWorkspaceMarkdown.workspaceUrls.resolve(tree,pathText),urls.workspaceIdForSlugPath(tree,urls.splitWorkspacePath(pathText),slug)||'');
   assert.deepEqual(Array.from(bundled.window.webaWorkspaceMarkdown.workspaceUrls.names(tree,pathText)),urls.workspaceNamePath(tree,urls.splitWorkspacePath(pathText),slug));
  }
+ const boardModel=fs.readFileSync(path.join(source,'models/boards.js'),'utf8'),schema=boardModel.slice(boardModel.indexOf('    slug: {'),boardModel.indexOf('    archived: {'));
+ const autoBody=schema.slice(schema.indexOf('autoValue() {')+'autoValue() {'.length,schema.lastIndexOf('      },'));
+ const sourceSlug=vm.runInNewContext('(function(){'+autoBody+'})',{getSlug:slug});
+ const signature='  originRelativeUrl() {',start=boardModel.indexOf(signature),end=boardModel.indexOf('\n  },',start);assert.ok(start>=0&&end>start);
+ const sourceBoardPath=vm.runInNewContext('(function(){'+boardModel.slice(start+signature.length,end)+'})');
+ const boardTitles=['Renkaan Vaihto','Backend & QA','🚀','船','Проект','','東京','<img onerror=alert(1)>','a/b','Café % 100','niño','..'];
+ for(const title of boardTitles){const sourceTitleSlug=sourceSlug.call({isSet:false,field:()=>({isSet:true,value:title})});assert.equal(bundled.window.webaWorkspaceMarkdown.boardUrls.path('123',title),sourceBoardPath.call({_id:'123',slug:sourceTitleSlug}));}
+ console.log('Board URL bundle: '+boardTitles.length+' title paths match unchanged board schema autoValue and originRelativeUrl with installed limax; native numeric-ID adapter explicit');
  console.log('Workspace URL bundle: 22 path/resolution/name results match unchanged source helpers and installed limax; source/dependency hashes verified');
  let helper;const context={DOMPurify:req('dompurify')(original.window),MarkdownIt:req('markdown-it'),markdownItEmoji:req('markdown-it-emoji'),
   markdownItMath:(await import(pathToFileURL(req.resolve('markdown-it-math/no-default-renderer')).href)).default,temml:req('temml'),hljs:req('highlight.js/lib/common'),

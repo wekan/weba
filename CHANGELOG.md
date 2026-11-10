@@ -2,6 +2,29 @@
 
 This work adds the following features and fixes:
 
+- Add native `/b/:id/:slug` and short `/b/:id` board entries with current-session
+  read checks, canonical native IDs, literal titles and fresh archive context.
+  Serve only root HTML for valid GET entries, stripping query commands; refuse
+  malformed/multiply encoded paths and mutation aliases. Use the source limax
+  slug/fallback for canonical tile and Home URLs; resolve by ID and retain an
+  explicit stale slug during rename/reload. Give explicit board entries priority
+  over saved Home and preserve the current explicit board when Home changes.
+  Share acknowledged route tokens across boards/overview/workspaces so only the
+  latest intent changes history; support menu, view, Back/Forward and reload.
+  Await the root landing decision before recording a cached board URL, and keep
+  denied/live-revoked entries at their requested URL with safe native fallback.
+  Keep an archived fallback in Archive rather than an inconsistent active view.
+  Refresh same-board short-entry titles from freshly authorized metadata before
+  canonicalization, including the empty-slug fallback after immediate rename.
+  Verify native access/session/archive negatives, host path/method/query guards,
+  twelve unchanged source schema/path comparisons and real route/history/privacy
+  regressions. Final full local (54 host tests), complete packaged browser and
+  focused source/packaged route/Home suites pass. Board-menu archive/restore and
+  tile link/modified-click semantics remain explicit navigation follow-ups.
+  Native SQL IDs, private membership and native cached forms remain the model;
+  original public/card routes and full Meteor/FlowRouter/profile/DDP/Sandstorm
+  integration remain pending. Thanks to xet7.
+
 - Accept cross-document HTML5 single/group board drops on Home and Home-origin
   drops on the drag-only Remove bar. Read only protected MIME types during hover,
   distinguish board/workspace/file sources, keep Remove-only Home origin and

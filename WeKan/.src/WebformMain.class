@@ -150,7 +150,7 @@ Private Sub RefreshTree()
     If unavailable Then
       $board = 0
       ' ValidateOpenCards clears stale fields before resetting the card ID.
-      $view = "Boards"
+      $view = If($archive, "Archive", "Boards")
       Editor.Hide()
       DetailsPanel.Hide()
       MembersPanel.Hide()
@@ -846,6 +846,11 @@ Private Sub UpdateHeader()
       routeSection = "workspaces"
     Endif
   Endif
+  If $board > 0 And $view <> "Profile" And $view <> "Admin panel" Then routeSection = "board"
+  routeAck["boardId"] = If(routeSection = "board", CStr($board), "")
+  routeAck["boardTitle"] = If(routeSection = "board", $boardTitle, "")
+  routeAck["boardArchived"] = If(routeSection = "board", $archive, False)
+  routeAck["landingReady"] = $landingConsumed
   routeAck.Add(routeSection, "section")
   routeAck.Add($overviewRouteToken, "token")
   routeAck.Add(If(routeSection = "workspaces" And $spaceMenu > 0, CStr($spaceMenu), ""), "workspaceId")
@@ -3902,6 +3907,9 @@ Public Sub EntryRouteAction_Change()
   Dim fields As String[] = Split(EntryRouteAction.Text, "|")
   Dim section As String = EntryRouteAction.Text
   Dim workspaceId As Integer
+  Dim boardData As Collection
+  Dim boardEntryStarted As Boolean
+  Dim failure As String
   If Not WebIdentity.Username Then Error.Raise("Sign in required")
   If Not section Then Return
   ' Empty the command after capture; identical later entries must raise Change.
@@ -3909,7 +3917,29 @@ Public Sub EntryRouteAction_Change()
   If fields.Count < 2 Or fields.Count > 3 Then Error.Raise("Unknown overview entry")
   section = fields[0]
   If Not fields[1] Or Len(fields[1]) > 128 Then Error.Raise("Unknown overview entry")
-  If ["remaining", "starred", "archive", "home", "workspaces"].Find(section) < 0 Then Error.Raise("Unknown overview entry")
+  If ["remaining", "starred", "archive", "home", "workspaces", "board"].Find(section) < 0 Then Error.Raise("Unknown overview entry")
+  If section = "board" Then
+    If fields.Count <> 3 Then Error.Raise("Unknown board entry")
+    boardEntryStarted = True
+    boardData = BoardRoute.Resolve(fields[2])
+    $landingConsumed = True
+    If $board = boardData["id"] And $archive = boardData["archived"] And $view <> "Profile" And $view <> "Admin panel" Then
+      $boardTitle = boardData["title"]
+      $overviewRouteToken = fields[1]
+      UpdateHeader()
+      Return
+    Endif
+    ' Clear previous editors before selecting a different route. Its temporary
+    ' overview acknowledgement retains the old token; only the final one wins.
+    Home_Click()
+    $overviewRouteToken = fields[1]
+    $board = boardData["id"]
+    $archive = boardData["archived"]
+    $view = "Swimlanes"
+    $card = 0
+    RefreshTree()
+    Return
+  Endif
   If section = "workspaces" Then
     If fields.Count <> 3 Then Error.Raise("Unknown overview entry")
     If fields[2] = "0" Then
@@ -3943,7 +3973,13 @@ Public Sub EntryRouteAction_Change()
       Error.Raise("Unknown overview entry")
   End Select
 Catch
-  Notice.Text = Error.Text
+  failure = Error.Text
+  If boardEntryStarted Then
+    $landingConsumed = True
+    $overviewRouteToken = fields[1]
+    Try Home_Click()
+  Endif
+  Notice.Text = failure
 End
 
 
@@ -3957,7 +3993,10 @@ Public Sub LoginLandingAction_Change()
   If $landingConsumed Then Return
   $landingConsumed = True
   ' An ordinary navigation that already won the race must stay selected.
-  If LandingContext() <> $landingContext Then Return
+  If LandingContext() <> $landingContext Then
+    UpdateHeader()
+    Return
+  Endif
   boardId = HomeBoard.Visible()
   If Not boardId Then
     If $board > 0 Then
@@ -3967,6 +4006,7 @@ Public Sub LoginLandingAction_Change()
         Home_Click()
       Endif
     Endif
+    UpdateHeader()
     Return
   Endif
   Home_Click()

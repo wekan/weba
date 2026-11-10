@@ -33,6 +33,12 @@ def all_boards_entry_section(path):
     return None
 
 
+def board_entry(path):
+    """Native board IDs, optional human slug; never arbitrary CGI aliases."""
+    match = re.fullmatch(r'/b/([1-9][0-9]{0,9})(?:/([^/]+))?/?', path)
+    return bool(match and int(match[1]) <= 2147483647)
+
+
 def is_attachment_export_path(path):
     parts = path.split('/')
     if len(parts) == 8 and parts[-1] == '':
@@ -344,7 +350,10 @@ def handler(application, runner, environment):
                 return
             if not self._request_allowed(url._replace(path=decoded_path)):
                 return
-            entry_section = all_boards_entry_section(decoded_path)
+            entry_section = all_boards_entry_section(decoded_path) or ('board' if board_entry(decoded_path) else None)
+            if (decoded_path == '/b' or decoded_path.startswith('/b/')) and not entry_section:
+                self.send_error(404)
+                return
             if decoded_path.startswith("/allboards/home/") and not entry_section:
                 self.send_error(404)
                 return

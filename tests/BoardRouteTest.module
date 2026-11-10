@@ -1,0 +1,55 @@
+Public Sub Main()
+  Dim a As Integer
+  Dim privateId As Integer
+  Dim data As Collection
+  Dim text As String
+  Dim denied As Boolean
+  Dim db As Connection
+  WebDatabase.Register("route-owner", "x")
+  WebDatabase.Register("route-reader", "x")
+  WebDatabase.Register("route-other", "x")
+  SignIn("route-owner")
+  a = KanbanStore.AddBoard("Renkaan Vaihto 🚀 <literal>")
+  privateId = KanbanStore.AddBoard("Private route canary")
+  BoardAccess.SetMember(a, "route-reader", "read-only")
+  SignIn("route-reader")
+  data = BoardRoute.Resolve(CStr(a))
+  If data["id"] <> a Or data["title"] <> "Renkaan Vaihto 🚀 <literal>" Or data["archived"] Then Error.Raise("Readonly board route metadata changed")
+  For Each text In ["", "0", "-1", "+1", " " & CStr(a), "0" & CStr(a), "1.0", "1e0", "2147483648", "9999999999999999", CStr(privateId), "2147483647", "__proto__"]
+    Try BoardRoute.Resolve(text)
+    denied = Error
+    If Not denied Then Error.Raise("Invalid/private/missing board route accepted: " & text)
+  Next
+  SignIn("route-owner")
+  KanbanStore.ArchiveBoard(a, True)
+  SignIn("route-reader")
+  data = BoardRoute.Resolve(CStr(a))
+  If Not data["archived"] Then Error.Raise("Explicit archive route lost its state")
+  SignIn("route-other")
+  db = WebDatabase.OpenConnection()
+  db.Exec("UPDATE users SET admin=1 WHERE username='route-other'")
+  Try BoardRoute.Resolve(CStr(a))
+  denied = Error
+  If Not denied Then Error.Raise("Global nonmember read a private route")
+  SignIn("route-owner")
+  BoardAccess.RemoveMember(a, "route-reader")
+  SignIn("route-reader")
+  Try BoardRoute.Resolve(CStr(a))
+  denied = Error
+  If Not denied Then Error.Raise("Revoked member read a board route")
+  Session["username"] = ""
+  Try BoardRoute.Resolve(CStr(a))
+  denied = Error
+  If Not denied Then Error.Raise("Anonymous board route accepted")
+  SignIn("route-owner")
+  db.Exec("UPDATE account_sessions SET generation=generation+1 WHERE username='route-owner'")
+  Try BoardRoute.Resolve(CStr(a))
+  denied = Error
+  If Not denied Then Error.Raise("Revoked session read a board route")
+  Print "Board routes: literal metadata, readonly/archived context, malformed/private/missing IDs, global nonmember, revoked membership/session and anonymous refusal passed"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

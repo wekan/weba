@@ -35,9 +35,11 @@
       return send.call(this,body);
     };
   }
-  const entryKey='weba-overview-entry',overviewSections=['remaining','starred','archive','home','workspaces'];
+  const entryKey='weba-overview-entry',overviewSections=['remaining','starred','archive','home','workspaces','board'];
   let entrySent=false,overviewPending=null,overviewObserved=null,overviewIntent=0,deferredOverview=null;
   function overviewRouteAtPath(){try{
+    const board=/^\/b\/([1-9]\d{0,9})(?:\/([^/]+))?\/?$/.exec(decodeURIComponent(root.location.pathname));
+    if(board&&Number(board[1])<=2147483647)return {section:'board',id:board[1],path:board[2]||''};
     const match=/^\/allboards\/(remaining|starred|archive|home|workspaces)(?:\/(.*))?$/.exec(decodeURIComponent(root.location.pathname));
     return match&&(match[1]==='workspaces'||!match[2])?{section:match[1],path:match[2]||''}:null;
   }catch(_){return null;}}
@@ -52,6 +54,19 @@
     if(el&&el.textContent!==title)el.textContent=title;if(el&&el.title!==title)el.title=title;
   }
   function rememberOverviewState(ack,push){
+    if(ack.section==='board'){
+      const urls=root.webaWorkspaceMarkdown?.boardUrls;if(!urls)return false;
+      const route=overviewRouteAtPath(),path=urls.path(ack.boardId,ack.boardTitle),state={webaOverviewSection:'board',webaBoardId:ack.boardId};
+      if(push&&root.location.pathname+root.location.search+root.location.hash!==path){
+        if(root.location.pathname==='/'&&!root.history.state?.webaOverviewSection)root.history.replaceState({...root.history.state,webaOverviewSection:'remaining'},'',root.location.href);
+        root.history.pushState(state,'',path);
+      }else{
+        // Explicit human slugs resolve by ID and remain stable through renames.
+        const address=route?.section==='board'&&route.id===ack.boardId&&route.path?root.location.href:path;
+        root.history.replaceState({...root.history.state,...state},'',address);
+      }
+      return true;
+    }
     if(ack.section==='workspaces'&&!workspaceUrls())return false;
     const slugs=ack.section==='workspaces'&&ack.workspaceId?workspaceUrls().slugs(ack.tree||[],ack.workspaceId)||[]:[];
     const path=ack.section==='workspaces'?workspaceUrls().path(ack.tree||[],ack.workspaceId||''):'/allboards/'+ack.section;
@@ -64,8 +79,10 @@
     const ack=overviewAck();if(!ack)return;const section=ack.section;
     if(!overviewSections.includes(section)){overviewObserved=null;return;}
     if(section==='workspaces'&&!workspaceUrls())return;
-    const id=section==='workspaces'?ack.workspaceId||'':'',key=section+':'+id;
-    if(overviewPending?.section==='workspaces'&&overviewPending.workspaceId&&workspaceUrls()&&!workspaceUrls().slugs(ack.tree||[],overviewPending.workspaceId)){
+    if(section==='board'&&root.location.pathname==='/'&&!ack.landingReady&&!overviewPending)return;
+    const id=section==='board'?ack.boardId||'':section==='workspaces'?ack.workspaceId||'':'',key=section+':'+id;
+    if(overviewPending?.section==='board'&&ack.token===overviewPending.token&&section!=='board'){overviewPending=null;overviewObserved=key;return;}
+    if(overviewPending?.section==='workspaces'&&overviewPending.id&&workspaceUrls()&&!workspaceUrls().slugs(ack.tree||[],overviewPending.id)){
       // A vanished target is a safe native fallback, not a new history intent.
       sendOverviewRoute('workspaces','entry','');return;
     }
@@ -74,22 +91,23 @@
       if(resolved&&resolved!==id){sendOverviewRoute('workspaces','entry',resolved);return;}
     }
     if(overviewPending){
-      if(overviewPending.section!==section||overviewPending.token!==ack.token||overviewPending.workspaceId!==id)return;
+      if(overviewPending.section!==section||overviewPending.token!==ack.token||overviewPending.id!==id)return;
       if(!rememberOverviewState(ack,overviewPending.source==='menu'))return;
       overviewPending=null;overviewObserved=key;return;
     }
     if(overviewObserved===key){workspaceTrail(ack);return;}
-    const first=overviewObserved===null,vanished=section==='workspaces'&&!id&&overviewObserved?.startsWith('workspaces:');if(rememberOverviewState(ack,!first&&!vanished))overviewObserved=key;
+    const first=overviewObserved===null,vanished=section==='workspaces'&&!id&&overviewObserved?.startsWith('workspaces:')||section!=='board'&&overviewObserved?.startsWith('board:')&&overviewRouteAtPath()?.section==='board';if(rememberOverviewState(ack,section==='board'&&root.location.pathname==='/'||!first&&!vanished))overviewObserved=key;
   }
   function sendOverviewRoute(section,source,workspaceId=''){
     const target=document.querySelector('[id$=".EntryRouteAction"]');if(!target||!root.gw?.update||!overviewSections.includes(section))return false;
-    let id=section==='workspaces'?String(workspaceId||''):'';
-    if(id&&source==='menu'&&workspaceUrls()){const tree=overviewAck()?.tree||[],slugs=workspaceUrls().slugs(tree,id);if(slugs)id=workspaceUrls().resolve(tree,slugs.join('/'))||id;}
+    let id=['workspaces','board'].includes(section)?String(workspaceId||''):'';
+    if(section==='workspaces'&&id&&source==='menu'&&workspaceUrls()){const tree=overviewAck()?.tree||[],slugs=workspaceUrls().slugs(tree,id);if(slugs)id=workspaceUrls().resolve(tree,slugs.join('/'))||id;}
     const token=String(Date.now())+'-'+String(++overviewIntent);
-    overviewPending={section,source,token,workspaceId:id};root.gw.update(target.id,'text',section+'|'+token+(section==='workspaces'?'|'+(id||'0'):''));return true;
+    overviewPending={section,source,token,id};root.gw.update(target.id,'text',section+'|'+token+(['workspaces','board'].includes(section)?'|'+(id||(section==='workspaces'?'0':'')):''));return true;
   }
   function sendOverviewPath(route,source){
     if(!route||!overviewSections.includes(route.section))return false;
+    if(route.section==='board')return sendOverviewRoute('board',source,route.id);
     if(route.section==='workspaces'){
       const ack=overviewAck();if(!workspaceUrls()||!Array.isArray(ack?.tree)){deferredOverview={route,source};return false;}
       return sendOverviewRoute(route.section,source,workspaceUrls().resolve(ack.tree,route.path||''));
@@ -288,6 +306,12 @@
   root.webaUI={decorate,syncColor};
   function start(){
     document.addEventListener('click',event=>{
+      const tile=event.target.closest?.('[data-board-key]');
+      if(tile){
+        if(root.webaDrag?.clickSuppressed){event.preventDefault();event.stopImmediatePropagation();return;}
+        const id=/^b([1-9]\d*)$/.exec(tile.dataset.boardKey)?.[1];
+        if(id&&!tile.disabled){event.preventDefault();event.stopImmediatePropagation();sendOverviewRoute('board','menu',id);}return;
+      }
       const workspace=event.target.closest?.('.weba-space-open');
       if(workspace){
         if(root.webaDrag?.clickSuppressed||workspace.disabled||workspace.classList.contains('gw-disabled'))return;
@@ -300,7 +324,7 @@
       if(section&&!button.disabled&&!button.classList.contains('gw-disabled')&&button.getAttribute('aria-disabled')!=='true'){event.preventDefault();event.stopImmediatePropagation();sendOverviewRoute(section,'menu');}
     },true);
     root.addEventListener('popstate',event=>{
-      const route=overviewRouteAtPath()||(root.location.pathname==='/'?{section:event.state?.webaOverviewSection,path:event.state?.webaWorkspacePath||''}:null);
+      const route=overviewRouteAtPath()||(root.location.pathname==='/'?{section:event.state?.webaOverviewSection,path:event.state?.webaWorkspacePath||'',id:event.state?.webaBoardId||''}:null);
       if(route&&overviewSections.includes(route.section)){entrySent=true;sendOverviewPath(route,'pop');syncOverviewHistory();}
     });
     document.addEventListener('input',event=>{

@@ -132,16 +132,25 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   drafts and clickable close controls. Delayed-width/async-error tests, full
   local/test-live and existing layout regressions pass. Original suite counts
   remain unchanged.
-- Next Home parity: original Meteor transport, original board
-  URL/profile/DDP and Sandstorm single-board convenience. Native Home preference,
+- Next Home parity: original Meteor/profile/DDP transport and Sandstorm
+  single-board convenience. Native Home preference,
   catalog/count, Starred presentation/badge, selection toggle and login/reload
   opening, pointer/touch drop replacement, confirmed drag-only Remove bar and
   empty instruction and same-form desktop HTML5/MIME events are recorded in
   CHANGELOG.md. Same-form HTML5 events keep server-bound origin/revision checks;
   cross-document Home set/Remove uses a strict private-profile payload command
   with fresh native session/membership/archive checks, as recorded there too.
+  Native canonical/short board URLs, explicit login/reload priority, ID-scoped
+  access and acknowledged tile/Home/history navigation are recorded there too;
+  original public/card routes and full FlowRouter/DDP callbacks remain open.
   Other board destinations remain same-form. The 60-case unchanged source
   Home/Remove callback adapter proof does not claim original Meteor wiring.
+- Next board navigation parity: explicit native board-menu archive/restore
+  transitions (source archive goes home; source restore opens the board), real
+  board-tile link/modified-click semantics, plus original public/card routes and
+  full FlowRouter/subscription behavior. Native
+  canonical/short entries and acknowledged tile/Home/history navigation are in
+  CHANGELOG.md; do not treat those as proof of every board action callback.
 - Next workspace parity: Templates and remaining production transport/routing beyond
   the six adapter-backed spec 39 callbacks. Production direct GET entry for
   Remaining/Starred/Archive with login/reload, acknowledged menu URL updates and

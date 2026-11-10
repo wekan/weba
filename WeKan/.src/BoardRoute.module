@@ -1,0 +1,24 @@
+ ' Read-only native board route resolution, always for the current principal.
+Export
+
+Public Function Resolve(text As String) As Collection
+  Dim actor As String = WebIdentity.Username
+  Dim id As Integer
+  Dim db As Connection
+  Dim row As Result
+  Dim data As New Collection
+  If Not actor Then Error.Raise("Sign in required")
+  Try id = CInt(text)
+  If Error Then Error.Raise("Board not accessible")
+  If id <= 0 Or CStr(id) <> text Then Error.Raise("Board not accessible")
+  BoardAccess.RequireRead(id)
+  db = WebDatabase.OpenConnection()
+  row = db.Find("kb_boards", "id=&1", id)
+  If Not row.Available Then Error.Raise("Board not accessible")
+  data["id"] = id
+  data["title"] = CStr(row!title)
+  data["archived"] = CBool(row!archived)
+  If WebIdentity.Username <> actor Then Error.Raise("Sign in required")
+  BoardAccess.RequireRead(id)
+  Return data
+End

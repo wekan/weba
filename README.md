@@ -652,12 +652,39 @@ remains usable afterward; named section entries win, ordinary mark changes do
 not navigate an already open page, and stale archived/revoked marks fall back.
 Gambas can retain forms across reloads, so only a fresh root HTML response rearms
 the consumed decision; native event requests cannot rearm it. The landing command
-accepts no caller board ID. Native board navigation keeps its existing URL.
+accepts no caller board ID. Native board navigation now records its canonical
+`/b/:id/:slug` URL.
 When no readable active Home is available, an existing native board retains its reload state.
-Full original board routes/profile/DDP and
+Original public/card routes, full Meteor/FlowRouter/profile/DDP and
 Sandstorm single-board convenience remain TODO. Run
 `python3 tests/run-http.py --home-login [--archive]` for login/reload coverage.
 Run `python3 tests/run-http.py --home [--archive]` for the browser regression.
+
+Native board entries accept `/b/:id/:slug` and short `/b/:id` (optionally with a
+trailing slash). The host permits only root HTML GET entry, strips query commands,
+rejects malformed/multiply encoded IDs/paths and never makes these mutation CGI
+aliases. `BoardRoute.Resolve` validates a canonical positive native SQL ID and
+returns only the current principal's readable title/archive state, with final
+session/read rechecks. Anonymous, missing, private, global-nonmember and revoked
+users/sessions cannot resolve the private board. Explicit archived entries use
+actual archived scope; a scope change leaves a coherent safe overview.
+
+The bundled installed limax and `board` fallback match the unchanged source
+board schema and URL helper. Slugs are readable decoration: explicit stale slugs
+remain valid by ID and stay unchanged through live rename/reload; a new tile
+navigation uses the current title. Explicit board entries win over saved Home,
+and reloading an explicit board keeps it when the Home preference changes; a
+fresh root entry is what applies the new Home. The private route snapshot and
+shared intent token acknowledge tile, automatic Home and native board changes
+before recording URLs. Back/Forward uses the same server guards, stale replies
+cannot win history, and the cached root board waits for the landing decision.
+Same-board entries preserve the native view/draft DOM and refresh their route
+title from the freshly authorized resolver before canonicalizing short URLs. Denied or live-revoked
+entries keep their requested URL while clearing board state; reload retries
+fresh authorization. This is native SQL/private-board routing, not original
+FlowRouter/DDP or public/card routes. `BoardRouteTest`, host path/method/query
+checks, twelve unchanged source slug/path comparisons and real
+`python3 tests/run-http.py --board-routes [--archive]` cover these boundaries.
 
 Starred now applies the unchanged source Home-first presentation rule after
 catalog paging: readable active Home appears first even when unstarred, once

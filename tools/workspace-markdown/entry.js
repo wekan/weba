@@ -28,3 +28,6 @@ export const workspaceUrls={
   resolve:(tree,path)=>workspaceIdForSlugPath(tree,splitWorkspacePath(path),getSlug)||'',
   names:(tree,path)=>workspaceNamePath(tree,splitWorkspacePath(path),getSlug),
 };
+
+// Same limax/fallback as the board schema; IDs remain native SQL IDs.
+export const boardUrls={path:(id,title)=>'/b/'+encodeURIComponent(String(id))+'/'+encodeURIComponent(getSlug(String(title??''))||'board')};
