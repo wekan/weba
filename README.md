@@ -2846,7 +2846,8 @@ The native `DragHandles` decision helper matches the source three-state rule:
 explicit on/off wins on every device; unset or malformed values follow touch
 capability. The 42-case source comparison covers 126 native outputs. Private profile
 storage and the native profile toggle are described below. The decision is now
-applied to native board-view ordering; other native gestures remain pending.
+applied to native board-view ordering and overview board tiles; card, list, lane
+and workspace gestures remain pending.
 
 `DragHandlePreference` now stores the signed-in native profile choice privately
 per account. `Stored()` returns Boolean or null without creating preference
@@ -2864,5 +2865,14 @@ labels with Up/Down keys when disabled. Explicit off works on touch, and keyboar
 focus follows the active control after an acknowledged move. Polling refreshes
 other open tabs without writing a preference; a change cancels pending gestures.
 The captured profile actor/session/revision guards reject stale or closed events,
-with opaque SQL errors and retry. Other native card/list/lane/workspace handles
-and the original Meteor profile/DDP bridge remain pending.
+with opaque SQL errors and retry.
+
+Overview board ordering follows the same effective preference. Handles on makes
+the visible board grip the only mouse/touch start and keeps ordinary tile touch
+scrollable. Handles off hides the grip and makes the board tile the mouse,
+trusted-touch and arrow-key surface. A preference change cancels a pending native
+gesture, and acknowledged keyboard moves restore focus to the effective grip or
+tile even when the server render precedes preference decoration. Personal order,
+readonly access, user isolation and the existing sorted/foreign-target guards
+remain unchanged. Native card/list/lane/workspace preference integration and the
+original Meteor profile/DDP bridge remain pending.

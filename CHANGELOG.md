@@ -2,6 +2,22 @@
 
 This work adds the following features and fixes:
 
+- Apply the shared drag-handle preference to native overview board tiles. Match
+  the source contract: with handles on, only the visible grip starts mouse or
+  touch ordering and an ordinary touch swipe remains scrolling; with handles
+  off, hide the grip and make the tile the mouse, touch and arrow-key ordering
+  surface. Cancel active native gestures when the effective preference changes
+  and restore keyboard focus to the effective grip or tile after acknowledged
+  refreshes, including the decorator/render race. Keep readonly personal order,
+  user isolation, source sort-index mapping and server-side sorted-mode/foreign
+  target guards unchanged. Verify unit decisions plus real explicit-off touch,
+  keyboard, focus, reload, cross-test profile cleanup, handle-on scrolling and
+  both touch-default grip and desktop-default tile board-drop behavior. Other native card,
+  list, lane and workspace drag surfaces remain pending. The full local suite
+  (69 host tests) and complete source/packaged browser suites pass against the
+  final code, including board order and board drop in both browser forms.
+  Thanks to xet7.
+
 - Add a native private profile drag-handle toggle using the source's three-state
   mouse/touch preference rule. Reflect effective state, persist explicit on/off,
   refresh open tabs without writes and translate the source caption (270 keys

@@ -19,7 +19,7 @@
     const workspace=target.closest('.weba-space-row');
     let kind=handle?.dataset.dragKind,element;
     if(kind==='workspace'||pointerType==='mouse'&&workspace&&target.closest('.weba-space-open')){kind='workspace';element=workspace;}
-    else if(kind==='board'||pointerType==='mouse'&&board&&target.closest('.weba-board-tile')){kind='board';element=board;}
+    else if(kind==='board'||board&&target.closest('.weba-board-drag-surface')){kind='board';element=board;}
     else if(kind==='lane')element=handle.closest('.weba-swimlane');
     else if(kind==='list')element=handle.closest('.weba-column');
     else if(kind==='card'||(pointerType==='mouse'&&card&&!target.closest('button,input,textarea,a:not(.weba-card-link),select'))){kind='card';element=card;}
@@ -320,7 +320,7 @@
     }catch(_){finish(true);}
   }
   function keyboard(event){
-    const handle=event.target.closest('.weba-drag-handle');if(!handle||!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key))return;
+    const handle=event.target.closest('.weba-drag-handle,.weba-board-drag-surface');if(!handle||handle.hidden||!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key))return;
     const state=identify(handle,'keyboard');if(!state)return;
     if(state.kind!=='board')keyboardFocus=null;
     if(state.kind!=='workspace')workspaceKeyboardFocus=null;
@@ -378,7 +378,7 @@
     if(Date.now()>keyboardFocus.expires||section.dataset.boardReorder!=='true'){keyboardFocus=null;return;}
     const rows=[...section.querySelectorAll('.weba-data>.weba-board-tile-group')];
     if(rows.length!==keyboardFocus.order.length||rows.some((row,index)=>row.dataset.boardId!==keyboardFocus.order[index]))return;
-    const handle=rows.find(row=>row.dataset.boardId===keyboardFocus.id)?.querySelector('.weba-drag-handle');
+    const row=rows.find(row=>row.dataset.boardId===keyboardFocus.id),handle=row?.querySelector(root.webaDragPreference&&!root.webaDragPreference.enabled()?'.weba-board-tile':'.weba-board-drag');
     keyboardFocus=null;
     root.requestAnimationFrame(()=>{if(handle?.isConnected&&document.activeElement===document.body){handle.focus({preventScroll:true});root.webaAlignFocus?.();}});
   }

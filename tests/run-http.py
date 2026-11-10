@@ -218,6 +218,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/wekan-workspace-latin.browser.cjs')], check=True, env=env)
         elif '--board-order' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-order.browser.cjs')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-drops.browser.cjs')], check=True, env=env)
         elif '--original-catalog' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/wekan-catalog-server.browser.cjs')], check=True, env=env)
         elif '--catalog' in sys.argv:

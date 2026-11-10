@@ -52,7 +52,11 @@ grid.getBoundingClientRect=()=>rect(0,0,640,300);root.dataset.editable='false';r
 d.elementFromPoint=(x,y)=>x<0?d.body:groups[Math.min(2,Math.floor(x/210))];
 const boardHandle=groups[2].querySelector('.weba-drag-handle'),tile=groups[2].querySelector('.weba-board-tile');
 assert.equal(w.webaDrag.identify(tile,'touch'),null,'ordinary board touch stays scrollable');
-assert.equal(w.webaDrag.identify(tile,'mouse').kind,'board','mouse board surface supports reorder');
+assert.equal(w.webaDrag.identify(tile,'mouse'),null,'handle mode refuses mouse board surface too');
+tile.classList.add('weba-board-drag-surface');
+assert.equal(w.webaDrag.identify(tile,'touch').kind,'board','handle-off board surface supports touch reorder');
+assert.equal(w.webaDrag.identify(tile,'mouse').kind,'board','handle-off board surface supports mouse reorder');
+tile.classList.remove('weba-board-drag-surface');
 assert.equal(w.webaDrag.identify(boardHandle,'touch').kind,'board','readonly board member can reorder personal view');
 const baseline=calls.length;
 event('pointerdown',boardHandle,430,30);event('pointermove',d,10,30);event('pointerup',d,10,30);

@@ -1,6 +1,7 @@
 Public Sub Main()
   Dim conn As Connection
   Dim mode As String = Env["WEBA_HANDLE_MODE"]
+  Dim username As String = If(Env["WEBA_HANDLE_USER"], Env["WEBA_HANDLE_USER"], "rest-order-manager")
   Dim r As Result
   Dim result As New Collection
   If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Fixture disabled")
@@ -8,14 +9,14 @@ Public Sub Main()
   Select mode
     Case "read"
       If conn.Tables.Exist("kb_drag_handle_preferences") Then
-        r = conn.Find("kb_drag_handle_preferences", "username='rest-order-manager'")
+        r = conn.Find("kb_drag_handle_preferences", "username=&1", username)
         If r.Available Then result.Add(CStr(r!preference), "stored")
       Endif
     Case "fail"
       conn.Exec("CREATE TRIGGER fail_ui_handle BEFORE UPDATE ON kb_drag_handle_preferences BEGIN SELECT RAISE(ABORT,'PRIVATE-HANDLE-SQL-CANARY'); END")
     Case "retry", "cleanup"
       conn.Exec("DROP TRIGGER IF EXISTS fail_ui_handle")
-      If mode = "cleanup" And conn.Tables.Exist("kb_drag_handle_preferences") Then conn.Delete("kb_drag_handle_preferences", "username='rest-order-manager' OR username='rest-order-reader'")
+      If mode = "cleanup" And conn.Tables.Exist("kb_drag_handle_preferences") Then conn.Delete("kb_drag_handle_preferences", "username=&1", username)
     Case "revoke"
       conn.Exec("UPDATE account_sessions SET generation=generation+1 WHERE username='rest-order-manager'")
     Case Else

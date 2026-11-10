@@ -23,7 +23,7 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   await click(owner,'HeaderSearch');await owner.locator(entry('BoardSearch')).fill('Drop Board Alpha');await expect(owner.locator(tile)).toBeVisible();await click(owner,'CloseSidebar');
   async function drop(page,target,confirm){
     await page.bringToFront();await expect(page.locator(tile)).toBeVisible();await expect(page.locator(target)).toBeVisible();
-    const start=await page.locator(tile+' .weba-board-drag').boundingBox(),dest=await page.locator(target).boundingBox();
+    const source=page.locator(tile+' .weba-board-drag:not([hidden]),'+tile+' .weba-board-drag-surface');await expect(source).toHaveCount(1);const start=await source.boundingBox(),dest=await page.locator(target).boundingBox();
     if(confirm!==undefined)page.once('dialog',async dialog=>{expect(dialog.type()).toBe('confirm');expect(dialog.message()).toBe('Are you sure you want to archive this board?');await (confirm?dialog.accept():dialog.dismiss());});
     await page.mouse.move(start.x+start.width/2,start.y+start.height/2);await page.mouse.down();await page.mouse.move(dest.x+dest.width/2,dest.y+dest.height/2,{steps:12});await page.mouse.up();
     // The engine deliberately suppresses the release click for 700 ms.
