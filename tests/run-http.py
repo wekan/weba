@@ -90,6 +90,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/attachment-export-conformance.test.cjs')], check=True, env=env)
         elif '--guest-boards' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/guest-boards.browser.cjs')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/public-attachments.browser.cjs')], check=True, env=env)
         elif '--public-boards' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/public-boards.browser.cjs')], check=True, env=env)
         elif '--board-visibility' in sys.argv:
@@ -224,6 +225,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-visibility.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/public-boards.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/guest-boards.browser.cjs')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/public-attachments.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-routes.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/card-route-conformance.test.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/card-routes.browser.cjs')], check=True, env=env)

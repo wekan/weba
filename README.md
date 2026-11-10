@@ -797,7 +797,7 @@ Finnish/mobile layout. The complete local suite (66 host tests) and complete
 source/packaged browser suites pass. Final focused source/packaged checks and
 all-catalog translation checks also pass with the source Refresh caption.
 The guest surface covers kanban/core card fields and the comments/checklists
-below. Remaining child/source-definition models, attachment downloads, additional views,
+below. Remaining child/source-definition models, storage/cover models, additional views,
 source backgrounds/templates and full Meteor publications/actions remain pending.
 
 Selected guest cards now show comments and checklists through the same final
@@ -843,21 +843,50 @@ The complete local suite (66 host tests) and complete source/packaged browser
 suites pass.
 These are existing card-level native models; source board-defined/admin-only
 field definitions, cross-board relationship/deposit models, duration aggregation,
-public downloads and original Meteor actions remain separate work.
+other download/storage models and original Meteor actions remain separate work.
 
-Selected guest cards show live native attachment names and scoped author/time
-metadata, using a fixed-column query that never selects file bytes. Match both
-board and card and exclude exactly scoped soft-deletion markers; a missing legacy
-file table gives an empty list without store initialization. Reuse retained-author
-lookup with the file kind and exact file/board/card binding. Filenames stay escaped
-literal text beneath the translated Attachments heading; this list adds no
-preview, download, upload or mutation target. Unchanged snapshots retain the DOM;
-removal and permission loss clear the metadata with the existing guest surface.
-Native tests cover exact projection, foreign/deleted/card scope, provenance and
-no writes. Real browser tests cover literal filenames, translated headings,
-absent actions/bytes and live removal. The complete local suite (66 host tests)
-and complete source/packaged browser suites pass. Public download identity/
-assigned-only scope, native transfer policy and retained-file behavior remain pending separately.
+Selected guest cards show live native attachment names, sizes and scoped author/
+time metadata through a fixed-column query without byte payloads. Match both
+board and card and exclude exactly scoped soft-deletion markers. Missing legacy
+file or settings tables/rows remain absent: public policy reads do not initialize
+stores. Bind retained authors to file kind/ID/board/card and escape filenames as
+literal user text beneath the translated Attachments heading.
+
+Available links use GET-only canonical positive native IDs at
+`/_weba/public-attachment/:board/:card/:file`. The host rejects encoded aliases,
+extra components/overflow/malformed IDs and non-GET methods and strips query
+commands. There is no GUI callback/upload exemption or API credential grant.
+Verify current public-board and exact file/card binding before metadata and bytes
+and again afterward. Anonymous readers and public nonmembers may download;
+active assigned-only members require current assignment, including raw flags on
+unknown/canonical roles. Removed members read as public nonmembers; the source
+file-server's verified site-admin exception precedes assignment narrowing.
+Use the shared verified HttpOnly UI principal independently of GUI ownership:
+an unrelated or absent GUI cookie cannot turn a valid restricted user anonymous.
+API bearer/query credentials do not authenticate this native public route.
+
+Respect native attachment block/size policy, API size fallback/environment and
+64 MiB buffer ceiling independently of API block. Hide blocked/oversized links
+while retaining metadata. Check size before fetching, bound the byte query and
+recheck actual bytes/policy before returning. Force octet-stream with attachment
+Content-Disposition, RFC 5987 filename encoding, host nosniff, sandbox CSP and
+no-store. No read initializes settings or adds activity/history. Deletion removes
+live list metadata but retained direct file URLs stay readable under current
+scope, matching the source file server; revoking public permission refuses them.
+
+Native tests cover exact binary/zero/name data, foreign bindings, assigned/raw/
+removed/site-admin scope, retained files, pure missing schema/row policy reads,
+API/native policy separation and no history writes. Source and packaged guest
+browser checks exercise downloads without execution, safe headers, commands/
+path/method negatives, live policy/metadata and assignment/privacy revocation,
+and restricted UI cookies without or with unrelated GUI cookies. A 64-case
+signed HTTP comparison plus anonymous reads executes unchanged source universal
+file authorization/assigned-file helpers using explicit UI-cookie/token,
+numeric-SQL-ID/cache and no-op security logger adapters. The complete local
+suite (66 host tests) and focused source/packaged guest browser suites pass.
+This is a public-only
+native buffered-file path; full source storage/streaming/Sandstorm/eventlog,
+cover/background/map and original Meteor file actions remain pending.
 
 First native root landing after login or full
 page reload now opens the current readable active Home board once. All Boards

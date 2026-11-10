@@ -38,21 +38,31 @@ Private Sub ValidateKind(kind As String)
   If ["attachmentsUpload", "attachmentsDownload", "apiUpload", "apiDownload", "avatarsUpload"].Find(kind) < 0 Then Error.Raise("Unknown transfer policy")
 End
 
-Public Function Blocked(kind As String) As Boolean
+Private Function Stored(field As String, readOnly As Boolean) As Variant
+  Dim db As Connection
   Dim r As Result
-  ValidateKind(kind)
-  OpenStore()
-  r = $db.Find("attachment_transfer_settings", "id=1")
-  Return CBool(r[kind & "Blocked"])
+  If readOnly Then
+    db = WebDatabase.OpenConnection()
+    If Not db.Tables.Exist("attachment_transfer_settings") Then Return Null
+  Else
+    OpenStore()
+    db = $db
+  Endif
+  r = db.Find("attachment_transfer_settings", "id=1")
+  If Not r.Available Then Return Null
+  Return r[field]
 End
 
-Private Function Configured(field As String) As Variant
-  Dim r As Result
-  OpenStore()
-  r = $db.Find("attachment_transfer_settings", "id=1")
-  If IsNull(r[field]) Then Return Null
-  If Not Finite(CFloat(r[field])) Or r[field] < 0 Then Return Null
-  Return CFloat(r[field])
+Public Function Blocked(kind As String, Optional readOnly As Boolean) As Boolean
+  ValidateKind(kind)
+  Return CBool(Stored(kind & "Blocked", readOnly))
+End
+
+Private Function Configured(field As String, Optional readOnly As Boolean) As Variant
+  Dim value As Variant = Stored(field, readOnly)
+  If IsNull(value) Then Return Null
+  If Not Finite(CFloat(value)) Or value < 0 Then Return Null
+  Return CFloat(value)
 End
 
 Private Function EnvironmentLimit(setting As String) As Float
@@ -72,13 +82,13 @@ Private Function EnvironmentLimit(setting As String) As Float
   Return value
 End
 
-Public Function Limit(kind As String) As Float
+Public Function Limit(kind As String, Optional readOnly As Boolean) As Float
   Dim value As Variant
   ValidateKind(kind)
   If kind = "avatarsUpload" Then Error.Raise("Avatar policy has no size limit")
-  value = Configured(kind & "MaxBytes")
+  value = Configured(kind & "MaxBytes", readOnly)
   If IsNull(value) Then
-    If kind = "attachmentsDownload" Then value = Configured("apiDownloadMaxBytes")
+    If kind = "attachmentsDownload" Then value = Configured("apiDownloadMaxBytes", readOnly)
   Endif
   If IsNull(value) Then
     Select kind
@@ -100,8 +110,8 @@ Public Sub Lock()
   $db.Exec("UPDATE attachment_transfer_settings SET id=id WHERE id=1")
 End
 
-Public Sub RequireTransfer(kind As String, size As Long)
-  If Blocked(kind) Then
+Public Sub RequireTransfer(kind As String, size As Long, Optional readOnly As Boolean)
+  If Blocked(kind, readOnly) Then
     Select kind
       Case "apiUpload"
         Error.Raise("API uploads are disabled by administrator")
@@ -116,7 +126,7 @@ Public Sub RequireTransfer(kind As String, size As Long)
     End Select
   Endif
   If kind = "avatarsUpload" Then Return
-  If size < 0 Or size > Limit(kind) Then
+  If size < 0 Or size > Limit(kind, readOnly) Then
     If kind = "apiUpload" Then Error.Raise("Attachment exceeds API upload limit")
     If kind = "apiDownload" Then Error.Raise("Attachment exceeds API download limit")
     If kind = "attachmentsUpload" Then Error.Raise("Attachment exceeds upload limit")

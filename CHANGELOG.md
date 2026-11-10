@@ -2,6 +2,28 @@
 
 This work adds the following features and fixes:
 
+- Add guarded native public attachment downloads and guest file links. Require
+  canonical GET paths, current public-board/exact file-card scope and verified
+  UI-cookie assigned-member scope independently of native GUI ownership; keep
+  removed-member/public reads and source file-server site-admin distinction.
+  Preserve retained direct files while live lists hide deletion. Share pure
+  native block/size reads with API-size/environment fallback and a 64 MiB ceiling,
+  leaving missing settings tables/rows absent; hide unavailable links, preflight
+  and bound byte fetches, then recheck scope/policy/actual size. Force attachment
+  octet-stream, safe Unicode filename headers, sandbox/nosniff/no-store and no
+  API/callback/upload or query-command authority. Test binary/zero/name data,
+  foreign/assigned/raw/removed/admin scopes, retention/privacy and no writes.
+  Real source/packaged guest browsers cover forced download/no execution,
+  headers/path/method/command guards, live policy/assignment/privacy and absent
+  or unrelated GUI cookies. Compare 64 signed native HTTP cases plus anonymous
+  reads with unchanged universal authorization/assigned-file helper bodies,
+  with explicit UI-cookie/source-token, SQL-ID/cache and no-op log adapters.
+  The complete local suite (66 host tests) and focused source/packaged guest
+  browser suites pass against final code.
+  Full source storage/streaming/Sandstorm/eventlog, cover/background/map and
+  original Meteor file actions remain pending.
+  Thanks to xet7.
+
 - Show live selected-card guest attachment names and scoped author/time metadata
   through a fixed-column read that excludes file bytes. Match the current public
   board/card and exact soft-deletion scope, preserve empty missing-schema reads

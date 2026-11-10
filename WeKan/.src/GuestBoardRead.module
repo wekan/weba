@@ -255,19 +255,23 @@ Private Function Author(db As Connection, boardId As Integer, cardId As Integer,
   Return ""
 End
 
-' File names/provenance only: no blob column or download authority in this DTO.
+' File metadata and link availability only: no bytes or credential in this DTO.
 Private Function Attachments(db As Connection, boardId As Integer, cardId As Integer) As Variant[]
   Dim rows As New Variant[]
   Dim row As Collection
   Dim r As Result
   Dim liveFiles As String = "TRUE"
+  Dim blocked As Boolean = TransferPolicy.Blocked("attachmentsDownload", True)
+  Dim limit As Float = TransferPolicy.Limit("attachmentsDownload", True)
   If Not db.Tables.Exist("kb_files") Then Return rows
   If db.Tables.Exist("kb_attachment_deletions") Then liveFiles = AttachmentLifecycle.LiveSql("kb_files")
-  r = db.Exec("SELECT id,filename,author,created_at FROM kb_files WHERE board_id=&1 AND card_id=&2 AND " & liveFiles & " ORDER BY id", boardId, cardId)
+  r = db.Exec("SELECT id,filename,author,created_at,COALESCE(LENGTH(content),0) AS size FROM kb_files WHERE board_id=&1 AND card_id=&2 AND " & liveFiles & " ORDER BY id", boardId, cardId)
   For Each r
     row = New Collection
     row["id"] = r!id
     row["filename"] = CStr(r!filename)
+    row["size"] = r!size
+    row["downloadAllowed"] = Not blocked And r!size >= 0 And r!size <= limit
     row["author"] = Author(db, boardId, cardId, r!id, CStr(r!author), "file")
     row.Add(r!created_at, "createdAt")
     rows.Add(row)

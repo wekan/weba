@@ -497,6 +497,16 @@ def handler(application, runner, environment):
                 if self.command != 'GET':
                     self.send_error(405)
                     return
+            public_attachment = decoded_path.startswith('/_weba/public-attachment/')
+            if decoded_path == '/_weba/public-attachment' or public_attachment:
+                if (not re.fullmatch(r'/_weba/public-attachment/[1-9][0-9]{0,9}/[1-9][0-9]{0,9}/[1-9][0-9]{0,9}', decoded_path)
+                        or url.path != decoded_path
+                        or any(int(part) > 2147483647 for part in decoded_path.split('/')[3:])):
+                    self.send_error(404)
+                    return
+                if self.command != 'GET':
+                    self.send_error(405)
+                    return
             api = decoded_path.lower() == '/api' or decoded_path.lower().startswith('/api/') or decoded_path.lower() in ('/users/login', '/users/logout')
             login = decoded_path == '/users/login' and self.command == 'POST'
             if login:
@@ -511,6 +521,7 @@ def handler(application, runner, environment):
                     return
             env = environment.copy()
             env['WEBA_API_REQUEST'] = '1' if api else '0'
+            env['WEBA_PUBLIC_ATTACHMENT'] = '1' if public_attachment else '0'
             env['WEBA_COMMAND_FILE'] = ''
             if api:
                 token = secrets.token_urlsafe(32)
@@ -523,7 +534,7 @@ def handler(application, runner, environment):
                     raw = authorization[7:]
                     if len(raw) == 43 and all(c in 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_' for c in raw):
                         env['WEBA_API_TOKEN_DIGEST'] = hashlib.sha256(raw.encode()).hexdigest()
-            query = "" if entry_section else url.query
+            query = "" if entry_section or public_attachment else url.query
             env['WEBA_EXPORT_QUERY_STATE'] = ''
             env['WEBA_EXPORT_HEADER_PRESENT'] = '0'
             if api and is_attachment_export_path(decoded_path):
@@ -659,7 +670,8 @@ def handler(application, runner, environment):
                 if closing:
                     env.update(PATH_INFO='/~logout', REQUEST_METHOD='GET', QUERY_STRING='', CONTENT_LENGTH='0', CONTENT_TYPE='')
                     body = b''
-                command = [runner, '-s', 'RestApi', str(application)] if api else [runner, str(application)]
+                command = ([runner, '-s', 'PublicAttachmentDownload', str(application)] if public_attachment else
+                           [runner, '-s', 'RestApi', str(application)] if api else [runner, str(application)])
                 if command_text is not None and len(command_text.encode()) > 32768:
                     # NamedTemporaryFile creates mode 0600 and deletes even on
                     # timeout/failure. Only its path crosses the exec boundary.
@@ -702,7 +714,7 @@ def handler(application, runner, environment):
                         # genuine raw attachment response may name a download.
                         pieces = decoded_path.strip('/').split('/')
                         if not (api and self.command == 'GET' and len(pieces) == 4
-                                and pieces[:3] == ['api', 'attachment', 'download']):
+                                and pieces[:3] == ['api', 'attachment', 'download']) and not public_attachment:
                             raise RuntimeError('Invalid download metadata')
                         filename = base64.b64decode(value.strip(), validate=True).decode('utf-8')
                         parsed.append(('Content-Disposition', attachment_disposition(filename)))

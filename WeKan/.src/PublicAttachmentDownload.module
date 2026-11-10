@@ -1,0 +1,45 @@
+' Dedicated host-selected endpoint; never a native GUI callback or API login.
+Public Sub Main()
+  Dim parts As String[] = Split(Env["PATH_INFO"], "/")
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim fileId As Integer
+  Dim actor As String
+  Dim data As Collection
+  Dim message As String
+  Dim status As Integer = 500
+  If Env["WEBA_PUBLIC_ATTACHMENT"] <> "1" Or Env["REQUEST_METHOD"] <> "GET" Or Env["WEBA_API_REQUEST"] = "1" Then Error.Raise("Attachment not accessible")
+  If parts.Count <> 6 Then Error.Raise("Attachment not accessible")
+  If parts[1] <> "_weba" Or parts[2] <> "public-attachment" Then Error.Raise("Attachment not accessible")
+  boardId = CanonicalId(parts[3])
+  cardId = CanonicalId(parts[4])
+  fileId = CanonicalId(parts[5])
+  actor = NativeAuth.Authenticate()
+  data = PublicAttachmentRead.Read(boardId, cardId, fileId, actor)
+  If NativeAuth.Authenticate() <> actor Then Error.Raise("Attachment not accessible")
+  Print "Status: 200"
+  Print "Content-Type: application/octet-stream"
+  Print "Cache-Control: no-store"
+  Print "Content-Security-Policy: default-src 'none'; sandbox"
+  Print "X-WeBa-Download-Name: " & Base64(data["filename"])
+  Print
+  Write data["bytes"]
+Catch
+  message = Error.Text
+  If message = "Attachment not accessible" Then status = 404
+  If message = "Attachment downloads are disabled by administrator" Then status = 403
+  If message = "Attachment exceeds download limit" Then status = 413
+  Print "Status: " & CStr(status)
+  Print "Content-Type: text/plain"
+  Print "Cache-Control: no-store"
+  Print
+  Print "Attachment not accessible"
+End
+
+Private Function CanonicalId(text As String) As Integer
+  Dim value As Integer
+  Try value = CInt(text)
+  If Error Then Error.Raise("Attachment not accessible")
+  If value <= 0 Or CStr(value) <> text Then Error.Raise("Attachment not accessible")
+  Return value
+End

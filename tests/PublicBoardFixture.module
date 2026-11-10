@@ -40,7 +40,23 @@ Public Sub Main()
     data["itemId"] = itemId
   Else If mode = "guest-attachments" Then
     cardId = Val(Env["WEBA_PUBLIC_CARD"])
-    data["fileId"] = CardContent.AddFile(id, cardId, "Attachments <literal>.txt", "ATTACHMENT-BYTES-CANARY")
+    data["fileId"] = CardContent.AddFile(id, cardId, "Attachments <literal>.txt", "<script>window.publicAttachmentExecuted=true</script>" & Chr(0) & "retained")
+  Else If mode = "attachments-policy" Then
+    TransferPolicy.OpenStore()
+    db.Exec("UPDATE attachment_transfer_settings SET attachmentsDownloadBlocked=&1,attachmentsDownloadMaxBytes=&2,apiDownloadBlocked=&3,apiDownloadMaxBytes=&4 WHERE id=1", Env["WEBA_PUBLIC_BLOCK"] = "1", Val(Env["WEBA_PUBLIC_LIMIT"]), Env["WEBA_PUBLIC_API_BLOCK"] = "1", Val(Env["WEBA_PUBLIC_API_LIMIT"]))
+  Else If mode = "attachments-frame" Then
+    cardId = Val(Env["WEBA_PUBLIC_CARD"])
+    db.Exec("DELETE FROM kb_members WHERE board_id=&1 AND username='rest-member'", id)
+    db.Exec("DELETE FROM kb_removed_members WHERE board_id=&1 AND username='rest-member'", id)
+    db.Exec("DELETE FROM kb_member_flags WHERE board_id=&1 AND username='rest-member'", id)
+    db.Exec("INSERT INTO kb_members (board_id,username,role) VALUES (&1,'rest-member',&2)", id, Env["WEBA_PUBLIC_ROLE"])
+    If Env["WEBA_PUBLIC_RAW"] = "1" Then db.Exec("INSERT INTO kb_member_flags (board_id,username,flag) VALUES (&1,'rest-member','isReadAssignedOnly')", id)
+    If Env["WEBA_PUBLIC_REMOVED"] = "1" Then db.Exec("INSERT INTO kb_removed_members (board_id,username,role) VALUES (&1,'rest-member',&2)", id, Env["WEBA_PUBLIC_ROLE"])
+    db.Exec("UPDATE kb_cards SET assignee=&1 WHERE board_id=&2 AND id=&3", If(Env["WEBA_PUBLIC_ASSIGNED"] = "1", "rest-member", ""), id, cardId)
+  Else If mode = "attachments-assigned" Then
+    cardId = Val(Env["WEBA_PUBLIC_CARD"])
+    BoardAccess.SetMember(id, "rest-member", "read-assigned-only")
+    db.Exec("UPDATE kb_cards SET assignee=&1 WHERE board_id=&2 AND id=&3", If(Env["WEBA_PUBLIC_ASSIGNED"] = "1", "rest-member", ""), id, cardId)
   Else If mode = "attachments-delete" Then
     AttachmentLifecycle.Delete(id, Val(Env["WEBA_PUBLIC_CARD"]), Val(Env["WEBA_PUBLIC_FILE"]))
   Else If mode = "guest-details" Then

@@ -1,0 +1,79 @@
+' Public native file reads. The caller supplies only a verified UI principal.
+Export
+
+Private Sub Scope(db As Connection, boardId As Integer, cardId As Integer, fileId As Integer, actor As String)
+  Dim board As Result
+  Dim member As Result
+  Dim card As Result
+  Dim flags As Collection
+  Dim role As String
+  Dim flag As String
+  Dim restricted As Boolean
+  If BoardVisibility.Permission(boardId) <> "public" Then Error.Raise("Attachment not accessible")
+  board = db.Find("kb_boards", "id=&1", boardId)
+  If Not board.Available Then Error.Raise("Attachment not accessible")
+  If Not db.Tables.Exist("kb_files") Then Error.Raise("Attachment not accessible")
+  If Not db.Find("kb_files", "id=&1 AND board_id=&2 AND card_id=&3", fileId, boardId, cardId).Available Then Error.Raise("Attachment not accessible")
+  If Not actor Then Return
+  member = db.Find("users", "username=&1", actor)
+  If Not member.Available Then Error.Raise("Attachment not accessible")
+  ' Universal file-server's enabled site-admin exception precedes card scope.
+  If CBool(member!admin) Then Return
+  If db.Tables.Exist("kb_removed_members") Then
+    If db.Find("kb_removed_members", "board_id=&1 AND username=&2", boardId, actor).Available Then Return
+  Endif
+  If board!owner = actor Then role = "board-admin"
+  If db.Tables.Exist("kb_members") Then
+    member = db.Find("kb_members", "board_id=&1 AND username=&2", boardId, actor)
+    If member.Available And Not role Then role = CStr(member!role)
+    If Not member.Available And Not role Then Return
+  Else
+    If Not role Then Return
+  Endif
+  flags = ApiMemberRoles.FlagsFor(role)
+  If db.Tables.Exist("kb_member_flags") Then
+    member = db.Find("kb_member_flags", "board_id=&1 AND username=&2", boardId, actor)
+    For Each member
+      If flags.Exist(CStr(member!flag)) Then flags[CStr(member!flag)] = True
+    Next
+  Endif
+  For Each flag In ["isNormalAssignedOnly", "isCommentAssignedOnly", "isReadAssignedOnly"]
+    If flags[flag] = True Then restricted = True
+  Next
+  If Not restricted Then Return
+  card = db.Find("kb_cards", "id=&1 AND board_id=&2", cardId, boardId)
+  If Not card.Available Then Error.Raise("Attachment not accessible")
+  If card!assignee = actor Then Return
+  If db.Tables.Exist("kb_card_assignees") Then
+    If db.Find("kb_card_assignees", "board_id=&1 AND card_id=&2 AND username=&3", boardId, cardId, actor).Available Then Return
+  Endif
+  Error.Raise("Attachment not accessible")
+End
+
+Public Function Read(boardId As Integer, cardId As Integer, fileId As Integer, actor As String) As Collection
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim r As Result
+  Dim data As New Collection
+  Dim bytes As String
+  If Env["WEBA_API_REQUEST"] = "1" Then Error.Raise("Attachment not accessible")
+  If NativeAuth.Enabled() Then
+    If actor <> NativeAuth.Authenticate() Then Error.Raise("Attachment not accessible")
+  Endif
+  If boardId <= 0 Or cardId <= 0 Or fileId <= 0 Then Error.Raise("Attachment not accessible")
+  Scope(db, boardId, cardId, fileId, actor)
+  TransferPolicy.RequireTransfer("attachmentsDownload", 0, True)
+  r = db.Exec("SELECT COALESCE(LENGTH(content),0) AS size FROM kb_files WHERE id=&1 AND board_id=&2 AND card_id=&3", fileId, boardId, cardId)
+  If Not r.Available Then Error.Raise("Attachment not accessible")
+  TransferPolicy.RequireTransfer("attachmentsDownload", r!size, True)
+  r = db.Exec("SELECT filename,content FROM kb_files WHERE id=&1 AND board_id=&2 AND card_id=&3 AND COALESCE(LENGTH(content),0)<=&4", fileId, boardId, cardId, TransferPolicy.Limit("attachmentsDownload", True))
+  If Not r.Available Then Error.Raise("Attachment not accessible")
+  bytes = r!content.Data
+  data["filename"] = CStr(r!filename)
+  data["bytes"] = bytes
+  Scope(db, boardId, cardId, fileId, actor)
+  TransferPolicy.RequireTransfer("attachmentsDownload", Len(bytes), True)
+  If NativeAuth.Enabled() Then
+    If actor <> NativeAuth.Authenticate() Then Error.Raise("Attachment not accessible")
+  Endif
+  Return data
+End

@@ -193,7 +193,11 @@ Public Sub GuestSurface_Render()
     Next
     If $data["attachments"].Count Then Print "<h3 class='weba-guest-attachments-title'>Attachments</h3>"
     For Each item In $data["attachments"]
-      Print "<article class='weba-guest-attachment weba-user-text' data-file-id='" & CStr(item["id"]) & "'><strong>" & Html(item["filename"]) & "</strong><small>" & Html(item["author"]) & " · " & Html(Str(item["createdAt"])) & "</small></article>"
+      Print "<article class='weba-guest-attachment weba-user-text' data-file-id='" & CStr(item["id"]) & "'><strong>"
+      If item["downloadAllowed"] Then Print "<a download href='/_weba/public-attachment/" & CStr($data["id"]) & "/" & CStr(card["id"]) & "/" & CStr(item["id"]) & "'>"
+      Print Html(item["filename"])
+      If item["downloadAllowed"] Then Print "</a>"
+      Print "</strong><small>" & Html(item["author"]) & " · " & Html(Str(item["createdAt"])) & "</small></article>"
     Next
     Print "</section>"
   Endif

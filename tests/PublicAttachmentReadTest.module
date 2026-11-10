@@ -1,0 +1,91 @@
+Public Sub Main()
+  Dim db As Connection
+  Dim boardId As Integer
+  Dim privateId As Integer
+  Dim cardId As Integer
+  Dim fileId As Integer
+  Dim emptyFile As Integer
+  Dim data As Collection
+  Dim denied As Boolean
+  Dim actor As String
+  Dim before As String
+  Dim settingsExisted As Boolean
+  WebDatabase.Register("public-global", "x")
+  WebDatabase.Register("public-owner", "x")
+  WebDatabase.Register("public-assigned", "x")
+  db = WebDatabase.OpenConnection()
+  settingsExisted = db.Tables.Exist("attachment_transfer_settings")
+  TransferPolicy.RequireTransfer("attachmentsDownload", 0, True)
+  If TransferPolicy.Limit("attachmentsDownload", True) <= 0 Then Error.Raise("Missing policy fallback failed")
+  If db.Tables.Exist("attachment_transfer_settings") <> settingsExisted Then Error.Raise("Pure policy read initialized settings")
+  Session["username"] = "public-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("public-owner")
+  boardId = KanbanStore.AddBoard("Public download")
+  privateId = KanbanStore.AddBoard("PRIVATE-CANARY")
+  BoardVisibility.SaveBoard(boardId, "public", False)
+  cardId = KanbanStore.SaveCard(boardId, 0, "Card", "", "Default", "Todo", "", "", "")
+  fileId = CardContent.AddFile(boardId, cardId, "文件 <literal>.html", "a" & Chr(0) & "b")
+  emptyFile = CardContent.AddFile(boardId, cardId, "empty.bin", "")
+  BoardAccess.SetMember(boardId, "public-assigned", "read-assigned-only")
+  Session["username"] = ""
+  For Each actor In ["", "public-owner", "public-global"]
+    data = PublicAttachmentRead.Read(boardId, cardId, fileId, actor)
+    If data["bytes"] <> "a" & Chr(0) & "b" Or data["filename"] <> "文件 <literal>.html" Then Error.Raise("Public download bytes/name changed")
+  Next
+  data = PublicAttachmentRead.Read(boardId, cardId, emptyFile, "")
+  If data["bytes"] <> "" Then Error.Raise("Zero-byte public attachment changed")
+  Try PublicAttachmentRead.Read(boardId, cardId, fileId, "public-assigned")
+  denied = Error
+  If Not denied Then Error.Raise("Signed assigned member bypassed public scope")
+  db.Exec("UPDATE kb_cards SET assignee='public-assigned' WHERE id=&1", cardId)
+  PublicAttachmentRead.Read(boardId, cardId, fileId, "public-assigned")
+  db.Exec("UPDATE kb_cards SET assignee='' WHERE id=&1", cardId)
+  db.Exec("INSERT INTO kb_card_assignees (board_id,card_id,username) VALUES (&1,&2,'public-assigned')", boardId, cardId)
+  PublicAttachmentRead.Read(boardId, cardId, fileId, "public-assigned")
+  db.Exec("DELETE FROM kb_card_assignees WHERE card_id=&1", cardId)
+  db.Exec("UPDATE kb_members SET role='unknown' WHERE board_id=&1 AND username='public-assigned'", boardId)
+  db.Exec("INSERT INTO kb_member_flags (board_id,username,flag) VALUES (&1,'public-assigned','isReadAssignedOnly')", boardId)
+  Try PublicAttachmentRead.Read(boardId, cardId, fileId, "public-assigned")
+  denied = Error
+  If Not denied Then Error.Raise("Unknown raw role escaped assigned scope")
+  db.Exec("INSERT INTO kb_removed_members (board_id,username,role) VALUES (&1,'public-assigned','read-assigned-only')", boardId)
+  PublicAttachmentRead.Read(boardId, cardId, fileId, "public-assigned")
+  Try PublicAttachmentRead.Read(privateId, cardId, fileId, "")
+  denied = Error
+  If Not denied Then Error.Raise("Foreign/private file binding accepted")
+  Try PublicAttachmentRead.Read(boardId, cardId + 1, fileId, "")
+  denied = Error
+  If Not denied Then Error.Raise("Foreign card binding accepted")
+  Session["username"] = "public-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("public-owner")
+  AttachmentLifecycle.Delete(boardId, cardId, fileId)
+  Session["username"] = ""
+  PublicAttachmentRead.Read(boardId, cardId, fileId, "")
+  db.Exec("UPDATE attachment_transfer_settings SET apiDownloadBlocked=1,apiDownloadMaxBytes=3,attachmentsDownloadMaxBytes=NULL WHERE id=1")
+  PublicAttachmentRead.Read(boardId, cardId, fileId, "")
+  db.Exec("UPDATE attachment_transfer_settings SET apiDownloadMaxBytes=2 WHERE id=1")
+  Try PublicAttachmentRead.Read(boardId, cardId, fileId, "")
+  denied = Error
+  If Not denied Then Error.Raise("Native/API fallback limit ignored")
+  db.Exec("UPDATE attachment_transfer_settings SET attachmentsDownloadMaxBytes=3,attachmentsDownloadBlocked=1 WHERE id=1")
+  Try PublicAttachmentRead.Read(boardId, cardId, fileId, "")
+  denied = Error
+  If Not denied Then Error.Raise("Native block ignored")
+  db.Exec("DELETE FROM attachment_transfer_settings")
+  PublicAttachmentRead.Read(boardId, cardId, fileId, "")
+  If db.Find("attachment_transfer_settings").Count Then Error.Raise("Pure download recreated settings row")
+  before = CStr(db.Find("kb_activity").Count) & ":" & CStr(db.Find("kb_attachment_history").Count)
+  PublicAttachmentRead.Read(boardId, cardId, fileId, "")
+  If before <> CStr(db.Find("kb_activity").Count) & ":" & CStr(db.Find("kb_attachment_history").Count) Then Error.Raise("Download added history/activity")
+  CGI["WEBA_NATIVE_AUTH"] = "1"
+  Try PublicAttachmentRead.Read(boardId, cardId, fileId, "public-owner")
+  denied = Error
+  If Not denied Then Error.Raise("Native caller forged an unverified file principal")
+  PublicAttachmentRead.Read(boardId, cardId, fileId, "")
+  CGI["WEBA_NATIVE_AUTH"] = "0"
+  db.Exec("UPDATE kb_board_visibility SET permission='private' WHERE board_id=&1", boardId)
+  Try PublicAttachmentRead.Read(boardId, cardId, fileId, "")
+  denied = Error
+  If Not denied Then Error.Raise("Revoked public file retained access")
+  Print "Public attachment reads: exact binary/name, public/file/card scope, assigned/raw flags/removed/global-admin distinctions, retained direct files, pure missing schema/row policy reads, API/native block and size fallback, history no-write and live privacy passed"
+End
