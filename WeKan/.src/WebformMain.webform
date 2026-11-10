@@ -1039,6 +1039,10 @@
         Class = "weba-user-text"
         Visible = False
       }
+      { MarkdownExternalSnapshot WebLabel
+        Class = "weba-user-text"
+        Visible = False
+      }
       { MarkdownPanel WebContainer
         Arrangement = Arrange.Vertical
         Visible = False
@@ -1057,6 +1061,37 @@
           Height = 100
         }
         { SaveMarkdownSchemes WebButton
+          Text = ("Save")
+        }
+        { ExternalPrefixLabel WebLabel
+          Class = "weba-markdown-schemes-label"
+          Text = ("Token Prefix")
+        }
+        { ExternalPrefix WebTextArea
+          Height = 48
+        }
+        { ExternalUrlLabel WebLabel
+          Class = "weba-markdown-schemes-label"
+          Text = ("URL Template (use {number})")
+        }
+        { ExternalUrl WebTextArea
+          Height = 48
+        }
+        { ExternalRulesLabel WebLabel
+          Class = "weba-markdown-schemes-label"
+          Text = ("More link rules")
+        }
+        { ExternalRules WebTextArea
+          Height = 100
+        }
+        { ExternalAliasesLabel WebLabel
+          Class = "weba-markdown-schemes-label"
+          Text = ("Abbreviations for {identifier}, for example TK=Task, IN=Incident")
+        }
+        { ExternalAliases WebTextArea
+          Height = 48
+        }
+        { SaveExternalLinks WebButton
           Text = ("Save")
         }
         { SaveMarkdown WebButton

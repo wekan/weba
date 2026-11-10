@@ -66,6 +66,7 @@ Private $spaceCounts As Collection
 Private $spaceNames As New Collection
 Private $markdownRawBase As Boolean
 Private $markdownSchemesBase As String
+Private $externalBase As String
 Private $workspaceRevision As Long
 Private $workspaceActor As String
 Private $workspaceGeneration As Long
@@ -3671,6 +3672,7 @@ Public Sub MarkdownSettings_Click()
   data = MarkdownPolicy.UrlSettings()
   MarkdownSchemes.Text = data["automaticLinkedUrlSchemes"]
   $markdownSchemesBase = MarkdownSchemes.Text
+  LoadExternalLinks(ExternalLinkPolicy.Settings())
   ContentRow.Hide()
   BoardCreationPanel.Hide()
   PasswordPolicyPanel.Hide()
@@ -3696,6 +3698,7 @@ End
 Private Sub ValidateMarkdownPolicy()
   Dim admin As Boolean = WebDatabase.GetIsAdmin(WebIdentity.Username)
   Dim value As Boolean = MarkdownPolicy.AlwaysRaw()
+  ValidateExternalLinks(admin)
   MarkdownSettings.Visible = admin
   MarkdownPolicySnapshot.Text = If(value, "1", "0")
   MarkdownUrlSnapshot.Text = Replace(JSON.Encode(MarkdownPolicy.UrlSchemes()), " ", "\\u0020")
@@ -3719,6 +3722,49 @@ End
 Public Sub SaveMarkdownSchemes_Click()
   MarkdownPolicy.SaveUrlSchemes(MarkdownSchemes.Text)
   $markdownSchemesBase = MarkdownSchemes.Text
+  Notice.Text = "Saved"
+  ValidateMarkdownPolicy()
+Catch
+  Notice.Text = Error.Text
+End
+
+Private Function ExternalLinksDraft() As Collection
+  Dim data As New Collection
+  data.Add(ExternalPrefix.Text, "externalLinkPatternPrefix")
+  data.Add(ExternalUrl.Text, "externalLinkPatternUrl")
+  data.Add(ExternalRules.Text, "externalLinkRules")
+  data.Add(ExternalAliases.Text, "externalLinkIdentifierAliases")
+  Return data
+End
+
+Private Sub LoadExternalLinks(data As Collection)
+  ExternalPrefix.Text = data["externalLinkPatternPrefix"]
+  ExternalUrl.Text = data["externalLinkPatternUrl"]
+  ExternalRules.Text = data["externalLinkRules"]
+  ExternalAliases.Text = data["externalLinkIdentifierAliases"]
+  $externalBase = JSON.Encode(ExternalLinksDraft())
+End
+
+Private Sub ValidateExternalLinks(admin As Boolean)
+  Dim empty As New Collection
+  Dim data As Collection = ExternalLinkPolicy.Snapshot()
+  MarkdownExternalSnapshot.Text = Replace(JSON.Encode(data), " ", "\\u0020")
+  If Not admin Then
+    LoadExternalLinks(empty)
+  Else If MarkdownPanel.Visible And JSON.Encode(ExternalLinksDraft()) = $externalBase Then
+    LoadExternalLinks(data)
+  Endif
+End
+
+Public Sub SaveExternalLinks_Click()
+  Dim data As Collection = ExternalLinksDraft()
+  Dim clean As New Collection
+  Dim field As String
+  For Each field In ["externalLinkPatternPrefix", "externalLinkPatternUrl", "externalLinkRules", "externalLinkIdentifierAliases"]
+    clean.Add(WorkspaceNameTrim(data[field]), field)
+  Next
+  ExternalLinkPolicy.Save(clean)
+  LoadExternalLinks(ExternalLinkPolicy.Snapshot())
   Notice.Text = "Saved"
   ValidateMarkdownPolicy()
 Catch

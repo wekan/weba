@@ -541,7 +541,7 @@ identity and locked/final rechecks, rolling back data/audit after write or late
 role/session/value failures. A hidden read-only boolean snapshot updates the
 source renderer live; a reader reload starts with the persisted policy. Settings
 fields refresh when clean and retain drafts; losing admin access hides/clears the
-panel and forged saves fail. Labels use 166 imported keys across 237 catalogs.
+panel and forged saves fail. Labels use 170 imported keys across 237 catalogs.
 `MarkdownPolicyTest` and `markdown-policy.browser.cjs` cover defaults, private
 audit, denied/failed writes, retry, two-session raw/rendered updates, reload,
 external refresh, dirty drafts, demotion, mobile layout and Finnish controls.
@@ -562,6 +562,23 @@ refresh, dirty text survives external updates, and demotion clears the field.
 Native tests cover typed/private/write/late role/session/value failures; real
 browser tests cover exact persistence, custom/forbidden links, live/reload/draft
 updates, forged saves, demotion and translated accessible mobile controls.
+
+External issue-tracker prefix, URL template, multiline rules and identifier
+abbreviations now have four translated, accessible fields and a single atomic
+Save in Security. The native handler applies the source form's Unicode trimming.
+`ExternalLinkPolicy` stores typed text together with private actor/time audit;
+the source limits are 20,000 UTF-16 units for rules and 5,000 for abbreviations.
+Missing/extra/mistyped values and late identity/role/value changes cannot partially
+save the group. Public readers get only four nonsecret strings in a lossless JSON
+snapshot; the unchanged source viewer applies prefix replacement, rule parsing,
+aliases, existing-link protection and URL sanitization. Empty fields disable the
+corresponding feature. Clean editor groups refresh live; any dirty field retains
+the entire draft until explicit save, and demotion clears all four. Native tests
+cover validation, audit and rollback/retry; browser tests cover trim/multiline,
+combined links and aliases, protected links, unsafe targets, live/reload/disable,
+clean/dirty groups, forged/demoted saves and mobile/Finnish controls. The fixture
+explicitly rebuilds typed strings after Gambas JSON decoding of empty values;
+this is a disposable test adapter, not a production settings API.
 
 `BoardOrderTest` covers per-user readonly access, filtered rank merge, invalid/
 foreign/revoked/archive/mode rejection, injected write rollback/retry and account/
@@ -1997,7 +2014,7 @@ A selected live attachment now has an Export button in the native details pane.
 It downloads wekan-attachment.json with the same five-field source JSON as the
 attachment-export API, preserving exact bytes, empty data and literal Unicode
 metadata. The button uses the existing native icon/keyboard controls and source
-Export caption (now included in 166 keys across 237 catalogs). Owner and readonly full-board
+Export caption (now included in 170 keys across 237 catalogs). Owner and readonly full-board
 members can export; assigned-only members cannot, even when raw flags also make
 them board administrators.
 

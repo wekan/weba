@@ -85,6 +85,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/attachment-export-conformance.test.cjs')], check=True, env=env)
         elif '--markdown-policy' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/markdown-policy.browser.cjs')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/external-link-policy.browser.cjs')], check=True, env=env)
         elif '--import-export-policy' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/import-export-policy.browser.cjs')], check=True, env=env)
         elif '--single-copy' in sys.argv:
@@ -132,6 +133,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
         elif '--workspaces' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/workspaces.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/markdown-policy.browser.cjs')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/external-link-policy.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/wekan-workspace-latin.browser.cjs')], check=True, env=env)
         elif '--board-order' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-order.browser.cjs')], check=True, env=env)
@@ -167,6 +169,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-order.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/workspaces.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/markdown-policy.browser.cjs')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/external-link-policy.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/wekan-workspace-latin.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/workspace-order.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-drops.browser.cjs')], check=True, env=env)

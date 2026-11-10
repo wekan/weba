@@ -4,6 +4,8 @@ Public Sub Main()
   Dim db As Connection
   Dim r As Result
   Dim node As Collection
+  Dim payload As Collection
+  Dim field As String
   If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
   Session["username"] = "rest-owner"
   Session["auth_generation"] = WebDatabase.SessionGeneration("rest-owner")
@@ -14,6 +16,14 @@ Public Sub Main()
     Session["username"] = "rest-member"
     Session["auth_generation"] = WebDatabase.SessionGeneration("rest-member")
     BoardSpaces.Edit(CInt(Env["WEBA_MARKDOWN_SPACE"]), "Markdown policy workspace", Env["WEBA_MARKDOWN_ICON"])
+  Endif
+  If mode = "external" Then
+    payload = JSON.Decode(Env["WEBA_MARKDOWN_EXTERNAL"])
+    node = New Collection
+    For Each field In ["externalLinkPatternPrefix", "externalLinkPatternUrl", "externalLinkRules", "externalLinkIdentifierAliases"]
+      node.Add(CStr(payload[field]), field)
+    Next
+    ExternalLinkPolicy.Save(node)
   Endif
   If mode = "schemes" Then MarkdownPolicy.SaveUrlSchemes(Env["WEBA_MARKDOWN_SCHEMES"])
   If mode = "save" Then MarkdownPolicy.Save(Env["WEBA_MARKDOWN_RAW"] = "1")
@@ -33,5 +43,11 @@ Public Sub Main()
   data.Add(r!actor, "actor")
   data.Add(r!changed_ms, "changed")
   data.Add(MarkdownPolicy.UrlSchemes(), "schemes")
+  data["external"] = ExternalLinkPolicy.Snapshot()
+  node = ExternalLinkPolicy.Snapshot()
+  r = db.Find("markdown_external_settings", "id=1")
+  node.Add(r!actor, "actor")
+  node.Add(r!changed_ms, "changedMs")
+  data["externalAudit"] = node
   Print JSON.Encode(data)
 End

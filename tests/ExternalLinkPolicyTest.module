@@ -1,0 +1,96 @@
+Public Sub Main()
+  Dim db As Connection
+  Dim data As Collection
+  Dim before As String
+  Dim denied As Boolean
+  Dim trigger As String
+  Dim i As Integer
+  WebDatabase.Register("links-admin", "x")
+  WebDatabase.Register("links-normal", "x")
+  SignIn("links-normal")
+  data = ExternalLinkPolicy.Snapshot()
+  If data.Count <> 4 Or CStr(data["externalLinkRules"]) <> "" Then Error.Raise("Public defaults changed")
+  db = WebDatabase.OpenConnection()
+  before = Frame()
+  Try ExternalLinkPolicy.Save(Values())
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Normal save accepted")
+  Try data = ExternalLinkPolicy.Settings()
+  denied = Error
+  If Not denied Then Error.Raise("Private audit leaked")
+  SignIn("links-admin")
+  data = Values()
+  data.Remove("externalLinkRules")
+  Refuse(data, before)
+  data = Values()
+  data.Add("extra", "extra")
+  Refuse(data, before)
+  data = Values()
+  data["externalLinkRules"] = True
+  Refuse(data, before)
+  data = Values()
+  data["externalLinkRules"] = String$(20001, "x")
+  Refuse(data, before)
+  data = Values()
+  data["externalLinkIdentifierAliases"] = String$(5001, "x")
+  Refuse(data, before)
+  data = Values()
+  data["externalLinkRules"] = ""
+  For i = 1 To 10001
+    data["externalLinkRules"] &= "🚀"
+  Next
+  Refuse(data, before)
+  data = Values()
+  ExternalLinkPolicy.Save(data)
+  If JSON.Encode(ExternalLinkPolicy.Snapshot()) <> JSON.Encode(data) Then Error.Raise("Exact text changed")
+  data = ExternalLinkPolicy.Settings()
+  If data["actor"] <> "links-admin" Or data["changedMs"] <= 0 Then Error.Raise("Audit missing")
+  before = Frame()
+  For Each trigger In ["BEFORE UPDATE ON markdown_external_settings BEGIN SELECT RAISE(ABORT,'injected'); END", "AFTER UPDATE OF externalLinkRules ON markdown_external_settings BEGIN UPDATE users SET admin=0 WHERE username='links-admin'; END", "AFTER UPDATE OF externalLinkRules ON markdown_external_settings BEGIN UPDATE account_sessions SET generation=generation+1 WHERE username='links-admin'; END", "AFTER UPDATE OF externalLinkRules ON markdown_external_settings WHEN NEW.externalLinkPatternPrefix='!' BEGIN UPDATE markdown_external_settings SET externalLinkPatternPrefix='changed' WHERE id=1; END"]
+    db.Exec("CREATE TRIGGER external_failure " & trigger)
+    data = Values()
+    data["externalLinkPatternPrefix"] = "!"
+    Refuse(data, before)
+    db.Exec("DROP TRIGGER external_failure")
+  Next
+  data = Values()
+  data["externalLinkRules"] = String$(20000, "x")
+  data["externalLinkIdentifierAliases"] = String$(5000, "x")
+  ExternalLinkPolicy.Save(data)
+  ExternalLinkPolicy.Save(Values(True))
+  data = ExternalLinkPolicy.Snapshot()
+  If CStr(data["externalLinkRules"]) <> "" Then Error.Raise("Clear/retry failed")
+  Print "External link policy: four defaults, typed/shape/UTF16 limits, private audit, exact atomic text, write/late role/session/value rollback and boundary/clear/retry passed"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End
+
+Private Function Values(Optional empty As Boolean) As Collection
+  Dim data As New Collection
+  data.Add(If(empty, "", "#"), "externalLinkPatternPrefix")
+  data.Add(If(empty, "", "https://issues.example/{number}"), "externalLinkPatternUrl")
+  data.Add(If(empty, "", "[{identifier}:{number}] = https://tracker.example/{identifier}/{number}\nPROJ-{number} = https://jira.example/{number}"), "externalLinkRules")
+  data.Add(If(empty, "", "TK=Task, IN=Incident"), "externalLinkIdentifierAliases")
+  Return data
+End
+
+Private Sub Refuse(data As Collection, before As String)
+  Dim denied As Boolean
+  Try ExternalLinkPolicy.Save(data)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Denied save changed policy, audit or identity")
+End
+
+Private Function Frame() As String
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim r As Result = db.Find("markdown_external_settings", "id=1")
+  Dim data As Collection = ExternalLinkPolicy.Snapshot()
+  data.Add(r!actor, "actor")
+  data.Add(r!changed_ms, "changedMs")
+  data["admin"] = WebDatabase.GetIsAdmin("links-admin")
+  data["generation"] = WebDatabase.SessionGeneration("links-admin")
+  Return JSON.Encode(data)
+End

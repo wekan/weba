@@ -2,6 +2,16 @@
 
 This work adds the following features and fixes:
 
+- Persist the four external-tracker Markdown settings with typed atomic saves,
+  private actor/time audit, source UTF-16 limits and locked/final identity/admin/
+  value checks. Add Unicode-trimmed Security fields, lossless public live snapshots,
+  clean group refresh, dirty group retention and demotion clearing. Reuse the
+  unchanged source viewer for prefix/rule/alias links, protected existing links
+  and unsafe URL sanitization. Verify native validation/write/late role-session-
+  value rollback/retry and real live/reload/disable/forged/translated accessible
+  mobile controls (170 keys/237 catalogs). Card-title/iconColor and full source
+  transport remain pending. Thanks to xet7.
+
 - Persist automaticLinkedUrlSchemes as exact typed admin-only text with private
   actor/time audit, locked/final identity/role/value checks and rollback/retry.
   Add translated accessible Security textarea with separate Save, live public
