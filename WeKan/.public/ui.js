@@ -66,7 +66,8 @@
     if(section==='workspaces'&&!workspaceUrls())return;
     const id=section==='workspaces'?ack.workspaceId||'':'',key=section+':'+id;
     if(overviewPending?.section==='workspaces'&&overviewPending.workspaceId&&workspaceUrls()&&!workspaceUrls().slugs(ack.tree||[],overviewPending.workspaceId)){
-      sendOverviewRoute('workspaces',overviewPending.source,'');return;
+      // A vanished target is a safe native fallback, not a new history intent.
+      sendOverviewRoute('workspaces','entry','');return;
     }
     if(!overviewPending&&section==='workspaces'){
       const route=overviewRouteAtPath(),resolved=route?.section==='workspaces'?workspaceUrls().resolve(ack.tree||[],route.path):'';

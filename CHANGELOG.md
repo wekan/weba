@@ -2,6 +2,12 @@
 
 This work adds the following features and fixes:
 
+- Preserve the current workspace URI/history when a pending target disappears,
+  including a redundant click on the selected workspace during deletion. Treat
+  the safe native index fallback as an entry acknowledgement rather than a new
+  menu navigation. Reproduce the race with a held native request and verify
+  unchanged history/URI in source and packaged browsers. Thanks to xet7.
+
 - Add a private native Home-board preference, independent of stars and workspace
   placement. Support idempotent replacement, selection-style toggle and conditional
   stale-ID clearing for the current principal. Require active readable targets
