@@ -1,0 +1,84 @@
+Public Sub Main()
+  Dim a As Integer
+  Dim b As Integer
+  Dim db As Connection
+  Dim denied As Boolean
+  Dim before As String
+  Dim generation As Long
+  WebDatabase.Register("pref-admin", "x")
+  WebDatabase.Register("pref-owner", "x")
+  WebDatabase.Register("pref-reader", "x")
+  SignIn("pref-owner")
+  a = KanbanStore.AddBoard("Preference A")
+  b = KanbanStore.AddBoard("Preference B")
+  BoardAccess.SetMember(a, "pref-reader", "read-only")
+  db = WebDatabase.OpenConnection()
+  If BoardViewPreference.Stored(a) <> "board-view-swimlanes" Then Error.Raise("Legacy preference default failed")
+  If db.Tables.Exist("kb_board_view_preferences") Then Error.Raise("Preference read initialized schema")
+  BoardViewPreference.Save(0, "board-view-table")
+  BoardViewPreference.Save(a, "board-view-cal")
+  If BoardViewPreference.Stored(a) <> "board-view-cal" Or BoardViewPreference.Stored(b) <> "board-view-table" Then Error.Raise("Board/shared precedence failed")
+  BoardViewPreference.Save(b, "board-view-email")
+  If BoardViewPreference.Stored(b) <> "board-view-email" Or BoardViewPreference.NativeName(BoardViewPreference.Stored(b)) <> "Swimlanes" Then Error.Raise("Native renderer fallback erased a known source preference")
+  before = Frame()
+  Try BoardViewPreference.Save(a, "unknown")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Unknown board view write succeeded")
+  BoardViewPreference.Save(0, "unknown-shared-legacy")
+  If BoardViewPreference.Stored(a) <> "board-view-cal" Or BoardViewPreference.Stored(2147483647) <> "board-view-swimlanes" Then Error.Raise("Invalid shared fallback or board override failed")
+  SignIn("pref-reader")
+  If BoardViewPreference.Stored(a) <> "board-view-swimlanes" Then Error.Raise("Another user's preference leaked")
+  BoardViewPreference.Save(a, "board-view-lists")
+  If BoardViewPreference.Stored(a) <> "board-view-lists" Then Error.Raise("Readonly personal choice failed")
+  before = Frame()
+  generation = WebDatabase.SessionGeneration("pref-reader")
+  db.Exec("CREATE TRIGGER lose_pref_actor AFTER UPDATE ON kb_board_view_preferences BEGIN UPDATE account_sessions SET generation=generation+1 WHERE username='pref-reader'; END")
+  Try BoardViewPreference.Save(a, "board-view-table")
+  denied = Error
+  If Not denied Or Frame() <> before Or WebDatabase.SessionGeneration("pref-reader") <> generation Then Error.Raise("Late preference actor loss did not roll back")
+  db.Exec("DROP TRIGGER lose_pref_actor")
+  BoardViewPreference.Save(a, "board-view-table")
+  Session["username"] = ""
+  before = Frame()
+  Try BoardViewPreference.Stored(a)
+  denied = Error
+  If Not denied Then Error.Raise("Anonymous preference read accepted")
+  Try BoardViewPreference.Save(a, "board-view-table")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Anonymous preference wrote data")
+  SignIn("pref-admin")
+  WebDatabase.DeleteUser("pref-reader")
+  If db.Find("kb_board_view_preferences", "username='pref-reader'").Count Then Error.Raise("Account deletion kept view preferences")
+  WebDatabase.Register("pref-reader", "new")
+  SignIn("pref-reader")
+  If BoardViewPreference.Stored(a) <> "board-view-swimlanes" Then Error.Raise("Recreated account inherited a view")
+  BoardViewPreference.Save(b, "board-view-gantt")
+  If BoardAccess.CanRead(b) Then Error.Raise("Personal preference granted board authority")
+  SignIn("pref-owner")
+  KanbanStore.ArchiveBoard(a, True)
+  SignIn("pref-admin")
+  RecoveryStore.SetEnabled(True)
+  BoardPurge.DeleteBoards([a])
+  If db.Find("kb_board_view_preferences", "board_id=&1", a).Count Then Error.Raise("Purge left board preferences")
+  If Not db.Find("kb_board_view_preferences", "board_id=0 AND username='pref-owner'").Available Or Not db.Find("kb_board_view_preferences", "board_id=&1 AND username='pref-reader'", b).Available Then Error.Raise("Purge erased unrelated preferences")
+  Print "Board view preferences: no-init reads, own board/shared precedence, readonly choice, unsupported/invalid fallback without erasure, actor rollback/retry, anonymous denial, no board authority and deletion/recreation/purge isolation passed"
+End
+
+Private Sub SignIn(actor As String)
+  Session["username"] = actor
+  Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+End
+
+Private Function Frame() As String
+  Dim rows As New Variant[]
+  Dim row As Collection
+  Dim r As Result = WebDatabase.OpenConnection().Find("kb_board_view_preferences", "TRUE ORDER BY username,board_id")
+  For Each r
+    row = New Collection
+    row["user"] = r!username
+    row["board"] = r!board_id
+    row["view"] = r!view_key
+    rows.Add(row)
+  Next
+  Return JSON.Encode(rows)
+End

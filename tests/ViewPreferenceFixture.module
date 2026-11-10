@@ -1,0 +1,67 @@
+Public Sub Main()
+  Dim mode As String = Env["WEBA_PREF_MODE"]
+  Dim user As String = Env["WEBA_PREF_USER"]
+  Dim id As Integer = Val(Env["WEBA_PREF_BOARD"])
+  Dim data As New Collection
+  Dim db As Connection
+  Dim r As Result
+  If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
+  If mode = "model-seed" Then
+    WebDatabase.Register("rest-pref-model-a", Env["WEBA_TEST_PASSWORD"])
+    WebDatabase.Register("rest-pref-model-b", Env["WEBA_TEST_PASSWORD"])
+    Print "{}"
+    Return
+  Endif
+  If mode = "model-cleanup" Then
+    Session["username"] = "rest-owner"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("rest-owner")
+    WebDatabase.DeleteUser("rest-pref-model-a")
+    WebDatabase.DeleteUser("rest-pref-model-b")
+    Print "{}"
+    Return
+  Endif
+  If Not user Then user = "rest-member"
+  Session["username"] = user
+  Session["auth_generation"] = WebDatabase.SessionGeneration(user)
+  If mode = "seed" Then
+    Session["username"] = "rest-other"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+    id = KanbanStore.AddBoard("Preference board A")
+    BoardAccess.SetMember(id, "rest-member", "read-only")
+    data["a"] = id
+    data["card"] = KanbanStore.SaveCard(id, 0, "Preference card", "Body", "Default", "Todo", "", "", "")
+    id = KanbanStore.AddBoard("Preference board B")
+    BoardAccess.SetMember(id, "rest-member", "read-only")
+    data["b"] = id
+    id = KanbanStore.AddBoard("Preference board C")
+    BoardAccess.SetMember(id, "rest-member", "read-only")
+    data["c"] = id
+    Print JSON.Encode(data)
+    Return
+  Endif
+  If mode = "cleanup" Then
+    Session["username"] = "rest-other"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+    BoardAccess.RemoveMember(id, "rest-member")
+    Print "{}"
+    Return
+  Endif
+  If mode = "fail" Then
+    WebDatabase.OpenConnection().Exec("CREATE TRIGGER pref_ui_fail BEFORE UPDATE ON kb_board_view_preferences WHEN NEW.board_id=" & CStr(id) & " BEGIN SELECT RAISE(ABORT,'PRIVATE-PREFERENCE-CANARY'); END")
+  Endif
+  If mode = "retry" Then WebDatabase.OpenConnection().Exec("DROP TRIGGER IF EXISTS pref_ui_fail")
+  If mode = "remove" Then
+    db = WebDatabase.OpenConnection()
+    If db.Tables.Exist("kb_board_view_preferences") Then db.Delete("kb_board_view_preferences", "username=&1 AND board_id=&2", user, id)
+  Endif
+  If mode = "save" Then BoardViewPreference.Save(id, Env["WEBA_PREF_VALUE"])
+  data["stored"] = BoardViewPreference.Stored(id)
+  db = WebDatabase.OpenConnection()
+  If db.Tables.Exist("kb_board_view_preferences") Then
+    r = db.Find("kb_board_view_preferences", "username=&1 AND board_id=&2", user, id)
+    If r.Available Then data["raw"] = r!view_key
+  Endif
+  Print JSON.Encode(data)
+Catch
+  Print "{\"error\":true}"
+End

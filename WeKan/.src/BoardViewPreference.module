@@ -1,0 +1,110 @@
+' Private current-user preferences; a board pointer grants no read authority.
+Export
+Private $db As Connection
+
+Private Function CurrentActor() As String
+  Dim value As String = WebIdentity.Username
+  If Env["WEBA_API_REQUEST"] = "1" Or Not value Then Error.Raise("Sign in required")
+  If Not WebDatabase.UserExists(value) Then Error.Raise("Sign in required")
+  Return value
+End
+
+Private Function Known(value As String) As Boolean
+  Return BoardViewPolicy.Keys().Find(value) >= 0
+End
+
+Private Function ReadValue(db As Connection, actor As String, boardId As Integer) As String
+  Dim r As Result
+  If Not db.Tables.Exist("kb_board_view_preferences") Then Return ""
+  r = db.Find("kb_board_view_preferences", "username=&1 AND board_id=&2", actor, boardId)
+  If r.Available Then Return CStr(r!view_key)
+  Return ""
+End
+
+Public Function Stored(boardId As Integer) As String
+  Dim actor As String = CurrentActor()
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim value As String
+  If boardId < 0 Then Error.Raise("Invalid board ID")
+  If boardId > 0 Then
+    value = ReadValue(db, actor, boardId)
+    If Known(value) Then Return value
+  Endif
+  value = ReadValue(db, actor, 0)
+  If Known(value) Then Return value
+  Return "board-view-swimlanes"
+End
+
+Private Sub OpenStore()
+  Dim t As Table
+  If $db Then Return
+  $db = WebDatabase.OpenConnection()
+  If Not $db.Tables.Exist("kb_board_view_preferences") Then
+    t = $db.Tables.Add("kb_board_view_preferences")
+    t.Fields.Add("username", db.String, 255)
+    t.Fields.Add("board_id", db.Integer)
+    t.Fields.Add("view_key", db.String)
+    t.PrimaryKey = ["username", "board_id"]
+    t.Update()
+  Endif
+Catch
+  $db = Null
+  Error.Propagate()
+End
+
+Public Sub Save(boardId As Integer, value As String)
+  Dim actor As String = CurrentActor()
+  Dim generation As Long = WebDatabase.SessionGeneration(actor)
+  Dim transaction As Boolean
+  Dim r As Result
+  Dim failure As String
+  If boardId < 0 Then Error.Raise("Invalid board ID")
+  If boardId > 0 And Not Known(value) Then Error.Raise("Unknown board view")
+  OpenStore()
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  If CurrentActor() <> actor Or WebDatabase.SessionGeneration(actor) <> generation Then Error.Raise("Sign in required")
+  r = $db.Edit("kb_board_view_preferences", "username=&1 AND board_id=&2", actor, boardId)
+  If Not r.Available Then
+    r = $db.Create("kb_board_view_preferences")
+    r["username"] = actor
+    r["board_id"] = boardId
+  Endif
+  r["view_key"] = value
+  r.Update()
+  If CurrentActor() <> actor Or WebDatabase.SessionGeneration(actor) <> generation Then Error.Raise("Sign in required")
+  If ReadValue($db, actor, boardId) <> value Then Error.Raise("View preference changed")
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
+End
+
+Public Function Canonical(name As String) As String
+  Select name
+    Case "Swimlanes"
+      Return "board-view-swimlanes"
+    Case "Lists"
+      Return "board-view-lists"
+    Case "Table"
+      Return "board-view-table"
+    Case "Calendar"
+      Return "board-view-cal"
+    Case "Gantt"
+      Return "board-view-gantt"
+    Case "Charts"
+      Return "board-view-stats"
+  End Select
+  Return ""
+End
+
+Public Function NativeName(key As String) As String
+  Dim name As String
+  For Each name In ["Swimlanes", "Lists", "Table", "Calendar", "Gantt", "Charts"]
+    If Canonical(name) = key Then Return name
+  Next
+  Return "Swimlanes"
+End

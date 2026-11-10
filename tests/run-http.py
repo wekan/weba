@@ -7,7 +7,7 @@ root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(root / 'runtime'))
 from server import handler
 
-if any(mode in sys.argv for mode in ('--board-views', '--view-policy-api', '--guest-boards', '--public-boards', '--board-visibility', '--card-routes', '--board-links', '--board-menu', '--board-routes', '--home-external', '--home-drops', '--home-presentation', '--home-login', '--home', '--workspace-urls', '--overview-entry', '--original-catalog', '--markdown-policy', '--live', '--overview-live', '--catalog', '--board-order', '--workspaces', '--workspace-order', '--board-drops', '--board-selection', '--selection-archive', '--board-purge', '--list-delete-api', '--list-deletion', '--attachment-lifecycle', '--attachment-delete-api', '--attachment-upload-api', '--attachment-upload', '--attachment-reads-api', '--attachment-reads', '--transfer-policy-api', '--transfer-policy', '--board-allowance', '--board-copy', '--selected-copy', '--copy-options', '--board-creation', '--single-copy', '--import-export-policy', '--attachment-export-api', '--attachment-export')) and '--members' not in sys.argv:
+if any(mode in sys.argv for mode in ('--view-preferences', '--board-views', '--view-policy-api', '--guest-boards', '--public-boards', '--board-visibility', '--card-routes', '--board-links', '--board-menu', '--board-routes', '--home-external', '--home-drops', '--home-presentation', '--home-login', '--home', '--workspace-urls', '--overview-entry', '--original-catalog', '--markdown-policy', '--live', '--overview-live', '--catalog', '--board-order', '--workspaces', '--workspace-order', '--board-drops', '--board-selection', '--selection-archive', '--board-purge', '--list-delete-api', '--list-deletion', '--attachment-lifecycle', '--attachment-delete-api', '--attachment-upload-api', '--attachment-upload', '--attachment-reads-api', '--attachment-reads', '--transfer-policy-api', '--transfer-policy', '--board-allowance', '--board-copy', '--selected-copy', '--copy-options', '--board-creation', '--single-copy', '--import-export-policy', '--attachment-export-api', '--attachment-export')) and '--members' not in sys.argv:
     sys.argv.append('--members')
 
 base_env = os.environ.copy()
@@ -35,6 +35,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
         shutil.copy2(root / 'tests/MarkdownTitlesFixture.module', project / '.src/MarkdownTitlesFixture.module')
         shutil.copy2(root / 'tests/CardRouteFixture.module', project / '.src/CardRouteFixture.module')
         shutil.copy2(root / 'tests/BoardVisibilityFixture.module', project / '.src/BoardVisibilityFixture.module')
+        shutil.copy2(root / 'tests/ViewPreferenceFixture.module', project / '.src/ViewPreferenceFixture.module')
         shutil.copy2(root / 'tests/PublicBoardFixture.module', project / '.src/PublicBoardFixture.module')
         shutil.copy2(root / 'tests/WorkspaceUrlFixture.module', project / '.src/WorkspaceUrlFixture.module')
         shutil.copy2(root / 'tests/ImportExportPolicyFixture.module', project / '.src/ImportExportPolicyFixture.module')
@@ -97,6 +98,9 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/guest-views.browser.cjs')], check=True, env=env)
         elif '--public-boards' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/public-boards.browser.cjs')], check=True, env=env)
+        elif '--view-preferences' in sys.argv:
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/view-preference-conformance.test.cjs')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/view-preferences.browser.cjs')], check=True, env=env)
         elif '--board-views' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-view-editor.browser.cjs')], check=True, env=env)
         elif '--board-visibility' in sys.argv:
@@ -230,6 +234,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/home-login.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-visibility.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-view-editor.browser.cjs')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/view-preferences.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/public-boards.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/guest-boards.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/public-attachments.browser.cjs')], check=True, env=env)
@@ -262,6 +267,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             subprocess.run([sys.executable, str(root / 'tests/api-board-reads.test.py')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/api-board-view-policy.test.py')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-view-rest-conformance.test.cjs')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/view-preference-conformance.test.cjs')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/api-list-times.test.py')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/api-list-delete.test.py')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/api-attachment-delete.test.py')], check=True, env=env)

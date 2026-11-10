@@ -914,6 +914,38 @@ signed-in view-policy rendering, instance feature filtering, drag/
 original popup callbacks, policy copy/import and full source integration remain
 pending.
 
+`BoardViewPreference` keeps private current-user choices in
+`kb_board_view_preferences`, keyed by actor and native board ID (zero is the
+shared fallback). A known per-board choice wins over a known shared choice;
+invalid legacy values fall back to core Swimlanes. Accept all 40 source board
+view IDs and retain unsupported preferences intact; map only the six current
+native renderers to UI modes. Preference reads do not create storage. Own writes
+lock the current account, recheck identity/generation/existence and roll back
+failure. A stored board pointer never grants board or card read authority, and
+readonly users may personalize their own view. Deletion/recreation clears the
+user's rows; board purge removes only that board's rows, preserving shared and
+other-board choices.
+
+Native view switches persist on the current board, or as shared when off a
+board. Board/card entries, reload, restore/copy/import/Home destinations and
+cross-board tree selection read the relevant preference. Peer preference changes
+refresh the native report without discarding a mounted card editor or unsaved
+description. The add-card action may temporarily show Swimlanes without changing
+the saved choice. This preference stage leaves signed-in policy visibility/
+audience/default resolution to the next integration step; it does not overwrite
+personal choices with a policy fallback.
+
+Native tests cover precedence, user/read-only/anonymous scope, missing schema,
+unsupported/legacy values, late generation rollback/retry and lifecycle cleanup.
+450 native read results after writes match unchanged source Users.setBoardView
+and Utils.storedBoardView bodies over every known view and private board/shared
+and user-isolation cases. Numeric SQL IDs/profile maps and absent browser,
+pending-choice and publication layers are explicit adapters. Real browser tests
+cover route/reload/per-board isolation, fresh-board shared fallback, peer changes,
+card history and unsaved drafts, and mobile/Finnish. Signed-in board-policy
+consumption, browser/localStorage/published-profile/DDP bridges and remaining
+renderers remain pending.
+
 Selected guest cards now show comments and checklists through the same final
 public/card scope guards. Only the selected board/card's records are queried;
 checklist items must have a checklist parent on that same board/card. Foreign or

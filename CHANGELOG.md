@@ -2,6 +2,29 @@
 
 This work adds the following features and fixes:
 
+- Persist private current-user board-view preferences with per-board choices
+  ahead of a shared fallback and core default. Retain all 40 known source view
+  IDs, ignore invalid legacy fallbacks and preserve unsupported choices behind
+  the six-view native renderer adapter. Allow readonly personal choices without
+  granting board access; guard own writes with actor/generation checks and
+  rollback. Reads do not initialize storage. Apply preferences on native view
+  switches, board/card entries, reload, restore/copy/import/Home destinations
+  and live peer changes while preserving mounted card drafts. Keep intentional
+  add-card layout changes temporary. Clean user preferences on account deletion/
+  recreation and selected board purge without touching other users/boards/shared
+  rows. Verify native scope/fallback/rollback/lifecycle cases and compare 450
+  native reads with unchanged source preference setter/reader bodies. Real UI
+  tests cover readonly selection, board/shared/user isolation, reload/route/peer
+  state, fresh-board shared fallback, unsaved drafts, opaque failed-save/retry
+  and Finnish/mobile behavior. Clean fixture memberships after browser checks
+  so later catalog/selection tests retain their original page composition.
+  The complete local suite (69 host tests) and complete source/packaged browser
+  suites pass against final code.
+  Native SQL IDs/profile-map and absent browser/pending/publication layers are
+  explicit adapters. Signed-in public/private policy enforcement, browser/profile/
+  DDP bridges and remaining source views remain pending.
+  Thanks to xet7.
+
 - Add a bound native manager editor for all 40 board views: public/private show
   flags, separate defaults and up/down ordering, with retained per-view drafts.
   Keep defaults shown, save only changes from the baseline and preserve unrelated

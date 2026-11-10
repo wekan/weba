@@ -2,6 +2,7 @@
 
 Export
 
+Private $viewPreferenceState As String
 Private $publicData As Collection
 Private $publicState As String
 Private $publicPage As Integer = 1
@@ -253,6 +254,7 @@ Public Sub BoardPoll_Timer()
         RefreshTree()
         Return
       Endif
+      RefreshViewPreference()
       state = BoardLive.State($board, $archive)
       If state <> $liveState Then RefreshTree()
     Endif
@@ -344,6 +346,7 @@ Private Sub ValidateOpenCards()
 End
 
 Public Sub Boards_Select()
+  Dim previousBoard As Integer = $board
   Dim parts As String[]
   Dim c As Result
   If Not Boards.Key Then Return
@@ -363,7 +366,7 @@ Public Sub Boards_Select()
     Editor.Show()
   Endif
   UpdateCardActions()
-  If Left(Boards.Key, 1) = "b" Or $view = "Boards" Or $view = "Archive" Then $view = "Swimlanes"
+  If Left(Boards.Key, 1) = "b" Or $view = "Boards" Or $view = "Archive" Or $board <> previousBoard Then $view = PreferredBoardView()
   ContentRow.Show()
   AccountPanel.Hide()
   PasswordPolicyPanel.Hide()
@@ -610,6 +613,10 @@ Private Sub CloseHeaderMenus()
 End
 
 Private Sub ShowView(view As String)
+  Dim key As String = BoardViewPreference.Canonical(view)
+  If key Then
+    If Not SaveViewPreference(key) Then Return
+  Endif
   AccountPanel.Visible = view = "Profile"
   AdminPanel.Visible = False
   PasswordPolicyPanel.Hide()
@@ -1668,7 +1675,7 @@ Public Sub ActionConfirm_Click()
     Case "Import"
       $board = BoardTransfer.ImportData($importText, ActionText.Text)
       $importText = ""
-      $view = "Swimlanes"
+      $view = PreferredBoardView()
       $archive = False
     Case "Delete"
       If $contextKind = "board" Then Error.Raise("Use Archive multi-selection to delete boards")
@@ -1712,7 +1719,7 @@ Public Sub ActionConfirm_Click()
         $card = 0
         $draft = Null
         Editor.Hide()
-        $view = "Swimlanes"
+        $view = PreferredBoardView()
         $archive = False
       Else
         If $singleCopy Or Not ActionPanel.Visible Then Error.Raise("Copy form changed")
@@ -1818,7 +1825,7 @@ Public Sub ContextRestore_Click()
     ResetHome()
     $board = data["id"]
     $archive = False
-    $view = "Swimlanes"
+    $view = PreferredBoardView()
     $card = 0
     $navigationHome = False
     $navigationRevision += 1
@@ -1933,6 +1940,7 @@ Public Sub ContextAddCard_Click()
   Dim r As Result
   Dim laneRows As Result
   $board = $contextBoard
+  PreferredBoardView()
   $view = "Swimlanes"
   If $contextKind = "list" Then
     r = WorkspaceStore.Record($contextBoard, "list", $contextId)
@@ -4195,7 +4203,7 @@ Public Sub EntryRouteAction_Change()
     $overviewRouteToken = fields[1]
     $board = boardData["id"]
     $archive = boardData["archived"]
-    $view = "Swimlanes"
+    $view = PreferredBoardView()
     $card = 0
     ApplyCardRoute(boardData, cardEntry)
     RefreshTree()
@@ -4300,7 +4308,7 @@ Public Sub LoginLandingAction_Change()
   Home_Click()
   $board = boardId
   $archive = False
-  $view = "Swimlanes"
+  $view = PreferredBoardView()
   $card = 0
   RefreshTree()
 Catch
@@ -4648,4 +4656,31 @@ Private Sub BoardViewsError(message As String)
   Else
     Notice.Text = "Error"
   Endif
+End
+
+Private Function PreferredBoardView() As String
+  Dim key As String = BoardViewPreference.Stored($board)
+  $viewPreferenceState = CStr($board) & "|" & key
+  Return BoardViewPreference.NativeName(key)
+End
+
+Private Sub RefreshViewPreference()
+  Dim key As String = BoardViewPreference.Stored($board)
+  Dim state As String = CStr($board) & "|" & key
+  If state = $viewPreferenceState Then Return
+  $viewPreferenceState = state
+  If Not BoardViewPreference.Canonical($view) Then Return
+  $view = BoardViewPreference.NativeName(key)
+  UpdateHeader()
+  Visual.Refresh()
+End
+
+Private Function SaveViewPreference(key As String) As Boolean
+  If $board > 0 Then BoardAccess.RequireRead($board)
+  BoardViewPreference.Save($board, key)
+  $viewPreferenceState = CStr($board) & "|" & key
+  Return True
+Catch
+  Notice.Text = "Error"
+  Return False
 End

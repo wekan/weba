@@ -165,7 +165,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   guest views beyond native Lists/Swimlanes/Table/due-day Calendar, source
   board-view drag ordering/original popup callbacks beyond the native bound
   manager editor and authenticated REST endpoints in CHANGELOG.md, signed-in
-  view policy and instance feature controls
+  public/private view-policy enforcement beyond native per-board/shared view
+  preferences in CHANGELOG.md, browser/profile/DDP preference bridges and
+  instance feature controls
   and policy copy/import integration beyond the native persisted public/private
   policy and live guest enforcement in CHANGELOG.md, source-defined child
   models, storage/cover/download models and
