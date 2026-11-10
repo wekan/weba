@@ -2,6 +2,23 @@
 
 This work adds the following features and fixes:
 
+- Expose read-only native Lists, Swimlanes, Table and due-day Calendar in the
+  guest form using four fixed own-control click handlers and fresh public/card
+  read checks. Keep the current view while opening/closing cards and moving
+  through same-board history; hide controls and content on permission loss and
+  restore through guarded Refresh. Translate the fixed controls without changing
+  the 186-key/237-catalog inventory. Make shared Table/Calendar/Gantt report
+  card titles real canonical anchors with routing IDs and literal-text protection,
+  retaining keyboard/new-tab/history behavior and the current mounted view.
+  Verify closed command shapes/foreign setter refusal, report links/HTML safety,
+  and real guest view switching, dated/undated Calendar/month navigation/idle
+  stability, translated fixed labels/literal titles, mobile and live privacy.
+  The complete local suite (66 host tests) and focused source/packaged guest
+  browser suites pass.
+  Source board/instance view visibility/default/order, other guest views, full
+  source calendar/date models and original Meteor view actions remain pending.
+  Thanks to xet7.
+
 - Add guarded native public attachment downloads and guest file links. Require
   canonical GET paths, current public-board/exact file-card scope and verified
   UI-cookie assigned-member scope independently of native GUI ownership; keep

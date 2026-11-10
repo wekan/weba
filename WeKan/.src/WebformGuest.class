@@ -5,6 +5,7 @@ Private $token As String
 Private $data As Collection
 Private $state As String
 Private $refusedCard As Boolean
+Private $view As String = "Swimlanes"
 
 Public Sub _HandleMessage()
   If CGI["WEBA_NATIVE_PASSIVE"] = "1" Then
@@ -64,6 +65,7 @@ Private Sub Acknowledge()
   OverviewRouteState.Text = Replace(JSON.Encode(ack), " ", "\\u0020")
   CloseEditor.Visible = Not IsNull($data) And $cardText <> ""
   GuestRetry.Visible = IsNull($data)
+  GuestViews.Visible = Not IsNull($data)
 End
 
 Private Sub RefreshGuest()
@@ -108,6 +110,7 @@ Public Sub EntryRouteAction_Change()
   If fields.Count < 3 Or fields.Count > 4 Then Return
   If fields[0] <> "board" Or Not fields[1] Or Len(fields[1]) > 128 Then Return
   $refusedCard = False
+  If fields[2] <> $boardText Then $view = "Swimlanes"
   $boardText = fields[2]
   $cardText = ""
   If fields.Count = 4 Then $cardText = fields[3]
@@ -152,7 +155,7 @@ Public Sub GuestSurface_Render()
   Dim kind As String
   If Not $data Then Return
   Print "<script>" & File.Load(".public/kanban.js") & "</script>"
-  Print "<section class='weba-content weba-guest-board' data-view='Swimlanes' data-board='" & CStr($data["id"]) & "' data-board-color='" & Html($data["color"]) & "' data-editable='false' data-card-move='false'>"
+  Print "<section class='weba-content weba-guest-board' data-view='" & Html($view) & "' data-board='" & CStr($data["id"]) & "' data-board-color='" & Html($data["color"]) & "' data-editable='false' data-card-move='false'>"
   If $cardText Then
     card = $data["card"]
     Print "<article class='weba-guest-detail weba-user-text'><h2>" & Html(card["title"]) & "</h2><p>" & Html(card["description"]) & "</p><p>" & Html(card["status"]) & " · " & Html(card["assignee"]) & " · " & Html(card["labels"]) & " · " & Html(card["due_day"]) & "</p></article>"
@@ -216,4 +219,26 @@ Public Sub GuestSurface_Render()
   Next
   Print "</div><div class='weba-report'></div></section>"
   WebForm.Exec("window.webaRender && window.webaRender();")
+End
+
+Private Sub ShowGuestView(view As String)
+  $view = view
+  RefreshGuest()
+  If $data Then GuestSurface.Refresh()
+End
+
+Public Sub GuestSwimlanes_Click()
+  ShowGuestView("Swimlanes")
+End
+
+Public Sub GuestLists_Click()
+  ShowGuestView("Lists")
+End
+
+Public Sub GuestTable_Click()
+  ShowGuestView("Table")
+End
+
+Public Sub GuestCalendar_Click()
+  ShowGuestView("Calendar")
 End

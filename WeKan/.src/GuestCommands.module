@@ -44,7 +44,7 @@ Public Function Allowed(form As WebForm) As Boolean
     If command[3].Count <> 0 Then Return False
   Endif
   If name = "BoardPoll" Then Return command[2] = "timer"
-  If ["GuestSignIn", "GuestRetry", "CloseEditor"].Find(name) >= 0 Then Return command[2] = "click"
+  If ["GuestSignIn", "GuestRetry", "CloseEditor", "GuestSwimlanes", "GuestLists", "GuestTable", "GuestCalendar"].Find(name) >= 0 Then Return command[2] = "click"
   Return False
 Catch
   Return False

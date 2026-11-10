@@ -80,3 +80,13 @@ section.dataset.editable='false';global.webaRender();
 assert.equal(section.querySelectorAll('.weba-add-card-top,.weba-add-card-bottom,.weba-add-list,.weba-add-lane').length,0,'archived board has no creation actions');
 delete global.gw;
 console.log('Swimlane/list controls, empty layouts, composer placement, action routing and archived-board UI passed');
+
+section.dataset.board='17';
+[...data.querySelectorAll('.weba-card')].forEach((card,index)=>{card.dataset.cardKey=`c${index+1}:17`;card.dataset.cardId=String(index+1);});
+for(const view of ['Table','Calendar','Gantt']){
+ section.dataset.view=view;global.webaRender();
+ const links=[...section.querySelectorAll('.weba-report a.weba-card-link')];
+ assert.ok(links.length,'report exposes real card anchors');
+ for(const link of links){assert.match(link.getAttribute('href'),/^\/b\/17\/board\/[1-3]$/);assert.match(link.dataset.cardId,/^[1-3]$/);assert.equal(link.classList.contains('weba-user-text'),true);assert.equal(link.querySelectorAll('img,script').length,0,'literal titles cannot introduce HTML');}
+}
+console.log('Table/Calendar/Gantt card anchors preserve canonical scope, literal titles and safe report navigation');

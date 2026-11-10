@@ -58,6 +58,19 @@
         if (cls) el.className = cls;
         parent.append(el); return el;
       }
+      function reportCard(card, parent, full = false) {
+        if (!card.dataset.cardKey || !card.dataset.cardId || !section.dataset.board) {
+          if (full) { const clone=card.cloneNode(true); parent.append(clone); return clone; }
+          return add(parent,'span',card.querySelector('strong').textContent,undefined,false);
+        }
+        const link=document.createElement('a');
+        link.className='weba-card-link weba-user-text';
+        link.dataset.cardId=card.dataset.cardId;
+        link.href='/b/'+encodeURIComponent(section.dataset.board)+'/board/'+encodeURIComponent(card.dataset.cardId);
+        if (full) { for(const attribute of card.attributes)link.setAttribute(attribute.name,attribute.value);link.classList.add('weba-card-link','weba-user-text');link.innerHTML=card.innerHTML; }
+        else link.textContent=card.querySelector('strong').textContent;
+        parent.append(link);return link;
+      }
       if (view === 'Lists' || view === 'Swimlanes') {
         const layout = [...section.querySelectorAll('.weba-layout section[data-lane]')].sort((a,b)=>Number(a.dataset.order||0)-Number(b.dataset.order||0));
         const editable = section.dataset.editable === 'true';
@@ -205,13 +218,13 @@
           for (let d = 1; d <= monthDays(year, month); d++) {
             const cell = add(grid, 'section', undefined, 'weba-day'); add(cell, 'strong', String(d));
             const iso = `${year}-${String(month + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-            cards.filter(c => c.dataset.due === iso).forEach(c => cell.append(c.cloneNode(true)));
+            cards.filter(c => c.dataset.due === iso).forEach(c => reportCard(c,cell,true));
           }
         }
         function shift(delta) { const date = new Date(year, month + delta, 1); year = date.getFullYear(); month = date.getMonth(); draw(); }
         previous.onclick = () => shift(-1); next.onclick = () => shift(1); draw();
         if (cards.some(c => !c.dataset.due)) add(report, 'h3', 'No due date');
-        cards.filter(c => !c.dataset.due).forEach(c => report.append(c.cloneNode(true)));
+        cards.filter(c => !c.dataset.due).forEach(c => reportCard(c,report,true));
       } else if (view === 'Charts') {
         add(report, 'h3', 'Cards by status');
         summary(cards.map(c => c.dataset)).forEach(({status,count}) => {
@@ -227,7 +240,7 @@
         const body = add(table, 'tbody');
         cards.slice().sort((a,b) => view === 'Gantt' ? a.dataset.due.localeCompare(b.dataset.due) : 0).forEach(card => {
           const row = add(body, 'tr');
-          add(row,'td',card.querySelector('strong').textContent,undefined,false);
+          reportCard(card,add(row,'td'));
           add(row,'td',card.dataset.status,undefined,['Todo','Doing','Done'].includes(card.dataset.status));
           add(row,'td',card.dataset.lane,undefined,false);
           add(row,'td',card.dataset.due || 'No due date');

@@ -34,6 +34,21 @@
   { EntryRouteAction WebTextBox
     Visible = False
   }
+  { GuestViews WebContainer
+    Arrangement = Arrange.Horizontal
+    { GuestSwimlanes WebButton
+      Text = ("Swimlanes")
+    }
+    { GuestLists WebButton
+      Text = ("Lists")
+    }
+    { GuestTable WebButton
+      Text = ("Table")
+    }
+    { GuestCalendar WebButton
+      Text = ("Calendar")
+    }
+  }
   { CloseEditor WebButton
     Text = ("Close")
     Visible = False

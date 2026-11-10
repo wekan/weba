@@ -3,6 +3,7 @@ Public Sub Main()
   Dim login As WebForm = WebformLogin
   Dim foreignName As String = login.Name & ".WebTextName"
   Dim command As Variant[]
+  Dim view As String
   If Not WebControl.FromName(foreignName) Then Error.Raise("Foreign control fixture missing")
   Check(guest, ["raise", Null, "open", Null, Null], True)
   Check(guest, ["raise", Null, "open", ["forged"], Null], False)
@@ -14,6 +15,11 @@ Public Sub Main()
   Check(guest, ["raise", guest.Name & ".GuestRetry", "click", [], True], True)
   Check(guest, ["raise", guest.Name & ".GuestSignIn", "click", ["forged"], True], False)
   Check(guest, ["raise", guest.Name & ".GuestSignIn", "activate", Null, Null], False)
+  For Each view In ["GuestSwimlanes", "GuestLists", "GuestTable", "GuestCalendar"]
+    Check(guest, ["raise", guest.Name & "." & view, "click", Null, Null], True)
+    Check(guest, ["raise", guest.Name & "." & view, "click", ["forged"], True], False)
+    Check(guest, ["update", guest.Name & "." & view, "text", "forged", True], False)
+  Next
   Check(guest, ["finish", "forged", "click", Null, Null], False)
   Check(guest, ["update", Null, "#focus", foreignName, True], False)
   Check(guest, ["update", Null, "#focus", guest.Name & ".GuestSignIn", True], True)

@@ -800,6 +800,29 @@ The guest surface covers kanban/core card fields and the comments/checklists
 below. Remaining child/source-definition models, storage/cover models, additional views,
 source backgrounds/templates and full Meteor publications/actions remain pending.
 
+Guest readers can switch among native Swimlanes, Lists, Table and due-day
+Calendar using four fixed native buttons. Each event performs the same fresh
+anonymous public/card read; it cannot submit an arbitrary view or mutation.
+Retain the selected view while opening/closing cards and navigating same-board
+history. Permission loss clears both data and view controls; guarded Refresh
+restores them. This is document-local state, initially Swimlanes, without writes
+to user profiles or board settings.
+
+Shared Table/Calendar/Gantt report cards now expose canonical semantic anchors
+with routing IDs and literal-user-text protection, so keyboard opening uses the
+existing acknowledged route flow while Ctrl/new-tab remains a real link. This
+also improves signed-in native reports. The guest Calendar displays the current
+native due-day field and undated cards with previous/next-month controls; it is
+not the full source multi-date planner. Native command/report/HTML safety tests
+and real guest browser checks cover all four views, mounted-view/card history,
+keyboard/new-tab, dated/undated month navigation, idle DOM preservation,
+translated controls/columns versus literal card titles, mobile, forged commands
+and privacy/recovery. The complete local suite (66 host tests) and focused
+source/packaged guest browser suites pass. Source board/instance view
+visibility/default/order,
+remaining guest views, richer date/calendar models and original Meteor actions
+remain pending.
+
 Selected guest cards now show comments and checklists through the same final
 public/card scope guards. Only the selected board/card's records are queried;
 checklist items must have a checklist parent on that same board/card. Foreign or
