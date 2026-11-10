@@ -2,12 +2,12 @@
 (function(root){
   'use strict';
   if(root.webaDrag)return;
-  let pending=null,drag=null,keyboardFocus=null,workspaceKeyboardFocus=null,suppressUntil=0,frame=0;
+  let pending=null,drag=null,keyboardFocus=null,workspaceKeyboardFocus=null,suppressUntil=0,frame=0,localPickup=false,external=null,externalBlocked=false,externalDepth=0,externalTimer=0;
   const threshold=7;
   const t=text=>root.webaI18n?.t(text)||text;
   const visible=e=>e && !e.hidden && e.getBoundingClientRect().width>0 && e.getBoundingClientRect().height>0;
   function encode(text){return btoa(Array.from(new TextEncoder().encode(String(text)),byte=>String.fromCharCode(byte)).join(''));}
-  function enabled(section,kind){return kind==='workspace'?section.dataset.workspaceReorder==='true':(kind==='board-drop'||kind==='board-multi-drop')?section.dataset.boardDrop==='true':kind==='board'?section.dataset.boardReorder==='true'||section.dataset.boardDrop==='true':kind==='card'?section.dataset.cardMove==='true'||section.dataset.editable==='true':section.dataset.editable==='true';}
+  function enabled(section,kind){return kind==='workspace'?section.dataset.workspaceReorder==='true':(kind==='board-drop'||kind==='board-multi-drop'||kind==='home-external')?section.dataset.boardDrop==='true':kind==='board'?section.dataset.boardReorder==='true'||section.dataset.boardDrop==='true':kind==='card'?section.dataset.cardMove==='true'||section.dataset.editable==='true':section.dataset.editable==='true';}
   function send(section,kind,values){
     if(!enabled(section,kind)||!section.dataset.drag||!root.gw)return;
     root.gw.update(section.dataset.drag,'text',[kind,...values.map(encode)].join('|'),null);
@@ -31,6 +31,7 @@
     return {kind,element,section,handle,group,source:section.dataset.boardSource,archivedMulti:section.dataset.boardSource==='archive'&&section.dataset.multiActive==='true'};
   }
   function reset(){
+    clearExternal();
     if(frame)root.cancelAnimationFrame(frame);frame=0;
     clearWorkspaceMark();
     if(drag){const bar=drag.section.querySelector('.js-home-remove');if(bar)bar.hidden=true;drag.section.classList.remove('weba-home-drag');drag.ghost.remove();drag.placeholder.remove();drag.element.classList.remove('weba-drag-origin');}
@@ -193,6 +194,7 @@
     }
   }
   function down(event){
+    if(external){clearExternal();externalDepth=0;externalBlocked=false;}
     keyboardFocus=null;workspaceKeyboardFocus=null;
     if(!event.isPrimary){finish(true);return;}
     if(event.button!==0||pending||drag)return;
@@ -209,14 +211,15 @@
     if(drag){drag.x=event.clientX;drag.y=event.clientY;event.preventDefault();}
   }
   function up(event){if(drag?.native)return;if((drag||pending)?.pointerId===event.pointerId){if(drag){drag.x=event.clientX;drag.y=event.clientY;}finish();}}
-  // MIME is interoperability metadata, never authorization. Only this live
-  // form's accepted mouse pickup may submit its server-bound origin/revision.
-  // Cross-document drags are deliberately refused until their transport exists.
+  // MIME is interoperability metadata, never authorization. Same-form drags
+  // keep their server-bound origin/revision; external Home drops use the own-
+  // profile payload path with independent session/read/active checks.
   const fromHome='application/x-board-from-home',fromRemaining='application/x-board-from-remaining',fromWorkspace='application/x-board-from-workspace',archivedMulti='application/x-archived-board-multi',multi='application/x-board-multi';
   function nativeStart(event){
     const state=pending,element=event.target.closest('.weba-board-tile-group');
     if(!element)return;
     if(!state||drag||state.kind!=='board'||state.element!==element||state.pointerType!=='mouse'||!element.draggable||!event.dataTransfer){event.preventDefault();return;}
+    localPickup=true;externalDepth=0;clearExternal();
     try{
       const dt=event.dataTransfer,id=element.dataset.boardId;
       let payload=id;
@@ -233,11 +236,68 @@
       if(state.archivedMulti)dt.setData(archivedMulti,'1');
       dt.effectAllowed='all';
       const rect=element.getBoundingClientRect();dt.setDragImage(element,rect.width/2,rect.height/2);
-      state.payload=payload;begin(true);
-    }catch(_){event.preventDefault();reset();}
+      state.payload=payload;element.addEventListener('dragend',nativeEnd,{once:true});begin(true);
+    }catch(_){event.preventDefault();localPickup=false;reset();}
+  }
+  function clearExternal(){
+    if(externalTimer)root.clearTimeout(externalTimer);externalTimer=0;
+    if(external){external.marked?.classList.remove('weba-board-drop-target','is-over');const bar=external.section.querySelector('.js-home-remove');if(bar)bar.hidden=true;external.section.classList.remove('weba-home-drag');}
+    external=null;
+  }
+  function externalOver(event){
+    if(drag||pending||localPickup||externalBlocked)return;
+    clearExternal();
+    const section=document.querySelector('.weba-content'),dt=event.dataTransfer,types=Array.from(dt?.types||[]);
+    if(!section||section.dataset.boardDrop!=='true'||!section.dataset.drag||!types.includes('text/plain')||types.includes('application/x-workspace-id')||types.includes('Files'))return;
+    const sources=[fromHome,fromRemaining,fromWorkspace].filter(type=>types.includes(type));
+    if(sources.length>1)return;
+    const source=types.includes(archivedMulti)?'archive-multi':types.includes(fromHome)?'home':types.includes(fromRemaining)?'remaining':types.includes(fromWorkspace)?'workspace':'other';
+    if(source==='archive-multi')return;
+    external={section,source,multi:types.includes(multi),target:null,marked:null};
+    // A source document's dragend does not bubble here. Some browsers/drivers
+    // cancel without a final recipient dragleave, so expire visual state if its
+    // dragover stream stops. Normal HTML5 hover events continually renew this;
+    // expiration never submits a command and a new hover restores the target.
+    externalTimer=root.setTimeout(()=>{externalTimer=0;externalDepth=0;clearExternal();},1500);
+    if(source==='home'){
+      if(section.dataset.boardSource!=='home')return;
+      section.classList.add('weba-home-drag');const bar=section.querySelector('.js-home-remove');if(bar)bar.hidden=false;
+      if(document.elementFromPoint(event.clientX,event.clientY)?.closest('.js-home-remove')===bar&&bar){external.target='home-remove';external.marked=bar;bar.classList.add('is-over');}
+    }else{
+      const menu=document.elementFromPoint(event.clientX,event.clientY)?.closest('[id$=".HomeBoards"]');
+      if(menu){external.target='home';external.marked=menu;menu.classList.add('weba-board-drop-target');}
+    }
+    if(!external.target)return;
+    event.preventDefault();event.stopPropagation();dt.dropEffect=external.target==='home'?'link':'move';
+  }
+  function externalDrop(event){
+    if(drag||pending||localPickup||externalBlocked){clearExternal();return;}
+    externalOver(event);const state=external;
+    if(!state?.target){clearExternal();return;}
+    try{
+      const dt=event.dataTransfer,payload=dt.getData('text/plain'),group=dt.getData(multi);
+      // Match the source's truthy multi flag, normalize it for the typed native
+      // parser, and bind the protected hover marker to the readable payload.
+      if(Boolean(group)!==state.multi)return;
+      if(state.target==='home-remove'&&!root.confirm(t('Remove this board from Home? The board itself is not deleted.')))return;
+      suppressUntil=Date.now()+700;
+      send(state.section,'home-external',[payload,group?'true':'',state.target,state.source]);
+    }finally{externalDepth=0;clearExternal();}
+  }
+  function nativeEnd(){
+    if(drag?.native)finish(true);localPickup=false;externalBlocked=false;externalDepth=0;clearExternal();
+  }
+  function nativeEnter(){if(!drag&&!localPickup)externalDepth++;}
+  function nativeLeave(event){
+    if(!drag&&!localPickup){externalDepth=Math.max(0,externalDepth-1);if(externalDepth===0){externalBlocked=false;clearExternal();return;}}
+    if(!event.relatedTarget&&(event.target===document.documentElement||event.target===document)){externalBlocked=false;clearExternal();return;}
+    if(!external)return;
+    const to=event.relatedTarget;
+    if(to&&external.marked?.contains(to))return;
+    external.marked?.classList.remove('weba-board-drop-target','is-over');external.marked=null;
   }
   function nativeOver(event){
-    if(!drag?.native)return;
+    if(!drag?.native){externalOver(event);return;}
     const dt=event.dataTransfer;
     // The drag data store is protected here: only inspect types, never getData.
     const types=Array.from(dt?.types||[]);
@@ -248,7 +308,7 @@
     dt.dropEffect=drag.target.drop==='home'?'link':'move';
   }
   function nativeDrop(event){
-    if(!drag?.native)return;
+    if(!drag?.native){externalDrop(event);return;}
     nativeOver(event);
     if(!event.defaultPrevented||!drag.target){finish(true);return;}
     try{
@@ -348,8 +408,10 @@
     document.addEventListener('dragstart',nativeStart);
     document.addEventListener('dragover',nativeOver);
     document.addEventListener('drop',nativeDrop);
-    document.addEventListener('dragend',()=>{if(drag?.native)finish(true);});
-    document.addEventListener('keydown',event=>{if(event.key==='Escape'&&(drag||pending)){event.preventDefault();event.stopImmediatePropagation();finish(true);}else keyboard(event);},true);
+    document.addEventListener('dragenter',nativeEnter);
+    document.addEventListener('dragleave',nativeLeave);
+    document.addEventListener('dragend',nativeEnd);
+    document.addEventListener('keydown',event=>{if(event.key==='Escape'&&(drag||pending||external)){event.preventDefault();event.stopImmediatePropagation();if(external)externalBlocked=true;finish(true);}else keyboard(event);},true);
     document.addEventListener('click',event=>{if(Date.now()<suppressUntil||event.target.closest('.weba-drag-handle')){event.preventDefault();event.stopImmediatePropagation();}},true);
     root.addEventListener('blur',()=>{if(!drag?.native)finish(true);});
   }

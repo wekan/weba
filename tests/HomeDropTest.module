@@ -38,12 +38,44 @@ Public Sub Main()
   Try HomeBoard.Drop([0], True)
   denied = Error
   If Not denied Then Error.Raise("Invalid Remove accepted")
+  HomeBoard.ExternalDrop(CStr(a), "", "home", "remaining")
+  If HomeBoard.Saved() <> a Then Error.Raise("External readonly set failed")
+  HomeBoard.ExternalDrop("[\"" & CStr(b) & "\"]", "true", "home", "workspace")
+  If HomeBoard.Saved() <> b Then Error.Raise("External grouped set failed")
+  For Each before In ["[]", "null", "{}", "[1]", "[true]", "[null]", "[\"0\"]", "[\"01\"]", "[\"2147483648\"]", "[\"1e0\"]", "[\"" & CStr(b) & "\",{}]", "[\"" & CStr(b) & "\",\"" & CStr(b) & "\"]"]
+    Try HomeBoard.ExternalDrop(before, "true", "home-remove", "home")
+    denied = Error
+    If Not denied Or HomeBoard.Saved() <> b Then Error.Raise("Invalid external payload wrote: " & before)
+  Next
+  For Each before In ["", "0", "01", "+1", " 1", "1.0", "2147483648", "999999999999", "[1]", "null", "__proto__"]
+    Try HomeBoard.ExternalDrop(before, "", "home", "other")
+    denied = Error
+    If Not denied Or HomeBoard.Saved() <> b Then Error.Raise("Invalid external single accepted")
+  Next
+  Try HomeBoard.ExternalDrop(CStr(a), "", "home", "home")
+  denied = Error
+  If Not denied Or HomeBoard.Saved() <> b Then Error.Raise("External Home-origin set accepted")
+  Try HomeBoard.ExternalDrop(CStr(a), "", "home", "archive-multi")
+  denied = Error
+  If Not denied Or HomeBoard.Saved() <> b Then Error.Raise("External Archive-multi set accepted")
+  Try HomeBoard.ExternalDrop(CStr(a), "1", "home", "remaining")
+  denied = Error
+  If Not denied Then Error.Raise("Unnormalized external group flag accepted")
+  Try HomeBoard.ExternalDrop(CStr(a), "", "archive", "other")
+  denied = Error
+  If Not denied Then Error.Raise("External non-Home target accepted")
+  Try HomeBoard.ExternalDrop(CStr(a), "", "home", "foreign")
+  denied = Error
+  If Not denied Then Error.Raise("External unknown source accepted")
   db = WebDatabase.OpenConnection()
   For Each trigger In ["BEFORE DELETE ON kb_default_boards BEGIN SELECT RAISE(ABORT,'injected'); END", "AFTER DELETE ON kb_default_boards BEGIN UPDATE account_sessions SET generation=generation+1 WHERE username='hd-reader'; END"]
     db.Exec("CREATE TRIGGER home_remove_failure " & trigger)
     Try HomeBoard.Drop([a, b], True)
     denied = Error
     If Not denied Or HomeBoard.Saved() <> b Then Error.Raise("Failed Remove did not roll back")
+    Try HomeBoard.ExternalDrop("[\"" & CStr(b) & "\"]", "true", "home-remove", "home")
+    denied = Error
+    If Not denied Or HomeBoard.Saved() <> b Then Error.Raise("External Remove did not roll back")
     db.Exec("DROP TRIGGER home_remove_failure")
   Next
   HomeBoard.Drop([a, b], True)
@@ -62,16 +94,22 @@ Public Sub Main()
   Try HomeBoard.Drop([b], False)
   denied = Error
   If Not denied Or HomeBoard.Saved() Then Error.Raise("Global nonmember set foreign Home")
+  Try HomeBoard.ExternalDrop(CStr(b), "", "home", "remaining")
+  denied = Error
+  If Not denied Or HomeBoard.Saved() Then Error.Raise("External global nonmember set foreign Home")
   SignIn("hd-reader")
   HomeBoard.Drop([b], False)
   SignIn("hd-other")
-  HomeBoard.Drop([b], True)
+  HomeBoard.ExternalDrop(CStr(b), "", "home-remove", "home")
   SignIn("hd-reader")
   If HomeBoard.Saved() <> b Then Error.Raise("Remove crossed principals")
   Session["username"] = ""
   Try HomeBoard.Drop([b], True)
   denied = Error
   If Not denied Then Error.Raise("Anonymous Remove accepted")
+  Try HomeBoard.ExternalDrop(CStr(b), "", "home", "remaining")
+  denied = Error
+  If Not denied Then Error.Raise("Anonymous external Home accepted")
   Print "Home drops: readonly idempotent replacement, retained multi/invalid denial, conditional/group clearing, write/session rollback, archived stale clear, global nonmember and cross-principal/anonymous guards passed"
 End
 

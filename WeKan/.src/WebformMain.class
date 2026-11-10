@@ -1094,6 +1094,14 @@ Public Sub DragAction_Change()
   DragAction.Text = ""
   fields = Split(wire, "|")
   If fields.Count <> 5 Then Error.Raise("Invalid drag action")
+  If fields[0] = "home-external" Then
+    If Not IsOverview() Then Error.Raise("Select All Boards first")
+    If UnBase64(fields[3]) = "home-remove" And $view <> "Home" Then Error.Raise("Invalid Home board drop")
+    HomeBoard.ExternalDrop(UnBase64(fields[1]), UnBase64(fields[2]), UnBase64(fields[3]), UnBase64(fields[4]))
+    If UnBase64(fields[2]) = "true" Then BoardSelection.Clear(SelectionState())
+    RefreshTree()
+    Return
+  Endif
   If $view = "Home" And fields[0] <> "workspace" And fields[0] <> "board-drop" And fields[0] <> "board-multi-drop" Then Error.Raise("Invalid Home board drop")
   If fields[0] = "board-multi-drop" Then
     DropSelectedBoards(CInt(UnBase64(fields[1])), UnBase64(fields[2]), CInt(UnBase64(fields[3])), CLong(UnBase64(fields[4])))

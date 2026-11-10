@@ -132,13 +132,15 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   drafts and clickable close controls. Delayed-width/async-error tests, full
   local/test-live and existing layout regressions pass. Original suite counts
   remain unchanged.
-- Next Home parity: cross-document HTML5 and original Meteor transport, original board
+- Next Home parity: original Meteor transport, original board
   URL/profile/DDP and Sandstorm single-board convenience. Native Home preference,
   catalog/count, Starred presentation/badge, selection toggle and login/reload
   opening, pointer/touch drop replacement, confirmed drag-only Remove bar and
   empty instruction and same-form desktop HTML5/MIME events are recorded in
-  CHANGELOG.md. Native HTML5 events share server-bound origin/revision checks;
-  external/cross-document payloads are refused. The 60-case unchanged source
+  CHANGELOG.md. Same-form HTML5 events keep server-bound origin/revision checks;
+  cross-document Home set/Remove uses a strict private-profile payload command
+  with fresh native session/membership/archive checks, as recorded there too.
+  Other board destinations remain same-form. The 60-case unchanged source
   Home/Remove callback adapter proof does not claim original Meteor wiring.
 - Next workspace parity: Templates and remaining production transport/routing beyond
   the six adapter-backed spec 39 callbacks. Production direct GET entry for

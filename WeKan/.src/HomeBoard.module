@@ -160,3 +160,40 @@ Public Sub Drop(ids As Integer[], remove As Boolean)
     If savedId > 0 And ids.Find(savedId) >= 0 Then Clear(savedId)
   Endif
 End
+
+
+' External HTML5 payloads carry identifiers, never an actor or authority.
+' Parse every element before any write; the ordinary private Home transaction
+' still checks the current session, membership and active board under locks.
+Public Sub ExternalDrop(payload As String, multi As String, target As String, source As String)
+  Dim values As Variant
+  Dim value As Variant
+  Dim ids As New Integer[]
+  Dim text As String
+  Dim index As Integer
+  Dim id As Long
+  Principal()
+  If target <> "home" And target <> "home-remove" Then Error.Raise("Invalid Home board drop")
+  If ["home", "remaining", "workspace", "archive-multi", "other"].Find(source) < 0 Then Error.Raise("Invalid Home board drop")
+  If source = "home" And target <> "home-remove" Then Error.Raise("Invalid Home board drop")
+  If source = "archive-multi" And target = "home" Then Error.Raise("Invalid Home board drop")
+  If multi <> "" And multi <> "true" Then Error.Raise("Invalid board drop")
+  If multi Then
+    values = JSON.Decode(payload)
+    If Not (values Is Variant[]) Then Error.Raise("Invalid board drop")
+  Else
+    values = [payload]
+  Endif
+  For Each value In values
+    If TypeOf(value) <> gb.String Then Error.Raise("Invalid board drop")
+    text = value
+    If Len(text) = 0 Or Len(text) > 10 Then Error.Raise("Invalid board drop")
+    For index = 1 To Len(text)
+      If Asc(text, index) < 48 Or Asc(text, index) > 57 Then Error.Raise("Invalid board drop")
+    Next
+    id = CLong(text)
+    If id <= 0 Or id > 2147483647 Or CStr(id) <> text Then Error.Raise("Invalid board drop")
+    ids.Add(CInt(id))
+  Next
+  Drop(ids, target = "home-remove")
+End

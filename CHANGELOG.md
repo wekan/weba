@@ -2,6 +2,25 @@
 
 This work adds the following features and fixes:
 
+- Accept cross-document HTML5 single/group board drops on Home and Home-origin
+  drops on the drag-only Remove bar. Read only protected MIME types during hover,
+  distinguish board/workspace/file sources, keep Remove-only Home origin and
+  Archive-multi refusal, and clear marks/bars after refused drops or cancellation.
+  Parse the complete external payload before writes, accepting canonical native
+  string IDs only. Keep changes on the current private profile through the locked
+  Home transaction and fresh session/read/active checks; refuse forged non-Home
+  targets and removal outside Home. Preserve the board, stars and placement,
+  retain a refused multi-selection and clear it after successful grouped drops.
+  Same-form drops retain their server-derived selection/revision transport.
+  Expire visual state when a cancelled external drag stops its hover stream
+  without delivering a recipient leave event; renew on hover and cancel stale
+  timers before a new gesture. Verify native malformed/role/session/rollback
+  negatives, event cleanup/renewal/no-mutation checks and real separate-document
+  Chromium replacement/removal/Escape in source and packaged builds. Full local,
+  final JavaScript and affected source/packaged gesture suites pass.
+  Original Meteor/profile/DDP and other cross-document board targets remain
+  pending. Thanks to xet7.
+
 - Use real desktop HTML5 board drags with the original single/multi and
   Home/Remaining/workspace/Archive-multi MIME markers. Share native target,
   reorder and confirmation policy with touch, while keeping ordinary touch

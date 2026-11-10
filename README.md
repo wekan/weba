@@ -622,11 +622,29 @@ engine and handle-only pickup. Native desktop hover reads protected-store types
 only; drop checks its captured payload before sending the existing private
 origin/selection-revision command. The browser's pointercancel does not abort an
 HTML5 drag; drop/end/Escape clean up without a second submission. Detached
-origins, tampered payloads, malformed selection snapshots and external drags
-without a local mouse pickup cannot submit. The selected-ID DOM snapshot is MIME
+origins, tampered local payloads and malformed local selection snapshots
+cannot submit through the same-form path. The selected-ID DOM snapshot is MIME
 metadata only; the server derives actual group IDs from private selection state.
-Same-form HTML5 is implemented; cross-document and original Meteor integration
-remain pending.
+Cross-document Home set/Remove uses a separate private-profile command: MIME
+identifiers are untrusted input, never an actor or permission. Parse the entire
+single/group payload before effects, allow canonical native string IDs only,
+and use the ordinary locked Home session/read/active checks. Workspace/file
+MIME, Archive-multi Home sets, Home-origin other targets, non-Home commands and
+Remove outside the Home view are refused. A valid group clears the recipient
+form's selection only after success; a refused group retains it. External Home
+removal shows the bar only while a Home-origin drag is inside the Home view,
+asks before conditional clearing and leaves the board/stars/placement intact.
+Drag depth, leave/drop/Escape and direct local-origin dragend handling clean up
+marks and bars, including refused external drops and detached local sources.
+A stopped external dragover stream also expires visual state after 1.5 seconds:
+some browser/driver cancellations deliver dragend only to the source document
+without a final recipient dragleave. Regular hover events renew this fallback;
+it never submits a command and the next hover restores eligible targets.
+Run `python3 tests/run-http.py --home-external [--archive]` for real Chromium
+drags from an independent iframe document carrying only MIME IDs into the native
+form: no source-form/session or authorization adapter. Native parser, role,
+rollback and event negatives run in the local suite. Other cross-document board
+destinations and original Meteor integration remain pending.
 
 First native root landing after login or full
 page reload now opens the current readable active Home board once. All Boards
