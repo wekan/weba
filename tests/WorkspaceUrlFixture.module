@@ -1,0 +1,50 @@
+Public Sub Main()
+  Dim mode As String = Env["WEBA_WORKSPACE_URL_MODE"]
+  Dim data As New Collection
+  Dim seed As Collection
+  Dim db As Connection
+  Dim t As Table
+  Dim id As Integer
+  Dim key As String
+  If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
+  Session["username"] = "rest-member"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("rest-member")
+  If mode = "seed" Then
+    data["root"] = BoardSpaces.Add("Renkaan Vaihto")
+    data["child"] = BoardSpaces.Add("Backend & QA", data["root"])
+    data["emoji"] = BoardSpaces.Add("🚀")
+    data["cyril"] = BoardSpaces.Add("Проект")
+    data["race"] = BoardSpaces.Add("Race Target")
+    data["duplicate1"] = BoardSpaces.Add("Same Name")
+    data["duplicate2"] = BoardSpaces.Add("Same-Name")
+    data["board"] = KanbanStore.AddBoard("Workspace URL Board")
+    BoardSpaces.Assign(data["board"], data["child"])
+    data["tree"] = BoardSpaces.Tree()
+    Session["username"] = "rest-other"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+    data["foreign"] = BoardSpaces.Add("PRIVATE-WORKSPACE-ROUTE-CANARY")
+  Else
+    seed = JSON.Decode(Env["WEBA_WORKSPACE_URL_SEED"])
+    If mode = "rename" Then BoardSpaces.Edit(seed["child"], Env["WEBA_WORKSPACE_URL_NAME"], "")
+    If mode = "create-missing" Then data["created"] = BoardSpaces.Add("Missing", seed["root"])
+    If mode = "delete-race" Then BoardSpaces.Remove(seed["race"])
+    If mode = "move" Then BoardSpaces.Move(seed["child"], 0)
+    If mode = "delete" Then BoardSpaces.Remove(seed["child"])
+    If mode = "cleanup" Then
+      db = WebDatabase.OpenConnection()
+      For Each t In db.Tables
+        If t.Fields.Exist("board_id") Then db.Delete(t.Name, "board_id=&1", seed["board"])
+      Next
+      db.Delete("kb_boards", "id=&1", seed["board"])
+      For Each key In ["root", "child", "emoji", "cyril", "duplicate1", "duplicate2", "race"]
+        Try BoardSpaces.Remove(CInt(seed[key]))
+      Next
+      Session["username"] = "rest-other"
+      Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+      BoardSpaces.Remove(seed["foreign"])
+    Else
+      data["tree"] = BoardSpaces.Tree()
+    Endif
+  Endif
+  Print JSON.Encode(data)
+End

@@ -132,11 +132,12 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   drafts and clickable close controls. Delayed-width/async-error tests, full
   local/test-live and existing layout regressions pass. Original suite counts
   remain unchanged.
-- Next workspace parity: workspace slug URLs and their menu/history transitions,
-  Home/Templates and remaining production transport/routing beyond
+- Next workspace parity: Home/Templates and remaining production transport/routing beyond
   the six adapter-backed spec 39 callbacks. Production direct GET entry for
   Remaining/Starred/Archive with login/reload, acknowledged menu URL updates and
-  Back/Forward is recorded in CHANGELOG.md. Rendered/sanitized source viewer icons and
+  Back/Forward is recorded in CHANGELOG.md. Workspace nested slug URLs, guarded
+  owned targets, source limax/name trails and reactive menu/history routing are
+  recorded there too. Rendered/sanitized source viewer icons and
   private preserved/rendered icon-color metadata are in CHANGELOG.md. The
   native raw-code, URL-scheme and atomic external-tracker settings, admin guards,
   lossless live snapshots and private audits are there too. The card-title resolver

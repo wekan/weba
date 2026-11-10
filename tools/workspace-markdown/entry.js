@@ -19,3 +19,12 @@ export function setCardTitles(titles={}){
   Markdown.resolveCardTitle=id=>Object.prototype.hasOwnProperty.call(titles,id)&&typeof titles[id]==='string'?titles[id]:undefined;
   window.dispatchEvent(new CustomEvent('weba-workspace-markdown-changed'));
 }
+
+import getSlug from 'limax';
+import {workspaceSlugPath,workspaceIdForSlugPath,workspaceNamePath,splitWorkspacePath,allBoardsPath} from '../../vendor/wekan-markdown/allBoardsUrls.js';
+export const workspaceUrls={
+  path:(tree,id)=>allBoardsPath('workspaces',id?workspaceSlugPath(tree,id,getSlug):[]),
+  slugs:(tree,id)=>workspaceSlugPath(tree,id,getSlug),
+  resolve:(tree,path)=>workspaceIdForSlugPath(tree,splitWorkspacePath(path),getSlug)||'',
+  names:(tree,path)=>workspaceNamePath(tree,splitWorkspacePath(path),getSlug),
+};

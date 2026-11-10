@@ -6,6 +6,7 @@ const requireSource=createRequire(path.join(source,'package.json')),webpack=requ
 const names=['template-integration.js','secureDOMPurify.js'];
 for(const name of names)fs.copyFileSync(path.join(source,'packages/markdown/src',name),path.join(root,'vendor/wekan-markdown',name));
 fs.copyFileSync(path.join(source,'models/lib/urlSchemeAllowlist.js'),path.join(root,'vendor/wekan-markdown/urlSchemeAllowlist.js'));
+fs.copyFileSync(path.join(source,'models/lib/allBoardsUrls.js'),path.join(root,'vendor/wekan-markdown/allBoardsUrls.js'));
 fs.copyFileSync(path.join(source,'LICENSE'),path.join(root,'vendor/wekan-markdown/LICENSE'));
 const adapter=path.join(__dirname,'workspace-markdown/meteor-adapter.js');
 const aliases=Object.fromEntries(['blaze','htmljs','templating','reactive-var'].map(name=>['meteor/'+name+'$',adapter]));
@@ -28,6 +29,6 @@ webpack({mode:'production',target:'web',context:source,entry:path.join(__dirname
  }
  fs.writeFileSync(path.join(root,'WeKan/.public/workspace-markdown-LICENSES.txt'),licenses);
  const sha=file=>crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
- fs.writeFileSync(path.join(root,'vendor/wekan-markdown/manifest.json'),JSON.stringify({source:'wekan/wekan packages/markdown/src',build:{webpack:webpack.version,node:process.versions.node},adapters:Object.fromEntries(['entry.js','meteor-adapter.js'].map(name=>[name,sha(path.join(__dirname,'workspace-markdown',name))])),sourceFiles:Object.fromEntries(names.map(name=>[name,sha(path.join(root,'vendor/wekan-markdown',name))])),urlSchemeParserSha256:sha(path.join(root,'vendor/wekan-markdown/urlSchemeAllowlist.js')),packages:versions,bundleSha256:sha(path.join(root,'WeKan/.public/workspace-markdown.js'))},null,2)+'\n');
+ fs.writeFileSync(path.join(root,'vendor/wekan-markdown/manifest.json'),JSON.stringify({source:'wekan/wekan packages/markdown/src',build:{webpack:webpack.version,node:process.versions.node},adapters:Object.fromEntries(['entry.js','meteor-adapter.js'].map(name=>[name,sha(path.join(__dirname,'workspace-markdown',name))])),sourceFiles:Object.fromEntries(names.map(name=>[name,sha(path.join(root,'vendor/wekan-markdown',name))])),allBoardsUrlsSha256:sha(path.join(root,'vendor/wekan-markdown/allBoardsUrls.js')),urlSchemeParserSha256:sha(path.join(root,'vendor/wekan-markdown/urlSchemeAllowlist.js')),packages:versions,bundleSha256:sha(path.join(root,'WeKan/.public/workspace-markdown.js'))},null,2)+'\n');
  console.log('Source Markdown viewer bundled; '+packages.size+' dependency licenses recorded');
 });

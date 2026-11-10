@@ -582,7 +582,7 @@ class AllBoardsEntryTest(unittest.TestCase):
 
     def test_entry_routes_reach_only_root_html_with_no_query_commands(self):
         result = SimpleNamespace(returncode=0, stdout=b'Content-Type: text/html\r\n\r\n<html>entry</html>')
-        for section in ('remaining', 'starred', 'archive'):
+        for section in ('remaining', 'starred', 'archive', 'workspaces', 'workspaces/parent/child', 'workspaces//parent///child'):
             for path in ('/allboards/' + section, '/allboards/' + section + '/', '/%61llboards/' + section):
                 with self.subTest(path=path):
                     request = self.request(path + '?c=forged-command&native=canary')
@@ -596,7 +596,7 @@ class AllBoardsEntryTest(unittest.TestCase):
                     self.assertEqual(request.wfile.getvalue(), b'<html>entry</html>')
 
     def test_entry_routes_cannot_be_mutation_or_multiply_encoded_aliases(self):
-        for path, method, code in [('/allboards/starred', 'POST', 405), ('/allboards/archive', 'DELETE', 405), ('/%2561llboards/starred', 'GET', 404), ('/allboards/%252e%252e/private', 'GET', 404)]:
+        for path, method, code in [('/allboards/starred', 'POST', 405), ('/allboards/archive', 'DELETE', 405), ('/%2561llboards/starred', 'GET', 404), ('/allboards/%252e%252e/private', 'GET', 404), ('/allboards/workspaces/%ZZ', 'GET', 404), ('/allboards/workspaces/%FF', 'GET', 404)]:
             with self.subTest(path=path, method=method):
                 request = self.request(path, method)
                 with patch.object(server, 'run_application') as run:

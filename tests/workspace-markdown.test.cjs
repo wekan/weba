@@ -16,12 +16,20 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),asse
   assert.deepEqual(fs.readFileSync(path.join(__dirname,'../vendor/wekan-markdown',name)),content);
  }
  assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(publicDir,'workspace-markdown.js'))).digest('hex'),manifest.bundleSha256);
+ const urlsSource=fs.readFileSync(path.join(source,'models/lib/allBoardsUrls.js'));assert.deepEqual(fs.readFileSync(path.join(__dirname,'../vendor/wekan-markdown/allBoardsUrls.js')),urlsSource);assert.equal(crypto.createHash('sha256').update(urlsSource).digest('hex'),manifest.allBoardsUrlsSha256);
  const parserSource=fs.readFileSync(path.join(source,'models/lib/urlSchemeAllowlist.js'));
  assert.deepEqual(fs.readFileSync(path.join(__dirname,'../vendor/wekan-markdown/urlSchemeAllowlist.js')),parserSource);
  assert.equal(crypto.createHash('sha256').update(parserSource).digest('hex'),manifest.urlSchemeParserSha256);
  bundled.window.eval(fs.readFileSync(path.join(publicDir,'workspace-markdown.js'),'utf8'));
  const sourceParse=req(path.join(source,'models/lib/urlSchemeAllowlist.js')).parseAllowedUrlSchemes;
  for(const input of [null,0,'','THUNDERLINK:, file://; OnEnOtE: file javascript: data: search-ms: telnet: https:', 'a+b a.b a-b 1bad '+'x'.repeat(33),Array.from({length:70},(_,i)=>'scheme'+i).join(',')])assert.deepEqual(Array.from(bundled.window.webaWorkspaceMarkdown.parseUrlSchemes(input)),sourceParse(input));
+ const urls=req(path.join(source,'models/lib/allBoardsUrls.js')),slug=req('limax'),tree=[{id:'1',name:'Renkaan Vaihto',children:[{id:'2',name:'Backend & QA',children:[]}]},{id:'3',name:'🚀',children:[]},{id:'4',name:'Проект',children:[]},{id:'5',name:'Same Name',children:[]},{id:'6',name:'Same-Name',children:[]}];
+ for(const id of ['','1','2','3','4','5','6','missing'])assert.equal(bundled.window.webaWorkspaceMarkdown.workspaceUrls.path(tree,id),urls.allBoardsPath('workspaces',id?urls.workspaceSlugPath(tree,id,slug):[]));
+ for(const pathText of ['', 'renkaan-vaihto/backend-qa','renkaan-vaihto/missing','same-name','3','proekt','//renkaan-vaihto///backend-qa/']){
+  assert.equal(bundled.window.webaWorkspaceMarkdown.workspaceUrls.resolve(tree,pathText),urls.workspaceIdForSlugPath(tree,urls.splitWorkspacePath(pathText),slug)||'');
+  assert.deepEqual(Array.from(bundled.window.webaWorkspaceMarkdown.workspaceUrls.names(tree,pathText)),urls.workspaceNamePath(tree,urls.splitWorkspacePath(pathText),slug));
+ }
+ console.log('Workspace URL bundle: 22 path/resolution/name results match unchanged source helpers and installed limax; source/dependency hashes verified');
  let helper;const context={DOMPurify:req('dompurify')(original.window),MarkdownIt:req('markdown-it'),markdownItEmoji:req('markdown-it-emoji'),
   markdownItMath:(await import(pathToFileURL(req.resolve('markdown-it-math/no-default-renderer')).href)).default,temml:req('temml'),hljs:req('highlight.js/lib/common'),
   window:original.window,document:original.window.document,URL:original.window.URL,console,

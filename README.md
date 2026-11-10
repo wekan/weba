@@ -621,8 +621,28 @@ so an older response cannot add entries after a newer Forward intent. Repeated
 clicks do not duplicate history. Reload and malformed/forbidden commands are tested,
 as are delayed old requests and mobile navigation. The token correlates UI intent;
 current native identity and existing data permissions remain the authority.
-Workspace slug URLs and their history, Home/Templates, other page routes and
-complete source route/DDP integration remain TODO.
+Workspace URLs now use the unchanged source `allBoardsUrls` helpers and the
+same installed `limax` dependency, bundled with exact source/dependency hashes
+and license notices. `/allboards/workspaces` and arbitrary nested slug paths
+support login, reload, menu clicks and Back/Forward. Unicode transliteration,
+emoji-only ID fallback, first sibling on duplicate slugs and partial name trails
+match the source. A private owned-tree acknowledgement supplies the data; the
+native command validates a canonical owned workspace ID (or the safe Workspaces
+index) before changing page state. Foreign/malformed IDs cannot select data.
+
+Missing paths keep the Workspaces section, with a title trail only as far as the
+path still exists. A matching node that arrives later resolves reactively. Names
+in the trail remain literal text; only its static prefixes are translated. Live
+rename/reparent retains the old path until a new menu selection, and selected
+node deletion preserves that stale URL while returning to the safe index. An
+in-flight deleted target is rejected, then the latest owned tree permits index
+fallback. Empty-index board filtering matches the source; removed assignments
+remain visible after explicit Remaining navigation. Workspace clicks obey the
+existing drag click-suppression window and safely wait for late helper delivery. Malformed percent escapes, invalid UTF-8,
+traversal and multiply encoded entry aliases are rejected before CGI; valid entry
+queries remain stripped. Run `python3 tests/run-http.py --workspace-urls
+[--archive]` or the full live suites. Home/Templates, other page routes and
+complete original Meteor route/DDP/profile transport remain TODO.
 
 Source workspace `iconColor` metadata now has private native persistence in the
 additive `kb_board_space_icons` table. `BoardSpaces.Edit` accepts an optional typed

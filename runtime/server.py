@@ -8,6 +8,7 @@ import ipaddress
 import hashlib
 import json
 import math
+import re
 import secrets
 import threading
 import time
@@ -24,6 +25,8 @@ import urllib.parse
 
 def all_boards_entry_section(path):
     """Implemented native section entrypoints; never an arbitrary CGI alias."""
+    if path == '/allboards/workspaces' or path.startswith('/allboards/workspaces/'):
+        return 'workspaces'
     for section in ('remaining', 'starred', 'archive'):
         if path in ('/allboards/' + section, '/allboards/' + section + '/'):
             return section
@@ -343,7 +346,11 @@ def handler(application, runner, environment):
                 return
             entry_section = all_boards_entry_section(decoded_path)
             if entry_section:
-                if urllib.parse.unquote(url.path) != decoded_path:
+                try:
+                    single_path = None if re.search(r'%(?![0-9A-Fa-f]{2})', url.path) else urllib.parse.unquote(url.path, errors='strict')
+                except UnicodeError:
+                    single_path = None
+                if single_path != decoded_path:
                     self.send_error(404)
                     return
                 if self.command != 'GET':

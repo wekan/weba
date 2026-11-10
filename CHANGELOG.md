@@ -2,6 +2,19 @@
 
 This work adds the following features and fixes:
 
+- Add production nested workspace slug URLs with unchanged source URL helpers
+  and the same limax slugifier, including Unicode, emoji fallback, duplicate-first
+  matching and literal localized partial name trails. Validate canonical owned
+  workspace IDs before native selection, carry private tree/ID acknowledgements
+  through login/menu/history, and keep missing targets in the safe Workspaces
+  index. Resolve late nodes reactively, preserve stale rename/move/delete paths
+  and handle a deleted in-flight target without selecting foreign data. Preserve
+  drag click suppression and reject malformed percent/UTF-8 entry paths before
+  CGI. Verify 22 source URL oracle outputs, 136 viewer outputs, real private/
+  malformed/stale/live/race/reload/mobile flows and source-compatible icon clicks.
+  Home/Templates and original full route/DDP/profile transport remain pending.
+  Thanks to xet7.
+
 - Synchronize Remaining/Starred/Archive menu URLs and Back/Forward with guarded
   native section/token acknowledgements. Preserve the root frame, push only a
   changed source path and never add frames for popstate. Ignore older replies

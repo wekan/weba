@@ -388,6 +388,7 @@ Private Function LoadBoardOverview() As Collection
   params["sortBy"] = $catalogSort
   params["menu"] = If($view = "Starred", "starred", "remaining")
   If $view <> "Starred" And $spaceMenu > 0 Then params["menu"] = CStr($spaceMenu)
+  If $view = "Boards" And $spaceMenu < 0 Then params["menu"] = "workspaces"
   If $view = "Archive" Then params["menu"] = "archive"
   params["page"] = $catalogPage
   If $catalogSort = "custom" Then
@@ -807,10 +808,14 @@ Private Sub UpdateHeader()
       routeSection = "starred"
     Else If $spaceMenu = 0 Then
       routeSection = "remaining"
+    Else
+      routeSection = "workspaces"
     Endif
   Endif
   routeAck.Add(routeSection, "section")
   routeAck.Add($overviewRouteToken, "token")
+  routeAck.Add(If(routeSection = "workspaces" And $spaceMenu > 0, CStr($spaceMenu), ""), "workspaceId")
+  routeAck["tree"] = BoardSpaces.Tree()
   OverviewRouteState.Text = Replace(JSON.Encode(routeAck), " ", "\\u0020")
   ViewMenu.Visible = $view <> "Profile" And $view <> "Admin panel"
   AddBoard.Visible = ViewMenu.Visible And BoardCreation.Allowed()
@@ -832,7 +837,7 @@ Private Sub UpdateHeader()
   BoardPagination.Class = "weba-board-pagination" & If(BoardPagination.Visible, " boards-pagination", "")
   If Not overview Then BoardSortMenu.Hide()
   ContentRow.Expand = Not overview
-  PaneTitle.Text = If($view = "Boards", "Remaining", $view)
+  PaneTitle.Text = If($view = "Boards", If($spaceMenu < 0, "Workspaces", "Remaining"), $view)
   PaneTitle.Class = ""
   If overview And $view = "Boards" And $spaceMenu > 0 And $spaceNames.Exist(CStr($spaceMenu)) Then
     PaneTitle.Class = "weba-user-text"
@@ -2525,7 +2530,7 @@ Private Function RefreshSpaces() As Boolean
   IndexSpaceNames(tree)
   AddSpaceRows(tree, 0)
   If $spaceMenu > 0 And Not $spaceNames.Exist(CStr($spaceMenu)) Then
-    $spaceMenu = 0
+    $spaceMenu = -1
     $catalogPage = 1
   Endif
   If $workspaceEdit > 0 And Not $spaceNames.Exist(CStr($workspaceEdit)) Then WorkspacePanel.Hide()
@@ -3795,14 +3800,28 @@ End
 Public Sub EntryRouteAction_Change()
   Dim fields As String[] = Split(EntryRouteAction.Text, "|")
   Dim section As String = EntryRouteAction.Text
+  Dim workspaceId As Integer
   If Not WebIdentity.Username Then Error.Raise("Sign in required")
   If Not section Then Return
   ' Empty the command after capture; identical later entries must raise Change.
   EntryRouteAction.Text = ""
-  If fields.Count <> 2 Then Error.Raise("Unknown overview entry")
+  If fields.Count < 2 Or fields.Count > 3 Then Error.Raise("Unknown overview entry")
   section = fields[0]
   If Not fields[1] Or Len(fields[1]) > 128 Then Error.Raise("Unknown overview entry")
-  If ["remaining", "starred", "archive"].Find(section) < 0 Then Error.Raise("Unknown overview entry")
+  If ["remaining", "starred", "archive", "workspaces"].Find(section) < 0 Then Error.Raise("Unknown overview entry")
+  If section = "workspaces" Then
+    If fields.Count <> 3 Then Error.Raise("Unknown overview entry")
+    If fields[2] = "0" Then
+      workspaceId = -1
+    Else
+      Try workspaceId = CInt(fields[2])
+      If Error Then Error.Raise("Workspace not found")
+      If workspaceId <= 0 Or CStr(workspaceId) <> fields[2] Then Error.Raise("Workspace not found")
+      BoardSpaces.Record(workspaceId)
+    Endif
+  Else If fields.Count <> 2 Then
+    Error.Raise("Unknown overview entry")
+  Endif
   $overviewRouteToken = fields[1]
   Select section
     Case "remaining"
@@ -3811,6 +3830,11 @@ Public Sub EntryRouteAction_Change()
       Starred_Click()
     Case "archive"
       Archive_Click()
+    Case "workspaces"
+      Home_Click()
+      $spaceMenu = workspaceId
+      $catalogPage = 1
+      RefreshTree()
     Case Else
       Error.Raise("Unknown overview entry")
   End Select

@@ -284,6 +284,6 @@
     document.addEventListener('click',event=>{if(Date.now()<suppressUntil||event.target.closest('.weba-drag-handle')){event.preventDefault();event.stopImmediatePropagation();}},true);
     root.addEventListener('blur',()=>finish(true));
   }
-  root.webaDrag={identify,restoreFocus,restoreWorkspaceFocus,workspaceDropPosition,cancel:()=>finish(true),get active(){return !!drag;},threshold};
+  root.webaDrag={identify,restoreFocus,restoreWorkspaceFocus,workspaceDropPosition,cancel:()=>finish(true),get active(){return !!drag;},get clickSuppressed(){return Date.now()<suppressUntil;},threshold};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })(window);

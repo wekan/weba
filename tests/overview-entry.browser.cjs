@@ -15,6 +15,6 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
    await page.evaluate(()=>gw.update(document.querySelector('[id$=".EntryRouteAction"]').id,'text','admin|forged-section'));await expect(page.locator(control('Notice'))).toContainText('Unknown overview entry');await expect(page.locator(control('PaneTitle'))).toHaveText(title);await expect(page.locator(control('AdminPanel'))).toBeHidden();
    await page.setViewportSize({width:390,height:844});await expect(page.locator(control('PaneTitle'))).toHaveText(title);
   }
-  expect(errors).toEqual([]);expect(badAssets).toEqual([]);console.log('Overview entry browser: production remaining/starred/archive URLs, login handoff, authenticated entry/reload, single encoded/trailing paths, root asset base and forged section denial/mobile passed; workspace and other-section routing remains pending');
+  expect(errors).toEqual([]);expect(badAssets).toEqual([]);console.log('Overview entry browser: production remaining/starred/archive URLs, login handoff, authenticated entry/reload, single encoded/trailing paths, root asset base and forged section denial/mobile passed; other-section and full source routing remains pending');
  }finally{for(const c of contexts)await c.close();await browser.close();}
 })().catch(error=>{let message=error.stack||String(error);if(process.env.WEBA_TEST_PASSWORD)message=message.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(message);process.exitCode=1;});

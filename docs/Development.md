@@ -1280,10 +1280,10 @@ refusal. Included in full live source/package runs and `--overview-entry`.
 
 The three supported overview menus now use the same consumed route command for
 click, entry and popstate. A unique per-document intent token accompanies the
-section; the native handler validates the two-field shape, known section and
+section; the native handler validates the section-dependent two/three-field shape, known section and
 bounded nonempty token after current-identity checks. `OverviewRouteState` sends
-only the current supported native section and correlation token in private lossless
-JSON. The client waits for a matching pair, not merely an already-visible section:
+the current supported native section, correlation token, selected workspace ID
+and owned workspace tree in private lossless JSON. The client waits for a matching pair, not merely an already-visible section:
 a delayed Back reply must not acknowledge a newer Forward just because its target
 was visible before either request ran. Menu clicks push only a changed source path;
 popstate updates metadata without push. The initial root frame keeps its URL and
@@ -1293,5 +1293,33 @@ UI correlation tokens, not authentication or authorization credentials.
 root preservation, Back/Forward, a held old native request followed by newer
 Forward, reload, malformed/forbidden input, and mobile. Both entry and history run
 in focused `--overview-entry` and full source/package live modes.
-Workspace slug URLs and their history, Home/Templates, other-page navigation and
-original Meteor route/DDP transport remain explicit TODO work.
+Workspace slug routing now imports unchanged `models/lib/allBoardsUrls.js` and
+uses the installed source `limax`, with hashes/version/license verification in the
+viewer build manifest. The adapter exposes path/resolve/name helpers; 22 oracle
+results compare them to the parent helpers and same slugifier, independently of
+136 Markdown comparisons. Native route payloads for Workspaces add an ID field:
+strict canonical positive integer plus `BoardSpaces.Record` ownership validation,
+or `0` for the safe index. No foreign node is looked up through client slugs.
+The index uses internal `$spaceMenu=-1` and the source empty-category filter;
+free-text search retains the source global behavior. Missing selected nodes fall
+back to this index, retaining their stale URL and partial source name trail.
+The private route acknowledgement includes the owned tree/selected ID. Initial
+slug resolution waits for the helper bundle and tree; menu/history transitions
+retain token/section/ID correlation. Duplicate sibling slugs take the first,
+including menu resolution. Late matching nodes resolve reactively; deleted pending
+targets retry the safe index after fresh ownership denial. Names, path fallback,
+Unicode transliteration and emoji IDs come from the original helper/slugifier.
+Header breadcrumbs use textContent and translate only static prefixes. Passive
+rename/reparent leaves the current URI stale until navigation, as in the source.
+UI workspace capture consults the drag module's suppression window so a completed
+gesture cannot become an unintended route click. The host wildcard rewrites only
+Workspaces entries to HTML root and validates strict single percent/UTF-8 decoding
+before CGI, preserving existing traversal/method/query/origin protections.
+`workspace-urls.browser.cjs` covers nested/Unicode/emoji/duplicate routes, login/
+reload/history, private/malformed IDs, partial/index fallback, matching-node
+arrival, live rename/move/delete, held-request deletion, late helper delivery,
+literal/Finnish breadcrumb and mobile/assets. Existing workspace tests now require the source route after an
+icon click without following its hash, and check safe-index deletion before
+explicitly checking removed assignments in Remaining. Run `--workspace-urls` or
+full source/package live suites. Home/Templates, other-page navigation and
+original Meteor route/DDP/profile transport remain TODO.

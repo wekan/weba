@@ -59,7 +59,7 @@ const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),{cre
   const iconValue=()=>space('Root <literal>').locator('.workspace-icon-value');
   async function saveIcon(text){await space('Root <literal>').locator('.weba-space-menu').click();await fill('WorkspaceIcon',text);await editForm.locator('input[type=submit]').click();await settle();await expect.poll(()=>spaces().find(row=>row.id===root.id).icon).toBe(text);await expect(space('Root <literal>').locator('.workspace-name')).toHaveText('Root <literal>');}
   await saveIcon('**Bold** :rocket:');await expect(iconValue().locator('strong')).toHaveText('Bold');await expect(iconValue()).toContainText('🚀');
-  await saveIcon('[link](#weba-icon-canary)');const iconUrl=page.url();await iconValue().locator('a').click();await settle();expect(page.url()).toBe(iconUrl);await expect(page.locator(control('PaneTitle'))).toHaveText('Root <literal>');
+  await saveIcon('[link](#weba-icon-canary)');const sourceUrls=require(path.join(source,'models/lib/allBoardsUrls.js')),sourceSlug=createRequire(path.join(source,'package.json'))('limax'),iconUrl=new URL(process.env.WEBA_TEST_URL).origin+sourceUrls.allBoardsPath('workspaces',[sourceSlug('Root <literal>')]);await iconValue().locator('a').click();await settle();await expect(page).toHaveURL(iconUrl);expect(new URL(page.url()).hash).toBe('');await expect(page.locator(control('PaneTitle'))).toHaveText('Root <literal>');
   await saveIcon('<script>window.webaIconXss=1</script><img src="data:image/svg+xml,bad" onerror="window.webaIconXss=2"><div id="clobber" class="workspace-name"><input type=password name=secret><a href="javascript:alert(1)">unsafe</a></div>');
   await expect(iconValue().locator('script,svg,form,iframe,[id],[onerror],input[type=password]')).toHaveCount(0);expect(await page.evaluate(()=>window.webaIconXss)).toBeUndefined();
   await saveIcon('[](#hidden)');await expect(iconValue().locator('pre')).toContainText('[](#hidden)');await expect(iconValue().locator('a')).toHaveCount(0);
@@ -152,7 +152,7 @@ const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),{cre
   await page.evaluate(()=>webaI18n.setLanguage('en'));
   await space('Members').locator('.weba-space-menu').click();await click('DeleteWorkspace');await expect(page.locator(control('WorkspacePanel'))).toBeVisible();expect(spaces()).toHaveLength(2);
   await page.locator(control('ConfirmWorkspaceDelete')+' input').check();await click('DeleteWorkspace');await expect(page.locator('.weba-space-open')).toHaveText(['📁 Root <literal>']);
-  await expect.poll(names).toContain('Workspace Alpha');expect(fixture('read').assignments[String(seeded.ids[0])]).toBeUndefined();
+  await expect(page.locator(control('PaneTitle'))).toHaveText('Workspaces');await expect.poll(names).toEqual([]);expect(fixture('read').assignments[String(seeded.ids[0])]).toBeUndefined();await click('Remaining');await expect.poll(names).toContain('Workspace Alpha');
   // Losing board access closes the personal placement popup. A hidden native
   // Save event still cannot write after the server has cleared its authority.
   await click('HeaderSearch');await fill('BoardSearch','Workspace Bravo');await expect.poll(names).toEqual(['Workspace Bravo']);
