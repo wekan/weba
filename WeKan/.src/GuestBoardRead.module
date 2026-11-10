@@ -166,8 +166,15 @@ Private Function Children(db As Connection, boardId As Integer, cardId As Intege
   Dim parents As New Collection
   Dim row As Collection
   Dim r As Result
-  Dim author As Result
   Dim items As Variant[]
+  Dim bucket As Variant[]
+  Dim kind As String
+  Dim target As Result
+  Dim targetId As Integer
+  Dim fieldType As String
+  For Each kind In ["custom", "time", "subtask", "dependency"]
+    data[kind] = New Variant[]
+  Next
   data["comments"] = comments
   data["checklists"] = checklists
   If Not db.Tables.Exist("kb_entries") Then Return data
@@ -186,12 +193,8 @@ Private Function Children(db As Connection, boardId As Integer, cardId As Intege
     row["id"] = r!id
     row["body"] = CStr(r!body)
     If r!kind = "comment" Then
-      row["author"] = CStr(r!author)
+      row["author"] = Author(db, boardId, cardId, r!id, CStr(r!author))
       row.Add(r!created_at, "createdAt")
-      If Not row["author"] And db.Tables.Exist("kb_retired_authors") Then
-        author = db.Find("kb_retired_authors", "kind='entry' AND item_id=&1 AND board_id=&2 AND card_id=&3", r!id, boardId, cardId)
-        If author.Available Then row["author"] = CStr(author!display_name)
-      Endif
       comments.Add(row)
     Else
       If Not parents.Exist(CStr(r!parent_id)) Then Continue
@@ -201,5 +204,52 @@ Private Function Children(db As Connection, boardId As Integer, cardId As Intege
       items.Add(row)
     Endif
   Next
+  r = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind IN ('custom','time','subtask','dependency') ORDER BY id", boardId, cardId)
+  For Each r
+    kind = CStr(r!kind)
+    row = New Collection
+    row["id"] = r!id
+    Select kind
+      Case "custom"
+        fieldType = CStr(r!value_type)
+        If Not fieldType Then fieldType = "text"
+        If ["text", "number", "date", "checkbox"].Find(fieldType) < 0 Then Continue
+        row["title"] = CStr(r!title)
+        row["body"] = CStr(r!body)
+        row["type"] = fieldType
+        row["done"] = CBool(r!done)
+      Case "time"
+        If IsNull(r!amount) Then Continue
+        If r!amount < 0 Or r!amount > 9007199254740991 Then Continue
+        If r!amount <> r!amount Then Continue
+        row["title"] = CStr(r!title)
+        row["body"] = CStr(r!body)
+        row["minutes"] = r!amount
+        row["author"] = Author(db, boardId, cardId, r!id, CStr(r!author))
+        row.Add(r!created_at, "createdAt")
+        row["done"] = CBool(r!done)
+      Case "subtask", "dependency"
+        If IsNull(r!amount) Then Continue
+        If r!amount <= 0 Or r!amount > 2147483647 Then Continue
+        If r!amount <> Int(r!amount) Then Continue
+        targetId = CInt(r!amount)
+        target = db.Find("kb_cards", "board_id=&1 AND id=&2 AND " & Live(db, "card", "kb_cards"), boardId, targetId)
+        If Not target.Available Then Continue
+        row["targetId"] = targetId
+        row["title"] = CStr(target!title)
+        row["archived"] = CBool(target!archived)
+    End Select
+    bucket = data[kind]
+    bucket.Add(row)
+  Next
   Return data
+End
+
+Private Function Author(db As Connection, boardId As Integer, cardId As Integer, itemId As Integer, liveAuthor As String) As String
+  Dim r As Result
+  If liveAuthor Then Return liveAuthor
+  If Not db.Tables.Exist("kb_retired_authors") Then Return ""
+  r = db.Find("kb_retired_authors", "kind='entry' AND item_id=&1 AND board_id=&2 AND card_id=&3", itemId, boardId, cardId)
+  If r.Available Then Return CStr(r!display_name)
+  Return ""
 End

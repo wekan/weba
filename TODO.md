@@ -158,7 +158,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   closed command dispatcher, history/reload/privacy and login handoff are
   recorded there too. Native selected-card guest comments/checklists, scoped
   parent/author reads, disabled completion and live privacy are recorded there
-  too. Remaining guest child models/downloads/additional views, source
+  too. Native guest typed/legacy fields, stored/running time and fresh scoped
+  same-board relationship links are recorded there too. Remaining guest
+  attachments/downloads/additional views and source-defined child models, source
   backgrounds/templates/global-sort fields, global visibility/editing controls,
   first-edit membership, import/copy and original publication/ReportPages
   integration remain open.

@@ -8,6 +8,7 @@ Public Sub Main()
   Dim commentId As Integer
   Dim checklistId As Integer
   Dim itemId As Integer
+  Dim deletedTarget As Integer
   Dim foreignCard As Integer
   Dim foreignChecklist As Integer
   Dim db As Connection
@@ -46,6 +47,23 @@ Public Sub Main()
   db.Exec("INSERT INTO kb_entries (board_id,card_id,kind,parent_id,title,body,done) VALUES (&1,&2,'checkitem',&3,'ORPHAN-CANARY','',0)", pub, card, foreignChecklist)
   db.Exec("UPDATE kb_entries SET author='' WHERE id=&1", commentId)
   RetiredAuthors.Remember("entry", commentId, pub, card, "Retained <author>")
+  CardContent.Save(pub, card, 0, "custom", "Text field", "Public <value>", 0, False, 0, "text")
+  CardContent.Save(pub, card, 0, "custom", "Number field", "2.5", 0, False, 0, "number")
+  CardContent.Save(pub, card, 0, "custom", "Date field", "2026-11-10", 0, False, 0, "date")
+  CardContent.Save(pub, card, 0, "custom", "Checkbox field", "", 0, True, 0, "checkbox")
+  CardContent.Save(pub, card, 0, "time", "Stored duration", "Time note", 0, True, 12.5)
+  CardContent.StartTimer(pub, card)
+  CardContent.Save(pub, card, 0, "subtask", "", "", 0, False, archivedCard)
+  CardContent.Save(pub, card, 0, "dependency", "", "", 0, False, archivedCard)
+  db.Exec("UPDATE kb_entries SET title='PRIVATE-STORED-CANARY',body='PRIVATE-BODY-CANARY' WHERE card_id=&1 AND kind IN ('subtask','dependency')", card)
+  deletedTarget = KanbanStore.SaveCard(pub, 0, "DELETED-TARGET-CANARY", "", "Default", "Todo", "", "", "")
+  CardContent.Save(pub, card, 0, "dependency", "", "", 0, False, deletedTarget)
+  db.Exec("INSERT INTO kb_deleted_items (board_id,kind,item_id) VALUES (&1,'card',&2)", pub, deletedTarget)
+  db.Exec("INSERT INTO kb_entries (board_id,card_id,kind,amount,title) VALUES (&1,&2,'dependency',&3,'PRIVATE-TARGET-CANARY')", pub, card, foreignCard)
+  db.Exec("INSERT INTO kb_entries (board_id,card_id,kind,amount,title) VALUES (&1,&2,'subtask',1.5,'FRACTIONAL-CANARY')", pub, card)
+  db.Exec("INSERT INTO kb_entries (board_id,card_id,kind,amount,title) VALUES (&1,&2,'time',-1,'INVALID-TIME-CANARY')", pub, card)
+  db.Exec("INSERT INTO kb_entries (board_id,card_id,kind,value_type,title) VALUES (&1,&2,'custom','unknown','INVALID-FIELD-CANARY')", pub, card)
+  db.Exec("INSERT INTO kb_entries (board_id,card_id,kind,title,body) VALUES (&1,&2,'custom','Legacy text','Legacy value')", pub, card)
   Session["username"] = ""
   before = Snapshot()
   data = GuestBoardRead.Load(CStr(pub))
@@ -56,6 +74,12 @@ Public Sub Main()
   If data["children"]["comments"][0]["author"] <> "Retained <author>" Then Error.Raise("Retained author missing")
   If data["children"]["checklists"][0]["items"].Count <> 1 Then Error.Raise("Foreign/orphan checklist child leaked")
   If Not data["children"]["checklists"][0]["items"][0]["done"] Then Error.Raise("Checklist completion lost")
+  If data["children"]["custom"].Count <> 5 Or data["children"]["time"].Count <> 2 Then Error.Raise("Typed guest fields/time scope failed")
+  If data["children"]["custom"][1]["body"] <> "2.5" Or data["children"]["custom"][2]["body"] <> "2026-11-10" Or Not data["children"]["custom"][3]["done"] Then Error.Raise("Typed field values changed")
+  If data["children"]["custom"][4]["type"] <> "text" Or data["children"]["custom"][4]["body"] <> "Legacy value" Then Error.Raise("Legacy field fallback changed")
+  If data["children"]["time"][0]["minutes"] <> 12.5 Or Not data["children"]["time"][0]["done"] Or data["children"]["time"][1]["done"] Then Error.Raise("Stored time/running state changed")
+  If data["children"]["subtask"].Count <> 1 Or data["children"]["dependency"].Count <> 1 Then Error.Raise("Guest relationships leaked foreign or malformed targets")
+  If data["children"]["subtask"][0]["title"] <> "Archived guest card" Or Not data["children"]["dependency"][0]["archived"] Then Error.Raise("Relationship labels were stale or archived target was lost")
   If InStr(JSON.Encode(data), "CANARY") Then Error.Raise("Guest projection leaked foreign/orphan content")
   db.Exec("UPDATE kb_retired_authors SET board_id=&1 WHERE item_id=&2", hidden, commentId)
   data = GuestBoardRead.Load(CStr(pub), CStr(card))
@@ -86,7 +110,7 @@ Public Sub Main()
   Try GuestBoardRead.Load(CStr(pub), CStr(archivedCard))
   denied = Error
   If Not denied Then Error.Raise("Public-to-private transition retained guest details")
-  Print "Anonymous projection: selected comment/checklist/parent and retained-author scope, missing-schema/no-write reads, public-only scope, canonical IDs, no synthetic principal/writes, active vs explicit archived card scope, current public moved destination/private refusal and live permission revocation passed"
+  Print "Anonymous projection: typed fields/stored time/current-target and comment/checklist/parent/author scope, missing-schema/no-write reads, public-only scope, canonical IDs, no synthetic principal/writes, active vs explicit archived card scope, current public moved destination/private refusal and live permission revocation passed"
 End
 
 Private Function Snapshot() As String
@@ -96,7 +120,7 @@ Private Function Snapshot() As String
   Dim r As Result
   Dim row As Collection
   Dim field As ResultField
-  For Each name In ["kb_boards", "kb_cards", "kb_lists", "kb_members", "kb_board_visibility", "kb_activity", "account_sessions", "kb_entries", "kb_retired_authors"]
+  For Each name In ["kb_boards", "kb_cards", "kb_lists", "kb_members", "kb_board_visibility", "kb_activity", "account_sessions", "kb_entries", "kb_retired_authors", "kb_deleted_items"]
     rows = New Variant[]
     r = WebDatabase.OpenConnection().Find(name, "TRUE ORDER BY 1")
     For Each r

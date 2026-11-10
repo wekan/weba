@@ -4,7 +4,7 @@ const path = require('node:path');
 const {JSDOM} = require('jsdom');
 const publicDir=path.join(__dirname,'../WeKan/.public');
 const dom = new JSDOM(`<div id="@1.LanguageSelector"><select data-weba-language></select></div>
-<button id="@1.GuestRetry">Refresh</button><button id="@1.GuestSignIn">Login</button><div id="@1.WebLabelUser">Username</div><button id="@1.WebButtonLogin">Login</button>
+<span class="weba-guest-running">Running</span><span class="weba-guest-minutes">minutes</span><div class="weba-user-text">Running</div><button id="@1.GuestRetry">Refresh</button><button id="@1.GuestSignIn">Login</button><div id="@1.WebLabelUser">Username</div><button id="@1.WebButtonLogin">Login</button>
 <div id="@1.PageTitle">Boards</div><div id="@1.ContextTitle">Boards</div><div id="@1.ActionTitle">Boards</div><div id="@1.DetailsTitle">Boards</div><input id="@1.WebTextName" value="Username">
 <div id="@1.BoardVisibilityName" class="weba-user-text">Public</div><div id="@1.BoardPermission"><select><option value="Public">Public</option><option value="Private">Private</option><option value="Signed-in users">Signed-in users</option></select></div><div id="@1.MemberBoardName">Members</div><div id="@1.MembersTree" class="gw-tree">Normal</div><div id="@1.MemberRole"><select><option value="Read only">Read only</option></select></div>
 <div id="@1.CardPeopleHeading">Members</div><div id="@1.CardPeopleName">Members</div><div id="@1.CardPeopleTree" class="gw-tree">Normal</div>
@@ -25,6 +25,8 @@ window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
   const api=window.webaI18n, doc=window.document;
   assert.equal(window.webaI18nCatalog.lookup.Board,'board');
   assert.equal(window.webaI18nCatalog.lookup.Refresh,'refresh');
+  assert.equal(window.webaI18nCatalog.lookup.Running,'running');
+  assert.equal(window.webaI18nCatalog.lookup.minutes,'minutes');
   for(const [text,key] of Object.entries({'Home':'home','Remove from Home':'home-board-remove','Remove this board from Home? The board itself is not deleted.':'home-board-remove-confirm','Drag only one board here to open it after login':'home-board-empty','Home board (opened after login)':'home-board-badge','Set as Home board (opened after login)':'set-selected-home','Unset as Home board':'unset-selected-home','Please select only one board':'select-only-one-board'}))assert.equal(window.webaI18nCatalog.lookup[text],key);
   await api.setLanguage('fi-FI');
   assert.equal(api.language,'fi');
@@ -45,6 +47,8 @@ window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
   assert.equal(doc.querySelector('.weba-public-description-caption').textContent,fi.description);
   assert.equal(doc.querySelector('.weba-public-empty').textContent,fi['no-results']);
   assert.equal(doc.getElementById('@1.GuestRetry').textContent,fi.refresh);
+  assert.equal(doc.querySelector('.weba-guest-running').textContent,fi.running);
+  assert.equal(doc.querySelector('.weba-guest-minutes').textContent,fi.minutes);
   assert.equal(doc.getElementById('@1.GuestSignIn').textContent,fi.login);
   assert.equal(doc.getElementById('@1.BoardVisibilityName').textContent,'Public','visibility board name stays literal');
   for(const [value,key] of [['Private','private'],['Signed-in users','instance'],['Public','public']]){

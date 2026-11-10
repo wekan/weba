@@ -797,8 +797,8 @@ Finnish/mobile layout. The complete local suite (66 host tests) and complete
 source/packaged browser suites pass. Final focused source/packaged checks and
 all-catalog translation checks also pass with the source Refresh caption.
 The guest surface covers kanban/core card fields and the comments/checklists
-below. Other child models, attachment downloads, additional views, source
-backgrounds/templates and full Meteor publications/actions remain pending.
+below. Remaining child/source-definition models, attachment downloads, additional views,
+source backgrounds/templates and full Meteor publications/actions remain pending.
 
 Selected guest cards now show comments and checklists through the same final
 public/card scope guards. Only the selected board/card's records are queried;
@@ -820,6 +820,30 @@ user-title translation, disabled state, stable idle DOM, live edits/deletion and
 privacy/recovery. The complete local suite (66 host tests) and complete source/
 packaged browser suites pass. These are native flat-entry and retained-name adapters, not the
 original Meteor child publications, rich-text viewer or checklist ordering model.
+
+Selected guest cards also show native text/number/date/checkbox fields, stored
+time entries and same-board subtask/dependency links. Legacy fields without a
+type read as text; unknown types are excluded. Checkbox fields stay disabled.
+Time displays the recorded minutes, notes, scoped author/record timestamp and
+running flag; it neither starts/stops timers nor invents elapsed totals. Fixed
+section/Running/minutes captions use source translations across 237 catalogs,
+while field names, values and notes stay literal.
+
+Relationship targets must be positive whole native IDs of live cards on the
+same public board. Their labels come from the current target, never a stale
+stored entry title/body; foreign, missing, soft-deleted and malformed targets
+are excluded. Archived live targets remain readable through explicit card links.
+Live renames update labels and a move to another/private board removes the link
+without disclosing its new title. Native projection tests cover typed/legacy
+values, stored/running time, invalid types/durations/targets, deleted/foreign
+scope, stale-label refusal and no writes. The guest browser exercises disabled
+fields, literal script-like values, stored durations, archived links/Back,
+translated labels versus user field names, live rename and private-target loss.
+The complete local suite (66 host tests) and complete source/packaged browser
+suites pass.
+These are existing card-level native models; source board-defined/admin-only
+field definitions, cross-board relationship/deposit models, duration aggregation,
+attachments/downloads and original Meteor actions remain separate work.
 
 First native root landing after login or full
 page reload now opens the current readable active Home board once. All Boards

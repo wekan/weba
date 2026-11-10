@@ -2,6 +2,26 @@
 
 This work adds the following features and fixes:
 
+- Extend selected-card guest reads with native text/number/date/checkbox fields,
+  legacy text fallback, stored time/running state and same-board subtask/
+  dependency links. Keep typed field checkboxes disabled and expose recorded
+  minutes/notes/scoped author/time without timer actions or invented elapsed
+  totals. Translate fixed headings and Running/minutes captions across 237
+  catalogs while retaining literal field names and values. Resolve relationship
+  labels from current live same-board targets, excluding stale stored titles/
+  bodies, foreign/deleted/missing/fractional targets and invalid fields/time.
+  Keep archived target links readable, refresh renamed labels and remove links
+  after a target moves away without revealing its private destination. Reuse
+  scoped retained-author reads without new mutation dispatch or store setup.
+  Verify native typed/legacy values, durations/running state, corrupt/foreign/
+  deleted scope and no writes, plus real browser disabled/literal/translated
+  fields, archived links/Back, live rename/private-target loss and prior guest
+  privacy/login. The complete local suite (66 host tests) and complete source/
+  packaged browser suites pass. Source board-defined/admin-field and cross-board/deposit models,
+  elapsed aggregation, attachments/downloads and original Meteor actions remain
+  pending.
+  Thanks to xet7.
+
 - Show native selected-card guest comments and checklists without new mutation
   targets. Scope child reads to the current public board/card, include only
   checklist items with a valid parent on that same card, and scope retained

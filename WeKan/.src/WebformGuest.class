@@ -148,6 +148,8 @@ Public Sub GuestSurface_Render()
   Dim comment As Collection
   Dim checklist As Collection
   Dim item As Collection
+  Dim relation As Collection
+  Dim kind As String
   If Not $data Then Return
   Print "<script>" & File.Load(".public/kanban.js") & "</script>"
   Print "<section class='weba-content weba-guest-board' data-view='Swimlanes' data-board='" & CStr($data["id"]) & "' data-board-color='" & Html($data["color"]) & "' data-editable='false' data-card-move='false'>"
@@ -165,6 +167,29 @@ Public Sub GuestSurface_Render()
         Print "<li data-entry-id='" & CStr(item["id"]) & "'><label><input type='checkbox' disabled" & If(item["done"], " checked", "") & "> " & Html(item["title"]) & "</label><p>" & Html(item["body"]) & "</p></li>"
       Next
       Print "</ul></section>"
+    Next
+    If $data["children"]["custom"].Count Then Print "<h3 class='weba-guest-fields-title'>Custom fields</h3>"
+    For Each item In $data["children"]["custom"]
+      Print "<div class='weba-guest-field weba-user-text' data-entry-id='" & CStr(item["id"]) & "'><strong>" & Html(item["title"]) & "</strong>"
+      If item["type"] = "checkbox" Then
+        Print "<input type='checkbox' disabled" & If(item["done"], " checked", "") & ">"
+      Else
+        Print "<p>" & Html(item["body"]) & "</p>"
+      Endif
+      Print "</div>"
+    Next
+    If $data["children"]["time"].Count Then Print "<h3 class='weba-guest-time-title'>Time tracking</h3>"
+    For Each item In $data["children"]["time"]
+      Print "<div class='weba-guest-time weba-user-text' data-entry-id='" & CStr(item["id"]) & "'><strong>" & Html(item["title"]) & "</strong> <span>" & Html(CStr(item["minutes"])) & "</span> <span class='weba-guest-minutes'>minutes</span><p>" & Html(item["body"]) & "</p>"
+      Print "<small>" & Html(item["author"]) & " · " & Html(Str(item["createdAt"])) & "</small>"
+      If Not item["done"] Then Print "<span class='weba-guest-running'>Running</span>"
+      Print "</div>"
+    Next
+    For Each kind In ["subtask", "dependency"]
+      If $data["children"][kind].Count Then Print If(kind = "subtask", "<h3 class='weba-guest-subtasks-title'>Subtasks</h3>", "<h3 class='weba-guest-dependencies-title'>Dependencies</h3>")
+      For Each relation In $data["children"][kind]
+        Print "<a class='weba-card-link weba-guest-relation weba-user-text' data-card-id='" & CStr(relation["targetId"]) & "' data-entry-id='" & CStr(relation["id"]) & "' href='/b/" & CStr($data["id"]) & "/board/" & CStr(relation["targetId"]) & "'>" & Html(relation["title"]) & "</a>"
+      Next
     Next
     Print "</section>"
   Endif

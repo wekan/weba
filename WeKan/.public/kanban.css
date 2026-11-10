@@ -252,3 +252,6 @@ body.weba-is-dragging:has(.weba-home-drag .home-remove-target.is-over) *{cursor:
 .weba-guest-children{width:100%;box-sizing:border-box;padding:12px;background:white;overflow-wrap:anywhere}
 .weba-guest-comment,.weba-guest-checklist{border-bottom:1px solid #ddd;padding:8px;white-space:pre-wrap}
 .weba-guest-checklist ul{list-style:none;padding-inline-start:8px}
+
+.weba-guest-field,.weba-guest-time{border-bottom:1px solid #ddd;padding:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+.weba-guest-relation{display:block;padding:8px;overflow-wrap:anywhere}
