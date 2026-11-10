@@ -159,9 +159,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   recorded there too. Native selected-card guest comments/checklists, scoped
   parent/author reads, disabled completion and live privacy are recorded there
   too. Native guest typed/legacy fields, stored/running time and fresh scoped
-  same-board relationship links are recorded there too. Remaining guest
-  attachments/downloads/additional views and source-defined child models, source
-  backgrounds/templates/global-sort fields, global visibility/editing controls,
+  same-board relationship links and live attachment metadata-only lists are
+  recorded there too. Remaining guest downloads/additional views, source-defined
+  child models, source backgrounds/templates/global-sort fields, global visibility/editing controls,
   first-edit membership, import/copy and original publication/ReportPages
   integration remain open.
 - Next board navigation parity: remaining public/instance UI, desktop multiple-card

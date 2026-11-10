@@ -843,7 +843,21 @@ The complete local suite (66 host tests) and complete source/packaged browser
 suites pass.
 These are existing card-level native models; source board-defined/admin-only
 field definitions, cross-board relationship/deposit models, duration aggregation,
-attachments/downloads and original Meteor actions remain separate work.
+public downloads and original Meteor actions remain separate work.
+
+Selected guest cards show live native attachment names and scoped author/time
+metadata, using a fixed-column query that never selects file bytes. Match both
+board and card and exclude exactly scoped soft-deletion markers; a missing legacy
+file table gives an empty list without store initialization. Reuse retained-author
+lookup with the file kind and exact file/board/card binding. Filenames stay escaped
+literal text beneath the translated Attachments heading; this list adds no
+preview, download, upload or mutation target. Unchanged snapshots retain the DOM;
+removal and permission loss clear the metadata with the existing guest surface.
+Native tests cover exact projection, foreign/deleted/card scope, provenance and
+no writes. Real browser tests cover literal filenames, translated headings,
+absent actions/bytes and live removal. The complete local suite (66 host tests)
+and complete source/packaged browser suites pass. Public download identity/
+assigned-only scope, native transfer policy and retained-file behavior remain pending separately.
 
 First native root landing after login or full
 page reload now opens the current readable active Home board once. All Boards

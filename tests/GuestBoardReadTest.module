@@ -8,6 +8,8 @@ Public Sub Main()
   Dim commentId As Integer
   Dim checklistId As Integer
   Dim itemId As Integer
+  Dim fileId As Integer
+  Dim deletedFile As Integer
   Dim deletedTarget As Integer
   Dim foreignCard As Integer
   Dim foreignChecklist As Integer
@@ -33,6 +35,7 @@ Public Sub Main()
   If db.Tables.Exist("kb_entries") Then Error.Raise("Missing-schema fixture was preinitialized")
   Session["username"] = ""
   data = GuestBoardRead.Load(CStr(pub), CStr(card))
+  If data["attachments"].Count Then Error.Raise("Missing file schema returned attachments")
   If data["children"]["comments"].Count Or data["children"]["checklists"].Count Then Error.Raise("Missing child schema returned content")
   If db.Tables.Exist("kb_entries") Or db.Tables.Exist("kb_files") Then Error.Raise("Guest read initialized mutable child schema")
   Session["username"] = "guest-owner"
@@ -64,12 +67,23 @@ Public Sub Main()
   db.Exec("INSERT INTO kb_entries (board_id,card_id,kind,amount,title) VALUES (&1,&2,'time',-1,'INVALID-TIME-CANARY')", pub, card)
   db.Exec("INSERT INTO kb_entries (board_id,card_id,kind,value_type,title) VALUES (&1,&2,'custom','unknown','INVALID-FIELD-CANARY')", pub, card)
   db.Exec("INSERT INTO kb_entries (board_id,card_id,kind,title,body) VALUES (&1,&2,'custom','Legacy text','Legacy value')", pub, card)
+  fileId = CardContent.AddFile(pub, card, "Guest <literal>.txt", "BLOB-BYTES-CANARY")
+  deletedFile = CardContent.AddFile(pub, card, "DELETED-FILE-CANARY", "DELETED-BYTES-CANARY")
+  AttachmentLifecycle.Delete(pub, card, deletedFile)
+  CardContent.AddFile(hidden, foreignCard, "FOREIGN-FILE-CANARY", "FOREIGN-BYTES-CANARY")
+  CardContent.AddFile(pub, archivedCard, "OTHER-CARD-FILE-CANARY", "OTHER-CARD-BYTES-CANARY")
+  db.Exec("UPDATE kb_files SET author='' WHERE id=&1", fileId)
+  RetiredAuthors.Remember("file", fileId, pub, card, "Retained <file author>")
   Session["username"] = ""
   before = Snapshot()
   data = GuestBoardRead.Load(CStr(pub))
   If data["cards"].Count <> 1 Or data["cardId"] <> 0 Then Error.Raise("Guest board archive filter failed")
+  If data.Exist("attachments") Then Error.Raise("Board grid fetched attachments")
   If data.Exist("children") Then Error.Raise("Board grid fetched selected-card children")
   data = GuestBoardRead.Load(CStr(pub), CStr(card))
+  If data["attachments"].Count <> 1 Then Error.Raise("Guest attachment board/card/live scope failed")
+  If data["attachments"][0]["id"] <> fileId Or data["attachments"][0]["filename"] <> "Guest <literal>.txt" Or data["attachments"][0]["author"] <> "Retained <file author>" Then Error.Raise("Guest attachment literal/provenance changed")
+  If data["attachments"][0].Count <> 4 Then Error.Raise("Guest attachment projection widened")
   If data["children"]["comments"].Count <> 1 Or data["children"]["checklists"].Count <> 1 Then Error.Raise("Guest child scope incorrect")
   If data["children"]["comments"][0]["author"] <> "Retained <author>" Then Error.Raise("Retained author missing")
   If data["children"]["checklists"][0]["items"].Count <> 1 Then Error.Raise("Foreign/orphan checklist child leaked")
@@ -81,10 +95,14 @@ Public Sub Main()
   If data["children"]["subtask"].Count <> 1 Or data["children"]["dependency"].Count <> 1 Then Error.Raise("Guest relationships leaked foreign or malformed targets")
   If data["children"]["subtask"][0]["title"] <> "Archived guest card" Or Not data["children"]["dependency"][0]["archived"] Then Error.Raise("Relationship labels were stale or archived target was lost")
   If InStr(JSON.Encode(data), "CANARY") Then Error.Raise("Guest projection leaked foreign/orphan content")
-  db.Exec("UPDATE kb_retired_authors SET board_id=&1 WHERE item_id=&2", hidden, commentId)
+  db.Exec("UPDATE kb_retired_authors SET board_id=&1 WHERE kind='file' AND item_id=&2", hidden, fileId)
+  data = GuestBoardRead.Load(CStr(pub), CStr(card))
+  If data["attachments"][0]["author"] <> "" Then Error.Raise("Foreign file provenance leaked")
+  db.Exec("UPDATE kb_retired_authors SET board_id=&1 WHERE kind='file' AND item_id=&2", pub, fileId)
+  db.Exec("UPDATE kb_retired_authors SET board_id=&1 WHERE kind='entry' AND item_id=&2", hidden, commentId)
   data = GuestBoardRead.Load(CStr(pub), CStr(card))
   If data["children"]["comments"][0]["author"] <> "" Then Error.Raise("Foreign retained author leaked")
-  db.Exec("UPDATE kb_retired_authors SET board_id=&1 WHERE item_id=&2", pub, commentId)
+  db.Exec("UPDATE kb_retired_authors SET board_id=&1 WHERE kind='entry' AND item_id=&2", pub, commentId)
   data = GuestBoardRead.Load(CStr(pub), CStr(archivedCard))
   If data["card"]["description"] <> "Retained archived body" Or Not data["card"]["archived"] Then Error.Raise("Explicit archived card not readable")
   For Each text In ["0", "01", "+1", "1.0", "1e0", "2147483648", CStr(inst), CStr(hidden)]
@@ -110,7 +128,7 @@ Public Sub Main()
   Try GuestBoardRead.Load(CStr(pub), CStr(archivedCard))
   denied = Error
   If Not denied Then Error.Raise("Public-to-private transition retained guest details")
-  Print "Anonymous projection: typed fields/stored time/current-target and comment/checklist/parent/author scope, missing-schema/no-write reads, public-only scope, canonical IDs, no synthetic principal/writes, active vs explicit archived card scope, current public moved destination/private refusal and live permission revocation passed"
+  Print "Anonymous projection: live metadata-only attachment scope/provenance, typed fields/stored time/current-target and comment/checklist/parent/author scope, missing-schema/no-write reads, public-only scope, canonical IDs, no synthetic principal/writes, active vs explicit archived card scope, current public moved destination/private refusal and live permission revocation passed"
 End
 
 Private Function Snapshot() As String
@@ -120,7 +138,7 @@ Private Function Snapshot() As String
   Dim r As Result
   Dim row As Collection
   Dim field As ResultField
-  For Each name In ["kb_boards", "kb_cards", "kb_lists", "kb_members", "kb_board_visibility", "kb_activity", "account_sessions", "kb_entries", "kb_retired_authors", "kb_deleted_items"]
+  For Each name In ["kb_boards", "kb_cards", "kb_lists", "kb_members", "kb_board_visibility", "kb_activity", "account_sessions", "kb_entries", "kb_retired_authors", "kb_deleted_items", "kb_files", "kb_attachment_deletions", "kb_attachment_data", "kb_attachment_history"]
     rows = New Variant[]
     r = WebDatabase.OpenConnection().Find(name, "TRUE ORDER BY 1")
     For Each r

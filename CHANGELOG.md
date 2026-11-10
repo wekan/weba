@@ -2,6 +2,21 @@
 
 This work adds the following features and fixes:
 
+- Show live selected-card guest attachment names and scoped author/time metadata
+  through a fixed-column read that excludes file bytes. Match the current public
+  board/card and exact soft-deletion scope, preserve empty missing-schema reads
+  without initializing stores, and bind retained authors to file kind/ID/board/
+  card. Render escaped literal filenames beneath the existing translated
+  Attachments heading, with no preview/download/upload or mutation target.
+  Retain idle DOM and remove metadata live after deletion or access loss. Verify
+  native projection/foreign/deleted/card/provenance/no-write guards and real
+  browser literal/translated labels, absent actions/bytes and live removal.
+  The complete local suite (66 host tests) and complete source/packaged browser
+  suites pass.
+  Public download identity/assigned-only scope, transfer policy, retained-file
+  behavior, storage/cover models and original Meteor file actions remain open.
+  Thanks to xet7.
+
 - Extend selected-card guest reads with native text/number/date/checkbox fields,
   legacy text fallback, stored time/running state and same-board subtask/
   dependency links. Keep typed field checkboxes disabled and expose recorded

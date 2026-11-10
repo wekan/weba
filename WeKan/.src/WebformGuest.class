@@ -191,6 +191,10 @@ Public Sub GuestSurface_Render()
         Print "<a class='weba-card-link weba-guest-relation weba-user-text' data-card-id='" & CStr(relation["targetId"]) & "' data-entry-id='" & CStr(relation["id"]) & "' href='/b/" & CStr($data["id"]) & "/board/" & CStr(relation["targetId"]) & "'>" & Html(relation["title"]) & "</a>"
       Next
     Next
+    If $data["attachments"].Count Then Print "<h3 class='weba-guest-attachments-title'>Attachments</h3>"
+    For Each item In $data["attachments"]
+      Print "<article class='weba-guest-attachment weba-user-text' data-file-id='" & CStr(item["id"]) & "'><strong>" & Html(item["filename"]) & "</strong><small>" & Html(item["author"]) & " · " & Html(Str(item["createdAt"])) & "</small></article>"
+    Next
     Print "</section>"
   Endif
   Print "<div class='weba-layout' hidden>"

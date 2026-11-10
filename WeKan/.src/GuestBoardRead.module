@@ -97,6 +97,7 @@ Public Function Load(boardText As String, Optional cardText As String) As Collec
     If Not r.Available Then Error.Raise("Card not accessible")
     data["card"] = Card(r)
     data["children"] = Children(db, boardId, cardId)
+    data["attachments"] = Attachments(db, boardId, cardId)
   Endif
   RequirePublic(boardId)
   r = db.Find("kb_boards", "id=&1", boardId)
@@ -245,11 +246,31 @@ Private Function Children(db As Connection, boardId As Integer, cardId As Intege
   Return data
 End
 
-Private Function Author(db As Connection, boardId As Integer, cardId As Integer, itemId As Integer, liveAuthor As String) As String
+Private Function Author(db As Connection, boardId As Integer, cardId As Integer, itemId As Integer, liveAuthor As String, Optional kind As String = "entry") As String
   Dim r As Result
   If liveAuthor Then Return liveAuthor
   If Not db.Tables.Exist("kb_retired_authors") Then Return ""
-  r = db.Find("kb_retired_authors", "kind='entry' AND item_id=&1 AND board_id=&2 AND card_id=&3", itemId, boardId, cardId)
+  r = db.Find("kb_retired_authors", "kind=&1 AND item_id=&2 AND board_id=&3 AND card_id=&4", kind, itemId, boardId, cardId)
   If r.Available Then Return CStr(r!display_name)
   Return ""
+End
+
+' File names/provenance only: no blob column or download authority in this DTO.
+Private Function Attachments(db As Connection, boardId As Integer, cardId As Integer) As Variant[]
+  Dim rows As New Variant[]
+  Dim row As Collection
+  Dim r As Result
+  Dim liveFiles As String = "TRUE"
+  If Not db.Tables.Exist("kb_files") Then Return rows
+  If db.Tables.Exist("kb_attachment_deletions") Then liveFiles = AttachmentLifecycle.LiveSql("kb_files")
+  r = db.Exec("SELECT id,filename,author,created_at FROM kb_files WHERE board_id=&1 AND card_id=&2 AND " & liveFiles & " ORDER BY id", boardId, cardId)
+  For Each r
+    row = New Collection
+    row["id"] = r!id
+    row["filename"] = CStr(r!filename)
+    row["author"] = Author(db, boardId, cardId, r!id, CStr(r!author), "file")
+    row.Add(r!created_at, "createdAt")
+    rows.Add(row)
+  Next
+  Return rows
 End
