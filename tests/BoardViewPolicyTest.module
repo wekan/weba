@@ -2,6 +2,9 @@ Public Sub Main()
   Dim boardId As Integer
   Dim data As Collection
   Dim guest As Collection
+  Dim baseline As Collection
+  Dim draft As Collection
+  Dim changes As Collection
   Dim db As Connection
   Dim denied As Boolean
   Dim before As String
@@ -31,6 +34,17 @@ Public Sub Main()
   Try BoardViewPolicy.Save(boardId, JSON.Decode("{\"boardViewSettings\":{\"board-view-table\":{\"showOnPublic\":false}}}"))
   denied = Error
   If Not denied Or Frame(boardId) <> before Then Error.Raise("Default hide was not atomically refused")
+  baseline = BoardViewPolicy.Settings(boardId)
+  draft = BoardViewPolicy.Snapshot(baseline)
+  If BoardViewPolicy.Difference(baseline, draft).Count Then Error.Raise("Clean native draft produced writes")
+  draft["boardViewSettings"]["board-view-lists"]["showOnPublic"] = False
+  changes = BoardViewPolicy.Difference(baseline, draft)
+  If changes.Count <> 1 Or changes["boardViewSettings"].Count <> 1 Then Error.Raise("Draft delta widened to untouched settings")
+  BoardViewPolicy.Save(boardId, JSON.Decode("{\"defaultPrivateBoardView\":\"board-view-table\"}"))
+  data = BoardViewPolicy.Save(boardId, changes)
+  If data["defaultPrivateBoardView"] <> "board-view-table" Or data["boardViewSettings"]["board-view-lists"]["showOnPublic"] Then Error.Raise("Draft delta overwrote unrelated live changes")
+  BoardViewPolicy.Save(boardId, JSON.Decode("{\"defaultPrivateBoardView\":\"board-view-cal\",\"boardViewSettings\":{\"board-view-lists\":{\"showOnPublic\":true}}}"))
+  before = Frame(boardId)
   SignIn("view-reader")
   BoardViewPolicy.Settings(boardId)
   Try BoardViewPolicy.Save(boardId, JSON.Decode("{\"defaultPublicBoardView\":\"board-view-lists\"}"))

@@ -6,6 +6,15 @@ Private $publicData As Collection
 Private $publicState As String
 Private $publicPage As Integer = 1
 Private $publicSearch As String
+Private $viewPolicyBoard As Integer
+Private $viewPolicyActor As String
+Private $viewPolicyGeneration As Long
+Private $viewPolicyContext As String
+Private $viewPolicyBase As Collection
+Private $viewPolicyDraft As Collection
+Private $viewPolicyOrder As String[]
+Private $viewPolicySelected As String
+Private $viewPolicyLoading As Boolean
 Private $visibilityBoard As Integer
 Private $visibilityActor As String
 Private $visibilityGeneration As Long
@@ -224,6 +233,7 @@ Public Sub BoardPoll_Timer()
   ValidateMarkdownPolicy()
   ValidateAttachmentAllowance()
   ValidateBoardVisibility()
+  ValidateBoardViews()
   ValidateBoardCopy()
   ValidateDeleteListPanel()
   RefreshDeletedListPanel()
@@ -919,6 +929,7 @@ End
 
 Private Sub UpdateHeader()
   ValidateBoardVisibility()
+  ValidateBoardViews()
   Dim routeSection As String
   Dim routeAck As New Collection
   Dim b As Result
@@ -1048,6 +1059,7 @@ End
 
 Public Sub CloseEditor_Click()
   CloseBoardVisibility_Click()
+  CloseBoardViews_Click()
   Dim hadCard As Boolean = $card > 0
   ClearCardEditor()
   If hadCard Then
@@ -1331,6 +1343,8 @@ Private Sub OpenContext(kind As String, itemId As Integer, boardId As Integer)
   ContextTitle.Text = r!title
   ContextMenu.Show()
   CloseBoardVisibility_Click()
+  CloseBoardViews_Click()
+  ContextBoardViews.Visible = kind = "board" And BoardAccess.CanManageViewPolicy(boardId)
   ContextVisibility.Visible = kind = "board" And (manager Or WebDatabase.GetIsAdmin(WebIdentity.Username))
   ContextWorkspace.Visible = kind = "board"
   ContextMembers.Visible = kind = "board" Or kind = "card"
@@ -4304,6 +4318,7 @@ Public Sub ContextVisibility_Click()
   If $contextKind <> "board" Or $contextId <> $contextBoard Then Error.Raise("Board not accessible")
   data = BoardVisibility.BoardSettings($contextBoard)
   CloseBoardVisibility_Click()
+  CloseBoardViews_Click()
   $visibilityBoard = $contextBoard
   $visibilityActor = WebIdentity.Username
   $visibilityGeneration = WebDatabase.SessionGeneration($visibilityActor)
@@ -4342,6 +4357,7 @@ Private Sub ValidateBoardVisibility()
   Endif
 Catch
   CloseBoardVisibility_Click()
+  CloseBoardViews_Click()
 End
 
 Public Sub SaveBoardVisibility_Click()
@@ -4351,6 +4367,7 @@ Public Sub SaveBoardVisibility_Click()
   If BoardPermission.Index < 0 Or BoardPermission.Index > 2 Then Error.Raise("Unknown board permission")
   BoardVisibility.SavePermission(id, ["private", "instance", "public"][BoardPermission.Index])
   CloseBoardVisibility_Click()
+  CloseBoardViews_Click()
   Notice.Text = "Saved"
   RefreshTree()
 Catch
@@ -4363,6 +4380,7 @@ Public Sub PublicBoards_Click()
   ContextMenu.Hide()
   CloseAction_Click()
   CloseBoardVisibility_Click()
+  CloseBoardViews_Click()
   CloseStaleMembers()
   CloseDeleteList_Click()
   CloseDeletedLists_Click()
@@ -4432,4 +4450,202 @@ Public Sub NextPublicPage_Click()
   If $view <> "Public" Or Not $publicData Then Return
   If $publicPage < $publicData["pages"] Then Inc $publicPage
   RefreshPublic(True)
+End
+
+Private Function BoundBoardViews() As Collection
+  If Not BoardViewsPanel.Visible Or $viewPolicyBoard <= 0 Or Not $viewPolicyDraft Then Error.Raise("Board not accessible")
+  If LandingContext() <> $viewPolicyContext Or WebIdentity.Username <> $viewPolicyActor Or WebDatabase.SessionGeneration($viewPolicyActor) <> $viewPolicyGeneration Then Error.Raise("Sign in required")
+  If Not BoardAccess.CanManageViewPolicy($viewPolicyBoard) Then Error.Raise("Board management required")
+  Return BoardViewPolicy.Settings($viewPolicyBoard)
+End
+
+Private Sub FillBoardViews()
+  Dim definitions As Collection = JSON.Decode(File.Load(".public/board-views.json"))
+  Dim english As Collection = JSON.Decode(File.Load(".public/i18n/en.json"))
+  Dim captions As New Collection
+  Dim labels As New String[]
+  Dim item As Collection
+  Dim key As String
+  $viewPolicyLoading = True
+  $viewPolicyOrder = New String[]
+  For Each item In definitions["views"]
+    captions[item["view"]] = english[item["labelKey"]]
+    If Not captions[item["view"]] Then captions[item["view"]] = item["view"]
+  Next
+  For Each key In $viewPolicyDraft["boardViewOrder"]
+    $viewPolicyOrder.Add(key)
+    labels.Add(captions[key])
+  Next
+  BoardViewChoice.List = labels
+  BoardDefaultPublic.List = labels
+  BoardDefaultPrivate.List = labels
+  BoardViewChoice.Index = $viewPolicyOrder.Find($viewPolicySelected)
+  BoardDefaultPublic.Index = $viewPolicyOrder.Find($viewPolicyDraft["defaultPublicBoardView"])
+  BoardDefaultPrivate.Index = $viewPolicyOrder.Find($viewPolicyDraft["defaultPrivateBoardView"])
+  BoardShowPublic.Value = $viewPolicyDraft["boardViewSettings"][$viewPolicySelected]["showOnPublic"]
+  BoardShowPrivate.Value = $viewPolicyDraft["boardViewSettings"][$viewPolicySelected]["showOnPrivate"]
+  BoardViewUp.Enabled = BoardViewChoice.Index > 0
+  BoardViewDown.Enabled = BoardViewChoice.Index < $viewPolicyOrder.Max
+  $viewPolicyLoading = False
+Catch
+  $viewPolicyLoading = False
+  Error.Propagate()
+End
+
+Public Sub ContextBoardViews_Click()
+  Dim id As Integer = $contextBoard
+  Dim data As Collection
+  If Not ContextMenu.Visible Or $contextKind <> "board" Or $contextId <> id Or Not BoardAccess.CanManageViewPolicy(id) Then Error.Raise("Board management required")
+  data = BoardViewPolicy.Settings(id)
+  CloseBoardVisibility_Click()
+  CloseBoardViews_Click()
+  $viewPolicyBoard = id
+  $viewPolicyActor = WebIdentity.Username
+  $viewPolicyGeneration = WebDatabase.SessionGeneration($viewPolicyActor)
+  $viewPolicyContext = LandingContext()
+  $viewPolicyBase = data
+  $viewPolicyDraft = BoardViewPolicy.Snapshot(data)
+  $viewPolicySelected = $viewPolicyDraft["boardViewOrder"][0]
+  BoardViewsName.Text = WorkspaceStore.Record(id, "board", id)!title
+  FillBoardViews()
+  ContextMenu.Hide()
+  BoardViewsPanel.Show()
+Catch
+  BoardViewsError(Error.Text)
+End
+
+Public Sub CloseBoardViews_Click()
+  BoardViewsPanel.Hide()
+  BoardViewsName.Text = ""
+  BoardViewChoice.Clear()
+  BoardDefaultPublic.Clear()
+  BoardDefaultPrivate.Clear()
+  BoardShowPublic.Value = False
+  BoardShowPrivate.Value = False
+  $viewPolicyBoard = 0
+  $viewPolicyActor = ""
+  $viewPolicyGeneration = 0
+  $viewPolicyContext = ""
+  $viewPolicyBase = Null
+  $viewPolicyDraft = Null
+  $viewPolicyOrder = Null
+  $viewPolicySelected = ""
+End
+
+Private Sub ValidateBoardViews()
+  Dim data As Collection
+  If ContextMenu.Visible Then ContextBoardViews.Visible = $contextKind = "board" And BoardAccess.CanManageViewPolicy($contextBoard)
+  If Not BoardViewsPanel.Visible Then Return
+  data = BoundBoardViews()
+  BoardViewsName.Text = WorkspaceStore.Record($viewPolicyBoard, "board", $viewPolicyBoard)!title
+  If BoardViewPolicy.Difference($viewPolicyBase, $viewPolicyDraft).Count = 0 Then
+    If JSON.Encode(data) <> JSON.Encode($viewPolicyBase) Then
+      $viewPolicyBase = data
+      $viewPolicyDraft = BoardViewPolicy.Snapshot(data)
+      FillBoardViews()
+    Endif
+  Endif
+Catch
+  CloseBoardViews_Click()
+End
+
+Public Sub BoardViewChoice_Click()
+  If $viewPolicyLoading Then Return
+  BoundBoardViews()
+  If BoardViewChoice.Index < 0 Or BoardViewChoice.Index > $viewPolicyOrder.Max Then Error.Raise("Unknown board view")
+  $viewPolicySelected = $viewPolicyOrder[BoardViewChoice.Index]
+  FillBoardViews()
+Catch
+  BoardViewsError(Error.Text)
+End
+
+Private Sub StageBoardViewShown(side As String, shown As Boolean)
+  BoundBoardViews()
+  If Not shown And $viewPolicyDraft["default" & side & "BoardView"] = $viewPolicySelected Then
+    FillBoardViews()
+    Return
+  Endif
+  $viewPolicyDraft["boardViewSettings"][$viewPolicySelected]["showOn" & side] = shown
+End
+
+Public Sub BoardShowPublic_Click()
+  If $viewPolicyLoading Then Return
+  StageBoardViewShown("Public", BoardShowPublic.Value)
+Catch
+  BoardViewsError(Error.Text)
+End
+
+Public Sub BoardShowPrivate_Click()
+  If $viewPolicyLoading Then Return
+  StageBoardViewShown("Private", BoardShowPrivate.Value)
+Catch
+  BoardViewsError(Error.Text)
+End
+
+Private Sub StageBoardViewDefault(side As String, index As Integer)
+  Dim key As String
+  BoundBoardViews()
+  If index < 0 Or index > $viewPolicyOrder.Max Then Error.Raise("Unknown board view")
+  key = $viewPolicyOrder[index]
+  $viewPolicyDraft["default" & side & "BoardView"] = key
+  $viewPolicyDraft["boardViewSettings"][key]["showOn" & side] = True
+  FillBoardViews()
+End
+
+Public Sub BoardDefaultPublic_Click()
+  If $viewPolicyLoading Then Return
+  StageBoardViewDefault("Public", BoardDefaultPublic.Index)
+Catch
+  BoardViewsError(Error.Text)
+End
+
+Public Sub BoardDefaultPrivate_Click()
+  If $viewPolicyLoading Then Return
+  StageBoardViewDefault("Private", BoardDefaultPrivate.Index)
+Catch
+  BoardViewsError(Error.Text)
+End
+
+Private Sub MoveBoardView(step As Integer)
+  Dim index As Integer
+  Dim key As String
+  BoundBoardViews()
+  index = $viewPolicyOrder.Find($viewPolicySelected)
+  If index < 0 Or index + step < 0 Or index + step > $viewPolicyOrder.Max Then Return
+  key = $viewPolicyOrder[index + step]
+  $viewPolicyOrder[index + step] = $viewPolicySelected
+  $viewPolicyOrder[index] = key
+  $viewPolicyDraft["boardViewOrder"] = $viewPolicyOrder
+  FillBoardViews()
+End
+
+Public Sub BoardViewUp_Click()
+  MoveBoardView(-1)
+Catch
+  BoardViewsError(Error.Text)
+End
+
+Public Sub BoardViewDown_Click()
+  MoveBoardView(1)
+Catch
+  BoardViewsError(Error.Text)
+End
+
+Public Sub SaveBoardViews_Click()
+  Dim changes As Collection
+  BoundBoardViews()
+  changes = BoardViewPolicy.Difference($viewPolicyBase, $viewPolicyDraft)
+  If changes.Count > 0 Then BoardViewPolicy.Save($viewPolicyBoard, changes)
+  CloseBoardViews_Click()
+  Notice.Text = "Saved"
+Catch
+  BoardViewsError(Error.Text)
+End
+
+Private Sub BoardViewsError(message As String)
+  If ["Board not accessible", "Sign in required", "Board management required", "Cannot hide the default board view", "Board owner changed", "Board view settings changed", "Unknown board view"].Find(message) >= 0 Then
+    Notice.Text = message
+  Else
+    Notice.Text = "Error"
+  Endif
 End

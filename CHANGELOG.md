@@ -2,6 +2,25 @@
 
 This work adds the following features and fixes:
 
+- Add a bound native manager editor for all 40 board views: public/private show
+  flags, separate defaults and up/down ordering, with retained per-view drafts.
+  Keep defaults shown, save only changes from the baseline and preserve unrelated
+  concurrent settings. Refresh clean forms live and retain dirty forms; guard
+  every event/save by current readable board, raw-admin authority, actor/session
+  generation and navigation context. Clear private state/selectors on close or
+  revocation and refuse forged opens, replayed saves, navigation and demotion.
+  Integrate anchored popup/Escape/mobile lifecycle, literal board titles and
+  source captions across 229 keys/237 catalogs. Keep failed writes atomic with
+  opaque errors and retained drafts for retry; verify native delta-only merge,
+  both visibility sides/defaults/order directions, live guest changes, clean/
+  dirty refresh, fault/retry and readonly/stale/translated/mobile browser cases.
+  The complete local suite (69 host tests) and complete source/packaged browser
+  suites pass against final code.
+  This is a native per-view batch form. Signed-in view-policy rendering, instance
+  feature filtering, drag ordering/original popup callbacks, policy copy/import
+  and remaining original source integration remain pending.
+  Thanks to xet7.
+
 - Add authenticated GET/PUT `/api/boards/:boardId/boardViewSettings` with the
   source normalized 40-view snapshot and partial-write rules. Keep whole-board
   GET raw-role scope separate from active raw-isAdmin/site-admin PUT authority;

@@ -12,7 +12,14 @@ Public Sub Main()
   Session["username"] = "rest-other"
   Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
   db = WebDatabase.OpenConnection()
-  If mode = "seed" Then
+  If mode = "seed-views" Then
+    WebDatabase.Register("rest-view-reader", Env["WEBA_TEST_PASSWORD"])
+    id = KanbanStore.AddBoard("Public")
+    BoardAccess.SetMember(id, "rest-member", "board-admin")
+    BoardAccess.SetMember(id, "rest-view-reader", "read-only")
+    data["cardId"] = KanbanStore.SaveCard(id, 0, "VIEW-CARD-CANARY", "Literal board body", "Default", "Todo", "", "", "")
+    BoardVisibility.SaveBoard(id, "public", False)
+  Else If mode = "seed" Then
     WebDatabase.Register("rest-visibility-reader", Env["WEBA_TEST_PASSWORD"])
     WebDatabase.Register("rest-visibility-visitor", Env["WEBA_TEST_PASSWORD"])
     id = KanbanStore.AddBoard("Public")
@@ -21,6 +28,12 @@ Public Sub Main()
     data["cardId"] = KanbanStore.SaveCard(id, 0, "VISIBILITY-CARD-CANARY", "Literal board body", "Default", "Todo", "", "", "")
     BoardVisibility.SaveBoard(id, "private", True)
   Endif
+  If mode = "view-fail" Then db.Exec("CREATE TRIGGER view_editor_fail BEFORE UPDATE ON kb_board_view_policy BEGIN SELECT RAISE(ABORT,'SQL-PRIVATE-EDITOR-CANARY'); END")
+  If mode = "view-retry" Then db.Exec("DROP TRIGGER IF EXISTS view_editor_fail")
+  If mode = "views" Then
+    BoardViewPolicy.Save(id, JSON.Decode(Env["WEBA_VIEW_POLICY"], True))
+  Endif
+  If mode = "view-raw" Then data["viewPolicy"] = BoardViewPolicy.Settings(id)
   If mode = "public" Or mode = "private" Or mode = "instance" Then BoardVisibility.SavePermission(id, mode)
   If mode = "demote" Then BoardAccess.SetMember(id, "rest-member", "read-only")
   If mode = "manager" Then BoardAccess.SetMember(id, "rest-member", "board-admin")

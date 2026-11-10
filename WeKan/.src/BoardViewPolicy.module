@@ -321,3 +321,25 @@ Private Function ApiError(status As Integer, message As String) As Collection
   result["data"] = data
   Return result
 End
+
+' Batch native editors save only user changes, preserving unrelated live writes.
+Public Function Difference(baseline As Collection, draft As Collection) As Collection
+  Dim result As New Collection
+  Dim table As New Collection
+  Dim row As Collection
+  Dim key As String
+  Dim field As String
+  For Each field In ["defaultPublicBoardView", "defaultPrivateBoardView"]
+    If baseline[field] <> draft[field] Then result[field] = draft[field]
+  Next
+  For Each key In Keys()
+    row = New Collection
+    For Each field In ["showOnPublic", "showOnPrivate"]
+      If baseline["boardViewSettings"][key][field] <> draft["boardViewSettings"][key][field] Then row[field] = draft["boardViewSettings"][key][field]
+    Next
+    If row.Count Then table[key] = row
+  Next
+  If table.Count Then result["boardViewSettings"] = table
+  If JSON.Encode(baseline["boardViewOrder"]) <> JSON.Encode(draft["boardViewOrder"]) Then result["boardViewOrder"] = draft["boardViewOrder"]
+  Return result
+End

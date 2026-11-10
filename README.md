@@ -818,7 +818,7 @@ and real guest browser checks cover all four views, mounted-view/card history,
 keyboard/new-tab, dated/undated month navigation, idle DOM preservation,
 translated controls/columns versus literal card titles, mobile, forged commands
 and privacy/recovery. The complete local suite (66 host tests) and focused
-source/packaged guest browser suites pass. Manager view-policy editing/REST,
+source/packaged guest browser suites pass. Original view-policy popup/drag callbacks,
 instance feature controls, remaining guest views, richer date/calendar models
 and original Meteor actions
 remain pending.
@@ -849,7 +849,7 @@ late owner/principal loss and purge rollback; 188 native cases match unchanged
 source snapshot/request helpers. Guest browsers cover live hidden/order/default/
 reload/fallback behavior with existing navigation and privacy checks. The full
 local suite (66 host tests) and focused source/packaged guest suites pass. Manager
-editing UI, signed-in view consumption, instance features, policy copy/import
+drag/original popup interactions, signed-in view consumption, instance features, policy copy/import
 and full original Meteor actions remain pending.
 
 The source-shaped REST endpoints are
@@ -884,9 +884,35 @@ SQL IDs, implicit native owner membership, bearer-to-source user context/cache a
 no-op security logging are explicit test adapters. A real signed-in browser also
 verifies its UI cookie cannot authenticate this REST route. The full local suite
 (69 host tests), focused source/packaged API checks and focused source/packaged
-guest browser suites pass. Manager UI, signed-in
+guest browser suites pass. Original popup/drag interactions, signed-in
 view rendering, instance settings, policy copy/import and full custom-role/OAuth/
 DDP/eventlog integration remain pending.
+
+The board context menu offers a native Board View editor to current readable
+board managers, using the raw-admin authority shared with settings PUT. Pick any
+of the 40 views to edit its public/private show flags, choose separate defaults
+and move the selected view up/down. A default stays shown; selecting a new default
+shows it on that side. Keep changes across view selections in a private draft,
+then Save or close/Escape. Saving a clean form is a no-op. Only differences from
+the opening baseline are sent to the policy service, so untouched concurrent
+settings survive. Clean forms refresh live; dirty forms retain the whole draft
+until save/cancel, and current-default conflicts are refused by the locked save.
+
+The form binds its board, actor, session generation and navigation context on
+open. Every event/save checks fresh read/manage scope; stale/replayed/forged
+commands cannot replace that private binding. Navigation, context changes,
+Escape/close and live demotion clear selectors and private state. Unexpected
+errors show a generic translated Error without internal SQL text; failed writes
+retain the draft and allow retry. Fixed labels/options use source translations
+(229 keys/237 catalogs), while board names stay literal. Native delta/merge tests
+and real browser checks cover all 40 choices, both flag sides, defaults and order
+directions, idle/clean/dirty behavior, concurrent updates, guest propagation,
+failed save/retry, readonly/stale/navigation/demotion denial and Finnish/mobile
+popup behavior. The complete local suite (69 host tests) and complete source/
+packaged browser suites pass. The native form batches edits across view selections. The original popup grid,
+signed-in view-policy rendering, instance feature filtering, drag/
+original popup callbacks, policy copy/import and full source integration remain
+pending.
 
 Selected guest cards now show comments and checklists through the same final
 public/card scope guards. Only the selected board/card's records are queried;

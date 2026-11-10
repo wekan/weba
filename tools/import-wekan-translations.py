@@ -51,6 +51,11 @@ aliases = {
 texts = {'Running', 'minutes', 'Board', 'No results', 'Private', 'Signed-in users', 'Public', 'Remove from Home', 'Remove this board from Home? The board itself is not deleted.', 'Drag only one board here to open it after login', 'Home board (opened after login)', 'Please select only one board', 'Unlimited', 'Maximum file size', 'Blocked', 'GB', 'MB', 'Bytes', 'Board administrator', 'Normal', 'Normal (assigned cards only)',
          'No comments', 'Comment only', 'Comment (assigned cards only)',
          'Worker', 'Read only', 'Read (assigned cards only)', 'Language', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'}
+# The board view picker uses all source captions, with stable server-side IDs.
+for view in json.loads((root / 'WeKan/.public/board-views.json').read_text())['views']:
+    caption = english[view['labelKey']]
+    texts.add(caption)
+    aliases[caption] = view['labelKey']
 controls = set()
 for path in (root / 'WeKan/.src').glob('*.webform'):
     current = ''
@@ -83,6 +88,8 @@ for text in sorted(texts):
 controls -= {'AccountToggle', 'PageTitle', 'PaneTitle', 'Status', 'Boards', 'WebLabelVersion', 'ContextTitle', 'ActionTitle', 'DetailsTitle'}
 controls.add('MemberRole')
 controls.add('BoardPermission')
+controls.update({'BoardViewChoice', 'BoardDefaultPublic', 'BoardDefaultPrivate'})
+controls.discard('BoardViewsName')
 controls.discard('BoardVisibilityName')
 controls.add('Notice')
 controls.update({'NativeUploadMode', 'NativeDownloadMode', 'ApiUploadMode', 'ApiDownloadMode'})

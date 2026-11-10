@@ -5,7 +5,7 @@ const {JSDOM} = require('jsdom');
 const publicDir=path.join(__dirname,'../WeKan/.public');
 const dom = new JSDOM(`<div id="@1.LanguageSelector"><select data-weba-language></select></div>
 <span class="weba-guest-running">Running</span><span class="weba-guest-minutes">minutes</span><div class="weba-user-text">Running</div><button id="@1.GuestRetry">Refresh</button><button id="@1.GuestSignIn">Login</button><div id="@1.WebLabelUser">Username</div><button id="@1.WebButtonLogin">Login</button>
-<button id="@1.GuestSwimlanes">Swimlanes</button><button id="@1.GuestLists">Lists</button><button id="@1.GuestTable">Table</button><button id="@1.GuestCalendar">Calendar</button><div id="@1.PageTitle">Boards</div><div id="@1.ContextTitle">Boards</div><div id="@1.ActionTitle">Boards</div><div id="@1.DetailsTitle">Boards</div><input id="@1.WebTextName" value="Username">
+<button id="@1.GuestSwimlanes">Swimlanes</button><button id="@1.GuestLists">Lists</button><button id="@1.GuestTable">Table</button><button id="@1.GuestCalendar">Calendar</button><div id="@1.BoardViewsName" class="weba-user-text">Public</div><div id="@1.BoardDefaultPublicLabel">Default on Public Board</div><div id="@1.BoardShowPublic">Show on Public Board</div><div id="@1.BoardViewChoice"><select><option value="Table">Table</option><option value="board-view-dashboard">Dashboard</option></select></div><div id="@1.PageTitle">Boards</div><div id="@1.ContextTitle">Boards</div><div id="@1.ActionTitle">Boards</div><div id="@1.DetailsTitle">Boards</div><input id="@1.WebTextName" value="Username">
 <div id="@1.BoardVisibilityName" class="weba-user-text">Public</div><div id="@1.BoardPermission"><select><option value="Public">Public</option><option value="Private">Private</option><option value="Signed-in users">Signed-in users</option></select></div><div id="@1.MemberBoardName">Members</div><div id="@1.MembersTree" class="gw-tree">Normal</div><div id="@1.MemberRole"><select><option value="Read only">Read only</option></select></div>
 <div id="@1.CardPeopleHeading">Members</div><div id="@1.CardPeopleName">Members</div><div id="@1.CardPeopleTree" class="gw-tree">Normal</div>
 <div id="@1.CardPersonChoice"><select><option value="Normal">Normal</option></select></div><button id="@1.AddCardPerson">Add</button>
@@ -50,6 +50,10 @@ window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
   assert.equal(doc.querySelector('.weba-guest-running').textContent,fi.running);
   assert.equal(doc.querySelector('.weba-guest-minutes').textContent,fi.minutes);
   assert.equal(doc.getElementById('@1.GuestSignIn').textContent,fi.login);
+  assert.equal(doc.getElementById('@1.BoardViewsName').textContent,'Public');
+  assert.equal(doc.getElementById('@1.BoardDefaultPublicLabel').textContent,fi['default-on-public-board']);
+  assert.equal(doc.getElementById('@1.BoardShowPublic').textContent,fi['show-on-public-board']);
+  assert.equal(doc.querySelector('[id="@1.BoardViewChoice"] option[value="Table"]').textContent,fi['board-view-table']);
   for(const [name,text] of [['GuestSwimlanes','Swimlanes'],['GuestLists','Lists'],['GuestTable','Table'],['GuestCalendar','Calendar']])assert.equal(doc.getElementById('@1.'+name).textContent,api.t(text));
   assert.equal(doc.getElementById('@1.BoardVisibilityName').textContent,'Public','visibility board name stays literal');
   for(const [value,key] of [['Private','private'],['Signed-in users','instance'],['Public','public']]){

@@ -208,6 +208,54 @@
       Text = ("Delete")
     }
   }
+  { BoardViewsPanel WebContainer
+    Class = "weba-action-panel"
+    Arrangement = Arrange.Vertical
+    Width = "340px"
+    Visible = False
+    Ignore = True
+    Spacing = True
+    { CloseBoardViews WebButton
+      Class = "weba-icon-only weba-popup-close fa fa-times-thin"
+      Tooltip = ("Close")
+    }
+    { BoardViewsHeading WebLabel
+      Text = ("Board View")
+    }
+    { BoardViewsName WebLabel
+      Class = "weba-user-text"
+    }
+    { BoardViewLabel WebLabel
+      Text = ("View")
+    }
+    { BoardViewChoice WebComboBox
+    }
+    { BoardShowPublic WebCheckBox
+      Text = ("Show on Public Board")
+    }
+    { BoardShowPrivate WebCheckBox
+      Text = ("Show on Private Board")
+    }
+    { BoardDefaultPublicLabel WebLabel
+      Text = ("Default on Public Board")
+    }
+    { BoardDefaultPublic WebComboBox
+    }
+    { BoardDefaultPrivateLabel WebLabel
+      Text = ("Default on Private Board")
+    }
+    { BoardDefaultPrivate WebComboBox
+    }
+    { BoardViewUp WebButton
+      Text = ("Move up")
+    }
+    { BoardViewDown WebButton
+      Text = ("Move down")
+    }
+    { SaveBoardViews WebButton
+      Text = ("Save")
+    }
+  }
   { BoardVisibilityPanel WebContainer
     Class = "weba-action-panel"
     Arrangement = Arrange.Vertical
@@ -554,6 +602,9 @@
     }
     { ContextWip WebButton
       Text = ("Work in progress limit")
+    }
+    { ContextBoardViews WebButton
+      Text = ("Board View")
     }
     { ContextVisibility WebButton
       Text = ("Visibility")
