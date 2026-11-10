@@ -1,0 +1,38 @@
+' Disposable HTTP-project data only; never a production endpoint.
+Public Sub Main()
+  Dim mode As String = Env["WEBA_PUBLIC_MODE"]
+  Dim id As Integer = Val(Env["WEBA_PUBLIC_ID"])
+  Dim ids As New Integer[]
+  Dim data As New Collection
+  Dim i As Integer
+  Dim r As Result
+  Dim db As Connection
+  If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
+  Session["username"] = "rest-other"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+  db = WebDatabase.OpenConnection()
+  If mode = "seed" Then
+    For i = 1 To 24
+      id = KanbanStore.AddBoard("Discover UI " & Format(i, "00"))
+      ids.Add(id)
+      BoardVisibility.SaveBoard(id, If(i = 24, "private", If(i = 21, "instance", "public")), False)
+      WorkspaceStore.SetSetting(id, "board", id, "description", "Literal <details> public description " & CStr(i))
+      WorkspaceStore.SetSetting(id, "board", id, "color", "#315579")
+      KanbanStore.SaveCard(id, 0, "DISCOVERY-CARD-PRIVATE-CANARY", "NEVER-ON-PUBLIC-TABLE", "Default", "Todo", "", "", "")
+      If i = 22 Then db.Exec("UPDATE kb_boards SET title='^Discover UI helper^' WHERE id=&1", id)
+      If i = 23 Then KanbanStore.ArchiveBoard(id, True)
+    Next
+    data["ids"] = ids
+  Else If mode = "private" Or mode = "public" Or mode = "instance" Then
+    BoardVisibility.SavePermission(id, mode)
+  Else If mode = "rename" Then
+    db.Exec("UPDATE kb_boards SET title=&1 WHERE id=&2", Env["WEBA_PUBLIC_TITLE"], id)
+  Else If mode = "archive" Then
+    KanbanStore.ArchiveBoard(id, True)
+  Endif
+  data["boardCount"] = db.Find("kb_boards").Count
+  data["cardCount"] = db.Find("kb_cards").Count
+  data["visibilityCount"] = db.Find("kb_board_visibility").Count
+  data["memberCount"] = db.Find("kb_members").Count
+  Print JSON.Encode(data)
+End

@@ -689,8 +689,9 @@ as nonmembers. Native selected-board rendering and readable open favorites work
 without adding unrelated open boards to personal catalogs. Default/API board
 enumeration and whole-board REST membership/site-admin authorization remain
 separate. The backend also recognizes anonymous public readability, but the
-native guest page, anonymous route/form integration and public discovery page
-are still pending. Current UI entry routes still require sign-in.
+native guest page and anonymous route/form integration are still pending.
+The signed-in native Public discovery page is described below. Current UI entry
+routes still require sign-in.
 
 `BoardVisibilityTest` checks defaults, strict values, administrator/manager
 boundaries, private-only policy and late SQL/owner/epoch/policy/privilege/value
@@ -721,8 +722,45 @@ saves, policy refusal, live clean/dirty refresh, demotion cleanup, public readon
 routes and immediate private-transition revocation, plus Finnish mobile geometry.
 The same check runs in the complete source/packaged browser suites. The complete
 local suite (64 host tests) and complete source/packaged browser suites pass. Anonymous
-board/card UI, public discovery, global visibility controls and first-edit
-membership remain pending; this editor does not expose the editing allowance.
+board/card UI, global visibility controls and first-edit membership remain
+pending; this editor does not expose the editing allowance. Native signed-in
+Public discovery is described below.
+
+Native `/public` now opens a separate read-only discovery table after login.
+The account menu provides the same entry; direct GET, reload and Back/Forward use
+the acknowledged native route flow, with a canonical `/public` URL and ignored
+query commands. Ten rows render per page, with title search submitted on Enter
+or Search. Public boards and signed-in instance boards are included; archived,
+private and internal caret-wrapped helper boards are excluded. Search is literal,
+not a caller-provided regular expression or selector. Unsubmitted text remains a
+draft while the current result set refreshes. Live title/permission/archive changes
+refresh rows/counts and clamp an exhausted page. Unchanged ticks preserve the DOM.
+
+The Public pane has no personal navigation/sidebar, create/sort/selection/drag
+controls or per-row actions. Entering it closes stale board/member/action forms
+and clears their bindings. Hidden create/import/context commands cannot act from
+this pane. Rows contain only the native ID, literal title/description and validated
+hex color. No membership, card text, settings map or workspace tree is included in
+the discovery projection. Titles are real canonical links with Enter and browser
+Ctrl/new-tab behavior; clicking another row cell opens the same readable board.
+Source captions translate for all 237 catalogs while titles/descriptions stay
+literal. Layout and controls work at the tested 390px mobile width.
+
+`PublicBoardCatalogTest` compares 96 actual native SQL page/count/projection cases
+with the unchanged source `publicBoardsSelector`, plus 13 unchanged helper-title
+outcomes. It covers anonymous service scope, signed-in scope, helper/archive
+exclusion, literal/Unicode search, ten-row paging, strict malformed/unknown option
+refusal and no storage writes. Numeric IDs, native working-board type, creation-ID
+ordering, metadata fields and safe hex colors are explicit adapters. The current
+native model has no source board background-image/template/global-sort fields;
+those integrations and full Meteor publication/ReportPages transport remain open.
+`python3 tests/run-http.py --public-boards [--archive]` checks real direct/menu/login/
+history navigation, paging/search, private-safe rows, stale-panel cleanup, denied
+forged actions, public/instance links, live exclusions, colors and Finnish/mobile
+presentation. The complete local suite (65 host tests), complete source/packaged
+browser runs and final focused source check with the final caption catalogs pass.
+The native UI still requires sign-in; anonymous public board/card
+forms, Sandstorm convenience and first-edit membership are separate remaining work.
 
 First native root landing after login or full
 page reload now opens the current readable active Home board once. All Boards

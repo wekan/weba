@@ -599,6 +599,22 @@ class AllBoardsEntryTest(unittest.TestCase):
                     self.assertEqual(env['WEBA_API_REQUEST'], '0')
                     self.assertEqual(request.wfile.getvalue(), b'<html>entry</html>')
 
+    def test_public_entries_are_get_only_root_shells(self):
+        result = SimpleNamespace(returncode=0, stdout=b'Content-Type: text/html\r\n\r\n<html>public</html>')
+        for path in ('/public', '/public/', '/%70ublic'):
+            request = self.request(path + '?c=forged-command&selector=private')
+            with patch.object(server, 'run_application', return_value=result) as run:
+                request._run_cgi()
+            request.send_error.assert_not_called()
+            self.assertEqual(run.call_args.kwargs['env']['PATH_INFO'], '/')
+            self.assertEqual(run.call_args.kwargs['env']['QUERY_STRING'], '')
+        for path, method, code in [('/public', 'POST', 405), ('/public/', 'DELETE', 405), ('/public/child', 'GET', 404), ('/%2570ublic', 'GET', 404)]:
+            request = self.request(path, method)
+            with patch.object(server, 'run_application') as run:
+                request._run_cgi()
+            request.send_error.assert_called_once_with(code)
+            run.assert_not_called()
+
     def test_entry_routes_cannot_be_mutation_or_multiply_encoded_aliases(self):
         for path, method, code in [('/allboards/home', 'POST', 405), ('/allboards/home/child', 'GET', 404), ('/allboards/starred', 'POST', 405), ('/allboards/archive', 'DELETE', 405), ('/%2561llboards/starred', 'GET', 404), ('/allboards/%252e%252e/private', 'GET', 404), ('/allboards/workspaces/%ZZ', 'GET', 404), ('/allboards/workspaces/%FF', 'GET', 404)]:
             with self.subTest(path=path, method=method):

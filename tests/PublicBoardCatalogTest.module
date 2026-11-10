@@ -1,0 +1,120 @@
+Public Sub Main()
+  Dim db As Connection
+  Dim r As Result
+  Dim id As Integer
+  Dim i As Integer
+  Dim pageNumber As Integer
+  Dim permission As String
+  Dim search As String
+  Dim actor As String
+  Dim bad As Variant
+  Dim denied As Boolean
+  Dim docs As New Variant[]
+  Dim helpers As New Variant[]
+  Dim cases As New Variant[]
+  Dim row As Collection
+  Dim item As Collection
+  Dim data As New Collection
+  Dim params As Collection
+  Dim result As Collection
+  Dim before As String
+  WebDatabase.Register("public-owner", "x")
+  WebDatabase.Register("public-visitor", "x")
+  SignIn("public-owner")
+  db = WebDatabase.OpenConnection()
+  For i = 1 To 24
+    id = KanbanStore.AddBoard("Discovery " & Format(i, "00"))
+    permission = If(i Mod 2, "public", "instance")
+    If i = 24 Then permission = "private"
+    BoardVisibility.SaveBoard(id, permission, False)
+    If i = 23 Then KanbanStore.ArchiveBoard(id, True)
+    If i = 22 Then db.Exec("UPDATE kb_boards SET title='^Subtasks^' WHERE id=&1", id)
+    If i = 20 Then db.Exec("UPDATE kb_boards SET title=&1 WHERE id=&2", "Public [literal].* 船", id)
+    WorkspaceStore.SetSetting(id, "board", id, "description", "Description <literal> " & CStr(i))
+    WorkspaceStore.SetSetting(id, "board", id, "color", "#123abc")
+    If i = 21 Then db.Exec("UPDATE kb_meta SET value=&1 WHERE board_id=&2 AND setting='color'", "red; background:url(https://invalid.example/canary)", id)
+    KanbanStore.SaveCard(id, 0, "PRIVATE-CARD-CANARY", "PRIVATE-CARD-BODY", "Default", "Todo", "", "", "")
+    row = New Collection
+    row["id"] = id
+    row["title"] = CStr(db.Find("kb_boards", "id=&1", id)!title)
+    row["archived"] = i = 23
+    row["permission"] = permission
+    row["type"] = "board"
+    row["description"] = "Description <literal> " & CStr(i)
+    row["color"] = If(i = 21, "#777777", "#123abc")
+    docs.Add(row)
+  Next
+  before = Snapshot()
+  For Each actor In ["", "public-visitor", "public-owner"]
+    SignIn(actor)
+    For Each search In ["", "Discovery", "[literal].*", "船", "^", "no-match", "%", "' OR 1=1 --"]
+      For pageNumber = 1 To 4
+        params = New Collection
+        params["search"] = search
+        params["page"] = pageNumber
+        result = PublicBoardCatalog.Page(params)
+        For Each row In result["rows"]
+          If row.Keys.Count <> 4 Or Not row.Exist("id") Or Not row.Exist("title") Or Not row.Exist("description") Or Not row.Exist("color") Then Error.Raise("Discovery projection includes unrelated fields")
+        Next
+        item = New Collection
+        item["signedIn"] = actor <> ""
+        item["search"] = search
+        item["page"] = pageNumber
+        item["actual"] = result
+        cases.Add(item)
+      Next
+    Next
+  Next
+  For Each bad In [0, -1, 1.5, True, "2", Null]
+    params = New Collection
+    params.Add(bad, "page")
+    Try PublicBoardCatalog.Page(params)
+    denied = Error
+    If Not denied Then Error.Raise("Malformed page accepted")
+  Next
+  For Each search In ["actor", "permission", "selector", "perPage", "sortBy"]
+    params = New Collection
+    params[search] = "public-owner"
+    Try PublicBoardCatalog.Page(params)
+    denied = Error
+    If Not denied Then Error.Raise("Caller-controlled discovery scope accepted")
+  Next
+  If Snapshot() <> before Then Error.Raise("Discovery read wrote storage")
+  For Each search In ["", "^", "^^", "^Subtasks^", "^船^", "^a\n^", "^a^\n", "^a\r^", "^a^\r\n", "^a ^", "^a ^", "before ^a^", "^a^ after"]
+    item = New Collection
+    item["title"] = search
+    item["helper"] = PublicBoardCatalog.IsHelperTitle(search)
+    helpers.Add(item)
+  Next
+  data["helpers"] = helpers
+  data["docs"] = docs
+  data["cases"] = cases
+  Print JSON.Encode(data)
+End
+
+Private Sub SignIn(actor As String)
+  Session["username"] = actor
+  If actor Then Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+End
+
+Private Function Snapshot() As String
+  Dim data As New Collection
+  Dim rows As Variant[]
+  Dim table As String
+  Dim r As Result
+  Dim row As Collection
+  Dim field As ResultField
+  For Each table In ["kb_boards", "kb_meta", "kb_cards", "kb_members", "kb_board_visibility", "board_visibility_settings", "kb_activity", "kb_history"]
+    rows = New Variant[]
+    r = WebDatabase.OpenConnection().Find(table, "TRUE ORDER BY 1")
+    For Each r
+      row = New Collection
+      For Each field In r.Fields
+        row.Add(r[field.Name], field.Name)
+      Next
+      rows.Add(row)
+    Next
+    data[table] = rows
+  Next
+  Return JSON.Encode(data)
+End

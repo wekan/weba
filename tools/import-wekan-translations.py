@@ -14,6 +14,7 @@ source = args.wekan / 'imports/i18n'
 english = json.loads((source / 'data/en.i18n.json').read_text())
 # Explicit equivalents where weba and WeKan use different English captions.
 aliases = {
+    'Board': 'board',
     'Private': 'private', 'Public': 'public', 'Signed-in users': 'instance',
     'Collapse': 'collapse', 'Uncollapse': 'uncollapse',
     'Unlimited': 'attachment-limit-mode-unlimited', 'Maximum file size': 'attachment-limit-mode-max-size',
@@ -46,7 +47,7 @@ aliases = {
     'Mon': 'monday', 'Tue': 'tuesday', 'Wed': 'wednesday', 'Thu': 'thursday',
     'Fri': 'friday', 'Sat': 'saturday', 'Sun': 'sunday',
 }
-texts = {'Private', 'Signed-in users', 'Public', 'Remove from Home', 'Remove this board from Home? The board itself is not deleted.', 'Drag only one board here to open it after login', 'Home board (opened after login)', 'Please select only one board', 'Unlimited', 'Maximum file size', 'Blocked', 'GB', 'MB', 'Bytes', 'Board administrator', 'Normal', 'Normal (assigned cards only)',
+texts = {'Board', 'No results', 'Private', 'Signed-in users', 'Public', 'Remove from Home', 'Remove this board from Home? The board itself is not deleted.', 'Drag only one board here to open it after login', 'Home board (opened after login)', 'Please select only one board', 'Unlimited', 'Maximum file size', 'Blocked', 'GB', 'MB', 'Bytes', 'Board administrator', 'Normal', 'Normal (assigned cards only)',
          'No comments', 'Comment only', 'Comment (assigned cards only)',
          'Worker', 'Read only', 'Read (assigned cards only)', 'Language', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'}
 controls = set()

@@ -15,7 +15,7 @@ const dom = new JSDOM(`<div id="@1.LanguageSelector"><select data-weba-language>
 <div id="@1.SubworkspaceNameLabel">Subworkspace name</div>
 <div id="@1.WorkspacePanel" class="weba-workspace-edit"><div id="@1.WorkspaceNameLabel">Workspace name</div></div>
 <div id="@1.BoardArchiveName" class="weba-user-text">Archive</div><div id="@1.BoardArchiveWarning">Are you sure you want to archive this board?</div><button id="@1.ConfirmBoardArchive">Archive</button><button id="@1.CancelBoardArchive">Cancel</button>
-<article class="weba-card"><strong>Username</strong></article>`,{url:'http://localhost',runScripts:'outside-only'});
+<h1 class="weba-public-heading">Public</h1><th class="weba-public-board-caption">Board</th><div class="weba-public-description-caption">Description</div><div class="weba-public-empty">No results</div><article class="weba-card"><strong>Username</strong></article>`,{url:'http://localhost',runScripts:'outside-only'});
 const {window}=dom;
 window.fetch=async url=>({ok:true,json:async()=>JSON.parse(fs.readFileSync(path.join(publicDir,url),'utf8'))});
 window.eval(fs.readFileSync(path.join(publicDir,'i18n-catalog.js'),'utf8'));
@@ -23,6 +23,7 @@ window.eval(fs.readFileSync(path.join(publicDir,'i18n.js'),'utf8'));
 window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
 (async()=>{
   const api=window.webaI18n, doc=window.document;
+  assert.equal(window.webaI18nCatalog.lookup.Board,'board');
   for(const [text,key] of Object.entries({'Home':'home','Remove from Home':'home-board-remove','Remove this board from Home? The board itself is not deleted.':'home-board-remove-confirm','Drag only one board here to open it after login':'home-board-empty','Home board (opened after login)':'home-board-badge','Set as Home board (opened after login)':'set-selected-home','Unset as Home board':'unset-selected-home','Please select only one board':'select-only-one-board'}))assert.equal(window.webaI18nCatalog.lookup[text],key);
   await api.setLanguage('fi-FI');
   assert.equal(api.language,'fi');
@@ -39,6 +40,9 @@ window.document.dispatchEvent(new window.Event('DOMContentLoaded'));
   assert.equal(doc.getElementById('@1.WebLabelUser').textContent,fi[key]);
   assert.equal(doc.getElementById('@1.MemberRole').textContent,api.t('Read only'),'fixed role caption translated');
   assert.equal(doc.getElementById('@1.MemberRole').querySelector('option').value,'Read only','role wire value stays stable');
+  assert.equal(doc.querySelector('.weba-public-heading').textContent,fi.public);
+  assert.equal(doc.querySelector('.weba-public-description-caption').textContent,fi.description);
+  assert.equal(doc.querySelector('.weba-public-empty').textContent,fi['no-results']);
   assert.equal(doc.getElementById('@1.BoardVisibilityName').textContent,'Public','visibility board name stays literal');
   for(const [value,key] of [['Private','private'],['Signed-in users','instance'],['Public','public']]){
     const option=doc.querySelector(`[id="@1.BoardPermission"] option[value="${value}"]`);

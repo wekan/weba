@@ -25,6 +25,8 @@ import urllib.parse
 
 def all_boards_entry_section(path):
     """Implemented native section entrypoints; never an arbitrary CGI alias."""
+    if path in ('/public', '/public/'):
+        return 'public'
     if path == '/allboards/workspaces' or path.startswith('/allboards/workspaces/'):
         return 'workspaces'
     for section in ('remaining', 'starred', 'archive', 'home'):
@@ -475,6 +477,9 @@ def handler(application, runner, environment):
                 return
             entry_section = all_boards_entry_section(decoded_path) or ('board' if board_entry(decoded_path) or card_entry(decoded_path) else None)
             if (decoded_path == '/b' or decoded_path.startswith('/b/')) and not entry_section:
+                self.send_error(404)
+                return
+            if decoded_path.startswith("/public/") and not entry_section:
                 self.send_error(404)
                 return
             if decoded_path.startswith("/allboards/home/") and not entry_section:

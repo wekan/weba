@@ -1,0 +1,86 @@
+' Read-only discovery projection; the caller supplies search/page, never scope.
+Export
+
+Public Function Page(params As Collection) As Collection
+  Dim actor As String = WebIdentity.Username
+  Dim generation As Long
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim data As New Collection
+  Dim rows As New Variant[]
+  Dim row As Collection
+  Dim r As Result
+  Dim meta As Result
+  Dim key As String
+  Dim search As String
+  Dim pageNumber As Integer = 1
+  Dim total As Integer
+  Dim offset As Long
+  Dim permission As String
+  If Not params Then Error.Raise("Invalid public board page")
+  For Each key In params.Keys
+    Select key
+      Case "search"
+        If TypeOf(params[key]) <> gb.String Then Error.Raise("Invalid public board search")
+        search = params[key]
+      Case "page"
+        If TypeOf(params[key]) <> gb.Integer And TypeOf(params[key]) <> gb.Long And TypeOf(params[key]) <> gb.Float Then Error.Raise("Invalid public board page")
+        If params[key] <> Int(params[key]) Or params[key] < 1 Or params[key] > 2147483647 Then Error.Raise("Invalid public board page")
+        pageNumber = params[key]
+      Case Else
+        Error.Raise("Unknown public board page option")
+    End Select
+  Next
+  If actor Then generation = WebDatabase.SessionGeneration(actor)
+  offset = CLong(pageNumber - 1) * 10
+  If db.Tables.Exist("kb_boards") And db.Tables.Exist("kb_board_visibility") Then
+    r = db.Exec("SELECT b.id,b.title FROM kb_boards b INNER JOIN kb_board_visibility v ON v.board_id=b.id WHERE b.archived=&1 AND (v.permission='public' OR (v.permission='instance' AND &2)) ORDER BY b.id", False, actor <> "")
+    For Each r
+      If IsHelperTitle(CStr(r!title)) Then Continue
+      If search And InStr(LCase(CStr(r!title)), LCase(search)) = 0 Then Continue
+      Inc total
+      If total <= offset Or rows.Count >= 10 Then Continue
+      row = New Collection
+      row["id"] = r!id
+      row["title"] = CStr(r!title)
+      row["description"] = ""
+      row["color"] = "#777777"
+      If db.Tables.Exist("kb_meta") Then
+        meta = db.Find("kb_meta", "board_id=&1 AND kind='board' AND item_id=&1 AND setting IN ('description','color')", r!id)
+        For Each meta
+          If meta!setting = "description" Then row["description"] = CStr(meta!value)
+          If meta!setting = "color" And SafeColor(CStr(meta!value)) Then row["color"] = CStr(meta!value)
+        Next
+      Endif
+      rows.Add(row)
+    Next
+  Endif
+  ' A stale signed-in identity must never turn into an anonymous instance reader.
+  If WebIdentity.Username <> actor Then Error.Raise("Public board access changed")
+  If actor Then
+    If WebDatabase.SessionGeneration(actor) <> generation Then Error.Raise("Public board access changed")
+  Endif
+  For Each row In rows
+    permission = BoardVisibility.Permission(row["id"])
+    If Not BoardVisibility.ReadableWithoutMembership(permission, actor <> "") Then Error.Raise("Public board access changed")
+  Next
+  data["rows"] = rows
+  data["total"] = total
+  data["page"] = pageNumber
+  data["pages"] = Max(1, (CLong(total) + 9) Div 10)
+  data["search"] = search
+  Return data
+End
+
+Public Function IsHelperTitle(title As String) As Boolean
+  If Len(title) < 2 Or Left(title) <> "^" Or Right(title) <> "^" Then Return False
+  Return InStr(title, "\n") = 0 And InStr(title, "\r") = 0 And InStr(title, " ") = 0 And InStr(title, " ") = 0
+End
+
+Private Function SafeColor(value As String) As Boolean
+  Dim i As Integer
+  If Len(value) <> 7 Or Left(value) <> "#" Then Return False
+  For i = 2 To 7
+    If InStr("0123456789abcdef", LCase(Mid(value, i, 1))) = 0 Then Return False
+  Next
+  Return True
+End

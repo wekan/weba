@@ -2,6 +2,31 @@
 
 This work adds the following features and fixes:
 
+- Add native signed-in `/public` discovery as its own read-only table with
+  ten-row paging and submitted literal title search. Derive public/instance
+  scope on the server, exclude archived/private/helper boards, accept no caller
+  identity/selector and return only native ID, title, description and safe hex
+  color. Keep cards, memberships, workspace trees and unrelated settings out of
+  the discovery projection. Hide personal/create/sort/selection/drag/sidebar
+  chrome and row actions; clear stale board/member/action bindings on entry and
+  refuse hidden create/import/context commands. Use real canonical board links,
+  keyboard and browser new tabs, row-cell activation, direct GET/login/reload,
+  account-menu and acknowledged Back/Forward navigation. Canonicalize `/public`
+  and ignore query commands. Preserve unsubmitted search drafts and unchanged
+  DOM while live titles/permissions/archive changes refresh rows/counts and
+  clamp exhausted pages. Translate source captions across 237 native catalogs
+  while preserving literal titles/descriptions and tested mobile layout.
+  Compare 96 native SQL page/count/projection and 13 helper-title outcomes with
+  unchanged source helpers; verify strict malformed/scope options and read-only
+  storage, host path/method/query rules and real browser privacy/navigation/
+  search/paging/stale/forged/mobile flows. The complete local suite (65 host
+  tests), complete source/packaged browser runs and a final focused source check
+  with the exact source caption key pass. Native working-board type, creation-ID
+  order, metadata and hex colors are explicit source adapters; background-image,
+  template/global-sort models, anonymous board/card UI, first-edit membership
+  and full original Meteor/ReportPages wiring remain pending.
+  Thanks to xet7.
+
 - Add the native board-menu Visibility editor for board managers and readable-
   board site administrators. Bind the board, actor, account generation and
   navigation context privately; refuse readonly/forged, closed/replayed,

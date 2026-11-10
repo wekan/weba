@@ -313,6 +313,9 @@
     { LanguageSelector WebContainer
       Height = "36px"
     }
+    { PublicBoards WebButton
+      Text = ("Public")
+    }
     { MyCards WebButton
       Text = ("My cards")
     }
@@ -844,6 +847,26 @@
         { NextBoardPage WebButton
           Class = "weba-icon-only fa fa-chevron-right"
           Tooltip = ("Next Page")
+        }
+      }
+      { PublicControls WebContainer
+        Arrangement = Arrange.Horizontal
+        Spacing = True
+        Visible = False
+        { PublicSearch WebTextBox
+          Expand = True
+          Tooltip = ("Search")
+        }
+        { SearchPublic WebButton
+          Text = ("Search")
+        }
+        { PreviousPublicPage WebButton
+          Text = ("Previous Page")
+        }
+        { PublicPageLabel WebLabel
+        }
+        { NextPublicPage WebButton
+          Text = ("Next Page")
         }
       }
       { ContentRow WebContainer

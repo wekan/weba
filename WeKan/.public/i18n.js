@@ -45,6 +45,9 @@
         state[attr] = {source,translated}; attributes.set(control,state);
       }
     });
+    for(const [selector,text] of [['.weba-public-heading','Public'],['.weba-public-board-caption','Board'],['.weba-public-description-caption','Description'],['.weba-public-empty','No results']]){
+      document.querySelectorAll(selector).forEach(el=>{const caption=translate(text);if(el.textContent!==caption)el.textContent=caption;});
+    }
     // Dynamic workspace rows have generated native IDs; translate only their
     // fixed menu tooltip and the explicit Remaining choice, never user names.
     document.querySelectorAll('.weba-space-menu').forEach(button => {

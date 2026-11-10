@@ -2,6 +2,10 @@
 
 Export
 
+Private $publicData As Collection
+Private $publicState As String
+Private $publicPage As Integer = 1
+Private $publicSearch As String
 Private $visibilityBoard As Integer
 Private $visibilityActor As String
 Private $visibilityGeneration As Long
@@ -160,6 +164,12 @@ Private Sub RefreshTree()
   Dim c As Result
   Dim unavailable As Boolean
   Dim overviewSnapshot As String
+  If $view = "Public" Then
+    Boards.Clear()
+    RefreshPublic(True)
+    UpdateHeader()
+    Return
+  Endif
   If $board Then
     If Not BoardAccess.CanRead($board) Then
       unavailable = True
@@ -202,6 +212,10 @@ End
 
 Public Sub BoardPoll_Timer()
   Dim state As String
+  If $view = "Public" Then
+    RefreshPublic(False)
+    Return
+  Endif
   ValidateBoardArchive()
   ValidateRecoveryPanels()
   ValidateTransferPanel()
@@ -372,6 +386,7 @@ Private Sub LoadCardDraft()
 End
 
 Public Sub NewBoard_Click()
+  If $view = "Public" Then Error.Raise("Public boards are read-only")
   KanbanStore.AddBoard(BoardTitle.Text)
   BoardTitle.Text = ""
   RefreshTree()
@@ -673,6 +688,10 @@ Public Sub Visual_Render()
   Dim boardColor As String = "#2980b9"
   Dim homeId As Integer
   If Not WebIdentity.Username Then Return
+  If $view = "Public" Then
+    RenderPublic()
+    Return
+  Endif
   homeId = HomeBoard.Saved()
   ' Capture before rendering: a concurrent mutation after this read must be
   ' noticed by the next tick, even if it races the render queries.
@@ -917,6 +936,7 @@ Private Sub UpdateHeader()
       routeSection = "workspaces"
     Endif
   Endif
+  If $view = "Public" Then routeSection = "public"
   If $board > 0 And $view <> "Profile" And $view <> "Admin panel" Then routeSection = "board"
   routeAck["boardId"] = If(routeSection = "board", CStr($board), "")
   routeAck["cardId"] = If(routeSection = "board" And $card > 0 And Editor.Visible, CStr($card), "")
@@ -928,7 +948,11 @@ Private Sub UpdateHeader()
   routeAck.Add(routeSection, "section")
   routeAck.Add($overviewRouteToken, "token")
   routeAck.Add(If(routeSection = "workspaces" And $spaceMenu > 0, CStr($spaceMenu), ""), "workspaceId")
-  routeAck["tree"] = BoardSpaces.Tree()
+  If $view = "Public" Then
+    routeAck["tree"] = New Variant[]
+  Else
+    routeAck["tree"] = BoardSpaces.Tree()
+  Endif
   OverviewRouteState.Text = Replace(JSON.Encode(routeAck), " ", "\\u0020")
   ViewMenu.Visible = $view <> "Profile" And $view <> "Admin panel"
   AddBoard.Visible = ViewMenu.Visible And BoardCreation.Allowed() And $view <> "Home"
@@ -964,11 +988,31 @@ Private Sub UpdateHeader()
     b = WorkspaceStore.Record($board, "board", $board)
     PageTitle.Text = b!title
   Endif
+  PageTitle.Class = If($view = "Public", "weba-public-heading", "")
   PageTitle.Tooltip = PageTitle.Text
   ViewMenu.Text = If($view = "Boards", "View", $view)
   ValidateBoardCreation()
   ValidateImportExportPolicy()
   ValidateMarkdownPolicy()
+  PublicControls.Visible = $view = "Public"
+  ToggleNavigation.Visible = $view <> "Public"
+  SidebarToggle.Visible = $view <> "Public"
+  If $view = "Public" Then
+    LeftNavigation.Hide()
+    BoardNavigation.Hide()
+    AdminNavigation.Hide()
+    PageSidebar.Hide()
+    ViewMenu.Hide()
+    AddBoard.Hide()
+    HeaderSearch.Hide()
+    PageActions.Hide()
+    BoardPagination.Hide()
+    OverviewActions.Hide()
+    SearchTitle.Hide()
+    Search.Hide()
+    Filter.Hide()
+    PaneTitle.Text = ""
+  Endif
 End
 
 Public Sub Remaining_Click()
@@ -976,10 +1020,12 @@ Public Sub Remaining_Click()
 End
 
 Public Sub ToggleNavigation_Click()
+  If $view = "Public" Then Return
   LeftNavigation.Visible = Not LeftNavigation.Visible
 End
 
 Public Sub ViewMenu_Click()
+  If $view = "Public" Then Return
   BoardSortMenu.Hide()
   Views.Visible = Not Views.Visible
   AccountMenu.Hide()
@@ -992,6 +1038,7 @@ Public Sub AccountToggle_Click()
 End
 
 Public Sub SidebarToggle_Click()
+  If $view = "Public" Then Return
   PageSidebar.Visible = Not PageSidebar.Visible
 End
 
@@ -1031,6 +1078,7 @@ Private Sub ClearCardEditor()
 End
 
 Public Sub AddBoard_Click()
+  If $view = "Public" Then Error.Raise("Public boards are read-only")
   BoardCreation.Require()
   PageSidebar.Show()
   BoardTitle.SetFocus()
@@ -1043,6 +1091,7 @@ Public Sub AddBoardTile_Click()
 End
 
 Public Sub HeaderSearch_Click()
+  If $view = "Public" Then Return
   $overviewSidebar = "search"
   UpdateSelectionControls()
   PageSidebar.Show()
@@ -1250,6 +1299,7 @@ Public Sub ContextAction_Change()
   If Not ContextAction.Text Then Return
   wire = ContextAction.Text
   ContextAction.Text = ""
+  If $view = "Public" Then Error.Raise("Public boards are read-only")
   fields = Split(wire, "|")
   If fields.Count < 2 Or fields.Count > 3 Then Error.Raise("Invalid menu context")
   OpenContext(fields[0], CInt(fields[1]), If(fields[0] = "board", CInt(fields[1]), $board))
@@ -1333,6 +1383,7 @@ Public Sub CloseAction_Click()
 End
 
 Public Sub ImportBoard_Click()
+  If $view = "Public" Then Error.Raise("Public boards are read-only")
   BoardCreation.Require()
   ImportExportPolicy.RequireImport()
   ImportBoard.Upload()
@@ -1341,6 +1392,7 @@ Catch
 End
 
 Public Sub ImportBoard_Finish()
+  If $view = "Public" Then Error.Raise("Public boards are read-only")
   Dim data As Collection
   BoardCreation.Require()
   ImportExportPolicy.RequireImport()
@@ -4097,7 +4149,7 @@ Public Sub EntryRouteAction_Change()
   If fields.Count < 2 Or fields.Count > 4 Then Error.Raise("Unknown overview entry")
   section = fields[0]
   If Not fields[1] Or Len(fields[1]) > 128 Then Error.Raise("Unknown overview entry")
-  If ["remaining", "starred", "archive", "home", "workspaces", "board"].Find(section) < 0 Then Error.Raise("Unknown overview entry")
+  If ["public", "remaining", "starred", "archive", "home", "workspaces", "board"].Find(section) < 0 Then Error.Raise("Unknown overview entry")
   CloseBoardArchive_Click()
   If section = "board" Then
     If fields.Count <> 3 And fields.Count <> 4 Then Error.Raise("Unknown board entry")
@@ -4152,6 +4204,8 @@ Public Sub EntryRouteAction_Change()
   $landingConsumed = True
   $overviewRouteToken = fields[1]
   Select section
+    Case "public"
+      PublicBoards_Click()
     Case "remaining"
       Home_Click()
     Case "starred"
@@ -4301,4 +4355,81 @@ Public Sub SaveBoardVisibility_Click()
   RefreshTree()
 Catch
   Notice.Text = Error.Text
+End
+
+Public Sub PublicBoards_Click()
+  ResetHome()
+  CloseEditor_Click()
+  ContextMenu.Hide()
+  CloseAction_Click()
+  CloseBoardVisibility_Click()
+  CloseStaleMembers()
+  CloseDeleteList_Click()
+  CloseDeletedLists_Click()
+  CloseBrowser_Click()
+  CloseWorkspace_Click()
+  CloseBoardWorkspace_Click()
+  $contextBoard = 0
+  $contextId = 0
+  $contextKind = ""
+  $detailsBoard = 0
+  $membersBoard = 0
+  $landingConsumed = True
+  $view = "Public"
+  $publicPage = 1
+  $publicSearch = ""
+  PublicSearch.Text = ""
+  RefreshTree()
+End
+
+Private Sub RefreshPublic(force As Boolean)
+  Dim params As New Collection
+  Dim data As Collection
+  Dim state As String
+  params["search"] = $publicSearch
+  params["page"] = $publicPage
+  data = PublicBoardCatalog.Page(params)
+  If $publicPage > data["pages"] Then
+    $publicPage = data["pages"]
+    params["page"] = $publicPage
+    data = PublicBoardCatalog.Page(params)
+  Endif
+  state = JSON.Encode(data)
+  If Not force And state = $publicState Then Return
+  $publicState = state
+  $publicData = data
+  PublicPageLabel.Text = CStr($publicPage) & " / " & CStr(data["pages"]) & " (" & CStr(data["total"]) & ")"
+  PreviousPublicPage.Enabled = $publicPage > 1
+  NextPublicPage.Enabled = $publicPage < data["pages"]
+  Visual.Refresh()
+End
+
+Private Sub RenderPublic()
+  Dim row As Collection
+  If Not $publicData Then Return
+  Print "<section class='weba-public-content'><table class='weba-public-table'><thead><tr><th class='weba-public-board-caption'>Board</th><th class='weba-public-description-caption'>Description</th></tr></thead><tbody>"
+  For Each row In $publicData["rows"]
+    Print "<tr class='weba-public-board-row' data-board-id='" & CStr(row["id"]) & "' style='background-color:" & Html(row["color"]) & "'><td><a class='weba-public-board-link weba-user-text' data-board-key='b" & CStr(row["id"]) & "' href='/b/" & CStr(row["id"]) & "'><span class='board-list-item-name'>" & Html(row["title"]) & "</span></a></td><td class='weba-user-text'>" & Html(row["description"]) & "</td></tr>"
+  Next
+  If $publicData["rows"].Count = 0 Then Print "<tr><td colspan='2' class='weba-public-empty'>No results</td></tr>"
+  Print "</tbody></table></section>"
+End
+
+Public Sub SearchPublic_Click()
+  If $view <> "Public" Then Return
+  $publicSearch = PublicSearch.Text
+  $publicPage = 1
+  RefreshPublic(True)
+End
+
+Public Sub PreviousPublicPage_Click()
+  If $view <> "Public" Then Return
+  If $publicPage > 1 Then Dec $publicPage
+  RefreshPublic(True)
+End
+
+Public Sub NextPublicPage_Click()
+  If $view <> "Public" Or Not $publicData Then Return
+  If $publicPage < $publicData["pages"] Then Inc $publicPage
+  RefreshPublic(True)
 End

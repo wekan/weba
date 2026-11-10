@@ -151,9 +151,12 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   selected rows/open favorites, assigned/inactive-member scope and unchanged
   default/whole-board REST boundaries; recorded in CHANGELOG.md. The native
   board-menu visibility editor, private stale-form guards, live refresh and
-  translated choices are recorded there too. Guest route/UI, public discovery,
-  global visibility/editing controls, first-edit membership and import/copy
-  integration remain open.
+  translated choices are recorded there too. Native signed-in `/public`
+  discovery now has its own read-only ten-row/search table, strict minimal
+  service projection and native route/history flow, recorded in CHANGELOG.md.
+  Guest board/card UI, source backgrounds/templates/global-sort fields,
+  global visibility/editing controls, first-edit membership, import/copy and
+  original publication/ReportPages integration remain open.
 - Next board navigation parity: remaining public/instance UI, desktop multiple-card
   windows, container/reveal routes and full original FlowRouter/subscription
   and action callbacks. Native canonical/short board entries, acknowledged
@@ -871,7 +874,8 @@ an exhaustive list. Reference areas: `client/components/boards`, `cards`,
 - Rich text, mentions, complete date controls, board-defined custom fields and
   notifications. Saved watch flags currently record preferences only; they do
   not deliver notifications. Card-level text/number/date/checkbox fields exist.
-- Public boards, templates, organizations, teams and global/multiboard search.
+- Remaining public board/guest/background/template integration, organizations,
+  teams and global/multiboard search.
 - Full Gantt durations/dependencies, timeline, roadmap, statistics/history,
   scrum, time, assignee grouping, maps, chat, email and version-control views.
 - WeKan chart types (flow/history/forecast/etc.) with the required persisted
