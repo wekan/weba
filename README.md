@@ -2257,6 +2257,18 @@ fields, unfinished checklist items as indented tasks, authored comment notes,
 RFC 4180 quoting and CRLF. Completed checklist items are omitted because
 Todoist exports no completed tasks.
 
+Microsoft Planner produces `wekan-boards-planner.zip` with one strict
+`board-ID.xlsx` workbook per selected board. Each workbook has Planner's
+`Tasks` sheet, plan metadata and 17-column task table. It maps native card ID,
+title, list bucket, assignees, start/due/end dates, description, checklist
+completion count/items and labels; derives Progress and Late, and uses
+Planner's default Medium priority. Native cards have no creation/requester,
+Completed By or Planner priority/progress custom fields, so those source-only
+values remain empty or use the parent formatter's documented defaults. The
+browser validates the descriptor before writing bounded stored OOXML with
+inline-string cells and a bold header, then stores the workbook inside the
+ordered selected-board ZIP.
+
 The ordered ID list, revision and completed/pending queue remain private to the
 form. The queue is bound to the current account session and unchanged selection.
 Every board independently takes the existing locked whole-board export path and
@@ -2282,8 +2294,8 @@ zero-selection refusal, live/forged policy denial, the exact two-entry JSON,
 comma-CSV, semicolon-CSV and TSV ZIPs, and the single two-sheet Excel workbook.
 They also verify the Kanboard container/task JSON, exact Markdown task-list,
 Leo XML, OPML outline, Org mode outline, todo.txt task, Taskwarrior JSON,
-Focalboard JSONL and Todoist CSV ZIPs. Remaining external-tool formats and the
-original HTTP route remain pending.
+Focalboard JSONL, Todoist CSV and Planner XLSX ZIPs. Remaining external-tool
+formats and the original HTTP route remain pending.
 
 
 ### Gated permanent board deletion and Recovery

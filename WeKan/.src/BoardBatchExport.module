@@ -7,7 +7,7 @@ Public Function NewBatch(selection As Collection, Optional format As String = "w
   Dim data As New Collection
   Dim ids As Integer[] = BoardSelection.ActionIds(selection)
   If ids.Count > 1000 Then Error.Raise("Select at most 1000 boards")
-  If format <> "weba" And format <> "csv" And format <> "scsv" And format <> "tsv" And format <> "excel" And format <> "kanboard" And format <> "markdown" And format <> "leo" And format <> "opml" And format <> "orgmode" And format <> "todotxt" And format <> "taskwarrior" And format <> "focalboard" And format <> "todoist" Then Error.Raise("Unknown export format")
+  If format <> "weba" And format <> "csv" And format <> "scsv" And format <> "tsv" And format <> "excel" And format <> "kanboard" And format <> "markdown" And format <> "leo" And format <> "opml" And format <> "orgmode" And format <> "todotxt" And format <> "taskwarrior" And format <> "focalboard" And format <> "todoist" And format <> "planner" Then Error.Raise("Unknown export format")
   data["username"] = WebIdentity.Username
   data["generation"] = WebDatabase.SessionGeneration(WebIdentity.Username)
   data["revision"] = BoardSelection.Revision(selection)
@@ -72,7 +72,7 @@ Public Sub Run(batch As Collection, selection As Collection)
   While pending.Count
     Check(batch, selection)
     file = New Collection
-    file["name"] = "board-" & CStr(pending[0]) & If(batch["format"] = "weba" Or batch["format"] = "kanboard" Or batch["format"] = "taskwarrior", ".json", If(batch["format"] = "focalboard", ".jsonl", If(batch["format"] = "tsv", ".tsv", If(batch["format"] = "excel", ".xlsx", If(batch["format"] = "markdown", ".md", If(batch["format"] = "leo", ".leo", If(batch["format"] = "opml", ".opml", If(batch["format"] = "orgmode", ".org", If(batch["format"] = "todotxt", ".txt", ".csv")))))))))
+    file["name"] = "board-" & CStr(pending[0]) & If(batch["format"] = "weba" Or batch["format"] = "kanboard" Or batch["format"] = "taskwarrior", ".json", If(batch["format"] = "focalboard", ".jsonl", If(batch["format"] = "tsv", ".tsv", If(batch["format"] = "excel" Or batch["format"] = "planner", ".xlsx", If(batch["format"] = "markdown", ".md", If(batch["format"] = "leo", ".leo", If(batch["format"] = "opml", ".opml", If(batch["format"] = "orgmode", ".org", If(batch["format"] = "todotxt", ".txt", ".csv")))))))))
     If batch["format"] = "csv" Then
       file["content"] = BoardTransfer.ExportActiveBoardCsv(pending[0])
     Else If batch["format"] = "scsv" Then
@@ -99,6 +99,8 @@ Public Sub Run(batch As Collection, selection As Collection)
       file["content"] = BoardTransfer.ExportActiveBoardFocalboard(pending[0])
     Else If batch["format"] = "todoist" Then
       file["content"] = BoardTransfer.ExportActiveBoardTodoist(pending[0])
+    Else If batch["format"] = "planner" Then
+      file["content"] = BoardTransfer.ExportActiveBoardPlanner(pending[0])
     Else
       file["content"] = BoardTransfer.ExportActiveBoard(pending[0])
     Endif

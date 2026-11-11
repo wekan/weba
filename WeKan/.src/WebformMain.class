@@ -3989,6 +3989,10 @@ Public Sub ExportSelectedTodoist_Click()
   RunSelectedExport("todoist")
 End
 
+Public Sub ExportSelectedPlanner_Click()
+  RunSelectedExport("planner")
+End
+
 Public Sub CancelSelectedExport_Click()
   ClearSelectedExport()
 End

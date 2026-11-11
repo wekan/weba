@@ -2,6 +2,23 @@
 
 This work adds the following features and fixes:
 
+- Add Microsoft Planner as the tenth selected-board external-tool export.
+  Download one `wekan-boards-planner.zip` with an ordered strict
+  `board-ID.xlsx` workbook per board. Match the parent one-sheet `Tasks`
+  contract: plan metadata, blank fourth row, exact 17-column header, card ID,
+  title, bucket, ordered assignees, UTC date text, description, checklist
+  completion/count/items and labels. Derive Progress and Late, use Planner's
+  Medium default priority, and leave creation/requester, Completed By and
+  source-only custom-field values empty where native cards have no counterpart.
+  Strictly validate the bounded descriptor before writing stored OOXML with
+  inline-string cells and a bold header, then nest each workbook in the ordered
+  outer ZIP. Reuse the private session/selection-bound retry queue and locked
+  full-read, active-board and global export-policy checks for every board.
+  Focused native/browser tests, the complete local suite (69 host tests), and
+  complete source/packaged live suites pass; the integrated scenario validates
+  all fifteen exact downloads and live/forged policy gates in both forms. Other
+  external-tool formats remain pending. Thanks to xet7.
+
 - Add Todoist as the ninth selected-board external-tool export. Download one
   `wekan-boards-todoist.zip` with an ordered strict `board-ID.csv` archive per
   board. Match the parent fourteen-column Todoist CSV contract, `view_style`

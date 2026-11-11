@@ -1494,6 +1494,9 @@
             { ExportSelectedTodoist WebButton
               Text = "Todoist"
             }
+            { ExportSelectedPlanner WebButton
+              Text = "Microsoft Planner"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton

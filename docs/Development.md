@@ -1258,6 +1258,18 @@ mapping, unfinished checklist sub-tasks, authored comment notes, selective RFC
 Todoist exports no completed tasks. It runs inside the same locked transfer
 transaction.
 
+The `planner` format writes `wekan-boards-planner.zip` with ordered strict
+`board-ID.xlsx` entries. `BoardPlannerExport` reproduces Microsoft Planner's
+`Tasks` descriptor: plan name/ID/export day, the blank fourth row, exact
+17-column header and task rows. Native cards supply card ID, title, list
+bucket, ordered assignees, UTC start/due/end days, description, flattened
+checklist completion/count/items and labels. Progress and Late are derived;
+priority defaults to Medium. Creation/requester, Completed By and source-only
+custom-field values remain empty because native cards do not model them. The
+browser strictly validates the bounded descriptor, writes inline-string OOXML
+with the header bold, and nests each stored workbook in the selected-board ZIP.
+The descriptor is built inside the same locked transfer transaction.
+
 The final file snapshot crosses the native command boundary as base64 JSON.
 `batch-export.js` bounds and validates the JSON/table/Excel envelope, writes
 stored UTF-8 ZIP or OOXML entries with CRC-32 and a central directory, and never
@@ -1266,7 +1278,7 @@ bytes, no-write failure,
 immutable snapshots, retry/replay/reentrancy, stale/foreign/archive/policy denial
 and ZIP structure. `python3 tests/run-http.py --selected-export` (add `--archive`)
 checks the real controls, live and forged global gate, selection retention and
-all fourteen download contents. The original caption is among 271 source keys in all
+all fifteen download contents. The original caption is among 271 source keys in all
 237 catalogs. Remaining external-tool formats and the original HTTP route stay
 open.
 

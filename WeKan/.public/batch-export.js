@@ -7,8 +7,9 @@
     if(!Array.isArray(entries)||!entries.length||entries.length>1100)throw new Error('Invalid board export');
     const encoder=new TextEncoder(),prepared=[];let localSize=0;
     for(const entry of entries){
-      if(!entry||typeof entry.name!=='string'||!entry.name||entry.name.startsWith('/')||entry.name.includes('..')||entry.name.includes('\\')||typeof entry.content!=='string')throw new Error('Invalid board export');
-      const name=encoder.encode(entry.name),body=encoder.encode(entry.content);
+      const byteContent=entry&&entry.bytes instanceof Uint8Array;
+      if(!entry||typeof entry.name!=='string'||!entry.name||entry.name.startsWith('/')||entry.name.includes('..')||entry.name.includes('\\')||(!byteContent&&typeof entry.content!=='string'))throw new Error('Invalid board export');
+      const name=encoder.encode(entry.name),body=byteContent?entry.bytes:encoder.encode(entry.content);
       if(name.length>65535||body.length>0xffffffff-localSize)throw new Error('Board export is too large');
       prepared.push({name,body,crc:crc32(body),offset:localSize});localSize+=30+name.length+body.length;
     }
@@ -29,7 +30,12 @@
     if(!Array.isArray(entries)||!entries.length||entries.length>1000)throw new Error('Invalid board export');
     const normalized=[];
     for(const entry of entries){
-      if(!entry||typeof entry.name!=='string'||!/^board-[1-9][0-9]*\.(json|jsonl|csv|tsv|md|leo|opml|org|txt)$/.test(entry.name))throw new Error('Invalid board export');
+      if(!entry||typeof entry.name!=='string'||!/^board-[1-9][0-9]*\.(json|jsonl|csv|tsv|md|leo|opml|org|txt|xlsx)$/.test(entry.name))throw new Error('Invalid board export');
+      if(entry.name.endsWith('.xlsx')){
+        if(typeof entry.content!=='string')throw new Error('Invalid board export');
+        let descriptor;try{descriptor=JSON.parse(entry.content);}catch{throw new Error('Invalid board export');}
+        normalized.push({name:entry.name,bytes:plannerWorkbook(descriptor)});continue;
+      }
       const content=entry.content==null&&entry.name.endsWith('.txt')?'':entry.content;
       if(typeof content!=='string')throw new Error('Invalid board export');
       normalized.push({name:entry.name,content});
@@ -63,6 +69,23 @@
     data.rows.forEach((values,index)=>rows.push(row(index+8,values)));
     return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${rows.join('')}</sheetData><mergeCells count="3"><mergeCell ref="A1:H1"/><mergeCell ref="B3:H3"/><mergeCell ref="F5:R5"/></mergeCells></worksheet>`;
   }
+  const plannerHeaders=['Task ID','Task Name','Bucket Name','Progress','Priority','Assigned To','Created By','Created Date','Start Date','Due Date','Late','Completed Date','Completed By','Description','Completed Checklist Items','Checklist Items','Labels'];
+  function plannerWorkbook(data){
+    if(!data||data.sheet!=='Tasks'||!Array.isArray(data.rows)||data.rows.length<5||data.rows.length>20005)throw new Error('Invalid board export');
+    const rows=data.rows;
+    if(!rows.slice(0,3).every(values=>Array.isArray(values)&&values.length===2&&values.every(value=>typeof value==='string'))||rows[0][0]!=='Plan name'||rows[1][0]!=='Plan ID'||!/^[1-9][0-9]*$/.test(rows[1][1])||rows[2][0]!=='Date of export'||!Array.isArray(rows[3])||rows[3].length||!Array.isArray(rows[4])||rows[4].length!==plannerHeaders.length||!rows[4].every((value,index)=>value===plannerHeaders[index])||!rows.slice(5).every(values=>Array.isArray(values)&&values.length===plannerHeaders.length&&values.every(value=>typeof value==='string'))||!/^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/\d{4}$/.test(rows[2][1]))throw new Error('Invalid board export');
+    const plannerCell=(number,index,value,bold)=>`<c r="${column(index)}${number}" t="inlineStr"${bold?' s="1"':''}><is><t xml:space="preserve">${xml(value)}</t></is></c>`;
+    const plannerRows=rows.map((values,index)=>`<row r="${index+1}">${values.map((value,cellIndex)=>plannerCell(index+1,cellIndex,value,index===4)).join('')}</row>`).join('');
+    const files=[
+      {name:'[Content_Types].xml',content:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'},
+      {name:'_rels/.rels',content:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
+      {name:'xl/workbook.xml',content:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Tasks" sheetId="1" r:id="rId1"/></sheets></workbook>'},
+      {name:'xl/_rels/workbook.xml.rels',content:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'},
+      {name:'xl/styles.xml',content:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>'},
+      {name:'xl/worksheets/sheet1.xml',content:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${plannerRows}</sheetData></worksheet>`}
+    ];
+    return stored(files);
+  }
   function workbook(entries){
     if(!Array.isArray(entries)||!entries.length||entries.length>1000)throw new Error('Invalid board export');
     const descriptors=entries.map(entry=>{
@@ -88,7 +111,7 @@
     return stored(files);
   }
   function downloadPayload(encoded,filename='wekan-boards-weba.zip'){
-    if(!/^wekan-boards-(weba|csv|scsv|tsv|kanboard|markdown|leo|opml|orgmode|todotxt|taskwarrior|focalboard|todoist)\.zip$/.test(filename))throw new Error('Invalid board export');
+    if(!/^wekan-boards-(weba|csv|scsv|tsv|kanboard|markdown|leo|opml|orgmode|todotxt|taskwarrior|focalboard|todoist|planner)\.zip$/.test(filename))throw new Error('Invalid board export');
     const url=URL.createObjectURL(new Blob([archive(payload(encoded))],{type:'application/zip'})),link=document.createElement('a');
     link.href=url;link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
@@ -96,5 +119,5 @@
     const url=URL.createObjectURL(new Blob([workbook(payload(encoded))],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})),link=document.createElement('a');
     link.href=url;link.download='wekan-boards.xlsx';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
-  window.webaBatchExport={archive,workbook,uniqueSheetNames,downloadPayload,downloadWorkbook};
+  window.webaBatchExport={archive,workbook,plannerWorkbook,uniqueSheetNames,downloadPayload,downloadWorkbook};
 })();

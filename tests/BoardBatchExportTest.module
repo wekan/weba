@@ -18,6 +18,7 @@ Public Sub Main()
   Dim taskwarriorBatch As Collection
   Dim focalboardBatch As Collection
   Dim todoistBatch As Collection
+  Dim plannerBatch As Collection
   Dim files As Variant[]
   Dim data As Collection
   Dim settings As Collection
@@ -50,6 +51,9 @@ Public Sub Main()
   Dim focalFoundComment As Boolean
   Dim todoist As String
   Dim todoistCard As Integer
+  Dim plannerRows As Variant[]
+  Dim plannerRow As Variant[]
+  Dim plannerFound As Boolean
   Dim i As Integer
   Dim checklist As Integer
   Dim denied As Boolean
@@ -275,6 +279,7 @@ Public Sub Main()
   data = New Collection
   data["startAt"] = CardDates.Parse("2026-11-10T01:02:03.004Z")
   data["dueAt"] = CardDates.Parse("2026-11-12T05:06:07.008Z")
+  data["endAt"] = CardDates.Parse("2026-11-13T09:10:11.012Z")
   CardDates.Apply(a, todoistCard, data)
   checklist = CardContent.Save(a, todoistCard, 0, "checklist", "Steps", "", 0, False, 0)
   CardContent.Save(a, todoistCard, 0, "checkitem", "Open step", "", checklist, False, 0)
@@ -289,6 +294,23 @@ Public Sub Main()
   If InStr(todoist, "section,Todo" & String(12, ",") & Chr(13) & Chr(10)) = 0 Or InStr(todoist, "task,Plan valve @shop_floor," & Chr(34) & "Two, " & Chr(34) & Chr(34) & "DN50" & Chr(34) & Chr(34) & Chr(10) & "now" & Chr(34) & ",2,1,,batch-export-owner,2026-11-10 01:02,en,UTC,,,2026-11-12 05:06,en" & Chr(13) & Chr(10)) = 0 Then Error.Raise("Todoist section, task, priority, label, text, owner or dates drifted")
   If InStr(todoist, "task,Open step,,4,2" & String(9, ",") & Chr(13) & Chr(10)) = 0 Or InStr(todoist, "Closed step") Or InStr(todoist, "note," & Chr(34) & "Call, vendor" & Chr(34) & ",,,,batch-export-owner" & String(8, ",") & Chr(13) & Chr(10)) = 0 Then Error.Raise("Todoist checklist filtering or comment row drifted")
   If InStr(files[1]["content"], "section,Todo") = 0 Or InStr(files[1]["content"], "task,Bravo card,Bravo body,4,1") = 0 Then Error.Raise("Todoist second-board template drifted")
+  plannerBatch = BoardBatchExport.NewBatch(selection, "planner")
+  BoardBatchExport.Run(plannerBatch, selection)
+  files = BoardBatchExport.Files(plannerBatch)
+  If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".xlsx" Or BoardBatchExport.Format(plannerBatch) <> "planner" Then Error.Raise("Planner batch lost format, order or extension")
+  data = JSON.Decode(files[0]["content"])
+  plannerRows = data["rows"]
+  If data["sheet"] <> "Tasks" Or plannerRows.Count < 6 Or JSON.Encode(plannerRows[4]) <> JSON.Encode(BoardPlannerExport.Headers()) Then Error.Raise("Planner sheet or header contract drifted")
+  If plannerRows[0][0] <> "Plan name" Or plannerRows[0][1] <> "Export Alpha" Or plannerRows[1][0] <> "Plan ID" Or plannerRows[1][1] <> CStr(a) Or plannerRows[2][0] <> "Date of export" Or Len(plannerRows[2][1]) <> 10 Or plannerRows[3].Count Then Error.Raise("Planner plan metadata or blank row drifted")
+  For i = 5 To plannerRows.Max
+    plannerRow = plannerRows[i]
+    If plannerRow[0] <> CStr(todoistCard) Then Continue
+    plannerFound = True
+    If plannerRow.Count <> 17 Or plannerRow[1] <> "Plan" & Chr(9) & "valve" Or plannerRow[2] <> "Todo" Or plannerRow[3] <> "Completed" Or plannerRow[4] <> "Medium" Or plannerRow[5] <> "batch-export-owner" Then Error.Raise("Planner task identity, bucket, progress, priority or people drifted")
+    If plannerRow[8] <> "11/10/2026" Or plannerRow[9] <> "11/12/2026" Or plannerRow[10] <> "false" Or plannerRow[11] <> "11/13/2026" Then Error.Raise("Planner dates, completed state or Late field drifted")
+    If plannerRow[13] <> "Two, " & Chr(34) & "DN50" & Chr(34) & Chr(10) & "now" Or plannerRow[14] <> "1/2" Or plannerRow[15] <> "Open step;Closed step" Or plannerRow[16] <> "p2;shop floor" Then Error.Raise("Planner description, checklist or labels drifted")
+  Next
+  If Not plannerFound Or JSON.Decode(files[1]["content"])["rows"][5][1] <> "Bravo card" Then Error.Raise("Planner task rows or second-board workbook descriptor drifted")
   batch = BoardBatchExport.NewBatch(selection)
   batch["busy"] = True
   Try BoardBatchExport.Run(batch, selection)
@@ -318,7 +340,7 @@ Public Sub Main()
   Try BoardBatchExport.Run(batch, selection)
   denied = Error
   If Not denied Or Error.Text <> "Export is disabled by the administrator." Or BoardBatchExport.Completed(batch) Then Error.Raise("Disabled export leaked or advanced its queue")
-  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML/Org mode/todo.txt/Taskwarrior/Focalboard/Todoist batch export: exact ordered files, table/workbook data, native Kanboard data, text/XML/JSON/JSONL tool formats and Todoist CSV rows, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
+  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML/Org mode/todo.txt/Taskwarrior/Focalboard/Todoist/Planner batch export: exact ordered files, generic and Planner workbook data, native Kanboard data, text/XML/JSON/JSONL/CSV tool formats, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
 End
 
 Private Function Frame() As String

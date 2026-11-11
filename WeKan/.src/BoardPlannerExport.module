@@ -1,0 +1,124 @@
+' Native descriptor for Microsoft Planner's one-sheet Excel export.
+Export
+Private $db As Connection
+Private $boardId As Integer
+
+Public Function Headers() As String[]
+  Return ["Task ID", "Task Name", "Bucket Name", "Progress", "Priority", "Assigned To", "Created By", "Created Date", "Start Date", "Due Date", "Late", "Completed Date", "Completed By", "Description", "Completed Checklist Items", "Checklist Items", "Labels"]
+End
+
+Private Function TextValue(value As Variant) As String
+  If IsNull(value) Then Return ""
+  Return CStr(value)
+End
+
+Private Function DateText(epoch As Long) As String
+  Dim iso As String
+  If epoch <= 0 Then Return ""
+  iso = CardDates.Iso(epoch)
+  Return Mid(iso, 6, 2) & "/" & Mid(iso, 9, 2) & "/" & Left(iso, 4)
+End
+
+Private Function Labels(value As Variant) As String
+  Dim result As New String[]
+  Dim label As String
+  For Each label In Split(TextValue(value), ",")
+    label = Trim(label)
+    If label Then result.Add(Replace(label, ";", ","))
+  Next
+  Return result.Join(";")
+End
+
+Private Function ChecklistData(cardId As Integer) As Collection
+  Dim result As New Collection
+  Dim names As New String[]
+  Dim checklist As Result
+  Dim item As Result
+  Dim title As String
+  Dim total As Integer
+  Dim done As Integer
+  checklist = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "checklist")
+  For Each checklist
+    item = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, cardId, "checkitem", checklist!id)
+    For Each item
+      Inc total
+      If CBool(item!done) Then Inc done
+      title = Trim(Replace(TextValue(item!title), ";", ","))
+      If title Then names.Add(title)
+    Next
+  Next
+  result["total"] = total
+  result["done"] = done
+  result["items"] = names.Join(";")
+  Return result
+End
+
+Private Function CardRow(card As Result, exportTime As Long) As String[]
+  Dim values As New String[]
+  Dim dates As Collection = CardDates.ReadDates($boardId, card!id)
+  Dim people As String[] = BoardAccess.Assignees($boardId, card!id)
+  Dim checkValues As Collection = ChecklistData(card!id)
+  Dim title As String = Trim(TextValue(card!title))
+  Dim listTitle As String = TextValue(card!list_title)
+  Dim completed As Boolean = dates.Exist("endAt")
+  Dim due As Long
+  Dim startText As String
+  Dim dueText As String
+  Dim endText As String
+  If Not title Then title = "Untitled"
+  If Not listTitle Then listTitle = "No bucket"
+  If dates.Exist("startAt") Then startText = DateText(dates["startAt"])
+  If dates.Exist("dueAt") Then
+    due = dates["dueAt"]
+    dueText = DateText(due)
+  Endif
+  If completed Then endText = DateText(dates["endAt"])
+  values.Add(CStr(card!id))
+  values.Add(title)
+  values.Add(listTitle)
+  values.Add(If(completed, "Completed", "Not started"))
+  values.Add("Medium")
+  values.Add(people.Join(";"))
+  values.Add("")
+  values.Add("")
+  values.Add(startText)
+  values.Add(dueText)
+  values.Add(If(due > 0 And Not completed And due < exportTime, "true", "false"))
+  values.Add(endText)
+  values.Add("")
+  values.Add(TextValue(card!description))
+  values.Add(If(checkValues["total"] > 0, CStr(checkValues["done"]) & "/" & CStr(checkValues["total"]), ""))
+  values.Add(checkValues["items"])
+  values.Add(Labels(card!labels))
+  Return values
+End
+
+Public Function Build(boardId As Integer, db As Connection) As String
+  Dim data As New Collection
+  Dim rows As New Variant[]
+  Dim empty As New String[]
+  Dim meta As String[]
+  Dim board As Result
+  Dim cards As Result
+  Dim exportTime As Long = ItemChanges.UtcNow()
+  $db = db
+  $boardId = boardId
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  board = db.Find("kb_boards", "id=&1", boardId)
+  If Not board.Available Then Error.Raise("Board not found")
+  meta = ["Plan name", If(TextValue(board!title), TextValue(board!title), "WeKan board")]
+  rows.Add(meta)
+  meta = ["Plan ID", CStr(boardId)]
+  rows.Add(meta)
+  meta = ["Date of export", DateText(exportTime)]
+  rows.Add(meta)
+  rows.Add(empty)
+  rows.Add(Headers())
+  cards = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card")
+  For Each cards
+    rows.Add(CardRow(cards, exportTime))
+  Next
+  data["sheet"] = "Tasks"
+  data["rows"] = rows
+  Return JSON.Encode(data)
+End
