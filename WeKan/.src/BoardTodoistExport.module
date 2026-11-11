@@ -1,0 +1,193 @@
+' Native counterpart of the parent Todoist project-template CSV formatter.
+Export
+Private $db As Connection
+Private $boardId As Integer
+
+Public Function Headers() As String[]
+  Return ["TYPE", "CONTENT", "DESCRIPTION", "PRIORITY", "INDENT", "AUTHOR", "RESPONSIBLE", "DATE", "DATE_LANG", "TIMEZONE", "DURATION", "DURATION_UNIT", "DEADLINE", "DEADLINE_LANG"]
+End
+
+Private Function TextValue(value As Variant) As String
+  If IsNull(value) Then Return ""
+  Return CStr(value)
+End
+
+Private Function Whitespace(character As String) As Boolean
+  Dim code As Integer = String.Code(character)
+  Return (code >= 9 And code <= 13) Or code = 32 Or code = 160 Or code = 5760 Or (code >= 8192 And code <= 8202) Or code = 8232 Or code = 8233 Or code = 8239 Or code = 8287 Or code = 12288 Or code = 65279
+End
+
+Private Function OneLine(value As Variant) As String
+  Dim source As String = TextValue(value)
+  Dim result As String
+  Dim character As String
+  Dim pendingSpace As Boolean
+  Dim i As Integer
+  For i = 1 To String.Len(source)
+    character = String.Mid(source, i, 1)
+    If Whitespace(character) Then
+      pendingSpace = True
+    Else
+      If pendingSpace And result Then result &= " "
+      result &= character
+      pendingSpace = False
+    Endif
+  Next
+  Return result
+End
+
+Private Function Labels(value As Variant) As String[]
+  Dim result As New String[]
+  Dim label As String
+  For Each label In Split(TextValue(value), ",")
+    label = Trim(label)
+    If label Then result.Add(label)
+  Next
+  Return result
+End
+
+Private Sub AddUnique(values As String[], value As String)
+  Dim current As String
+  For Each current In values
+    If current = value Then Return
+  Next
+  values.Add(value)
+End
+
+Private Function Field(value As Variant) As String
+  Dim text As String = TextValue(value)
+  If InStr(text, ",") Or InStr(text, Chr(34)) Or InStr(text, Chr(13)) Or InStr(text, Chr(10)) Then Return Chr(34) & Replace(text, Chr(34), Chr(34) & Chr(34)) & Chr(34)
+  Return text
+End
+
+Private Function Row(values As Collection) As String
+  Dim cells As New String[]
+  Dim name As String
+  For Each name In Headers()
+    cells.Add(Field(If(values.Exist(name), values[name], "")))
+  Next
+  Return cells.Join(",")
+End
+
+Private Function CsvDate(epoch As Long) As String
+  Dim iso As String
+  If epoch <= 0 Then Return ""
+  iso = CardDates.Iso(epoch)
+  If Mid(iso, 12, 5) = "00:00" Then Return Left(iso, 10)
+  Return Left(iso, 10) & " " & Mid(iso, 12, 5)
+End
+
+Private Function CardRows(card As Result) As String[]
+  Dim rows As New String[]
+  Dim values As New Collection
+  Dim parsedLabels As String[] = Labels(card!labels)
+  Dim tags As New String[]
+  Dim label As String
+  Dim priority As String
+  Dim title As String = OneLine(card!title)
+  Dim dates As Collection = CardDates.ReadDates($boardId, card!id)
+  Dim start As String
+  Dim due As String
+  Dim checklist As Result
+  Dim item As Result
+  Dim comment As Result
+  Dim author As String
+  For Each label In parsedLabels
+    If Len(label) = 2 And Left(label, 1) = "p" And InStr("123", Right(label, 1)) Then
+      If Not priority Then priority = Right(label, 1)
+    Else
+      label = Replace(OneLine(label), " ", "_")
+      If label Then tags.Add("@" & label)
+    Endif
+  Next
+  If Not title Then title = "Untitled"
+  If tags.Count Then title &= " " & tags.Join(" ")
+  If dates.Exist("startAt") Then start = CsvDate(dates["startAt"])
+  If dates.Exist("dueAt") Then due = CsvDate(dates["dueAt"])
+  values.Add("task", "TYPE")
+  values.Add(title, "CONTENT")
+  values.Add(TextValue(card!description), "DESCRIPTION")
+  values.Add(If(priority, priority, "4"), "PRIORITY")
+  values.Add("1", "INDENT")
+  values.Add(TextValue(card!assignee), "RESPONSIBLE")
+  If start And due Then
+    values.Add(start, "DATE")
+    values.Add(due, "DEADLINE")
+  Else If due Then
+    values.Add(due, "DATE")
+  Endif
+  If values.Exist("DATE") Then
+    values.Add("en", "DATE_LANG")
+    values.Add("UTC", "TIMEZONE")
+  Endif
+  If values.Exist("DEADLINE") Then values.Add("en", "DEADLINE_LANG")
+  rows.Add(Row(values))
+  checklist = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, card!id, "checklist")
+  For Each checklist
+    item = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, card!id, "checkitem", checklist!id)
+    For Each item
+      If CBool(item!done) Then Continue
+      values = New Collection
+      values.Add("task", "TYPE")
+      values.Add(TextValue(item!title), "CONTENT")
+      values.Add("4", "PRIORITY")
+      values.Add("2", "INDENT")
+      rows.Add(Row(values))
+    Next
+  Next
+  comment = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, card!id, "comment")
+  For Each comment
+    If Not Trim(TextValue(comment!body)) Then Continue
+    values = New Collection
+    values.Add("note", "TYPE")
+    values.Add(TextValue(comment!body), "CONTENT")
+    author = CardContent.AuthorName($boardId, card!id, "entry", CInt(comment!id))
+    If author Then values.Add(author, "AUTHOR")
+    rows.Add(Row(values))
+  Next
+  Return rows
+End
+
+Public Function Build(boardId As Integer, db As Connection) As String
+  Dim rows As New String[]
+  Dim listTitles As New String[]
+  Dim cards As Result
+  Dim listTitle As String
+  Dim values As Collection
+  Dim generatedRows As String[]
+  Dim rowText As String
+  Dim query As String
+  $db = db
+  $boardId = boardId
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  rows.Add(Headers().Join(","))
+  values = New Collection
+  values.Add("meta", "TYPE")
+  values.Add("view_style=board", "CONTENT")
+  rows.Add(Row(values))
+  cards = db.Exec("SELECT COALESCE(l.title,'') AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card")
+  For Each cards
+    AddUnique(listTitles, If(TextValue(cards!list_title), TextValue(cards!list_title), "No section"))
+  Next
+  For Each listTitle In listTitles
+    If listTitle <> "No section" Then
+      values = New Collection
+      values.Add("section", "TYPE")
+      values.Add(listTitle, "CONTENT")
+      rows.Add(Row(values))
+    Endif
+    query = "SELECT c.* FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND "
+    If listTitle = "No section" Then
+      cards = db.Exec(query & "COALESCE(l.title,'')='' ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card")
+    Else
+      cards = db.Exec(query & "l.title=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", listTitle)
+    Endif
+    For Each cards
+      generatedRows = CardRows(cards)
+      For Each rowText In generatedRows
+        rows.Add(rowText)
+      Next
+    Next
+  Next
+  Return rows.Join(Chr(13) & Chr(10)) & Chr(13) & Chr(10)
+End

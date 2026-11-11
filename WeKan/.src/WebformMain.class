@@ -3985,6 +3985,10 @@ Public Sub ExportSelectedFocalboard_Click()
   RunSelectedExport("focalboard")
 End
 
+Public Sub ExportSelectedTodoist_Click()
+  RunSelectedExport("todoist")
+End
+
 Public Sub CancelSelectedExport_Click()
   ClearSelectedExport()
 End

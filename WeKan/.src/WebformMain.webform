@@ -1491,6 +1491,9 @@
             { ExportSelectedFocalboard WebButton
               Text = "Focalboard"
             }
+            { ExportSelectedTodoist WebButton
+              Text = "Todoist"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton

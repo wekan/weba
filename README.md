@@ -2161,7 +2161,7 @@ the driver has already lost. Other original JSON wire contracts and selected
 multi-format exports remain pending.
 
 
-### Selected board JSON, CSV, TSV, Excel, Kanboard, Markdown, Leo, OPML, Org mode, todo.txt, Taskwarrior and Focalboard export
+### Selected board JSON, CSV, TSV, Excel and external-tool export
 
 The native Multi-Selection sidebar can export selected active boards as one
 `wekan-boards-weba.zip`. Each entry is a complete `weba-2` JSON board named
@@ -2249,6 +2249,14 @@ ranges, description text, flattened checklist items and authored comments.
 Native board descriptions, card creation timestamps and custom fields do not
 exist, so those source-only values remain empty or absent.
 
+Todoist produces `wekan-boards-todoist.zip` with one strict `board-ID.csv`
+project template per selected board. It matches Todoist's 14-column header,
+board-view metadata, card-derived sections, task rows, `p1`/`p2`/`p3`
+priorities, normalized `@labels`, responsible assignee, UTC DATE/DEADLINE
+fields, unfinished checklist items as indented tasks, authored comment notes,
+RFC 4180 quoting and CRLF. Completed checklist items are omitted because
+Todoist exports no completed tasks.
+
 The ordered ID list, revision and completed/pending queue remain private to the
 form. The queue is bound to the current account session and unchanged selection.
 Every board independently takes the existing locked whole-board export path and
@@ -2273,9 +2281,9 @@ apps with `python3 tests/run-http.py --selected-export [--archive]` and verify
 zero-selection refusal, live/forged policy denial, the exact two-entry JSON,
 comma-CSV, semicolon-CSV and TSV ZIPs, and the single two-sheet Excel workbook.
 They also verify the Kanboard container/task JSON, exact Markdown task-list,
-Leo XML, OPML outline, Org mode outline, todo.txt task, Taskwarrior JSON and
-Focalboard JSONL ZIPs. Remaining external-tool formats and the original HTTP
-route remain pending.
+Leo XML, OPML outline, Org mode outline, todo.txt task, Taskwarrior JSON,
+Focalboard JSONL and Todoist CSV ZIPs. Remaining external-tool formats and the
+original HTTP route remain pending.
 
 
 ### Gated permanent board deletion and Recovery

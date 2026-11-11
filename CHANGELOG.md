@@ -2,6 +2,20 @@
 
 This work adds the following features and fixes:
 
+- Add Todoist as the ninth selected-board external-tool export. Download one
+  `wekan-boards-todoist.zip` with an ordered strict `board-ID.csv` archive per
+  board. Match the parent fourteen-column Todoist CSV contract, `view_style`
+  metadata, card-derived non-empty sections, task priorities, normalized label
+  tags, responsible assignees, UTC start/due dates, unfinished checklist rows
+  and authored comment-note rows. Preserve exact CRLF records and selective
+  RFC 4180 quoting, including embedded commas, quotes and newlines. Reuse the
+  private session/selection-bound retry queue and locked full-read, active-board
+  and global export-policy checks for every board. Focused native/browser
+  tests, the complete local suite (69 host tests), and complete source/packaged
+  live suites pass; the integrated scenario validates all fourteen exact
+  downloads and live/forged policy gates in both forms. Other external-tool
+  formats remain pending. Thanks to xet7.
+
 - Add Focalboard as the eighth selected-board external-tool export. Download
   one `wekan-boards-focalboard.zip` with an ordered strict `board-ID.jsonl`
   archive per board. Match the parent archive header, deterministic base-36

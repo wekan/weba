@@ -1158,7 +1158,7 @@ streaming, security eventlog/Problems reporting, non-SQLite concurrency and full
 original UI/API/DDP/security suites remain pending. No controls for unsupported
 formats or privacy transformations are shown.
 
-### Selected board JSON, CSV, TSV, Excel, Kanboard, Markdown, Leo, OPML, Org mode, todo.txt, Taskwarrior and Focalboard export
+### Selected board JSON, CSV, TSV, Excel and external-tool export
 
 The native Multi-Selection action exports selected active boards into one
 `wekan-boards-weba.zip`, with a complete weba-2 document in each strict
@@ -1249,6 +1249,15 @@ descriptions, card creation timestamps and custom fields have no current model,
 so those source-only values remain empty or absent. The JSONL is built inside
 the same locked transfer transaction.
 
+The `todoist` format writes `wekan-boards-todoist.zip` with ordered strict
+`board-ID.csv` entries. `BoardTodoistExport` reproduces Todoist's 14-column
+project-template header, board-view metadata, card-derived section ordering,
+task priorities and normalized labels, responsible assignee, UTC start/due
+mapping, unfinished checklist sub-tasks, authored comment notes, selective RFC
+4180 quoting and CRLF rows. Completed checklist items are omitted because
+Todoist exports no completed tasks. It runs inside the same locked transfer
+transaction.
+
 The final file snapshot crosses the native command boundary as base64 JSON.
 `batch-export.js` bounds and validates the JSON/table/Excel envelope, writes
 stored UTF-8 ZIP or OOXML entries with CRC-32 and a central directory, and never
@@ -1257,7 +1266,7 @@ bytes, no-write failure,
 immutable snapshots, retry/replay/reentrancy, stale/foreign/archive/policy denial
 and ZIP structure. `python3 tests/run-http.py --selected-export` (add `--archive`)
 checks the real controls, live and forged global gate, selection retention and
-all thirteen download contents. The original caption is among 271 source keys in all
+all fourteen download contents. The original caption is among 271 source keys in all
 237 catalogs. Remaining external-tool formats and the original HTTP route stay
 open.
 

@@ -67,6 +67,10 @@ Public Function ExportActiveBoardFocalboard(boardId As Integer) As String
   Return ExportChecked(boardId, "board", boardId, True, "focalboard")
 End
 
+Public Function ExportActiveBoardTodoist(boardId As Integer) As String
+  Return ExportChecked(boardId, "board", boardId, True, "todoist")
+End
+
 Private Sub RequireActiveBoard(boardId As Integer)
   Dim r As Result = $db.Find("kb_boards", "id=&1 AND archived=&2", boardId, False)
   If Not r.Available Then Error.Raise("Select active boards first")
@@ -119,6 +123,8 @@ Private Function ExportChecked(boardId As Integer, kind As String, itemId As Int
     text = BoardTaskwarriorExport.Build(boardId, $db)
   Else If format = "focalboard" And kind = "board" Then
     text = BoardFocalboardExport.Build(boardId, $db)
+  Else If format = "todoist" And kind = "board" Then
+    text = BoardTodoistExport.Build(boardId, $db)
   Else
     Error.Raise("Unknown export format")
   Endif

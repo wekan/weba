@@ -17,6 +17,7 @@ Public Sub Main()
   Dim todoTxtBatch As Collection
   Dim taskwarriorBatch As Collection
   Dim focalboardBatch As Collection
+  Dim todoistBatch As Collection
   Dim files As Variant[]
   Dim data As Collection
   Dim settings As Collection
@@ -47,6 +48,8 @@ Public Sub Main()
   Dim focalFoundDescription As Boolean
   Dim focalFoundCheckbox As Boolean
   Dim focalFoundComment As Boolean
+  Dim todoist As String
+  Dim todoistCard As Integer
   Dim i As Integer
   Dim checklist As Integer
   Dim denied As Boolean
@@ -268,6 +271,24 @@ Public Sub Main()
   Next
   If Not focalFoundCard Or Not focalFoundDescription Or Not focalFoundCheckbox Or Not focalFoundComment Then Error.Raise("Focalboard card content or comment blocks drifted")
   If InStr(files[1]["content"], Chr(34) & "title" & Chr(34) & ":" & Chr(34) & "Export Bravo" & Chr(34)) = 0 Or InStr(files[1]["content"], Chr(34) & "title" & Chr(34) & ":" & Chr(34) & "Bravo card" & Chr(34)) = 0 Then Error.Raise("Focalboard second-board archive drifted")
+  todoistCard = KanbanStore.SaveCard(a, 0, "Plan" & Chr(9) & "valve", "Two, " & Chr(34) & "DN50" & Chr(34) & Chr(10) & "now", "Default", "Todo", "batch-export-owner", "p2, shop floor", "")
+  data = New Collection
+  data["startAt"] = CardDates.Parse("2026-11-10T01:02:03.004Z")
+  data["dueAt"] = CardDates.Parse("2026-11-12T05:06:07.008Z")
+  CardDates.Apply(a, todoistCard, data)
+  checklist = CardContent.Save(a, todoistCard, 0, "checklist", "Steps", "", 0, False, 0)
+  CardContent.Save(a, todoistCard, 0, "checkitem", "Open step", "", checklist, False, 0)
+  CardContent.Save(a, todoistCard, 0, "checkitem", "Closed step", "", checklist, True, 0)
+  CardContent.Save(a, todoistCard, 0, "comment", "", "Call, vendor", 0, False, 0)
+  todoistBatch = BoardBatchExport.NewBatch(selection, "todoist")
+  BoardBatchExport.Run(todoistBatch, selection)
+  files = BoardBatchExport.Files(todoistBatch)
+  If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".csv" Or BoardBatchExport.Format(todoistBatch) <> "todoist" Then Error.Raise("Todoist batch lost format, order or extension")
+  todoist = files[0]["content"]
+  If Left(todoist, Len(BoardTodoistExport.Headers().Join(",") & Chr(13) & Chr(10) & "meta,view_style=board")) <> BoardTodoistExport.Headers().Join(",") & Chr(13) & Chr(10) & "meta,view_style=board" Or Right(todoist, 2) <> Chr(13) & Chr(10) Then Error.Raise("Todoist header, metadata or CRLF drifted")
+  If InStr(todoist, "section,Todo" & String(12, ",") & Chr(13) & Chr(10)) = 0 Or InStr(todoist, "task,Plan valve @shop_floor," & Chr(34) & "Two, " & Chr(34) & Chr(34) & "DN50" & Chr(34) & Chr(34) & Chr(10) & "now" & Chr(34) & ",2,1,,batch-export-owner,2026-11-10 01:02,en,UTC,,,2026-11-12 05:06,en" & Chr(13) & Chr(10)) = 0 Then Error.Raise("Todoist section, task, priority, label, text, owner or dates drifted")
+  If InStr(todoist, "task,Open step,,4,2" & String(9, ",") & Chr(13) & Chr(10)) = 0 Or InStr(todoist, "Closed step") Or InStr(todoist, "note," & Chr(34) & "Call, vendor" & Chr(34) & ",,,,batch-export-owner" & String(8, ",") & Chr(13) & Chr(10)) = 0 Then Error.Raise("Todoist checklist filtering or comment row drifted")
+  If InStr(files[1]["content"], "section,Todo") = 0 Or InStr(files[1]["content"], "task,Bravo card,Bravo body,4,1") = 0 Then Error.Raise("Todoist second-board template drifted")
   batch = BoardBatchExport.NewBatch(selection)
   batch["busy"] = True
   Try BoardBatchExport.Run(batch, selection)
@@ -297,7 +318,7 @@ Public Sub Main()
   Try BoardBatchExport.Run(batch, selection)
   denied = Error
   If Not denied Or Error.Text <> "Export is disabled by the administrator." Or BoardBatchExport.Completed(batch) Then Error.Raise("Disabled export leaked or advanced its queue")
-  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML/Org mode/todo.txt/Taskwarrior/Focalboard batch export: exact ordered files, table/workbook data, native Kanboard data, Markdown/Leo/OPML/Org/todo.txt tasks, Taskwarrior JSON and Focalboard JSONL blocks, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
+  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML/Org mode/todo.txt/Taskwarrior/Focalboard/Todoist batch export: exact ordered files, table/workbook data, native Kanboard data, text/XML/JSON/JSONL tool formats and Todoist CSV rows, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
 End
 
 Private Function Frame() As String
