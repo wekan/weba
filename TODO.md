@@ -113,6 +113,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   note attributes and XML whitespace escaping is recorded there;
   selected Org mode outline ZIP with TODO/DONE state, priorities, Unicode tags,
   UTC planning stamps, descriptions and checklist hierarchy is recorded there;
+  selected todo.txt task ZIP with terminal state, priorities, projects/contexts,
+  due/threshold days and list metadata is recorded there;
   original remaining formats/API route, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded

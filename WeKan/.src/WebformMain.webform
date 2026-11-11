@@ -1482,6 +1482,9 @@
             { ExportSelectedOrgMode WebButton
               Text = "Org mode"
             }
+            { ExportSelectedTodoTxt WebButton
+              Text = "todo.txt"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton

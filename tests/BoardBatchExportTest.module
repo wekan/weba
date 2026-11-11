@@ -14,6 +14,7 @@ Public Sub Main()
   Dim leoBatch As Collection
   Dim opmlBatch As Collection
   Dim orgModeBatch As Collection
+  Dim todoTxtBatch As Collection
   Dim files As Variant[]
   Dim data As Collection
   Dim settings As Collection
@@ -26,6 +27,8 @@ Public Sub Main()
   Dim opml As String
   Dim orgMode As String
   Dim orgCard As Integer
+  Dim todoTxt As String
+  Dim todoCard As Integer
   Dim checklist As Integer
   Dim denied As Boolean
   WebDatabase.Register("batch-export-global", "x")
@@ -174,6 +177,20 @@ Public Sub Main()
   If InStr(orgMode, "   Comma, quote " & Chr(34) & " and" & Chr(10) & "   line" & Chr(10) & "*** Checks" & Chr(10) & "**** DONE Checked") = 0 Then Error.Raise("Org mode description or checklist hierarchy drifted")
   If InStr(orgMode, "** DONE [#A] Planned card :tag_value:Mötley_Crüe:" & Chr(10) & "   SCHEDULED: <2026-11-10 Tue> DEADLINE: <2026-11-12 Thu 05:06> CLOSED: [2026-11-13 Fri]" & Chr(10) & "   Line one" & Chr(10) & Chr(10) & "   Line three" & Chr(10) & "*** Release checks" & Chr(10) & "**** TODO Open item" & Chr(10) & "**** DONE Closed item") = 0 Then Error.Raise("Org mode priority, done label, Unicode tags, normalized description, closed stamp or checklist states drifted")
   If InStr(orgMode, "* Doing" & Chr(10) & "* Done" & Chr(10) & "** DONE Finished card") = 0 Or Right(orgMode, 1) <> Chr(10) Then Error.Raise("Org mode empty list, terminal card or trailing newline drifted")
+  todoCard = KanbanStore.SaveCard(a, 0, "Ship" & Chr(10) & "valve", "Ignored description", "Default", "Done", "", "priority:B, project name, @work shop", "")
+  data = New Collection
+  data["startAt"] = CardDates.Parse("2026-11-10T01:02:03.004Z")
+  data["dueAt"] = CardDates.Parse("2026-11-12T05:06:07.008Z")
+  data["endAt"] = CardDates.Parse("2026-11-13T09:10:11.012Z")
+  CardDates.Apply(a, todoCard, data)
+  todoTxtBatch = BoardBatchExport.NewBatch(selection, "todotxt")
+  BoardBatchExport.Run(todoTxtBatch, selection)
+  files = BoardBatchExport.Files(todoTxtBatch)
+  If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".txt" Or BoardBatchExport.Format(todoTxtBatch) <> "todotxt" Then Error.Raise("todo.txt batch lost format, order or extension")
+  todoTxt = files[0]["content"]
+  If Left(todoTxt, Len("Alpha card list:Todo" & Chr(10) & "=SUM(1,2) +red +urgent due:2026-11-12 t:2026-11-10 list:Todo" & Chr(10))) <> "Alpha card list:Todo" & Chr(10) & "=SUM(1,2) +red +urgent due:2026-11-12 t:2026-11-10 list:Todo" & Chr(10) Then Error.Raise("todo.txt open task, project tags, dates or source order drifted")
+  If InStr(todoTxt, "x Finished card list:Done" & Chr(10)) = 0 Or InStr(todoTxt, "(A) Planned card +tag_value +done +Mötley_Crüe due:2026-11-12 t:2026-11-10 list:Todo" & Chr(10)) = 0 Then Error.Raise("todo.txt terminal state, open priority, Unicode projects or metadata drifted")
+  If InStr(todoTxt, "x Ship valve +project_name @work_shop pri:B due:2026-11-12 t:2026-11-10 list:Done" & Chr(10)) = 0 Or InStr(todoTxt, "2026-11-13") Or Right(todoTxt, 1) <> Chr(10) Then Error.Raise("todo.txt completed priority/context, whitespace, unsupported completion date or trailing newline drifted")
   batch = BoardBatchExport.NewBatch(selection)
   batch["busy"] = True
   Try BoardBatchExport.Run(batch, selection)
@@ -203,7 +220,7 @@ Public Sub Main()
   Try BoardBatchExport.Run(batch, selection)
   denied = Error
   If Not denied Or Error.Text <> "Export is disabled by the administrator." Or BoardBatchExport.Completed(batch) Then Error.Raise("Disabled export leaked or advanced its queue")
-  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML/Org mode batch export: exact ordered files, fixed quoted rows/CRLF/formula/date/people cells, 20-column workbook descriptors, native Kanboard containers/tasks/dates/tags/details/links, Markdown task-list text, Leo XML, OPML outlines, and Org headings/planning/tags/checklists, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
+  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML/Org mode/todo.txt batch export: exact ordered files, fixed quoted rows/CRLF/formula/date/people cells, 20-column workbook descriptors, native Kanboard containers/tasks/dates/tags/details/links, Markdown task-list text, Leo XML, OPML outlines, Org headings/planning/tags/checklists, and todo.txt states/priorities/projects/contexts/dates/lists, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
 End
 
 Private Function Frame() As String

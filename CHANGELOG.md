@@ -2,6 +2,21 @@
 
 This work adds the following features and fixes:
 
+- Add todo.txt as the sixth selected-board external-tool export. Download one
+  `wekan-boards-todotxt.zip` with an ordered strict `board-ID.txt` entry per
+  board. Match the parent one-task-per-line formatter: terminal-list `x` state,
+  open and completed priority placement, whitespace-collapsed titles, project
+  and context tags, UTC due/threshold days, list metadata and trailing newline.
+  Omit completion day honestly because native cards have no creation timestamp
+  and todo.txt permits completion only together with creation. Normalize only
+  null/omitted strict `.txt` content to an empty file at the Gambas JSON browser
+  boundary. Reuse the private session/selection-bound retry queue and locked
+  full-read, active-board and global export-policy checks for every board.
+  Focused native/browser tests, the complete local suite (69 host tests), and
+  complete source/packaged live suites pass; the integrated scenario validates
+  all eleven exact downloads and live/forged policy gates in both forms. Other
+  external-tool formats remain pending. Thanks to xet7.
+
 - Add Org mode as the fifth selected-board external-tool export. Download one
   `wekan-boards-orgmode.zip` with an ordered strict `board-ID.org` entry per
   board. Match the parent Org formatter: collapsed board/list/card/checklist

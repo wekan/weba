@@ -9,7 +9,10 @@ assert.equal(index,2);assert.equal(view.getUint32(at,true),0x02014b50);assert.eq
 const csv=window.webaBatchExport.archive([{name:'board-11.csv',content:'"Title"\r\n"\'=formula"'}]);assert.equal(new DataView(csv.buffer).getUint32(0,true),0x04034b50);
 const tsv=window.webaBatchExport.archive([{name:'board-12.tsv',content:'"Title"\t"Description"'}]);assert.equal(new DataView(tsv.buffer).getUint32(0,true),0x04034b50);
 const org=window.webaBatchExport.archive([{name:'board-13.org',content:'#+TITLE: Alpha\n'}]);assert.equal(new DataView(org.buffer).getUint32(0,true),0x04034b50);
-for(const bad of [[],[{name:'../escape.json',content:'{}'}],[{name:'board-0.json',content:'{}'}],[{name:'board-1.xlsx',content:'x'}],[{name:'board-1.json',content:1}]])assert.throws(()=>window.webaBatchExport.archive(bad),/Invalid board export/);
+const txt=window.webaBatchExport.archive([{name:'board-14.txt',content:'Task list:Todo\n'}]);assert.equal(new DataView(txt.buffer).getUint32(0,true),0x04034b50);
+assert.equal(unzipStored(window.webaBatchExport.archive([{name:'board-15.txt',content:null}])).get('board-15.txt'),'');
+assert.equal(unzipStored(window.webaBatchExport.archive([{name:'board-16.txt'}])).get('board-16.txt'),'');
+for(const bad of [[],[{name:'../escape.json',content:'{}'}],[{name:'board-0.json',content:'{}'}],[{name:'board-1.xlsx',content:'x'}],[{name:'board-1.json',content:1}],[{name:'board-1.json',content:null}],[{name:'board-1.org'}]])assert.throws(()=>window.webaBatchExport.archive(bad),/Invalid board export/);
 const headers=['number','title','description','parent-card','owner','createdAt','last-modified-at','card-received','card-start','card-due','card-end','list','swimlane','assignee','members','requested-by','assigned-by','labels','overtime-hours','spent-time-hours'];
 const descriptor=(title,value)=>({title,description:'Board <description>',createdAt:'',modifiedAt:'',boardMembers:'alice,bob',headerKeys:headers,rows:[['1',value,'Body \0 & text','','','','','','2026-11-10T01:02:03.004Z','','','Todo','Default','alice','alice bob','','','red','false','']]});
 const xlsx=window.webaBatchExport.workbook([{name:'board-7.xlsx',content:JSON.stringify(descriptor('A/B?C','=1+1'))},{name:'board-9.xlsx',content:JSON.stringify(descriptor('a b c','Bravo'))}]);

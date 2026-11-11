@@ -3973,6 +3973,10 @@ Public Sub ExportSelectedOrgMode_Click()
   RunSelectedExport("orgmode")
 End
 
+Public Sub ExportSelectedTodoTxt_Click()
+  RunSelectedExport("todotxt")
+End
+
 Public Sub CancelSelectedExport_Click()
   ClearSelectedExport()
 End

@@ -27,8 +27,14 @@
   }
   function archive(entries){
     if(!Array.isArray(entries)||!entries.length||entries.length>1000)throw new Error('Invalid board export');
-    for(const entry of entries)if(!entry||typeof entry.name!=='string'||!/^board-[1-9][0-9]*\.(json|csv|tsv|md|leo|opml|org)$/.test(entry.name)||typeof entry.content!=='string')throw new Error('Invalid board export');
-    return stored(entries);
+    const normalized=[];
+    for(const entry of entries){
+      if(!entry||typeof entry.name!=='string'||!/^board-[1-9][0-9]*\.(json|csv|tsv|md|leo|opml|org|txt)$/.test(entry.name))throw new Error('Invalid board export');
+      const content=entry.content==null&&entry.name.endsWith('.txt')?'':entry.content;
+      if(typeof content!=='string')throw new Error('Invalid board export');
+      normalized.push({name:entry.name,content});
+    }
+    return stored(normalized);
   }
   function payload(encoded){
     if(typeof encoded!=='string'||encoded.length>300*1024*1024)throw new Error('Invalid board export');
@@ -82,7 +88,7 @@
     return stored(files);
   }
   function downloadPayload(encoded,filename='wekan-boards-weba.zip'){
-    if(!/^wekan-boards-(weba|csv|scsv|tsv|kanboard|markdown|leo|opml|orgmode)\.zip$/.test(filename))throw new Error('Invalid board export');
+    if(!/^wekan-boards-(weba|csv|scsv|tsv|kanboard|markdown|leo|opml|orgmode|todotxt)\.zip$/.test(filename))throw new Error('Invalid board export');
     const url=URL.createObjectURL(new Blob([archive(payload(encoded))],{type:'application/zip'})),link=document.createElement('a');
     link.href=url;link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }

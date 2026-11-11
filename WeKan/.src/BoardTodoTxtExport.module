@@ -1,0 +1,114 @@
+' Native counterpart of the parent todo.txt formatter.
+Export
+
+Private Function TextValue(value As Variant) As String
+  If IsNull(value) Then Return ""
+  Return CStr(value)
+End
+
+Private Function Whitespace(character As String) As Boolean
+  Dim code As Integer = String.Code(character)
+  Return (code >= 9 And code <= 13) Or code = 32 Or code = 160 Or code = 5760 Or (code >= 8192 And code <= 8202) Or code = 8232 Or code = 8233 Or code = 8239 Or code = 8287 Or code = 12288 Or code = 65279
+End
+
+Private Function OneLine(value As Variant) As String
+  Dim source As String = TextValue(value)
+  Dim result As String
+  Dim character As String
+  Dim pendingSpace As Boolean
+  Dim i As Integer
+  For i = 1 To String.Len(source)
+    character = String.Mid(source, i, 1)
+    If Whitespace(character) Then
+      pendingSpace = True
+    Else
+      If pendingSpace And result Then result &= " "
+      result &= character
+      pendingSpace = False
+    Endif
+  Next
+  Return result
+End
+
+Private Function ClosedList(title As String) As Boolean
+  Dim lower As String = LCase(title)
+  Return InStr(lower, "done") > 0 Or InStr(lower, "closed") > 0 Or InStr(lower, "complete") > 0 Or InStr(lower, "archiv") > 0 Or InStr(lower, "finished") > 0
+End
+
+Private Function PriorityLabel(label As String) As Boolean
+  If Len(label) <> 10 Or Left(label, 9) <> "priority:" Then Return False
+  Return InStr("ABCDEFGHIJKLMNOPQRSTUVWXYZ", Right(label, 1)) > 0
+End
+
+Private Function Labels(value As Variant) As String[]
+  Dim result As New String[]
+  Dim label As String
+  For Each label In Split(TextValue(value), ",")
+    label = Trim(label)
+    If label Then result.Add(label)
+  Next
+  Return result
+End
+
+Private Function DateDay(dates As Collection, key As String) As String
+  If Not dates.Exist(key) Then Return ""
+  Return Left(CardDates.Iso(CLong(dates[key])), 10)
+End
+
+Private Function Line(card As Result) As String
+  Dim head As New String[]
+  Dim tail As New String[]
+  Dim parsedLabels As String[] = Labels(card!labels)
+  Dim label As String
+  Dim priority As String
+  Dim value As String
+  Dim listTitle As String = TextValue(card!list_title)
+  Dim done As Boolean = ClosedList(listTitle)
+  Dim dates As Collection = CardDates.ReadDates(card!board_id, card!id)
+  Dim title As String = OneLine(card!title)
+  For Each label In parsedLabels
+    If PriorityLabel(label) And Not priority Then priority = Right(label, 1)
+  Next
+  If done Then
+    head.Add("x")
+    ' Native cards have no creation timestamp, so the todo.txt completion date
+    ' (which is valid only together with creation) is intentionally absent.
+  Else If priority Then
+    head.Add("(" & priority & ")")
+  Endif
+  If Not title Then title = "Untitled"
+  For Each label In parsedLabels
+    If PriorityLabel(label) Then Continue
+    value = Replace(OneLine(label), " ", "_")
+    If Not value Then Continue
+    If Left(value, 1) = "@" Then
+      tail.Add("@" & Mid(value, 2))
+    Else
+      tail.Add("+" & value)
+    Endif
+  Next
+  If done And priority Then tail.Add("pri:" & priority)
+  value = DateDay(dates, "dueAt")
+  If value Then tail.Add("due:" & value)
+  value = DateDay(dates, "startAt")
+  If value Then tail.Add("t:" & value)
+  If listTitle Then tail.Add("list:" & Replace(OneLine(listTitle), " ", "_"))
+  head.Add(title)
+  For Each value In tail
+    head.Add(value)
+  Next
+  Return head.Join(" ")
+End
+
+Public Function Build(boardId As Integer, db As Connection) As String
+  Dim lines As New String[]
+  Dim cards As Result
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  cards = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card")
+  For Each cards
+    lines.Add(Line(cards))
+  Next
+  If Not lines.Count Then Return ""
+  lines.Add("")
+  Return lines.Join(Chr(10))
+End
