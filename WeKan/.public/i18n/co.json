@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Permette à l’amministratori glubali di squassà definitivamente i cuntenuti marcati cum’è squassati. Attivà st’opzione ùn squassa nunda da per sè.",
   "error": "Errore",
   "export": "Espurtà",
+  "export-selected-boards": "Espurtà e tavule scelte",
   "external-link-identifier-aliases": "Abbreviazioni per {identifier}, per esempiu TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefissu di u token",
   "external-link-pattern-url": "Mudellu URL (aduprà {number})",

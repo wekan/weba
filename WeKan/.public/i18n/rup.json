@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Alasã administratorlji globalj s-ashteargã permanent contsinutul ashtersu lishor. Activarea a aestei sitari nu ashteardzi tsiva singurã.",
   "error": "Alatus",
   "export": "Exportã",
+  "export-selected-boards": "Exportã tabelili alepti",
   "external-link-identifier-aliases": "Scurtãri ti {identifier}, di exemplu TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefixul a token-lui",
   "external-link-pattern-url": "Sheabllon URL (foloseashti {number})",

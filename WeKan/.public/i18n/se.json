@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Suova Global Admin -hálddašeaddjiid sihkkut bistevaččat siste sihkkojuvvon sisdoalu. Dán heivehusa bidjan ala ii iešalddis sihko maidege.",
   "error": "Meattáhus",
   "export": "Olggosfievrrit",
+  "export-selected-boards": "Olggosfievrrit válljejuvvon távvaliid",
   "external-link-identifier-aliases": "Oanádusat {identifier} várás, ovdamearkka dihte TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Symbola ovdaliite",
   "external-link-pattern-url": "URL-minsttar (geavat {number})",

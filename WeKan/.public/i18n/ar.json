@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "السماح للمسؤولين العامين بحذف المحتوى المحذوف منطقيًا نهائيًا. لا يؤدي تمكين هذا الإعداد وحده إلى حذف أي شيء.",
   "error": "خطأ",
   "export": "تصدير",
+  "export-selected-boards": "تصدير اللوحات المحددة",
   "external-link-identifier-aliases": "اختصارات {identifier}، مثل TK=Task, IN=Incident",
   "external-link-pattern-prefix": "بادئة الرمز",
   "external-link-pattern-url": "قالب الرابط (استخدم {number})",

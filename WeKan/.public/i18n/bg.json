@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Позволете на глобалните администратори да изтриват окончателно меко изтрито съдържание. Включването на тази настройка само по себе си не изтрива нищо.",
   "error": "Грешка",
   "export": "Експортиране",
+  "export-selected-boards": "Изнеси избраните табла",
   "external-link-identifier-aliases": "Съкращения за {identifier}, например TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Представка на токена",
   "external-link-pattern-url": "URL шаблон (използвайте {number})",

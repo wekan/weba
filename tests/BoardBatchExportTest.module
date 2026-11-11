@@ -1,0 +1,117 @@
+Public Sub Main()
+  Dim a As Integer
+  Dim b As Integer
+  Dim cardId As Integer
+  Dim selection As Collection
+  Dim batch As Collection
+  Dim files As Variant[]
+  Dim data As Collection
+  Dim settings As Collection
+  Dim before As String
+  Dim denied As Boolean
+  WebDatabase.Register("batch-export-global", "x")
+  WebDatabase.Register("batch-export-owner", "x")
+  WebDatabase.Register("batch-export-other", "x")
+  SignIn("batch-export-owner")
+  a = KanbanStore.AddBoard("Export Alpha")
+  cardId = KanbanStore.SaveCard(a, 0, "Alpha card", "Alpha body", "Default", "Todo", "", "", "")
+  CardContent.UploadFile(a, cardId, "alpha.bin", "A")
+  b = KanbanStore.AddBoard("Export Bravo")
+  cardId = KanbanStore.SaveCard(b, 0, "Bravo card", "Bravo body", "Default", "Todo", "", "", "")
+  CardContent.UploadFile(b, cardId, "bravo.bin", "BBB")
+  selection = BoardSelection.NewState()
+  BoardSelection.SetActive(selection, True)
+  BoardSelection.AddVisible(selection, [a, b])
+  batch = BoardBatchExport.NewBatch(selection)
+  SignIn("batch-export-global")
+  settings = TransferPolicy.Settings()
+  settings["attachmentsDownloadMaxBytes"] = 2
+  TransferPolicy.Save(settings)
+  SignIn("batch-export-owner")
+  before = Frame()
+  Try BoardBatchExport.Run(batch, selection)
+  denied = Error
+  If Not denied Or BoardBatchExport.Completed(batch) <> 1 Or BoardBatchExport.Remaining(batch) <> 1 Or batch["busy"] Then Error.Raise("Failed batch export lost its pending-only queue")
+  If Frame() <> before Then Error.Raise("Batch export wrote application data")
+  files = BoardBatchExport.Files(batch)
+  If files.Count <> 1 Or files[0]["name"] <> "board-" & CStr(a) & ".json" Then Error.Raise("Completed export lost caller order or safe name")
+  data = JSON.Decode(files[0]["content"])
+  If data["format"] <> "weba-2" Or data["title"] <> "Export Alpha" Or data["files"][0]["base64"] <> Base64("A") Then Error.Raise("Completed export lost exact data")
+  files[0]["content"] = "tampered"
+  If BoardBatchExport.Files(batch)[0]["content"] = "tampered" Then Error.Raise("Export getter exposed private queue state")
+  SignIn("batch-export-global")
+  settings["attachmentsDownloadMaxBytes"] = 0
+  TransferPolicy.Save(settings)
+  SignIn("batch-export-owner")
+  BoardBatchExport.Run(batch, selection)
+  If BoardBatchExport.Completed(batch) <> 2 Or BoardBatchExport.Remaining(batch) Then Error.Raise("Retry did not export only the pending board")
+  files = BoardBatchExport.Files(batch)
+  data = JSON.Decode(files[1]["content"])
+  If data["title"] <> "Export Bravo" Or data["files"][0]["base64"] <> Base64("BBB") Then Error.Raise("Pending retry lost exact second board")
+  before = Frame()
+  BoardBatchExport.Run(batch, selection)
+  If BoardBatchExport.Completed(batch) <> 2 Or Frame() <> before Then Error.Raise("Completed export replay changed state")
+  batch = BoardBatchExport.NewBatch(selection)
+  batch["busy"] = True
+  Try BoardBatchExport.Run(batch, selection)
+  denied = Error
+  If Not denied Or Not batch["busy"] Or BoardBatchExport.Completed(batch) Then Error.Raise("Reentrant export unlocked or advanced its queue")
+  batch["busy"] = False
+  BoardSelection.Toggle(selection, b, [a, b])
+  BoardSelection.Toggle(selection, b, [a, b])
+  Try BoardBatchExport.Run(batch, selection)
+  denied = Error
+  If Not denied Or BoardBatchExport.Completed(batch) Then Error.Raise("Stale selection revision exported")
+  batch = BoardBatchExport.NewBatch(selection)
+  SignIn("batch-export-other")
+  Try BoardBatchExport.Run(batch, selection)
+  denied = Error
+  If Not denied Or BoardBatchExport.Completed(batch) Then Error.Raise("Foreign actor reused an export queue")
+  SignIn("batch-export-owner")
+  batch = BoardBatchExport.NewBatch(selection)
+  WorkspaceStore.SetArchived(a, "board", a, True)
+  Try BoardBatchExport.Run(batch, selection)
+  denied = Error
+  If Not denied Or Error.Text <> "Select active boards first" Or BoardBatchExport.Completed(batch) Or BoardBatchExport.Remaining(batch) <> 2 Then Error.Raise("Archived selected board leaked or consumed its queue entry")
+  WorkspaceStore.SetArchived(a, "board", a, False)
+  SignIn("batch-export-global")
+  ImportExportPolicy.Save(False, True)
+  SignIn("batch-export-owner")
+  Try BoardBatchExport.Run(batch, selection)
+  denied = Error
+  If Not denied Or Error.Text <> "Export is disabled by the administrator." Or BoardBatchExport.Completed(batch) Then Error.Raise("Disabled export leaked or advanced its queue")
+  Print "Selected JSON batch export: exact ordered files, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
+End
+
+Private Function Frame() As String
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim tables As String[] = ["users", "kb_boards", "kb_lanes", "kb_lists", "kb_cards", "kb_files", "kb_entries", "kb_activity", "kb_members", "kb_meta", "attachment_transfer_settings"]
+  Dim tableName As String
+  Dim r As Result
+  Dim row As Collection
+  Dim rows As Variant[]
+  Dim data As New Variant[]
+  Dim field As ResultField
+  For Each tableName In tables
+    rows = New Variant[]
+    r = db.Find(tableName)
+    For Each r
+      row = New Collection
+      For Each field In r.Fields
+        If field.Name = "content" Then
+          row.Add(Base64(r!content.Data), field.Name)
+        Else
+          row.Add(r[field.Name], field.Name)
+        Endif
+      Next
+      rows.Add(row)
+    Next
+    data.Add(rows)
+  Next
+  Return JSON.Encode(data)
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

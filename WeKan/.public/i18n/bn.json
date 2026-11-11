@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "বৈশ্বিক প্রশাসকদের অস্থায়ীভাবে মোছা বিষয়বস্তু স্থায়ীভাবে মুছতে দিন। এই সেটিং চালু করলেই নিজে থেকে কিছু মোছা হয় না।",
   "error": "ত্রুটি",
   "export": "রপ্তানি",
+  "export-selected-boards": "নির্বাচিত বোর্ড রপ্তানি করুন",
   "external-link-identifier-aliases": "{identifier}-এর সংক্ষিপ্ত রূপ, যেমন TK=Task, IN=Incident",
   "external-link-pattern-prefix": "টোকেন উপসর্গ",
   "external-link-pattern-url": "ইউআরএল টেমপ্লেট ({number} ব্যবহার করুন)",

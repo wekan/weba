@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Salli pääylläpitäjien poistaa pehmeästi poistetut sisällöt pysyvästi. Tämän asetuksen käyttöönotto ei itsessään poista mitään.",
   "error": "Virhe",
   "export": "Vie",
+  "export-selected-boards": "Vie valitut taulut",
   "external-link-identifier-aliases": "Lyhenteet merkinnälle {identifier}, esimerkiksi TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Tunnisteen etuliite",
   "external-link-pattern-url": "URL-malli (käytä {number})",

@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "ዓለማዊ ኣመሓደርቲ ብልስሉስ ዝተደምሰሰ ትሕዝቶ ብቐዋሚ ክድምስሱ ፍቐድ። እዚ ምድላው ምኽፋት ብባዕሉ ዝኾነ ነገር ኣይድምስስን።",
   "error": "ጌጋ",
   "export": "አግዕዞ",
+  "export-selected-boards": "ዝተመርጹ ምዱዳት አግዕዞ",
   "external-link-identifier-aliases": "ኣሕጽሮታት ን {identifier}፣ ንኣብነት TK=Task, IN=Incident",
   "external-link-pattern-prefix": "ናይ ምልክት ቅድመ-ቅጥያ",
   "external-link-pattern-url": "ሞደል URL ({number} ተጠቐም)",

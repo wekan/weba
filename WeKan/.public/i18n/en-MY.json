@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Allow Global Admins to permanently delete soft-deleted content. Enabling this setting does not delete anything by itself.",
   "error": "Error",
   "export": "Export",
+  "export-selected-boards": "Export selected boards",
   "external-link-identifier-aliases": "Abbreviations for {identifier}, for example TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Token Prefix",
   "external-link-pattern-url": "URL Template (use {number})",

@@ -2161,6 +2161,37 @@ the driver has already lost. Other original JSON wire contracts and selected
 multi-format exports remain pending.
 
 
+### Selected board JSON ZIP export
+
+The native Multi-Selection sidebar can export selected active boards as one
+`wekan-boards-weba.zip`. Each entry is a complete `weba-2` JSON board named
+`board-ID.json`; attachment data remains exact base64 content. Downloading does
+not clear the selected set. The original Export selected boards caption is
+imported verbatim across all 237 native catalogs (271 source keys).
+
+The ordered ID list, revision and completed/pending queue remain private to the
+form. The queue is bound to the current account session and unchanged selection.
+Every board independently takes the existing locked whole-board export path and
+rechecks the global export gate, readable full-board scope, assigned-only rule
+and active state before returning data. If a later board fails, no ZIP is
+downloaded; already completed JSON stays only in private form memory and the
+next click retries the pending board. A completed replay does not reserialize
+boards. Changing selection, leaving the active overview, signing out or disabling
+export invalidates the queue. Forged hidden actions still pass all server checks.
+
+The browser receives only a base64-encoded JSON envelope after every selected
+board succeeds. A bounded local helper validates strict `board-ID.json` names
+and string content, then writes a standard stored ZIP with UTF-8 names, CRC-32
+and a central directory; it accepts neither paths nor caller-selected names.
+Native and JavaScript tests cover exact bytes, no-write failure, copied snapshots,
+pending-only retry, replay, reentrancy, stale revision, foreign actor, archived
+board and disabled export. Real Chromium tests run against source and packaged
+apps with `python3 tests/run-http.py --selected-export [--archive]` and verify
+zero-selection refusal, live/forged policy denial and the exact two-entry ZIP.
+CSV, semicolon-CSV, TSV, Excel, external-tool formats and the original HTTP route
+remain pending.
+
+
 ### Gated permanent board deletion and Recovery
 
 Board deletion is offered only in the Archive multi-selection sidebar when the

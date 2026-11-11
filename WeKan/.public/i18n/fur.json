@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Permet ai aministradôrs globâi di eliminâ par simpri i contignûts za eliminâts in maniere recuperabile. Abilitâ cheste impostazion no elimine nuie di bessôl.",
   "error": "Erôr",
   "export": "Espuarte",
+  "export-selected-boards": "Espuarte lis taulis selezionadis",
   "external-link-identifier-aliases": "Abreviazions par {identifier}, par esempli TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefìs dal token",
   "external-link-pattern-url": "Model URL (dopre {number})",

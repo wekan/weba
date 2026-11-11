@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "عالمي منتظمن کي نرم نموني ڊاهيل مواد مستقل طور ڊاهڻ ڏيو. هي سيٽنگ فعال ڪرڻ سان پاڻمرادو ڪجهه به نه ڊهندو.",
   "error": "غلطي",
   "export": "برآمد ڪريو",
+  "export-selected-boards": "چونڊيل بورڊ برآمد ڪريو",
   "external-link-identifier-aliases": "{identifier} لاءِ مخفف، مثال طور TK=Task، IN=Incident",
   "external-link-pattern-prefix": "ٽوڪن جو اڳياڙو",
   "external-link-pattern-url": "يو آر ايل جو نمونو ({number} استعمال ڪريو)",

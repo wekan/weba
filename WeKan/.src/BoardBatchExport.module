@@ -1,0 +1,80 @@
+' Private per-form selected-board export queue. Completed JSON is retained only
+' until every selected board has passed fresh export checks and the browser has
+' received the ZIP payload.
+Export
+
+Public Function NewBatch(selection As Collection) As Collection
+  Dim data As New Collection
+  Dim ids As Integer[] = BoardSelection.ActionIds(selection)
+  If ids.Count > 1000 Then Error.Raise("Select at most 1000 boards")
+  data["username"] = WebIdentity.Username
+  data["generation"] = WebDatabase.SessionGeneration(WebIdentity.Username)
+  data["revision"] = BoardSelection.Revision(selection)
+  data["ids"] = ids.Copy()
+  data["remaining"] = ids.Copy()
+  data["files"] = New Variant[]
+  data["busy"] = False
+  Return data
+End
+
+Private Sub Check(batch As Collection, selection As Collection)
+  If Not batch Then Error.Raise("Board selection changed")
+  If WebIdentity.Username = "" Or WebIdentity.Username <> batch["username"] Then Error.Raise("Sign in required")
+  If WebDatabase.SessionGeneration(WebIdentity.Username) <> batch["generation"] Then Error.Raise("Sign in required")
+  If Not BoardSelection.Active(selection) Or BoardSelection.Revision(selection) <> batch["revision"] Then Error.Raise("Board selection changed")
+  If JSON.Encode(BoardSelection.ActionIds(selection)) <> JSON.Encode(batch["ids"]) Then Error.Raise("Board selection changed")
+End
+
+Public Function Revision(batch As Collection) As Long
+  If Not batch Then Return -1
+  Return batch["revision"]
+End
+
+Public Function Remaining(batch As Collection) As Integer
+  Dim ids As Integer[] = batch["remaining"]
+  Return ids.Count
+End
+
+Public Function Completed(batch As Collection) As Integer
+  Dim files As Variant[] = batch["files"]
+  Return files.Count
+End
+
+Public Function Files(batch As Collection) As Variant[]
+  Dim result As New Variant[]
+  Dim file As Collection
+  For Each file In batch["files"]
+    result.Add(file.Copy())
+  Next
+  Return result
+End
+
+Public Sub Run(batch As Collection, selection As Collection)
+  Dim pending As Integer[]
+  Dim files As Variant[]
+  Dim file As Collection
+  Dim acquired As Boolean
+  Dim failure As String
+  Check(batch, selection)
+  ImportExportPolicy.RequireExport()
+  If batch["busy"] Then Error.Raise("Board export is already running")
+  batch["busy"] = True
+  acquired = True
+  pending = batch["remaining"]
+  files = batch["files"]
+  While pending.Count
+    Check(batch, selection)
+    file = New Collection
+    file["name"] = "board-" & CStr(pending[0]) & ".json"
+    file["content"] = BoardTransfer.ExportActiveBoard(pending[0])
+    files.Add(file)
+    pending.Remove(0)
+  Wend
+  Check(batch, selection)
+  ImportExportPolicy.RequireExport()
+  batch["busy"] = False
+Catch
+  failure = Error.Text
+  If acquired Then batch["busy"] = False
+  Error.Raise(failure)
+End

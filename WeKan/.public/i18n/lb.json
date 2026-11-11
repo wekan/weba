@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Erlaabt globalen Administrateuren, mëll geläschten Inhalt permanent ze läschen. D'Aktivéiere vun dëser Astellung läscht eleng näischt.",
   "error": "Feeler",
   "export": "Exportéieren",
+  "export-selected-boards": "Ausgewielt Tafelen exportéieren",
   "external-link-identifier-aliases": "Ofkierzunge fir {identifier}, zum Beispill TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Token-Präfix",
   "external-link-pattern-url": "URL-Schabloun (benotzt {number})",

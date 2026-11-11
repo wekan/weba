@@ -80,7 +80,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   Original callback outcome comparisons expand from 52 to 156 single/multi/mixed
   cases. Native selection and confirmed sidebar actions now use this service;
   no new public HTTP route is exposed. Original full callbacks remain open.
-- Next: remaining copy-option models/controls and batch multi-format export,
+- Next: remaining copy-option models/controls and selected batch CSV,
+  semicolon-CSV, TSV, Excel and external-format export,
   Home/group targets and original
   UI callbacks. Whole-board copy authorization and late actor/source/destination
   guards, selected native duplication with pending-only retry and source-style
@@ -90,7 +91,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   creation policy across current native paths are recorded in
   CHANGELOG.md. Native admin import/export disable switches, current JSON and
   whole-board-copy gates, locked transfer checks, stale form cleanup and retained
-  copy retry are also recorded there; original formats/APIs, avatar exclusions,
+  copy retry are also recorded there. Native selected weba-2 JSON ZIP export,
+  its private ordered queue, pending-only retry, active/full-board/policy checks,
+  strict entries and source/packaged browser download are recorded there;
+  original remaining formats/API route, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded
   in CHANGELOG.md. Its native selected-file action, session/API separation and

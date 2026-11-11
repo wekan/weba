@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Consenti ali amministratori globali di cancellare definitivamenti i contenuti contrassegnati comu cancellati. L'attivazzzioni di chista impostazzzioni nnu cancella nulla da sola.",
   "error": "Erruri",
   "export": "Esporta",
+  "export-selected-boards": "Esporta li tavuli scigghiuti",
   "external-link-identifier-aliases": "Abbreviazzioni pi {identifier}, pir esempiu TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefissu dû token",
   "external-link-pattern-url": "Mudellu URL (usa {number})",

@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Povolit globálním správcům trvale odstranit obsah označený jako odstraněný. Samotné povolení tohoto nastavení nic neodstraní.",
   "error": "Chyba",
   "export": "Exportovat",
+  "export-selected-boards": "Exportovat vybraná tabla",
   "external-link-identifier-aliases": "Zkratky pro {identifier}, například TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefix tokenu",
   "external-link-pattern-url": "Šablona URL (použijte {number})",

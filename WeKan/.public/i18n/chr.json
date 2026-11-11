@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "ᎡᎶᎯ ᎤᏂᎵᏍᏙᏗ ᎠᏂᏓᏅᏙ ᎤᏍᏗ ᎠᎲᏍᏔᏅ ᎧᏃᎮᏓ ᏂᎪᎯᎸ ᎤᏂᎲᏍᏗ ᏗᎵᏍᏓᏁᏗ. ᎯᎠ ᎦᏟᏌᏅ ᎤᏍᏚᎢᏍᏗ ᎤᏩᏒ Ꮭ ᎪᎱᏍᏗ ᏱᎬᎲᏍᏓ.",
   "error": "ᎤᏲ",
   "export": "ᎭᏓᏅᏍᏓ",
+  "export-selected-boards": "ᏗᏑᏰᏒ ᏗᏟᎶᏍᏙᏗ ᎭᏓᏅᏍᏓ",
   "external-link-identifier-aliases": "{identifier} ᎤᏍᏗ ᏚᏙᎥ, ᎯᎠ ᏄᏍᏗ TK=Task, IN=Incident",
   "external-link-pattern-prefix": "ᎢᎬᏱᏗᏢ ᎠᏰᎵ",
   "external-link-pattern-url": "URL ᎠᏢᏛᎢ ({number} ᎪᏢᏗᏱ)",

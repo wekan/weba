@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "ڕێگە بە بەڕێوەبەرانی گشتی بدە ناوەڕۆکی نەرم‌سڕاو بە هەمیشەیی بسڕنەوە. چالاککردنی ئەم ڕێکخستنە بەخۆی هیچ شتێک ناسڕێتەوە.",
   "error": "هەڵە",
   "export": "هەناردەکردنی",
+  "export-selected-boards": "هەناردەکردنی تەختە دیاریکراوەکان",
   "external-link-identifier-aliases": "کورتکراوەکان بۆ {identifier}، بۆ نموونە TK=Task، IN=Incident",
   "external-link-pattern-prefix": "پێشگری نیشانە",
   "external-link-pattern-url": "قاڵبی URL (بەکارهێنانی {number})",

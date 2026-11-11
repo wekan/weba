@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "گلابال ادمینیستراتارلرگه یومشاق اۉچیریلگن ترکیبنی بوتونلی اۉچیریشگه رخصت بیریش. بو سازلمه‌نی یاقیش اۉز-اۉزیدن هیچ نرسه‌نی اۉچیرمیدی.",
   "error": "خطا",
   "export": "اکسپورت قیلیش",
+  "export-selected-boards": "تنلنگن تخته‌لرنی اکسپورت قیلیش",
   "external-link-identifier-aliases": "{identifier} اوچون قیسقرتمه‌لر، مثلاً TK=وظیفه، IN=حادثه",
   "external-link-pattern-prefix": "بیلگی پریفیکسی",
   "external-link-pattern-url": "URL شابلانی ({number}دن فایدلنینگ)",

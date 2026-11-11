@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Consenti agli amministratori globali di eliminare definitivamente i contenuti contrassegnati comme eliminati. L'attivazione di chesta impostazione nun scancella nulla da sola.",
   "error": "Errore",
   "export": "Esporta",
+  "export-selected-boards": "Spuorta 'e tavule scigliute",
   "external-link-identifier-aliases": "Abbreviazziune pe' {identifier}, pe' esempio TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefisso d' 'o token",
   "external-link-pattern-url": "Mudello URL (usa {number})",

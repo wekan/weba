@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Zwōl globalnym administratorōm niyôdwrŏcalnie wyciepować miyndko skasowanõ zawartość. Samo załōnczenie tego sztelōnku niczego niy wyciepuje.",
   "error": "Feler",
   "export": "Eksportuj",
+  "export-selected-boards": "Eksportuj ôbrane tabule",
   "external-link-identifier-aliases": "Skrōty dlŏ {identifier}, na przikłŏd TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefiks tokynu",
   "external-link-pattern-url": "Szablōn URL (użyj {number})",

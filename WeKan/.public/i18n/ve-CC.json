@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Parmeti ai aministradori globałi de scancełar par senpre el contenùo za scancełà in modo provisorio. Ativar sta inpostasion no scancela gnente da só.",
   "error": "Eror",
   "export": "Thumela ngaphandle",
+  "export-selected-boards": "Esporta i quadri sełesionà",
   "external-link-identifier-aliases": "Abreviasion par {identifier}, par esenpio TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefiso del segno",
   "external-link-pattern-url": "Modeło de URL (dòpara {number})",

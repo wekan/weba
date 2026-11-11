@@ -80,6 +80,7 @@ Private $boardSelection As Collection
 Private $overviewSidebar As String = "search"
 Private $selectedArchiveRevision As Long = -1
 Private $selectedCopy As Collection
+Private $selectedExport As Collection
 Private $singleCopy As Collection
 Private $deleteListBoard As Integer
 Private $deleteListId As Integer
@@ -1222,7 +1223,7 @@ Public Sub LanguageSelector_Render()
   Print "<base href=\"/\">"
   Print "<link rel=\"stylesheet\" href=\"kanban.css\">"
   Print "<link rel=\"stylesheet\" href=\"fontawesome.css\">"
-  Print "<script>" & File.Load(".public/i18n-catalog.js") & File.Load(".public/i18n.js") & File.Load(".public/ui.js") & File.Load(".public/popup.js") & File.Load(".public/drag.js") & File.Load(".public/board-view-order.js") & File.Load(".public/drag-handle-preference.js") & "</script>"
+  Print "<script>" & File.Load(".public/i18n-catalog.js") & File.Load(".public/i18n.js") & File.Load(".public/ui.js") & File.Load(".public/popup.js") & File.Load(".public/drag.js") & File.Load(".public/board-view-order.js") & File.Load(".public/drag-handle-preference.js") & File.Load(".public/batch-export.js") & "</script>"
   Print "<select data-weba-language aria-label=\"Language\" style=\"width:100%;height:32px;background:white;color:black\"></select>"
 End
 
@@ -3284,6 +3285,10 @@ Private Sub UpdateSelectionControls()
   If $selectedCopy Then
     If Not IsOverview() Or $archive Or Not active Or $selectedCopy["revision"] <> BoardSelection.Revision(SelectionState()) Then CancelSelectedCopy_Click()
   Endif
+  ExportSelectedBoards.Visible = IsOverview() And Not $archive And active And ImportExportPolicy.ExportAllowed()
+  If $selectedExport Then
+    If Not IsOverview() Or $archive Or Not active Or BoardBatchExport.Revision($selectedExport) <> BoardSelection.Revision(SelectionState()) Then ClearSelectedExport()
+  Endif
   HomeSelectedBoards.Visible = IsOverview() And Not $archive And active
   HomeSelectedBoards.Text = "Set as Home board (opened after login)"
   Try SetHomeCaption()
@@ -3890,6 +3895,26 @@ Catch
   RefreshTree()
 End
 
+Private Sub ClearSelectedExport()
+  $selectedExport = Null
+  SelectedExportProgress.Text = ""
+End
+
+Public Sub ExportSelectedBoards_Click()
+  Dim files As Variant[]
+  If Not IsOverview() Or $archive Then Error.Raise("Select active boards first")
+  ImportExportPolicy.RequireExport()
+  BoardSelection.ActionIds(SelectionState())
+  If Not $selectedExport Then $selectedExport = BoardBatchExport.NewBatch(SelectionState())
+  BoardBatchExport.Run($selectedExport, SelectionState())
+  files = BoardBatchExport.Files($selectedExport)
+  WebForm.Exec("webaBatchExport.downloadPayload('" & Base64(JSON.Encode(files)) & "');")
+  ClearSelectedExport()
+Catch
+  Notice.Text = Error.Text
+  If $selectedExport Then SelectedExportProgress.Text = "Completed: " & Str(BoardBatchExport.Completed($selectedExport)) & "; remaining: " & Str(BoardBatchExport.Remaining($selectedExport))
+End
+
 Public Sub SelectedBoardsCaption_Click()
   If Not IsOverview() Or Not BoardSelection.Active(SelectionState()) Then Error.Raise("Activate multi-selection first")
   $overviewSidebar = "selection"
@@ -4146,6 +4171,8 @@ Private Sub ValidateImportExportPolicy()
     Endif
   Endif
   If ContextMenu.Visible Then ContextExport.Visible = ImportExportPolicy.ExportAllowed() And ($contextKind = "card" Or BoardAccess.Can($contextBoard, "seesAllCards"))
+  ExportSelectedBoards.Visible = IsOverview() And Not $archive And BoardSelection.Active(SelectionState()) And ImportExportPolicy.ExportAllowed()
+  If Not ImportExportPolicy.ExportAllowed() Then ClearSelectedExport()
   UpdateAttachmentExportControl()
 End
 

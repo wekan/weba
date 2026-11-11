@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Дазволіць глабальным адміністратарам назаўсёды выдаляць мякка выдаленае змесціва. Уключэнне гэтай налады само нічога не выдаляе.",
   "error": "Памылка",
   "export": "Экспартаваць",
+  "export-selected-boards": "Экспартаваць выбраныя дошкі",
   "external-link-identifier-aliases": "Скарачэнні для {identifier}, напрыклад TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Прэфікс токена",
   "external-link-pattern-url": "Шаблон URL (выкарыстоўвайце {number})",

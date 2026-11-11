@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Vumela abaPhathi boMhlaba ukususa unomphela okumunyethweyo okusulwe ngendlela ethambileyo. Ukuvula lesi silungiselelo akususi lutho ngokwakho.",
   "error": "Iphutha",
   "export": "Thumela",
+  "export-selected-boards": "Thumela amabhodi akhethiweyo",
   "external-link-identifier-aliases": "Izifinyezo zika-{identifier}, ngokwesibonelo TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Isiqalo sethokheni",
   "external-link-pattern-url": "Isibonelo se-URL (sebenzisa {number})",

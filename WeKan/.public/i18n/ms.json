@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Benarkan Pentadbir Global memadam secara kekal kandungan yang dipadam secara lembut. Mendayakan tetapan ini tidak memadam apa-apa dengan sendirinya.",
   "error": "Ralat",
   "export": "Eksport",
+  "export-selected-boards": "Eksport papan yang dipilih",
   "external-link-identifier-aliases": "Singkatan untuk {identifier}, contohnya TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Awalan token",
   "external-link-pattern-url": "Templat URL (guna {number})",

@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "De' Qaw'Ha'lu'pu'bogh reH Qaw'laH Hoch che'wI'pu'. mu'meyvam chu'lu'DI' pagh Qaw'lu'.",
   "error": "Qagh",
   "export": "yIngeH",
+  "export-selected-boards": "wIvlu'pu'bogh raSmey yIngeH",
   "external-link-identifier-aliases": "{identifier}vaD ngaj pongmey, mu'tlhegh TK=Task, IN=Incident",
   "external-link-pattern-prefix": "wIv poH pIn'a'",
   "external-link-pattern-url": "URL beq ({number} lo')",

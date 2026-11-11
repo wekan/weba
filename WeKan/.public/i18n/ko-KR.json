@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "전역 관리자가 소프트 삭제된 콘텐츠를 영구적으로 삭제할 수 있도록 허용합니다. 이 설정을 활성화하는 것만으로는 아무것도 삭제되지 않습니다.",
   "error": "오류",
   "export": "내보내기",
+  "export-selected-boards": "선택한 보드 내보내기",
   "external-link-identifier-aliases": "{identifier}의 약어. 예: TK=Task, IN=Incident",
   "external-link-pattern-prefix": "토큰 접두사",
   "external-link-pattern-url": "URL 템플릿 ({number} 사용)",

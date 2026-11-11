@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "മൃദുവായി ഇല്ലാതാക്കിയ ഉള്ളടക്കം സ്ഥിരമായി ഇല്ലാതാക്കാൻ ഗ്ലോബൽ അഡ്മിനുകളെ അനുവദിക്കുക. ഈ ക്രമീകരണം പ്രവർത്തനക്ഷമമാക്കുന്നത് സ്വയം ഒന്നും ഇല്ലാതാക്കില്ല.",
   "error": "പിശക്",
   "export": "കയറ്റുമതി ചെയ്യുക",
+  "export-selected-boards": "തിരഞ്ഞെടുത്ത ബോർഡുകൾ കയറ്റുമതി ചെയ്യുക",
   "external-link-identifier-aliases": "{identifier}-നുള്ള ചുരുക്കങ്ങൾ, ഉദാഹരണത്തിന് TK=Task, IN=Incident",
   "external-link-pattern-prefix": "ടോക്കൺ പ്രിഫിക്സ്",
   "external-link-pattern-url": "URL ടെംപ്ലേറ്റ് ({number} ഉപയോഗിക്കുക)",

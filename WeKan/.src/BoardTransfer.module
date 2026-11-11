@@ -12,6 +12,19 @@ Private Function Row(r As Result, fields As String[]) As Collection
 End
 
 Public Function ExportData(boardId As Integer, kind As String, itemId As Integer) As String
+  Return ExportChecked(boardId, kind, itemId, False)
+End
+
+Public Function ExportActiveBoard(boardId As Integer) As String
+  Return ExportChecked(boardId, "board", boardId, True)
+End
+
+Private Sub RequireActiveBoard(boardId As Integer)
+  Dim r As Result = $db.Find("kb_boards", "id=&1 AND archived=&2", boardId, False)
+  If Not r.Available Then Error.Raise("Select active boards first")
+End
+
+Private Function ExportChecked(boardId As Integer, kind As String, itemId As Integer, requireActive As Boolean) As String
   Dim actor As String = WebIdentity.Username
   Dim generation As Long
   Dim text As String
@@ -30,6 +43,7 @@ Public Function ExportData(boardId As Integer, kind As String, itemId As Integer
   ImportExportPolicy.RequireExport()
   $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
   BoardAccess.RequireContainer(boardId, kind, itemId)
+  If requireActive Then RequireActiveBoard(boardId)
   If kind = "board" Then viewPolicy = BoardViewPolicy.Transfer(boardId)
   text = BuildExport(boardId, kind, itemId)
   If kind = "board" Then
@@ -37,6 +51,7 @@ Public Function ExportData(boardId As Integer, kind As String, itemId As Integer
   Endif
   If WebIdentity.Username <> actor Or WebDatabase.SessionGeneration(actor) <> generation Then Error.Raise("Sign in required")
   BoardAccess.RequireContainer(boardId, kind, itemId)
+  If requireActive Then RequireActiveBoard(boardId)
   ImportExportPolicy.RequireExport()
   DatabaseTransactions.Commit($db)
   transaction = False

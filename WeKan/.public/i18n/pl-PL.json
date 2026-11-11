@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Zezwól administratorom globalnym na trwałe usuwanie treści oznaczonych jako usunięte. Samo włączenie tego ustawienia niczego nie usuwa.",
   "error": "Błąd",
   "export": "Eksportuj",
+  "export-selected-boards": "Eksportuj wybrane tablice",
   "external-link-identifier-aliases": "Skróty dla {identifier}, na przykład TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefiks tokenu",
   "external-link-pattern-url": "Szablon URL (użyj {number})",

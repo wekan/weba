@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Emerera Global Admins gufuta burundu ibirimwo vyafuswe buhoro. Gufungura iki kigenwa ntaco gifuta ubwaco.",
   "error": "Ikosa",
   "export": "Sohora",
+  "export-selected-boards": "Sohora ivyapa vyahiswemwo",
   "external-link-identifier-aliases": "Amajambo magufi ya {identifier}, nk'akarorero TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Intango y'ikimenyetso",
   "external-link-pattern-url": "Icapo ca URL (koresha {number})",

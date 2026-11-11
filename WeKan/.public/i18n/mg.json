@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Avelao ny Mpitantana manerantany hamafa maharitra ny votoaty voafafa malefaka. Tsy mamafa na inona na inona ho azy ny fampandehanana ity fikirana ity.",
   "error": "Hadisoana",
   "export": "Hamoaka",
+  "export-selected-boards": "Avoahy ny solaitra voafidy",
   "external-link-identifier-aliases": "Fanafohezana ny {identifier}, ohatra TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Mialoha ny marika",
   "external-link-pattern-url": "Modely URL (ampiasao ny {number})",

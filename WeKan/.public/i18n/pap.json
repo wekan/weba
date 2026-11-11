@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Permití Atministradónan Global pa kita kontenido ku a wordu eliminá suavemente pa semper. Habilitá e konfigurashon aki no ta kita nada di su mes.",
   "error": "Eror",
   "export": "Eksportá",
+  "export-selected-boards": "Eksportá e tablanan selektá",
   "external-link-identifier-aliases": "Abreviashon pa {identifier}, por ehèmpel TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefiho di tòken",
   "external-link-pattern-url": "Plantia di URL (usa {number})",

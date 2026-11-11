@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "דערלויבן גלאבאלע אַדמיניסטראַטאָרן שטענדיק אויסצומעקן צײַטווײַליק אויסגעמעקטן אינהאַלט. דאָס אַקטיווירן מעקט גאָרנישט אויס פֿון זיך אַליין.",
   "error": "טעות",
   "export": "עקספּאָרטירן",
+  "export-selected-boards": "עקספּאָרטירן אויסגעקליבענע ברעטער",
   "external-link-identifier-aliases": "אַברעוויאַטורן פֿאַר {identifier}, למשל TK=Task, IN=Incident",
   "external-link-pattern-prefix": "פרעפיקס פֿון טאָקן",
   "external-link-pattern-url": "URL שאַבלאָן (נוץ {number})",

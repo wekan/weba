@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Fakaʻatā ʻa e Kau Pule Fakalūkufua ke tāmateʻi tuʻuloa ʻa e ngaahi meʻa kuo tāmateʻi fakataimi. Ko hono fakaʻaongaʻi ʻo e fokotuʻutuʻu ko ʻení ʻoku ʻikai ke ne tāmateʻi ha meʻa ʻiate ia pē.",
   "error": "Hala",
   "export": "ʻAve",
+  "export-selected-boards": "ʻAve ki tuʻa ʻa e ngaahi papa kuo fili",
   "external-link-identifier-aliases": "Ngaahi fakanounou ki he {identifier}, hangē ko ʻeni TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Muʻa faka'ilonga",
   "external-link-pattern-url": "Sīpinga URL (ngāueʻaki ʻa e {number})",

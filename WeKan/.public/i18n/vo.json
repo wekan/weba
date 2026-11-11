@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Dälön guvanes valik ad moükön laidiko ninädi pemöüköl no-laidiko. Välodükam parameta at no moükon bosi it.",
   "error": "Pöl",
   "export": "Ekavön",
+  "export-selected-boards": "Seveigön tabis pevälöl",
   "external-link-identifier-aliases": "Brefods pro {identifier}, a.s. TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Foyümot mala",
   "external-link-pattern-url": "Rot URL (gebolös {number})",

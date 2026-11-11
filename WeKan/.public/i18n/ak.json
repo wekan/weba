@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Ma nhyehyɛe no nyinaa sohwɛfo kwan ma wɔmpopa nsɛm a wɔayi afi adi nanso wɔkora so no korakora. Nhyehyɛe yi a wɔsɔ no nko ara mmpopa biribiara.",
   "error": "Mfomsoɔ",
   "export": "Yi adi",
+  "export-selected-boards": "Yi bɔɔd a wɔapaw adi",
   "external-link-identifier-aliases": "Nsɛmfua tiawa ma {identifier}, sɛ nhwɛsoɔ TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Ntɛtɛe ɔhyɛase",
   "external-link-pattern-url": "URL nhwɛso (fa {number} di dwuma)",

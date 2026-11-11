@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "ကမ္ဘာလုံးဆိုင်ရာ စီမံသူများအား ယာယီဖျက်ထားသော အကြောင်းအရာကို အမြဲတမ်းဖျက်ခွင့်ပြုသည်။ ဤဆက်တင်ကို ဖွင့်ရုံဖြင့် မည်သည့်အရာမျှ မဖျက်ပါ။",
   "error": "အမှား",
   "export": "ထုတ်ယူရန်",
+  "export-selected-boards": "ရွေးထားသော ဘုတ်များ ထုတ်ယူရန်",
   "external-link-identifier-aliases": "{identifier} အတွက် အတိုကောက်များ၊ ဥပမာ TK=Task, IN=Incident",
   "external-link-pattern-prefix": "တိုကင်ရှေ့ဆက်",
   "external-link-pattern-url": "URL ပုံစံ ({number} ကိုအသုံးပြုပါ)",

@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Hatun Kamachiqkunata saqiy llamp'ullapi pichasqa kaqkunata wiñaypaq pichanankupaq. Kay allichayta hap'ichiyqa manam kikinmanta imatapas pichanchu.",
   "error": "Pantay",
   "export": "Hurquy",
+  "export-selected-boards": "Akllasqa pirqakunata hurquy",
   "external-link-identifier-aliases": "{identifier} paq pisichasqa sutikuna, kayhina TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Simip ñawpaqnin",
   "external-link-pattern-url": "URL rikch'ay (kayta llamk'achiy {number})",

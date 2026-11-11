@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Destûrê bide Rêveberên Giştî ku naveroka bi nermî jêbirî bi mayînde jê bibin. Çalakkirina vê mîhengê bi tena serê xwe tiştekî jê nade.",
   "error": "Çewtî",
   "export": "Derxe",
+  "export-selected-boards": "Depoyên hilbijartî derxe",
   "external-link-identifier-aliases": "Kurtenav ji bo {identifier}, wek mînak TK=Task, IN=Incident",
   "external-link-pattern-prefix": "پێشگری نیشانە",
   "external-link-pattern-url": "قاڵبی URL (بەکارهێنانی {number})",

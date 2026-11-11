@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Atļaut globālajiem administratoriem neatgriezeniski dzēst mīksti dzēstu saturu. Šī iestatījuma iespējošana pati par sevi neko neizdzēš.",
   "error": "Klaida",
   "export": "Eksportēt",
+  "export-selected-boards": "Eksportēt izvēlētos dēļus",
   "external-link-identifier-aliases": "Saīsinājumi vērtībai {identifier}, piemēram, TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Marķiera prefikss",
   "external-link-pattern-url": "URL veidne (izmantojiet {number})",

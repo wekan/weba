@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Dumelela Balaodi ba Kakaretšo go phumola ka sa ruri diteng tše di phumotšwego ka nakwana. Go bulela peakanyo ye ga go phumole selo ka boyona.",
   "error": "Phošo",
   "export": "Romela",
+  "export-selected-boards": "Romela dipoto tše di kgethilwego",
   "external-link-identifier-aliases": "Dikhutsofatšo tša {identifier}, mohlala TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Selelapele sa kgopolo",
   "external-link-pattern-url": "Sešupo sa URL (diriša {number})",

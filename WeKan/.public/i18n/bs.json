@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Dozvoli globalnim administratorima da trajno obrišu meko obrisani sadržaj. Uključivanje ove postavke samo po sebi ništa ne briše.",
   "error": "Greška",
   "export": "Izvezi",
+  "export-selected-boards": "Izvezi odabrane table",
   "external-link-identifier-aliases": "Skraćenice za {identifier}, naprimjer TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefiks tokena",
   "external-link-pattern-url": "URL šablon (koristite {number})",

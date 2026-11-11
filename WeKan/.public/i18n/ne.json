@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "विश्वव्यापी प्रशासकहरूलाई सामान्य रूपमा मेटाइएको सामग्री स्थायी रूपमा मेटाउन अनुमति दिनुहोस्। यो सेटिङ सक्षम गर्दा आफैँ केही मेटिँदैन।",
   "error": "त्रुटि",
   "export": "निर्यात गर्नुहोस्",
+  "export-selected-boards": "छानिएका बोर्ड निर्यात गर्नुहोस्",
   "external-link-identifier-aliases": "{identifier} का संक्षिप्त रूप, जस्तै TK=Task, IN=Incident",
   "external-link-pattern-prefix": "टोकन उपसर्ग",
   "external-link-pattern-url": "URL टेम्प्लेट ({number} प्रयोग गर्नुहोस्)",

@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Allow Global Admins għal permanently delete soft-ħassar content. Enabling dan setting does mhux delete anything by itself.",
   "error": "Żball",
   "export": "Esporta",
+  "export-selected-boards": "Esporta l-bordijiet magħżula",
   "external-link-identifier-aliases": "Abbrevjazzjonijiet għal {identifier}, pereżempju TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefiss tat-token",
   "external-link-pattern-url": "Mudell URL (uża {number})",

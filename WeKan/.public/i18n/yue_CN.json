@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "允許全域管理員永久刪除已軟刪除的內容。啟用此設定本身不會刪除任何內容。",
   "error": "錯誤",
   "export": "匯出",
+  "export-selected-boards": "匯出揀咗嘅看板",
   "external-link-identifier-aliases": "{identifier} 嘅縮寫，例如 TK=Task, IN=Incident",
   "external-link-pattern-prefix": "标记前缀",
   "external-link-pattern-url": "URL 模板（使用 {number}）",

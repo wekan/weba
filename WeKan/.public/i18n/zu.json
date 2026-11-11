@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Vumela Abalawuli Abakhulu ukuthi basuse unomphela okuqukethwe okusulwe okwesikhashana. Ukuvula lesi silungiselelo ngokwaso akususi lutho.",
   "error": "Iphutha",
   "export": "Thumela ngaphandle",
+  "export-selected-boards": "Thumela amabhodi akhethiwe ngaphandle",
   "external-link-identifier-aliases": "Izifinyezo zika-{identifier}, isibonelo TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Isiqalo sethokheni",
   "external-link-pattern-url": "Ithempuleti le-URL (sebenzisa u-{number})",

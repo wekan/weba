@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Luba globaalsetel administraatoritel pehmelt kustutatud sisu jäädavalt kustutada. Selle seade lubamine ei kustuta iseenesest midagi.",
   "error": "Viga",
   "export": "Ekspordi",
+  "export-selected-boards": "Ekspordi valitud juhatused",
   "external-link-identifier-aliases": "Lühendid väärtusele {identifier}, näiteks TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Märgi eesliide",
   "external-link-pattern-url": "URL-i mall (kasutage {number})",

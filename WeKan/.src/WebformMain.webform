@@ -1446,6 +1446,11 @@
           { DuplicateSelectedBoards WebButton
             Text = ("Duplicate Board")
           }
+          { ExportSelectedBoards WebButton
+            Text = ("Export selected boards")
+          }
+          { SelectedExportProgress WebLabel
+          }
           { SelectedCopyPanel WebContainer
             Arrangement = Arrange.Vertical
             Visible = False

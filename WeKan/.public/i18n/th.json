@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "อนุญาตให้ผู้ดูแลระบบส่วนกลางลบเนื้อหาที่ลบแบบชั่วคราวอย่างถาวร การเปิดการตั้งค่านี้จะไม่ลบสิ่งใดด้วยตัวเอง",
   "error": "ข้อผิดพลาด",
   "export": "ส่งออก",
+  "export-selected-boards": "ส่งออกบอร์ดที่เลือก",
   "external-link-identifier-aliases": "ตัวย่อสำหรับ {identifier} เช่น TK=Task, IN=Incident",
   "external-link-pattern-prefix": "คำนำหน้าโทเคน",
   "external-link-pattern-url": "เทมเพลต URL (ใช้ {number})",

@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Тӗп администраторсене ҫемҫе кӑларнӑ содержанине яланлӑха кӑларса пӑрахма май парас. Ҫак ӗнерлеве хутни хӑй тӗллӗн нимӗн те кӑларса пӑрахмасть.",
   "error": "Йӑнӑш",
   "export": "Экспортлас",
+  "export-selected-boards": "Суйланӑ хӑмасене экспортлас",
   "external-link-identifier-aliases": "{identifier} валли кӗскетӳсем, тӗслӗхрен TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Паллӑ префиксӗ",
   "external-link-pattern-url": "URL шаблонӗ ({number} усӑ кур)",

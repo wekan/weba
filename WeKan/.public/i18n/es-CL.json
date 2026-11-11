@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Permitir que los administradores globales eliminen permanentemente el contenido marcado como eliminado. Activar esta opción no elimina nada por sí solo.",
   "error": "Mensaje de error",
   "export": "Exportar",
+  "export-selected-boards": "Exportar los tableros seleccionados",
   "external-link-identifier-aliases": "Abreviaturas de {identifier}, por ejemplo TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefijo del token",
   "external-link-pattern-url": "Plantilla de URL (usa {number})",

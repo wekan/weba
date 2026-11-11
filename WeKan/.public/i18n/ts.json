@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Pfumelela Valawuri va Misava ku susa hi ku helela swilo leswi susiweke hi ndlela yo olova. Ku pfula xiyimiso lexi a swi susi swilo hi swoxe.",
   "error": "Xihoxo",
   "export": "Humesa",
+  "export-selected-boards": "Humesa tibodo leti hlawuriweke",
   "external-link-identifier-aliases": "Swikomiso swa {identifier}, xikombiso TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Xisunguli xa xikombiso",
   "external-link-pattern-url": "Xikombelo xa URL (tirhisa {number})",

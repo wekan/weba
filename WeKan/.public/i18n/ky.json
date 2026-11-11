@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Global Admin колдонуучуларына жумшак өчүрүлгөн мазмунду туруктуу өчүрүүгө уруксат берүү. Бул жөндөөнү иштетүү өзүнөн өзү эч нерсени өчүрбөйт.",
   "error": "Ката",
   "export": "Экспорттоо",
+  "export-selected-boards": "Тандалган тактанын экспорту",
   "external-link-identifier-aliases": "{identifier} үчүн кыскартуулар, мисалы TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Белги префикси",
   "external-link-pattern-url": "URL үлгүсү ({number} колдонуңуз)",

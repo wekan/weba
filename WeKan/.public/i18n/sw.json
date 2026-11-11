@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Ruhusu Wasimamizi Wakuu kufuta kabisa maudhui yaliyofutwa kwa muda. Kuwezesha mpangilio huu hakufuti chochote peke yake.",
   "error": "Hitilafu",
   "export": "Hamisha",
+  "export-selected-boards": "Hamisha bodi zilizochaguliwa",
   "external-link-identifier-aliases": "Vifupisho vya {identifier}, kwa mfano TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Kiambishi cha alama",
   "external-link-pattern-url": "Kiolezo cha URL (tumia {number})",

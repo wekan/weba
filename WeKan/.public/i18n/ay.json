@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Allow Global Admins ukaru permanently chhaqtayaña soft-deleted content. Enabling aka setting does jani chhaqtayaña anything by itself.",
   "error": "Pantjata",
   "export": "Apsuña",
+  "export-selected-boards": "Ajllita pirqanak mistuyaña",
   "external-link-identifier-aliases": "{identifier} ukatak jisk'a sutinaka, sañäni TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Token nayrïri",
   "external-link-pattern-url": "URL plantilla ({number} apnaqasa)",

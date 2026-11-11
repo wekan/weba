@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "A globális adminisztrátorok véglegesen törölhetik a helyreállíthatóan törölt tartalmat. A beállítás engedélyezése önmagában nem töröl semmit.",
   "error": "Hiba",
   "export": "Exportálás",
+  "export-selected-boards": "Kijelölt táblák exportálása",
   "external-link-identifier-aliases": "Rövidítések a {identifier} jelöléshez, például TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Token előtag",
   "external-link-pattern-url": "URL sablon ({number} használatával)",

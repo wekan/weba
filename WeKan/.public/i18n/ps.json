@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "نړيوالو مديرانو ته اجازه ورکړئ چې په نرم ډول ړنګه شوې منځپانګه دايمي ړنګه کړي. د دې امستنې چالانول پخپله هېڅ شی نه ړنګوي.",
   "error": "تېروتنه",
   "export": "صادرول",
+  "export-selected-boards": "ټاکل شوې تختې صادرول",
   "external-link-identifier-aliases": "د {identifier} لپاره لنډیزونه، د بېلګې په توګه TK=Task، IN=Incident",
   "external-link-pattern-prefix": "د نښان مخوند",
   "external-link-pattern-url": "د یو آر ایل نمونه ({number} وکاروئ)",

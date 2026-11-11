@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "ग्लोबल एडमिन को अस्थायी रूप से हटाई गई सामग्री को स्थायी रूप से हटाने दें। केवल इस सेटिंग को सक्षम करने से कुछ भी नहीं हटता।",
   "error": "त्रुटि",
   "export": "निर्यात करें",
+  "export-selected-boards": "चुने हुए बोर्ड निर्यात करें",
   "external-link-identifier-aliases": "{identifier} के संक्षिप्त रूप, जैसे TK=Task, IN=Incident",
   "external-link-pattern-prefix": "टोकन उपसर्ग",
   "external-link-pattern-url": "यूआरएल टेम्पलेट ({number} का उपयोग करें)",

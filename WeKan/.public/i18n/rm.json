@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Permetter als administraturs globals da stizzar permanentamain cuntegnì stizzà temporarmain. Activar questa opziun na stizza nagut automaticamain.",
   "error": "Errur",
   "export": "Exportar",
+  "export-selected-boards": "Exportar las tabellas tschernidas",
   "external-link-identifier-aliases": "Abreviaziuns per {identifier}, per exempel TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefix dal token",
   "external-link-pattern-url": "Model d'URL (duvra {number})",

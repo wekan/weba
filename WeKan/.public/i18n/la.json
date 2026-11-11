@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Permitte administratoribus globalibus res quae iam remotae sed nondum penitus deletae sunt in perpetuum delere. Hanc optionem activare per se nihil delet.",
   "error": "Error",
   "export": "Exporta",
+  "export-selected-boards": "Exporta tabulas selectas",
   "external-link-identifier-aliases": "Compendia pro {identifier}, exempli gratia TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Praefixum signi",
   "external-link-pattern-url": "Exemplar URL (utere {number})",

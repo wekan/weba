@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Globalnim skrbnikom dovoli trajno brisanje začasno izbrisane vsebine. Vklop te nastavitve sam po sebi ničesar ne izbriše.",
   "error": "Napaka",
   "export": "Izvozi",
+  "export-selected-boards": "Izvozi izbrane table",
   "external-link-identifier-aliases": "Okrajšave za {identifier}, na primer TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Predpona žetona",
   "external-link-pattern-url": "Predloga URL (uporabite {number})",

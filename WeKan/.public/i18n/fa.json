@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "به مدیران سراسری اجازه دهید محتوای حذف نرم را برای همیشه حذف کنند. فعال‌کردن این تنظیم به‌تنهایی چیزی را حذف نمی‌کند.",
   "error": "خطا",
   "export": "برون‌بری",
+  "export-selected-boards": "خروجی گرفتن از بردهای انتخاب‌شده",
   "external-link-identifier-aliases": "مخفف‌های {identifier}، برای نمونه TK=Task, IN=Incident",
   "external-link-pattern-prefix": "پیشوند نشانه",
   "external-link-pattern-url": "قالب نشانی اینترنتی (از {number} استفاده کنید)",

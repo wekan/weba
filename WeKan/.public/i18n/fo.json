@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Loyv høvuðsumsitarum at strika bleytt strikað innihald varandi. At virkja hesa stillingina strikar einki av sær sjálvum.",
   "error": "Villa",
   "export": "Útflyt",
+  "export-selected-boards": "Útflyt valdar talvur",
   "external-link-identifier-aliases": "Stytingar fyri {identifier}, til dømis TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Forsetningur hjá teknum",
   "external-link-pattern-url": "URL-mynstur (nýt {number})",

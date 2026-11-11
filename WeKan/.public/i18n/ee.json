@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Na mɔ xexeame katã ƒe dziɖulawo woatu emenyawo siwo wotutu bɔbɔe la tegbee. Ðoɖo sia ƒe mɔɖeɖe matu naneke le eya ŋutɔ si o.",
   "error": "Vodada",
   "export": "Ɖe ɖe go",
+  "export-selected-boards": "Ðe kpekpeɖeŋu siwo wotia",
   "external-link-identifier-aliases": "Nya kpuiwo na {identifier}, le kpɔɖeŋu me TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Token ƒe gbãtɔ",
   "external-link-pattern-url": "URL kpɔɖeŋu (zã {number})",

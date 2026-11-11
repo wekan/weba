@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Global Admin дьоҥҥо сымнаҕастык сотуллубут ис хоһоону быданнаахтык сотору көҥүллээ. Бу туруоруу холбоммутунан бэйэтэ тугу да соппот.",
   "error": "Алҕас",
   "export": "Таһаарар",
+  "export-selected-boards": "Талыллыбыт дуоскалары таһаар",
   "external-link-identifier-aliases": "{identifier} кылгатыылара, холобур TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Бэлиэ префиксэ",
   "external-link-pattern-url": "URL холобура ({number} туттун)",

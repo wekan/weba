@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Юрэнхы захирагшадта зөөлэн усадхагдаһан удхые бүримүһэн усадхахыень зүбшөөхэ. Энэ тохируулгые асаахада өөрөө юумэ усадхахагүй.",
   "error": "Алдуу",
   "export": "Экспортлохо",
+  "export-selected-boards": "Шэлэгдэһэн самбарнуудые гаргаха",
   "external-link-identifier-aliases": "{identifier}-ай товчолол, жэшээлбэл TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Тэмдэгэй урдаhан",
   "external-link-pattern-url": "URL загбар ({number} хэрэглэ)",

@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Permite administratorilor globali să șteargă permanent conținutul șters logic. Activarea acestei setări nu șterge nimic de la sine.",
   "error": "Eroare",
   "export": "Exportă",
+  "export-selected-boards": "Exportă panourile selectate",
   "external-link-identifier-aliases": "Abrevieri pentru {identifier}, de exemplu TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefix token",
   "external-link-pattern-url": "Șablon URL (folosiți {number})",

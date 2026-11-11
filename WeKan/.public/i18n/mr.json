@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "जागतिक प्रशासकांना तात्पुरते हटवलेला मजकूर कायमस्वरूपी हटवण्याची परवानगी द्या. ही सेटिंग सक्षम केल्याने स्वतःहून काहीही हटत नाही.",
   "error": "त्रुटी",
   "export": "निर्यात करा",
+  "export-selected-boards": "निवडलेले फलक निर्यात करा",
   "external-link-identifier-aliases": "{identifier} साठी संक्षेप, उदाहरणार्थ TK=Task, IN=Incident",
   "external-link-pattern-prefix": "टोकन उपसर्ग",
   "external-link-pattern-url": "URL टेम्पलेट ({number} वापरा)",

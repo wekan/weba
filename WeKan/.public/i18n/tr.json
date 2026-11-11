@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Genel Yöneticilerin geçici olarak silinmiş içeriği kalıcı olarak silmesine izin ver. Bu ayarı etkinleştirmek tek başına hiçbir şeyi silmez.",
   "error": "Hata",
   "export": "Dışa aktar",
+  "export-selected-boards": "Seçili panoları dışa aktar",
   "external-link-identifier-aliases": "{identifier} için kısaltmalar, örneğin TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Belirteç öneki",
   "external-link-pattern-url": "URL şablonu ({number} kullanın)",

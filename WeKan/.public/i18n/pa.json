@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "ਗਲੋਬਲ ਐਡਮਿਨਾਂ ਨੂੰ ਨਰਮ ਤਰੀਕੇ ਨਾਲ ਮਿਟਾਈ ਸਮੱਗਰੀ ਪੱਕੇ ਤੌਰ ਤੇ ਮਿਟਾਉਣ ਦਿਓ। ਇਹ ਸੈਟਿੰਗ ਸਮਰੱਥ ਕਰਨ ਨਾਲ ਆਪਣੇ ਆਪ ਕੁਝ ਨਹੀਂ ਮਿਟਦਾ।",
   "error": "ਗਲਤੀ",
   "export": "ਨਿਰਯਾਤ ਕਰੋ",
+  "export-selected-boards": "ਚੁਣੇ ਬੋਰਡ ਨਿਰਯਾਤ ਕਰੋ",
   "external-link-identifier-aliases": "{identifier} ਲਈ ਸੰਖੇਪ ਰੂਪ, ਉਦਾਹਰਨ ਲਈ TK=Task, IN=Incident",
   "external-link-pattern-prefix": "ਟੋਕਨ ਅਗੇਤਰ",
   "external-link-pattern-url": "URL ਨਮੂਨਾ ({number} ਵਰਤੋ)",

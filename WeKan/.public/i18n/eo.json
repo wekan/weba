@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Permesi al Tutmondaj Administrantoj konstante forigi provizore forigitan enhavon. Ebligi ĉi tiun agordon mem ne forigas ion ajn.",
   "error": "Eraro",
   "export": "Eksporti",
+  "export-selected-boards": "Eksporti elektitajn tabulojn",
   "external-link-identifier-aliases": "Mallongigoj por {identifier}, ekzemple TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefikso de ĵetono",
   "external-link-pattern-url": "URL-ŝablono (uzu {number})",

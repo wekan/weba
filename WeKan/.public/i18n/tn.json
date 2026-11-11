@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Letla Batsamaisi ba Lefatshe go phumola diteng tse di phumotsweng ka bonolo ga leruri. Go kgontsha tlhophiso eno ga go phumole sepe ka bogone.",
   "error": "Phoso",
   "export": "Ntsha",
+  "export-selected-boards": "Ntsha diboto tse di tlhophilweng",
   "external-link-identifier-aliases": "Dikhutsofatso tsa {identifier}, ka sekai TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Setshwaya sa pontsho",
   "external-link-pattern-url": "Setlhagiso sa URL (dirisa {number})",

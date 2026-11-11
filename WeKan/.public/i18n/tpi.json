@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Larim ol Admin bilong olgeta hap i rausim inap oltaim ol samting ol i bin rausim tasol inap kisim bek yet. Sapos yu kirapim dispela seting, em yet i no rausim wanpela samting.",
   "error": "Rong",
   "export": "Salim i go aut",
+  "export-selected-boards": "Salim ol bot yu makim i go aut",
   "external-link-identifier-aliases": "Sotpela nem bilong {identifier}, olsem TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Nem paslain bilong tok",
   "external-link-pattern-url": "URL template (yusim {number})",

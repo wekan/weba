@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Permite a sos amministradores globales de cantzellare in manera definitiva sos cuntenutos marcados comente cantzellados. Ativare custa impostatzione no cantzellat nudda a sa sola.",
   "error": "Errore",
   "export": "Esporta",
+  "export-selected-boards": "Esporta sas tàulas seberadas",
   "external-link-identifier-aliases": "Abbreviaturas pro {identifier}, pro esempru TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefissu de su token",
   "external-link-pattern-url": "Modellu de URL (imprea {number})",

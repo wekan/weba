@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Дозволи глобалните администратори трајно да бришат меко избришана содржина. Овозможувањето на оваа поставка само по себе не брише ништо.",
   "error": "Грешка",
   "export": "Извези",
+  "export-selected-boards": "Извези ги избраните табли",
   "external-link-identifier-aliases": "Кратенки за {identifier}, на пример TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Префикс на токенот",
   "external-link-pattern-url": "URL шаблон (користете {number})",

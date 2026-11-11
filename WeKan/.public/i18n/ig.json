@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Kwe ka Ndị Nlekọta Izugbe hichapụ ọdịnaya e hichapụrụ nwayọ kpamkpam. Ịkwado ntọala a anaghị ehichapụ ihe ọ bụla n'onwe ya.",
   "error": "Njehie",
   "export": "Bupụ",
+  "export-selected-boards": "Bupụ bọọdụ ndị ahọpụtara",
   "external-link-identifier-aliases": "Ndebiri maka {identifier}, dịka TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Mbido akara",
   "external-link-pattern-url": "Ụdịdị URL (jiri {number})",

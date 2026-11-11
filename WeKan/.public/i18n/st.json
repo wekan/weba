@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Dumella Balaodi ba Lefatshe ho hlakola ka ho sa feleng dikahare tse neng di hlakotswe ka bonolo. Ho bulela tlhophiso ena ha ho hlakole letho ka boyona.",
   "error": "Phoso",
   "export": "Ntsha",
+  "export-selected-boards": "Ntsha diboto tse kgethilweng",
   "external-link-identifier-aliases": "Dikgutsufatso tsa {identifier}, mohlala TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Selelekela sa pontsho",
   "external-link-pattern-url": "Thempleite ya URL (sebedisa {number})",

@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Tillåt globala administratörer att permanent ta bort mjukraderat innehåll. Att aktivera inställningen tar inte bort något i sig.",
   "error": "Fel",
   "export": "Exportera",
+  "export-selected-boards": "Exportera valda tavlor",
   "external-link-identifier-aliases": "Förkortningar för {identifier}, till exempel TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Tokenprefix",
   "external-link-pattern-url": "URL-mall (använd {number})",

@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Leisti visuotiniams administratoriams visam laikui pašalinti laikinai pašalintą turinį. Įjungus šią nuostatą savaime niekas nepašalinama.",
   "error": "Klaida",
   "export": "Eksportuoti",
+  "export-selected-boards": "Eksportuoti pasirinktas lentas",
   "external-link-identifier-aliases": "{identifier} santrumpos, pavyzdžiui, TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Žymens priešdėlis",
   "external-link-pattern-url": "URL šablonas (naudokite {number})",

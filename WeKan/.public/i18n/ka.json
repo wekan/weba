@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "მიეცით გლობალურ ადმინისტრატორებს რბილად წაშლილი შიგთავსის მუდმივად წაშლის უფლება. ამ პარამეტრის ჩართვა თავისით არაფერს შლის.",
   "error": "შეცდომა",
   "export": "Ექსპორტი",
+  "export-selected-boards": "არჩეული დაფების ექსპორტი",
   "external-link-identifier-aliases": "აბრევიატურები {identifier}-ისთვის, მაგალითად TK=Task, IN=Incident",
   "external-link-pattern-prefix": "ტოკენის პრეფიქსი",
   "external-link-pattern-url": "URL შაბლონი (გამოიყენეთ {number})",

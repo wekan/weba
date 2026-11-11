@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "ዓለም አቀፍ አስተዳዳሪዎች ለስላሳ የተሰረዘ ይዘትን በቋሚነት እንዲሰርዙ ፍቀድ። ይህን ቅንብር ማንቃት በራሱ ምንም አይሰርዝም።",
   "error": "ስህተት",
   "export": "ላክ",
+  "export-selected-boards": "የተመረጡ ሰሌዳዎችን ላክ",
   "external-link-identifier-aliases": "ለ{identifier} አህጽሮተ ቃላት፣ ለምሳሌ TK=Task, IN=Incident",
   "external-link-pattern-prefix": "የምልክት ቅድመ ቅጥያ",
   "external-link-pattern-url": "URL አብነት ({number} ይጠቀሙ)",

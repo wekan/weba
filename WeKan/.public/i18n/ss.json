@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Vumela Baphatsi Bonkhe kutsi basuse unaphakadze lokucuketfwe lokususwe ngalokutsambile. Kuvula lesilungiselelo akususi lutfo ngekwako.",
   "error": "Liphutsa",
   "export": "Tfumela",
+  "export-selected-boards": "Tfumela emabhodi lakhetsiwe",
   "external-link-identifier-aliases": "Tifinyeto ta-{identifier}, sibonelo TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Sicalo setiteleko",
   "external-link-pattern-url": "Itempulete ye-URL (sebentisa {number})",

@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "לאפשר למנהלים כלליים למחוק לצמיתות תוכן שנמחק באופן זמני. הפעלת הגדרה זו כשלעצמה אינה מוחקת דבר.",
   "error": "שגיאה",
   "export": "ייצוא",
+  "export-selected-boards": "ייצוא הלוחות שנבחרו",
   "external-link-identifier-aliases": "קיצורים עבור {identifier}, לדוגמה TK=Task, IN=Incident",
   "external-link-pattern-prefix": "קידומת האסימון",
   "external-link-pattern-url": "תבנית כתובת URL (השתמשו ב-{number})",

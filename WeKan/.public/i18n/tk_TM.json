@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Global administratorlara ýumşak pozulan mazmuny hemişelik pozmaga rugsat beriň. Bu sazlamany işletmek öz-özünden hiç zady pozmaýar.",
   "error": "Roralňyşlyk",
   "export": "Eksport et",
+  "export-selected-boards": "Saýlanan tagtalary eksport et",
   "external-link-identifier-aliases": "{identifier} üçin gysgaltmalar, mysal üçin TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Nyşan öňi",
   "external-link-pattern-url": "URL şablony ({number} ulanyň)",

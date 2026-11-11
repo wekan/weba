@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Pèmèt Administratè Global yo efase nèt kontni ki te efase lojikman. Aktive paramèt sa a pa efase anyen poukont li.",
   "error": "Erè",
   "export": "Ekspòte",
+  "export-selected-boards": "Ekspòte tablo ki chwazi yo",
   "external-link-identifier-aliases": "Abrevyasyon pou {identifier}, pa egzanp TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefiks tokenn",
   "external-link-pattern-url": "Modèl URL (itilize {number})",

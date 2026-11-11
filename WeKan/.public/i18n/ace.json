@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Peuidin Admin Global sampôh siumu masa asoë nyang ka geusampôh leumoh. Peuaktif aturan nyoe hana meusampôh sapeue ngon droe jih.",
   "error": "Saleuh",
   "export": "Eksport",
+  "export-selected-boards": "Ekspor papan nyang geupileh",
   "external-link-identifier-aliases": "Singkatan keu {identifier}, contoh TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Awai token",
   "external-link-pattern-url": "Contoh URL (ngui {number})",

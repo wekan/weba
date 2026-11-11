@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "يەرشارى باشقۇرغۇچىلىرىنىڭ يۇمشاق ئۆچۈرۈلگەن مەزمۇننى مەڭگۈلۈك ئۆچۈرۈشىگە يول قويىدۇ. بۇ تەڭشەكنى قوزغىتىش ئۆزلۈكىدىن ھېچنېمىنى ئۆچۈرمەيدۇ.",
   "error": "خاتالىق",
   "export": "ئېكسپورت قىلىش",
+  "export-selected-boards": "تاللانغان تاختىلارنى ئېكسپورت قىلىش",
   "external-link-identifier-aliases": "{identifier} ئۈچۈن قىسقارتمىلار، مەسىلەن TK=Task، IN=Incident",
   "external-link-pattern-prefix": "بەلگە ئالدى قوشۇلغۇچىسى",
   "external-link-pattern-url": "URL قېلىپى ({number} ئىشلىتىڭ)",

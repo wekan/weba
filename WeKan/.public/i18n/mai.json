@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "वैश्विक प्रशासक केँ नरम रूपसँ मेटाओल सामग्री स्थायी रूपसँ मेटेबाक अनुमति दिअ। ई सेटिंग सक्षम करब स्वयं कोनो वस्तु नहि मेटैत अछि।",
   "error": "त्रुटि",
   "export": "निर्यात करू",
+  "export-selected-boards": "चुनल पट्ट निर्यात करू",
   "external-link-identifier-aliases": "{identifier} लेल संक्षेप, उदाहरणक लेल TK=Task, IN=Incident",
   "external-link-pattern-prefix": "टोकन उपसर्ग",
   "external-link-pattern-url": "यूआरएल टेम्पलेट ({number} प्रयोग करू)",

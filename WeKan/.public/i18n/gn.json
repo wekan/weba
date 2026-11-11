@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Eheja Global Admin-kuérape omboguete tapiaite tetepy oñembogue kangyva'ekue. Ko ñemboheko ñemyendy nomoĩri mba'eve ñemboguépe ijehegui.",
   "error": "Javy",
   "export": "Emosẽ",
+  "export-selected-boards": "Mosẽ peteĩcha ojeporavóva",
   "external-link-identifier-aliases": "Ñe'ẽ mbykymby {identifier}-pe g̃uarã, techapyrã TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Token ypy",
   "external-link-pattern-url": "URL modelo (eipuru {number})",

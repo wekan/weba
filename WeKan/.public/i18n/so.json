@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "U oggolow Maamulayaasha Guud inay si joogto ah u tirtiraan nuxurka si jilicsan loo tirtiray. Shididda dejintani keligeed waxba ma tirtirto.",
   "error": "Khalad",
   "export": "Soo saar",
+  "export-selected-boards": "Soo saar sabuuradaha la doortay",
   "external-link-identifier-aliases": "Soo gaabinta {identifier}, tusaale ahaan TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Xarafka horyaalka calaamadda",
   "external-link-pattern-url": "Qaabka URL-ka (isticmaal {number})",

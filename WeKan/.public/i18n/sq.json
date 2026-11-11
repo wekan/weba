@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Lejo Administratorët globalë të fshijnë përgjithmonë përmbajtjen e fshirë butësisht. Aktivizimi i këtij cilësimi nuk fshin asgjë vetvetiu.",
   "error": "Gabim",
   "export": "Eksporto",
+  "export-selected-boards": "Eksporto tabelat e zgjedhura",
   "external-link-identifier-aliases": "Shkurtime për {identifier}, për shembull TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Parashtesa e tokenit",
   "external-link-pattern-url": "Shabllon URL (përdorni {number})",

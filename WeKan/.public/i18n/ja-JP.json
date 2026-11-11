@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "グローバル管理者が論理削除されたコンテンツを完全に削除できるようにします。この設定を有効にするだけでは、何も削除されません。",
   "error": "エラー",
   "export": "エクスポート",
+  "export-selected-boards": "選択したボードをエクスポート",
   "external-link-identifier-aliases": "{identifier}の略称。例: TK=Task, IN=Incident",
   "external-link-pattern-prefix": "トークンの接頭辞",
   "external-link-pattern-url": "URLテンプレート（{number} を使用）",

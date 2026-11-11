@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Leyfa yfirkerfisstjórum að eyða endanlega efni sem hefur verið merkt sem eytt. Þessi stilling eyðir engu ein og sér.",
   "error": "Villa",
   "export": "Flytja út",
+  "export-selected-boards": "Flytja út valdar töflur",
   "external-link-identifier-aliases": "Skammstafanir fyrir {identifier}, til dæmis TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Forskeyti tákns",
   "external-link-pattern-url": "URL sniðmát (notaðu {number})",

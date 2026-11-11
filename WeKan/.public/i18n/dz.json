@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "སྤྱི་ཁྱབ་བདག་སྐྱོང་པ་ཚུ་ལུ་གནས་སྐབས་བཏོན་པའི་ནང་དོན་རྟག་བརྟན་སྦེ་བཏོན་བཅུག སྒྲིག་སྟངས་འདི་ལྕོགས་ཅན་བཟོ་བ་རྐྱངམ་ཅིག་གིས་ག་ཅི་ཡང་མི་བཏོན།",
   "error": "འཛོལ་བ།",
   "export": "ཕྱིར་སྐྱེལ།",
+  "export-selected-boards": "སེལ་འཐུ་འབད་ཡོད་པའི་བྱང་གཞི་ཚུ་ཕྱིར་སྐྱེལ་འབད།",
   "external-link-identifier-aliases": "{identifier} གི་དོན་ལུ་ བསྡུས་ཚིག་ཚུ་ དཔེར་ན་ TK=Task, IN=Incident",
   "external-link-pattern-prefix": "བརྡ་མཚོན་གྱི་སྔོན་ཚིག",
   "external-link-pattern-url": "URL དཔེ་གཞི། ({number} ལག་ལེན།)",

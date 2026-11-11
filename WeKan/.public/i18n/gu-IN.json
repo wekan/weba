@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "વૈશ્વિક એડમિનને નરમ રીતે કાઢી નાખેલી સામગ્રી કાયમ માટે કાઢવાની મંજૂરી આપો. આ સેટિંગ સક્ષમ કરવાથી પોતે કંઈ કાઢી નાખાતું નથી.",
   "error": "ભૂલ",
   "export": "નિકાસ કરો",
+  "export-selected-boards": "પસંદ કરેલા બોર્ડ નિકાસ કરો",
   "external-link-identifier-aliases": "{identifier} માટે ટૂંકાં રૂપ, જેમ કે TK=Task, IN=Incident",
   "external-link-pattern-prefix": "ટોકન ઉપસર્ગ",
   "external-link-pattern-url": "URL ટેમ્પલેટ ({number} વાપરો)",

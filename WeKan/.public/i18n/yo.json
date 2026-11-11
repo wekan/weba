@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Gba àwọn Alámójútó Àgbáyé láyè láti pa àkóónú tí a parẹ́ lọ́nà rírọ̀ rẹ́ títí láé. Mímú ètò yìí ṣiṣẹ́ kò pa ohunkóhun fúnra rẹ̀.",
   "error": "Asise",
   "export": "Okeere",
+  "export-selected-boards": "Gbe awọn ọkọ ti a yan jade",
   "external-link-identifier-aliases": "Awọn kukuru fun {identifier}, fun apẹẹrẹ TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Àmì àkọ́kọ́",
   "external-link-pattern-url": "Àwòṣe URL (lo {number})",

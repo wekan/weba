@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Tillat globale administratorer å slette mykslettet innhold permanent. Aktivering av denne innstillingen sletter ikke noe i seg selv.",
   "error": "Feil",
   "export": "Eksporter",
+  "export-selected-boards": "Eksporter valgte tavler",
   "external-link-identifier-aliases": "Forkortelser for {identifier}, for eksempel TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Token-prefiks",
   "external-link-pattern-url": "URL-mal (bruk {number})",

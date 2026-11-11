@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "May Doxalkati Àddina ñu far ba fàww li ñu faroon ci anam wu nooy. Doxal tëralin bii du far dara ci boppam.",
   "error": "Njuumte",
   "export": "Génne",
+  "export-selected-boards": "Génne tablo yi ñu tànn",
   "external-link-identifier-aliases": "Gàttal yu {identifier}, ci misaal TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Njëkk marqe",
   "external-link-pattern-url": "Molu URL (jëfandikoo {number})",

@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Yamir Jiilooɓe Kuuɓɓe momtude loowdi maandaaɗi momtugol haa abada. Hurminde teeltol ngol tan momtataa hay huunde.",
   "error": "Juumre",
   "export": "Yaltin",
+  "export-selected-boards": "Yaltin alluuje cuɓaaɗe",
   "external-link-identifier-aliases": "Raɓɓinɗe wonande {identifier}, yeru TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Ado maande",
   "external-link-pattern-url": "Maandeejo URL (huutoro {number})",

@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Povoliť globálnym správcom natrvalo odstrániť obsah odstránený dočasne. Zapnutie tohto nastavenia samo osebe nič neodstráni.",
   "error": "Chyba",
   "export": "Exportovať",
+  "export-selected-boards": "Exportovať vybrané nástenky",
   "external-link-identifier-aliases": "Skratky pre {identifier}, napríklad TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefix tokenu",
   "external-link-pattern-url": "Šablóna URL (použite {number})",

@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Global administratorlarga yumshoq o‘chirilgan tarkibni butunlay o‘chirishga ruxsat berish. Bu sozlamani yoqish o‘z-o‘zidan hech narsani o‘chirmaydi.",
   "error": "Xato",
   "export": "Eksport qilish",
+  "export-selected-boards": "Tanlangan taxtalarni eksport qilish",
   "external-link-identifier-aliases": "{identifier} uchun qisqartmalar, masalan TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Belgi prefiksi",
   "external-link-pattern-url": "URL shabloni ({number}dan foydalaning)",

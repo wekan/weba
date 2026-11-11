@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Bulchitoota Waliigalaa qabiyyee akka haqametti mallatteeffame dhaabbataatti akka haqan hayyami. Qindaa'ina kana banuun ofumaan homaa hin haqu.",
   "error": "Dogoggora",
   "export": "Baasi",
+  "export-selected-boards": "Gabateewwan filataman baasi",
   "external-link-identifier-aliases": "Gabaabsa {identifier}, fakkeenyaaf TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Dursaa mallattoo",
   "external-link-pattern-url": "Bifa URL (fayyadamaa {number})",

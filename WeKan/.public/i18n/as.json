@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "গ্ল'বেল প্ৰশাসকসকলক কোমলভাৱে মচা বিষয়বস্তু স্থায়ীভাৱে মচিবলৈ অনুমতি দিয়ক। এই ছেটিং সক্ষম কৰিলেই নিজে একো নমচে।",
   "error": "ত্ৰুটি",
   "export": "ৰপ্তানি কৰক",
+  "export-selected-boards": "বাছনি কৰা ফলকসমূহ ৰপ্তানি কৰক",
   "external-link-identifier-aliases": "{identifier}-ৰ বাবে সংক্ষিপ্ত ৰূপ, উদাহৰণস্বৰূপে TK=কাম, IN=ঘটনা",
   "external-link-pattern-prefix": "টোকেনৰ প্ৰত্যয়",
   "external-link-pattern-url": "URL টেমপ্লেট ({number} ব্যৱহাৰ কৰক",

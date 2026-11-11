@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Ba Babban Masu Gudanarwa damar share abun da aka share a laushi har abada. Kunna wannan saitin ba ya share komai da kansa.",
   "error": "Kuskure",
   "export": "Fitar da",
+  "export-selected-boards": "Fitar da zaɓaɓɓun alluna",
   "external-link-identifier-aliases": "Gajerun kalmomi don {identifier}, misali TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Kariyar alama",
   "external-link-pattern-url": "Tsarin URL (yi amfani da {number})",

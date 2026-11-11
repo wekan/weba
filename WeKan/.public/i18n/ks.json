@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "گلوبل ایڈمنن نرم مٹاونہٕ آمُت مواد مستقل مٹاونچ اجازت دِیو۔ یِہ ترتیب فعال کرنس سٕتۍ پنُن پان کانٛہہ چیز مٹہِ نہٕ۔",
   "error": "غلطی",
   "export": "برآمد کریو",
+  "export-selected-boards": "ژارِتھ بورڈ برآمد کریو",
   "external-link-identifier-aliases": "{identifier} خٲطرٕ مخففات، مثلاً TK=Task، IN=Incident",
   "external-link-pattern-prefix": "ٹوکنَس منٛز اکس اڳر",
   "external-link-pattern-url": "یوآرایل نمونہ ({number} کارٕ)",

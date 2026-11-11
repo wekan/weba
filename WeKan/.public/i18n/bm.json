@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "A yamaruya Foroba Baarakɛla Kuntigiw ma ka kɔnɔkow minnu bɔra nɔgɔya la bɔ tuma bɛɛ. Labɛnni in dali yɛrɛ tɛ foyi bɔ.",
   "error": "Fili",
   "export": "Labɔ",
+  "export-selected-boards": "Walan sugandilenw labɔ",
   "external-link-identifier-aliases": "{identifier} surunyalenw, misali la TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Marqe ɲɛfɛla",
   "external-link-pattern-url": "URL sábiri (kɛ {number} na)",

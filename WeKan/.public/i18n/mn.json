@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Глобал админууд зөөлөн устгасан агуулгыг бүрмөсөн устгахыг зөвшөөрнө. Энэ тохиргоог идэвхжүүлэх нь өөрөө юу ч устгахгүй.",
   "error": "Алдаа",
   "export": "Экспортлох",
+  "export-selected-boards": "Сонгосон самбаруудыг экспортлох",
   "external-link-identifier-aliases": "{identifier}-ийн товчлолууд, жишээ нь TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Тэмдэглэгээний угтвар",
   "external-link-pattern-url": "URL загвар ({number}-г ашиглана уу)",

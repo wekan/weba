@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "जागतिक प्रशासकांक मृदू रीतीन काडून उडयिल्लो मजकूर कायम काडूंक दियात. ही मांडावळ सक्षम केल्यान आपोआप कांयच काडून उडना.",
   "error": "चूक",
   "export": "निर्यात करची",
+  "export-selected-boards": "वेंचिल्ले फळे निर्यात करचे",
   "external-link-identifier-aliases": "{identifier} खातीर संक्षेप, देखीक TK=Task, IN=Incident",
   "external-link-pattern-prefix": "टोकन उपसर्ग",
   "external-link-pattern-url": "URL प्रारूप ({number} वापरात)",

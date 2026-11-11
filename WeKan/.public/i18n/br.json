@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Aotren ar Verourien Hollek da zilemel da viken an endalc'hadoù dilamet dre vlot. Gweredekaat an arventenn-mañ ne zilam netra drezañ e-unan.",
   "error": "Fazi",
   "export": "Ezporzhiañ",
+  "export-selected-boards": "Ezporzhiañ an taolennoù dibabet",
   "external-link-identifier-aliases": "Berradurioù evit {identifier}, da skouer TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Rakger an tokenn",
   "external-link-pattern-url": "Patrom URL (implij {number})",

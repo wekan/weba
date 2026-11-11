@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Bvumira Vakuru Vepasi Rose kudzima zvachose zvinhu zvakambodzimwa zvinyoro. Kubatidza marongero aya hakudzimi chinhu pachako.",
   "error": "Kukanganisa",
   "export": "Buritsa",
+  "export-selected-boards": "Buritsa mabhodhi akasarudzwa",
   "external-link-identifier-aliases": "Zvipfupiso zve{identifier}, semuenzaniso TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Kutanga kwezvinhu",
   "external-link-pattern-url": "Tembleti yeURL (shandisa {number})",

@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "អនុញ្ញាតឱ្យអ្នកគ្រប់គ្រងសកលលុបមាតិកាដែលបានលុបទន់ជាអចិន្ត្រៃយ៍។ ការបើកការកំណត់នេះមិនលុបអ្វីដោយខ្លួនឯងទេ។",
   "error": "កំហុស",
   "export": "នាំចេញ",
+  "export-selected-boards": "នាំចេញក្តារដែលបានជ្រើសរើស",
   "external-link-identifier-aliases": "អក្សរកាត់សម្រាប់ {identifier} ឧទាហរណ៍ TK=Task, IN=Incident",
   "external-link-pattern-prefix": "បុព្វបទថូខឹន",
   "external-link-pattern-url": "ពុម្ពអាសយដ្ឋាន URL (ប្រើ {number})",

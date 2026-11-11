@@ -2,6 +2,24 @@
 
 This work adds the following features and fixes:
 
+- Add native selected-board weba-2 JSON batch export as one ZIP download. Keep
+  the selected IDs and ordered pending queue private to the form, bind them to
+  the account session and selection revision, and independently lock and recheck
+  the global export gate, full-board read scope, assigned-only restriction and
+  active state for every board. Retain completed in-memory JSON after a later
+  board fails so retry processes only the pending board; expose only copied file
+  snapshots and clear them after the completed download. Use strict board-ID
+  entry names, a base64 command envelope and a bounded dependency-free ZIP
+  writer, preserving exact UTF-8 JSON and attachment bytes. Hide the action on
+  live policy disable and refuse forged, empty, stale, foreign, replayed,
+  archived and reentrant operations server-side. Import the original Export
+  selected boards caption across 237 catalogs (271 keys). Native and ZIP tests,
+  the full local suite (69 host tests), and the complete source/packaged live
+  browser suites pass; the integrated export scenario covers failure/retry,
+  exact entries, selection retention and the live/forged policy gate in both
+  forms. Other original batch formats and the HTTP route remain pending. Thanks
+  to xet7.
+
 - Apply the shared drag-handle preference to native lane ordering. Match the
   source swimlane Sortable contract: with handles on, use only the visible grip
   for mouse, touch and vertical arrow-key moves; with handles off, hide the grip

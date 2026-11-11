@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Permitir que os administradores globais eliminen permanentemente o contido eliminado de forma lóxica. Activar esta opción non elimina nada por si mesma.",
   "error": "Erro",
   "export": "Exportar",
+  "export-selected-boards": "Exportar os taboleiros seleccionados",
   "external-link-identifier-aliases": "Abreviaturas para {identifier}, por exemplo TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefixo do token",
   "external-link-pattern-url": "Modelo de URL (usa {number})",

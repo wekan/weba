@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Erlaubt globalen Administratoren, als gelöscht markierte Inhalte dauerhaft zu löschen. Durch das Aktivieren dieser Einstellung allein werden keine Inhalte gelöscht.",
   "error": "Fehler",
   "export": "Exportieren",
+  "export-selected-boards": "Ausgewählte Arbeitstafeln exportieren",
   "external-link-identifier-aliases": "Abkürzungen für {identifier}, zum Beispiel TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Token-Präfix",
   "external-link-pattern-url": "URL-Vorlage (verwende {number})",

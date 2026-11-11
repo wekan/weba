@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "மென்மையாக நீக்கப்பட்ட உள்ளடக்கத்தை உலகளாவிய நிர்வாகிகள் நிரந்தரமாக நீக்க அனுமதிக்கவும். இந்த அமைப்பை இயக்குவது தானாக எதையும் நீக்காது.",
   "error": "பிழை",
   "export": "ஏற்றுமதி செய்",
+  "export-selected-boards": "தேர்ந்தெடுத்த பலகைகளை ஏற்றுமதி செய்",
   "external-link-identifier-aliases": "{identifier}-க்கான சுருக்கங்கள், எடுத்துக்காட்டாக TK=Task, IN=Incident",
   "external-link-pattern-prefix": "குறியீடு முன்னொட்டு",
   "external-link-pattern-url": "URL வார்ப்புரு ({number} பயன்படுத்தவும்)",

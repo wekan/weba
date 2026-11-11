@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Allow Global Admins eri permanently sangula soft-deleted birimu. Enabling kino ntegeka does si sangula anything nga itself.",
   "error": "Ensobi",
   "export": "Fulumya",
+  "export-selected-boards": "Fulumya embaawo ezirondeddwa",
   "external-link-identifier-aliases": "Ebimpi bya {identifier}, okugeza TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Ekisookerwako ky'akabonero",
   "external-link-pattern-url": "Ekifaananyi kya URL (kozesa {number})",

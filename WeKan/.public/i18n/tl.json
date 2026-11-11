@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Payagan Pangkalahatang Tagapangasiwas sa nang permanente tanggalin soft-tinanggal nilalaman. Enabling ito setting gumagawa ng hindi tanggalin anything ni itself.",
   "error": "Mali",
   "export": "I-export",
+  "export-selected-boards": "I-export ang mga napiling pisara",
   "external-link-identifier-aliases": "Mga pagdadaglat para sa {identifier}, halimbawa TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Panlaping token",
   "external-link-pattern-url": "URL na Template (gamitin ang {number})",

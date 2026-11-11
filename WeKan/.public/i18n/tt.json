@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Глобаль администраторларга вакытлыча бетерелгән эчтәлекне даими бетерергә рөхсәт итү. Бу көйләүне кабызу үзе генә бернәрсәне дә бетерми.",
   "error": "Хата",
   "export": "Экспортлау",
+  "export-selected-boards": "Сайланган такталарны экспортлау",
   "external-link-identifier-aliases": "{identifier} өчен кыскартулар, мәсәлән TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Тамга префиксы",
   "external-link-pattern-url": "URL шаблоны ({number} кулланыгыз)",

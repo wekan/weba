@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Baimendu administratzaile globalei modu bigunean ezabatutako edukia behin betiko ezabatzea. Ezarpen hau gaitzeak ez du berez ezer ezabatzen.",
   "error": "Errorea",
   "export": "Esportatu",
+  "export-selected-boards": "Esportatu hautatutako arbelak",
   "external-link-identifier-aliases": "{identifier} balioaren laburdurak, adibidez TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Tokenaren aurrizkia",
   "external-link-pattern-url": "URL txantiloia ({number} erabili)",

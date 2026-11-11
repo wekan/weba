@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Ceadaigh do Riarthóirí Domhanda ábhar bogscriosta a scriosadh go buan. Ní scriosann cumasú an tsocraithe seo aon rud leis féin.",
   "error": "Earráid",
   "export": "Easpórtáil",
+  "export-selected-boards": "Easpórtáil na cláir roghnaithe",
   "external-link-identifier-aliases": "Giorrúcháin do {identifier}, mar shampla TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Réimír an chomhartha",
   "external-link-pattern-url": "Teimpléad URL (úsáid {number})",

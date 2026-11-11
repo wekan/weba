@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Consenti agli amministratori globali di eliminare definitivamente i contenuti contrassegnati come eliminati. L'attivazione di questa impostazione non elimina nulla da sola.",
   "error": "Errore",
   "export": "Esporta",
+  "export-selected-boards": "Esporta le bacheche selezionate",
   "external-link-identifier-aliases": "Abbreviazioni per {identifier}, ad esempio TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefisso del token",
   "external-link-pattern-url": "Modello URL (usa {number})",

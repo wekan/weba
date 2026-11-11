@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Lascé che i aministradëures globai scancele per dagnora l cuntenut scancelà a la leijiera. Ativé chësta mpustazion ne scancela nia da sëula.",
   "error": "Fal",
   "export": "Esporté",
+  "export-selected-boards": "Esporté les tofles tlüdes fora",
   "external-link-identifier-aliases": "Scurzadöres por {identifier}, por ejëmpl TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefiss dl token",
   "external-link-pattern-url": "Mudel URL (adurvé {number})",

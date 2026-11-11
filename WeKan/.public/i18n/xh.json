@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Vumela abalawuli jikelele ukuba bacime ngokusisigxina umxholo ocinywe ngokuthambileyo. Ukuvula olu seto akucimi nto ngokwalo.",
   "error": "Impazamo",
   "export": "Thumela ngaphandle",
+  "export-selected-boards": "Thumela iibhodi ezikhethiweyo ngaphandle",
   "external-link-identifier-aliases": "Izifinyezo zika-{identifier}, umzekelo TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Isiqalo sompawu",
   "external-link-pattern-url": "Itampleti ye-URL (sebenzisa u-{number})",

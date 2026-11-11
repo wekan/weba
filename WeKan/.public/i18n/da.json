@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Tillad globale administratorer at slette blødt slettet indhold permanent. Aktivering af denne indstilling sletter ikke noget i sig selv.",
   "error": "Fel",
   "export": "Eksportér",
+  "export-selected-boards": "Eksportér valgte tavler",
   "external-link-identifier-aliases": "Forkortelser for {identifier}, for eksempel TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Token-præfiks",
   "external-link-pattern-url": "URL-skabelon (brug {number})",

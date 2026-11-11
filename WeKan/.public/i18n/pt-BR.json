@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Permitir que administradores globais excluam permanentemente o conteúdo marcado como excluído. Ativar esta configuração não exclui nada por si só.",
   "error": "Erro",
   "export": "Exportar",
+  "export-selected-boards": "Exportar quadros selecionados",
   "external-link-identifier-aliases": "Abreviaturas de {identifier}, por exemplo TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefixo do token",
   "external-link-pattern-url": "Modelo de URL (use {number})",

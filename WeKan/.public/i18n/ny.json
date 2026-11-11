@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Lolani Oyang'anira Apadziko Lonse kuchotsa kosatha zinthu zomwe zachotsedwa mofewa. Kuyatsa zokonda izi sikuchotsa chilichonse pakokha.",
   "error": "Cholakwika",
   "export": "Tulutsani",
+  "export-selected-boards": "Tulutsani mabolodi osankhidwa",
   "external-link-identifier-aliases": "Machidule a {identifier}, mwachitsanzo TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Chiyambi cha chizindikiro",
   "external-link-pattern-url": "Chithunzithunzi cha URL (gwiritsani {number})",

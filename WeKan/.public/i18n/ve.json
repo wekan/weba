@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Tendelani Vhalanguli Vhahulwane u thutha lwa tshoṱhe zwi re ngomu zwo thuthwaho nga nḓila i humulelaho. U tendela nzudzanyo iyi a zwi thuthi tshithu nga zwoṱhe.",
   "error": "Vhukhakhi",
   "export": "Thumela ngaphandle",
+  "export-selected-boards": "Bvisela nnḓa bodo dzo nangwaho",
   "external-link-identifier-aliases": "Khonḓiso dza {identifier}, sa tsumbo TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Themendulo ya tshiga",
   "external-link-pattern-url": "Tshifanyiso tsha URL (shumisani {number})",

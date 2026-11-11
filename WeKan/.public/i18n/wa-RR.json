@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Tuguti an mga Global Admin nga permanente nga magtanggal han sulod nga gintanggal na pero aada pa ha sistema. An pagtugot hini nga setting diri nagtatanggal hin bisan ano ha iya la kalugaringon.",
   "error": "Sayop",
   "export": "Pag-eksport",
+  "export-selected-boards": "I-eksport an mga ginpili nga pisara",
   "external-link-identifier-aliases": "Mga pinamubo para han {identifier}, pananglitan TK=Buruhaton, IN=Insidente",
   "external-link-pattern-prefix": "Unahan han token",
   "external-link-pattern-url": "Susbaranan han URL (gamita an {number})",

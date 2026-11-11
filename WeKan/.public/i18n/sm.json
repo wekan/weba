@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Faataga Pule Aoao e soloia tumau anotusi na soloia faamalū. O le faaolaina o lenei faatulagaga e le soloia ai se mea na o ia.",
   "error": "Sese",
   "export": "Auina atu",
+  "export-selected-boards": "Auina atu laupapa filifilia",
   "external-link-identifier-aliases": "Faapuupuuga mo {identifier}, mo se faataitaiga TK=Task, IN=Incident",
   "external-link-pattern-prefix": "'Amata o le fa'ailoga",
   "external-link-pattern-url": "Fa'ata'ita'iga URL (fa'aogaina le {number})",

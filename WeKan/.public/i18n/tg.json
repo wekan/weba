@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Ба Маъмурони умумӣ иҷозат диҳед, ки муҳтавои нарм нестшударо доимӣ нест кунанд. Фаъол кардани ин танзим худ аз худ чизеро нест намекунад.",
   "error": "Хато",
   "export": "Содир кардан",
+  "export-selected-boards": "Содир кардани тахтаҳои интихобшуда",
   "external-link-identifier-aliases": "Ихтисораҳо барои {identifier}, масалан TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Пешванди аломат",
   "external-link-pattern-url": "Қолаби URL (аз {number} истифода баред)",

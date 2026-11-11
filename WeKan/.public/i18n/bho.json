@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "वैश्विक प्रशासकन के नरम ढंग से मेटावल सामग्री हमेशा खातिर मेटावे दीं। एह सेटिंग के चालू कइला से अपने-आप कुछुओ ना मेटाई।",
   "error": "गलती",
   "export": "निर्यात करीं",
+  "export-selected-boards": "चुनल बोर्ड निर्यात करीं",
   "external-link-identifier-aliases": "{identifier} खातिर संक्षेप, जइसे TK=Task, IN=Incident",
   "external-link-pattern-prefix": "टोकन के उपसर्ग",
   "external-link-pattern-url": "यूआरएल टेम्पलेट ({number} के इस्तेमाल करीं)",

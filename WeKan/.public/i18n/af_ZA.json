@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Laat Globale Administrateurs toe om saggeskrapte inhoud permanent te skrap. Om hierdie instelling te aktiveer, skrap niks vanself nie.",
   "error": "Fout",
   "export": "Voer uit",
+  "export-selected-boards": "Voer gekose rade uit",
   "external-link-identifier-aliases": "Afkortings vir {identifier}, byvoorbeeld TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Teken-voorvoegsel",
   "external-link-pattern-url": "URL-sjabloon (gebruik {number})",

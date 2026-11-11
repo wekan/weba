@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "මෘදු ලෙස මකා දැමූ අන්තර්ගතය ස්ථිරව මකා දැමීමට Global Admin වරුන්ට ඉඩ දෙන්න. මෙම සැකසුම සක්‍රිය කිරීමෙන් පමණක් කිසිවක් මකා නොදමයි.",
   "error": "දෝෂය",
   "export": "නිර්යාත කරන්න",
+  "export-selected-boards": "තෝරාගත් පුවරු නිර්යාත කරන්න",
   "external-link-identifier-aliases": "{identifier} සඳහා කෙටි යෙදුම්, උදාහරණයක් ලෙස TK=Task, IN=Incident",
   "external-link-pattern-prefix": "ටෝකන් උපසර්ගය",
   "external-link-pattern-url": "URL අච්චුව ({number} භාවිතා කරන්න)",

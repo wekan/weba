@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Xiquincahuili Hueyi Tlayecanqueh ma quimpolocan cemihcac tlahtolli yolic pololoc. Inin tlaahxitiliztli zan amo quipoloa tlein.",
   "error": "Tlahtlacolli",
   "export": "Xicquixti",
+  "export-selected-boards": "Xiquinquixti huapaltin tlaixpehpenaltin",
   "external-link-identifier-aliases": "Tlahtoltzicuiliztli para {identifier}, quemeh TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Achtopa tlamahuiztli",
   "external-link-pattern-url": "URL nezcayotl (xitequiti {number})",

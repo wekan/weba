@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Permetre als administrators globals de suprimir definitivament lo contengut suprimit logicament. Activar aqueste reglatge suprimís pas res d'esperel.",
   "error": "Error",
   "export": "Exportar",
+  "export-selected-boards": "Exportar los tablèus seleccionats",
   "external-link-identifier-aliases": "Abreviacions per {identifier}, per exemple TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefix del tòken",
   "external-link-pattern-url": "Modèl d'URL (utilizar {number})",

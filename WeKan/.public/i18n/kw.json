@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Gasa Menystroryon Oll dhe dhilea dalgh dileys medhel yn heb korfenn. Ena an settyans ma ny wra dilea tra vyth y honan.",
   "error": "Kammwrians",
   "export": "Esperthi",
+  "export-selected-boards": "Esperthi an estyll dewisys",
   "external-link-identifier-aliases": "Berrheansow rag {identifier}, rag ensampel TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Ragger an tokyn",
   "external-link-pattern-url": "Patron URL (usya {number})",

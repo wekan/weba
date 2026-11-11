@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Ubbaa alaafiyati shemppuwan xayettida yohota merinaa xayssana mala maata. Ha giigissuwaa oottissiyoogee ba huuphen aybanne xayssenna.",
   "error": "Balaa",
   "export": "Kessa",
+  "export-selected-boards": "Doorettida bookkiyata kessa",
   "external-link-identifier-aliases": "{identifier} guuxxida sunttata, leemisuwaas TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Token kasse",
   "external-link-pattern-url": "URL leemiso ({number} go'ettite)",

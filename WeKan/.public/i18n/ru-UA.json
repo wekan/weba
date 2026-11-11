@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Разрешить глобальным администраторам безвозвратно удалять содержимое, помеченное как удалённое. Само включение этого параметра ничего не удаляет.",
   "error": "Ошибка",
   "export": "Экспортировать",
+  "export-selected-boards": "Экспортировать выбранные доски",
   "external-link-identifier-aliases": "Сокращения для {identifier}, например TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Префикс токена",
   "external-link-pattern-url": "Шаблон URL (используйте {number})",

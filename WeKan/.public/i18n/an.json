@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Permitir que os administradors globals borren definitivament o conteniu marcau como borrau. Activar iste achuste no borra cosa por sí mesmo.",
   "error": "Mensaje de error",
   "export": "Exportar",
+  "export-selected-boards": "Exportar os tableros seleccionaus",
   "external-link-identifier-aliases": "Abreviaturas pa {identifier}, por eixemplo TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefixo d'o token",
   "external-link-pattern-url": "Plantilla d'URL (fe servir {number})",

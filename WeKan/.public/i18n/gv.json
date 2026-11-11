@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Lhig da Reireyderyn Cadjin çheshaght er ny doll magh dy bog y doll magh dy bragh. Cha jean cur y reigh shoh er nhee erbee y doll magh hene.",
   "error": "Marranys",
   "export": "Cur magh",
+  "export-selected-boards": "Cur magh ny boayrdyn reiht",
   "external-link-identifier-aliases": "Giarraghyn son {identifier}, son sampleyr TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Roie-ockle y chomharrey",
   "external-link-pattern-url": "Sampleyr URL (jean ymmyd jeh {number})",

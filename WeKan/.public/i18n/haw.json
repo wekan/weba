@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "ʻae kalopala akaminaka i pelamanenakalawa holoi kopakakelekeka ʻike. enapalinaka kēia kekakinaka koeka ʻaʻole holoi kekahi mea na ikakelapa.",
   "error": "Hewa",
   "export": "Hoʻopuka",
+  "export-selected-boards": "Hoʻopuka i nā papa i koho ʻia",
   "external-link-identifier-aliases": "Nā inoa pōkole no {identifier}, no ka laʻana TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Mua o ka hōʻailona",
   "external-link-pattern-url": "Kumu hoʻohālike URL (e hoʻohana i {number})",

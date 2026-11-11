@@ -1158,6 +1158,27 @@ streaming, security eventlog/Problems reporting, non-SQLite concurrency and full
 original UI/API/DDP/security suites remain pending. No controls for unsupported
 formats or privacy transformations are shown.
 
+### Selected board JSON ZIP export
+
+The native Multi-Selection action exports selected active boards into one
+`wekan-boards-weba.zip`, with a complete weba-2 document in each strict
+`board-ID.json` entry. `BoardBatchExport` owns an account/session/selection-
+revision-bound ordered queue. Every pending item calls the locked active-board
+serializer, which rechecks export policy, full-board read scope, the assigned-
+only exclusion and archive state inside the transaction. A later failure retains
+completed JSON only in private form memory and retry resumes at the pending item;
+no partial ZIP is sent.
+
+The final file snapshot crosses the native command boundary as base64 JSON.
+`batch-export.js` bounds and validates the envelope, writes stored UTF-8 ZIP
+entries with CRC-32 and a central directory, and never accepts path-shaped or
+browser-supplied names. Tests cover exact attachment bytes, no-write failure,
+immutable snapshots, retry/replay/reentrancy, stale/foreign/archive/policy denial
+and ZIP structure. `python3 tests/run-http.py --selected-export` (add `--archive`)
+checks the real controls, live and forged global gate, selection retention and
+download contents. The original caption is among 271 source keys in all 237
+catalogs. Remaining batch formats and the original HTTP route stay open.
+
 ### Single-attachment export API
 
 GET /api/boards/:boardId/attachments/:attachmentId/export now returns the current

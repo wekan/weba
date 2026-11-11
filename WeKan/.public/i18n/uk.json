@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Дозволити глобальним адміністраторам безповоротно видаляти вміст, позначений як видалений. Саме ввімкнення цього параметра нічого не видаляє.",
   "error": "Помилка",
   "export": "Експортувати",
+  "export-selected-boards": "Експортувати вибрані дошки",
   "external-link-identifier-aliases": "Скорочення для {identifier}, наприклад TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Префікс токена",
   "external-link-pattern-url": "Шаблон URL (використайте {number})",

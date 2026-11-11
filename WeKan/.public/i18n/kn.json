@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "ಮೃದುವಾಗಿ ಅಳಿಸಿದ ವಿಷಯವನ್ನು ಜಾಗತಿಕ ನಿರ್ವಾಹಕರು ಶಾಶ್ವತವಾಗಿ ಅಳಿಸಲು ಅನುಮತಿಸಿ. ಈ ಸೆಟ್ಟಿಂಗ್ ಸಕ್ರಿಯಗೊಳಿಸುವುದರಿಂದ ಮಾತ್ರ ಯಾವುದೂ ಅಳಿಸುವುದಿಲ್ಲ.",
   "error": "ದೋಷ",
   "export": "ರಫ್ತು ಮಾಡಿ",
+  "export-selected-boards": "ಆಯ್ದ ಫಲಕಗಳನ್ನು ರಫ್ತು ಮಾಡಿ",
   "external-link-identifier-aliases": "{identifier} ಗಾಗಿ ಸಂಕ್ಷೇಪಗಳು, ಉದಾಹರಣೆಗೆ TK=Task, IN=Incident",
   "external-link-pattern-prefix": "ಟೋಕನ್ ಪೂರ್ವಪ್ರತ್ಯಯ",
   "external-link-pattern-url": "URL ಟೆಂಪ್ಲೇಟ್ ({number} ಬಳಸಿ)",

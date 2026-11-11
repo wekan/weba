@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Qlobal inzibatçılara yumşaq silinmiş məzmunu həmişəlik silməyə icazə verin. Bu ayarı aktivləşdirmək öz-özünə heç nəyi silmir.",
   "error": "Xəta",
   "export": "Ixrac et",
+  "export-selected-boards": "Seçilmiş lövhələri ixrac edin",
   "external-link-identifier-aliases": "{identifier} üçün qısaltmalar, məsələn TK=Task, IN=Incident",
   "external-link-pattern-prefix": "İşarə prefiksi",
   "external-link-pattern-url": "URL şablonu ({number} istifadə edin)",

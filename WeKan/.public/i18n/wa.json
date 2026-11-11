@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Permete ås manaedjeus globås di disfacer po todi l' ådvins disfacé doûcemint. Mete cisse apontiaedje en alaedje ni disface rin tot seu.",
   "error": "Erôre",
   "export": "Ebaguer",
+  "export-selected-boards": "Ebaguer les tåvleas tchoezis",
   "external-link-identifier-aliases": "Rascourtixhmints po {identifier}, pa egzimpe TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefikse do token",
   "external-link-pattern-url": "Modele d' URL (eployîz {number})",

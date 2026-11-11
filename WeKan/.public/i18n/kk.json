@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Жаһандық әкімшілерге уақытша жойылған мазмұнды біржола жоюға рұқсат беру. Бұл параметрді қосу өздігінен ештеңені жоймайды.",
   "error": "Қате",
   "export": "Экспорттау",
+  "export-selected-boards": "Таңдалған тақталарды экспорттау",
   "external-link-identifier-aliases": "{identifier} үшін қысқартулар, мысалы TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Белгі префиксі",
   "external-link-pattern-url": "URL үлгісі ({number} қолданыңыз)",

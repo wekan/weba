@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Sta globale beheerders toe om als verwijderd gemarkeerde inhoud permanent te verwijderen. Het inschakelen van deze instelling verwijdert op zichzelf niets.",
   "error": "Fout",
   "export": "Exporteren",
+  "export-selected-boards": "Geselecteerde borden exporteren",
   "external-link-identifier-aliases": "Afkortingen voor {identifier}, bijvoorbeeld TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Token-voorvoegsel",
   "external-link-pattern-url": "URL-sjabloon (gebruik {number})",

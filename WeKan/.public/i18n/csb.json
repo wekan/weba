@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Pòzwôlô globalnym administratoróm na trwałé rëmanié zamkłoscë òznaczony jakno rëmniãtô. Samò włączenié ti nastôwë nic nie rëmô.",
   "error": "Fela",
   "export": "Ekspòrtowac",
+  "export-selected-boards": "Ekspòrtëjë wëbróné tôfle",
   "external-link-identifier-aliases": "Skrócënczi dlô {identifier}, na przëkłôd TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefiks tokena",
   "external-link-pattern-url": "Szablón URL (brëkùjë {number})",

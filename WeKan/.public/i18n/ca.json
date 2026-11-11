@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Permet que els administradors globals suprimeixin permanentment el contingut suprimit de manera lògica. Activar aquesta configuració no suprimeix res per si mateixa.",
   "error": "Missatge d'error",
   "export": "Exporta",
+  "export-selected-boards": "Exporta els taulers seleccionats",
   "external-link-identifier-aliases": "Abreviacions per a {identifier}, per exemple TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefix del testimoni",
   "external-link-pattern-url": "Plantilla d'URL (useu {number})",

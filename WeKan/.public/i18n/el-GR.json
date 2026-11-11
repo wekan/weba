@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Να επιτρέπεται στους καθολικούς διαχειριστές να διαγράφουν οριστικά περιεχόμενο που έχει διαγραφεί προσωρινά. Η ενεργοποίηση αυτής της ρύθμισης δεν διαγράφει τίποτα από μόνη της.",
   "error": "Σφάλμα",
   "export": "Εξαγωγή",
+  "export-selected-boards": "Εξαγωγή επιλεγμένων πινάκων",
   "external-link-identifier-aliases": "Συντομογραφίες για το {identifier}, για παράδειγμα TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Πρόθεμα διακριτικού",
   "external-link-pattern-url": "Πρότυπο URL (χρησιμοποιήστε {number})",

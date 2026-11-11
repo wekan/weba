@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "允许全局管理员永久删脱已经软删除个内容。打开搿个设置本身勿会删脱任何内容。",
   "error": "错误",
   "export": "导出",
+  "export-selected-boards": "导出选中个看板",
   "external-link-identifier-aliases": "{identifier} 个缩写，譬如 TK=Task、IN=Incident",
   "external-link-pattern-prefix": "标记前缀",
   "external-link-pattern-url": "URL 模板（使用 {number}）",

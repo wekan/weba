@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "عالمی منتظمین کو نرم طور پر حذف شدہ مواد مستقل طور پر حذف کرنے کی اجازت دیں۔ یہ ترتیب فعال کرنے سے خود کوئی چیز حذف نہیں ہوتی۔",
   "error": "خرابی",
   "export": "برآمد کریں",
+  "export-selected-boards": "منتخب بورڈ برآمد کریں",
   "external-link-identifier-aliases": "{identifier} کے مخففات، مثلاً TK=Task, IN=Incident",
   "external-link-pattern-prefix": "ٹوکن کا سابقہ",
   "external-link-pattern-url": "یو آر ایل سانچہ ({number} استعمال کریں)",

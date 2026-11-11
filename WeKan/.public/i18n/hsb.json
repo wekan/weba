@@ -131,6 +131,7 @@
   "enable-permanent-delete-description": "Globalnym administratoram dowolić, wobsah markěrowany jako zhašany trajnje zhašeć. Zmóžnjenje tutoho nastajenja samo ničo njezhaša.",
   "error": "Zmylk",
   "export": "Eksportować",
+  "export-selected-boards": "Wubrane tafle eksportować",
   "external-link-identifier-aliases": "Skrótšenki za {identifier}, na přikład TK=Task, IN=Incident",
   "external-link-pattern-prefix": "Prefiks tokena",
   "external-link-pattern-url": "URL-předłoha (wužiwajće {number})",
