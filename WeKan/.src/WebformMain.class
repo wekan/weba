@@ -3961,6 +3961,10 @@ Public Sub ExportSelectedMarkdown_Click()
   RunSelectedExport("markdown")
 End
 
+Public Sub ExportSelectedLeo_Click()
+  RunSelectedExport("leo")
+End
+
 Public Sub CancelSelectedExport_Click()
   ClearSelectedExport()
 End

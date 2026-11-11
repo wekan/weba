@@ -107,6 +107,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   checkitems, comments and reciprocal card relationships is recorded there;
   selected Markdown task-list ZIP with non-empty list headings, open/terminal
   checkboxes and description continuation lines is recorded there;
+  selected Leo XML outline ZIP with deterministic list/card/checklist nodes,
+  marks, body nodes and escaping is recorded there;
   original remaining formats/API route, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded

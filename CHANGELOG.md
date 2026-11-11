@@ -2,6 +2,19 @@
 
 This work adds the following features and fixes:
 
+- Add Leo as the third selected-board external-tool export. Download one
+  `wekan-boards-leo.zip` with an ordered strict `board-ID.leo` entry per board.
+  Match the parent Leo XML outline: deterministic node IDs, board-title header,
+  every list as a top-level node, nested cards/checklists/checkitems, terminal
+  cards and completed items marked, card descriptions in joined body nodes,
+  exact XML escaping and the trailing newline. Reuse the private session/
+  selection-bound retry queue and independently locked full-read, active-board
+  and global export-policy checks for every board. Focused native/browser tests,
+  the complete local suite (69 host tests), and complete source/packaged live
+  suites pass; the integrated scenario validates all eight exact downloads and
+  live/forged policy gates in both forms. Other external-tool formats remain
+  pending. Thanks to xet7.
+
 - Add Markdown as the second selected-board external-tool export. Download one
   `wekan-boards-markdown.zip` with an ordered strict `board-ID.md` entry per
   selected board. Match the parent task-list formatter exactly: board and only

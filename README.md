@@ -2161,7 +2161,7 @@ the driver has already lost. Other original JSON wire contracts and selected
 multi-format exports remain pending.
 
 
-### Selected board JSON, CSV, TSV, Excel, Kanboard and Markdown export
+### Selected board JSON, CSV, TSV, Excel, Kanboard, Markdown and Leo export
 
 The native Multi-Selection sidebar can export selected active boards as one
 `wekan-boards-weba.zip`. Each entry is a complete `weba-2` JSON board named
@@ -2206,6 +2206,12 @@ done/closed/complete/archiv/finished are checked; all others are unchecked.
 Every non-empty description line is retained as a two-space-indented
 continuation. Literal Markdown is preserved as source text.
 
+Leo produces `wekan-boards-leo.zip` with one strict `board-ID.leo` XML outline
+per selected board. It matches the parent formatter's deterministic node IDs,
+board-title header, top-level list nodes, nested card/checklist/checkitem nodes,
+terminal-card and completed-item marks, separate card-description body nodes,
+XML escaping, and trailing newline. Empty lists remain in the outline.
+
 The ordered ID list, revision and completed/pending queue remain private to the
 form. The queue is bound to the current account session and unchanged selection.
 Every board independently takes the existing locked whole-board export path and
@@ -2228,9 +2234,9 @@ board and disabled export. Real Chromium tests run against source and packaged
 apps with `python3 tests/run-http.py --selected-export [--archive]` and verify
 zero-selection refusal, live/forged policy denial, the exact two-entry JSON,
 comma-CSV, semicolon-CSV and TSV ZIPs, and the single two-sheet Excel workbook.
-They also verify the Kanboard container/task JSON and exact Markdown task-list
-ZIPs. Remaining external-tool formats and the original HTTP route remain
-pending.
+They also verify the Kanboard container/task JSON, exact Markdown task-list and
+Leo XML outline ZIPs. Remaining external-tool formats and the original HTTP
+route remain pending.
 
 
 ### Gated permanent board deletion and Recovery
