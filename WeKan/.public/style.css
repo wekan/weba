@@ -12025,6 +12025,8 @@ ul, #myUL {
 .weba-card-drag-surface{touch-action:none;cursor:move}
 .weba-column .weba-drag-handle[data-drag-kind="list"][hidden]{display:none!important}
 .weba-list-drag-surface{touch-action:none;cursor:move}
+.weba-swimlane .weba-drag-handle[data-drag-kind="lane"][hidden]{display:none!important}
+.weba-lane-drag-surface{touch-action:none;cursor:move}
 .weba-drag-preference-state{display:none!important}
 .weba-drag-preference-toggle[aria-checked="true"]::before{content:"✓ ";}
 .weba-drag-preference-toggle[aria-checked="false"]::before{content:"☐ ";}

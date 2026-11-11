@@ -163,15 +163,12 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   recorded there too. Public guest downloads now use a dedicated guarded path
   with native policy and assigned-member scope, recorded there too. Remaining
   guest views beyond native Lists/Swimlanes/Table/due-day Calendar, source
-  original board-view popup/Blaze callbacks and shared drag-handle preference
-  integration for native lane controls beyond the
-  native three-state preference decision helper/private account storage/profile
-  toggle/device detection/view-order and overview-board gesture integration, guarded
-  drag/keyboard ordering, bound manager editor and authenticated
-  REST endpoints in CHANGELOG.md, signed-in
+  original board-view popup/Blaze callbacks and browser/profile/DDP drag-handle
+  bridges beyond the native three-state decision helper, private account storage,
+  profile toggle/device detection and view/overview/workspace/card/list/lane
+  gesture integration recorded in CHANGELOG.md, signed-in
   view-policy integration beyond the native signed-in audience/ordered menu/
   default enforcement and per-board/shared preferences in CHANGELOG.md,
-  browser/profile/DDP preference bridges and
   instance feature integration beyond the native 16-group admin policy/pilot/
   preview form and signed-in/guest view filtering recorded in CHANGELOG.md
   and original-format policy copy/import integration beyond the native whole-

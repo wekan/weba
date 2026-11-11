@@ -261,6 +261,7 @@
       }
       root.webaDrag?.restoreCardFocus?.(section);
       root.webaDrag?.restoreListFocus?.(section);
+      root.webaDrag?.restoreLaneFocus?.(section);
       data.hidden = true;
     });
   }

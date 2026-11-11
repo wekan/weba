@@ -597,6 +597,16 @@ const fs = require('node:fs');
       await page.focus(column('Default','Doing')+' .weba-list-header');await page.keyboard.press('ArrowRight');
       await page.waitForFunction(()=>document.querySelector('.weba-swimlane[data-lane="Default"] .weba-column')?.dataset.list==='Todo');
       await page.waitForFunction(()=>document.activeElement?.closest('.weba-column')?.dataset.list==='Doing');
+      assert.equal(await page.$eval('.weba-swimlane[data-lane="Default"] [data-drag-kind="lane"]',e=>e.hidden),true,'handle-off hides the lane grip');
+      await page.waitForSelector('.weba-swimlane[data-lane="Default"]>.weba-swimlane-header.weba-lane-drag-surface');
+      const laneFrom=await point('.weba-swimlane[data-lane="Default"]>.weba-swimlane-header h3'),laneTo=await point('.weba-swimlane[data-lane="Second ä"]>.weba-swimlane-header',true);
+      await page.mouse.move(laneFrom.x,laneFrom.y);await page.mouse.down();await page.mouse.move(laneTo.x,laneTo.y,{steps:12});await page.mouse.up();await settle();
+      await page.waitForFunction(()=>document.querySelector('.weba-swimlane')?.dataset.lane==='Default');
+      await page.focus('.weba-swimlane[data-lane="Default"]>.weba-swimlane-header');await page.keyboard.press('ArrowDown');
+      await page.waitForFunction(()=>document.querySelector('.weba-swimlane')?.dataset.lane==='Second ä');
+      await page.waitForFunction(()=>document.activeElement?.closest('.weba-swimlane')?.dataset.lane==='Default');
+      await gesture(await point('.weba-swimlane[data-lane="Default"]>.weba-swimlane-header h3'),await point('.weba-swimlane[data-lane="Second ä"]>.weba-swimlane-header',true));
+      await page.waitForFunction(()=>document.querySelector('.weba-swimlane')?.dataset.lane==='Default');
       const oldTodoId=await page.$eval(column('Second ä','Todo'),e=>e.dataset.listId);
       const movedTodoId=await page.$eval(column('Default','Todo'),e=>e.dataset.listId);
       page.once('dialog',dialog=>dialog.accept());
@@ -605,7 +615,7 @@ const fs = require('node:fs');
       assert.equal(await page.$eval(`.weba-data .weba-card[data-card-id="${ids['Drag one']}"]`,e=>e.dataset.listId),oldTodoId,'existing destination cards keep their original list identity');
       assert.notEqual(oldTodoId,movedTodoId);
       await shot('weba-touch-drag');
-      console.log('Browser touch drag: handle-on grips, handle-off card and list keyboard/mouse/trusted-touch surfaces, taps/focus, card reorder, list/lane moves, carried cards, persistence, auto-scroll, scrolling and cancel passed');
+      console.log('Browser touch drag: handle-on grips, handle-off card/list/lane keyboard/mouse/trusted-touch surfaces, taps/focus, card reorder, list/lane moves, carried cards, persistence, auto-scroll, scrolling and cancel passed');
       return;
     }
     if(process.env.WEBA_POPUPS_ONLY) {

@@ -2,6 +2,22 @@
 
 This work adds the following features and fixes:
 
+- Apply the shared drag-handle preference to native lane ordering. Match the
+  source swimlane Sortable contract: with handles on, use only the visible grip
+  for mouse, touch and vertical arrow-key moves; with handles off, hide the grip
+  and make non-interactive lane-header content the mouse, trusted-touch and
+  keyboard surface. Keep header menus, collapse/add controls, links and editors
+  interactive. Restore focus to the effective grip/header after the expected
+  order renders. Preserve lane/list/card content and existing current-board,
+  role, archive and transactional server guards. Units and real Chromium cover
+  both preference modes, header mouse reorder, keyboard/focus, trusted-touch
+  reorder, persistence, scrolling and cancellation. The full local suite (69
+  host tests) and complete source/packaged browser suites pass against the final
+  code, with the integrated all-surface drag scenario passing in both forms. This
+  completes the native view, overview-board, workspace, card, list and lane
+  gesture surfaces; the original Meteor profile/DDP bridge remains pending.
+  Thanks to xet7.
+
 - Apply the shared drag-handle preference to native list ordering. Match the
   source list Sortable contract: with handles on, use only the visible grip for
   mouse, touch and horizontal arrow-key moves; with handles off, hide the grip
@@ -14,9 +30,8 @@ This work adds the following features and fixes:
   mouse reorder, keyboard/focus, trusted-touch cross-swimlane movement,
   persistence, scrolling and cancellation. The full local suite (69 host tests)
   and complete source/packaged browser suites pass against the final code, with
-  the integrated list drag scenario passing in both browser forms. Native lane
-  preference integration and the original Meteor profile/DDP bridge remain
-  pending. Thanks to xet7.
+  the integrated list drag scenario passing in both browser forms. The original
+  Meteor profile/DDP bridge remains pending. Thanks to xet7.
 
 - Apply the shared drag-handle preference to native card ordering. Match the
   source minicard/Sortable contract: with handles on, only the visible grip
@@ -33,8 +48,7 @@ This work adds the following features and fixes:
   tap, scrolling, cancellation and retained list/lane behavior. The full local
   suite (69 host tests) and complete source/packaged browser suites pass against
   the final code, with the integrated card drag scenario passing in both browser
-  forms. Native lane preference integration and the original Meteor
-  profile/DDP bridge remain pending. Thanks to xet7.
+  forms. The original Meteor profile/DDP bridge remains pending. Thanks to xet7.
 
 - Apply the shared drag-handle preference to native personal workspace ordering.
   Match the source contract: with handles on, only the visible grip starts mouse,
@@ -48,9 +62,8 @@ This work adds the following features and fixes:
   real browser runs verify both preference modes, mouse, keyboard, trusted touch,
   reload, focus and denied forged commands. The full local suite (69 host tests)
   and complete source/packaged browser suites pass against the final code, with
-  workspace ordering passing in both browser forms. Native lane
-  preference integration and the original Meteor profile/DDP bridge remain
-  pending. Thanks to xet7.
+  workspace ordering passing in both browser forms. The original Meteor
+  profile/DDP bridge remains pending. Thanks to xet7.
 
 - Apply the shared drag-handle preference to native overview board tiles. Match
   the source contract: with handles on, only the visible grip starts mouse or
@@ -62,8 +75,7 @@ This work adds the following features and fixes:
   user isolation, source sort-index mapping and server-side sorted-mode/foreign
   target guards unchanged. Verify unit decisions plus real explicit-off touch,
   keyboard, focus, reload, cross-test profile cleanup, handle-on scrolling and
-  both touch-default grip and desktop-default tile board-drop behavior. Other native
-  lane drag surfaces remain pending. The full local suite
+  both touch-default grip and desktop-default tile board-drop behavior. The full local suite
   (69 host tests) and complete source/packaged browser suites pass against the
   final code, including board order and board drop in both browser forms.
   Thanks to xet7.
@@ -83,8 +95,7 @@ This work adds the following features and fixes:
   The full local suite (69 host tests) and complete source/packaged browser
   suites pass against the final code; the new browser integration passes in
   both forms.
-  Other native lane handles and original Meteor/profile/DDP
-  integration remain pending. Thanks to xet7.
+  Original Meteor/profile/DDP integration remains pending. Thanks to xet7.
 
 - Store native signed-in drag-handle choices privately per account, retaining
   explicit false separately from an unset preference. Bind writes to the

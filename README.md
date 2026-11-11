@@ -1845,10 +1845,12 @@ Lists now follow the same preference: handles on uses only the list grip; handle
 off hides it and makes non-interactive header content the mouse, touch and
 horizontal arrow-key surface. Header buttons, links and editors remain controls,
 and focus returns to the effective grip/header after the stable-ID order renders.
-Cross-swimlane confirmation and carried cards are unchanged. Swimlanes continue
-to use their Font Awesome arrow handles; applying the preference to that final
-surface remains pending. Touch targets expand to at least 44 pixels and card
-handles sit on the trailing edge below the title area.
+Cross-swimlane confirmation and carried cards are unchanged. Swimlanes follow
+the same rule: handles on uses the grip; handles off uses non-interactive lane
+header content for mouse, touch and vertical arrow-key ordering, with effective-
+control focus restoration. Lane menus, collapse/add controls, links and editors
+remain controls. Touch targets expand to at least 44 pixels and card handles sit
+on the trailing edge below the title area.
 Movement starts after 7 pixels. Drag near a scrollable edge to auto-scroll;
 Escape, touch cancellation or a second finger cancels without saving.
 
@@ -2863,7 +2865,8 @@ explicit on/off wins on every device; unset or malformed values follow touch
 capability. The 42-case source comparison covers 126 native outputs. Private profile
 storage and the native profile toggle are described below. The decision is now
 applied to native board-view ordering, overview board tiles, personal workspace
-ordering, cards and lists; lane gestures remain pending.
+ordering, cards, lists and lanes. The original Meteor profile/DDP bridge remains
+pending.
 
 `DragHandlePreference` now stores the signed-in native profile choice privately
 per account. `Stored()` returns Boolean or null without creating preference
@@ -2890,5 +2893,4 @@ trusted-touch and arrow-key surface. A preference change cancels a pending nativ
 gesture, and acknowledged keyboard moves restore focus to the effective grip or
 tile even when the server render precedes preference decoration. Personal order,
 readonly access, user isolation and the existing sorted/foreign-target guards
-remain unchanged. Native lane preference integration and the
-original Meteor profile/DDP bridge remain pending.
+remain unchanged. The original Meteor profile/DDP bridge remains pending.
