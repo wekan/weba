@@ -3957,6 +3957,10 @@ Public Sub ExportSelectedKanboard_Click()
   RunSelectedExport("kanboard")
 End
 
+Public Sub ExportSelectedMarkdown_Click()
+  RunSelectedExport("markdown")
+End
+
 Public Sub CancelSelectedExport_Click()
   ClearSelectedExport()
 End

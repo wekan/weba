@@ -1,0 +1,43 @@
+' Native counterpart of the parent Markdown task-list Kanban formatter.
+Export
+
+Private Function TextValue(value As Variant) As String
+  If IsNull(value) Then Return ""
+  Return CStr(value)
+End
+
+Private Function ClosedList(title As String) As Boolean
+  Dim lower As String = LCase(title)
+  Return InStr(lower, "done") > 0 Or InStr(lower, "closed") > 0 Or InStr(lower, "complete") > 0 Or InStr(lower, "archiv") > 0 Or InStr(lower, "finished") > 0
+End
+
+Public Function Build(boardId As Integer, db As Connection) As String
+  Dim lines As New String[]
+  Dim board As Result
+  Dim lists As Result
+  Dim cards As Result
+  Dim title As String
+  Dim descriptionLine As String
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  board = db.Find("kb_boards", "id=&1", boardId)
+  If Not board.Available Then Error.Raise("Board not found")
+  title = TextValue(board!title)
+  If Not title Then title = "Imported board"
+  lines.Add("# " & title)
+  lines.Add("")
+  lists = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
+  For Each lists
+    cards = db.Exec("SELECT c.* FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND l.title=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", lists!title)
+    If Not cards.Available Then Continue
+    lines.Add("## " & TextValue(lists!title))
+    lines.Add("")
+    For Each cards
+      lines.Add("- [" & If(ClosedList(TextValue(lists!title)), "x", " ") & "] " & TextValue(cards!title))
+      For Each descriptionLine In Split(TextValue(cards!description), Chr(10))
+        If descriptionLine Then lines.Add("  " & descriptionLine)
+      Next
+    Next
+    lines.Add("")
+  Next
+  Return lines.Join(Chr(10))
+End

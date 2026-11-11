@@ -10,6 +10,7 @@ Public Sub Main()
   Dim tsvBatch As Collection
   Dim excelBatch As Collection
   Dim kanboardBatch As Collection
+  Dim markdownBatch As Collection
   Dim files As Variant[]
   Dim data As Collection
   Dim settings As Collection
@@ -17,6 +18,7 @@ Public Sub Main()
   Dim csv As String
   Dim excelRow As Variant[]
   Dim kanboardTask As Collection
+  Dim markdown As String
   Dim checklist As Integer
   Dim denied As Boolean
   WebDatabase.Register("batch-export-global", "x")
@@ -118,6 +120,15 @@ Public Sub Main()
   If kanboardTask["subtasks"].Count <> 1 Or kanboardTask["subtasks"][0]["title"] <> "Checked" Or kanboardTask["subtasks"][0]["status"] <> 2 Then Error.Raise("Kanboard checklist mapping drifted")
   If kanboardTask["comments"].Count <> 1 Or kanboardTask["comments"][0]["comment"] <> "Kanboard comment" Or kanboardTask["comments"][0]["username"] <> "batch-export-owner" Then Error.Raise("Kanboard comment mapping drifted")
   If kanboardTask["links"].Count <> 1 Or kanboardTask["links"][0]["task_id"] <> 1 Or kanboardTask["links"][0]["label"] <> "relates to" Or data["tasks"][0]["links"][0]["task_id"] <> 2 Then Error.Raise("Kanboard reciprocal task links drifted")
+  KanbanStore.SaveCard(a, 0, "Finished card", "First" & Chr(10) & Chr(10) & "Second", "Default", "Done", "", "", "")
+  markdownBatch = BoardBatchExport.NewBatch(selection, "markdown")
+  BoardBatchExport.Run(markdownBatch, selection)
+  files = BoardBatchExport.Files(markdownBatch)
+  If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".md" Or BoardBatchExport.Format(markdownBatch) <> "markdown" Then Error.Raise("Markdown batch lost format, order or extension")
+  markdown = files[0]["content"]
+  If Left(markdown, Len("# Export Alpha" & Chr(10) & Chr(10) & "## Todo" & Chr(10) & Chr(10))) <> "# Export Alpha" & Chr(10) & Chr(10) & "## Todo" & Chr(10) & Chr(10) Then Error.Raise("Markdown board or non-empty list headings drifted")
+  If InStr(markdown, "- [ ] Alpha card" & Chr(10) & "  Alpha body") = 0 Or InStr(markdown, "- [ ] =SUM(1,2)" & Chr(10) & "  Comma, quote " & Chr(34) & " and" & Chr(10) & "  line") = 0 Then Error.Raise("Markdown cards or description continuation lines drifted")
+  If InStr(markdown, "## Doing") Or InStr(markdown, "## Done" & Chr(10) & Chr(10) & "- [x] Finished card" & Chr(10) & "  First" & Chr(10) & "  Second") = 0 Or Right(markdown, 1) <> Chr(10) Then Error.Raise("Markdown empty-list, terminal-list, blank-description-line or trailing-newline contract drifted")
   batch = BoardBatchExport.NewBatch(selection)
   batch["busy"] = True
   Try BoardBatchExport.Run(batch, selection)
@@ -147,7 +158,7 @@ Public Sub Main()
   Try BoardBatchExport.Run(batch, selection)
   denied = Error
   If Not denied Or Error.Text <> "Export is disabled by the administrator." Or BoardBatchExport.Completed(batch) Then Error.Raise("Disabled export leaked or advanced its queue")
-  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard batch export: exact ordered files, fixed quoted rows/CRLF/formula/date/people cells, 20-column workbook descriptors and native Kanboard containers/tasks/dates/tags/details/links, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
+  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown batch export: exact ordered files, fixed quoted rows/CRLF/formula/date/people cells, 20-column workbook descriptors, native Kanboard containers/tasks/dates/tags/details/links and Markdown task-list text, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
 End
 
 Private Function Frame() As String

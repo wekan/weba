@@ -1470,6 +1470,9 @@
             { ExportSelectedKanboard WebButton
               Text = "Kanboard"
             }
+            { ExportSelectedMarkdown WebButton
+              Text = "Markdown"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton

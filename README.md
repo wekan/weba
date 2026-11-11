@@ -2161,7 +2161,7 @@ the driver has already lost. Other original JSON wire contracts and selected
 multi-format exports remain pending.
 
 
-### Selected board JSON, CSV, TSV, Excel and Kanboard export
+### Selected board JSON, CSV, TSV, Excel, Kanboard and Markdown export
 
 The native Multi-Selection sidebar can export selected active boards as one
 `wekan-boards-weba.zip`. Each entry is a complete `weba-2` JSON board named
@@ -2198,6 +2198,14 @@ author and timestamp, and native subtask/dependency relationships become
 reciprocal Kanboard task links. Source identity fields without native
 counterparts are omitted.
 
+Markdown produces `wekan-boards-markdown.zip` with one strict `board-ID.md`
+entry per selected board. It matches the parent task-list formatter: the board
+title is a level-one heading, only lists containing cards become level-two
+headings, and cards are task-list items. Cards in list names containing
+done/closed/complete/archiv/finished are checked; all others are unchecked.
+Every non-empty description line is retained as a two-space-indented
+continuation. Literal Markdown is preserved as source text.
+
 The ordered ID list, revision and completed/pending queue remain private to the
 form. The queue is bound to the current account session and unchanged selection.
 Every board independently takes the existing locked whole-board export path and
@@ -2220,8 +2228,9 @@ board and disabled export. Real Chromium tests run against source and packaged
 apps with `python3 tests/run-http.py --selected-export [--archive]` and verify
 zero-selection refusal, live/forged policy denial, the exact two-entry JSON,
 comma-CSV, semicolon-CSV and TSV ZIPs, and the single two-sheet Excel workbook.
-They also verify the Kanboard container/task JSON ZIP. Remaining external-tool
-formats and the original HTTP route remain pending.
+They also verify the Kanboard container/task JSON and exact Markdown task-list
+ZIPs. Remaining external-tool formats and the original HTTP route remain
+pending.
 
 
 ### Gated permanent board deletion and Recovery

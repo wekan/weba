@@ -2,6 +2,20 @@
 
 This work adds the following features and fixes:
 
+- Add Markdown as the second selected-board external-tool export. Download one
+  `wekan-boards-markdown.zip` with an ordered strict `board-ID.md` entry per
+  selected board. Match the parent task-list formatter exactly: board and only
+  non-empty list headings, unchecked cards by default, checked cards for
+  terminal-looking list names, two-space-indented non-empty description lines,
+  and the original trailing newline. Preserve literal Markdown source rather
+  than escaping or rendering it. Reuse the private session/selection-bound
+  retry queue and independently locked full-read, active-board and global
+  export-policy checks for every board. Focused native/browser tests, the
+  complete local suite (69 host tests), and complete source/packaged live suites
+  pass; the integrated scenario validates all seven exact downloads and live/
+  forged policy gates in both forms. Other external-tool formats remain
+  pending. Thanks to xet7.
+
 - Add Kanboard as the first selected-board external-tool export. Download one
   `wekan-boards-kanboard.zip` with an ordered strict `board-ID.json` entry per
   selected board. Match the parent formatter's board, column, swimlane and
