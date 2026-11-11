@@ -7,6 +7,7 @@ Public Sub Main()
   Dim batch As Collection
   Dim csvBatch As Collection
   Dim scsvBatch As Collection
+  Dim tsvBatch As Collection
   Dim files As Variant[]
   Dim data As Collection
   Dim settings As Collection
@@ -77,6 +78,13 @@ Public Sub Main()
   csv = files[0]["content"]
   If Left(csv, Len(BoardCsvExport.Line(BoardCsvExport.Headers(), ";"))) <> BoardCsvExport.Line(BoardCsvExport.Headers(), ";") Then Error.Raise("Semicolon-CSV header lost the source delimiter")
   If InStr(csv, Chr(34) & ";" & Chr(34)) = 0 Or InStr(csv, Chr(34) & "Comma, quote " & Chr(34) & Chr(34) & " and" & Chr(10) & "line" & Chr(34)) = 0 Then Error.Raise("Semicolon-CSV delimiter or quoted data drifted")
+  tsvBatch = BoardBatchExport.NewBatch(selection, "tsv")
+  BoardBatchExport.Run(tsvBatch, selection)
+  files = BoardBatchExport.Files(tsvBatch)
+  If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".tsv" Or BoardBatchExport.Format(tsvBatch) <> "tsv" Then Error.Raise("TSV batch lost format, order or extension")
+  csv = files[0]["content"]
+  If Left(csv, Len(BoardCsvExport.Line(BoardCsvExport.Headers(), Chr(9)))) <> BoardCsvExport.Line(BoardCsvExport.Headers(), Chr(9)) Then Error.Raise("TSV header lost the source delimiter")
+  If InStr(csv, Chr(34) & Chr(9) & Chr(34)) = 0 Or InStr(csv, Chr(34) & "Comma, quote " & Chr(34) & Chr(34) & " and" & Chr(10) & "line" & Chr(34)) = 0 Then Error.Raise("TSV delimiter or quoted data drifted")
   batch = BoardBatchExport.NewBatch(selection)
   batch["busy"] = True
   Try BoardBatchExport.Run(batch, selection)
@@ -106,7 +114,7 @@ Public Sub Main()
   Try BoardBatchExport.Run(batch, selection)
   denied = Error
   If Not denied Or Error.Text <> "Export is disabled by the administrator." Or BoardBatchExport.Completed(batch) Then Error.Raise("Disabled export leaked or advanced its queue")
-  Print "Selected JSON/comma/semicolon-CSV batch export: exact ordered files, fixed quoted CSV/CRLF/formula/date/people cells, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
+  Print "Selected JSON/comma/semicolon-CSV/TSV batch export: exact ordered files, fixed quoted rows/CRLF/formula/date/people cells, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
 End
 
 Private Function Frame() As String

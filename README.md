@@ -2161,7 +2161,7 @@ the driver has already lost. Other original JSON wire contracts and selected
 multi-format exports remain pending.
 
 
-### Selected board JSON, comma-CSV and semicolon-CSV ZIP export
+### Selected board JSON, CSV and TSV ZIP export
 
 The native Multi-Selection sidebar can export selected active boards as one
 `wekan-boards-weba.zip`. Each entry is a complete `weba-2` JSON board named
@@ -2171,7 +2171,8 @@ imported verbatim across all 237 native catalogs (271 source keys).
 
 The retained export panel also offers comma-CSV as `wekan-boards-csv.zip` and
 semicolon-CSV as `wekan-boards-scsv.zip`, each with one strict `board-ID.csv`
-entry per board. They use
+entry per board. TSV is `wekan-boards-tsv.zip` with strict `board-ID.tsv`
+entries. All three table formats use
 the original fixed 20-column order, quote every cell, write CRLF rows, double
 embedded quotes, preserve embedded newlines and prefix formula-leading cell
 text. Current native card, list, lane, member, assignee, label and date fields
@@ -2197,7 +2198,7 @@ pending-only retry, replay, reentrancy, stale revision, foreign actor, archived
 board and disabled export. Real Chromium tests run against source and packaged
 apps with `python3 tests/run-http.py --selected-export [--archive]` and verify
 zero-selection refusal, live/forged policy denial and the exact two-entry JSON,
-comma-CSV and semicolon-CSV ZIPs. TSV, Excel, external-tool formats and the
+comma-CSV, semicolon-CSV and TSV ZIPs. Excel, external-tool formats and the
 original HTTP route remain pending.
 
 

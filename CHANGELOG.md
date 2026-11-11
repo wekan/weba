@@ -2,6 +2,17 @@
 
 This work adds the following features and fixes:
 
+- Add TSV to selected-board ZIP export with the parent WeKan `tsv` format key,
+  `TSV` choice, `.tsv` entries and `wekan-boards-tsv.zip` download name. Reuse
+  the fixed 20 columns, all-cell quoting, CRLF, quote/newline/formula handling,
+  private retry queue and locked per-board scope/policy checks; only the field
+  separator and extension change. Focused native/ZIP tests, the full local suite
+  (69 host tests), and complete source/packaged live browser suites pass; the
+  integrated export scenario verifies all exact downloads and policy gates in
+  both forms. Excel, external-tool
+  formats, custom fields and source models not yet native remain pending.
+  Thanks to xet7.
+
 - Add semicolon-CSV to selected-board ZIP export with the parent WeKan `scsv`
   format key, `CSV (;)` choice, `.csv` entries and
   `wekan-boards-scsv.zip` download name. Reuse the comma-CSV fixed columns,
@@ -11,7 +22,7 @@ This work adds the following features and fixes:
   suite (69 host tests), and the complete source/packaged live browser suites
   pass; the integrated export scenario verifies every exact download and the
   live/forged policy gate in both forms.
-  TSV, Excel, external-tool formats, custom fields and source models not yet
+  Excel, external-tool formats, custom fields and source models not yet
   native remain pending. Thanks to xet7.
 
 - Add comma-CSV to the native selected-board ZIP export. Offer JSON and CSV

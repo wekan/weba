@@ -1461,6 +1461,9 @@
             { ExportSelectedSemicolonCsv WebButton
               Text = "CSV (;)"
             }
+            { ExportSelectedTsv WebButton
+              Text = "TSV"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton
