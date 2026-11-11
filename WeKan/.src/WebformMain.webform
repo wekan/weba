@@ -1503,6 +1503,9 @@
             { ExportSelectedObsidian WebButton
               Text = "Obsidian Kanban"
             }
+            { ExportSelectedLinear WebButton
+              Text = "Linear"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton

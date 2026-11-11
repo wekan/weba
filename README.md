@@ -2285,6 +2285,14 @@ descriptions, remaining custom fields and flattened checklist items; and omits
 archived cards. Native lists have no WIP-limit field, so no `(N)` lane suffix is
 invented.
 
+Linear produces `wekan-boards-linear.zip` with one strict `board-ID.csv` export
+per selected board. It matches Linear's 29-column order, spreadsheet-formula
+guard, selective RFC 4180 quoting and CRLF. Native cards supply ID, non-default
+team/swimlane, title/description/status, assignee, labels, start/end/due dates,
+Priority/Estimate/Project/Cycle/Canceled custom fields and an inverse subtask
+parent issue. Archived cards are omitted. Source-only creator/created/project-ID
+and unsupported Linear lifecycle columns stay empty.
+
 The ordered ID list, revision and completed/pending queue remain private to the
 form. The queue is bound to the current account session and unchanged selection.
 Every board independently takes the existing locked whole-board export path and
@@ -2310,8 +2318,9 @@ zero-selection refusal, live/forged policy denial, the exact two-entry JSON,
 comma-CSV, semicolon-CSV and TSV ZIPs, and the single two-sheet Excel workbook.
 They also verify the Kanboard container/task JSON, exact Markdown task-list,
 Leo XML, OPML outline, Org mode outline, todo.txt task, Taskwarrior JSON,
-Focalboard JSONL, Todoist CSV, Planner XLSX, MeisterTask CSV and Obsidian Kanban
-ZIPs. Remaining external-tool formats and the original HTTP route remain pending.
+Focalboard JSONL, Todoist CSV, Planner XLSX, MeisterTask CSV, Obsidian Kanban and
+Linear CSV ZIPs. Remaining external-tool formats and the original HTTP route
+remain pending.
 
 
 ### Gated permanent board deletion and Recovery

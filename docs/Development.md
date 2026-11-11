@@ -1285,6 +1285,14 @@ fields and flattened checklist items. It excludes archived cards. Native lists
 have no WIP-limit field, so the optional lane limit is absent. The Markdown is
 built inside the same locked transfer transaction.
 
+The `linear` format writes `wekan-boards-linear.zip` with ordered strict
+`board-ID.csv` entries. `BoardLinearExport` reproduces Linear's 29-column order,
+formula guard, selective CSV quoting and CRLF, mapping native card ID, team,
+status, assignee, labels, UTC dates, Priority/Estimate/Project/Cycle/Canceled
+custom fields and inverse subtask parent. Archived cards are excluded. Creator,
+created/project IDs and source-only Linear lifecycle fields remain blank because
+the native card model has no counterpart. It uses the same locked transaction.
+
 The final file snapshot crosses the native command boundary as base64 JSON.
 `batch-export.js` bounds and validates the JSON/table/Excel envelope, writes
 stored UTF-8 ZIP or OOXML entries with CRC-32 and a central directory, and never
@@ -1293,7 +1301,7 @@ bytes, no-write failure,
 immutable snapshots, retry/replay/reentrancy, stale/foreign/archive/policy denial
 and ZIP structure. `python3 tests/run-http.py --selected-export` (add `--archive`)
 checks the real controls, live and forged global gate, selection retention and
-all seventeen download contents. The original caption is among 271 source keys in all
+all eighteen download contents. The original caption is among 271 source keys in all
 237 catalogs. Remaining external-tool formats and the original HTTP route stay
 open.
 

@@ -1,0 +1,124 @@
+' Native counterpart of the parent Linear 29-column CSV formatter.
+Export
+Private $db As Connection
+Private $boardId As Integer
+
+Public Function Headers() As String[]
+  Return ["ID", "Team", "Title", "Description", "Status", "Estimate", "Priority", "Project ID", "Project", "Creator", "Assignee", "Labels", "Cycle Number", "Cycle Name", "Cycle Start", "Cycle End", "Created", "Updated", "Started", "Triaged", "Completed", "Canceled", "Archived", "Due Date", "Parent issue", "Initiatives", "Project Milestone ID", "Project Milestone", "SLA Status"]
+End
+
+Private Function TextValue(value As Variant) As String
+  If IsNull(value) Then Return ""
+  Return CStr(value)
+End
+
+Private Function FormulaPrefix(value As String) As Boolean
+  Dim first As String
+  If Not value Then Return False
+  first = Left(value, 1)
+  Return InStr("+-=@∑√∏<>＜＞≤≥＝≠±÷×", first) > 0
+End
+
+Private Function Field(value As Variant) As String
+  Dim text As String = TextValue(value)
+  If FormulaPrefix(text) Then text = "'" & text
+  If InStr(text, ",") Or InStr(text, Chr(34)) Or InStr(text, Chr(13)) Or InStr(text, Chr(10)) Then Return Chr(34) & Replace(text, Chr(34), Chr(34) & Chr(34)) & Chr(34)
+  Return text
+End
+
+Private Function Row(values As Collection) As String
+  Dim cells As New String[]
+  Dim name As String
+  For Each name In Headers()
+    cells.Add(Field(If(values.Exist(name), values[name], "")))
+  Next
+  Return cells.Join(",")
+End
+
+Private Function Labels(value As Variant) As String
+  Dim result As New String[]
+  Dim label As String
+  For Each label In Split(TextValue(value), ",")
+    label = Trim(Replace(label, ",", " "))
+    If label Then result.Add(label)
+  Next
+  Return result.Join(", ")
+End
+
+Private Function Iso(dates As Collection, key As String) As String
+  If Not dates.Exist(key) Then Return ""
+  Return CardDates.Iso(dates[key])
+End
+
+Private Function CustomFields(cardId As Integer) As Collection
+  Dim result As New Collection
+  Dim fields As Result
+  Dim name As String
+  fields = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "custom")
+  For Each fields
+    name = TextValue(fields!title)
+    If Not name Then Continue
+    If result.Exist(name) Then
+      result[name] = TextValue(fields!body)
+    Else
+      result.Add(TextValue(fields!body), name)
+    Endif
+    result["type:" & name] = TextValue(fields!value_type)
+    result["done:" & name] = CBool(fields!done)
+  Next
+  Return result
+End
+
+Private Function ParentIssue(cardId As Integer) As String
+  Dim relation As Result = $db.Find("kb_entries", "board_id=&1 AND kind=&2 AND amount=&3 ORDER BY id", $boardId, "subtask", cardId)
+  If relation.Available Then Return CStr(relation!card_id)
+  Return ""
+End
+
+Private Function CardRow(card As Result) As String
+  Dim values As New Collection
+  Dim dates As Collection = CardDates.ReadDates($boardId, card!id)
+  Dim fields As Collection = CustomFields(card!id)
+  Dim title As String = Trim(TextValue(card!title))
+  Dim priority As String
+  Dim canceled As Boolean
+  Dim ended As String = Iso(dates, "endAt")
+  If Not title Then title = "Untitled"
+  If fields.Exist("Priority") And ["Urgent", "High", "Medium", "Low"].Find(fields["Priority"]) >= 0 Then priority = fields["Priority"]
+  canceled = fields.Exist("Canceled") And (fields["Canceled"] = "true" Or (fields.Exist("done:Canceled") And CBool(fields["done:Canceled"])))
+  values.Add(CStr(card!id), "ID")
+  If TextValue(card!lane) <> "Default" Then values.Add(TextValue(card!lane), "Team")
+  values.Add(title, "Title")
+  values.Add(TextValue(card!description), "Description")
+  values.Add(If(TextValue(card!list_title), TextValue(card!list_title), "No status"), "Status")
+  If fields.Exist("Estimate") And fields.Exist("type:Estimate") And fields["type:Estimate"] = "number" And fields["Estimate"] <> "" Then values.Add(fields["Estimate"], "Estimate")
+  values.Add(If(priority, priority, "No priority"), "Priority")
+  If fields.Exist("Project") Then values.Add(fields["Project"], "Project")
+  values.Add(TextValue(card!assignee), "Assignee")
+  values.Add(Labels(card!labels), "Labels")
+  If fields.Exist("Cycle") Then values.Add(fields["Cycle"], "Cycle Name")
+  values.Add(Iso(dates, "startAt"), "Started")
+  If canceled Then
+    values.Add(ended, "Canceled")
+  Else
+    values.Add(ended, "Completed")
+  Endif
+  If dates.Exist("dueAt") Then values.Add(Left(Iso(dates, "dueAt"), 10), "Due Date")
+  values.Add(ParentIssue(card!id), "Parent issue")
+  Return Row(values)
+End
+
+Public Function Build(boardId As Integer, db As Connection) As String
+  Dim rows As New String[]
+  Dim cards As Result
+  $db = db
+  $boardId = boardId
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  If Not db.Find("kb_boards", "id=&1", boardId).Available Then Error.Raise("Board not found")
+  rows.Add(Headers().Join(","))
+  cards = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  For Each cards
+    rows.Add(CardRow(cards))
+  Next
+  Return rows.Join(Chr(13) & Chr(10)) & Chr(13) & Chr(10)
+End

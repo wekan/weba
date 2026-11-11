@@ -4001,6 +4001,10 @@ Public Sub ExportSelectedObsidian_Click()
   RunSelectedExport("obsidian")
 End
 
+Public Sub ExportSelectedLinear_Click()
+  RunSelectedExport("linear")
+End
+
 Public Sub CancelSelectedExport_Click()
   ClearSelectedExport()
 End

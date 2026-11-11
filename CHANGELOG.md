@@ -2,6 +2,22 @@
 
 This work adds the following features and fixes:
 
+- Add Linear as the thirteenth selected-board external-tool export. Download
+  one `wekan-boards-linear.zip` with an ordered strict `board-ID.csv` export per
+  board. Match Linear's exact 29-column order, leading-apostrophe spreadsheet-
+  formula guard, selective RFC 4180 quoting and CRLF. Map native card ID,
+  non-default team/swimlane, title, description, status, assignee, labels, UTC
+  start/completed-or-canceled/due dates, Priority/Estimate/Project/Cycle/
+  Canceled custom fields and inverse subtask parent issue; omit archived cards.
+  Leave creator/created/project ID and source-only Linear lifecycle columns empty
+  where the native model has no counterpart. Reuse the private session/
+  selection-bound retry queue and locked full-read, active-board and global
+  export-policy checks for every board. Focused native/browser tests, the
+  complete local suite (69 host tests), and complete source/packaged live suites
+  pass; the integrated scenario validates all eighteen exact downloads and
+  live/forged policy gates in both forms. Other external-tool formats remain
+  pending. Thanks to xet7.
+
 - Add Obsidian Kanban as the twelfth selected-board external-tool export.
   Download one `wekan-boards-obsidian.zip` with an ordered strict `board-ID.md`
   plugin board per selected board. Match the parent frontmatter, every native

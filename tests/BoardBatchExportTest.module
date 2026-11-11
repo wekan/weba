@@ -21,6 +21,7 @@ Public Sub Main()
   Dim plannerBatch As Collection
   Dim meisterTaskBatch As Collection
   Dim obsidianBatch As Collection
+  Dim linearBatch As Collection
   Dim files As Variant[]
   Dim data As Collection
   Dim settings As Collection
@@ -58,6 +59,7 @@ Public Sub Main()
   Dim plannerFound As Boolean
   Dim meisterTask As String
   Dim obsidian As String
+  Dim linear As String
   Dim i As Integer
   Dim checklist As Integer
   Dim denied As Boolean
@@ -333,6 +335,19 @@ Public Sub Main()
   If Left(obsidian, Len("---" & Chr(10) & Chr(10) & "kanban-plugin: board" & Chr(10) & Chr(10) & "---" & Chr(10) & Chr(10) & "## Todo" & Chr(10) & Chr(10))) <> "---" & Chr(10) & Chr(10) & "kanban-plugin: board" & Chr(10) & Chr(10) & "---" & Chr(10) & Chr(10) & "## Todo" & Chr(10) & Chr(10) Then Error.Raise("Obsidian frontmatter or first lane drifted")
   If InStr(obsidian, "- [x] Plan valve #p2 #shop-floor @{2026-11-12} @@{05:06} 🛫 2026-11-10 ✅ 2026-11-13 🔺" & Chr(10) & "    Two, " & Chr(34) & "DN50" & Chr(34) & Chr(10) & "    now" & Chr(10) & "    Vendor:: ACME" & Chr(10) & "    - [ ] Open step" & Chr(10) & "    - [x] Closed step" & Chr(10)) = 0 Then Error.Raise("Obsidian title, tags, dates, priority, description, custom field or checklist drifted")
   If InStr(obsidian, "## Doing" & String(5, Chr(10)) & "## Done") = 0 Or Right(obsidian, Len("%% kanban:settings" & Chr(10) & "```" & Chr(10) & "{\"kanban-plugin\":\"board\"}" & Chr(10) & "```" & Chr(10) & "%%" & Chr(10))) <> "%% kanban:settings" & Chr(10) & "```" & Chr(10) & "{\"kanban-plugin\":\"board\"}" & Chr(10) & "```" & Chr(10) & "%%" & Chr(10) Then Error.Raise("Obsidian empty lane spacing or settings footer drifted")
+  CardContent.Save(a, formulaCard, 0, "custom", "Priority", "Urgent", 0, False, 0, "text")
+  CardContent.Save(a, formulaCard, 0, "custom", "Estimate", "5", 0, False, 0, "number")
+  CardContent.Save(a, formulaCard, 0, "custom", "Project", "Web", 0, False, 0, "text")
+  CardContent.Save(a, formulaCard, 0, "custom", "Cycle", "Sprint 3", 0, False, 0, "text")
+  CardContent.Save(a, formulaCard, 0, "subtask", "", "", 0, False, todoistCard)
+  linearBatch = BoardBatchExport.NewBatch(selection, "linear")
+  BoardBatchExport.Run(linearBatch, selection)
+  files = BoardBatchExport.Files(linearBatch)
+  If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".csv" Or BoardBatchExport.Format(linearBatch) <> "linear" Then Error.Raise("Linear batch lost format, order or extension")
+  linear = files[0]["content"]
+  If Left(linear, Len(BoardLinearExport.Headers().Join(",") & Chr(13) & Chr(10))) <> BoardLinearExport.Headers().Join(",") & Chr(13) & Chr(10) Or Right(linear, 2) <> Chr(13) & Chr(10) Then Error.Raise("Linear header or CRLF drifted")
+  If InStr(linear, CStr(formulaCard) & ",," & Chr(34) & "'=SUM(1,2)" & Chr(34) & "," & Chr(34) & "Comma, quote " & Chr(34) & Chr(34) & " and" & Chr(10) & "line" & Chr(34) & ",Todo,5,Urgent,,Web,,batch-export-owner," & Chr(34) & "red, urgent" & Chr(34) & ",,Sprint 3") = 0 Then Error.Raise("Linear ID, formula guard, description, status, custom fields, assignee or labels drifted")
+  If InStr(linear, "2026-11-10T01:02:03.004Z") = 0 Or InStr(linear, "2026-11-12," & CStr(formulaCard)) = 0 Then Error.Raise("Linear dates or parent issue drifted")
   batch = BoardBatchExport.NewBatch(selection)
   batch["busy"] = True
   Try BoardBatchExport.Run(batch, selection)
@@ -362,7 +377,7 @@ Public Sub Main()
   Try BoardBatchExport.Run(batch, selection)
   denied = Error
   If Not denied Or Error.Text <> "Export is disabled by the administrator." Or BoardBatchExport.Completed(batch) Then Error.Raise("Disabled export leaked or advanced its queue")
-  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML/Org mode/todo.txt/Taskwarrior/Focalboard/Todoist/Planner/MeisterTask/Obsidian batch export: exact ordered files, generic and Planner workbook data, native Kanboard data, text/XML/JSON/JSONL/CSV tool formats, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
+  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML/Org mode/todo.txt/Taskwarrior/Focalboard/Todoist/Planner/MeisterTask/Obsidian/Linear batch export: exact ordered files, generic and Planner workbook data, native Kanboard data, text/XML/JSON/JSONL/CSV tool formats, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
 End
 
 Private Function Frame() As String
