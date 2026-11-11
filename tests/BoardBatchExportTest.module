@@ -19,6 +19,7 @@ Public Sub Main()
   Dim focalboardBatch As Collection
   Dim todoistBatch As Collection
   Dim plannerBatch As Collection
+  Dim meisterTaskBatch As Collection
   Dim files As Variant[]
   Dim data As Collection
   Dim settings As Collection
@@ -54,6 +55,7 @@ Public Sub Main()
   Dim plannerRows As Variant[]
   Dim plannerRow As Variant[]
   Dim plannerFound As Boolean
+  Dim meisterTask As String
   Dim i As Integer
   Dim checklist As Integer
   Dim denied As Boolean
@@ -311,6 +313,14 @@ Public Sub Main()
     If plannerRow[13] <> "Two, " & Chr(34) & "DN50" & Chr(34) & Chr(10) & "now" Or plannerRow[14] <> "1/2" Or plannerRow[15] <> "Open step;Closed step" Or plannerRow[16] <> "p2;shop floor" Then Error.Raise("Planner description, checklist or labels drifted")
   Next
   If Not plannerFound Or JSON.Decode(files[1]["content"])["rows"][5][1] <> "Bravo card" Then Error.Raise("Planner task rows or second-board workbook descriptor drifted")
+  meisterTaskBatch = BoardBatchExport.NewBatch(selection, "meistertask")
+  BoardBatchExport.Run(meisterTaskBatch, selection)
+  files = BoardBatchExport.Files(meisterTaskBatch)
+  If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".csv" Or BoardBatchExport.Format(meisterTaskBatch) <> "meistertask" Then Error.Raise("MeisterTask batch lost format, order or extension")
+  meisterTask = files[0]["content"]
+  If Left(meisterTask, Len(BoardMeisterTaskExport.Headers().Join(",") & Chr(13) & Chr(10))) <> BoardMeisterTaskExport.Headers().Join(",") & Chr(13) & Chr(10) Or Right(meisterTask, 2) <> Chr(13) & Chr(10) Then Error.Raise("MeisterTask header or CRLF drifted")
+  If InStr(meisterTask, "Export Alpha,Todo,Plan" & Chr(9) & "valve," & Chr(34) & "Two, " & Chr(34) & Chr(34) & "DN50" & Chr(34) & Chr(34) & Chr(10) & "now" & Chr(34) & ",2026-11-12T05:06:07+00:00,2,p2; shop floor" & Chr(13) & Chr(10)) = 0 Then Error.Raise("MeisterTask project, section, task, notes, due date, completion or tags drifted")
+  If InStr(files[1]["content"], "Export Bravo,Todo,Bravo card,Bravo body,,1,") = 0 Then Error.Raise("MeisterTask second-board CSV drifted")
   batch = BoardBatchExport.NewBatch(selection)
   batch["busy"] = True
   Try BoardBatchExport.Run(batch, selection)
@@ -340,7 +350,7 @@ Public Sub Main()
   Try BoardBatchExport.Run(batch, selection)
   denied = Error
   If Not denied Or Error.Text <> "Export is disabled by the administrator." Or BoardBatchExport.Completed(batch) Then Error.Raise("Disabled export leaked or advanced its queue")
-  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML/Org mode/todo.txt/Taskwarrior/Focalboard/Todoist/Planner batch export: exact ordered files, generic and Planner workbook data, native Kanboard data, text/XML/JSON/JSONL/CSV tool formats, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
+  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML/Org mode/todo.txt/Taskwarrior/Focalboard/Todoist/Planner/MeisterTask batch export: exact ordered files, generic and Planner workbook data, native Kanboard data, text/XML/JSON/JSONL/CSV tool formats, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
 End
 
 Private Function Frame() As String

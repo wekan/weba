@@ -1497,6 +1497,9 @@
             { ExportSelectedPlanner WebButton
               Text = "Microsoft Planner"
             }
+            { ExportSelectedMeisterTask WebButton
+              Text = "MeisterTask"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton

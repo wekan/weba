@@ -2,6 +2,20 @@
 
 This work adds the following features and fixes:
 
+- Add MeisterTask as the eleventh selected-board external-tool export.
+  Download one `wekan-boards-meistertask.zip` with an ordered strict
+  `board-ID.csv` import per board. Match MeisterTask's exact seven-column
+  project, section, name, notes, due date, status and tags shape. Map native
+  board/list/card text, format due dates as UTC timestamps to seconds, derive
+  completed status from the card end date, omit archived cards and normalize
+  labels into semicolon-safe tags. Preserve CRLF records and selective CSV
+  quoting for commas, quotes and newlines. Reuse the private session/selection-
+  bound retry queue and locked full-read, active-board and global export-policy
+  checks for every board. Focused native/browser tests, the complete local suite
+  (69 host tests), and complete source/packaged live suites pass; the integrated
+  scenario validates all sixteen exact downloads and live/forged policy gates
+  in both forms. Other external-tool formats remain pending. Thanks to xet7.
+
 - Add Microsoft Planner as the tenth selected-board external-tool export.
   Download one `wekan-boards-planner.zip` with an ordered strict
   `board-ID.xlsx` workbook per board. Match the parent one-sheet `Tasks`

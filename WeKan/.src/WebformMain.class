@@ -3993,6 +3993,10 @@ Public Sub ExportSelectedPlanner_Click()
   RunSelectedExport("planner")
 End
 
+Public Sub ExportSelectedMeisterTask_Click()
+  RunSelectedExport("meistertask")
+End
+
 Public Sub CancelSelectedExport_Click()
   ClearSelectedExport()
 End

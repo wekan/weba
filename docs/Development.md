@@ -1270,6 +1270,13 @@ browser strictly validates the bounded descriptor, writes inline-string OOXML
 with the header bold, and nests each stored workbook in the selected-board ZIP.
 The descriptor is built inside the same locked transfer transaction.
 
+The `meistertask` format writes `wekan-boards-meistertask.zip` with ordered
+strict `board-ID.csv` entries. `BoardMeisterTaskExport` reproduces the
+seven-column MeisterTask import shape, mapping board/list/card text, UTC due
+timestamps to seconds, end-date completion status and semicolon-safe labels.
+It excludes archived cards, applies selective quote/comma/newline escaping and
+CRLF rows, and runs inside the same locked transfer transaction.
+
 The final file snapshot crosses the native command boundary as base64 JSON.
 `batch-export.js` bounds and validates the JSON/table/Excel envelope, writes
 stored UTF-8 ZIP or OOXML entries with CRC-32 and a central directory, and never
@@ -1278,7 +1285,7 @@ bytes, no-write failure,
 immutable snapshots, retry/replay/reentrancy, stale/foreign/archive/policy denial
 and ZIP structure. `python3 tests/run-http.py --selected-export` (add `--archive`)
 checks the real controls, live and forged global gate, selection retention and
-all fifteen download contents. The original caption is among 271 source keys in all
+all sixteen download contents. The original caption is among 271 source keys in all
 237 catalogs. Remaining external-tool formats and the original HTTP route stay
 open.
 

@@ -1,0 +1,77 @@
+' Native counterpart of MeisterTask's seven-column CSV import shape.
+Export
+
+Public Function Headers() As String[]
+  Return ["project", "section", "name", "notes", "due_date", "status", "tags"]
+End
+
+Private Function TextValue(value As Variant) As String
+  If IsNull(value) Then Return ""
+  Return CStr(value)
+End
+
+Private Function Field(value As Variant) As String
+  Dim text As String = TextValue(value)
+  If InStr(text, ",") Or InStr(text, Chr(34)) Or InStr(text, Chr(13)) Or InStr(text, Chr(10)) Then Return Chr(34) & Replace(text, Chr(34), Chr(34) & Chr(34)) & Chr(34)
+  Return text
+End
+
+Private Function Row(values As String[]) As String
+  Dim result As New String[]
+  Dim value As String
+  For Each value In values
+    result.Add(Field(value))
+  Next
+  Return result.Join(",")
+End
+
+Private Function Labels(value As Variant) As String
+  Dim result As New String[]
+  Dim label As String
+  For Each label In Split(TextValue(value), ",")
+    label = Trim(Replace(label, ";", ","))
+    If label Then result.Add(label)
+  Next
+  Return result.Join("; ")
+End
+
+Private Function IsoSeconds(dates As Collection, key As String) As String
+  Dim iso As String
+  If Not dates.Exist(key) Then Return ""
+  iso = CardDates.Iso(dates[key])
+  Return Left(iso, 19) & "+00:00"
+End
+
+Public Function Build(boardId As Integer, db As Connection) As String
+  Dim lines As New String[]
+  Dim values As New String[]
+  Dim board As Result
+  Dim cards As Result
+  Dim dates As Collection
+  Dim value As String
+  Dim project As String
+  Dim section As String
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  board = db.Find("kb_boards", "id=&1", boardId)
+  If Not board.Available Then Error.Raise("Board not found")
+  project = TextValue(board!title)
+  If Not project Then project = "WeKan board"
+  lines.Add(Headers().Join(","))
+  cards = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  For Each cards
+    section = TextValue(cards!list_title)
+    If Not section Then section = "No section"
+    dates = CardDates.ReadDates(boardId, cards!id)
+    values = New String[]
+    values.Add(project)
+    values.Add(section)
+    value = Trim(TextValue(cards!title))
+    values.Add(If(value, value, "Untitled"))
+    values.Add(TextValue(cards!description))
+    values.Add(IsoSeconds(dates, "dueAt"))
+    values.Add(If(dates.Exist("endAt"), "2", "1"))
+    values.Add(Labels(cards!labels))
+    lines.Add(Row(values))
+  Next
+  Return lines.Join(Chr(13) & Chr(10)) & Chr(13) & Chr(10)
+End
