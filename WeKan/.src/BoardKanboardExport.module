@@ -1,0 +1,156 @@
+' Native counterpart of the parent Kanboard JSON formatter. Unsupported source
+' identity fields remain absent; native comments, checklist items and card
+' relationships are retained in the shapes Kanboard imports.
+Export
+
+Private Function TextValue(value As Variant) As String
+  If IsNull(value) Then Return ""
+  Return CStr(value)
+End
+
+Private Function DateValue(dates As Collection, key As String) As String
+  If Not dates.Exist(key) Then Return ""
+  Return CardDates.Iso(CLong(dates[key]))
+End
+
+Private Function Labels(value As Variant) As String[]
+  Dim result As New String[]
+  Dim label As String
+  For Each label In Split(TextValue(value), ",")
+    label = Trim(label)
+    If label Then result.Add(label)
+  Next
+  Return result
+End
+
+Private Sub AddLink(linksByCard As Collection, numbers As Collection, seen As Collection, fromId As Integer, toId As Integer, label As String, ByRef nextId As Integer)
+  Dim key As String = CStr(fromId) & ">" & CStr(toId) & ":" & label
+  Dim links As Variant[]
+  Dim item As New Collection
+  If fromId = toId Or Not numbers.Exist(CStr(fromId)) Or Not numbers.Exist(CStr(toId)) Or seen.Exist(key) Then Return
+  seen[key] = True
+  Inc nextId
+  item.Add(nextId, "id")
+  item.Add(numbers[CStr(toId)], "task_id")
+  item.Add(label, "label")
+  links = linksByCard[CStr(fromId)]
+  links.Add(item)
+End
+
+Private Sub AddLinkPair(linksByCard As Collection, numbers As Collection, seen As Collection, fromId As Integer, toId As Integer, label As String, opposite As String, ByRef nextId As Integer)
+  AddLink(linksByCard, numbers, seen, fromId, toId, label, nextId)
+  AddLink(linksByCard, numbers, seen, toId, fromId, opposite, nextId)
+End
+
+Public Function Build(boardId As Integer, db As Connection) As String
+  Dim data As New Collection
+  Dim boardData As New Collection
+  Dim columns As New Variant[]
+  Dim swimlanes As New Variant[]
+  Dim cards As New Variant[]
+  Dim tasks As New Variant[]
+  Dim numbers As New Collection
+  Dim linksByCard As New Collection
+  Dim seenLinks As New Collection
+  Dim board As Result
+  Dim r As Result
+  Dim related As Result
+  Dim row As Collection
+  Dim task As Collection
+  Dim item As Collection
+  Dim dates As Collection
+  Dim subtasks As Variant[]
+  Dim comments As Variant[]
+  Dim links As Variant[]
+  Dim emptyLinks As Variant[]
+  Dim cardId As Integer
+  Dim index As Integer
+  Dim nextLinkId As Integer
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  board = db.Find("kb_boards", "id=&1", boardId)
+  If Not board.Available Then Error.Raise("Board not found")
+  boardData.Add(TextValue(board!title), "name")
+  data.Add(boardData, "board")
+  r = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
+  For Each r
+    item = New Collection
+    item.Add(TextValue(r!title), "title")
+    columns.Add(item)
+  Next
+  data.Add(columns, "columns")
+  r = db.Find("kb_lanes", "board_id=&1 ORDER BY id", boardId)
+  For Each r
+    item = New Collection
+    item.Add(TextValue(r!title), "name")
+    swimlanes.Add(item)
+  Next
+  data.Add(swimlanes, "swimlanes")
+  r = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 ORDER BY c.id", boardId)
+  For Each r
+    Inc index
+    row = New Collection
+    row.Add(CInt(r!id), "cardId")
+    row.Add(index, "number")
+    row.Add(TextValue(r!title), "title")
+    row.Add(TextValue(r!description), "description")
+    row.Add(TextValue(r!list_title), "column")
+    row.Add(TextValue(r!lane), "swimlane")
+    row.Add(Labels(r!labels), "tags")
+    dates = CardDates.ReadDates(boardId, r!id)
+    row.Add(DateValue(dates, "dueAt"), "due")
+    row.Add(DateValue(dates, "startAt"), "start")
+    row.Add(DateValue(dates, "endAt"), "end")
+    cards.Add(row)
+    numbers.Add(index, CStr(r!id))
+    emptyLinks = New Variant[]
+    linksByCard.Add(emptyLinks, CStr(r!id))
+  Next
+  For Each row In cards
+    cardId = row["cardId"]
+    related = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, cardId, "subtask")
+    For Each related
+      AddLinkPair(linksByCard, numbers, seenLinks, CInt(related!amount), cardId, "is a child of", "is a parent of", nextLinkId)
+    Next
+    related = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, cardId, "dependency")
+    For Each related
+      AddLinkPair(linksByCard, numbers, seenLinks, cardId, CInt(related!amount), "relates to", "relates to", nextLinkId)
+    Next
+  Next
+  For Each row In cards
+    cardId = row["cardId"]
+    task = New Collection
+    task.Add(row["number"], "id")
+    task.Add(row["title"], "title")
+    task.Add(row["description"], "description")
+    task.Add(row["column"], "column_name")
+    task.Add(row["swimlane"], "swimlane_name")
+    If row["due"] Then task.Add(row["due"], "date_due")
+    If row["start"] Then task.Add(row["start"], "date_started")
+    If row["end"] Then task.Add(row["end"], "date_completed")
+    task.Add(row["tags"], "tags")
+    subtasks = New Variant[]
+    related = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, cardId, "checkitem")
+    For Each related
+      item = New Collection
+      item.Add(TextValue(related!title), "title")
+      item.Add(If(CBool(related!done), 2, 0), "status")
+      subtasks.Add(item)
+    Next
+    If subtasks.Count Then task.Add(subtasks, "subtasks")
+    comments = New Variant[]
+    related = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, cardId, "comment")
+    For Each related
+      item = New Collection
+      item.Add(TextValue(related!body), "comment")
+      item.Add(CardContent.AuthorName(boardId, cardId, "entry", CInt(related!id)), "username")
+      If TypeOf(related!created_at) = gb.Date And Not IsNull(related!created_at) Then item.Add(CardDates.Iso(ItemChanges.Epoch(related!created_at)), "date_creation")
+      comments.Add(item)
+    Next
+    If comments.Count Then task.Add(comments, "comments")
+    links = linksByCard[CStr(cardId)]
+    If links.Count Then task.Add(links, "links")
+    tasks.Add(task)
+  Next
+  data.Add(tasks, "tasks")
+  Return JSON.Encode(data)
+End

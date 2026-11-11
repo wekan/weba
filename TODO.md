@@ -103,6 +103,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   selected Excel as one `wekan-boards.xlsx` workbook with one safe unique
   worksheet per board, the source seven-row/20-column layout, inline-string
   formula safety and current native fields/source-only blanks is recorded there;
+  selected Kanboard JSON ZIP with native containers, cards, dates, labels,
+  checkitems, comments and reciprocal card relationships is recorded there;
   original remaining formats/API route, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded

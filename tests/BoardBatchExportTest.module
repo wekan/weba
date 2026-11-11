@@ -9,12 +9,15 @@ Public Sub Main()
   Dim scsvBatch As Collection
   Dim tsvBatch As Collection
   Dim excelBatch As Collection
+  Dim kanboardBatch As Collection
   Dim files As Variant[]
   Dim data As Collection
   Dim settings As Collection
   Dim before As String
   Dim csv As String
   Dim excelRow As Variant[]
+  Dim kanboardTask As Collection
+  Dim checklist As Integer
   Dim denied As Boolean
   WebDatabase.Register("batch-export-global", "x")
   WebDatabase.Register("batch-export-owner", "x")
@@ -30,6 +33,10 @@ Public Sub Main()
   data["startAt"] = CardDates.Parse("2026-11-10T01:02:03.004Z")
   data["dueAt"] = CardDates.Parse("2026-11-12T05:06:07.008Z")
   CardDates.Apply(a, formulaCard, data)
+  checklist = CardContent.Save(a, formulaCard, 0, "checklist", "Checks", "", 0, False, 0)
+  CardContent.Save(a, formulaCard, 0, "checkitem", "Checked", "", checklist, True, 0)
+  CardContent.Save(a, formulaCard, 0, "comment", "", "Kanboard comment", 0, False, 0)
+  CardContent.Save(a, formulaCard, 0, "dependency", "", "", 0, False, cardId)
   b = KanbanStore.AddBoard("Export Bravo")
   cardId = KanbanStore.SaveCard(b, 0, "Bravo card", "Bravo body", "Default", "Todo", "", "", "")
   CardContent.UploadFile(b, cardId, "bravo.bin", "BBB")
@@ -99,6 +106,18 @@ Public Sub Main()
   excelRow = data["rows"][1]
   If excelRow.Count <> 20 Or excelRow[0] <> "2" Or excelRow[1] <> "=SUM(1,2)" Or excelRow[2] <> "Comma, quote " & Chr(34) & " and" & Chr(10) & "line" Then Error.Raise("Excel descriptor lost fixed columns or exact text")
   If excelRow[8] <> "2026-11-10T01:02:03.004Z" Or excelRow[9] <> "2026-11-12T05:06:07.008Z" Or excelRow[11] <> "Todo" Or excelRow[12] <> "Default" Or excelRow[13] <> "batch-export-owner" Or excelRow[14] <> "batch-export-owner" Or excelRow[17] <> "red, urgent" Or excelRow[18] <> "false" Then Error.Raise("Excel descriptor lost native dates, containers, people, labels or overtime default")
+  kanboardBatch = BoardBatchExport.NewBatch(selection, "kanboard")
+  BoardBatchExport.Run(kanboardBatch, selection)
+  files = BoardBatchExport.Files(kanboardBatch)
+  If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".json" Or BoardBatchExport.Format(kanboardBatch) <> "kanboard" Then Error.Raise("Kanboard batch lost format, order or extension")
+  data = JSON.Decode(files[0]["content"])
+  If data["board"]["name"] <> "Export Alpha" Or data["columns"][0]["title"] <> "Todo" Or data["swimlanes"][0]["name"] <> "Default" Or data["tasks"].Count <> 2 Then Error.Raise("Kanboard export lost board containers or active tasks")
+  kanboardTask = data["tasks"][1]
+  If kanboardTask["id"] <> 2 Or kanboardTask["title"] <> "=SUM(1,2)" Or kanboardTask["description"] <> "Comma, quote " & Chr(34) & " and" & Chr(10) & "line" Or kanboardTask["column_name"] <> "Todo" Or kanboardTask["swimlane_name"] <> "Default" Then Error.Raise("Kanboard task identity or exact text drifted")
+  If kanboardTask["date_started"] <> "2026-11-10T01:02:03.004Z" Or kanboardTask["date_due"] <> "2026-11-12T05:06:07.008Z" Or kanboardTask["tags"].Count <> 2 Or kanboardTask["tags"][0] <> "red" Or kanboardTask["tags"][1] <> "urgent" Then Error.Raise("Kanboard task dates or tags were lost")
+  If kanboardTask["subtasks"].Count <> 1 Or kanboardTask["subtasks"][0]["title"] <> "Checked" Or kanboardTask["subtasks"][0]["status"] <> 2 Then Error.Raise("Kanboard checklist mapping drifted")
+  If kanboardTask["comments"].Count <> 1 Or kanboardTask["comments"][0]["comment"] <> "Kanboard comment" Or kanboardTask["comments"][0]["username"] <> "batch-export-owner" Then Error.Raise("Kanboard comment mapping drifted")
+  If kanboardTask["links"].Count <> 1 Or kanboardTask["links"][0]["task_id"] <> 1 Or kanboardTask["links"][0]["label"] <> "relates to" Or data["tasks"][0]["links"][0]["task_id"] <> 2 Then Error.Raise("Kanboard reciprocal task links drifted")
   batch = BoardBatchExport.NewBatch(selection)
   batch["busy"] = True
   Try BoardBatchExport.Run(batch, selection)
@@ -128,7 +147,7 @@ Public Sub Main()
   Try BoardBatchExport.Run(batch, selection)
   denied = Error
   If Not denied Or Error.Text <> "Export is disabled by the administrator." Or BoardBatchExport.Completed(batch) Then Error.Raise("Disabled export leaked or advanced its queue")
-  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel batch export: exact ordered files, fixed quoted rows/CRLF/formula/date/people cells and 20-column workbook descriptors, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
+  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard batch export: exact ordered files, fixed quoted rows/CRLF/formula/date/people cells, 20-column workbook descriptors and native Kanboard containers/tasks/dates/tags/details/links, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
 End
 
 Private Function Frame() As String

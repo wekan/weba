@@ -35,6 +35,10 @@ Public Function ExportActiveBoardExcel(boardId As Integer) As String
   Return ExportChecked(boardId, "board", boardId, True, "excel")
 End
 
+Public Function ExportActiveBoardKanboard(boardId As Integer) As String
+  Return ExportChecked(boardId, "board", boardId, True, "kanboard")
+End
+
 Private Sub RequireActiveBoard(boardId As Integer)
   Dim r As Result = $db.Find("kb_boards", "id=&1 AND archived=&2", boardId, False)
   If Not r.Available Then Error.Raise("Select active boards first")
@@ -71,6 +75,8 @@ Private Function ExportChecked(boardId As Integer, kind As String, itemId As Int
     text = BoardCsvExport.Build(boardId, $db, Chr(9))
   Else If format = "excel" And kind = "board" Then
     text = BoardExcelExport.Build(boardId, $db)
+  Else If format = "kanboard" And kind = "board" Then
+    text = BoardKanboardExport.Build(boardId, $db)
   Else
     Error.Raise("Unknown export format")
   Endif

@@ -2,6 +2,20 @@
 
 This work adds the following features and fixes:
 
+- Add Kanboard as the first selected-board external-tool export. Download one
+  `wekan-boards-kanboard.zip` with an ordered strict `board-ID.json` entry per
+  selected board. Match the parent formatter's board, column, swimlane and
+  numbered-task document shape; map native title, description, list, lane,
+  start/due/end dates and labels, plus completed/open checkitems, comments with
+  authors/timestamps, and reciprocal parent/dependency task links. Keep source
+  identity fields absent where no native counterpart exists. Reuse the private
+  session/selection-bound retry queue and independently locked full-read,
+  active-board and global export-policy checks for every board. Focused native
+  and browser tests, the complete local suite (69 host tests), and complete
+  source/packaged live suites pass; the integrated scenario validates all six
+  exact downloads and live/forged policy gates in both forms. Other
+  external-tool formats remain pending. Thanks to xet7.
+
 - Add Excel to selected-board export as one `wekan-boards.xlsx` workbook with
   one worksheet per selected board, matching the parent WeKan export contract
   instead of wrapping separate files in a ZIP. Sanitize forbidden worksheet

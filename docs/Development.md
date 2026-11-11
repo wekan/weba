@@ -1158,7 +1158,7 @@ streaming, security eventlog/Problems reporting, non-SQLite concurrency and full
 original UI/API/DDP/security suites remain pending. No controls for unsupported
 formats or privacy transformations are shown.
 
-### Selected board JSON, CSV, TSV and Excel export
+### Selected board JSON, CSV, TSV, Excel and Kanboard export
 
 The native Multi-Selection action exports selected active boards into one
 `wekan-boards-weba.zip`, with a complete weba-2 document in each strict
@@ -1187,6 +1187,14 @@ seven-row preamble and merge ranges. Values are XML-escaped inline strings, so
 formula-leading text cannot become a spreadsheet formula. Unsupported source
 board/card models remain explicit blank cells.
 
+The first external format, `kanboard`, writes
+`wekan-boards-kanboard.zip` with ordered strict `board-ID.json` entries.
+`BoardKanboardExport` runs inside the same locked transfer transaction and
+matches the parent board/columns/swimlanes/numbered-tasks shape. It maps native
+text, containers, ISO dates and labels, flattens checkitems to Kanboard
+subtasks, retains comments and builds reciprocal parent/dependency task links.
+Fields whose source model has no native counterpart remain absent.
+
 The final file snapshot crosses the native command boundary as base64 JSON.
 `batch-export.js` bounds and validates the JSON/table/Excel envelope, writes
 stored UTF-8 ZIP or OOXML entries with CRC-32 and a central directory, and never
@@ -1195,8 +1203,9 @@ bytes, no-write failure,
 immutable snapshots, retry/replay/reentrancy, stale/foreign/archive/policy denial
 and ZIP structure. `python3 tests/run-http.py --selected-export` (add `--archive`)
 checks the real controls, live and forged global gate, selection retention and
-all five download contents. The original caption is among 271 source keys in all
-237 catalogs. External-tool formats and the original HTTP route stay open.
+all six download contents. The original caption is among 271 source keys in all
+237 catalogs. Remaining external-tool formats and the original HTTP route stay
+open.
 
 ### Single-attachment export API
 

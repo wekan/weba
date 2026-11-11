@@ -1467,6 +1467,9 @@
             { ExportSelectedExcel WebButton
               Text = "Excel"
             }
+            { ExportSelectedKanboard WebButton
+              Text = "Kanboard"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton

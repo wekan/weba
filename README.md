@@ -2161,7 +2161,7 @@ the driver has already lost. Other original JSON wire contracts and selected
 multi-format exports remain pending.
 
 
-### Selected board JSON, CSV, TSV and Excel export
+### Selected board JSON, CSV, TSV, Excel and Kanboard export
 
 The native Multi-Selection sidebar can export selected active boards as one
 `wekan-boards-weba.zip`. Each entry is a complete `weba-2` JSON board named
@@ -2189,6 +2189,15 @@ All cells are OOXML inline strings, so a title beginning with `=`, `+`, `-`
 or `@` remains text rather than a formula. XML metacharacters are escaped and
 invalid control characters are replaced.
 
+Kanboard produces `wekan-boards-kanboard.zip` with one strict
+`board-ID.json` entry per selected board. Each document follows the parent
+Kanboard formatter: board name, ordered native columns and swimlanes, and
+numbered active tasks with title, description, list, lane, available ISO dates
+and labels. Native checkitems become Kanboard subtasks, comments retain their
+author and timestamp, and native subtask/dependency relationships become
+reciprocal Kanboard task links. Source identity fields without native
+counterparts are omitted.
+
 The ordered ID list, revision and completed/pending queue remain private to the
 form. The queue is bound to the current account session and unchanged selection.
 Every board independently takes the existing locked whole-board export path and
@@ -2211,7 +2220,8 @@ board and disabled export. Real Chromium tests run against source and packaged
 apps with `python3 tests/run-http.py --selected-export [--archive]` and verify
 zero-selection refusal, live/forged policy denial, the exact two-entry JSON,
 comma-CSV, semicolon-CSV and TSV ZIPs, and the single two-sheet Excel workbook.
-External-tool formats and the original HTTP route remain pending.
+They also verify the Kanboard container/task JSON ZIP. Remaining external-tool
+formats and the original HTTP route remain pending.
 
 
 ### Gated permanent board deletion and Recovery

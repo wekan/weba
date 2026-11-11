@@ -3953,6 +3953,10 @@ Public Sub ExportSelectedExcel_Click()
   RunSelectedExport("excel")
 End
 
+Public Sub ExportSelectedKanboard_Click()
+  RunSelectedExport("kanboard")
+End
+
 Public Sub CancelSelectedExport_Click()
   ClearSelectedExport()
 End
