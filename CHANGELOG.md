@@ -2,6 +2,22 @@
 
 This work adds the following features and fixes:
 
+- Add TickTick as the fourteenth selected-board external-tool export. Download
+  one `wekan-boards-ticktick.zip` with an ordered strict `board-ID.csv` backup
+  per board. Match TickTick 7.2's fully quoted date/version/status preamble and
+  exact 25-column task layout. Map native board/list/card text, labels,
+  descriptions with flattened open/completed checklist glyphs, UTC start/due/
+  end timestamps, stable sequential task IDs/order and inverse subtask parents.
+  Map `Folder` and Low/Medium/High `Priority` custom fields; map the exact
+  `won't do` label to canceled state while excluding it from tags. Omit archived
+  cards and leave reminder, repeat and created time blank where the native model
+  has no counterpart. Reuse the private session/selection-bound retry queue and
+  locked full-read, active-board and global export-policy checks for every board.
+  Focused native/browser tests, the complete local suite (69 host tests), and
+  complete source/packaged live suites pass; the integrated scenario validates
+  all nineteen exact downloads and live/forged policy gates in both forms. Other
+  external-tool formats remain pending. Thanks to xet7.
+
 - Add Linear as the thirteenth selected-board external-tool export. Download
   one `wekan-boards-linear.zip` with an ordered strict `board-ID.csv` export per
   board. Match Linear's exact 29-column order, leading-apostrophe spreadsheet-

@@ -2293,6 +2293,16 @@ Priority/Estimate/Project/Cycle/Canceled custom fields and an inverse subtask
 parent issue. Archived cards are omitted. Source-only creator/created/project-ID
 and unsupported Linear lifecycle columns stay empty.
 
+TickTick produces `wekan-boards-ticktick.zip` with one strict `board-ID.csv`
+backup per selected board. It matches TickTick 7.2's quoted date/version/status
+preamble and fixed 25-column task layout. Native cards supply board/list/title,
+labels, description plus flattened open/completed checklist glyphs, UTC start/
+due/end timestamps, stable sequential task IDs and order, and inverse subtask
+parents. `Folder` and `Priority` custom fields map to TickTick folder and
+1/3/5 priority; the exact `won't do` label maps to canceled state and is omitted
+from tags. Archived cards are omitted, and source-only reminder, repeat and
+creation fields remain blank.
+
 The ordered ID list, revision and completed/pending queue remain private to the
 form. The queue is bound to the current account session and unchanged selection.
 Every board independently takes the existing locked whole-board export path and
@@ -2318,8 +2328,8 @@ zero-selection refusal, live/forged policy denial, the exact two-entry JSON,
 comma-CSV, semicolon-CSV and TSV ZIPs, and the single two-sheet Excel workbook.
 They also verify the Kanboard container/task JSON, exact Markdown task-list,
 Leo XML, OPML outline, Org mode outline, todo.txt task, Taskwarrior JSON,
-Focalboard JSONL, Todoist CSV, Planner XLSX, MeisterTask CSV, Obsidian Kanban and
-Linear CSV ZIPs. Remaining external-tool formats and the original HTTP route
+Focalboard JSONL, Todoist CSV, Planner XLSX, MeisterTask CSV, Obsidian Kanban,
+Linear CSV and TickTick CSV ZIPs. Remaining external-tool formats and the original HTTP route
 remain pending.
 
 

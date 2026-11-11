@@ -1,0 +1,178 @@
+' Native counterpart of the parent TickTick 7.2 backup CSV formatter.
+Export
+Private $db As Connection
+Private $boardId As Integer
+Private $ids As Collection
+Private $columns As Collection
+
+Public Function Headers() As String[]
+  Return ["Folder Name", "List Name", "Title", "Kind", "Tags", "Content", "Is Check list", "Start Date", "Due Date", "Reminder", "Repeat", "Priority", "Status", "Created Time", "Completed Time", "Order", "Timezone", "Is All Day", "Is Floating", "Column Name", "Column Order", "View Mode", "taskId", "parentId", "projectKind"]
+End
+
+Private Function TextValue(value As Variant) As String
+  If IsNull(value) Then Return ""
+  Return CStr(value)
+End
+
+Private Function Quoted(value As Variant) As String
+  Return Chr(34) & Replace(TextValue(value), Chr(34), Chr(34) & Chr(34)) & Chr(34)
+End
+
+Private Function Row(values As Collection) As String
+  Dim cells As New String[]
+  Dim name As String
+  For Each name In Headers()
+    cells.Add(Quoted(If(values.Exist(name), values[name], "")))
+  Next
+  Return cells.Join(",")
+End
+
+Private Function Stamp(dates As Collection, key As String) As String
+  Dim iso As String
+  If Not dates.Exist(key) Then Return ""
+  iso = CardDates.Iso(dates[key])
+  Return Left(iso, 19) & "+0000"
+End
+
+Private Function Custom(cardId As Integer, name As String) As String
+  Dim field As Result = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND title=&4 ORDER BY id DESC", $boardId, cardId, "custom", name)
+  If field.Available Then Return TextValue(field!body)
+  Return ""
+End
+
+Private Function Labels(value As Variant) As Collection
+  Dim result As New Collection
+  Dim values As New String[]
+  Dim label As String
+  Dim wontDo As Boolean
+  For Each label In Split(TextValue(value), ",")
+    label = Trim(Replace(label, ",", " "))
+    If Not label Then Continue
+    If label = "won't do" Then
+      wontDo = True
+    Else
+      values.Add(label)
+    Endif
+  Next
+  result["text"] = values.Join(", ")
+  result["wontDo"] = wontDo
+  Return result
+End
+
+Private Function Checklist(cardId As Integer, description As String) As Collection
+  Dim result As New Collection
+  Dim lines As New String[]
+  Dim checklist As Result
+  Dim item As Result
+  Dim count As Integer
+  If description Then lines.Add(description)
+  checklist = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "checklist")
+  For Each checklist
+    item = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, cardId, "checkitem", checklist!id)
+    For Each item
+      Inc count
+      lines.Add(If(CBool(item!done), "▪", "▫") & TextValue(item!title))
+    Next
+  Next
+  result["count"] = count
+  result["content"] = lines.Join(Chr(10))
+  Return result
+End
+
+Private Function ParentId(cardId As Integer) As String
+  Dim relation As Result = $db.Find("kb_entries", "board_id=&1 AND kind=&2 AND amount=&3 ORDER BY id", $boardId, "subtask", cardId)
+  Dim parent As String
+  If relation.Available Then parent = CStr(relation!card_id)
+  If parent And $ids.Exist(parent) Then Return $ids[parent]
+  Return ""
+End
+
+Private Function CardRow(card As Result, index As Integer, listName As String) As String
+  Dim values As New Collection
+  Dim dates As Collection = CardDates.ReadDates($boardId, card!id)
+  Dim labelData As Collection = Labels(card!labels)
+  Dim checklistData As Collection = Checklist(card!id, TextValue(card!description))
+  Dim priority As String = Custom(card!id, "Priority")
+  Dim title As String = Trim(TextValue(card!title))
+  Dim columnName As String = TextValue(card!list_title)
+  Dim allDay As Boolean = True
+  Dim hasPlanning As Boolean
+  If Not title Then title = "Untitled"
+  If Not columnName Then columnName = "Tasks"
+  If dates.Exist("startAt") Then
+    hasPlanning = True
+    If Mid(CardDates.Iso(dates["startAt"]), 12, 8) <> "00:00:00" Then allDay = False
+  Endif
+  If dates.Exist("dueAt") Then
+    hasPlanning = True
+    If Mid(CardDates.Iso(dates["dueAt"]), 12, 8) <> "00:00:00" Then allDay = False
+  Endif
+  values["Folder Name"] = Custom(card!id, "Folder")
+  values["List Name"] = listName
+  values["Title"] = title
+  values["Kind"] = If(checklistData["count"] > 0, "CHECKLIST", "TEXT")
+  values["Tags"] = labelData["text"]
+  values["Content"] = checklistData["content"]
+  values["Is Check list"] = If(checklistData["count"] > 0, "Y", "N")
+  values["Start Date"] = Stamp(dates, "startAt")
+  values["Due Date"] = Stamp(dates, "dueAt")
+  values["Priority"] = If(priority = "Low", "1", If(priority = "Medium", "3", If(priority = "High", "5", "0")))
+  values["Status"] = If(CBool(labelData["wontDo"]), "-1", If(dates.Exist("endAt"), "1", "0"))
+  values["Completed Time"] = Stamp(dates, "endAt")
+  values["Order"] = CStr(CLong(index) * 1099511627776)
+  values["Timezone"] = "UTC"
+  values["Is All Day"] = If(hasPlanning, If(allDay, "true", "false"), "")
+  values["Is Floating"] = "false"
+  values["Column Name"] = columnName
+  values["Column Order"] = If($columns.Exist(columnName), $columns[columnName], "0")
+  values["View Mode"] = "kanban"
+  values["taskId"] = $ids[CStr(card!id)]
+  values["parentId"] = ParentId(card!id)
+  values["projectKind"] = "TASK"
+  Return Row(values)
+End
+
+Public Function Build(boardId As Integer, db As Connection) As String
+  Dim lines As New String[]
+  Dim board As Result
+  Dim lists As Result
+  Dim cards As Result
+  Dim index As Integer
+  Dim title As String
+  Dim headerCells As New String[]
+  Dim header As String
+  $db = db
+  $boardId = boardId
+  $ids = New Collection
+  $columns = New Collection
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  board = db.Find("kb_boards", "id=&1", boardId)
+  If Not board.Available Then Error.Raise("Board not found")
+  title = TextValue(board!title)
+  If Not title Then title = "WeKan board"
+  lists = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
+  For Each lists
+    If Not $columns.Exist(TextValue(lists!title)) Then $columns.Add(CStr(index), TextValue(lists!title))
+    Inc index
+  Next
+  cards = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  index = 0
+  For Each cards
+    $ids.Add(CStr(index + 1), CStr(cards!id))
+    Inc index
+  Next
+  lines.Add(Quoted("Date: " & Left(CardDates.Iso(ItemChanges.UtcNow()), 10) & "+0000"))
+  lines.Add(Quoted("Version: 7.2"))
+  lines.Add(Quoted("Status: " & Chr(10) & "0 Normal" & Chr(10) & "1 Completed" & Chr(10) & "2 Archived"))
+  For Each header In Headers()
+    headerCells.Add(Quoted(header))
+  Next
+  lines.Add(headerCells.Join(","))
+  cards = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  index = 0
+  For Each cards
+    lines.Add(CardRow(cards, index, title))
+    Inc index
+  Next
+  Return lines.Join(Chr(10)) & Chr(10)
+End

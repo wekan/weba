@@ -22,6 +22,7 @@ Public Sub Main()
   Dim meisterTaskBatch As Collection
   Dim obsidianBatch As Collection
   Dim linearBatch As Collection
+  Dim tickTickBatch As Collection
   Dim files As Variant[]
   Dim data As Collection
   Dim settings As Collection
@@ -38,6 +39,7 @@ Public Sub Main()
   Dim todoCard As Integer
   Dim taskwarrior As String
   Dim taskCard As Integer
+  Dim tickTickCard As Integer
   Dim taskwarriorData As Variant[]
   Dim taskwarriorTask As Collection
   Dim focalboard As String
@@ -60,6 +62,7 @@ Public Sub Main()
   Dim meisterTask As String
   Dim obsidian As String
   Dim linear As String
+  Dim tickTick As String
   Dim i As Integer
   Dim checklist As Integer
   Dim denied As Boolean
@@ -348,6 +351,26 @@ Public Sub Main()
   If Left(linear, Len(BoardLinearExport.Headers().Join(",") & Chr(13) & Chr(10))) <> BoardLinearExport.Headers().Join(",") & Chr(13) & Chr(10) Or Right(linear, 2) <> Chr(13) & Chr(10) Then Error.Raise("Linear header or CRLF drifted")
   If InStr(linear, CStr(formulaCard) & ",," & Chr(34) & "'=SUM(1,2)" & Chr(34) & "," & Chr(34) & "Comma, quote " & Chr(34) & Chr(34) & " and" & Chr(10) & "line" & Chr(34) & ",Todo,5,Urgent,,Web,,batch-export-owner," & Chr(34) & "red, urgent" & Chr(34) & ",,Sprint 3") = 0 Then Error.Raise("Linear ID, formula guard, description, status, custom fields, assignee or labels drifted")
   If InStr(linear, "2026-11-10T01:02:03.004Z") = 0 Or InStr(linear, "2026-11-12," & CStr(formulaCard)) = 0 Then Error.Raise("Linear dates or parent issue drifted")
+  CardContent.Save(a, formulaCard, 0, "custom", "Folder", "Work", 0, False, 0, "text")
+  CardContent.Save(a, formulaCard, 0, "custom", "Priority", "Medium", 0, False, 0, "text")
+  tickTickCard = KanbanStore.SaveCard(a, 0, "Canceled all day", "TickTick only", "Default", "Doing", "", "won't do, kept", "")
+  data = New Collection
+  data["startAt"] = CardDates.Parse("2026-11-15T00:00:00.000Z")
+  data["dueAt"] = CardDates.Parse("2026-11-16T00:00:00.000Z")
+  CardDates.Apply(a, tickTickCard, data)
+  CardContent.Save(a, tickTickCard, 0, "custom", "Priority", "High", 0, False, 0, "text")
+  tickTickBatch = BoardBatchExport.NewBatch(selection, "ticktick")
+  BoardBatchExport.Run(tickTickBatch, selection)
+  files = BoardBatchExport.Files(tickTickBatch)
+  If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".csv" Or BoardBatchExport.Format(tickTickBatch) <> "ticktick" Then Error.Raise("TickTick batch lost format, order or extension")
+  tickTick = files[0]["content"]
+  If Left(tickTick, Len(Chr(34) & "Date: ")) <> Chr(34) & "Date: " Or InStr(tickTick, "+0000" & Chr(34) & Chr(10) & Chr(34) & "Version: 7.2" & Chr(34) & Chr(10) & Chr(34) & "Status: " & Chr(10) & "0 Normal" & Chr(10) & "1 Completed" & Chr(10) & "2 Archived" & Chr(34) & Chr(10)) = 0 Then Error.Raise("TickTick date, version or status preamble drifted")
+  If InStr(tickTick, Chr(34) & "Folder Name" & Chr(34) & "," & Chr(34) & "List Name" & Chr(34) & "," & Chr(34) & "Title" & Chr(34)) = 0 Or Right(tickTick, 1) <> Chr(10) Then Error.Raise("TickTick quoted header or trailing newline drifted")
+  If InStr(tickTick, Chr(34) & "Work" & Chr(34) & "," & Chr(34) & "Export Alpha" & Chr(34) & "," & Chr(34) & "=SUM(1,2)" & Chr(34) & "," & Chr(34) & "CHECKLIST" & Chr(34) & "," & Chr(34) & "red, urgent" & Chr(34) & "," & Chr(34) & "Comma, quote " & Chr(34) & Chr(34) & " and" & Chr(10) & "line" & Chr(10) & "▪Checked" & Chr(34) & "," & Chr(34) & "Y" & Chr(34) & "," & Chr(34) & "2026-11-10T01:02:03+0000" & Chr(34) & "," & Chr(34) & "2026-11-12T05:06:07+0000" & Chr(34)) = 0 Then Error.Raise("TickTick folder, project, title, checklist, tags, text or dates drifted")
+  If InStr(tickTick, Chr(34) & "3" & Chr(34) & "," & Chr(34) & "0" & Chr(34) & "," & Chr(34) & Chr(34) & "," & Chr(34) & Chr(34)) = 0 Or InStr(tickTick, Chr(34) & "UTC" & Chr(34) & "," & Chr(34) & "false" & Chr(34) & "," & Chr(34) & "false" & Chr(34) & "," & Chr(34) & "Todo" & Chr(34) & "," & Chr(34) & "0" & Chr(34) & "," & Chr(34) & "kanban" & Chr(34)) = 0 Then Error.Raise("TickTick priority, state, timezone, all-day or column metadata drifted")
+  If InStr(tickTick, Chr(34) & "Canceled all day" & Chr(34) & "," & Chr(34) & "TEXT" & Chr(34) & "," & Chr(34) & "kept" & Chr(34) & "," & Chr(34) & "TickTick only" & Chr(34) & "," & Chr(34) & "N" & Chr(34) & "," & Chr(34) & "2026-11-15T00:00:00+0000" & Chr(34) & "," & Chr(34) & "2026-11-16T00:00:00+0000" & Chr(34)) = 0 Or InStr(tickTick, Chr(34) & "5" & Chr(34) & "," & Chr(34) & "-1" & Chr(34)) = 0 Or InStr(tickTick, Chr(34) & "UTC" & Chr(34) & "," & Chr(34) & "true" & Chr(34) & "," & Chr(34) & "false" & Chr(34) & "," & Chr(34) & "Doing" & Chr(34)) = 0 Then Error.Raise("TickTick canceled label, tag filtering, high priority or all-day mapping drifted")
+  If InStr(tickTick, Chr(34) & "2" & Chr(34) & "," & Chr(34) & "TASK" & Chr(34) & Chr(10)) = 0 Then Error.Raise("TickTick sequential parent task mapping drifted")
+  If InStr(files[1]["content"], Chr(34) & "Selection Bravo" & Chr(34)) Or InStr(files[1]["content"], Chr(34) & "Export Bravo" & Chr(34) & "," & Chr(34) & "Bravo card" & Chr(34) & "," & Chr(34) & "TEXT" & Chr(34)) = 0 Then Error.Raise("TickTick second-board CSV drifted")
   batch = BoardBatchExport.NewBatch(selection)
   batch["busy"] = True
   Try BoardBatchExport.Run(batch, selection)
@@ -377,7 +400,7 @@ Public Sub Main()
   Try BoardBatchExport.Run(batch, selection)
   denied = Error
   If Not denied Or Error.Text <> "Export is disabled by the administrator." Or BoardBatchExport.Completed(batch) Then Error.Raise("Disabled export leaked or advanced its queue")
-  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML/Org mode/todo.txt/Taskwarrior/Focalboard/Todoist/Planner/MeisterTask/Obsidian/Linear batch export: exact ordered files, generic and Planner workbook data, native Kanboard data, text/XML/JSON/JSONL/CSV tool formats, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
+  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML/Org mode/todo.txt/Taskwarrior/Focalboard/Todoist/Planner/MeisterTask/Obsidian/Linear/TickTick batch export: exact ordered files, generic and Planner workbook data, native Kanboard data, text/XML/JSON/JSONL/CSV tool formats, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
 End
 
 Private Function Frame() As String

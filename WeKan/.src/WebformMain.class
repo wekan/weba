@@ -4005,6 +4005,10 @@ Public Sub ExportSelectedLinear_Click()
   RunSelectedExport("linear")
 End
 
+Public Sub ExportSelectedTickTick_Click()
+  RunSelectedExport("ticktick")
+End
+
 Public Sub CancelSelectedExport_Click()
   ClearSelectedExport()
 End

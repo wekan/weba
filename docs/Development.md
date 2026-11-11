@@ -1293,6 +1293,17 @@ custom fields and inverse subtask parent. Archived cards are excluded. Creator,
 created/project IDs and source-only Linear lifecycle fields remain blank because
 the native card model has no counterpart. It uses the same locked transaction.
 
+The `ticktick` format writes `wekan-boards-ticktick.zip` with ordered strict
+`board-ID.csv` entries. `BoardTickTickExport` reproduces TickTick 7.2's fully
+quoted date/version/status preamble and fixed 25-column task rows. It maps native
+board/list/card text, labels, flattened checklist glyphs, UTC planning/completion
+timestamps, stable sequential task IDs/order and inverse subtask parents. The
+`Folder` and `Priority` custom fields map to TickTick folder and Low/Medium/High
+priority; the exact `won't do` label maps to canceled state and is excluded from
+tags. Archived cards are excluded. Reminder, repeat and created time remain blank
+because the native card model has no counterpart. It uses the same locked
+transaction.
+
 The final file snapshot crosses the native command boundary as base64 JSON.
 `batch-export.js` bounds and validates the JSON/table/Excel envelope, writes
 stored UTF-8 ZIP or OOXML entries with CRC-32 and a central directory, and never
@@ -1301,7 +1312,7 @@ bytes, no-write failure,
 immutable snapshots, retry/replay/reentrancy, stale/foreign/archive/policy denial
 and ZIP structure. `python3 tests/run-http.py --selected-export` (add `--archive`)
 checks the real controls, live and forged global gate, selection retention and
-all eighteen download contents. The original caption is among 271 source keys in all
+all nineteen download contents. The original caption is among 271 source keys in all
 237 catalogs. Remaining external-tool formats and the original HTTP route stay
 open.
 
