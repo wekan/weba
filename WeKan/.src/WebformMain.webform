@@ -1485,6 +1485,9 @@
             { ExportSelectedTodoTxt WebButton
               Text = "todo.txt"
             }
+            { ExportSelectedTaskwarrior WebButton
+              Text = "Taskwarrior"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton

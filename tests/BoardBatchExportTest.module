@@ -15,6 +15,7 @@ Public Sub Main()
   Dim opmlBatch As Collection
   Dim orgModeBatch As Collection
   Dim todoTxtBatch As Collection
+  Dim taskwarriorBatch As Collection
   Dim files As Variant[]
   Dim data As Collection
   Dim settings As Collection
@@ -29,6 +30,10 @@ Public Sub Main()
   Dim orgCard As Integer
   Dim todoTxt As String
   Dim todoCard As Integer
+  Dim taskwarrior As String
+  Dim taskCard As Integer
+  Dim taskwarriorData As Variant[]
+  Dim taskwarriorTask As Collection
   Dim checklist As Integer
   Dim denied As Boolean
   WebDatabase.Register("batch-export-global", "x")
@@ -191,6 +196,27 @@ Public Sub Main()
   If Left(todoTxt, Len("Alpha card list:Todo" & Chr(10) & "=SUM(1,2) +red +urgent due:2026-11-12 t:2026-11-10 list:Todo" & Chr(10))) <> "Alpha card list:Todo" & Chr(10) & "=SUM(1,2) +red +urgent due:2026-11-12 t:2026-11-10 list:Todo" & Chr(10) Then Error.Raise("todo.txt open task, project tags, dates or source order drifted")
   If InStr(todoTxt, "x Finished card list:Done" & Chr(10)) = 0 Or InStr(todoTxt, "(A) Planned card +tag_value +done +Mötley_Crüe due:2026-11-12 t:2026-11-10 list:Todo" & Chr(10)) = 0 Then Error.Raise("todo.txt terminal state, open priority, Unicode projects or metadata drifted")
   If InStr(todoTxt, "x Ship valve +project_name @work_shop pri:B due:2026-11-12 t:2026-11-10 list:Done" & Chr(10)) = 0 Or InStr(todoTxt, "2026-11-13") Or Right(todoTxt, 1) <> Chr(10) Then Error.Raise("todo.txt completed priority/context, whitespace, unsupported completion date or trailing newline drifted")
+  taskCard = KanbanStore.SaveCard(a, 0, "Repair" & Chr(9) & "pump", "Task details" & Chr(10) & "second line", "Default", "Done", "", "priority:H, project:Plant.Pumps, shop floor", "")
+  data = New Collection
+  data["startAt"] = CardDates.Parse("2026-11-10T01:02:03.004Z")
+  data["dueAt"] = CardDates.Parse("2026-11-12T05:06:07.008Z")
+  data["endAt"] = CardDates.Parse("2026-11-13T09:10:11.012Z")
+  CardDates.Apply(a, taskCard, data)
+  CardContent.Save(a, taskCard, 0, "comment", "", "Call " & Chr(34) & "vendor" & Chr(10) & "today", 0, False, 0)
+  taskwarriorBatch = BoardBatchExport.NewBatch(selection, "taskwarrior")
+  BoardBatchExport.Run(taskwarriorBatch, selection)
+  files = BoardBatchExport.Files(taskwarriorBatch)
+  If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".json" Or BoardBatchExport.Format(taskwarriorBatch) <> "taskwarrior" Then Error.Raise("Taskwarrior batch lost format, order or extension")
+  taskwarrior = files[0]["content"]
+  If Left(taskwarrior, 5) <> "[" & Chr(10) & "  {" Or Right(taskwarrior, 2) <> "]" & Chr(10) Then Error.Raise("Taskwarrior pretty array or trailing newline drifted")
+  If BoardTaskwarriorExport.Uuid(1) <> "340ca71c-350c-48af-b60c-aa42370cabd5" Or BoardTaskwarriorExport.Uuid(2) <> "370cabd5-360c-4a42-b50c-a8af340ca71c" Or BoardTaskwarriorExport.Uuid(3) <> "360caa42-370c-4bd5-b40c-a71c350ca8af" Or BoardTaskwarriorExport.Uuid(6) <> "330ca589-320c-43f6-b10c-a263300ca0d0" Then Error.Raise("Taskwarrior deterministic UUID drifted")
+  taskwarriorData = JSON.Decode(taskwarrior)
+  taskwarriorTask = taskwarriorData[taskwarriorData.Count - 1]
+  If taskwarriorTask["uuid"] <> BoardTaskwarriorExport.Uuid(taskCard) Or taskwarriorTask["status"] <> "completed" Or taskwarriorTask["description"] <> "Repair pump" Or taskwarriorTask["end"] <> "20261113T091011Z" Or taskwarriorTask["due"] <> "20261112T050607Z" Or taskwarriorTask["scheduled"] <> "20261110T010203Z" Then Error.Raise("Taskwarrior identity, state, title or compact dates drifted")
+  If taskwarriorTask["project"] <> "Plant.Pumps" Or taskwarriorTask["priority"] <> "H" Or taskwarriorTask["tags"].Count <> 1 Or taskwarriorTask["tags"][0] <> "shop_floor" Or taskwarriorTask["wekanlist"] <> "Done" Or taskwarriorTask["wekandescription"] <> "Task details" & Chr(10) & "second line" Then Error.Raise("Taskwarrior project, priority, tags, list or description UDA drifted")
+  If taskwarriorTask["annotations"].Count <> 1 Or taskwarriorTask["annotations"][0]["description"] <> "batch-export-owner: Call " & Chr(34) & "vendor" & Chr(10) & "today" Or Len(taskwarriorTask["annotations"][0]["entry"]) <> 16 Then Error.Raise("Taskwarrior annotation author, text or compact timestamp drifted")
+  taskwarriorData = JSON.Decode(files[1]["content"])
+  If taskwarriorData.Count <> 1 Or taskwarriorData[0]["description"] <> "Bravo card" Or taskwarriorData[0]["status"] <> "pending" Or taskwarriorData[0]["wekanlist"] <> "Todo" Then Error.Raise("Taskwarrior second-board task drifted")
   batch = BoardBatchExport.NewBatch(selection)
   batch["busy"] = True
   Try BoardBatchExport.Run(batch, selection)
@@ -220,7 +246,7 @@ Public Sub Main()
   Try BoardBatchExport.Run(batch, selection)
   denied = Error
   If Not denied Or Error.Text <> "Export is disabled by the administrator." Or BoardBatchExport.Completed(batch) Then Error.Raise("Disabled export leaked or advanced its queue")
-  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML/Org mode/todo.txt batch export: exact ordered files, fixed quoted rows/CRLF/formula/date/people cells, 20-column workbook descriptors, native Kanboard containers/tasks/dates/tags/details/links, Markdown task-list text, Leo XML, OPML outlines, Org headings/planning/tags/checklists, and todo.txt states/priorities/projects/contexts/dates/lists, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
+  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML/Org mode/todo.txt/Taskwarrior batch export: exact ordered files, fixed quoted rows/CRLF/formula/date/people cells, 20-column workbook descriptors, native Kanboard containers/tasks/dates/tags/details/links, Markdown task-list text, Leo XML, OPML outlines, Org headings/planning/tags/checklists, todo.txt tasks, and Taskwarrior UUID/state/date/project/tag/annotation/UDA JSON, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
 End
 
 Private Function Frame() As String

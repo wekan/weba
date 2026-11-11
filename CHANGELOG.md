@@ -2,6 +2,21 @@
 
 This work adds the following features and fixes:
 
+- Add Taskwarrior as the seventh selected-board external-tool export. Download
+  one `wekan-boards-taskwarrior.zip` with an ordered strict `board-ID.json`
+  entry per board. Match the parent pretty JSON array formatter: deterministic
+  RFC 4122 UUIDs, pending/completed state from terminal lists, whitespace-
+  collapsed titles, compact UTC end/due/scheduled dates, exact priority and
+  project labels, normalized remaining tags, comment annotations, and WeKan
+  list/description UDAs. Omit the optional entry timestamp because native cards
+  have no creation timestamp, and serialize empty boards exactly as `[]` plus a
+  newline. Reuse the private session/selection-bound retry queue and locked
+  full-read, active-board and global export-policy checks for every board.
+  Focused native/browser tests, the complete local suite (69 host tests), and
+  complete source/packaged live suites pass; the integrated scenario validates
+  all twelve exact downloads and live/forged policy gates in both forms. Other
+  external-tool formats remain pending. Thanks to xet7.
+
 - Add todo.txt as the sixth selected-board external-tool export. Download one
   `wekan-boards-todotxt.zip` with an ordered strict `board-ID.txt` entry per
   board. Match the parent one-task-per-line formatter: terminal-list `x` state,

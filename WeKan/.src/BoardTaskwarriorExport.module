@@ -1,0 +1,223 @@
+' Native counterpart of the parent Taskwarrior JSON formatter.
+Export
+Private $db As Connection
+Private $boardId As Integer
+
+Private Function TextValue(value As Variant) As String
+  If IsNull(value) Then Return ""
+  Return CStr(value)
+End
+
+Private Function Whitespace(character As String) As Boolean
+  Dim code As Integer = String.Code(character)
+  Return (code >= 9 And code <= 13) Or code = 32 Or code = 160 Or code = 5760 Or (code >= 8192 And code <= 8202) Or code = 8232 Or code = 8233 Or code = 8239 Or code = 8287 Or code = 12288 Or code = 65279
+End
+
+Private Function OneLine(value As Variant) As String
+  Dim source As String = TextValue(value)
+  Dim result As String
+  Dim character As String
+  Dim pendingSpace As Boolean
+  Dim i As Integer
+  For i = 1 To String.Len(source)
+    character = String.Mid(source, i, 1)
+    If Whitespace(character) Then
+      pendingSpace = True
+    Else
+      If pendingSpace And result Then result &= " "
+      result &= character
+      pendingSpace = False
+    Endif
+  Next
+  Return result
+End
+
+Private Function ClosedList(title As String) As Boolean
+  Dim lower As String = LCase(title)
+  Return InStr(lower, "done") > 0 Or InStr(lower, "closed") > 0 Or InStr(lower, "complete") > 0 Or InStr(lower, "archiv") > 0 Or InStr(lower, "finished") > 0
+End
+
+Private Function Labels(value As Variant) As String[]
+  Dim result As New String[]
+  Dim label As String
+  For Each label In Split(TextValue(value), ",")
+    label = Trim(label)
+    If label Then result.Add(label)
+  Next
+  Return result
+End
+
+Private Function CompactEpoch(epoch As Long) As String
+  Dim iso As String = CardDates.Iso(epoch)
+  Return Left(iso, 4) & Mid(iso, 6, 2) & Mid(iso, 9, 2) & "T" & Mid(iso, 12, 2) & Mid(iso, 15, 2) & Mid(iso, 18, 2) & "Z"
+End
+
+Private Function Quote(value As Variant) As String
+  Dim source As String = TextValue(value)
+  Dim result As String = Chr(34)
+  Dim character As String
+  Dim code As Integer
+  Dim i As Integer
+  For i = 1 To String.Len(source)
+    character = String.Mid(source, i, 1)
+    code = String.Code(character)
+    Select code
+      Case 8
+        result &= Chr(92) & "b"
+      Case 9
+        result &= Chr(92) & "t"
+      Case 10
+        result &= Chr(92) & "n"
+      Case 12
+        result &= Chr(92) & "f"
+      Case 13
+        result &= Chr(92) & "r"
+      Case 34, 92
+        result &= Chr(92) & character
+      Case 0 To 31
+        result &= Chr(92) & "u" & LCase(Hex$(code, 4))
+      Case Else
+        result &= character
+    End Select
+  Next
+  Return result & Chr(34)
+End
+
+Public Function Uuid(value As Variant) As String
+  Dim source As String = CStr(value)
+  Dim hex As String
+  Dim h As Long
+  Dim round As Integer
+  Dim i As Integer
+  Dim variant As Integer
+  While Len(hex) < 32
+    h = 2166136261 Xor round
+    For i = 1 To Len(source)
+      h = (((h Xor Asc(Mid(source, i, 1))) * 16777619) Mod 4294967296)
+      If h < 0 Then h += 4294967296
+    Next
+    hex &= LCase(Hex$(h, 8))
+    Inc round
+  Wend
+  hex = Left(hex, 32)
+  hex = Left(hex, 12) & "4" & Mid(hex, 14)
+  variant = CInt(Val("&H0" & Mid(hex, 17, 1))) Mod 4
+  hex = Left(hex, 16) & Mid("89ab", variant + 1, 1) & Mid(hex, 18)
+  Return Left(hex, 8) & "-" & Mid(hex, 9, 4) & "-" & Mid(hex, 13, 4) & "-" & Mid(hex, 17, 4) & "-" & Mid(hex, 21)
+End
+
+Private Function StringArrayProperty(key As String, values As String[]) As String
+  Dim lines As New String[]
+  Dim value As String
+  Dim index As Integer
+  lines.Add(Quote(key) & ": [")
+  For Each value In values
+    lines.Add("  " & Quote(value) & If(index < values.Count - 1, ",", ""))
+    Inc index
+  Next
+  lines.Add("]")
+  Return lines.Join(Chr(10))
+End
+
+Private Function AnnotationProperty(cardId As Integer) As String
+  Dim lines As New String[]
+  Dim entries As New String[]
+  Dim fields As New String[]
+  Dim comments As Result
+  Dim text As String
+  Dim author As String
+  Dim index As Integer
+  Dim fieldIndex As Integer
+  comments = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "comment")
+  For Each comments
+    text = TextValue(comments!body)
+    If Not Trim(text) Then Continue
+    fields = New String[]
+    If TypeOf(comments!created_at) = gb.Date And Not IsNull(comments!created_at) Then fields.Add(Quote("entry") & ": " & Quote(CompactEpoch(ItemChanges.Epoch(comments!created_at))))
+    author = CardContent.AuthorName($boardId, cardId, "entry", CInt(comments!id))
+    fields.Add(Quote("description") & ": " & Quote(If(author, author & ": ", "") & text))
+    lines = New String[]
+    lines.Add("{")
+    fieldIndex = 0
+    For Each text In fields
+      lines.Add("  " & text & If(fieldIndex < fields.Count - 1, ",", ""))
+      Inc fieldIndex
+    Next
+    lines.Add("}")
+    entries.Add(lines.Join(Chr(10)))
+  Next
+  If Not entries.Count Then Return ""
+  lines = New String[]
+  lines.Add(Quote("annotations") & ": [")
+  index = 0
+  For Each text In entries
+    lines.Add("  " & Replace(text, Chr(10), Chr(10) & "  ") & If(index < entries.Count - 1, ",", ""))
+    Inc index
+  Next
+  lines.Add("]")
+  Return lines.Join(Chr(10))
+End
+
+Private Function TaskJson(card As Result) As String
+  Dim properties As New String[]
+  Dim parsedLabels As String[] = Labels(card!labels)
+  Dim tags As New String[]
+  Dim label As String
+  Dim priority As String
+  Dim project As String
+  Dim value As String
+  Dim dates As Collection = CardDates.ReadDates($boardId, card!id)
+  Dim listTitle As String = TextValue(card!list_title)
+  Dim done As Boolean = ClosedList(listTitle)
+  Dim annotation As String
+  Dim lines As New String[]
+  Dim index As Integer
+  For Each label In parsedLabels
+    If Len(label) = 10 And Left(label, 9) = "priority:" And InStr("HML", Right(label, 1)) Then
+      If Not priority Then priority = Right(label, 1)
+    Else If Left(label, 8) = "project:" And Len(label) > 8 Then
+      If Not project Then project = Mid(label, 9)
+    Else
+      value = Replace(OneLine(label), " ", "_")
+      If value Then tags.Add(value)
+    Endif
+  Next
+  properties.Add(Quote("uuid") & ": " & Quote(Uuid(card!id)))
+  properties.Add(Quote("status") & ": " & Quote(If(done, "completed", "pending")))
+  value = OneLine(card!title)
+  properties.Add(Quote("description") & ": " & Quote(If(value, value, "Untitled")))
+  If done And dates.Exist("endAt") Then properties.Add(Quote("end") & ": " & Quote(CompactEpoch(dates["endAt"])))
+  If dates.Exist("dueAt") Then properties.Add(Quote("due") & ": " & Quote(CompactEpoch(dates["dueAt"])))
+  If dates.Exist("startAt") Then properties.Add(Quote("scheduled") & ": " & Quote(CompactEpoch(dates["startAt"])))
+  If project Then properties.Add(Quote("project") & ": " & Quote(project))
+  If priority Then properties.Add(Quote("priority") & ": " & Quote(priority))
+  If tags.Count Then properties.Add(StringArrayProperty("tags", tags))
+  annotation = AnnotationProperty(card!id)
+  If annotation Then properties.Add(annotation)
+  If listTitle Then properties.Add(Quote("wekanlist") & ": " & Quote(listTitle))
+  value = TextValue(card!description)
+  If value Then properties.Add(Quote("wekandescription") & ": " & Quote(value))
+  lines.Add("{")
+  For Each value In properties
+    lines.Add("  " & Replace(value, Chr(10), Chr(10) & "  ") & If(index < properties.Count - 1, ",", ""))
+    Inc index
+  Next
+  lines.Add("}")
+  Return lines.Join(Chr(10))
+End
+
+Public Function Build(boardId As Integer, db As Connection) As String
+  Dim tasks As New String[]
+  Dim cards As Result
+  Dim task As String
+  $db = db
+  $boardId = boardId
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  cards = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card")
+  For Each cards
+    task = TaskJson(cards)
+    tasks.Add("  " & Replace(task, Chr(10), Chr(10) & "  "))
+  Next
+  If Not tasks.Count Then Return "[]" & Chr(10)
+  Return "[" & Chr(10) & tasks.Join("," & Chr(10)) & Chr(10) & "]" & Chr(10)
+End

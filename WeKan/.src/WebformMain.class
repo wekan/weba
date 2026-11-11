@@ -3977,6 +3977,10 @@ Public Sub ExportSelectedTodoTxt_Click()
   RunSelectedExport("todotxt")
 End
 
+Public Sub ExportSelectedTaskwarrior_Click()
+  RunSelectedExport("taskwarrior")
+End
+
 Public Sub CancelSelectedExport_Click()
   ClearSelectedExport()
 End

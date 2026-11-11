@@ -2161,7 +2161,7 @@ the driver has already lost. Other original JSON wire contracts and selected
 multi-format exports remain pending.
 
 
-### Selected board JSON, CSV, TSV, Excel, Kanboard, Markdown, Leo, OPML, Org mode and todo.txt export
+### Selected board JSON, CSV, TSV, Excel, Kanboard, Markdown, Leo, OPML, Org mode, todo.txt and Taskwarrior export
 
 The native Multi-Selection sidebar can export selected active boards as one
 `wekan-boards-weba.zip`. Each entry is a complete `weba-2` JSON board named
@@ -2233,6 +2233,14 @@ newline. Native cards have no creation timestamp, so no completion day is
 written because todo.txt permits one only together with creation. Empty boards
 produce empty `.txt` entries.
 
+Taskwarrior produces `wekan-boards-taskwarrior.zip` with one strict
+`board-ID.json` array per selected board. It matches the parent formatter's
+deterministic RFC 4122 UUIDs, terminal-list state, collapsed task titles,
+compact UTC end/due/scheduled timestamps, exact `priority:H|M|L` and
+`project:` labels, normalized remaining tags, comment annotations, and WeKan
+list/description UDAs. Native cards have no creation timestamp, so `entry` is
+omitted. Empty boards produce `[]` followed by a newline.
+
 The ordered ID list, revision and completed/pending queue remain private to the
 form. The queue is bound to the current account session and unchanged selection.
 Every board independently takes the existing locked whole-board export path and
@@ -2257,8 +2265,9 @@ apps with `python3 tests/run-http.py --selected-export [--archive]` and verify
 zero-selection refusal, live/forged policy denial, the exact two-entry JSON,
 comma-CSV, semicolon-CSV and TSV ZIPs, and the single two-sheet Excel workbook.
 They also verify the Kanboard container/task JSON, exact Markdown task-list,
-Leo XML, OPML outline, Org mode outline and todo.txt task ZIPs. Remaining
-external-tool formats and the original HTTP route remain pending.
+Leo XML, OPML outline, Org mode outline, todo.txt task and Taskwarrior JSON
+ZIPs. Remaining external-tool formats and the original HTTP route remain
+pending.
 
 
 ### Gated permanent board deletion and Recovery

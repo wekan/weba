@@ -1158,7 +1158,7 @@ streaming, security eventlog/Problems reporting, non-SQLite concurrency and full
 original UI/API/DDP/security suites remain pending. No controls for unsupported
 formats or privacy transformations are shown.
 
-### Selected board JSON, CSV, TSV, Excel, Kanboard, Markdown, Leo, OPML, Org mode and todo.txt export
+### Selected board JSON, CSV, TSV, Excel, Kanboard, Markdown, Leo, OPML, Org mode, todo.txt and Taskwarrior export
 
 The native Multi-Selection action exports selected active boards into one
 `wekan-boards-weba.zip`, with a complete weba-2 document in each strict
@@ -1231,6 +1231,15 @@ to accompany creation. Gambas represents an empty returned string as null or an
 omitted JSON field; the browser normalizes that shape only for an already strict
 `.txt` descriptor and continues to reject every other non-string content value.
 
+The `taskwarrior` format writes `wekan-boards-taskwarrior.zip` with ordered
+strict `board-ID.json` entries. `BoardTaskwarriorExport` reproduces the parent
+pretty JSON array and deterministic RFC 4122 UUIDs, terminal-list state,
+collapsed titles, compact UTC dates, exact priority/project labels, normalized
+tags, comment annotations and WeKan list/description UDAs. Native cards lack a
+creation timestamp, so the optional Taskwarrior `entry` field is absent. Empty
+boards serialize exactly as `[]` plus a newline inside the same locked transfer
+transaction.
+
 The final file snapshot crosses the native command boundary as base64 JSON.
 `batch-export.js` bounds and validates the JSON/table/Excel envelope, writes
 stored UTF-8 ZIP or OOXML entries with CRC-32 and a central directory, and never
@@ -1239,7 +1248,7 @@ bytes, no-write failure,
 immutable snapshots, retry/replay/reentrancy, stale/foreign/archive/policy denial
 and ZIP structure. `python3 tests/run-http.py --selected-export` (add `--archive`)
 checks the real controls, live and forged global gate, selection retention and
-all eleven download contents. The original caption is among 271 source keys in all
+all twelve download contents. The original caption is among 271 source keys in all
 237 catalogs. Remaining external-tool formats and the original HTTP route stay
 open.
 
