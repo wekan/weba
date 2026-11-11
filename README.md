@@ -2161,7 +2161,7 @@ the driver has already lost. Other original JSON wire contracts and selected
 multi-format exports remain pending.
 
 
-### Selected board JSON, CSV and TSV ZIP export
+### Selected board JSON, CSV, TSV and Excel export
 
 The native Multi-Selection sidebar can export selected active boards as one
 `wekan-boards-weba.zip`. Each entry is a complete `weba-2` JSON board named
@@ -2178,6 +2178,17 @@ embedded quotes, preserve embedded newlines and prefix formula-leading cell
 text. Current native card, list, lane, member, assignee, label and date fields
 are exported; source models and custom-field columns not yet native stay open.
 
+Excel produces one `wekan-boards.xlsx` workbook, not a ZIP of per-board
+workbooks. It contains one worksheet per selected board in caller order.
+Worksheet names remove Excel's forbidden characters, are limited to 31
+characters and receive case-insensitive ` (2)` suffixes when needed. Each sheet
+matches the parent seven-row board title/description/metadata preamble, three
+merge ranges and fixed 20-column card table. Current native fields are populated;
+board metadata and card models without native counterparts remain blank.
+All cells are OOXML inline strings, so a title beginning with `=`, `+`, `-`
+or `@` remains text rather than a formula. XML metacharacters are escaped and
+invalid control characters are replaced.
+
 The ordered ID list, revision and completed/pending queue remain private to the
 form. The queue is bound to the current account session and unchanged selection.
 Every board independently takes the existing locked whole-board export path and
@@ -2189,17 +2200,18 @@ boards. Changing selection, leaving the active overview, signing out or disablin
 export invalidates the queue. Forged hidden actions still pass all server checks.
 
 The browser receives only a base64-encoded JSON envelope after every selected
-board succeeds. A bounded local helper validates strict `board-ID.json` or
-`board-ID.csv` names
-and string content, then writes a standard stored ZIP with UTF-8 names, CRC-32
-and a central directory; it accepts neither paths nor caller-selected names.
+board succeeds. A bounded local helper validates strict `board-ID.json`,
+`board-ID.csv`, `board-ID.tsv` or internal `board-ID.xlsx` descriptor names
+and string content. It writes either a standard stored ZIP or the fixed OOXML
+package with UTF-8 names, CRC-32 and a central directory; it accepts neither
+paths nor caller-selected names.
 Native and JavaScript tests cover exact bytes, no-write failure, copied snapshots,
 pending-only retry, replay, reentrancy, stale revision, foreign actor, archived
 board and disabled export. Real Chromium tests run against source and packaged
 apps with `python3 tests/run-http.py --selected-export [--archive]` and verify
-zero-selection refusal, live/forged policy denial and the exact two-entry JSON,
-comma-CSV, semicolon-CSV and TSV ZIPs. Excel, external-tool formats and the
-original HTTP route remain pending.
+zero-selection refusal, live/forged policy denial, the exact two-entry JSON,
+comma-CSV, semicolon-CSV and TSV ZIPs, and the single two-sheet Excel workbook.
+External-tool formats and the original HTTP route remain pending.
 
 
 ### Gated permanent board deletion and Recovery

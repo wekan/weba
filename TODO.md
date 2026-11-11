@@ -1,6 +1,6 @@
 # Work in progress
 
-Updated 2026-11-10. Target: the signed-in pages of the current `wekan/wekan`
+Updated 2026-11-11. Target: the signed-in pages of the current `wekan/wekan`
 checkout, implemented with Gambas Web UI, SQLite persistence and portable Gambas
 DB operations. This is an initial implementation, not complete WeKan parity.
 
@@ -80,7 +80,7 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   Original callback outcome comparisons expand from 52 to 156 single/multi/mixed
   cases. Native selection and confirmed sidebar actions now use this service;
   no new public HTTP route is exposed. Original full callbacks remain open.
-- Next: remaining copy-option models/controls and selected batch Excel and
+- Next: remaining copy-option models/controls and selected batch
   external-format export,
   Home/group targets and original
   UI callbacks. Whole-board copy authorization and late actor/source/destination
@@ -100,6 +100,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   identity is recorded there;
   selected TSV with the same row contract, tab separator and `.tsv` entries is
   recorded there;
+  selected Excel as one `wekan-boards.xlsx` workbook with one safe unique
+  worksheet per board, the source seven-row/20-column layout, inline-string
+  formula safety and current native fields/source-only blanks is recorded there;
   original remaining formats/API route, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded

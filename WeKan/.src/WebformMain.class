@@ -3921,7 +3921,11 @@ Private Sub RunSelectedExport(format As String)
   If Not $selectedExport Then $selectedExport = BoardBatchExport.NewBatch(SelectionState(), format)
   BoardBatchExport.Run($selectedExport, SelectionState())
   files = BoardBatchExport.Files($selectedExport)
-  WebForm.Exec("webaBatchExport.downloadPayload('" & Base64(JSON.Encode(files)) & "','wekan-boards-" & format & ".zip');")
+  If format = "excel" Then
+    WebForm.Exec("webaBatchExport.downloadWorkbook('" & Base64(JSON.Encode(files)) & "');")
+  Else
+    WebForm.Exec("webaBatchExport.downloadPayload('" & Base64(JSON.Encode(files)) & "','wekan-boards-" & format & ".zip');")
+  Endif
   ClearSelectedExport()
 Catch
   Notice.Text = Error.Text
@@ -3943,6 +3947,10 @@ End
 
 Public Sub ExportSelectedTsv_Click()
   RunSelectedExport("tsv")
+End
+
+Public Sub ExportSelectedExcel_Click()
+  RunSelectedExport("excel")
 End
 
 Public Sub CancelSelectedExport_Click()

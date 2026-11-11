@@ -8,11 +8,13 @@ Public Sub Main()
   Dim csvBatch As Collection
   Dim scsvBatch As Collection
   Dim tsvBatch As Collection
+  Dim excelBatch As Collection
   Dim files As Variant[]
   Dim data As Collection
   Dim settings As Collection
   Dim before As String
   Dim csv As String
+  Dim excelRow As Variant[]
   Dim denied As Boolean
   WebDatabase.Register("batch-export-global", "x")
   WebDatabase.Register("batch-export-owner", "x")
@@ -23,6 +25,7 @@ Public Sub Main()
   CardContent.UploadFile(a, cardId, "alpha.bin", "A")
   formulaCard = KanbanStore.SaveCard(a, 0, "=SUM(1,2)", "Comma, quote " & Chr(34) & " and" & Chr(10) & "line", "Default", "Todo", "batch-export-owner", "red, urgent", "")
   BoardAccess.SetAssignees(a, formulaCard, ["batch-export-owner"])
+  BoardAccess.RestoreCardMembers(a, formulaCard, ["batch-export-owner"])
   data = New Collection
   data["startAt"] = CardDates.Parse("2026-11-10T01:02:03.004Z")
   data["dueAt"] = CardDates.Parse("2026-11-12T05:06:07.008Z")
@@ -85,6 +88,17 @@ Public Sub Main()
   csv = files[0]["content"]
   If Left(csv, Len(BoardCsvExport.Line(BoardCsvExport.Headers(), Chr(9)))) <> BoardCsvExport.Line(BoardCsvExport.Headers(), Chr(9)) Then Error.Raise("TSV header lost the source delimiter")
   If InStr(csv, Chr(34) & Chr(9) & Chr(34)) = 0 Or InStr(csv, Chr(34) & "Comma, quote " & Chr(34) & Chr(34) & " and" & Chr(10) & "line" & Chr(34)) = 0 Then Error.Raise("TSV delimiter or quoted data drifted")
+  excelBatch = BoardBatchExport.NewBatch(selection, "excel")
+  BoardBatchExport.Run(excelBatch, selection)
+  files = BoardBatchExport.Files(excelBatch)
+  If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".xlsx" Or BoardBatchExport.Format(excelBatch) <> "excel" Then Error.Raise("Excel batch lost format, order or descriptor extension")
+  data = JSON.Decode(files[0]["content"])
+  If data["title"] <> "Export Alpha" Or data["description"] <> "" Or data["createdAt"] <> "" Or data["modifiedAt"] <> "" Then Error.Raise("Excel descriptor lost board metadata or source-only blanks")
+  If JSON.Encode(data["headerKeys"]) <> JSON.Encode(BoardExcelExport.HeaderKeys()) Or data["headerKeys"].Count <> 20 Then Error.Raise("Excel descriptor header order drifted from the source workbook")
+  If data["rows"].Count <> 2 Then Error.Raise("Excel descriptor lost active cards")
+  excelRow = data["rows"][1]
+  If excelRow.Count <> 20 Or excelRow[0] <> "2" Or excelRow[1] <> "=SUM(1,2)" Or excelRow[2] <> "Comma, quote " & Chr(34) & " and" & Chr(10) & "line" Then Error.Raise("Excel descriptor lost fixed columns or exact text")
+  If excelRow[8] <> "2026-11-10T01:02:03.004Z" Or excelRow[9] <> "2026-11-12T05:06:07.008Z" Or excelRow[11] <> "Todo" Or excelRow[12] <> "Default" Or excelRow[13] <> "batch-export-owner" Or excelRow[14] <> "batch-export-owner" Or excelRow[17] <> "red, urgent" Or excelRow[18] <> "false" Then Error.Raise("Excel descriptor lost native dates, containers, people, labels or overtime default")
   batch = BoardBatchExport.NewBatch(selection)
   batch["busy"] = True
   Try BoardBatchExport.Run(batch, selection)
@@ -114,7 +128,7 @@ Public Sub Main()
   Try BoardBatchExport.Run(batch, selection)
   denied = Error
   If Not denied Or Error.Text <> "Export is disabled by the administrator." Or BoardBatchExport.Completed(batch) Then Error.Raise("Disabled export leaked or advanced its queue")
-  Print "Selected JSON/comma/semicolon-CSV/TSV batch export: exact ordered files, fixed quoted rows/CRLF/formula/date/people cells, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
+  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel batch export: exact ordered files, fixed quoted rows/CRLF/formula/date/people cells and 20-column workbook descriptors, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
 End
 
 Private Function Frame() As String

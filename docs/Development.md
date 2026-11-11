@@ -1158,7 +1158,7 @@ streaming, security eventlog/Problems reporting, non-SQLite concurrency and full
 original UI/API/DDP/security suites remain pending. No controls for unsupported
 formats or privacy transformations are shown.
 
-### Selected board JSON, CSV and TSV ZIP export
+### Selected board JSON, CSV, TSV and Excel export
 
 The native Multi-Selection action exports selected active boards into one
 `wekan-boards-weba.zip`, with a complete weba-2 document in each strict
@@ -1178,15 +1178,25 @@ preserves embedded newlines and prefixes formula-leading text. It currently maps
 native card, list, lane, member, assignee, label and date data; custom-field
 columns and source models without native counterparts remain pending.
 
+The parent `excel` format produces one `wekan-boards.xlsx` workbook after the
+queue completes. `BoardExcelExport` returns a fixed 20-column descriptor from
+inside the same locked transfer transaction. The browser validates every
+descriptor, creates one caller-ordered worksheet per board, sanitizes and
+case-insensitively deduplicates 31-character sheet names, and writes the parent
+seven-row preamble and merge ranges. Values are XML-escaped inline strings, so
+formula-leading text cannot become a spreadsheet formula. Unsupported source
+board/card models remain explicit blank cells.
+
 The final file snapshot crosses the native command boundary as base64 JSON.
-`batch-export.js` bounds and validates the JSON/CSV envelope, writes stored UTF-8 ZIP
-entries with CRC-32 and a central directory, and never accepts path-shaped or
-browser-supplied names. Tests cover exact attachment bytes, no-write failure,
+`batch-export.js` bounds and validates the JSON/table/Excel envelope, writes
+stored UTF-8 ZIP or OOXML entries with CRC-32 and a central directory, and never
+accepts path-shaped or browser-supplied names. Tests cover exact attachment
+bytes, no-write failure,
 immutable snapshots, retry/replay/reentrancy, stale/foreign/archive/policy denial
 and ZIP structure. `python3 tests/run-http.py --selected-export` (add `--archive`)
 checks the real controls, live and forged global gate, selection retention and
-all four download contents. The original caption is among 271 source keys in all
-237 catalogs. Excel, external-tool formats and the original HTTP route stay open.
+all five download contents. The original caption is among 271 source keys in all
+237 catalogs. External-tool formats and the original HTTP route stay open.
 
 ### Single-attachment export API
 

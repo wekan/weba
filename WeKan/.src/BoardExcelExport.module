@@ -1,0 +1,75 @@
+' Native descriptor for the parent multi-board Excel layout. Browser code writes
+' one OOXML worksheet per descriptor after every board passes its own locked
+' export checks. Source-only fields remain blank until their native models exist.
+Export
+
+Public Function HeaderKeys() As String[]
+  Return ["number", "title", "description", "parent-card", "owner", "createdAt", "last-modified-at", "card-received", "card-start", "card-due", "card-end", "list", "swimlane", "assignee", "members", "requested-by", "assigned-by", "labels", "overtime-hours", "spent-time-hours"]
+End
+
+Private Function TextValue(value As Variant) As String
+  If IsNull(value) Then Return ""
+  Return CStr(value)
+End
+
+Private Function DateValue(dates As Collection, key As String) As String
+  If Not dates.Exist(key) Then Return ""
+  Return CardDates.Iso(CLong(dates[key]))
+End
+
+Public Function Build(boardId As Integer, db As Connection) As String
+  Dim data As New Collection
+  Dim rows As New Variant[]
+  Dim values As String[]
+  Dim dates As Collection
+  Dim members As String[]
+  Dim assignees As String[]
+  Dim board As Result
+  Dim r As Result
+  Dim index As Integer
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  board = db.Find("kb_boards", "id=&1", boardId)
+  If Not board.Available Then Error.Raise("Board not found")
+  data["title"] = TextValue(board!title)
+  data["description"] = ""
+  data["createdAt"] = ""
+  data["modifiedAt"] = ""
+  values = New String[]
+  r = BoardAccess.Members(boardId)
+  For Each r
+    values.Add(TextValue(r!username))
+  Next
+  data["boardMembers"] = values.Join(",")
+  data["headerKeys"] = HeaderKeys()
+  r = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 ORDER BY c.id", boardId)
+  For Each r
+    Inc index
+    members = BoardAccess.CardMembers(boardId, r!id)
+    assignees = BoardAccess.Assignees(boardId, r!id)
+    dates = CardDates.ReadDates(boardId, r!id)
+    values = New String[]
+    values.Add(CStr(index))
+    values.Add(TextValue(r!title))
+    values.Add(TextValue(r!description))
+    values.Add("")
+    values.Add("")
+    values.Add("")
+    values.Add("")
+    values.Add(DateValue(dates, "receivedAt"))
+    values.Add(DateValue(dates, "startAt"))
+    values.Add(DateValue(dates, "dueAt"))
+    values.Add(DateValue(dates, "endAt"))
+    values.Add(TextValue(r!list_title))
+    values.Add(TextValue(r!lane))
+    values.Add(assignees.Join(" "))
+    values.Add(members.Join(" "))
+    values.Add("")
+    values.Add("")
+    values.Add(TextValue(r!labels))
+    values.Add("false")
+    values.Add("")
+    rows.Add(values)
+  Next
+  data["rows"] = rows
+  Return JSON.Encode(data)
+End

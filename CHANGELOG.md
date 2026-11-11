@@ -2,6 +2,22 @@
 
 This work adds the following features and fixes:
 
+- Add Excel to selected-board export as one `wekan-boards.xlsx` workbook with
+  one worksheet per selected board, matching the parent WeKan export contract
+  instead of wrapping separate files in a ZIP. Sanitize forbidden worksheet
+  characters, enforce 31-character case-insensitively unique names, and reproduce
+  the source board-title/description/metadata preamble, merge ranges and fixed
+  20-column card table. Map current native list, lane, member, assignee, label and
+  date data while leaving source-only models blank. Generate bounded stored OOXML
+  only after every board passes the existing private retry queue and locked
+  per-board session, selection, full-read, active-state and global-policy checks.
+  Encode every value as escaped inline text, including formula-leading cells, and
+  replace XML-invalid controls. Focused native/OOXML tests, the complete local
+  suite (69 host tests), and complete source/packaged live Chromium suites pass;
+  the integrated export scenario validates all five exact downloads and live/
+  forged policy gates in both forms. External-tool formats, custom fields and
+  source models not yet native remain pending. Thanks to xet7.
+
 - Add TSV to selected-board ZIP export with the parent WeKan `tsv` format key,
   `TSV` choice, `.tsv` entries and `wekan-boards-tsv.zip` download name. Reuse
   the fixed 20 columns, all-cell quoting, CRLF, quote/newline/formula handling,
@@ -9,8 +25,8 @@ This work adds the following features and fixes:
   separator and extension change. Focused native/ZIP tests, the full local suite
   (69 host tests), and complete source/packaged live browser suites pass; the
   integrated export scenario verifies all exact downloads and policy gates in
-  both forms. Excel, external-tool
-  formats, custom fields and source models not yet native remain pending.
+  both forms. External-tool formats, custom fields and source models not yet
+  native remain pending.
   Thanks to xet7.
 
 - Add semicolon-CSV to selected-board ZIP export with the parent WeKan `scsv`
@@ -22,8 +38,8 @@ This work adds the following features and fixes:
   suite (69 host tests), and the complete source/packaged live browser suites
   pass; the integrated export scenario verifies every exact download and the
   live/forged policy gate in both forms.
-  Excel, external-tool formats, custom fields and source models not yet
-  native remain pending. Thanks to xet7.
+  External-tool formats, custom fields and source models not yet native remain
+  pending. Thanks to xet7.
 
 - Add comma-CSV to the native selected-board ZIP export. Offer JSON and CSV
   from a retained export panel while preserving the private account/session/
@@ -35,8 +51,8 @@ This work adds the following features and fixes:
   suite (69 host tests), and the complete source/packaged live browser suites
   pass; the integrated export scenario verifies both exact downloads and the
   live/forged policy gate in both forms.
-  TSV, Excel, external-tool formats, custom-field columns and
-  source models not yet native remain pending. Thanks to xet7.
+  External-tool formats, custom-field columns and source models not yet native
+  remain pending. Thanks to xet7.
 
 - Add native selected-board weba-2 JSON batch export as one ZIP download. Keep
   the selected IDs and ordered pending queue private to the form, bind them to
