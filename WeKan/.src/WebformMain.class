@@ -3981,6 +3981,10 @@ Public Sub ExportSelectedTaskwarrior_Click()
   RunSelectedExport("taskwarrior")
 End
 
+Public Sub ExportSelectedFocalboard_Click()
+  RunSelectedExport("focalboard")
+End
+
 Public Sub CancelSelectedExport_Click()
   ClearSelectedExport()
 End

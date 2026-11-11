@@ -2161,7 +2161,7 @@ the driver has already lost. Other original JSON wire contracts and selected
 multi-format exports remain pending.
 
 
-### Selected board JSON, CSV, TSV, Excel, Kanboard, Markdown, Leo, OPML, Org mode, todo.txt and Taskwarrior export
+### Selected board JSON, CSV, TSV, Excel, Kanboard, Markdown, Leo, OPML, Org mode, todo.txt, Taskwarrior and Focalboard export
 
 The native Multi-Selection sidebar can export selected active boards as one
 `wekan-boards-weba.zip`. Each entry is a complete `weba-2` JSON board named
@@ -2241,6 +2241,14 @@ compact UTC end/due/scheduled timestamps, exact `priority:H|M|L` and
 list/description UDAs. Native cards have no creation timestamp, so `entry` is
 omitted. Empty boards produce `[]` followed by a newline.
 
+Focalboard produces `wekan-boards-focalboard.zip` with one strict
+`board-ID.jsonl` archive per selected board. It matches the parent formatter's
+version header, deterministic 27-character block IDs, board and board-view
+records, ordered Status/Labels/Due properties, card blocks, millisecond date
+ranges, description text, flattened checklist items and authored comments.
+Native board descriptions, card creation timestamps and custom fields do not
+exist, so those source-only values remain empty or absent.
+
 The ordered ID list, revision and completed/pending queue remain private to the
 form. The queue is bound to the current account session and unchanged selection.
 Every board independently takes the existing locked whole-board export path and
@@ -2254,10 +2262,10 @@ export invalidates the queue. Forged hidden actions still pass all server checks
 The browser receives only a base64-encoded JSON envelope after every selected
 board succeeds. A bounded local helper validates strict `board-ID.json`,
 `board-ID.csv`, `board-ID.tsv`, `board-ID.md`, `board-ID.leo`, `board-ID.opml`,
-`board-ID.org`, `board-ID.txt` or internal `board-ID.xlsx` descriptor names and
-string content. It writes either a standard stored ZIP or the fixed OOXML
-package with UTF-8 names, CRC-32 and a central directory; it accepts neither
-paths nor caller-selected names.
+`board-ID.org`, `board-ID.txt`, `board-ID.jsonl` or internal `board-ID.xlsx`
+descriptor names and string content. It writes either a standard stored ZIP or
+the fixed OOXML package with UTF-8 names, CRC-32 and a central directory; it
+accepts neither paths nor caller-selected names.
 Native and JavaScript tests cover exact bytes, no-write failure, copied snapshots,
 pending-only retry, replay, reentrancy, stale revision, foreign actor, archived
 board and disabled export. Real Chromium tests run against source and packaged
@@ -2265,9 +2273,9 @@ apps with `python3 tests/run-http.py --selected-export [--archive]` and verify
 zero-selection refusal, live/forged policy denial, the exact two-entry JSON,
 comma-CSV, semicolon-CSV and TSV ZIPs, and the single two-sheet Excel workbook.
 They also verify the Kanboard container/task JSON, exact Markdown task-list,
-Leo XML, OPML outline, Org mode outline, todo.txt task and Taskwarrior JSON
-ZIPs. Remaining external-tool formats and the original HTTP route remain
-pending.
+Leo XML, OPML outline, Org mode outline, todo.txt task, Taskwarrior JSON and
+Focalboard JSONL ZIPs. Remaining external-tool formats and the original HTTP
+route remain pending.
 
 
 ### Gated permanent board deletion and Recovery

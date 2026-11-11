@@ -2,6 +2,20 @@
 
 This work adds the following features and fixes:
 
+- Add Focalboard as the eighth selected-board external-tool export. Download
+  one `wekan-boards-focalboard.zip` with an ordered strict `board-ID.jsonl`
+  archive per board. Match the parent archive header, deterministic base-36
+  block IDs, board and board-view records, ordered Status/Labels/Due property
+  definitions, cards, millisecond date ranges, description text, flattened
+  checklist items and authored comments. Keep native source-only board
+  description, card-creation and custom-field values empty or absent. Reuse the
+  private session/selection-bound retry queue and locked full-read, active-board
+  and global export-policy checks for every board. Focused native/browser tests,
+  the complete local suite (69 host tests), and complete source/packaged live
+  suites pass; the integrated scenario validates all thirteen exact downloads
+  and live/forged policy gates in both forms. Other external-tool formats remain
+  pending. Thanks to xet7.
+
 - Add Taskwarrior as the seventh selected-board external-tool export. Download
   one `wekan-boards-taskwarrior.zip` with an ordered strict `board-ID.json`
   entry per board. Match the parent pretty JSON array formatter: deterministic

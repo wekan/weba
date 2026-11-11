@@ -16,6 +16,7 @@ Public Sub Main()
   Dim orgModeBatch As Collection
   Dim todoTxtBatch As Collection
   Dim taskwarriorBatch As Collection
+  Dim focalboardBatch As Collection
   Dim files As Variant[]
   Dim data As Collection
   Dim settings As Collection
@@ -34,6 +35,19 @@ Public Sub Main()
   Dim taskCard As Integer
   Dim taskwarriorData As Variant[]
   Dim taskwarriorTask As Collection
+  Dim focalboard As String
+  Dim focalLines As String[]
+  Dim focalRow As Collection
+  Dim focalBoardData As Collection
+  Dim focalStatus As Collection
+  Dim focalCard As Collection
+  Dim focalRange As Collection
+  Dim focalStatusId As String
+  Dim focalFoundCard As Boolean
+  Dim focalFoundDescription As Boolean
+  Dim focalFoundCheckbox As Boolean
+  Dim focalFoundComment As Boolean
+  Dim i As Integer
   Dim checklist As Integer
   Dim denied As Boolean
   WebDatabase.Register("batch-export-global", "x")
@@ -217,6 +231,43 @@ Public Sub Main()
   If taskwarriorTask["annotations"].Count <> 1 Or taskwarriorTask["annotations"][0]["description"] <> "batch-export-owner: Call " & Chr(34) & "vendor" & Chr(10) & "today" Or Len(taskwarriorTask["annotations"][0]["entry"]) <> 16 Then Error.Raise("Taskwarrior annotation author, text or compact timestamp drifted")
   taskwarriorData = JSON.Decode(files[1]["content"])
   If taskwarriorData.Count <> 1 Or taskwarriorData[0]["description"] <> "Bravo card" Or taskwarriorData[0]["status"] <> "pending" Or taskwarriorData[0]["wekanlist"] <> "Todo" Then Error.Raise("Taskwarrior second-board task drifted")
+  focalboardBatch = BoardBatchExport.NewBatch(selection, "focalboard")
+  BoardBatchExport.Run(focalboardBatch, selection)
+  files = BoardBatchExport.Files(focalboardBatch)
+  If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".jsonl" Or BoardBatchExport.Format(focalboardBatch) <> "focalboard" Then Error.Raise("Focalboard batch lost format, order or extension")
+  If BoardFocalboardExport.Id("b", 1) <> "b0efwnq40epw9f30ezvv420f9vg" Or BoardFocalboardExport.Id("p", "b0efwnq40epw9f30ezvv420f9vg:status") <> "p15ic5yh1if84c0072u7jb1j2e1" Or BoardFocalboardExport.Id("o", "rocket🚀") <> "o0hcmsvs08fqhdv0zm9sxa0ikph" Then Error.Raise("Focalboard deterministic block IDs drifted")
+  focalboard = files[0]["content"]
+  focalLines = Split(focalboard, Chr(10))
+  If focalLines.Count < 8 Or focalLines[focalLines.Max] <> "" Then Error.Raise("Focalboard JSONL lines or trailing newline drifted")
+  data = JSON.Decode(focalLines[0])
+  If data["version"] <> 1 Or data["date"] <= 0 Then Error.Raise("Focalboard archive header drifted")
+  For i = 1 To focalLines.Max - 1
+    focalRow = JSON.Decode(focalLines[i])
+    If focalRow["type"] = "board" Then
+      focalBoardData = focalRow["data"]
+      focalStatus = focalBoardData["cardProperties"][0]
+      focalStatusId = focalStatus["id"]
+      If focalBoardData["id"] <> BoardFocalboardExport.Id("b", a) Or focalBoardData["title"] <> "Export Alpha" Or focalBoardData["description"] <> "" Or focalBoardData["createAt"] <> data["date"] Or focalStatus["name"] <> "Status" Or focalStatus["options"].Count <> 3 Or focalStatus["options"][0]["value"] <> "Todo" Or focalStatus["options"][1]["value"] <> "Doing" Or focalStatus["options"][2]["value"] <> "Done" Or focalBoardData["cardProperties"][1]["name"] <> "Labels" Or focalBoardData["cardProperties"][2]["name"] <> "Due" Then Error.Raise("Focalboard board properties drifted")
+    Else
+      focalCard = focalRow["data"]
+      If focalCard["type"] = "view" Then
+        If focalCard["fields"]["viewType"] <> "board" Or focalCard["fields"]["groupById"] <> focalStatusId Then Error.Raise("Focalboard board view drifted")
+      Else If focalCard["type"] = "card" And focalCard["title"] = "Repair" & Chr(9) & "pump" Then
+        focalFoundCard = True
+        If focalCard["id"] <> BoardFocalboardExport.Id("c", taskCard) Or focalCard["fields"]["properties"][focalStatusId] <> focalStatus["options"][2]["id"] Or focalCard["fields"]["properties"][focalBoardData["cardProperties"][1]["id"]].Count <> 3 Then Error.Raise("Focalboard card identity, status or labels drifted")
+        focalRange = JSON.Decode(focalCard["fields"]["properties"][focalBoardData["cardProperties"][2]["id"]])
+        If focalRange["from"] <> CardDates.Parse("2026-11-10T01:02:03.004Z")["epoch"] Or focalRange["to"] <> CardDates.Parse("2026-11-12T05:06:07.008Z")["epoch"] Then Error.Raise("Focalboard date range drifted")
+      Else If focalCard["type"] = "text" And focalCard["title"] = "Task details" & Chr(10) & "second line" Then
+        focalFoundDescription = True
+      Else If focalCard["type"] = "checkbox" And focalCard["title"] = "Checked" And focalCard["fields"]["value"] Then
+        focalFoundCheckbox = True
+      Else If focalCard["type"] = "comment" And focalCard["title"] = "batch-export-owner: Call " & Chr(34) & "vendor" & Chr(10) & "today" Then
+        focalFoundComment = True
+      Endif
+    Endif
+  Next
+  If Not focalFoundCard Or Not focalFoundDescription Or Not focalFoundCheckbox Or Not focalFoundComment Then Error.Raise("Focalboard card content or comment blocks drifted")
+  If InStr(files[1]["content"], Chr(34) & "title" & Chr(34) & ":" & Chr(34) & "Export Bravo" & Chr(34)) = 0 Or InStr(files[1]["content"], Chr(34) & "title" & Chr(34) & ":" & Chr(34) & "Bravo card" & Chr(34)) = 0 Then Error.Raise("Focalboard second-board archive drifted")
   batch = BoardBatchExport.NewBatch(selection)
   batch["busy"] = True
   Try BoardBatchExport.Run(batch, selection)
@@ -246,7 +297,7 @@ Public Sub Main()
   Try BoardBatchExport.Run(batch, selection)
   denied = Error
   If Not denied Or Error.Text <> "Export is disabled by the administrator." Or BoardBatchExport.Completed(batch) Then Error.Raise("Disabled export leaked or advanced its queue")
-  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML/Org mode/todo.txt/Taskwarrior batch export: exact ordered files, fixed quoted rows/CRLF/formula/date/people cells, 20-column workbook descriptors, native Kanboard containers/tasks/dates/tags/details/links, Markdown task-list text, Leo XML, OPML outlines, Org headings/planning/tags/checklists, todo.txt tasks, and Taskwarrior UUID/state/date/project/tag/annotation/UDA JSON, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
+  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML/Org mode/todo.txt/Taskwarrior/Focalboard batch export: exact ordered files, table/workbook data, native Kanboard data, Markdown/Leo/OPML/Org/todo.txt tasks, Taskwarrior JSON and Focalboard JSONL blocks, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
 End
 
 Private Function Frame() As String

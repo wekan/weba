@@ -1488,6 +1488,9 @@
             { ExportSelectedTaskwarrior WebButton
               Text = "Taskwarrior"
             }
+            { ExportSelectedFocalboard WebButton
+              Text = "Focalboard"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton

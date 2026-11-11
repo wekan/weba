@@ -118,6 +118,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   selected Taskwarrior JSON ZIP with deterministic UUIDs, terminal state,
   compact UTC dates, project/priority/tags, annotations and WeKan UDAs is
   recorded there;
+  selected Focalboard JSONL ZIP with deterministic block IDs, board/view/status/
+  label/date records, card descriptions, checklist items and comments is
+  recorded there;
   original remaining formats/API route, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded

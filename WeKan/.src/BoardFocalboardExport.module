@@ -1,0 +1,313 @@
+' Native counterpart of the parent Focalboard board.jsonl formatter.
+Export
+Private $db As Connection
+Private $boardId As Integer
+
+Private Function TextValue(value As Variant) As String
+  If IsNull(value) Then Return ""
+  Return CStr(value)
+End
+
+Private Function Labels(value As Variant) As String[]
+  Dim result As New String[]
+  Dim label As String
+  For Each label In Split(TextValue(value), ",")
+    label = Trim(label)
+    If label Then result.Add(label)
+  Next
+  Return result
+End
+
+Private Sub AddUnique(values As String[], value As String)
+  Dim current As String
+  If Not value Then Return
+  For Each current In values
+    If current = value Then Return
+  Next
+  values.Add(value)
+End
+
+Private Function IndexOf(values As String[], value As String) As Integer
+  Dim i As Integer
+  For i = 0 To values.Max
+    If values[i] = value Then Return i
+  Next
+  Return -1
+End
+
+Private Function Base36(value As Long) As String
+  Dim digits As String = "0123456789abcdefghijklmnopqrstuvwxyz"
+  Dim result As String
+  Dim remainder As Integer
+  If value = 0 Then result = "0"
+  While value > 0
+    remainder = value Mod 36
+    result = Mid(digits, remainder + 1, 1) & result
+    value = Int(value / 36)
+  Wend
+  Return String(7 - Len(result), "0") & result
+End
+
+Public Function Id(prefix As String, sourceValue As Variant) As String
+  Dim source As String = CStr(sourceValue)
+  Dim result As String
+  Dim character As String
+  Dim code As Integer
+  Dim h As Long
+  Dim round As Integer
+  Dim i As Integer
+  While Len(result) < 26
+    h = 2166136261 Xor round
+    For i = 1 To String.Len(source)
+      character = String.Mid(source, i, 1)
+      code = String.Code(character)
+      ' JavaScript for-of visits an astral character once, while charCodeAt(0)
+      ' hashes its UTF-16 high surrogate.
+      If code > 65535 Then code = 55296 + Int((code - 65536) / 1024)
+      h = (((h Xor code) * 16777619) Mod 4294967296)
+      If h < 0 Then h += 4294967296
+    Next
+    result &= Base36(h)
+    Inc round
+  Wend
+  Return prefix & Left(result, 26)
+End
+
+Private Function Line(typeName As String, data As Collection) As String
+  Dim row As New Collection
+  row.Add(typeName, "type")
+  row.Add(data, "data")
+  Return JSON.Encode(row)
+End
+
+Private Function BaseBlock(blockIdentifier As String, parentId As String, typeName As String, title As String, fields As Collection, created As Long, exportTime As Long) As Collection
+  Dim data As New Collection
+  If created <= 0 Then created = exportTime
+  data.Add(blockIdentifier, "id")
+  data.Add(parentId, "parentId")
+  data.Add(Id("b", $boardId), "boardId")
+  data.Add("", "createdBy")
+  data.Add("", "modifiedBy")
+  data.Add(1, "schema")
+  data.Add(typeName, "type")
+  data.Add(title, "title")
+  data.Add(fields, "fields")
+  data.Add(created, "createAt")
+  data.Add(created, "updateAt")
+  data.Add(0, "deleteAt")
+  Return data
+End
+
+Private Function Property(id As String, name As String, typeName As String, options As Variant[]) As Collection
+  Dim data As New Collection
+  data.Add(id, "id")
+  data.Add(name, "name")
+  data.Add(typeName, "type")
+  data.Add(options, "options")
+  Return data
+End
+
+Private Function Choice(id As String, value As String) As Collection
+  Dim data As New Collection
+  data.Add(id, "id")
+  data.Add(value, "value")
+  data.Add("propColorDefault", "color")
+  Return data
+End
+
+Private Function CommentLine(cardId As Integer, comment As Result, index As Integer, cardBlockId As String, created As Long, exportTime As Long) As String
+  Dim fields As New Collection
+  Dim author As String = CardContent.AuthorName($boardId, cardId, "entry", CInt(comment!id))
+  Dim text As String = TextValue(comment!body)
+  Dim stamp As Long = created
+  If TypeOf(comment!created_at) = gb.Date And Not IsNull(comment!created_at) Then stamp = ItemChanges.Epoch(comment!created_at)
+  Return Line("block", BaseBlock(Id("m", cardBlockId & ":comment:" & CStr(index)), cardBlockId, "comment", If(author, author & ": ", "") & text, fields, stamp, exportTime))
+End
+
+Public Function Build(boardId As Integer, db As Connection) As String
+  Dim out As New String[]
+  Dim statusTitles As New String[]
+  Dim statusIds As New String[]
+  Dim labelNames As New String[]
+  Dim labelIds As New String[]
+  Dim options As New Variant[]
+  Dim labelOptions As New Variant[]
+  Dim cardProperties As New Variant[]
+  Dim visiblePropertyIds As New String[]
+  Dim emptyVariants As New Variant[]
+  Dim emptyCollection As New Collection
+  Dim board As Result
+  Dim lists As Result
+  Dim cards As Result
+  Dim entry As Result
+  Dim item As Result
+  Dim header As New Collection
+  Dim boardData As New Collection
+  Dim viewFields As New Collection
+  Dim filter As New Collection
+  Dim fields As Collection
+  Dim properties As Collection
+  Dim range As Collection
+  Dim dates As Collection
+  Dim contentLines As String[]
+  Dim contentOrder As String[]
+  Dim chosen As String[]
+  Dim parsedLabels As String[]
+  Dim label As String
+  Dim title As String
+  Dim boardBlockId As String
+  Dim statusId As String
+  Dim labelsId As String
+  Dim dueId As String
+  Dim cardBlockId As String
+  Dim childId As String
+  Dim exportTime As Long = ItemChanges.UtcNow()
+  Dim created As Long
+  Dim startAt As Long
+  Dim dueAt As Long
+  Dim checklistIndex As Integer
+  Dim itemIndex As Integer
+  Dim commentIndex As Integer
+  Dim index As Integer
+  $db = db
+  $boardId = boardId
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  board = db.Find("kb_boards", "id=&1", boardId)
+  If Not board.Available Then Error.Raise("Board not found")
+  boardBlockId = Id("b", boardId)
+  statusId = Id("p", boardBlockId & ":status")
+  labelsId = Id("p", boardBlockId & ":labels")
+  dueId = Id("p", boardBlockId & ":due")
+  lists = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
+  For Each lists
+    AddUnique(statusTitles, TextValue(lists!title))
+  Next
+  cards = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card")
+  For Each cards
+    AddUnique(statusTitles, TextValue(cards!list_title))
+    parsedLabels = Labels(cards!labels)
+    For Each label In parsedLabels
+      AddUnique(labelNames, label)
+    Next
+  Next
+  For Each title In statusTitles
+    childId = Id("o", boardBlockId & ":status:" & title)
+    statusIds.Add(childId)
+    options.Add(Choice(childId, title))
+  Next
+  For Each title In labelNames
+    childId = Id("o", boardBlockId & ":label:" & title)
+    labelIds.Add(childId)
+    labelOptions.Add(Choice(childId, title))
+  Next
+  cardProperties.Add(Property(statusId, "Status", "select", options))
+  cardProperties.Add(Property(labelsId, "Labels", "multiSelect", labelOptions))
+  cardProperties.Add(Property(dueId, "Due", "date", emptyVariants))
+  header.Add(1, "version")
+  header.Add(exportTime, "date")
+  out.Add(JSON.Encode(header))
+  boardData.Add(boardBlockId, "id")
+  boardData.Add("0", "teamId")
+  boardData.Add("", "channelId")
+  boardData.Add("", "createdBy")
+  boardData.Add("", "modifiedBy")
+  boardData.Add("P", "type")
+  boardData.Add("", "minimumRole")
+  boardData.Add(If(TextValue(board!title), TextValue(board!title), "WeKan board"), "title")
+  boardData.Add("", "description")
+  boardData.Add("", "icon")
+  boardData.Add(False, "showDescription")
+  boardData.Add(False, "isTemplate")
+  boardData.Add(0, "templateVersion")
+  boardData.Add(emptyCollection, "properties")
+  boardData.Add(cardProperties, "cardProperties")
+  boardData.Add(exportTime, "createAt")
+  boardData.Add(exportTime, "updateAt")
+  boardData.Add(0, "deleteAt")
+  out.Add(Line("board", boardData))
+  filter.Add("and", "operation")
+  filter.Add(emptyVariants, "filters")
+  visiblePropertyIds.Add(labelsId)
+  visiblePropertyIds.Add(dueId)
+  viewFields.Add("board", "viewType")
+  viewFields.Add(statusId, "groupById")
+  viewFields.Add(emptyVariants, "sortOptions")
+  viewFields.Add(visiblePropertyIds, "visiblePropertyIds")
+  viewFields.Add(emptyVariants, "visibleOptionIds")
+  viewFields.Add(emptyVariants, "hiddenOptionIds")
+  viewFields.Add(emptyVariants, "collapsedOptionIds")
+  viewFields.Add(filter, "filter")
+  viewFields.Add(emptyVariants, "cardOrder")
+  viewFields.Add(emptyCollection, "columnWidths")
+  viewFields.Add(emptyCollection, "columnCalculations")
+  viewFields.Add(emptyCollection, "kanbanCalculations")
+  viewFields.Add("", "defaultTemplateId")
+  out.Add(Line("block", BaseBlock(Id("v", boardBlockId & ":view"), boardBlockId, "view", "Board view", viewFields, exportTime, exportTime)))
+  cards = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card")
+  For Each cards
+    cardBlockId = Id("c", cards!id)
+    created = exportTime
+    properties = New Collection
+    index = IndexOf(statusTitles, TextValue(cards!list_title))
+    If index >= 0 Then properties.Add(statusIds[index], statusId)
+    chosen = New String[]
+    parsedLabels = Labels(cards!labels)
+    For Each label In parsedLabels
+      index = IndexOf(labelNames, label)
+      If index >= 0 Then chosen.Add(labelIds[index])
+    Next
+    If chosen.Count Then properties.Add(chosen, labelsId)
+    dates = CardDates.ReadDates(boardId, cards!id)
+    If dates.Exist("dueAt") Then
+      dueAt = dates["dueAt"]
+      range = New Collection
+      If dates.Exist("startAt") Then startAt = dates["startAt"] Else startAt = 0
+      If startAt > 0 And startAt < dueAt Then
+        range.Add(startAt, "from")
+        range.Add(dueAt, "to")
+      Else
+        range.Add(dueAt, "from")
+      Endif
+      properties.Add(JSON.Encode(range), dueId)
+    Endif
+    contentLines = New String[]
+    contentOrder = New String[]
+    If TextValue(cards!description) Then
+      childId = Id("a", cardBlockId & ":description")
+      fields = New Collection
+      contentOrder.Add(childId)
+      contentLines.Add(Line("block", BaseBlock(childId, cardBlockId, "text", TextValue(cards!description), fields, created, exportTime)))
+    Endif
+    checklistIndex = 0
+    entry = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, cards!id, "checklist")
+    For Each entry
+      itemIndex = 0
+      item = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", boardId, cards!id, "checkitem", entry!id)
+      For Each item
+        childId = Id("x", cardBlockId & ":" & CStr(checklistIndex) & ":" & CStr(itemIndex))
+        fields = New Collection
+        fields.Add(CBool(item!done), "value")
+        contentOrder.Add(childId)
+        contentLines.Add(Line("block", BaseBlock(childId, cardBlockId, "checkbox", TextValue(item!title), fields, created, exportTime)))
+        Inc itemIndex
+      Next
+      Inc checklistIndex
+    Next
+    fields = New Collection
+    fields.Add("", "icon")
+    fields.Add(properties, "properties")
+    fields.Add(contentOrder, "contentOrder")
+    fields.Add(False, "isTemplate")
+    out.Add(Line("block", BaseBlock(cardBlockId, boardBlockId, "card", If(TextValue(cards!title), TextValue(cards!title), "Untitled"), fields, created, exportTime)))
+    For Each title In contentLines
+      out.Add(title)
+    Next
+    commentIndex = 0
+    entry = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, cards!id, "comment")
+    For Each entry
+      If Trim(TextValue(entry!body)) Then out.Add(CommentLine(cards!id, entry, commentIndex, cardBlockId, created, exportTime))
+      Inc commentIndex
+    Next
+  Next
+  Return out.Join(Chr(10)) & Chr(10)
+End
