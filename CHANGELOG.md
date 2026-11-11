@@ -2,6 +2,18 @@
 
 This work adds the following features and fixes:
 
+- Add semicolon-CSV to selected-board ZIP export with the parent WeKan `scsv`
+  format key, `CSV (;)` choice, `.csv` entries and
+  `wekan-boards-scsv.zip` download name. Reuse the comma-CSV fixed columns,
+  all-cell quoting, CRLF, doubled quotes, embedded newlines, formula guard,
+  private retry queue and independently locked per-board policy/scope checks;
+  only the field separator changes. Focused native/ZIP tests, the full local
+  suite (69 host tests), and the complete source/packaged live browser suites
+  pass; the integrated export scenario verifies every exact download and the
+  live/forged policy gate in both forms.
+  TSV, Excel, external-tool formats, custom fields and source models not yet
+  native remain pending. Thanks to xet7.
+
 - Add comma-CSV to the native selected-board ZIP export. Offer JSON and CSV
   from a retained export panel while preserving the private account/session/
   selection-revision queue and per-board active, full-read and global-policy
@@ -12,7 +24,7 @@ This work adds the following features and fixes:
   suite (69 host tests), and the complete source/packaged live browser suites
   pass; the integrated export scenario verifies both exact downloads and the
   live/forged policy gate in both forms.
-  Semicolon-CSV, TSV, Excel, external-tool formats, custom-field columns and
+  TSV, Excel, external-tool formats, custom-field columns and
   source models not yet native remain pending. Thanks to xet7.
 
 - Add native selected-board weba-2 JSON batch export as one ZIP download. Keep

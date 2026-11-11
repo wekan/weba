@@ -3937,6 +3937,10 @@ Public Sub ExportSelectedCsv_Click()
   RunSelectedExport("csv")
 End
 
+Public Sub ExportSelectedSemicolonCsv_Click()
+  RunSelectedExport("scsv")
+End
+
 Public Sub CancelSelectedExport_Click()
   ClearSelectedExport()
 End

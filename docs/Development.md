@@ -1158,7 +1158,7 @@ streaming, security eventlog/Problems reporting, non-SQLite concurrency and full
 original UI/API/DDP/security suites remain pending. No controls for unsupported
 formats or privacy transformations are shown.
 
-### Selected board JSON and comma-CSV ZIP export
+### Selected board JSON, comma-CSV and semicolon-CSV ZIP export
 
 The native Multi-Selection action exports selected active boards into one
 `wekan-boards-weba.zip`, with a complete weba-2 document in each strict
@@ -1169,8 +1169,9 @@ only exclusion and archive state inside the transaction. A later failure retains
 completed JSON only in private form memory and retry resumes at the pending item;
 no partial ZIP is sent.
 
-The retained export panel can instead produce `wekan-boards-csv.zip` with one
-strict `board-ID.csv` entry for each selected board. `BoardCsvExport` follows the
+The retained export panel can instead produce `wekan-boards-csv.zip` or the
+parent WeKan `scsv` format's `wekan-boards-scsv.zip`, with one strict
+`board-ID.csv` entry for each selected board. `BoardCsvExport` follows the
 source fixed 20-column order, quotes every cell, writes CRLF rows, doubles quotes,
 preserves embedded newlines and prefixes formula-leading text. It currently maps
 native card, list, lane, member, assignee, label and date data; custom-field
@@ -1183,9 +1184,9 @@ browser-supplied names. Tests cover exact attachment bytes, no-write failure,
 immutable snapshots, retry/replay/reentrancy, stale/foreign/archive/policy denial
 and ZIP structure. `python3 tests/run-http.py --selected-export` (add `--archive`)
 checks the real controls, live and forged global gate, selection retention and
-both download contents. The original caption is among 271 source keys in all 237
-catalogs. Semicolon-CSV, TSV, Excel, external-tool formats and the original HTTP
-route stay open.
+all three download contents. The original caption is among 271 source keys in all 237
+catalogs. TSV, Excel, external-tool formats and the original HTTP route stay
+open.
 
 ### Single-attachment export API
 

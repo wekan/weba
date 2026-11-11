@@ -80,8 +80,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   Original callback outcome comparisons expand from 52 to 156 single/multi/mixed
   cases. Native selection and confirmed sidebar actions now use this service;
   no new public HTTP route is exposed. Original full callbacks remain open.
-- Next: remaining copy-option models/controls and selected batch semicolon-CSV,
-  TSV, Excel and external-format export,
+- Next: remaining copy-option models/controls and selected batch TSV, Excel and
+  external-format export,
   Home/group targets and original
   UI callbacks. Whole-board copy authorization and late actor/source/destination
   guards, selected native duplication with pending-only retry and source-style
@@ -96,6 +96,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   strict entries and source/packaged browser download are recorded there;
   selected comma-CSV with the source fixed-column, quoting and formula-safety
   contract and current native fields is recorded there;
+  selected semicolon-CSV with the same source row contract and `scsv` format
+  identity is recorded there;
   original remaining formats/API route, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded

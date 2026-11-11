@@ -23,6 +23,10 @@ Public Function ExportActiveBoardCsv(boardId As Integer) As String
   Return ExportChecked(boardId, "board", boardId, True, "csv")
 End
 
+Public Function ExportActiveBoardSemicolonCsv(boardId As Integer) As String
+  Return ExportChecked(boardId, "board", boardId, True, "scsv")
+End
+
 Private Sub RequireActiveBoard(boardId As Integer)
   Dim r As Result = $db.Find("kb_boards", "id=&1 AND archived=&2", boardId, False)
   If Not r.Available Then Error.Raise("Select active boards first")
@@ -53,6 +57,8 @@ Private Function ExportChecked(boardId As Integer, kind As String, itemId As Int
     text = BuildExport(boardId, kind, itemId)
   Else If format = "csv" And kind = "board" Then
     text = BoardCsvExport.Build(boardId, $db)
+  Else If format = "scsv" And kind = "board" Then
+    text = BoardCsvExport.Build(boardId, $db, ";")
   Else
     Error.Raise("Unknown export format")
   Endif

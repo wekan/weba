@@ -2161,7 +2161,7 @@ the driver has already lost. Other original JSON wire contracts and selected
 multi-format exports remain pending.
 
 
-### Selected board JSON and comma-CSV ZIP export
+### Selected board JSON, comma-CSV and semicolon-CSV ZIP export
 
 The native Multi-Selection sidebar can export selected active boards as one
 `wekan-boards-weba.zip`. Each entry is a complete `weba-2` JSON board named
@@ -2169,10 +2169,11 @@ The native Multi-Selection sidebar can export selected active boards as one
 not clear the selected set. The original Export selected boards caption is
 imported verbatim across all 237 native catalogs (271 source keys).
 
-The retained export panel also offers comma-CSV as
-`wekan-boards-csv.zip`, with one strict `board-ID.csv` entry per board. It uses
-the original fixed 20-column order, quotes every cell, writes CRLF rows, doubles
-embedded quotes, preserves embedded newlines and prefixes formula-leading cell
+The retained export panel also offers comma-CSV as `wekan-boards-csv.zip` and
+semicolon-CSV as `wekan-boards-scsv.zip`, each with one strict `board-ID.csv`
+entry per board. They use
+the original fixed 20-column order, quote every cell, write CRLF rows, double
+embedded quotes, preserve embedded newlines and prefix formula-leading cell
 text. Current native card, list, lane, member, assignee, label and date fields
 are exported; source models and custom-field columns not yet native stay open.
 
@@ -2195,9 +2196,9 @@ Native and JavaScript tests cover exact bytes, no-write failure, copied snapshot
 pending-only retry, replay, reentrancy, stale revision, foreign actor, archived
 board and disabled export. Real Chromium tests run against source and packaged
 apps with `python3 tests/run-http.py --selected-export [--archive]` and verify
-zero-selection refusal, live/forged policy denial and the exact two-entry JSON
-and CSV ZIPs. Semicolon-CSV, TSV, Excel, external-tool formats and the original
-HTTP route remain pending.
+zero-selection refusal, live/forged policy denial and the exact two-entry JSON,
+comma-CSV and semicolon-CSV ZIPs. TSV, Excel, external-tool formats and the
+original HTTP route remain pending.
 
 
 ### Gated permanent board deletion and Recovery

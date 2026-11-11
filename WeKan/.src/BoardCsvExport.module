@@ -21,7 +21,7 @@ End
 Public Function Line(values As String[], delimiter As String) As String
   Dim cells As New String[]
   Dim value As String
-  If delimiter <> "," Then Error.Raise("Unknown CSV delimiter")
+  If delimiter <> "," And delimiter <> ";" Then Error.Raise("Unknown CSV delimiter")
   For Each value In values
     cells.Add(Cell(value))
   Next
