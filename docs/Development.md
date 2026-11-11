@@ -1304,6 +1304,18 @@ tags. Archived cards are excluded. Reminder, repeat and created time remain blan
 because the native card model has no counterpart. It uses the same locked
 transaction.
 
+The `clickup` format writes `wekan-boards-clickup.zip` with ordered strict
+`board-ID.csv` entries. `BoardClickUpExport` reproduces ClickUp's 31 workspace
+columns followed by the spreadsheet importer's `Checklist` column, using
+selective CSV quoting and CRLF. It maps native card identity/text/status,
+millisecond and ISO start/due pairs, ordered assignees plus members, bracketed
+labels, list/swimlane/board placement, flattened comma-safe checklist names and
+both parent/child subtask references. `Task Type`, `Custom ID`, `Folder`,
+`Priority` and `Time Estimate (hours)` custom fields map to ClickUp columns.
+Archived cards are excluded. Link, creation, attachment, comment and tracked-time
+columns stay blank or use ClickUp's empty defaults because the native export has
+no safe counterpart. It uses the same locked transaction.
+
 The final file snapshot crosses the native command boundary as base64 JSON.
 `batch-export.js` bounds and validates the JSON/table/Excel envelope, writes
 stored UTF-8 ZIP or OOXML entries with CRC-32 and a central directory, and never
@@ -1312,7 +1324,7 @@ bytes, no-write failure,
 immutable snapshots, retry/replay/reentrancy, stale/foreign/archive/policy denial
 and ZIP structure. `python3 tests/run-http.py --selected-export` (add `--archive`)
 checks the real controls, live and forged global gate, selection retention and
-all nineteen download contents. The original caption is among 271 source keys in all
+all twenty download contents. The original caption is among 271 source keys in all
 237 catalogs. Remaining external-tool formats and the original HTTP route stay
 open.
 

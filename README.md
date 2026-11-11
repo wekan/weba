@@ -2303,6 +2303,18 @@ parents. `Folder` and `Priority` custom fields map to TickTick folder and
 from tags. Archived cards are omitted, and source-only reminder, repeat and
 creation fields remain blank.
 
+ClickUp produces `wekan-boards-clickup.zip` with one strict `board-ID.csv`
+workspace export per selected board. It matches ClickUp's 31 workspace columns
+plus the spreadsheet importer's `Checklist` column, selective CSV quoting and
+CRLF. Native cards supply task ID, title/content/status, millisecond and ISO
+start/due pairs, ordered assignees and members, labels, list/swimlane, board
+space, flattened comma-safe checklist names, and both parent and child subtask
+references. `Task Type`, `Custom ID`, `Folder`, `Priority` and
+`Time Estimate (hours)` custom fields map to their ClickUp columns. Archived
+cards are omitted; task link, creation time, attachments, comments and tracked
+time remain blank or use ClickUp's empty defaults where native data has no safe
+counterpart.
+
 The ordered ID list, revision and completed/pending queue remain private to the
 form. The queue is bound to the current account session and unchanged selection.
 Every board independently takes the existing locked whole-board export path and
@@ -2329,7 +2341,7 @@ comma-CSV, semicolon-CSV and TSV ZIPs, and the single two-sheet Excel workbook.
 They also verify the Kanboard container/task JSON, exact Markdown task-list,
 Leo XML, OPML outline, Org mode outline, todo.txt task, Taskwarrior JSON,
 Focalboard JSONL, Todoist CSV, Planner XLSX, MeisterTask CSV, Obsidian Kanban,
-Linear CSV and TickTick CSV ZIPs. Remaining external-tool formats and the original HTTP route
+Linear CSV, TickTick CSV and ClickUp CSV ZIPs. Remaining external-tool formats and the original HTTP route
 remain pending.
 
 

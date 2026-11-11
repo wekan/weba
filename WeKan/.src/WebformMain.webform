@@ -1509,6 +1509,9 @@
             { ExportSelectedTickTick WebButton
               Text = "TickTick"
             }
+            { ExportSelectedClickUp WebButton
+              Text = "ClickUp"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton

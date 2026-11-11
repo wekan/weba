@@ -4009,6 +4009,10 @@ Public Sub ExportSelectedTickTick_Click()
   RunSelectedExport("ticktick")
 End
 
+Public Sub ExportSelectedClickUp_Click()
+  RunSelectedExport("clickup")
+End
+
 Public Sub CancelSelectedExport_Click()
   ClearSelectedExport()
 End

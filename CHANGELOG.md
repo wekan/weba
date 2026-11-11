@@ -2,6 +2,24 @@
 
 This work adds the following features and fixes:
 
+- Add ClickUp as the fifteenth selected-board external-tool export. Download
+  one `wekan-boards-clickup.zip` with an ordered strict `board-ID.csv` workspace
+  export per board. Match ClickUp's 31 workspace columns followed by the
+  spreadsheet importer's `Checklist` column, selective CSV quoting and CRLF.
+  Map native task identity/text/status, millisecond and ISO start/due pairs,
+  ordered assignees and members, bracketed labels, list/swimlane/board
+  placement, flattened comma-safe checklist names, and both parent/child
+  subtask references. Map `Task Type`, `Custom ID`, `Folder`, `Priority` and
+  `Time Estimate (hours)` custom fields. Omit archived cards and leave link,
+  creation, comment and tracked-time fields blank; use ClickUp's empty
+  attachment default where native attachments cannot be represented safely.
+  Reuse the private session/selection-bound retry queue and locked full-read,
+  active-board and global export-policy checks for every board. Focused native/
+  browser tests, the complete local suite (69 host tests), and complete source/
+  packaged live suites pass; the integrated scenario validates all twenty exact
+  downloads and live/forged policy gates in both forms. Other external-tool
+  formats remain pending. Thanks to xet7.
+
 - Add TickTick as the fourteenth selected-board external-tool export. Download
   one `wekan-boards-ticktick.zip` with an ordered strict `board-ID.csv` backup
   per board. Match TickTick 7.2's fully quoted date/version/status preamble and

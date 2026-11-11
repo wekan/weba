@@ -91,6 +91,10 @@ Public Function ExportActiveBoardTickTickCsv(boardId As Integer) As String
   Return ExportChecked(boardId, "board", boardId, True, "ticktick")
 End
 
+Public Function ExportActiveBoardClickUp(boardId As Integer) As String
+  Return ExportChecked(boardId, "board", boardId, True, "clickup")
+End
+
 Private Sub RequireActiveBoard(boardId As Integer)
   Dim r As Result = $db.Find("kb_boards", "id=&1 AND archived=&2", boardId, False)
   If Not r.Available Then Error.Raise("Select active boards first")
@@ -155,6 +159,8 @@ Private Function ExportChecked(boardId As Integer, kind As String, itemId As Int
     text = BoardLinearExport.Build(boardId, $db)
   Else If format = "ticktick" And kind = "board" Then
     text = BoardTickTickExport.Build(boardId, $db)
+  Else If format = "clickup" And kind = "board" Then
+    text = BoardClickUpExport.Build(boardId, $db)
   Else
     Error.Raise("Unknown export format")
   Endif

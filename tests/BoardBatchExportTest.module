@@ -23,6 +23,7 @@ Public Sub Main()
   Dim obsidianBatch As Collection
   Dim linearBatch As Collection
   Dim tickTickBatch As Collection
+  Dim clickUpBatch As Collection
   Dim files As Variant[]
   Dim data As Collection
   Dim settings As Collection
@@ -63,6 +64,7 @@ Public Sub Main()
   Dim obsidian As String
   Dim linear As String
   Dim tickTick As String
+  Dim clickUp As String
   Dim i As Integer
   Dim checklist As Integer
   Dim denied As Boolean
@@ -371,6 +373,21 @@ Public Sub Main()
   If InStr(tickTick, Chr(34) & "Canceled all day" & Chr(34) & "," & Chr(34) & "TEXT" & Chr(34) & "," & Chr(34) & "kept" & Chr(34) & "," & Chr(34) & "TickTick only" & Chr(34) & "," & Chr(34) & "N" & Chr(34) & "," & Chr(34) & "2026-11-15T00:00:00+0000" & Chr(34) & "," & Chr(34) & "2026-11-16T00:00:00+0000" & Chr(34)) = 0 Or InStr(tickTick, Chr(34) & "5" & Chr(34) & "," & Chr(34) & "-1" & Chr(34)) = 0 Or InStr(tickTick, Chr(34) & "UTC" & Chr(34) & "," & Chr(34) & "true" & Chr(34) & "," & Chr(34) & "false" & Chr(34) & "," & Chr(34) & "Doing" & Chr(34)) = 0 Then Error.Raise("TickTick canceled label, tag filtering, high priority or all-day mapping drifted")
   If InStr(tickTick, Chr(34) & "2" & Chr(34) & "," & Chr(34) & "TASK" & Chr(34) & Chr(10)) = 0 Then Error.Raise("TickTick sequential parent task mapping drifted")
   If InStr(files[1]["content"], Chr(34) & "Selection Bravo" & Chr(34)) Or InStr(files[1]["content"], Chr(34) & "Export Bravo" & Chr(34) & "," & Chr(34) & "Bravo card" & Chr(34) & "," & Chr(34) & "TEXT" & Chr(34)) = 0 Then Error.Raise("TickTick second-board CSV drifted")
+  CardContent.Save(a, formulaCard, 0, "custom", "Priority", "High", 0, False, 0, "text")
+  CardContent.Save(a, formulaCard, 0, "custom", "Task Type", "Milestone", 0, False, 0, "text")
+  CardContent.Save(a, formulaCard, 0, "custom", "Custom ID", "CU-7", 0, False, 0, "text")
+  CardContent.Save(a, formulaCard, 0, "custom", "Time Estimate (hours)", "2.5", 0, False, 0, "number")
+  clickUpBatch = BoardBatchExport.NewBatch(selection, "clickup")
+  BoardBatchExport.Run(clickUpBatch, selection)
+  files = BoardBatchExport.Files(clickUpBatch)
+  If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".csv" Or BoardBatchExport.Format(clickUpBatch) <> "clickup" Then Error.Raise("ClickUp batch lost format, order or extension")
+  clickUp = files[0]["content"]
+  If Left(clickUp, Len(BoardClickUpExport.Headers().Join(",") & Chr(13) & Chr(10))) <> BoardClickUpExport.Headers().Join(",") & Chr(13) & Chr(10) Or Right(clickUp, 2) <> Chr(13) & Chr(10) Or BoardClickUpExport.Headers().Count <> 32 Then Error.Raise("ClickUp 32-column header or CRLF drifted")
+  If InStr(clickUp, CStr(formulaCard) & ",,Milestone,CU-7," & Chr(34) & "=SUM(1,2)" & Chr(34) & "," & Chr(34) & "Comma, quote " & Chr(34) & Chr(34) & " and" & Chr(10) & "line" & Chr(34) & ",Todo") = 0 Then Error.Raise("ClickUp ID, type, custom ID, title, description or status drifted")
+  If InStr(clickUp, CStr(CardDates.Parse("2026-11-12T05:06:07.008Z")["epoch"]) & ",2026-11-12T05:06:07.008Z," & CStr(CardDates.Parse("2026-11-10T01:02:03.004Z")["epoch"]) & ",2026-11-10T01:02:03.004Z,,[" & CStr(todoistCard) & "],[],[batch-export-owner]," & Chr(34) & "[red,urgent]" & Chr(34) & ",high,,Work,Export Alpha,9000000") = 0 Then Error.Raise("ClickUp date pairs, child IDs, people, tags, priority, folder, space or estimate drifted")
+  If InStr(clickUp, String(9, ",") & "Checked" & Chr(13) & Chr(10)) = 0 Then Error.Raise("ClickUp flattened checklist or trailing empty columns drifted")
+  If InStr(clickUp, "," & CStr(formulaCard) & ",,[],") = 0 Then Error.Raise("ClickUp inverse parent reference drifted")
+  If InStr(files[1]["content"], ",Bravo card,Bravo body,Todo") = 0 Then Error.Raise("ClickUp second-board CSV drifted")
   batch = BoardBatchExport.NewBatch(selection)
   batch["busy"] = True
   Try BoardBatchExport.Run(batch, selection)
@@ -400,7 +417,7 @@ Public Sub Main()
   Try BoardBatchExport.Run(batch, selection)
   denied = Error
   If Not denied Or Error.Text <> "Export is disabled by the administrator." Or BoardBatchExport.Completed(batch) Then Error.Raise("Disabled export leaked or advanced its queue")
-  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML/Org mode/todo.txt/Taskwarrior/Focalboard/Todoist/Planner/MeisterTask/Obsidian/Linear/TickTick batch export: exact ordered files, generic and Planner workbook data, native Kanboard data, text/XML/JSON/JSONL/CSV tool formats, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
+  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML/Org mode/todo.txt/Taskwarrior/Focalboard/Todoist/Planner/MeisterTask/Obsidian/Linear/TickTick/ClickUp batch export: exact ordered files, generic and Planner workbook data, native Kanboard data, text/XML/JSON/JSONL/CSV tool formats, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
 End
 
 Private Function Frame() As String

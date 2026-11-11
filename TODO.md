@@ -124,6 +124,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   selected TickTick 7.2 CSV ZIP with its quoted preamble and 25-column rows,
   folders/priorities, labels, checklist glyphs, UTC dates, stable task IDs/order
   and inverse subtask parents is recorded there;
+  selected ClickUp CSV ZIP with its exact workspace/importer columns, CRLF,
+  date pairs, bracketed people/tags, custom fields, checklists and bidirectional
+  subtask references is recorded there;
   original remaining formats/API route, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded
