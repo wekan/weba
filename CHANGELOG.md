@@ -2,6 +2,18 @@
 
 This work adds the following features and fixes:
 
+- Add OPML as the fourth selected-board external-tool export. Download one
+  `wekan-boards-opml.zip` with an ordered strict `board-ID.opml` entry per
+  board. Match the parent OPML 2.0 outline: board title, every list, nested
+  cards/checklists/checkitems, terminal cards and completed items, descriptions
+  in `_note`, exact XML attribute/newline/tab escaping, indentation and trailing
+  newline. Reuse the private session/selection-bound retry queue and locked
+  full-read, active-board and global export-policy checks for every board.
+  Focused native/browser tests, the complete local suite (69 host tests), and
+  complete source/packaged live suites pass; the integrated scenario validates
+  all nine exact downloads and live/forged policy gates in both forms. Other
+  external-tool formats remain pending. Thanks to xet7.
+
 - Add Leo as the third selected-board external-tool export. Download one
   `wekan-boards-leo.zip` with an ordered strict `board-ID.leo` entry per board.
   Match the parent Leo XML outline: deterministic node IDs, board-title header,

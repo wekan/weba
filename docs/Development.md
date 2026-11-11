@@ -1158,7 +1158,7 @@ streaming, security eventlog/Problems reporting, non-SQLite concurrency and full
 original UI/API/DDP/security suites remain pending. No controls for unsupported
 formats or privacy transformations are shown.
 
-### Selected board JSON, CSV, TSV, Excel, Kanboard, Markdown and Leo export
+### Selected board JSON, CSV, TSV, Excel, Kanboard, Markdown, Leo and OPML export
 
 The native Multi-Selection action exports selected active boards into one
 `wekan-boards-weba.zip`, with a complete weba-2 document in each strict
@@ -1208,6 +1208,12 @@ deterministic gnx IDs, the board-title header, every list, nested cards and
 checklists/items, terminal/completed marks, escaped card-description body nodes,
 and the trailing newline. It runs inside the same locked transfer transaction.
 
+The `opml` format writes `wekan-boards-opml.zip` with ordered strict
+`board-ID.opml` entries. `BoardOpmlExport` reproduces the parent OPML 2.0
+outline: board/list/card/checklist hierarchy, completion attributes, `_note`
+descriptions, XML attribute and line-break/tab escaping, indentation, and the
+trailing newline inside the same locked transfer transaction.
+
 The final file snapshot crosses the native command boundary as base64 JSON.
 `batch-export.js` bounds and validates the JSON/table/Excel envelope, writes
 stored UTF-8 ZIP or OOXML entries with CRC-32 and a central directory, and never
@@ -1216,7 +1222,7 @@ bytes, no-write failure,
 immutable snapshots, retry/replay/reentrancy, stale/foreign/archive/policy denial
 and ZIP structure. `python3 tests/run-http.py --selected-export` (add `--archive`)
 checks the real controls, live and forged global gate, selection retention and
-all eight download contents. The original caption is among 271 source keys in all
+all nine download contents. The original caption is among 271 source keys in all
 237 catalogs. Remaining external-tool formats and the original HTTP route stay
 open.
 

@@ -1476,6 +1476,9 @@
             { ExportSelectedLeo WebButton
               Text = "Leo"
             }
+            { ExportSelectedOpml WebButton
+              Text = "OPML"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton

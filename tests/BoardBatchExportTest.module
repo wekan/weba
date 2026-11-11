@@ -12,6 +12,7 @@ Public Sub Main()
   Dim kanboardBatch As Collection
   Dim markdownBatch As Collection
   Dim leoBatch As Collection
+  Dim opmlBatch As Collection
   Dim files As Variant[]
   Dim data As Collection
   Dim settings As Collection
@@ -21,6 +22,7 @@ Public Sub Main()
   Dim kanboardTask As Collection
   Dim markdown As String
   Dim leo As String
+  Dim opml As String
   Dim checklist As Integer
   Dim denied As Boolean
   WebDatabase.Register("batch-export-global", "x")
@@ -141,6 +143,15 @@ Public Sub Main()
   If InStr(leo, "<vh>Todo</vh>") = 0 Or InStr(leo, "<vh>Doing</vh>") = 0 Or InStr(leo, "<vh>Done</vh>") = 0 Or InStr(leo, " a=" & Chr(34) & "M" & Chr(34) & "><vh>Finished card</vh>") = 0 Then Error.Raise("Leo lists or terminal-card mark drifted")
   If InStr(leo, "<vh>Checks</vh>") = 0 Or InStr(leo, " a=" & Chr(34) & "M" & Chr(34) & "><vh>Checked</vh>") = 0 Or InStr(leo, "<t tx=") = 0 Or InStr(leo, "Comma, quote &quot; and" & Chr(10) & "line") = 0 Or InStr(leo, "Check &lt;valve&gt;") = 0 Or InStr(leo, "a &lt; b &amp;&amp; c &gt; d") = 0 Then Error.Raise("Leo checklist, body node or XML escaping drifted")
   If InStr(leo, "</vnodes>" & Chr(10) & "<tnodes>") = 0 Or Right(leo, 1) <> Chr(10) Then Error.Raise("Leo vnodes/tnodes ordering or trailing newline drifted")
+  opmlBatch = BoardBatchExport.NewBatch(selection, "opml")
+  BoardBatchExport.Run(opmlBatch, selection)
+  files = BoardBatchExport.Files(opmlBatch)
+  If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".opml" Or BoardBatchExport.Format(opmlBatch) <> "opml" Then Error.Raise("OPML batch lost format, order or extension")
+  opml = files[0]["content"]
+  If Left(opml, Len("<?xml version=" & Chr(34) & "1.0" & Chr(34) & " encoding=" & Chr(34) & "UTF-8" & Chr(34) & "?>")) <> "<?xml version=" & Chr(34) & "1.0" & Chr(34) & " encoding=" & Chr(34) & "UTF-8" & Chr(34) & "?>" Or InStr(opml, "<title>Export Alpha</title>") = 0 Then Error.Raise("OPML declaration or board title drifted")
+  If InStr(opml, "    <outline text=" & Chr(34) & "Todo" & Chr(34)) = 0 Or InStr(opml, "    <outline text=" & Chr(34) & "Doing" & Chr(34) & "/>") = 0 Or InStr(opml, "    <outline text=" & Chr(34) & "Done" & Chr(34)) = 0 Then Error.Raise("OPML list outlines or indentation drifted")
+  If InStr(opml, "text=" & Chr(34) & "Finished card" & Chr(34) & " _note=" & Chr(34) & "First&#10;&#10;Second" & Chr(34) & " _complete=" & Chr(34) & "true" & Chr(34)) = 0 Or InStr(opml, "Check &lt;valve&gt;") = 0 Or InStr(opml, "a &lt; b &amp;&amp; c &gt; d") = 0 Then Error.Raise("OPML note, completion or XML attribute escaping drifted")
+  If InStr(opml, "<outline text=" & Chr(34) & "Checks" & Chr(34) & ">") = 0 Or InStr(opml, "<outline text=" & Chr(34) & "Checked" & Chr(34) & " _complete=" & Chr(34) & "true" & Chr(34) & "/>") = 0 Or Right(opml, 1) <> Chr(10) Then Error.Raise("OPML checklist nesting, completed item or trailing newline drifted")
   batch = BoardBatchExport.NewBatch(selection)
   batch["busy"] = True
   Try BoardBatchExport.Run(batch, selection)
@@ -170,7 +181,7 @@ Public Sub Main()
   Try BoardBatchExport.Run(batch, selection)
   denied = Error
   If Not denied Or Error.Text <> "Export is disabled by the administrator." Or BoardBatchExport.Completed(batch) Then Error.Raise("Disabled export leaked or advanced its queue")
-  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo batch export: exact ordered files, fixed quoted rows/CRLF/formula/date/people cells, 20-column workbook descriptors, native Kanboard containers/tasks/dates/tags/details/links, Markdown task-list text and Leo XML outline/checklists, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
+  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML batch export: exact ordered files, fixed quoted rows/CRLF/formula/date/people cells, 20-column workbook descriptors, native Kanboard containers/tasks/dates/tags/details/links, Markdown task-list text, Leo XML and OPML outlines/checklists, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
 End
 
 Private Function Frame() As String

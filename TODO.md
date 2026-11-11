@@ -109,6 +109,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   checkboxes and description continuation lines is recorded there;
   selected Leo XML outline ZIP with deterministic list/card/checklist nodes,
   marks, body nodes and escaping is recorded there;
+  selected OPML 2.0 outline ZIP with list/card/checklist nodes, completion,
+  note attributes and XML whitespace escaping is recorded there;
   original remaining formats/API route, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded

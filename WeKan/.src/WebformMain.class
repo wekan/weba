@@ -3965,6 +3965,10 @@ Public Sub ExportSelectedLeo_Click()
   RunSelectedExport("leo")
 End
 
+Public Sub ExportSelectedOpml_Click()
+  RunSelectedExport("opml")
+End
+
 Public Sub CancelSelectedExport_Click()
   ClearSelectedExport()
 End

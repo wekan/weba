@@ -1,0 +1,97 @@
+' Native counterpart of the parent OPML 2.0 outline formatter.
+Export
+Private $db As Connection
+Private $boardId As Integer
+
+Private Function TextValue(value As Variant) As String
+  If IsNull(value) Then Return ""
+  Return CStr(value)
+End
+
+Private Function EscapeAttr(value As Variant) As String
+  Dim text As String = TextValue(value)
+  text = Replace(text, "&", "&amp;")
+  text = Replace(text, "<", "&lt;")
+  text = Replace(text, ">", "&gt;")
+  text = Replace(text, Chr(34), "&quot;")
+  text = Replace(text, Chr(13) & Chr(10), "&#10;")
+  text = Replace(text, Chr(13), "&#10;")
+  text = Replace(text, Chr(10), "&#10;")
+  text = Replace(text, Chr(9), "&#9;")
+  Return text
+End
+
+Private Function ClosedList(title As String) As Boolean
+  Dim lower As String = LCase(title)
+  Return InStr(lower, "done") > 0 Or InStr(lower, "closed") > 0 Or InStr(lower, "complete") > 0 Or InStr(lower, "archiv") > 0 Or InStr(lower, "finished") > 0
+End
+
+Private Function Attributes(text As Variant, note As String, done As Boolean) As String
+  Return "text=" & Chr(34) & EscapeAttr(text) & Chr(34) & If(note, " _note=" & Chr(34) & EscapeAttr(note) & Chr(34), "") & If(done, " _complete=" & Chr(34) & "true" & Chr(34), "")
+End
+
+Private Function ItemOutline(item As Result, indent As String) As String
+  Return indent & "<outline " & Attributes(item!title, "", CBool(item!done)) & "/>"
+End
+
+Private Function ChecklistOutline(checklist As Result, indent As String) As String
+  Dim children As New String[]
+  Dim item As Result
+  Dim tag As String = indent & "<outline " & Attributes(checklist!title, "", False)
+  item = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, checklist!card_id, "checkitem", checklist!id)
+  For Each item
+    children.Add(ItemOutline(item, indent & "  "))
+  Next
+  If Not children.Count Then Return tag & "/>"
+  Return tag & ">" & Chr(10) & children.Join(Chr(10)) & Chr(10) & indent & "</outline>"
+End
+
+Private Function CardOutline(card As Result, listTitle As String, indent As String) As String
+  Dim children As New String[]
+  Dim checklist As Result
+  Dim tag As String = indent & "<outline " & Attributes(card!title, TextValue(card!description), ClosedList(listTitle))
+  checklist = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, card!id, "checklist")
+  For Each checklist
+    children.Add(ChecklistOutline(checklist, indent & "  "))
+  Next
+  If Not children.Count Then Return tag & "/>"
+  Return tag & ">" & Chr(10) & children.Join(Chr(10)) & Chr(10) & indent & "</outline>"
+End
+
+Private Function ListOutline(listRow As Result) As String
+  Dim children As New String[]
+  Dim card As Result
+  Dim title As String = TextValue(listRow!title)
+  Dim tag As String = "    <outline " & Attributes(title, "", False)
+  card = $db.Exec("SELECT c.* FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND l.title=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", $boardId, "card", title)
+  For Each card
+    children.Add(CardOutline(card, title, "      "))
+  Next
+  If Not children.Count Then Return tag & "/>"
+  Return tag & ">" & Chr(10) & children.Join(Chr(10)) & Chr(10) & "    </outline>"
+End
+
+Public Function Build(boardId As Integer, db As Connection) As String
+  Dim lines As New String[]
+  Dim board As Result
+  Dim lists As Result
+  $db = db
+  $boardId = boardId
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  board = db.Find("kb_boards", "id=&1", boardId)
+  If Not board.Available Then Error.Raise("Board not found")
+  lines.Add("<?xml version=" & Chr(34) & "1.0" & Chr(34) & " encoding=" & Chr(34) & "UTF-8" & Chr(34) & "?>")
+  lines.Add("<opml version=" & Chr(34) & "2.0" & Chr(34) & ">")
+  lines.Add("  <head>")
+  lines.Add("    <title>" & EscapeAttr(board!title) & "</title>")
+  lines.Add("  </head>")
+  lines.Add("  <body>")
+  lists = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
+  For Each lists
+    lines.Add(ListOutline(lists))
+  Next
+  lines.Add("  </body>")
+  lines.Add("</opml>")
+  lines.Add("")
+  Return lines.Join(Chr(10))
+End

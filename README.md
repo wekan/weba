@@ -2161,7 +2161,7 @@ the driver has already lost. Other original JSON wire contracts and selected
 multi-format exports remain pending.
 
 
-### Selected board JSON, CSV, TSV, Excel, Kanboard, Markdown and Leo export
+### Selected board JSON, CSV, TSV, Excel, Kanboard, Markdown, Leo and OPML export
 
 The native Multi-Selection sidebar can export selected active boards as one
 `wekan-boards-weba.zip`. Each entry is a complete `weba-2` JSON board named
@@ -2212,6 +2212,12 @@ board-title header, top-level list nodes, nested card/checklist/checkitem nodes,
 terminal-card and completed-item marks, separate card-description body nodes,
 XML escaping, and trailing newline. Empty lists remain in the outline.
 
+OPML produces `wekan-boards-opml.zip` with one strict `board-ID.opml` outline
+per selected board. It matches the parent OPML 2.0 formatter: board title,
+top-level list outlines including empty lists, nested card/checklist/checkitem
+outlines, terminal-card and completed-item attributes, card descriptions in
+`_note`, and XML-safe attribute text with encoded line breaks and tabs.
+
 The ordered ID list, revision and completed/pending queue remain private to the
 form. The queue is bound to the current account session and unchanged selection.
 Every board independently takes the existing locked whole-board export path and
@@ -2234,9 +2240,9 @@ board and disabled export. Real Chromium tests run against source and packaged
 apps with `python3 tests/run-http.py --selected-export [--archive]` and verify
 zero-selection refusal, live/forged policy denial, the exact two-entry JSON,
 comma-CSV, semicolon-CSV and TSV ZIPs, and the single two-sheet Excel workbook.
-They also verify the Kanboard container/task JSON, exact Markdown task-list and
-Leo XML outline ZIPs. Remaining external-tool formats and the original HTTP
-route remain pending.
+They also verify the Kanboard container/task JSON, exact Markdown task-list,
+Leo XML, and OPML outline ZIPs. Remaining external-tool formats and the original
+HTTP route remain pending.
 
 
 ### Gated permanent board deletion and Recovery

@@ -47,6 +47,10 @@ Public Function ExportActiveBoardLeo(boardId As Integer) As String
   Return ExportChecked(boardId, "board", boardId, True, "leo")
 End
 
+Public Function ExportActiveBoardOpml(boardId As Integer) As String
+  Return ExportChecked(boardId, "board", boardId, True, "opml")
+End
+
 Private Sub RequireActiveBoard(boardId As Integer)
   Dim r As Result = $db.Find("kb_boards", "id=&1 AND archived=&2", boardId, False)
   If Not r.Available Then Error.Raise("Select active boards first")
@@ -89,6 +93,8 @@ Private Function ExportChecked(boardId As Integer, kind As String, itemId As Int
     text = BoardMarkdownExport.Build(boardId, $db)
   Else If format = "leo" And kind = "board" Then
     text = BoardLeoExport.Build(boardId, $db)
+  Else If format = "opml" And kind = "board" Then
+    text = BoardOpmlExport.Build(boardId, $db)
   Else
     Error.Raise("Unknown export format")
   Endif
