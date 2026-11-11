@@ -1,0 +1,81 @@
+' Native fixed-column counterpart of the source card-row CSV export. Board-defined
+' custom-field columns remain pending until that native schema exists.
+Export
+
+Public Function Headers() As String[]
+  Return ["Title", "Description", "List", "Swimlane", "Owner", "Requested By", "Assigned By", "Members", "Assignee", "Labels", "Start", "Due", "End", "Overtime (hours)", "Spent time (hours)", "Created at", "Last modified at", "Last activity", "Voting", "Archived"]
+End
+
+Private Function GuardFormula(text As String) As String
+  If text And InStr("=+-@" & Chr(9) & Chr(13), Left(text, 1)) Then Return "'" & text
+  Return text
+End
+
+Public Function Cell(value As Variant) As String
+  Dim text As String
+  If Not IsNull(value) Then text = CStr(value)
+  text = GuardFormula(text)
+  Return Chr(34) & Replace(text, Chr(34), Chr(34) & Chr(34)) & Chr(34)
+End
+
+Public Function Line(values As String[], delimiter As String) As String
+  Dim cells As New String[]
+  Dim value As String
+  If delimiter <> "," Then Error.Raise("Unknown CSV delimiter")
+  For Each value In values
+    cells.Add(Cell(value))
+  Next
+  Return cells.Join(delimiter)
+End
+
+Private Function DateValue(dates As Collection, key As String) As String
+  If Not dates.Exist(key) Then Return " "
+  Return CardDates.Iso(CLong(dates[key]))
+End
+
+Private Function TextValue(value As Variant) As String
+  If IsNull(value) Then Return ""
+  Return CStr(value)
+End
+
+Public Function Build(boardId As Integer, db As Connection, Optional delimiter As String = ",") As String
+  Dim lines As New String[]
+  Dim values As String[]
+  Dim members As String[]
+  Dim assignees As String[]
+  Dim dates As Collection
+  Dim r As Result
+  Dim query As String
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  lines.Add(Line(Headers(), delimiter))
+  query = "SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 ORDER BY c.id"
+  r = db.Exec(query, boardId)
+  For Each r
+    members = BoardAccess.CardMembers(boardId, r!id)
+    assignees = BoardAccess.Assignees(boardId, r!id)
+    dates = CardDates.ReadDates(boardId, r!id)
+    values = New String[]
+    values.Add(TextValue(r!title))
+    values.Add(TextValue(r!description))
+    values.Add(TextValue(r!list_title))
+    values.Add(TextValue(r!lane))
+    values.Add("")
+    values.Add(" ")
+    values.Add(" ")
+    values.Add(members.Join(" "))
+    values.Add(assignees.Join(" "))
+    values.Add(TextValue(r!labels))
+    values.Add(DateValue(dates, "startAt"))
+    values.Add(DateValue(dates, "dueAt"))
+    values.Add(DateValue(dates, "endAt"))
+    values.Add("false")
+    values.Add("")
+    values.Add(" ")
+    values.Add(" ")
+    values.Add(" ")
+    values.Add(" ")
+    values.Add(If(CBool(r!archived), "true", "false"))
+    lines.Add(Line(values, delimiter))
+  Next
+  Return lines.Join(Chr(13) & Chr(10))
+End

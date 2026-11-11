@@ -2,12 +2,15 @@ Public Sub Main()
   Dim a As Integer
   Dim b As Integer
   Dim cardId As Integer
+  Dim formulaCard As Integer
   Dim selection As Collection
   Dim batch As Collection
+  Dim csvBatch As Collection
   Dim files As Variant[]
   Dim data As Collection
   Dim settings As Collection
   Dim before As String
+  Dim csv As String
   Dim denied As Boolean
   WebDatabase.Register("batch-export-global", "x")
   WebDatabase.Register("batch-export-owner", "x")
@@ -16,6 +19,12 @@ Public Sub Main()
   a = KanbanStore.AddBoard("Export Alpha")
   cardId = KanbanStore.SaveCard(a, 0, "Alpha card", "Alpha body", "Default", "Todo", "", "", "")
   CardContent.UploadFile(a, cardId, "alpha.bin", "A")
+  formulaCard = KanbanStore.SaveCard(a, 0, "=SUM(1,2)", "Comma, quote " & Chr(34) & " and" & Chr(10) & "line", "Default", "Todo", "batch-export-owner", "red, urgent", "")
+  BoardAccess.SetAssignees(a, formulaCard, ["batch-export-owner"])
+  data = New Collection
+  data["startAt"] = CardDates.Parse("2026-11-10T01:02:03.004Z")
+  data["dueAt"] = CardDates.Parse("2026-11-12T05:06:07.008Z")
+  CardDates.Apply(a, formulaCard, data)
   b = KanbanStore.AddBoard("Export Bravo")
   cardId = KanbanStore.SaveCard(b, 0, "Bravo card", "Bravo body", "Default", "Todo", "", "", "")
   CardContent.UploadFile(b, cardId, "bravo.bin", "BBB")
@@ -51,6 +60,15 @@ Public Sub Main()
   before = Frame()
   BoardBatchExport.Run(batch, selection)
   If BoardBatchExport.Completed(batch) <> 2 Or Frame() <> before Then Error.Raise("Completed export replay changed state")
+  csvBatch = BoardBatchExport.NewBatch(selection, "csv")
+  BoardBatchExport.Run(csvBatch, selection)
+  files = BoardBatchExport.Files(csvBatch)
+  If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".csv" Or BoardBatchExport.Format(csvBatch) <> "csv" Then Error.Raise("CSV batch lost format, order or extension")
+  csv = files[0]["content"]
+  If Left(csv, Len(BoardCsvExport.Line(BoardCsvExport.Headers(), ","))) <> BoardCsvExport.Line(BoardCsvExport.Headers(), ",") Then Error.Raise("CSV header drifted from the source fixed-column order")
+  If InStr(csv, Chr(13) & Chr(10)) = 0 Or InStr(csv, Chr(34) & "'=SUM(1,2)" & Chr(34)) = 0 Then Error.Raise("CSV lost CRLF rows or spreadsheet-formula guard")
+  If InStr(csv, Chr(34) & "Comma, quote " & Chr(34) & Chr(34) & " and" & Chr(10) & "line" & Chr(34)) = 0 Then Error.Raise("CSV quote/newline escaping failed")
+  If InStr(csv, "2026-11-10T01:02:03.004Z") = 0 Or InStr(csv, "2026-11-12T05:06:07.008Z") = 0 Or InStr(csv, Chr(34) & "batch-export-owner" & Chr(34)) = 0 Then Error.Raise("CSV lost native dates or assignee")
   batch = BoardBatchExport.NewBatch(selection)
   batch["busy"] = True
   Try BoardBatchExport.Run(batch, selection)
@@ -80,7 +98,7 @@ Public Sub Main()
   Try BoardBatchExport.Run(batch, selection)
   denied = Error
   If Not denied Or Error.Text <> "Export is disabled by the administrator." Or BoardBatchExport.Completed(batch) Then Error.Raise("Disabled export leaked or advanced its queue")
-  Print "Selected JSON batch export: exact ordered files, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
+  Print "Selected JSON/CSV batch export: exact ordered files, fixed quoted CSV/CRLF/formula/date/people cells, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
 End
 
 Private Function Frame() As String

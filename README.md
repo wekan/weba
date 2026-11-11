@@ -2161,13 +2161,20 @@ the driver has already lost. Other original JSON wire contracts and selected
 multi-format exports remain pending.
 
 
-### Selected board JSON ZIP export
+### Selected board JSON and comma-CSV ZIP export
 
 The native Multi-Selection sidebar can export selected active boards as one
 `wekan-boards-weba.zip`. Each entry is a complete `weba-2` JSON board named
 `board-ID.json`; attachment data remains exact base64 content. Downloading does
 not clear the selected set. The original Export selected boards caption is
 imported verbatim across all 237 native catalogs (271 source keys).
+
+The retained export panel also offers comma-CSV as
+`wekan-boards-csv.zip`, with one strict `board-ID.csv` entry per board. It uses
+the original fixed 20-column order, quotes every cell, writes CRLF rows, doubles
+embedded quotes, preserves embedded newlines and prefixes formula-leading cell
+text. Current native card, list, lane, member, assignee, label and date fields
+are exported; source models and custom-field columns not yet native stay open.
 
 The ordered ID list, revision and completed/pending queue remain private to the
 form. The queue is bound to the current account session and unchanged selection.
@@ -2180,16 +2187,17 @@ boards. Changing selection, leaving the active overview, signing out or disablin
 export invalidates the queue. Forged hidden actions still pass all server checks.
 
 The browser receives only a base64-encoded JSON envelope after every selected
-board succeeds. A bounded local helper validates strict `board-ID.json` names
+board succeeds. A bounded local helper validates strict `board-ID.json` or
+`board-ID.csv` names
 and string content, then writes a standard stored ZIP with UTF-8 names, CRC-32
 and a central directory; it accepts neither paths nor caller-selected names.
 Native and JavaScript tests cover exact bytes, no-write failure, copied snapshots,
 pending-only retry, replay, reentrancy, stale revision, foreign actor, archived
 board and disabled export. Real Chromium tests run against source and packaged
 apps with `python3 tests/run-http.py --selected-export [--archive]` and verify
-zero-selection refusal, live/forged policy denial and the exact two-entry ZIP.
-CSV, semicolon-CSV, TSV, Excel, external-tool formats and the original HTTP route
-remain pending.
+zero-selection refusal, live/forged policy denial and the exact two-entry JSON
+and CSV ZIPs. Semicolon-CSV, TSV, Excel, external-tool formats and the original
+HTTP route remain pending.
 
 
 ### Gated permanent board deletion and Recovery

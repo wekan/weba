@@ -2,6 +2,19 @@
 
 This work adds the following features and fixes:
 
+- Add comma-CSV to the native selected-board ZIP export. Offer JSON and CSV
+  from a retained export panel while preserving the private account/session/
+  selection-revision queue and per-board active, full-read and global-policy
+  checks. Match the original fixed 20-column order, quote every cell, use CRLF,
+  double embedded quotes and prefix formula-leading values; export the current
+  native card, list, lane, people, label and date fields. Use strict `.csv`
+  entries and a distinct download name. Native and ZIP tests, the full local
+  suite (69 host tests), and the complete source/packaged live browser suites
+  pass; the integrated export scenario verifies both exact downloads and the
+  live/forged policy gate in both forms.
+  Semicolon-CSV, TSV, Excel, external-tool formats, custom-field columns and
+  source models not yet native remain pending. Thanks to xet7.
+
 - Add native selected-board weba-2 JSON batch export as one ZIP download. Keep
   the selected IDs and ordered pending queue private to the form, bind them to
   the account session and selection revision, and independently lock and recheck

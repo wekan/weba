@@ -3897,22 +3897,48 @@ End
 
 Private Sub ClearSelectedExport()
   $selectedExport = Null
+  SelectedExportPanel.Hide()
   SelectedExportProgress.Text = ""
 End
 
 Public Sub ExportSelectedBoards_Click()
+  If Not IsOverview() Or $archive Then Error.Raise("Select active boards first")
+  ImportExportPolicy.RequireExport()
+  BoardSelection.ActionIds(SelectionState())
+  SelectedExportPanel.Show()
+Catch
+  Notice.Text = Error.Text
+End
+
+Private Sub RunSelectedExport(format As String)
   Dim files As Variant[]
   If Not IsOverview() Or $archive Then Error.Raise("Select active boards first")
   ImportExportPolicy.RequireExport()
   BoardSelection.ActionIds(SelectionState())
-  If Not $selectedExport Then $selectedExport = BoardBatchExport.NewBatch(SelectionState())
+  If $selectedExport Then
+    If BoardBatchExport.Format($selectedExport) <> format Then $selectedExport = Null
+  Endif
+  If Not $selectedExport Then $selectedExport = BoardBatchExport.NewBatch(SelectionState(), format)
   BoardBatchExport.Run($selectedExport, SelectionState())
   files = BoardBatchExport.Files($selectedExport)
-  WebForm.Exec("webaBatchExport.downloadPayload('" & Base64(JSON.Encode(files)) & "');")
+  WebForm.Exec("webaBatchExport.downloadPayload('" & Base64(JSON.Encode(files)) & "','wekan-boards-" & format & ".zip');")
   ClearSelectedExport()
 Catch
   Notice.Text = Error.Text
+  SelectedExportPanel.Show()
   If $selectedExport Then SelectedExportProgress.Text = "Completed: " & Str(BoardBatchExport.Completed($selectedExport)) & "; remaining: " & Str(BoardBatchExport.Remaining($selectedExport))
+End
+
+Public Sub ExportSelectedJson_Click()
+  RunSelectedExport("weba")
+End
+
+Public Sub ExportSelectedCsv_Click()
+  RunSelectedExport("csv")
+End
+
+Public Sub CancelSelectedExport_Click()
+  ClearSelectedExport()
 End
 
 Public Sub SelectedBoardsCaption_Click()

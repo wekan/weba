@@ -6,5 +6,6 @@ const files=[{name:'board-7.json',content:JSON.stringify({format:'weba-2',title:
 let at=0,index=0;
 while(view.getUint32(at,true)===0x04034b50){const size=view.getUint32(at+18,true),nameSize=view.getUint16(at+26,true),extraSize=view.getUint16(at+28,true),name=decoder.decode(bytes.subarray(at+30,at+30+nameSize)),start=at+30+nameSize+extraSize;assert.equal(name,files[index].name);assert.deepEqual(JSON.parse(decoder.decode(bytes.subarray(start,start+size))),JSON.parse(files[index].content));at=start+size;index++;}
 assert.equal(index,2);assert.equal(view.getUint32(at,true),0x02014b50);assert.equal(view.getUint32(bytes.length-22,true),0x06054b50);assert.equal(view.getUint16(bytes.length-12,true),2);
-for(const bad of [[],[{name:'../escape.json',content:'{}'}],[{name:'board-0.json',content:'{}'}],[{name:'board-1.json',content:1}]])assert.throws(()=>window.webaBatchExport.archive(bad),/Invalid board export/);
+const csv=window.webaBatchExport.archive([{name:'board-11.csv',content:'"Title"\r\n"\'=formula"'}]);assert.equal(new DataView(csv.buffer).getUint32(0,true),0x04034b50);
+for(const bad of [[],[{name:'../escape.json',content:'{}'}],[{name:'board-0.json',content:'{}'}],[{name:'board-1.tsv',content:'x'}],[{name:'board-1.json',content:1}]])assert.throws(()=>window.webaBatchExport.archive(bad),/Invalid board export/);
 console.log('Selected export ZIP: stored UTF-8 JSON entries, central directory and strict server filename/content envelope passed');

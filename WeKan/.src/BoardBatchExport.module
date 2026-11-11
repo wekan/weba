@@ -3,18 +3,25 @@
 ' received the ZIP payload.
 Export
 
-Public Function NewBatch(selection As Collection) As Collection
+Public Function NewBatch(selection As Collection, Optional format As String = "weba") As Collection
   Dim data As New Collection
   Dim ids As Integer[] = BoardSelection.ActionIds(selection)
   If ids.Count > 1000 Then Error.Raise("Select at most 1000 boards")
+  If format <> "weba" And format <> "csv" Then Error.Raise("Unknown export format")
   data["username"] = WebIdentity.Username
   data["generation"] = WebDatabase.SessionGeneration(WebIdentity.Username)
   data["revision"] = BoardSelection.Revision(selection)
+  data["format"] = format
   data["ids"] = ids.Copy()
   data["remaining"] = ids.Copy()
   data["files"] = New Variant[]
   data["busy"] = False
   Return data
+End
+
+Public Function Format(batch As Collection) As String
+  If Not batch Then Return ""
+  Return batch["format"]
 End
 
 Private Sub Check(batch As Collection, selection As Collection)
@@ -65,8 +72,12 @@ Public Sub Run(batch As Collection, selection As Collection)
   While pending.Count
     Check(batch, selection)
     file = New Collection
-    file["name"] = "board-" & CStr(pending[0]) & ".json"
-    file["content"] = BoardTransfer.ExportActiveBoard(pending[0])
+    file["name"] = "board-" & CStr(pending[0]) & If(batch["format"] = "csv", ".csv", ".json")
+    If batch["format"] = "csv" Then
+      file["content"] = BoardTransfer.ExportActiveBoardCsv(pending[0])
+    Else
+      file["content"] = BoardTransfer.ExportActiveBoard(pending[0])
+    Endif
     files.Add(file)
     pending.Remove(0)
   Wend

@@ -1158,7 +1158,7 @@ streaming, security eventlog/Problems reporting, non-SQLite concurrency and full
 original UI/API/DDP/security suites remain pending. No controls for unsupported
 formats or privacy transformations are shown.
 
-### Selected board JSON ZIP export
+### Selected board JSON and comma-CSV ZIP export
 
 The native Multi-Selection action exports selected active boards into one
 `wekan-boards-weba.zip`, with a complete weba-2 document in each strict
@@ -1169,15 +1169,23 @@ only exclusion and archive state inside the transaction. A later failure retains
 completed JSON only in private form memory and retry resumes at the pending item;
 no partial ZIP is sent.
 
+The retained export panel can instead produce `wekan-boards-csv.zip` with one
+strict `board-ID.csv` entry for each selected board. `BoardCsvExport` follows the
+source fixed 20-column order, quotes every cell, writes CRLF rows, doubles quotes,
+preserves embedded newlines and prefixes formula-leading text. It currently maps
+native card, list, lane, member, assignee, label and date data; custom-field
+columns and source models without native counterparts remain pending.
+
 The final file snapshot crosses the native command boundary as base64 JSON.
-`batch-export.js` bounds and validates the envelope, writes stored UTF-8 ZIP
+`batch-export.js` bounds and validates the JSON/CSV envelope, writes stored UTF-8 ZIP
 entries with CRC-32 and a central directory, and never accepts path-shaped or
 browser-supplied names. Tests cover exact attachment bytes, no-write failure,
 immutable snapshots, retry/replay/reentrancy, stale/foreign/archive/policy denial
 and ZIP structure. `python3 tests/run-http.py --selected-export` (add `--archive`)
 checks the real controls, live and forged global gate, selection retention and
-download contents. The original caption is among 271 source keys in all 237
-catalogs. Remaining batch formats and the original HTTP route stay open.
+both download contents. The original caption is among 271 source keys in all 237
+catalogs. Semicolon-CSV, TSV, Excel, external-tool formats and the original HTTP
+route stay open.
 
 ### Single-attachment export API
 

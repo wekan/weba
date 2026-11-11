@@ -1449,7 +1449,20 @@
           { ExportSelectedBoards WebButton
             Text = ("Export selected boards")
           }
-          { SelectedExportProgress WebLabel
+          { SelectedExportPanel WebContainer
+            Arrangement = Arrange.Vertical
+            Visible = False
+            { ExportSelectedJson WebButton
+              Text = "JSON"
+            }
+            { ExportSelectedCsv WebButton
+              Text = "CSV"
+            }
+            { SelectedExportProgress WebLabel
+            }
+            { CancelSelectedExport WebButton
+              Text = ("Cancel")
+            }
           }
           { SelectedCopyPanel WebContainer
             Arrangement = Arrange.Vertical
