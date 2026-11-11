@@ -13,6 +13,7 @@ Public Sub Main()
   Dim markdownBatch As Collection
   Dim leoBatch As Collection
   Dim opmlBatch As Collection
+  Dim orgModeBatch As Collection
   Dim files As Variant[]
   Dim data As Collection
   Dim settings As Collection
@@ -23,6 +24,8 @@ Public Sub Main()
   Dim markdown As String
   Dim leo As String
   Dim opml As String
+  Dim orgMode As String
+  Dim orgCard As Integer
   Dim checklist As Integer
   Dim denied As Boolean
   WebDatabase.Register("batch-export-global", "x")
@@ -152,6 +155,25 @@ Public Sub Main()
   If InStr(opml, "    <outline text=" & Chr(34) & "Todo" & Chr(34)) = 0 Or InStr(opml, "    <outline text=" & Chr(34) & "Doing" & Chr(34) & "/>") = 0 Or InStr(opml, "    <outline text=" & Chr(34) & "Done" & Chr(34)) = 0 Then Error.Raise("OPML list outlines or indentation drifted")
   If InStr(opml, "text=" & Chr(34) & "Finished card" & Chr(34) & " _note=" & Chr(34) & "First&#10;&#10;Second" & Chr(34) & " _complete=" & Chr(34) & "true" & Chr(34)) = 0 Or InStr(opml, "Check &lt;valve&gt;") = 0 Or InStr(opml, "a &lt; b &amp;&amp; c &gt; d") = 0 Then Error.Raise("OPML note, completion or XML attribute escaping drifted")
   If InStr(opml, "<outline text=" & Chr(34) & "Checks" & Chr(34) & ">") = 0 Or InStr(opml, "<outline text=" & Chr(34) & "Checked" & Chr(34) & " _complete=" & Chr(34) & "true" & Chr(34) & "/>") = 0 Or Right(opml, 1) <> Chr(10) Then Error.Raise("OPML checklist nesting, completed item or trailing newline drifted")
+  orgCard = KanbanStore.SaveCard(a, 0, "Planned" & String.Chr(160) & String.Chr(160) & "card", "Line one" & Chr(13) & Chr(10) & Chr(13) & "Line three", "Default", "Todo", "", "priority:A, tag value, done, Mötley Crüe", "")
+  data = New Collection
+  data["startAt"] = CardDates.Parse("2026-11-10T00:00:00.000Z")
+  data["dueAt"] = CardDates.Parse("2026-11-12T05:06:07.008Z")
+  data["endAt"] = CardDates.Parse("2026-11-13T00:00:00.000Z")
+  CardDates.Apply(a, orgCard, data)
+  checklist = CardContent.Save(a, orgCard, 0, "checklist", "Release checks", "", 0, False, 0)
+  CardContent.Save(a, orgCard, 0, "checkitem", "Open item", "", checklist, False, 0)
+  CardContent.Save(a, orgCard, 0, "checkitem", "Closed item", "", checklist, True, 0)
+  orgModeBatch = BoardBatchExport.NewBatch(selection, "orgmode")
+  BoardBatchExport.Run(orgModeBatch, selection)
+  files = BoardBatchExport.Files(orgModeBatch)
+  If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".org" Or BoardBatchExport.Format(orgModeBatch) <> "orgmode" Then Error.Raise("Org mode batch lost format, order or extension")
+  orgMode = files[0]["content"]
+  If Left(orgMode, Len("#+TITLE: Export Alpha" & Chr(10) & "#+TODO: TODO | DONE" & Chr(10) & Chr(10) & "* Todo" & Chr(10))) <> "#+TITLE: Export Alpha" & Chr(10) & "#+TODO: TODO | DONE" & Chr(10) & Chr(10) & "* Todo" & Chr(10) Then Error.Raise("Org mode header or first list drifted")
+  If InStr(orgMode, "** TODO =SUM(1,2) :red:urgent:" & Chr(10) & "   SCHEDULED: <2026-11-10 Tue 01:02> DEADLINE: <2026-11-12 Thu 05:06>") = 0 Then Error.Raise("Org mode open-card tags or UTC planning stamps drifted")
+  If InStr(orgMode, "   Comma, quote " & Chr(34) & " and" & Chr(10) & "   line" & Chr(10) & "*** Checks" & Chr(10) & "**** DONE Checked") = 0 Then Error.Raise("Org mode description or checklist hierarchy drifted")
+  If InStr(orgMode, "** DONE [#A] Planned card :tag_value:Mötley_Crüe:" & Chr(10) & "   SCHEDULED: <2026-11-10 Tue> DEADLINE: <2026-11-12 Thu 05:06> CLOSED: [2026-11-13 Fri]" & Chr(10) & "   Line one" & Chr(10) & Chr(10) & "   Line three" & Chr(10) & "*** Release checks" & Chr(10) & "**** TODO Open item" & Chr(10) & "**** DONE Closed item") = 0 Then Error.Raise("Org mode priority, done label, Unicode tags, normalized description, closed stamp or checklist states drifted")
+  If InStr(orgMode, "* Doing" & Chr(10) & "* Done" & Chr(10) & "** DONE Finished card") = 0 Or Right(orgMode, 1) <> Chr(10) Then Error.Raise("Org mode empty list, terminal card or trailing newline drifted")
   batch = BoardBatchExport.NewBatch(selection)
   batch["busy"] = True
   Try BoardBatchExport.Run(batch, selection)
@@ -181,7 +203,7 @@ Public Sub Main()
   Try BoardBatchExport.Run(batch, selection)
   denied = Error
   If Not denied Or Error.Text <> "Export is disabled by the administrator." Or BoardBatchExport.Completed(batch) Then Error.Raise("Disabled export leaked or advanced its queue")
-  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML batch export: exact ordered files, fixed quoted rows/CRLF/formula/date/people cells, 20-column workbook descriptors, native Kanboard containers/tasks/dates/tags/details/links, Markdown task-list text, Leo XML and OPML outlines/checklists, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
+  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML/Org mode batch export: exact ordered files, fixed quoted rows/CRLF/formula/date/people cells, 20-column workbook descriptors, native Kanboard containers/tasks/dates/tags/details/links, Markdown task-list text, Leo XML, OPML outlines, and Org headings/planning/tags/checklists, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
 End
 
 Private Function Frame() As String

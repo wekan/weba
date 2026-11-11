@@ -3969,6 +3969,10 @@ Public Sub ExportSelectedOpml_Click()
   RunSelectedExport("opml")
 End
 
+Public Sub ExportSelectedOrgMode_Click()
+  RunSelectedExport("orgmode")
+End
+
 Public Sub CancelSelectedExport_Click()
   ClearSelectedExport()
 End

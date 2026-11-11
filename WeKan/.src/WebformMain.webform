@@ -1479,6 +1479,9 @@
             { ExportSelectedOpml WebButton
               Text = "OPML"
             }
+            { ExportSelectedOrgMode WebButton
+              Text = "Org mode"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton

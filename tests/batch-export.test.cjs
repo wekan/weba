@@ -8,6 +8,7 @@ while(view.getUint32(at,true)===0x04034b50){const size=view.getUint32(at+18,true
 assert.equal(index,2);assert.equal(view.getUint32(at,true),0x02014b50);assert.equal(view.getUint32(bytes.length-22,true),0x06054b50);assert.equal(view.getUint16(bytes.length-12,true),2);
 const csv=window.webaBatchExport.archive([{name:'board-11.csv',content:'"Title"\r\n"\'=formula"'}]);assert.equal(new DataView(csv.buffer).getUint32(0,true),0x04034b50);
 const tsv=window.webaBatchExport.archive([{name:'board-12.tsv',content:'"Title"\t"Description"'}]);assert.equal(new DataView(tsv.buffer).getUint32(0,true),0x04034b50);
+const org=window.webaBatchExport.archive([{name:'board-13.org',content:'#+TITLE: Alpha\n'}]);assert.equal(new DataView(org.buffer).getUint32(0,true),0x04034b50);
 for(const bad of [[],[{name:'../escape.json',content:'{}'}],[{name:'board-0.json',content:'{}'}],[{name:'board-1.xlsx',content:'x'}],[{name:'board-1.json',content:1}]])assert.throws(()=>window.webaBatchExport.archive(bad),/Invalid board export/);
 const headers=['number','title','description','parent-card','owner','createdAt','last-modified-at','card-received','card-start','card-due','card-end','list','swimlane','assignee','members','requested-by','assigned-by','labels','overtime-hours','spent-time-hours'];
 const descriptor=(title,value)=>({title,description:'Board <description>',createdAt:'',modifiedAt:'',boardMembers:'alice,bob',headerKeys:headers,rows:[['1',value,'Body \0 & text','','','','','','2026-11-10T01:02:03.004Z','','','Todo','Default','alice','alice bob','','','red','false','']]});

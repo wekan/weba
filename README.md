@@ -2161,7 +2161,7 @@ the driver has already lost. Other original JSON wire contracts and selected
 multi-format exports remain pending.
 
 
-### Selected board JSON, CSV, TSV, Excel, Kanboard, Markdown, Leo and OPML export
+### Selected board JSON, CSV, TSV, Excel, Kanboard, Markdown, Leo, OPML and Org mode export
 
 The native Multi-Selection sidebar can export selected active boards as one
 `wekan-boards-weba.zip`. Each entry is a complete `weba-2` JSON board named
@@ -2218,6 +2218,13 @@ top-level list outlines including empty lists, nested card/checklist/checkitem
 outlines, terminal-card and completed-item attributes, card descriptions in
 `_note`, and XML-safe attribute text with encoded line breaks and tabs.
 
+Org mode produces `wekan-boards-orgmode.zip` with one strict `board-ID.org`
+outline per selected board. It matches the parent formatter's collapsed
+single-line board/list/card/checklist headings, TODO/DONE state from terminal
+lists or the exact `done` label, exact `priority:X` markers, Unicode-safe tags,
+UTC scheduled/deadline/closed stamps, normalized description lines, nested
+checkitems, empty lists and trailing newline.
+
 The ordered ID list, revision and completed/pending queue remain private to the
 form. The queue is bound to the current account session and unchanged selection.
 Every board independently takes the existing locked whole-board export path and
@@ -2230,8 +2237,9 @@ export invalidates the queue. Forged hidden actions still pass all server checks
 
 The browser receives only a base64-encoded JSON envelope after every selected
 board succeeds. A bounded local helper validates strict `board-ID.json`,
-`board-ID.csv`, `board-ID.tsv` or internal `board-ID.xlsx` descriptor names
-and string content. It writes either a standard stored ZIP or the fixed OOXML
+`board-ID.csv`, `board-ID.tsv`, `board-ID.md`, `board-ID.leo`, `board-ID.opml`,
+`board-ID.org` or internal `board-ID.xlsx` descriptor names and string content.
+It writes either a standard stored ZIP or the fixed OOXML
 package with UTF-8 names, CRC-32 and a central directory; it accepts neither
 paths nor caller-selected names.
 Native and JavaScript tests cover exact bytes, no-write failure, copied snapshots,
@@ -2241,8 +2249,8 @@ apps with `python3 tests/run-http.py --selected-export [--archive]` and verify
 zero-selection refusal, live/forged policy denial, the exact two-entry JSON,
 comma-CSV, semicolon-CSV and TSV ZIPs, and the single two-sheet Excel workbook.
 They also verify the Kanboard container/task JSON, exact Markdown task-list,
-Leo XML, and OPML outline ZIPs. Remaining external-tool formats and the original
-HTTP route remain pending.
+Leo XML, OPML outline and Org mode outline ZIPs. Remaining external-tool formats
+and the original HTTP route remain pending.
 
 
 ### Gated permanent board deletion and Recovery

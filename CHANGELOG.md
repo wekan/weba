@@ -2,6 +2,19 @@
 
 This work adds the following features and fixes:
 
+- Add Org mode as the fifth selected-board external-tool export. Download one
+  `wekan-boards-orgmode.zip` with an ordered strict `board-ID.org` entry per
+  board. Match the parent Org formatter: collapsed board/list/card/checklist
+  headings, TODO/DONE state from terminal lists or the exact `done` label,
+  exact priority labels, Unicode letter/number tags, UTC scheduled/deadline/
+  closed stamps, normalized description lines, checklist items, empty lists and
+  trailing newline. Reuse the private session/selection-bound retry queue and
+  locked full-read, active-board and global export-policy checks for every
+  board. Focused native/browser tests, the complete local suite (69 host tests),
+  and complete source/packaged live suites pass; the integrated scenario
+  validates all ten exact downloads and live/forged policy gates in both forms.
+  Other external-tool formats remain pending. Thanks to xet7.
+
 - Add OPML as the fourth selected-board external-tool export. Download one
   `wekan-boards-opml.zip` with an ordered strict `board-ID.opml` entry per
   board. Match the parent OPML 2.0 outline: board title, every list, nested
