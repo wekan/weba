@@ -1952,16 +1952,20 @@ packaged apps. Other drivers and complete original callbacks remain unverified.
 
 ### Native workspace ordering
 
-Drag a workspace name with the mouse, or use its native `fa-arrows` handle with
-mouse/touch. The top quarter of a target row inserts before it, the bottom
+The private **Show desktop drag handles** preference follows the same source
+contract here as board views and overview board tiles. With handles on, use the
+native `fa-arrows` grip with mouse, touch or arrow keys; ordinary name touch keeps
+scrolling. With handles off, the grip is hidden and the workspace name becomes
+the mouse, touch and arrow-key ordering surface. A live preference change cancels
+an active gesture. The top quarter of a target row inserts before it, the bottom
 quarter inserts after it and the middle half appends inside it. The row shows
-the intended slot. Ordinary touch on a name keeps scrolling; menus/carets do not
+the intended slot. Menus/carets do not
 start a sort. Cancel, Escape, outside drops and detached origins do not save.
 
-The handle also accepts Up/Down for sibling order and logical Right/Left for
-indent/outdent (reversed in RTL). Focus follows the moved row after the matching
+The effective grip or name also accepts Up/Down for sibling order and logical
+Right/Left for indent/outdent (reversed in RTL). Focus follows the moved row after the matching
 native update. A folded target stays folded; if the moved row becomes hidden,
-keyboard focus returns to that target's handle. A later gesture or another
+keyboard focus returns to that target's effective control. A later gesture or another
 keyboard drag kind clears the previous focus request. Workspace ordering is
 available in All Boards categories, including Archive, and does not archive a
 board or change assignments/fold state. Single board-to-menu drops are described
@@ -1978,13 +1982,13 @@ checks both SQL and the visible native tree and compares outcomes with that
 original helper. It waits for rendered workspace IDs and parentage as well as
 labels before the next keyboard move: nesting can preserve the visible name
 sequence. Delayed native replies after SQL commit exercise that ordering, and
-interception teardown waits for in-flight handlers. It covers nested/root moves,
-repeated focus, folded targets,
+interception teardown reloads after in-flight handlers. It covers nested/root
+moves, both handle preference modes, repeated focus, folded targets,
 scroll/cancel/reload/isolation, Archive and forged cycle/foreign/profile commands.
 It runs in test-live for source/packages; run separately with the documented
 toolchain/CDP environment using `python3 tests/run-http.py --workspace-order`,
 adding `--archive` for the package. This does not run all original workspace
-UI callbacks unchanged or implement their full shared desktop-handle preferences. Implemented native
+UI callbacks unchanged or implement the original Meteor profile/DDP bridge. Implemented native
 multiselection/drop targets and rendered Markdown icons are described separately.
 
 
@@ -2846,8 +2850,8 @@ The native `DragHandles` decision helper matches the source three-state rule:
 explicit on/off wins on every device; unset or malformed values follow touch
 capability. The 42-case source comparison covers 126 native outputs. Private profile
 storage and the native profile toggle are described below. The decision is now
-applied to native board-view ordering and overview board tiles; card, list, lane
-and workspace gestures remain pending.
+applied to native board-view ordering, overview board tiles and personal workspace
+ordering; card, list and lane gestures remain pending.
 
 `DragHandlePreference` now stores the signed-in native profile choice privately
 per account. `Stored()` returns Boolean or null without creating preference
@@ -2874,5 +2878,5 @@ trusted-touch and arrow-key surface. A preference change cancels a pending nativ
 gesture, and acknowledged keyboard moves restore focus to the effective grip or
 tile even when the server render precedes preference decoration. Personal order,
 readonly access, user isolation and the existing sorted/foreign-target guards
-remain unchanged. Native card/list/lane/workspace preference integration and the
+remain unchanged. Native card/list/lane preference integration and the
 original Meteor profile/DDP bridge remain pending.

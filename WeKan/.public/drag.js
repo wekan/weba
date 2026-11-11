@@ -18,7 +18,7 @@
     const board=target.closest('.weba-board-tile-group');
     const workspace=target.closest('.weba-space-row');
     let kind=handle?.dataset.dragKind,element;
-    if(kind==='workspace'||pointerType==='mouse'&&workspace&&target.closest('.weba-space-open')){kind='workspace';element=workspace;}
+    if(kind==='workspace'||workspace&&target.closest('.weba-space-drag-surface')){kind='workspace';element=workspace;}
     else if(kind==='board'||board&&target.closest('.weba-board-drag-surface')){kind='board';element=board;}
     else if(kind==='lane')element=handle.closest('.weba-swimlane');
     else if(kind==='list')element=handle.closest('.weba-column');
@@ -320,7 +320,7 @@
     }catch(_){finish(true);}
   }
   function keyboard(event){
-    const handle=event.target.closest('.weba-drag-handle,.weba-board-drag-surface');if(!handle||handle.hidden||!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key))return;
+    const handle=event.target.closest('.weba-drag-handle,.weba-board-drag-surface,.weba-space-drag-surface');if(!handle||handle.hidden||!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key))return;
     const state=identify(handle,'keyboard');if(!state)return;
     if(state.kind!=='board')keyboardFocus=null;
     if(state.kind!=='workspace')workspaceKeyboardFocus=null;
@@ -397,8 +397,8 @@
       ready=siblings.indexOf(moved)===siblings.indexOf(target)+(state.position==='before'?-1:1);
     }
     if(!ready)return;
-    const handle=(moved||target).querySelector('.weba-space-drag');workspaceKeyboardFocus=null;
-    root.requestAnimationFrame(()=>{if(handle?.isConnected&&document.activeElement===document.body){handle.focus({preventScroll:true});root.webaAlignFocus?.();}});
+    const row=moved||target,handle=row.querySelector(root.webaDragPreference&&!root.webaDragPreference.enabled()?'.weba-space-open':'.weba-space-drag');workspaceKeyboardFocus=null;
+    root.requestAnimationFrame(()=>{const active=document.activeElement;if(handle?.isConnected&&(active===document.body||active?.closest?.('.weba-space-row'))){handle.focus({preventScroll:true});root.webaAlignFocus?.();}});
   }
   function start(){
     document.addEventListener('pointerdown',down);

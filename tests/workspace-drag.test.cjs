@@ -15,11 +15,13 @@ const decode=()=>{const parts=calls.at(-1)[2].split('|');assert.equal(parts.shif
 let source=process.env.WEKAN_SOURCE,ancestor=path.resolve(__dirname,'..');while(!source&&path.dirname(ancestor)!==ancestor){if(fs.existsSync(path.join(ancestor,'models/lib/workspacesTree.js')))source=ancestor;else ancestor=path.dirname(ancestor);}
 assert.ok(source,'Original workspace drop helper required');const helper=require(path.join(source,'models/lib/workspacesTree.js'));
 for(const y of [null,undefined,-1,0,24.9,25,50,75,75.1,100,Infinity,NaN])for(const height of [null,undefined,0,-1,100,Infinity,NaN])assert.equal(w.webaDrag.workspaceDropPosition(y,height),helper.dropPosition(y,height));
-assert.equal(w.webaDrag.identify(surface,'touch'),null,'ordinary touch scrolls workspace names');assert.equal(w.webaDrag.identify(surface,'mouse').kind,'workspace');assert.equal(w.webaDrag.identify(handle,'touch').kind,'workspace');assert.equal(w.webaDrag.identify(rows[3].querySelector('.weba-space-menu'),'mouse'),null,'menus do not initiate sorting');
+assert.equal(w.webaDrag.identify(surface,'touch'),null,'handle mode keeps workspace-name touch scrolling');assert.equal(w.webaDrag.identify(surface,'mouse'),null,'handle mode refuses workspace-name mouse starts too');assert.equal(w.webaDrag.identify(handle,'touch').kind,'workspace');assert.equal(w.webaDrag.identify(rows[3].querySelector('.weba-space-menu'),'mouse'),null,'menus do not initiate sorting');
 event('pointerdown',surface,20,175);event('pointermove',d,20,25);event('pointerup',d,20,25);assert.equal(calls.length,0);
+surface.classList.add('weba-space-drag-surface');assert.equal(w.webaDrag.identify(surface,'touch').kind,'workspace','handle-off workspace name supports touch');assert.equal(w.webaDrag.identify(surface,'mouse').kind,'workspace','handle-off workspace name supports mouse');
 for(const [y,position] of [[5,'before'],[25,'inside'],[45,'after']]){
  event('pointerdown',surface,20,175,{pointerType:'mouse'});event('pointermove',d,20,y,{pointerType:'mouse'});assert.ok(rows[0].classList.contains('weba-space-drop-'+position));event('pointerup',d,20,y,{pointerType:'mouse'});assert.deepEqual(decode(),['30','10',position,'']);assert.equal(d.querySelector('[class*="weba-space-drop-"]'),null,'drop marks removed');
 }
+surface.classList.remove('weba-space-drag-surface');
 event('pointerdown',handle,20,175);event('pointermove',d,20,125);event('pointerup',d,20,125);assert.deepEqual(decode(),['30','20','inside','']);
 const before=calls.length;
 for(const cancellation of ['pointercancel','multitouch','outside','escape']){
@@ -37,4 +39,4 @@ rows[3].style.direction='rtl';handle.dispatchEvent(new w.KeyboardEvent('keydown'
 rows[1].style.direction='rtl';rows[1].querySelector('.weba-space-drag').dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true,cancelable:true}));assert.deepEqual(decode(),['11','10','after',''],'RTL right outdents');rows[1].style.direction='';
 section.dataset.workspaceReorder='false';assert.equal(w.webaDrag.identify(handle,'touch'),null,'non-overview cannot start workspace drag');section.dataset.workspaceReorder='true';
 const count=calls.length;event('pointerdown',handle,20,175);event('pointermove',d,20,125);rows[3].remove();event('pointerup',d,20,125);assert.equal(calls.length,count,'replacement/disconnected origin cancels');
-w.close();console.log('Workspace gestures: original quarter-row rule, mouse surface/touch-handle wire, menu/scroll separation, cycle/cancel/outside/replacement guards, marks and keyboard wire passed');
+w.close();console.log('Workspace gestures: original quarter-row rule, handle-on grip and handle-off mouse/touch surface wire, menu/scroll separation, cycle/cancel/outside/replacement guards, marks and keyboard wire passed');
