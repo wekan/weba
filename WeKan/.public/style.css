@@ -12023,6 +12023,8 @@ ul, #myUL {
 .weba-space-drag-surface{touch-action:none;cursor:move}
 .weba-card>.weba-drag-handle[hidden]{display:none!important}
 .weba-card-drag-surface{touch-action:none;cursor:move}
+.weba-column .weba-drag-handle[data-drag-kind="list"][hidden]{display:none!important}
+.weba-list-drag-surface{touch-action:none;cursor:move}
 .weba-drag-preference-state{display:none!important}
 .weba-drag-preference-toggle[aria-checked="true"]::before{content:"✓ ";}
 .weba-drag-preference-toggle[aria-checked="false"]::before{content:"☐ ";}

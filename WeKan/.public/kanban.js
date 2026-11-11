@@ -260,6 +260,7 @@
         return;
       }
       root.webaDrag?.restoreCardFocus?.(section);
+      root.webaDrag?.restoreListFocus?.(section);
       data.hidden = true;
     });
   }

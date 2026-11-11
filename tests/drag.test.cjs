@@ -55,6 +55,14 @@ cards[0].classList.add('weba-card-drag-surface');cards[0].dispatchEvent(new w.Ke
 columns[0].dataset.listId='11';columns[1].dataset.listId='22';
 handle.dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true,cancelable:true}));
 assert.equal(Buffer.from(calls.at(-1)[2].split('|')[3],'base64').toString(),'#22','keyboard targets stable list identity');
+const listHeaders=columns.map((column,index)=>{const header=d.createElement('header');header.className='weba-list-header';header.innerHTML=`<h4>${index?'Doing':'Todo'}</h4><button type="button">Menu</button><button class="weba-drag-handle" data-drag-kind="list">Move</button>`;column.prepend(header);return header;});
+const reorderListHandle=listHeaders[0].querySelector('[data-drag-kind="list"]');
+assert.equal(w.webaDrag.identify(listHeaders[0].querySelector('h4'),'touch'),null,'handle mode keeps list header touch scrollable');
+assert.equal(w.webaDrag.identify(listHeaders[0].querySelector('h4'),'mouse'),null,'handle mode refuses list header mouse starts');
+assert.equal(w.webaDrag.identify(reorderListHandle,'touch').kind,'list','handle mode accepts the list grip');
+listHeaders[0].classList.add('weba-list-drag-surface');assert.equal(w.webaDrag.identify(listHeaders[0].querySelector('h4'),'touch').kind,'list','handle-off list header supports touch');assert.equal(w.webaDrag.identify(listHeaders[0].querySelector('button'),'mouse'),null,'list header buttons stay interactive');
+const listBaseline=calls.length;listHeaders[0].dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true,cancelable:true}));assert.equal(calls.length,listBaseline+1,'handle-off list header supports keyboard ordering');assert.deepEqual(calls.at(-1)[2].split('|').slice(1).map(value=>Buffer.from(value,'base64').toString()),['Default','#11','Default','']);
+listHeaders[0].classList.remove('weba-list-drag-surface');
 // Personal board order is independent of shared board write capabilities.
 const grid=d.createElement('div');grid.className='weba-data';root.append(grid);
 const groups=[101,102,103].map((id,index)=>{const e=d.createElement('div');e.className='weba-board-tile-group';e.dataset.boardId=String(id);e.innerHTML='<button class="weba-board-tile">Board</button><button class="weba-drag-handle" data-drag-kind="board">Move</button>';e.getBoundingClientRect=()=>rect(index*210,20,200,120);grid.append(e);return e;});
@@ -82,4 +90,4 @@ for(const cancel of ['pointercancel','multitouch','outside','escape']){
 groups.forEach(e=>e.style.direction='rtl');groups[0].querySelector('.weba-drag-handle').dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true,cancelable:true}));
 boardWire=calls.at(-1)[2].split('|');assert.deepEqual(boardWire.slice(1).map(x=>Buffer.from(x,'base64').toString()),['101','','','103'],'RTL keyboard moves in visual direction');
 root.dataset.boardReorder='false';assert.equal(w.webaDrag.identify(boardHandle,'touch'),null,'sorted/archive board mode has no reorder gesture');
-w.close();console.log('Drag gestures: handle-on grip and handle-off card mouse/touch/keyboard surface, scrolling, threshold, UTF-8 targets, cancel/multitouch, invalid/read-only drops and cleanup passed');
+w.close();console.log('Drag gestures: handle-on grips and handle-off card/list mouse/touch/keyboard surfaces, interactive exclusions, scrolling, threshold, UTF-8 targets, cancel/multitouch, invalid/read-only drops and cleanup passed');

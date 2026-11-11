@@ -589,15 +589,23 @@ const fs = require('node:fs');
       await page.mouse.move(surfaceFrom.x,surfaceFrom.y);await page.mouse.down();await page.mouse.move(surfaceTo.x,surfaceTo.y,{steps:12});await page.mouse.up();await settle();
       await page.waitForFunction(id=>document.querySelector(`.weba-data .weba-card[data-card-id="${id}"]`)?.dataset.status==='Doing',{},ids['Drag two']);
       await new Promise(resolve=>setTimeout(resolve,750));await page.touchscreen.tap(...Object.values(await point(card(ids['Drag two']))));await settle();await visible('Editor');await click('CloseEditor');
+      assert.equal(await page.$eval(column('Default','Doing')+' [data-drag-kind="list"]',e=>e.hidden),true,'handle-off hides the list grip');
+      await page.waitForSelector(column('Default','Doing')+' .weba-list-header.weba-list-drag-surface');
+      const listFrom=await point(column('Default','Doing')+' .weba-list-header h4'),listTo=await point(column('Default','Todo'),true);
+      await page.mouse.move(listFrom.x,listFrom.y);await page.mouse.down();await page.mouse.move(listTo.x,listTo.y,{steps:12});await page.mouse.up();await settle();
+      await page.waitForFunction(()=>document.querySelector('.weba-swimlane[data-lane="Default"] .weba-column')?.dataset.list==='Doing');
+      await page.focus(column('Default','Doing')+' .weba-list-header');await page.keyboard.press('ArrowRight');
+      await page.waitForFunction(()=>document.querySelector('.weba-swimlane[data-lane="Default"] .weba-column')?.dataset.list==='Todo');
+      await page.waitForFunction(()=>document.activeElement?.closest('.weba-column')?.dataset.list==='Doing');
       const oldTodoId=await page.$eval(column('Second ä','Todo'),e=>e.dataset.listId);
       const movedTodoId=await page.$eval(column('Default','Todo'),e=>e.dataset.listId);
       page.once('dialog',dialog=>dialog.accept());
-      await gesture(await point(column('Default','Todo')+' [data-drag-kind="list"]'),await point(column('Second ä','Todo'),true));
+      await gesture(await point(column('Default','Todo')+' .weba-list-header h4'),await point(column('Second ä','Todo'),true));
       await page.waitForFunction(()=>document.querySelectorAll('.weba-column[data-lane="Second ä"][data-list="Todo"]').length===2);
       assert.equal(await page.$eval(`.weba-data .weba-card[data-card-id="${ids['Drag one']}"]`,e=>e.dataset.listId),oldTodoId,'existing destination cards keep their original list identity');
       assert.notEqual(oldTodoId,movedTodoId);
       await shot('weba-touch-drag');
-      console.log('Browser touch drag: handle-on card grip, handle-off card keyboard/mouse/trusted-touch surface and tap, focus, card reorder, list/lane moves, carried cards, persistence, auto-scroll, scrolling and cancel passed');
+      console.log('Browser touch drag: handle-on grips, handle-off card and list keyboard/mouse/trusted-touch surfaces, taps/focus, card reorder, list/lane moves, carried cards, persistence, auto-scroll, scrolling and cancel passed');
       return;
     }
     if(process.env.WEBA_POPUPS_ONLY) {

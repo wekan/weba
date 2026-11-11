@@ -2,7 +2,7 @@
 (function(root){
   'use strict';
   if(root.webaDrag)return;
-  let pending=null,drag=null,keyboardFocus=null,workspaceKeyboardFocus=null,cardKeyboardFocus=null,tapFallback=null,suppressUntil=0,frame=0,localPickup=false,external=null,externalBlocked=false,externalDepth=0,externalTimer=0;
+  let pending=null,drag=null,keyboardFocus=null,workspaceKeyboardFocus=null,cardKeyboardFocus=null,listKeyboardFocus=null,tapFallback=null,suppressUntil=0,frame=0,localPickup=false,external=null,externalBlocked=false,externalDepth=0,externalTimer=0;
   const threshold=7;
   const t=text=>root.webaI18n?.t(text)||text;
   const visible=e=>e && !e.hidden && e.getBoundingClientRect().width>0 && e.getBoundingClientRect().height>0;
@@ -15,13 +15,14 @@
   function identify(target,pointerType){
     const handle=target.closest('.weba-drag-handle');
     const card=target.closest('.weba-list-body>.weba-card');
+    const listHeader=target.closest('.weba-list-drag-surface');
     const board=target.closest('.weba-board-tile-group');
     const workspace=target.closest('.weba-space-row');
     let kind=handle?.dataset.dragKind,element;
     if(kind==='workspace'||workspace&&target.closest('.weba-space-drag-surface')){kind='workspace';element=workspace;}
     else if(kind==='board'||board&&target.closest('.weba-board-drag-surface')){kind='board';element=board;}
     else if(kind==='lane')element=handle.closest('.weba-swimlane');
-    else if(kind==='list')element=handle.closest('.weba-column');
+    else if(kind==='list'||listHeader&&!target.closest('button,input,textarea,select,a')){kind='list';element=(handle||listHeader).closest('.weba-column');}
     else if(kind==='card'||card&&target.closest('.weba-card-drag-surface')&&!target.closest('button,input,textarea,a:not(.weba-card-link),select')){kind='card';element=card;}
     const section=kind==='workspace'?document.querySelector('.weba-content'):element?.closest('.weba-content');
     if(!element||!section||!section.dataset.drag)return null;
@@ -195,7 +196,7 @@
   }
   function down(event){
     if(external){clearExternal();externalDepth=0;externalBlocked=false;}
-    keyboardFocus=null;workspaceKeyboardFocus=null;cardKeyboardFocus=null;
+    keyboardFocus=null;workspaceKeyboardFocus=null;cardKeyboardFocus=null;listKeyboardFocus=null;
     if(!event.isPrimary){finish(true);return;}
     if(event.button!==0||pending||drag)return;
     const state=identify(event.target,event.pointerType);if(!state)return;
@@ -328,11 +329,12 @@
     }catch(_){finish(true);}
   }
   function keyboard(event){
-    const handle=event.target.closest('.weba-drag-handle,.weba-board-drag-surface,.weba-space-drag-surface,.weba-card-drag-surface');if(!handle||handle.hidden||!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key))return;
+    const handle=event.target.closest('.weba-drag-handle,.weba-board-drag-surface,.weba-space-drag-surface,.weba-card-drag-surface,.weba-list-drag-surface');if(!handle||handle.hidden||!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key))return;
     const state=identify(handle,'keyboard');if(!state)return;
     if(state.kind!=='board')keyboardFocus=null;
     if(state.kind!=='workspace')workspaceKeyboardFocus=null;
     if(state.kind!=='card')cardKeyboardFocus=null;
+    if(state.kind!=='list')listKeyboardFocus=null;
     event.preventDefault();event.stopPropagation();
     if(state.kind==='workspace'){
       const all=workspaceRows(state.section),parent=state.element.dataset.workspaceParent;
@@ -375,7 +377,8 @@
       const columns=[...state.element.parentElement.querySelectorAll(':scope>.weba-column')],index=columns.indexOf(state.element),rtl=getComputedStyle(state.element).direction==='rtl';
       const backward=(event.key==='ArrowLeft')!==rtl;
       if(!['ArrowLeft','ArrowRight'].includes(event.key)||backward&&index===0)return;
-      send(state.section,'list',[state.element.dataset.lane,state.element.dataset.listId?'#'+state.element.dataset.listId:state.element.dataset.list,state.element.dataset.lane,(()=>{const e=columns[index+(backward?-1:2)];return e?(e.dataset.listId?'#'+e.dataset.listId:e.dataset.list):'';})()]);
+      const id=state.element.dataset.listId?'#'+state.element.dataset.listId:state.element.dataset.list,beforeColumn=columns[index+(backward?-1:2)],before=beforeColumn?(beforeColumn.dataset.listId?'#'+beforeColumn.dataset.listId:beforeColumn.dataset.list):'';
+      listKeyboardFocus={id,lane:state.element.dataset.lane,before,expires:Date.now()+5000};send(state.section,'list',[state.element.dataset.lane,id,state.element.dataset.lane,before]);
     }else{
       const rows=[...state.element.parentElement.querySelectorAll(':scope>.weba-swimlane')],index=rows.indexOf(state.element);
       if(!['ArrowUp','ArrowDown'].includes(event.key)||event.key==='ArrowUp'&&index===0)return;
@@ -419,6 +422,15 @@
     const control=root.webaDragPreference&&!root.webaDragPreference.enabled()?row:row.querySelector('.weba-drag-handle[data-drag-kind="card"]');cardKeyboardFocus=null;
     root.requestAnimationFrame(()=>{const active=document.activeElement;if(control?.isConnected&&(active===document.body||active?.closest?.('.weba-card'))){control.focus({preventScroll:true});root.webaAlignFocus?.();}});
   }
+  function restoreListFocus(section){
+    if(!listKeyboardFocus)return;
+    if(Date.now()>listKeyboardFocus.expires||!enabled(section,'list')){listKeyboardFocus=null;return;}
+    const state=listKeyboardFocus,columns=[...section.querySelectorAll('.weba-columns>.weba-column')],id=column=>column?(column.dataset.listId?'#'+column.dataset.listId:column.dataset.list):'',column=columns.find(column=>column.dataset.lane===state.lane&&id(column)===state.id);
+    if(!column)return;const siblings=[...column.parentElement.querySelectorAll(':scope>.weba-column')],index=siblings.indexOf(column);
+    if(state.before===''?index!==siblings.length-1:id(siblings[index+1])!==state.before)return;
+    const control=root.webaDragPreference&&!root.webaDragPreference.enabled()?column.querySelector(':scope>.weba-list-header'):column.querySelector('.weba-drag-handle[data-drag-kind="list"]');listKeyboardFocus=null;
+    root.requestAnimationFrame(()=>{const active=document.activeElement;if(control?.isConnected&&(active===document.body||active?.closest?.('.weba-column'))){control.focus({preventScroll:true});root.webaAlignFocus?.();}});
+  }
   function start(){
     document.addEventListener('pointerdown',down);
     document.addEventListener('pointermove',move,{passive:false});
@@ -434,6 +446,6 @@
     document.addEventListener('click',event=>{if(tapFallback&&event.target.closest('.weba-card')===tapFallback.card)tapFallback=null;if(Date.now()<suppressUntil||event.target.closest('.weba-drag-handle')){event.preventDefault();event.stopImmediatePropagation();}},true);
     root.addEventListener('blur',()=>{if(!drag?.native)finish(true);});
   }
-  root.webaDrag={identify,restoreFocus,restoreWorkspaceFocus,restoreCardFocus,workspaceDropPosition,cancel:()=>finish(true),get active(){return !!drag;},get clickSuppressed(){return Date.now()<suppressUntil;},threshold};
+  root.webaDrag={identify,restoreFocus,restoreWorkspaceFocus,restoreCardFocus,restoreListFocus,workspaceDropPosition,cancel:()=>finish(true),get active(){return !!drag;},get clickSuppressed(){return Date.now()<suppressUntil;},threshold};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })(window);
