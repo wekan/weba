@@ -79,6 +79,10 @@ Public Function ExportActiveBoardMeisterTask(boardId As Integer) As String
   Return ExportChecked(boardId, "board", boardId, True, "meistertask")
 End
 
+Public Function ExportActiveBoardObsidian(boardId As Integer) As String
+  Return ExportChecked(boardId, "board", boardId, True, "obsidian")
+End
+
 Private Sub RequireActiveBoard(boardId As Integer)
   Dim r As Result = $db.Find("kb_boards", "id=&1 AND archived=&2", boardId, False)
   If Not r.Available Then Error.Raise("Select active boards first")
@@ -137,6 +141,8 @@ Private Function ExportChecked(boardId As Integer, kind As String, itemId As Int
     text = BoardPlannerExport.Build(boardId, $db)
   Else If format = "meistertask" And kind = "board" Then
     text = BoardMeisterTaskExport.Build(boardId, $db)
+  Else If format = "obsidian" And kind = "board" Then
+    text = BoardObsidianExport.Build(boardId, $db)
   Else
     Error.Raise("Unknown export format")
   Endif

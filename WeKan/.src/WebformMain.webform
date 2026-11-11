@@ -1500,6 +1500,9 @@
             { ExportSelectedMeisterTask WebButton
               Text = "MeisterTask"
             }
+            { ExportSelectedObsidian WebButton
+              Text = "Obsidian Kanban"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton

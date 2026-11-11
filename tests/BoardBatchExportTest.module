@@ -20,6 +20,7 @@ Public Sub Main()
   Dim todoistBatch As Collection
   Dim plannerBatch As Collection
   Dim meisterTaskBatch As Collection
+  Dim obsidianBatch As Collection
   Dim files As Variant[]
   Dim data As Collection
   Dim settings As Collection
@@ -56,6 +57,7 @@ Public Sub Main()
   Dim plannerRow As Variant[]
   Dim plannerFound As Boolean
   Dim meisterTask As String
+  Dim obsidian As String
   Dim i As Integer
   Dim checklist As Integer
   Dim denied As Boolean
@@ -321,6 +323,16 @@ Public Sub Main()
   If Left(meisterTask, Len(BoardMeisterTaskExport.Headers().Join(",") & Chr(13) & Chr(10))) <> BoardMeisterTaskExport.Headers().Join(",") & Chr(13) & Chr(10) Or Right(meisterTask, 2) <> Chr(13) & Chr(10) Then Error.Raise("MeisterTask header or CRLF drifted")
   If InStr(meisterTask, "Export Alpha,Todo,Plan" & Chr(9) & "valve," & Chr(34) & "Two, " & Chr(34) & Chr(34) & "DN50" & Chr(34) & Chr(34) & Chr(10) & "now" & Chr(34) & ",2026-11-12T05:06:07+00:00,2,p2; shop floor" & Chr(13) & Chr(10)) = 0 Then Error.Raise("MeisterTask project, section, task, notes, due date, completion or tags drifted")
   If InStr(files[1]["content"], "Export Bravo,Todo,Bravo card,Bravo body,,1,") = 0 Then Error.Raise("MeisterTask second-board CSV drifted")
+  CardContent.Save(a, todoistCard, 0, "custom", "Priority", "Highest", 0, False, 0, "text")
+  CardContent.Save(a, todoistCard, 0, "custom", "Vendor", "ACME", 0, False, 0, "text")
+  obsidianBatch = BoardBatchExport.NewBatch(selection, "obsidian")
+  BoardBatchExport.Run(obsidianBatch, selection)
+  files = BoardBatchExport.Files(obsidianBatch)
+  If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".md" Or BoardBatchExport.Format(obsidianBatch) <> "obsidian" Then Error.Raise("Obsidian batch lost format, order or extension")
+  obsidian = files[0]["content"]
+  If Left(obsidian, Len("---" & Chr(10) & Chr(10) & "kanban-plugin: board" & Chr(10) & Chr(10) & "---" & Chr(10) & Chr(10) & "## Todo" & Chr(10) & Chr(10))) <> "---" & Chr(10) & Chr(10) & "kanban-plugin: board" & Chr(10) & Chr(10) & "---" & Chr(10) & Chr(10) & "## Todo" & Chr(10) & Chr(10) Then Error.Raise("Obsidian frontmatter or first lane drifted")
+  If InStr(obsidian, "- [x] Plan valve #p2 #shop-floor @{2026-11-12} @@{05:06} 🛫 2026-11-10 ✅ 2026-11-13 🔺" & Chr(10) & "    Two, " & Chr(34) & "DN50" & Chr(34) & Chr(10) & "    now" & Chr(10) & "    Vendor:: ACME" & Chr(10) & "    - [ ] Open step" & Chr(10) & "    - [x] Closed step" & Chr(10)) = 0 Then Error.Raise("Obsidian title, tags, dates, priority, description, custom field or checklist drifted")
+  If InStr(obsidian, "## Doing" & String(5, Chr(10)) & "## Done") = 0 Or Right(obsidian, Len("%% kanban:settings" & Chr(10) & "```" & Chr(10) & "{\"kanban-plugin\":\"board\"}" & Chr(10) & "```" & Chr(10) & "%%" & Chr(10))) <> "%% kanban:settings" & Chr(10) & "```" & Chr(10) & "{\"kanban-plugin\":\"board\"}" & Chr(10) & "```" & Chr(10) & "%%" & Chr(10) Then Error.Raise("Obsidian empty lane spacing or settings footer drifted")
   batch = BoardBatchExport.NewBatch(selection)
   batch["busy"] = True
   Try BoardBatchExport.Run(batch, selection)
@@ -350,7 +362,7 @@ Public Sub Main()
   Try BoardBatchExport.Run(batch, selection)
   denied = Error
   If Not denied Or Error.Text <> "Export is disabled by the administrator." Or BoardBatchExport.Completed(batch) Then Error.Raise("Disabled export leaked or advanced its queue")
-  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML/Org mode/todo.txt/Taskwarrior/Focalboard/Todoist/Planner/MeisterTask batch export: exact ordered files, generic and Planner workbook data, native Kanboard data, text/XML/JSON/JSONL/CSV tool formats, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
+  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML/Org mode/todo.txt/Taskwarrior/Focalboard/Todoist/Planner/MeisterTask/Obsidian batch export: exact ordered files, generic and Planner workbook data, native Kanboard data, text/XML/JSON/JSONL/CSV tool formats, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
 End
 
 Private Function Frame() As String

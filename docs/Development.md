@@ -1277,6 +1277,14 @@ timestamps to seconds, end-date completion status and semicolon-safe labels.
 It excludes archived cards, applies selective quote/comma/newline escaping and
 CRLF rows, and runs inside the same locked transfer transaction.
 
+The `obsidian` format writes `wekan-boards-obsidian.zip` with ordered strict
+`board-ID.md` entries. `BoardObsidianExport` reproduces the Obsidian Kanban
+plugin frontmatter, lane/card spacing and settings footer, with native lists,
+labels, UTC due/start/end markers, priority emoji, descriptions, Dataview custom
+fields and flattened checklist items. It excludes archived cards. Native lists
+have no WIP-limit field, so the optional lane limit is absent. The Markdown is
+built inside the same locked transfer transaction.
+
 The final file snapshot crosses the native command boundary as base64 JSON.
 `batch-export.js` bounds and validates the JSON/table/Excel envelope, writes
 stored UTF-8 ZIP or OOXML entries with CRC-32 and a central directory, and never
@@ -1285,7 +1293,7 @@ bytes, no-write failure,
 immutable snapshots, retry/replay/reentrancy, stale/foreign/archive/policy denial
 and ZIP structure. `python3 tests/run-http.py --selected-export` (add `--archive`)
 checks the real controls, live and forged global gate, selection retention and
-all sixteen download contents. The original caption is among 271 source keys in all
+all seventeen download contents. The original caption is among 271 source keys in all
 237 catalogs. Remaining external-tool formats and the original HTTP route stay
 open.
 

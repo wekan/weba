@@ -2277,6 +2277,14 @@ with an end date completed, replaces semicolons inside labels before joining
 tags, uses selective CSV quoting and CRLF, and omits archived cards as the
 parent exporter does.
 
+Obsidian Kanban produces `wekan-boards-obsidian.zip` with one strict
+`board-ID.md` plugin board per selected board. It matches the plugin's
+frontmatter, lane/card spacing and settings footer; writes every native list,
+task title, labels, UTC due/start/end metadata, priority custom field,
+descriptions, remaining custom fields and flattened checklist items; and omits
+archived cards. Native lists have no WIP-limit field, so no `(N)` lane suffix is
+invented.
+
 The ordered ID list, revision and completed/pending queue remain private to the
 form. The queue is bound to the current account session and unchanged selection.
 Every board independently takes the existing locked whole-board export path and
@@ -2302,8 +2310,8 @@ zero-selection refusal, live/forged policy denial, the exact two-entry JSON,
 comma-CSV, semicolon-CSV and TSV ZIPs, and the single two-sheet Excel workbook.
 They also verify the Kanboard container/task JSON, exact Markdown task-list,
 Leo XML, OPML outline, Org mode outline, todo.txt task, Taskwarrior JSON,
-Focalboard JSONL, Todoist CSV, Planner XLSX and MeisterTask CSV ZIPs. Remaining
-external-tool formats and the original HTTP route remain pending.
+Focalboard JSONL, Todoist CSV, Planner XLSX, MeisterTask CSV and Obsidian Kanban
+ZIPs. Remaining external-tool formats and the original HTTP route remain pending.
 
 
 ### Gated permanent board deletion and Recovery

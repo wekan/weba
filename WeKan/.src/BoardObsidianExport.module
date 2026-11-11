@@ -1,0 +1,158 @@
+' Native counterpart of the parent Obsidian Kanban plugin Markdown formatter.
+Export
+Private $db As Connection
+Private $boardId As Integer
+
+Private Function TextValue(value As Variant) As String
+  If IsNull(value) Then Return ""
+  Return CStr(value)
+End
+
+Private Function Whitespace(character As String) As Boolean
+  Dim code As Integer = String.Code(character)
+  Return (code >= 9 And code <= 13) Or code = 32 Or code = 160 Or code = 5760 Or (code >= 8192 And code <= 8202) Or code = 8232 Or code = 8233 Or code = 8239 Or code = 8287 Or code = 12288 Or code = 65279
+End
+
+Private Function OneLine(value As Variant) As String
+  Dim source As String = TextValue(value)
+  Dim result As String
+  Dim character As String
+  Dim pendingSpace As Boolean
+  Dim i As Integer
+  For i = 1 To String.Len(source)
+    character = String.Mid(source, i, 1)
+    If Whitespace(character) Then
+      pendingSpace = True
+    Else
+      If pendingSpace And result Then result &= " "
+      result &= character
+      pendingSpace = False
+    Endif
+  Next
+  Return result
+End
+
+Private Function Labels(value As Variant) As String[]
+  Dim result As New String[]
+  Dim label As String
+  For Each label In Split(TextValue(value), ",")
+    label = Trim(label)
+    If label Then result.Add(label)
+  Next
+  Return result
+End
+
+Private Function IsoDay(epoch As Long) As String
+  Return Left(CardDates.Iso(epoch), 10)
+End
+
+Private Function Clock(epoch As Long) As String
+  Dim value As String = Mid(CardDates.Iso(epoch), 12, 5)
+  Return If(value = "00:00", "", value)
+End
+
+Private Function PriorityEmoji(value As String) As String
+  Select value
+    Case "Highest"
+      Return "🔺"
+    Case "High"
+      Return "⏫"
+    Case "Medium"
+      Return "🔼"
+    Case "Low"
+      Return "🔽"
+    Case "Lowest"
+      Return "⏬"
+  End Select
+  Return ""
+End
+
+Private Function CardText(card As Result) As String
+  Dim parts As New String[]
+  Dim body As New String[]
+  Dim parsedLabels As String[] = Labels(card!labels)
+  Dim label As String
+  Dim tag As String
+  Dim dates As Collection = CardDates.ReadDates($boardId, card!id)
+  Dim custom As Result
+  Dim checklist As Result
+  Dim item As Result
+  Dim title As String = OneLine(card!title)
+  Dim description As String
+  Dim descriptionLines As String[]
+  Dim bodyLine As String
+  Dim priority As String
+  Dim done As Boolean
+  Dim result As String
+  If Not title Then title = "Untitled"
+  parts.Add(title)
+  For Each label In parsedLabels
+    If label = "done" Then
+      done = True
+    Else
+      tag = Replace(OneLine(label), " ", "-")
+      If tag Then parts.Add("#" & tag)
+    Endif
+  Next
+  If dates.Exist("dueAt") Then
+    parts.Add("@{" & IsoDay(dates["dueAt"]) & "}")
+    If Clock(dates["dueAt"]) Then parts.Add("@@{" & Clock(dates["dueAt"]) & "}")
+  Endif
+  If dates.Exist("startAt") Then parts.Add("🛫 " & IsoDay(dates["startAt"]))
+  If dates.Exist("endAt") Then
+    done = True
+    parts.Add("✅ " & IsoDay(dates["endAt"]))
+  Endif
+  custom = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, card!id, "custom")
+  For Each custom
+    If TextValue(custom!title) = "Priority" Then priority = PriorityEmoji(TextValue(custom!body))
+  Next
+  If priority Then parts.Add(priority)
+  description = Replace(TextValue(card!description), Chr(13) & Chr(10), Chr(10))
+  description = Replace(description, Chr(13), Chr(10))
+  descriptionLines = Split(description, Chr(10))
+  If descriptionLines.Count And Not descriptionLines[descriptionLines.Max] Then descriptionLines.Remove(descriptionLines.Max)
+  For Each bodyLine In descriptionLines
+    body.Add(bodyLine)
+  Next
+  custom = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, card!id, "custom")
+  For Each custom
+    If TextValue(custom!title) <> "Priority" Then body.Add(TextValue(custom!title) & ":: " & TextValue(custom!body))
+  Next
+  checklist = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, card!id, "checklist")
+  For Each checklist
+    item = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, card!id, "checkitem", checklist!id)
+    For Each item
+      body.Add("- [" & If(CBool(item!done), "x", " ") & "] " & TextValue(item!title))
+    Next
+  Next
+  result = "- [" & If(done, "x", " ") & "] " & parts.Join(" ") & Chr(10)
+  For Each bodyLine In body
+    result &= "    " & bodyLine & Chr(10)
+  Next
+  Return result
+End
+
+Public Function Build(boardId As Integer, db As Connection) As String
+  Dim result As String = "---" & Chr(10) & Chr(10) & "kanban-plugin: board" & Chr(10) & Chr(10) & "---" & Chr(10) & Chr(10)
+  Dim lists As Result
+  Dim cards As Result
+  Dim title As String
+  $db = db
+  $boardId = boardId
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  If Not db.Find("kb_boards", "id=&1", boardId).Available Then Error.Raise("Board not found")
+  lists = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
+  For Each lists
+    title = TextValue(lists!title)
+    If Not title Then title = "Untitled"
+    result &= "## " & title & Chr(10) & Chr(10)
+    cards = db.Exec("SELECT c.* FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 AND l.id=&4 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False, lists!id)
+    For Each cards
+      result &= CardText(cards)
+    Next
+    result &= Chr(10) & Chr(10) & Chr(10)
+  Next
+  result &= "%% kanban:settings" & Chr(10) & "```" & Chr(10) & "{\"kanban-plugin\":\"board\"}" & Chr(10) & "```" & Chr(10) & "%%" & Chr(10)
+  Return result
+End

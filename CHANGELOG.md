@@ -2,6 +2,20 @@
 
 This work adds the following features and fixes:
 
+- Add Obsidian Kanban as the twelfth selected-board external-tool export.
+  Download one `wekan-boards-obsidian.zip` with an ordered strict `board-ID.md`
+  plugin board per selected board. Match the parent frontmatter, every native
+  lane including empty ones, task/card spacing and settings footer. Map task
+  titles, labels, UTC due date/time and start/end days, completion, priority
+  emoji, multiline descriptions, Dataview custom fields and flattened checklist
+  items; omit archived cards. Native lists have no WIP-limit field, so do not
+  invent the optional `(N)` lane suffix. Reuse the private session/selection-
+  bound retry queue and locked full-read, active-board and global export-policy
+  checks for every board. Focused native/browser tests, the complete local suite
+  (69 host tests), and complete source/packaged live suites pass; the integrated
+  scenario validates all seventeen exact downloads and live/forged policy gates
+  in both forms. Other external-tool formats remain pending. Thanks to xet7.
+
 - Add MeisterTask as the eleventh selected-board external-tool export.
   Download one `wekan-boards-meistertask.zip` with an ordered strict
   `board-ID.csv` import per board. Match MeisterTask's exact seven-column

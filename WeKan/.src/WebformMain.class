@@ -3997,6 +3997,10 @@ Public Sub ExportSelectedMeisterTask_Click()
   RunSelectedExport("meistertask")
 End
 
+Public Sub ExportSelectedObsidian_Click()
+  RunSelectedExport("obsidian")
+End
+
 Public Sub CancelSelectedExport_Click()
   ClearSelectedExport()
 End
