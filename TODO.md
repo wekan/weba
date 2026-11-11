@@ -164,7 +164,7 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   with native policy and assigned-member scope, recorded there too. Remaining
   guest views beyond native Lists/Swimlanes/Table/due-day Calendar, source
   original board-view popup/Blaze callbacks and shared drag-handle preference
-  integration for native card/list/lane controls beyond the
+  integration for native list/lane controls beyond the
   native three-state preference decision helper/private account storage/profile
   toggle/device detection/view-order and overview-board gesture integration, guarded
   drag/keyboard ordering, bound manager editor and authenticated

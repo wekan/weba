@@ -556,8 +556,8 @@ const fs = require('node:fs');
       const laneHandle=await page.$eval('.weba-swimlane:nth-child(2) [data-drag-kind="lane"]',e=>{const r=e.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2};});
       await gesture(laneHandle,await point('.weba-swimlane:first-child .weba-swimlane-header',true));
       await page.waitForFunction(()=>document.querySelector('.weba-swimlane')?.dataset.lane==='Second ä');
-      // Mouse dragging the card surface remains supported on touch-capable devices.
-      const from=await point(card(ids['Drag two'])),to=await point(column('Default','Doing')+' .weba-list-body');
+      // With handles on, mouse and touch both start from the card grip.
+      const from=await point(card(ids['Drag two'])+' .weba-drag-handle'),to=await point(column('Default','Doing')+' .weba-list-body');
       await page.mouse.move(from.x,from.y);await page.mouse.down();await page.mouse.move(to.x,to.y,{steps:12});await page.mouse.up();await settle();
       await page.waitForFunction(id=>document.querySelector(`.weba-data .weba-card[data-card-id="${id}"]`)?.dataset.status==='Doing',{},ids['Drag two']);
       const viewport=await page.$eval(column('Default','Doing')+' .weba-list-body',e=>{const r=e.closest('.weba-columns').getBoundingClientRect(),b=e.getBoundingClientRect();return {x:r.right-5,y:b.top+20};});
@@ -573,6 +573,22 @@ const fs = require('node:fs');
       await click('Home');await page.click('.weba-board-tile');await settle();
       await page.waitForFunction(()=>document.querySelector('.weba-swimlane')?.dataset.lane==='Second ä');
       assert.deepEqual(await location(ids['Drag two']),['Default','Doing']);assert.deepEqual(await location(ids['Drag one']),['Second ä','Todo']);
+      await click('AccountToggle');await click('Profile');
+      assert.equal(await page.$eval('.weba-drag-preference-toggle',e=>e.getAttribute('aria-checked')),'true');
+      await page.click('.weba-drag-preference-toggle');await settle();
+      assert.equal(await page.$eval('.weba-drag-preference-toggle',e=>e.getAttribute('aria-checked')),'false');
+      await click('Home');await page.click('.weba-board-tile');await settle();
+      await page.waitForSelector(card(ids['Drag two'])+'.weba-card-drag-surface');
+      assert.equal(await page.$eval(card(ids['Drag two'])+' .weba-drag-handle',e=>e.hidden),true,'handle-off hides the card grip');
+      await page.focus(card(ids['Drag two']));await page.keyboard.press('ArrowLeft');
+      await page.waitForFunction(id=>document.querySelector(`.weba-data .weba-card[data-card-id="${id}"]`)?.dataset.status==='Todo',{},ids['Drag two']);
+      await page.waitForFunction(id=>document.activeElement?.dataset.cardId===id,{},ids['Drag two']);
+      await gesture(await point(card(ids['Drag two'])),await point(column('Default','Done')+' .weba-list-body'));
+      await page.waitForFunction(id=>document.querySelector(`.weba-data .weba-card[data-card-id="${id}"]`)?.dataset.status==='Done',{},ids['Drag two']);
+      const surfaceFrom=await point(card(ids['Drag two'])),surfaceTo=await point(column('Default','Doing')+' .weba-list-body');
+      await page.mouse.move(surfaceFrom.x,surfaceFrom.y);await page.mouse.down();await page.mouse.move(surfaceTo.x,surfaceTo.y,{steps:12});await page.mouse.up();await settle();
+      await page.waitForFunction(id=>document.querySelector(`.weba-data .weba-card[data-card-id="${id}"]`)?.dataset.status==='Doing',{},ids['Drag two']);
+      await new Promise(resolve=>setTimeout(resolve,750));await page.touchscreen.tap(...Object.values(await point(card(ids['Drag two']))));await settle();await visible('Editor');await click('CloseEditor');
       const oldTodoId=await page.$eval(column('Second ä','Todo'),e=>e.dataset.listId);
       const movedTodoId=await page.$eval(column('Default','Todo'),e=>e.dataset.listId);
       page.once('dialog',dialog=>dialog.accept());
@@ -581,7 +597,7 @@ const fs = require('node:fs');
       assert.equal(await page.$eval(`.weba-data .weba-card[data-card-id="${ids['Drag one']}"]`,e=>e.dataset.listId),oldTodoId,'existing destination cards keep their original list identity');
       assert.notEqual(oldTodoId,movedTodoId);
       await shot('weba-touch-drag');
-      console.log('Browser touch drag: card reorder/list and lane moves, carried cards, persistence, mouse surface, auto-scroll, touch scrolling and cancel passed');
+      console.log('Browser touch drag: handle-on card grip, handle-off card keyboard/mouse/trusted-touch surface and tap, focus, card reorder, list/lane moves, carried cards, persistence, auto-scroll, scrolling and cancel passed');
       return;
     }
     if(process.env.WEBA_POPUPS_ONLY) {

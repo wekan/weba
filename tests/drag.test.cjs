@@ -13,13 +13,22 @@ d.elementFromPoint=(x,y)=>x<0?d.body:x>280?columns[1].firstElementChild:columns[
 w.eval(fs.readFileSync(path.join(__dirname,'../WeKan/.public/drag.js'),'utf8'));d.dispatchEvent(new w.Event('DOMContentLoaded'));
 function event(type,target,x,y,extra={}){const e=new w.Event(type,{bubbles:true,cancelable:true});Object.assign(e,{clientX:x,clientY:y,pointerId:1,pointerType:'touch',isPrimary:true,button:0,...extra});target.dispatchEvent(e);}
 assert.equal(w.webaDrag.identify(cards[0],'touch'),null,'ordinary card touch remains native scroll');
-assert.equal(w.webaDrag.identify(cards[0],'mouse').kind,'card','mouse can drag the card surface');
+assert.equal(w.webaDrag.identify(cards[0],'mouse'),null,'handle mode refuses mouse card surface too');
 assert.equal(w.webaDrag.identify(handle,'touch').kind,'card');
 const cardLink=d.createElement('a');cardLink.className='weba-card-link';cardLink.innerHTML='<strong>One</strong>';cards[0].append(cardLink);
-assert.equal(w.webaDrag.identify(cardLink.firstElementChild,'mouse').kind,'card','native card link title retains mouse surface dragging');
+assert.equal(w.webaDrag.identify(cardLink.firstElementChild,'mouse'),null,'handle mode refuses card-link mouse starts');
 assert.equal(w.webaDrag.identify(cardLink.firstElementChild,'touch'),null,'ordinary card-link touch keeps native scroll');
 const otherLink=d.createElement('a');otherLink.textContent='External';cards[0].append(otherLink);
 assert.equal(w.webaDrag.identify(otherLink,'mouse'),null,'unrelated links do not start card drags');
+cards[0].classList.add('weba-card-drag-surface');
+assert.equal(w.webaDrag.identify(cards[0],'touch').kind,'card','handle-off card surface supports touch');
+assert.equal(w.webaDrag.identify(cardLink.firstElementChild,'mouse').kind,'card','handle-off native card link supports mouse');
+assert.equal(w.webaDrag.identify(otherLink,'touch'),null,'handle-off unrelated links remain interactive');
+let deferred,opened=0;const nativeTimeout=w.setTimeout;w.setTimeout=fn=>{deferred=fn;return 1;};cards[0].onclick=()=>opened++;
+event('pointerdown',cards[0],10,30);event('pointerup',cards[0],10,30);cards[0].click();deferred();assert.equal(opened,1,'native card click suppresses the no-click fallback duplicate');
+event('pointerdown',cards[0],10,30);event('pointerup',cards[0],10,30);deferred();assert.equal(opened,2,'handle-off touch tap falls back to one card click when Chromium omits it');
+w.setTimeout=nativeTimeout;cards[0].onclick=null;
+cards[0].classList.remove('weba-card-drag-surface');
 
 event('pointerdown',cards[0],10,30);event('pointermove',d,330,80);event('pointerup',d,330,80);assert.equal(calls.length,0);
 event('pointerdown',handle,10,30);event('pointermove',d,14,32);event('pointerup',d,14,32);assert.equal(calls.length,0,'small movement is not a drag');
@@ -42,6 +51,7 @@ const listHandle=d.createElement('button');listHandle.dataset.dragKind='list';co
 assert.equal(w.webaDrag.identify(listHandle,'touch'),null,'Worker cannot drag lists');
 listHandle.remove();delete root.dataset.cardMove;calls.pop();
 root.dataset.editable='true';const key=new w.KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true,cancelable:true});handle.dispatchEvent(key);assert.equal(calls.length,2,'keyboard handle can move a card');
+cards[0].classList.add('weba-card-drag-surface');cards[0].dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true,cancelable:true}));assert.equal(calls.length,3,'handle-off card surface can move a card with the keyboard');cards[0].classList.remove('weba-card-drag-surface');
 columns[0].dataset.listId='11';columns[1].dataset.listId='22';
 handle.dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true,cancelable:true}));
 assert.equal(Buffer.from(calls.at(-1)[2].split('|')[3],'base64').toString(),'#22','keyboard targets stable list identity');
@@ -72,4 +82,4 @@ for(const cancel of ['pointercancel','multitouch','outside','escape']){
 groups.forEach(e=>e.style.direction='rtl');groups[0].querySelector('.weba-drag-handle').dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true,cancelable:true}));
 boardWire=calls.at(-1)[2].split('|');assert.deepEqual(boardWire.slice(1).map(x=>Buffer.from(x,'base64').toString()),['101','','','103'],'RTL keyboard moves in visual direction');
 root.dataset.boardReorder='false';assert.equal(w.webaDrag.identify(boardHandle,'touch'),null,'sorted/archive board mode has no reorder gesture');
-w.close();console.log('Drag gestures: touch-vs-scroll, mouse surface, threshold, UTF-8 targets, cancel/multitouch, invalid/read-only drops, cleanup and keyboard passed');
+w.close();console.log('Drag gestures: handle-on grip and handle-off card mouse/touch/keyboard surface, scrolling, threshold, UTF-8 targets, cancel/multitouch, invalid/read-only drops and cleanup passed');

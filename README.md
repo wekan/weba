@@ -1833,13 +1833,19 @@ behavior in the isolated `tests/run-http.py --browser` harness.
 
 ## Touch drag and drop
 
-Use the Font Awesome arrow handle on a card, list or swimlane to drag it, as in
-WeKan's touch mode. Touch targets expand to at least 44 pixels; card handles sit
-on the trailing edge below the title area. Movement starts after 7 pixels. Touching elsewhere keeps
-normal browser scrolling and tapping a card still opens its details. On a mouse,
-a card can also be dragged from its surface. Focus a handle and use arrow keys
-for keyboard moves. Drag near a scrollable edge to auto-scroll; Escape, touch
-cancellation or a second finger cancels without saving.
+Cards follow the private **Show desktop drag handles** preference. With handles
+on, the Font Awesome arrow grip is the only mouse, touch or arrow-key move source;
+ordinary card touch keeps scrolling and a tap still opens details. With handles
+off, the grip is hidden and the non-interactive card/link surface accepts mouse,
+touch and arrow-key moves. Menus and unrelated links remain interactive, focus
+returns to the effective control after the acknowledged move, and a no-movement
+touch opens exactly once even when Chromium omits its compatibility click.
+
+Lists and swimlanes continue to use their Font Awesome arrow handles; applying
+the preference to those two surfaces remains pending. Touch targets expand to at
+least 44 pixels and card handles sit on the trailing edge below the title area.
+Movement starts after 7 pixels. Drag near a scrollable edge to auto-scroll;
+Escape, touch cancellation or a second finger cancels without saving.
 
 Cards can be reordered and moved between lists/swimlanes within the current
 board. Lists can be reordered or moved to another swimlane with their cards;
@@ -1855,8 +1861,9 @@ Cross-board drag moves remain future work.
 `node tests/drag.test.cjs` checks gesture selection, threshold, cancellation,
 UTF-8 transport and keyboard input. `tests/DragStoreTest.module` runs in the
 isolated store harness. `WEBA_DRAG_ONLY=1` selects the Chromium CDP touch/mouse
-checks in `tests/run-http.py --browser` (also `--archive`). Actual physical touch
-hardware and non-Chromium browsers have not been tested.
+checks in `tests/run-http.py --browser` (also `--archive`); the same scenario now
+runs in the standard source and packaged `test-live` sequence. Actual physical
+touch hardware and non-Chromium browsers have not been tested.
 
 
 ### Personal workspace service
@@ -2850,8 +2857,8 @@ The native `DragHandles` decision helper matches the source three-state rule:
 explicit on/off wins on every device; unset or malformed values follow touch
 capability. The 42-case source comparison covers 126 native outputs. Private profile
 storage and the native profile toggle are described below. The decision is now
-applied to native board-view ordering, overview board tiles and personal workspace
-ordering; card, list and lane gestures remain pending.
+applied to native board-view ordering, overview board tiles, personal workspace
+ordering and cards; list and lane gestures remain pending.
 
 `DragHandlePreference` now stores the signed-in native profile choice privately
 per account. `Stored()` returns Boolean or null without creating preference
@@ -2878,5 +2885,5 @@ trusted-touch and arrow-key surface. A preference change cancels a pending nativ
 gesture, and acknowledged keyboard moves restore focus to the effective grip or
 tile even when the server render precedes preference decoration. Personal order,
 readonly access, user isolation and the existing sorted/foreign-target guards
-remain unchanged. Native card/list/lane preference integration and the
+remain unchanged. Native list/lane preference integration and the
 original Meteor profile/DDP bridge remain pending.

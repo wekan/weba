@@ -12021,6 +12021,8 @@ ul, #myUL {
 .weba-board-drag-surface{touch-action:none;cursor:move}
 .weba-space-drag[hidden]{display:none!important}
 .weba-space-drag-surface{touch-action:none;cursor:move}
+.weba-card>.weba-drag-handle[hidden]{display:none!important}
+.weba-card-drag-surface{touch-action:none;cursor:move}
 .weba-drag-preference-state{display:none!important}
 .weba-drag-preference-toggle[aria-checked="true"]::before{content:"✓ ";}
 .weba-drag-preference-toggle[aria-checked="false"]::before{content:"☐ ";}

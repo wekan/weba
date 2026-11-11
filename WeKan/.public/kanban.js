@@ -259,6 +259,7 @@
         if (!cards.length && !['Boards','Archive','Starred'].includes(view) && !data.querySelector('[data-board-key]')) add(report,'p','No cards. Open the page menu to create a board, then select it and add a card.');
         return;
       }
+      root.webaDrag?.restoreCardFocus?.(section);
       data.hidden = true;
     });
   }
