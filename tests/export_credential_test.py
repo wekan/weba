@@ -22,10 +22,10 @@ class ExportCredentialTest(unittest.TestCase):
             self.assertFalse(server.is_attachment_export_path(path))
 
     def test_issue_route_scope_and_fields(self):
-        for name in ['github', 'gitea', 'forgejo', 'gitlab']:
+        for name in ['github', 'gitea', 'forgejo', 'gitlab', 'trello']:
             for suffix in ['', '/']:
                 self.assertTrue(server.is_issue_export_path('/api/boards/1/export/' + name + suffix))
-        for path in ['/api/boards/1/export/trello', '/api/boards/1/export/github//',
+        for path in ['/api/boards/1/export/kanboard', '/api/boards/1/export/github//',
                      '/API/boards/1/export/github', '/api/boards//export/github',
                      '/other/api/boards/1/export/github']:
             self.assertFalse(server.is_issue_export_path(path))
@@ -70,7 +70,7 @@ class ExportCredentialTest(unittest.TestCase):
                  ('unused&authToken[]=' + query_token, 'bad-query', ''),
                  ('', 'none', hashlib.sha256(header_token.encode()).hexdigest())]
         for value, state, digest in cases:
-            for path in ['/api/boards/1/attachments/2/export', '/api/boards/1/export/github', '/api/boards/1/export/gitea', '/api/boards/1/export/forgejo', '/api/boards/1/export/gitlab']:
+            for path in ['/api/boards/1/attachments/2/export', '/api/boards/1/export/github', '/api/boards/1/export/gitea', '/api/boards/1/export/forgejo', '/api/boards/1/export/gitlab', '/api/boards/1/export/trello']:
                 self.check_boundary(path, value, state, digest, query_token, header_token)
 
     def check_boundary(self, path, value, state, digest, query_token, header_token):

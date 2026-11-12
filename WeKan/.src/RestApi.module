@@ -667,7 +667,7 @@ Private Function IsIssueExport(fields As String[]) As Boolean
   Dim path As String
   If fields.Count <> 5 Then Return False
   If fields[0] <> "api" Or fields[1] <> "boards" Or fields[3] <> "export" Then Return False
-  If ["github", "gitea", "forgejo", "gitlab"].Find(fields[4]) < 0 Then Return False
+  If ["github", "gitea", "forgejo", "gitlab", "trello"].Find(fields[4]) < 0 Then Return False
   path = "/api/boards/" & fields[2] & "/export/" & fields[4]
   Return Request.Path = path Or Request.Path = path & "/"
 End

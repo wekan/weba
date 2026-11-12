@@ -2181,3 +2181,25 @@ export-access helpers. CGI credential tests include GitLab; WITH_API=false,
 no-write, policy-before-lookup, late scope/token/policy/public rollback and opaque
 failure cases remain covered. Other 36 format API renderers and complete original
 model/UI/API/security parity remain pending.
+
+Trello now shares the external API boundary at
+`GET /api/boards/:id/export/trello`. `BoardTrelloExport` accepts optional source
+selections; selected UI exports retain their all-fields default. Deselected
+card descriptions remain empty strings, dates become null and card label IDs
+become empty arrays. Source board name/prefs/lists/label definitions remain
+present regardless of those per-card gates. The explicit native label adapter
+therefore always derives the palette from active-card names, while independently
+gating each card's ID array. Persisted board-level label IDs/colors are pending.
+Missing list links omit idList rather than inventing a reference.
+
+The shared API fixtures now capture actual native card/list IDs and ordered lists
+for unchanged source collect/formatters. Trello cases compare per-card gates,
+palette retention, preferences, nulls/empty arrays, source parent-list metadata,
+missing-link omission and public output. The GitLab opened-state fixture now
+restores by list ID so an existing Doing list is not renamed accidentally.
+Credentials remain CGI-scrubbed and WITH_API=false remains authoritative.
+The shared raw-role/no-write/policy-before-lookup/late authority-policy rollback
+and opaque failure tests apply. Source neutral documents/user names/label IDs,
+empty planning and no-op anonymization remain explicit oracle adapters.
+Other 35 format API renderers and complete original model/UI/API/security parity
+remain pending.

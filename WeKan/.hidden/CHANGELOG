@@ -1,4 +1,9 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Trello export API: Add source GET board JSON with per-card section gates,
+  retained palette/list metadata, null deselected dates and missing-reference
+  omission. Verify source collector/formatter and shared security boundaries;
+  native palette models and complete original parity remain pending.
+
 - GitLab export API: Add source GET route with independent section gating,
   notes/people/close dates and scoped anonymous public note authors. Verify
   original collector/formatter HTTP equality and shared security boundaries;

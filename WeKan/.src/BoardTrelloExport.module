@@ -25,7 +25,7 @@ Private Function TrimText(value As String) As String
   Return String.Mid(value, first, finish - first + 1)
 End
 
-Public Function Build(boardId As Integer, db As Connection) As String
+Public Function Build(boardId As Integer, db As Connection, Optional wanted As Collection) As String
   Dim output As New Collection
   Dim prefs As New Collection
   Dim lists As New Variant[]
@@ -60,20 +60,19 @@ Public Function Build(boardId As Integer, db As Connection) As String
     item = New Collection
     item.Add(CStr(rows!id), "id")
     item.Add(TextValue(rows!title), "name")
-    item.Add(TextValue(rows!description), "desc")
+    item.Add(If(ExternalExportFields.Wants(wanted, "description"), TextValue(rows!description), ""), "desc")
     If Not IsNull(rows!list_id) Then item.Add(CStr(rows!list_id), "idList")
-    dates = CardDates.ReadDates(boardId, rows!id)
-    If dates.Exist("dueAt") Then
-      item.Add(CardDates.Iso(dates["dueAt"]), "due")
-    Else
-      item.Add(JSON.Null, "due")
+    item.Add(JSON.Null, "due")
+    If ExternalExportFields.Wants(wanted, "dates") Then
+      dates = CardDates.ReadDates(boardId, rows!id)
+      If dates.Exist("dueAt") Then item.Add(CardDates.Iso(dates["dueAt"]), "due")
     Endif
     item.Add(False, "closed")
     labelIds = New String[]
     For Each label In Split(TextValue(rows!labels), ",")
       label = TrimText(label)
       If Not label Then Continue
-      labelIds.Add(label)
+      If ExternalExportFields.Wants(wanted, "labels") Then labelIds.Add(label)
       If Not seen.Exist(label) Then
         seen.Add(True, label)
         definition = New Collection

@@ -25,10 +25,16 @@ def main():
         db.execute('UPDATE kb_cards SET description=?,labels=?,due_day=? WHERE id=?',('<literal> Ω\nquote "', 'one,one, Ω','2026-11-14',f['cardId']))
         db.execute('UPDATE kb_lists SET title=? WHERE board_id=? AND title=?',('incomplete',board,'Todo'));db.commit()
         items=[{'title':'Retained attachments','description':'<literal> Ω\nquote "','listTitle':'incomplete','labels':['one','one','Ω'],'dueAt':'2026-11-14T00:00:00.000Z','endAt':'2026-11-13T01:02:03.004Z','owner':'rest-file-assigned','assignees':['rest-member','rest-file-assigned'],'comments':seeded['comments']}, {'title':'Unassigned attachments','description':'','listTitle':'incomplete','labels':[]}]
+        active_cards=db.execute('SELECT c.id,cl.list_id FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id WHERE c.board_id=? AND c.archived=0 ORDER BY c.id',(board,)).fetchall()
+        assert len(active_cards)==len(items)
+        for item,(card_id,list_id) in zip(items,active_cards):
+            item['cardId']=str(card_id);item['listId']=str(list_id)
+        source_lists=[{'_id':str(row[0]),'title':row[1]} for row in db.execute('SELECT id,title FROM kb_lists WHERE board_id=? ORDER BY lane,sort_order,id',(board,))]
+        source_board={'title':'Attachment lifecycle board'}
         def snapshot():
             names=[row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table' AND (name LIKE 'kb_%' OR name IN ('api_tokens','import_export_settings','users'))")]
             return {name:sorted(db.execute('SELECT * FROM '+name).fetchall(),key=repr) for name in names}
-        for fmt in ['github','gitea','forgejo','gitlab']:
+        for fmt in ['github','gitea','forgejo','gitlab','trello']:
             url=f'/api/boards/{board}/export/{fmt}'
             status,data,headers=call(url,token=owner);assert status==200,(status,data)
             assert headers['Cache-Control']=='no-store' and headers['X-Content-Type-Options']=='nosniff'
@@ -55,12 +61,19 @@ def main():
             assert pair(f'/api/boards/99999999/export/{fmt}?authToken=bad')==(404,{'error':'Not found'})
             assert pair(f'/api/boards/0{board}/export/{fmt}',token=owner)==(404,{'error':'Not found'})
             assert snapshot()==before
+            if fmt=='trello':
+                db.execute('DELETE FROM kb_card_lists WHERE board_id=? AND card_id=?',(board,f['cardId']));db.commit()
+                status,data=pair(url,token=owner);assert status==200 and 'idList' not in data['cards'][0]
+                orphan_items=[{key:value for key,value in item.items() if key!='listId'} if index==0 else dict(item) for index,item in enumerate(items)]
+                orphan_items[0]['listTitle']=''
+                cases.append({'format':fmt,'fields':None,'items':orphan_items,'actual':data})
+                db.execute('INSERT INTO kb_card_lists(board_id,card_id,list_id) VALUES(?,?,?)',(board,f['cardId'],f['listId']));db.commit()
             if fmt=='gitlab':
-                db.execute('UPDATE kb_lists SET title=? WHERE board_id=? AND title=?',('Doing',board,'incomplete'));db.commit()
+                db.execute('UPDATE kb_lists SET title=? WHERE board_id=? AND id=?',('Doing',board,f['listId']));db.commit()
                 status,data=pair(url,token=owner);assert status==200
                 assert all(row['state']=='opened' and 'closed_at' not in row for row in data)
-                cases.append({'format':fmt,'fields':None,'items':[{**item,'listTitle':'Doing'} for item in items],'actual':data})
-                db.execute('UPDATE kb_lists SET title=? WHERE board_id=? AND title=?',('incomplete',board,'Doing'));db.commit()
+                cases.append({'format':fmt,'fields':None,'items':[{**item,'listTitle':'Doing'} for item in items],'lists':[{**row,'title':'Doing' if row['_id']==str(f['listId']) else row['title']} for row in source_lists],'actual':data})
+                db.execute('UPDATE kb_lists SET title=? WHERE board_id=? AND id=?',('incomplete',board,f['listId']));db.commit()
         url=f'/api/boards/{board}/export/github'
         role_flags=[entry['flag'] for entry in json.loads((Path(__file__).parent.parent/'WeKan/.public/api-member-roles.json').read_text())['roles'] if entry.get('flag')]
         assert len(role_flags)==8
@@ -91,6 +104,10 @@ def main():
             status,data=pair(url+suffix);assert status==200,(status,data)
             cases.append({'format':'github','fields':None,'items':items,'actual':data})
         assert pair(url,token=assigned)[0]==200
+        trello_url=f'/api/boards/{board}/export/trello'
+        status,data=pair(trello_url+'?fields=people&authToken=bad');assert status==200
+        assert data['labels'] and all(not card['idLabels'] and card['due'] is None and card['desc']=='' for card in data['cards'])
+        cases.append({'format':'trello','fields':'people','items':items,'actual':data})
         gitlab_url=f'/api/boards/{board}/export/gitlab'
         status,data=pair(gitlab_url+'?fields=comments&authToken=bad');assert status==200
         cases.append({'format':'gitlab','fields':'comments','items':items,'actual':data})
@@ -109,9 +126,11 @@ def main():
         db.execute('ALTER TABLE kb_cards RENAME COLUMN labels TO opaque_export_canary');db.commit();before=snapshot()
         assert pair(url)==(500,{'error':'Board export failed'});assert snapshot()==before
         db.execute('ALTER TABLE kb_cards RENAME COLUMN opaque_export_canary TO labels');db.commit()
+    for sample in cases:
+        sample.setdefault('board',source_board);sample.setdefault('lists',source_lists)
     Path(os.environ['WEBA_TEST_PROJECT'],'issue-export-cases.json').write_text(json.dumps(cases))
     Path(os.environ['WEBA_TEST_PROJECT'],'issue-export-roles.json').write_text(json.dumps(role_cases))
-    print('Issue export HTTP: four source routes, public/private/query-bearer auth precedence, field selections, archive reads, no writes, assigned-only/global-admin denial, all 256 raw role sets, late member/token/policy/public rollback and opaque failure passed')
+    print('Issue export HTTP: five source routes, public/private/query-bearer auth precedence, field selections, archive reads, no writes, assigned-only/global-admin denial, all 256 raw role sets, late member/token/policy/public rollback and opaque failure passed')
 try:main()
 except Exception as error:
     message=traceback.format_exc()+"\nLast response: "+repr(last)

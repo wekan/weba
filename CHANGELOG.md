@@ -2,6 +2,20 @@
 
 This work adds the following features and fixes:
 
+- Add GET `/api/boards/:id/export/trello` through the locked external-export
+  service. Apply source per-card description/label/date gates while retaining
+  board name, prefs, lists and palette metadata; use null due dates and empty
+  label IDs where deselected. Preserve native list/card references, missing-link
+  omission and exact empty arrays/strings. Keep native label-name IDs and derived
+  active-card palette as explicit adapters; persisted board label IDs/colors
+  remain pending. Compare 124 actual HTTP bodies with unchanged source collector/
+  formatters across five routes, retaining 256 raw-role and all prior security
+  checks. Complete host tests pass (70 Python tests, 80 archive/scope snapshots),
+  as do 10 original Trello contracts, both API builds and all 45 source/packaged
+  selected downloads with cached scope checks.
+  Remaining 35 API format renderers, native models/anonymization/security
+  reporting and complete original parity remain pending. Thanks to xet7.
+
 - Add GET `/api/boards/:id/export/gitlab` through the locked public/private
   issue-export service. Gate description, labels, card dates, people and comments
   independently as source collect does; retain note timestamps without card
