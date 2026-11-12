@@ -1,0 +1,87 @@
+' Native Nextcloud Deck formatter; match source stack titles exactly.
+Export
+Private Function TextValue(value As Variant) As String
+  If IsNull(value) Then Return ""
+  Return CStr(value)
+End
+
+Public Function Build(boardId As Integer, db As Connection) As String
+  Dim output As New Collection
+  Dim stacks As New Variant[]
+  Dim cards As New Variant[]
+  Dim board As Result
+  Dim lists As Result
+  Dim rows As Result
+  Dim entries As Result
+  Dim stack As Collection
+  Dim card As Collection
+  Dim label As String
+  Dim labels As Variant[]
+  Dim item As Collection
+  Dim comments As Variant[]
+  Dim people As String[]
+  Dim person As String
+  Dim assigned As Variant[]
+  Dim participant As Collection
+  Dim dates As Collection
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  board = db.Find("kb_boards", "id=&1", boardId)
+  If Not board.Available Then Error.Raise("Board not found")
+  output.Add(TextValue(board!title), "title")
+  lists = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
+  For Each lists
+    cards = New Variant[]
+    rows = db.Exec("SELECT c.* FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 AND COALESCE(l.title,'')=&4 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False, TextValue(lists!title))
+    For Each rows
+      card = New Collection
+      card.Add(TextValue(rows!title), "title")
+      card.Add(TextValue(rows!description), "description")
+      dates = CardDates.ReadDates(boardId, rows!id)
+      If dates.Exist("dueAt") Then card.Add(CardDates.Iso(dates["dueAt"]), "duedate")
+      If dates.Exist("endAt") Then card.Add(CardDates.Iso(dates["endAt"]), "done")
+      labels = New Variant[]
+      For Each label In Split(TextValue(rows!labels), ",")
+        label = Trim(label)
+        If Not label Then Continue
+        item = New Collection
+        item.Add(label, "title")
+        labels.Add(item)
+      Next
+      card.Add(labels, "labels")
+      people = BoardAccess.Assignees(boardId, rows!id)
+      For Each person In BoardAccess.CardMembers(boardId, rows!id)
+        people.Add(person)
+      Next
+      assigned = New Variant[]
+      For Each person In people
+        participant = New Collection
+        participant.Add(person, "uid")
+        item = New Collection
+        item.Add(participant, "participant")
+        assigned.Add(item)
+      Next
+      If assigned.Count Then card.Add(assigned, "assignedUsers")
+      comments = New Variant[]
+      entries = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, rows!id, "comment")
+      For Each entries
+        item = New Collection
+        item.Add(TextValue(entries!body), "message")
+        item.Add(CardContent.AuthorName(boardId, rows!id, "entry", entries!id), "actorId")
+        If IsNull(entries!created_at) Then
+          item.Add("", "creationDateTime")
+        Else
+          item.Add(CardDates.Iso(ItemChanges.Epoch(entries!created_at)), "creationDateTime")
+        Endif
+        comments.Add(item)
+      Next
+      If comments.Count Then card.Add(comments, "comments")
+      cards.Add(card)
+    Next
+    stack = New Collection
+    stack.Add(TextValue(lists!title), "title")
+    stack.Add(cards, "cards")
+    stacks.Add(stack)
+  Next
+  output.Add(stacks, "stacks")
+  Return JSON.Encode(output) & Chr(10)
+End

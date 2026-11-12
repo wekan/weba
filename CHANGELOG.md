@@ -2,6 +2,17 @@
 
 This work adds the following features and fixes:
 
+- Add Nextcloud Deck JSON as the thirty-first selected-board tool export.
+  Download `wekan-boards-deck.zip` with source stack-title grouping, duplicate
+  and empty-title behavior, literal card text/labels, due/completion dates,
+  repeated people and comments. Retain active/full-read/export-policy/session
+  and cached-scope gates; omit unrelated checklist/custom/WIP metadata.
+  Native rich/empty/legacy/missing-list comparisons and original round-trip
+  contracts pass. Complete host tests pass, including 69 Python tests and 62
+  archive/scope snapshots; all 36 source/packaged browser downloads and cached
+  revocation/regrant checks pass. Native creator/creation metadata, nine remaining tool
+  formats and full original UI/API/security parity remain pending. Thanks to xet7.
+
 - Add Notion CSV as the thirtieth selected-board tool export. Download
   `wekan-boards-notion.zip` with source-exact CSV columns, used-lane Swimlane
   detection, ordered typed custom fields, Boolean Yes/No, precise numeric text,

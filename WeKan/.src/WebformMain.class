@@ -5280,3 +5280,7 @@ End
 Public Sub ExportSelectedNotion_Click()
   RunSelectedExport("notion")
 End
+
+Public Sub ExportSelectedDeck_Click()
+  RunSelectedExport("deck")
+End

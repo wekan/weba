@@ -1921,3 +1921,21 @@ Notion legacy numeric storage containing only whitespace is normalized to zero
 before descriptor handoff, matching the native finite-number parser and JavaScript
 number conversion. The regression fixture inserts this legacy state directly; the
 normal card-content save path rejects empty numeric input.
+
+Nextcloud Deck selected export uses `BoardDeckExport` under the existing locked
+`BoardTransfer.ExportChecked` boundary. It reads only active cards and the native
+list, people, label, date and comment models. It matches each stack by list title
+rather than list ID, preserving duplicate-title repetition and the source empty
+list-title fallback for missing list links. Optional absent due/done/people/comment
+properties are omitted. Native numeric IDs, comma-separated labels and membership
+names remain explicit storage adapters; creator and card creation timestamps have
+no native persisted counterpart yet. The source collector provides time tracking
+only for Jira, so Deck has no fabricated time-tracking object.
+
+`DeckExportTest` and `DeckCasesTest` compare actual native batch/direct exports to
+unchanged `formatters.deck`: literal Unicode, source duplicate title behavior,
+rich comments/people/dates, archived exclusion, empty/legacy/missing-list cases,
+export-policy denial and assigned-only full-read denial. The selected-export
+browser harness downloads ordered per-board JSON files through the real Deck
+button in both source and packaged applications. Complete original feature and
+security parity remains separate pending work.

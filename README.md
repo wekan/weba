@@ -3274,3 +3274,10 @@ gesture, and acknowledged keyboard moves restore focus to the effective grip or
 tile even when the server render precedes preference decoration. Personal order,
 readonly access, user isolation and the existing sorted/foreign-target guards
 remain unchanged. The original Meteor profile/DDP bridge remains pending.
+
+Selected boards can also export **Nextcloud Deck JSON** in
+`wekan-boards-deck.zip`. Each board gets one `board-ID.json` with source-shaped
+stacks and cards, comments, repeated assignments, labels and optional due/done
+dates. Matching uses list titles, including duplicate and empty-title stacks.
+Archived cards stay excluded. Creator/creation metadata and complete original
+UI/API/security parity remain pending.

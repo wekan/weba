@@ -115,6 +115,10 @@ Public Function ExportActiveBoardTasksOrg(boardId As Integer) As String
   Return ExportChecked(boardId, "board", boardId, True, "tasksorg")
 End
 
+Public Function ExportActiveBoardDeck(boardId As Integer) As String
+  Return ExportChecked(boardId, "board", boardId, True, "deck")
+End
+
 Public Function ExportActiveBoardNotion(boardId As Integer) As String
   Return ExportChecked(boardId, "board", boardId, True, "notion")
 End
@@ -223,6 +227,8 @@ Private Function ExportChecked(boardId As Integer, kind As String, itemId As Int
     text = BoardClickUpExport.Build(boardId, $db)
   Else If format = "nullboard" And kind = "board" Then
     text = BoardNullboardExport.Build(boardId, $db)
+  Else If format = "deck" And kind = "board" Then
+    text = BoardDeckExport.Build(boardId, $db)
   Else If format = "kanri" And kind = "board" Then
     text = BoardKanriExport.Build(boardId, $db)
   Else If format = "pivotal" And kind = "board" Then

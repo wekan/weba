@@ -1,4 +1,9 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Nextcloud Deck selected export: Add source-shaped JSON ZIPs with stack-title
+  matching, duplicate/empty lists, comments/people/labels and optional dates.
+  Verify rich/legacy/empty/missing-list source comparisons and full-read/policy
+  gates. Native creation metadata and full original parity remain pending.
+
 - Notion selected export: Add explicitly bound CSV ZIP rendering from scoped
   native snapshots with dynamic typed fields, conditional used-lane columns,
   reserved-name filtering and exact source values/quoting. Verify native/source
