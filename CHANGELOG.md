@@ -2,6 +2,22 @@
 
 This work adds the following features and fixes:
 
+- Add GET `/api/boards/:id/export/orgmode` through the locked external-export
+  service with source `text/x-org; charset=utf-8` bytes. Independently select
+  descriptions, labels, dates and checklists. Preserve label-driven DONE state,
+  first priority, Unicode tags, UTC planning and whitespace/fallback outlines;
+  trim tag edge underscores and match source ASCII terminal case rules.
+  Compare 460 actual responses across eleven routes with unchanged source
+  collector/formatters and original server types/bodies, retaining 256 roles
+  and direct Org late-scope/token/policy/public rollback, policy-before-lookup
+  and opaque error cases. Full host tests pass (70 Python tests, 240 complete
+  selected descriptor pairs and 80 archive/scope snapshots), as do both API
+  builds, all 45 source/packaged selected downloads and cached scope checks,
+  five original Org mode contracts and original external export round-trips.
+  Remaining 29 API renderers, native creation/field
+  models/anonymization/security reporting and complete original parity remain
+  pending. Thanks to xet7.
+
 - Exclude tombstoned list metadata from native external exports while keeping
   retained card list IDs. Fix deleted titles affecting issue open/closed state,
   container grouping and descriptor metadata in 24 renderer modules and the

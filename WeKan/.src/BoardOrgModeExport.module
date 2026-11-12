@@ -2,6 +2,7 @@
 Export
 Private $db As Connection
 Private $boardId As Integer
+Private $wanted As Collection
 ' Compressed endpoints for ECMAScript [\p{L}\p{N}], decoded once so the
 ' formatter keeps the parent Unicode contract without an optional PCRE module.
 Private $unicodeLetterNumber As Integer[]
@@ -95,8 +96,16 @@ Private Function OneLine(value As Variant) As String
 End
 
 Private Function ClosedList(title As String) As Boolean
-  Dim lower As String = LCase(title)
-  Return InStr(lower, "done") > 0 Or InStr(lower, "closed") > 0 Or InStr(lower, "complete") > 0 Or InStr(lower, "archiv") > 0 Or InStr(lower, "finished") > 0
+  Dim code As Integer
+  Dim word As String
+  ' JavaScript's non-Unicode /i matches these ASCII literals only.
+  For code = 65 To 90
+    title = Replace(title, Chr(code), Chr(code + 32))
+  Next
+  For Each word In ["done", "closed", "complete", "archiv", "finished"]
+    If InStr(title, word) Then Return True
+  Next
+  Return False
 End
 
 Private Function PriorityLabel(label As String) As Boolean
@@ -121,6 +130,12 @@ Private Function OrgTag(value As String) As String
       separator = True
     Endif
   Next
+  While Left(result, 1) = "_"
+    result = Mid(result, 2)
+  Wend
+  While Right(result, 1) = "_"
+    result = Left(result, Len(result) - 1)
+  Wend
   Return result
 End
 
@@ -147,7 +162,7 @@ End
 
 Private Function CardLines(card As Result, listTitle As String) As String[]
   Dim lines As New String[]
-  Dim parsedLabels As String[] = Labels(card!labels)
+  Dim parsedLabels As String[] = Labels("")
   Dim tags As New String[]
   Dim label As String
   Dim tag As String
@@ -161,6 +176,7 @@ Private Function CardLines(card As Result, listTitle As String) As String[]
   Dim checklist As Result
   Dim item As Result
   Dim itemLines As New String[]
+  If ExternalExportFields.Wants($wanted, "labels") Then parsedLabels = Labels(card!labels)
   For Each label In parsedLabels
     If label = "done" Then
       done = True
@@ -173,46 +189,52 @@ Private Function CardLines(card As Result, listTitle As String) As String[]
   Next
   If Not title Then title = "Untitled"
   lines.Add("** " & If(done, "DONE ", "TODO ") & If(priority, "[#" & priority & "] ", "") & title & If(tags.Count, " :" & tags.Join(":") & ":", ""))
-  dates = CardDates.ReadDates($boardId, card!id)
+  dates = New Collection
+  If ExternalExportFields.Wants($wanted, "dates") Then dates = CardDates.ReadDates($boardId, card!id)
   If dates.Exist("startAt") Then planning.Add("SCHEDULED: " & Stamp(dates["startAt"], True))
   If dates.Exist("dueAt") Then planning.Add("DEADLINE: " & Stamp(dates["dueAt"], True))
   If done And dates.Exist("endAt") Then planning.Add("CLOSED: " & Stamp(dates["endAt"], False))
   If planning.Count Then lines.Add("   " & planning.Join(" "))
-  description = Replace(TextValue(card!description), Chr(13) & Chr(10), Chr(10))
+  If ExternalExportFields.Wants($wanted, "description") Then
+    description = Replace(TextValue(card!description), Chr(13) & Chr(10), Chr(10))
+  Endif
   description = Replace(description, Chr(13), Chr(10))
   If description Then
     For Each descriptionLine In Split(description, Chr(10))
       lines.Add(If(descriptionLine, "   " & descriptionLine, ""))
     Next
   Endif
-  checklist = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, card!id, "checklist")
-  For Each checklist
-    itemLines = New String[]
-    item = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, card!id, "checkitem", checklist!id)
-    For Each item
-      title = OneLine(item!title)
-      If Not title Then title = "Item"
-      itemLines.Add("**** " & If(CBool(item!done), "DONE ", "TODO ") & title)
-    Next
-    If itemLines.Count Then
-      title = OneLine(checklist!title)
-      If Not title Then title = "Checklist"
-      lines.Add("*** " & title)
-      For Each descriptionLine In itemLines
-        lines.Add(descriptionLine)
+  If ExternalExportFields.Wants($wanted, "checklists") Then
+    checklist = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, card!id, "checklist")
+    For Each checklist
+      itemLines = New String[]
+      item = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, card!id, "checkitem", checklist!id)
+      For Each item
+        title = OneLine(item!title)
+        If Not title Then title = "Item"
+        itemLines.Add("**** " & If(CBool(item!done), "DONE ", "TODO ") & title)
       Next
-    Endif
-  Next
+      If itemLines.Count Then
+        title = OneLine(checklist!title)
+        If Not title Then title = "Checklist"
+        lines.Add("*** " & title)
+        For Each descriptionLine In itemLines
+          lines.Add(descriptionLine)
+        Next
+      Endif
+    Next
+  Endif
   Return lines
 End
 
-Public Function Build(boardId As Integer, db As Connection) As String
+Public Function Build(boardId As Integer, db As Connection, Optional wanted As Collection) As String
   Dim lines As New String[]
   Dim board As Result
   Dim lists As Result
   Dim cards As Result
   Dim cardLine As String
   Dim title As String
+  $wanted = wanted
   $db = db
   $boardId = boardId
   BoardAccess.RequireContainer(boardId, "board", boardId)

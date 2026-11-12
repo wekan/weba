@@ -1,4 +1,10 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Org mode export API: Add original text response and independently selected
+  descriptions/labels/dates/checklists. Preserve source DONE/priority/Unicode
+  tags, UTC planning and whitespace fallbacks; repair tag edge underscores and
+  terminal case rules. Verify source output and direct access/error boundaries;
+  remaining native models/routes and full original parity stay open.
+
 - External export list metadata: Filter tombstoned list joins in renderer and
   shared snapshots without changing retained card IDs. Fix wrong issue state,
   grouping, Org mode blank-title binding and TickTick empty map keys. Verify

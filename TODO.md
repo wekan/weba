@@ -212,7 +212,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   selection, source node/mark/escaping semantics and scoped final guards is
   recorded there; OPML GET XML export with independent notes/checklists, source
   attribute whitespace/outline state and live-list metadata resolution is
-  recorded there; remaining 30
+  recorded there; Org mode GET export with independent sections, source planning/
+  state/tag/outline semantics and scoped final guards is recorded there;
+  remaining 29
   external-format API routes, native field-model guards, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded

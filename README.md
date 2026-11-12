@@ -3340,12 +3340,12 @@ current source tool formats now have native selected-export entries, checked
 against source EXTERNAL_EXPORT_FORMATS. Native model gaps and complete original
 UI/API/security parity remain pending.
 
-With `WITH_API=true`, GitHub/Gitea/Forgejo/GitLab issue, Trello board, Deck stack, Kanboard task, Markdown text, Leo XML and OPML exports are available at
-`GET /api/boards/ID/export/github` (or `gitea` / `forgejo` / `gitlab` / `trello` / `deck` / `kanboard` / `markdown` / `leo` / `opml`). Private boards require
+With `WITH_API=true`, GitHub/Gitea/Forgejo/GitLab issue, Trello board, Deck stack, Kanboard task, Markdown text, Leo XML, OPML and Org mode exports are available at
+`GET /api/boards/ID/export/github` (or `gitea` / `forgejo` / `gitlab` / `trello` / `deck` / `kanboard` / `markdown` / `leo` / `opml` / `orgmode`). Private boards require
 a valid bearer or source-compatible query credential and full-board read access;
 public boards follow the source anonymous path. The `fields=labels,dates,description` query selects sections;
 unknown/empty/structured selections fall back as
-source does. Native JSON is written directly so empty strings survive. Other 30
+source does. Native JSON is written directly so empty strings survive. Other 29
 format API routes, native field-security models, anonymization/security reporting
 and complete original UI/API/security parity remain pending.
 
@@ -3407,3 +3407,12 @@ selected-descriptor pairs across all 40 formats, owner/readonly roles and live
 duplicate/blank/missing-title cases. The descriptor fixture freezes only its
 isolated copy's export clock; generic CSV/Excel archive-retention adapters keep
 their existing behavior. Full native model/UI/API/security parity remains open.
+
+Org mode API export returns `text/x-org; charset=utf-8`, with independent
+`description`, `labels`, `dates` and `checklists` selection. The selected `done`
+label can mark a card DONE; priority uses the first matching source label.
+Unicode tags, UTC planning, heading whitespace and checklist fallbacks follow
+the original formatter. Deselected dates omit planning, and deselected labels
+do not set DONE or tags. Creation timestamps and other native field models stay
+pending. Shared credential, policy, full-board and final transaction guards
+apply before returning the text.

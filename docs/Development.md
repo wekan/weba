@@ -2340,3 +2340,23 @@ checked after the pairs; existing 80 archive snapshots and generic CSV/Excel
 archive behavior remain covered. Source custom/native field models, neutral
 anonymization/security reporting and complete original UI/API/security parity
 remain separate open work, along with 30 API renderers.
+
+Org mode shares the locked API at `GET /api/boards/:id/export/orgmode` and returns
+original text/x-org UTF-8 bytes. Optional sections are reset for each Build call:
+description/labels/dates/checklists independently control body text, tag-derived
+DONE/priority/tags, planning and checklist outlines. UI selected exports retain
+all-fields defaults. Terminal detection uses source ASCII case rules; tag edge
+underscores are trimmed even when literal in a label, matching original orgTag.
+
+Fixtures cover all general section masks plus label-driven done versus dates-only
+TODO state, first priority, underscore-only/edge tags, Unicode/astral/symbol tags,
+negative-epoch scheduled stamps, due/closed gates, whitespace heading and checklist
+fallbacks and literal heading-like body lines. Empty/duplicate/blank/deleted list
+contexts and anonymous selections stay in coverage. All 460 actual responses
+across eleven formats match unchanged parseExportFields/collect/gateItem/formatters,
+with original server body/type checks for initial successes. Org itself exercises
+late member/token/policy/public rollback, policy-before-lookup under broken board
+schema and opaque missing-description failure. Shared 256-role/credential checks
+remain. Native creation stamps, SQL ID/label/lane/entry adapters, empty planning
+models/no-op anonymization and full security reporting remain explicit gaps;
+29 API renderers and complete original UI/API/security parity remain open.
