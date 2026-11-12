@@ -2367,6 +2367,9 @@ undated comments use the source export-time fallback; comments have no author
 field in this target. Unsupported attachments/alarms/location/preferences remain
 empty or absent as in the source backup formatter.
 
+External-tool exports contain active cards. The native `weba-2` backup and
+generic CSV/TSV/Excel exports also retain archived cards.
+
 The ordered ID list, revision and completed/pending queue remain private to the
 form. The queue is bound to the current account session and unchanged selection.
 Every board independently takes the existing locked whole-board export path and

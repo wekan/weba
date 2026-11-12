@@ -1,0 +1,69 @@
+' All current external-tool formats share the source active-card collector.
+Public Sub Main()
+  Dim boardId As Integer
+  Dim active As Integer
+  Dim archived As Integer
+  Dim orphan As Integer
+  Dim archivedOrphan As Integer
+  Dim formats As String[] = ["kanboard", "markdown", "leo", "opml", "orgmode", "todotxt", "taskwarrior", "focalboard", "todoist", "planner", "meistertask", "obsidian", "linear", "ticktick", "clickup", "nullboard", "kanri", "pivotal", "redmine", "tasksorg"]
+  Dim result As New Collection
+  Dim snapshots As New Variant[]
+  Dim item As Collection
+  Dim selection As Collection
+  Dim batch As Collection
+  Dim content As String
+  Dim format As String
+  Dim actor As String
+  Dim retained As Result
+  Dim before As Integer
+  Dim historyBefore As Integer
+  WebDatabase.Register("external-archive-owner", "x")
+  WebDatabase.Register("external-archive-reader", "x")
+  Session["username"] = "external-archive-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("external-archive-owner")
+  boardId = KanbanStore.AddBoard("Archive export contract")
+  active = KanbanStore.SaveCard(boardId, 0, "Active export canary", "ACTIVE_EXPORT_BODY", "Default", "Todo", "", "visible", "")
+  archived = KanbanStore.SaveCard(boardId, 0, "Hidden archived canary", "SECRET_ARCHIVED_BODY_CANARY", "Default", "Todo", "", "ARCHIVED_TAG_MARKER", "")
+  CardContent.Save(boardId, archived, 0, "comment", "", "ARCHIVED_COMMENT_MARKER", 0, False, 0)
+  KanbanStore.ArchiveCard(boardId, archived, True)
+  orphan = KanbanStore.SaveCard(boardId, 0, "Active orphan canary", "ACTIVE_ORPHAN_BODY", "Default", "Todo", "", "", "")
+  archivedOrphan = KanbanStore.SaveCard(boardId, 0, "Hidden archived canary orphan", "SECRET_ARCHIVED_BODY_CANARY_ORPHAN", "Default", "Todo", "", "ARCHIVED_TAG_MARKER_ORPHAN", "")
+  KanbanStore.ArchiveCard(boardId, archivedOrphan, True)
+  ' Legacy missing-list rows exercise Todoist's separate No section query.
+  WebDatabase.OpenConnection().Exec("DELETE FROM kb_card_lists WHERE board_id=&1 AND (card_id=&2 OR card_id=&3)", boardId, orphan, archivedOrphan)
+  BoardAccess.SetMember(boardId, "external-archive-reader", "read-only")
+  before = WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_entries")!total
+  historyBefore = WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_history")!total
+  For Each actor In ["external-archive-owner", "external-archive-reader"]
+    Session["username"] = actor
+    Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+    selection = BoardSelection.NewState()
+    BoardSelection.SetActive(selection, True)
+    BoardSelection.AddVisible(selection, [boardId])
+    For Each format In formats
+      batch = BoardBatchExport.NewBatch(selection, format)
+      BoardBatchExport.Run(batch, selection)
+      content = BoardBatchExport.Files(batch)[0]["content"]
+      If format = "todoist" And InStr(content, "Active orphan canary") = 0 Then Error.Raise("Todoist No section export lost active orphan or failed its bound query")
+      item = New Collection
+      item["actor"] = actor
+      item["format"] = format
+      item["content"] = content
+      snapshots.Add(item)
+    Next
+    ' Native backup and generic CSV/Excel intentionally include retained cards.
+    For Each format In ["weba", "csv", "scsv", "tsv", "excel"]
+      batch = BoardBatchExport.NewBatch(selection, format)
+      BoardBatchExport.Run(batch, selection)
+      content = BoardBatchExport.Files(batch)[0]["content"]
+      If InStr(content, "Hidden archived canary") = 0 Or InStr(content, "SECRET_ARCHIVED_BODY_CANARY") = 0 Then Error.Raise("Generic/native export lost intentional archive retention: " & format)
+    Next
+  Next
+  retained = WebDatabase.OpenConnection().Find("kb_cards", "board_id=&1 AND id=&2", boardId, archived)
+  If Not retained.Available Then Error.Raise("External export deleted archived retention")
+  If Not CBool(retained!archived) Or retained!description <> "SECRET_ARCHIVED_BODY_CANARY" Then Error.Raise("External export changed archived content/state")
+  If WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_entries")!total <> before Or WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_history")!total <> historyBefore Then Error.Raise("External export changed retained entries/history")
+  result["formats"] = formats
+  result["snapshots"] = snapshots
+  Print JSON.Encode(result)
+End

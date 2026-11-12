@@ -27,7 +27,7 @@ Public Function Build(boardId As Integer, db As Connection) As String
   lines.Add("")
   lists = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
   For Each lists
-    cards = db.Exec("SELECT c.* FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND l.title=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", lists!title)
+    cards = db.Exec("SELECT c.* FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND l.title=&3 AND c.archived=&4 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", lists!title, False)
     If Not cards.Available Then Continue
     lines.Add("## " & TextValue(lists!title))
     lines.Add("")

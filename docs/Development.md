@@ -1411,6 +1411,27 @@ estimates, running-time omission, archived content and assigned-only/global-poli
 refusal. The normal store runner isolates its database. Real source/package
 selected-export downloads compare empty backups to the actual parent formatter.
 
+### External-tool archive scope
+
+The source `collect()` in `models/lib/externalExporters.js` selects active cards.
+Every implemented native tool exporter follows that scope, including metadata
+and section-discovery passes. Archived labels/comments must not leak through a
+prepass after card rows have been filtered. Native `weba-2` backups and generic
+CSV/TSV/multi-board Excel follow their different source contract and keep archive
+content; do not apply the external-tool filter to those paths.
+
+`ExternalArchiveExportTest` exercises every accepted tool format as both owner
+and readonly member, verifies active content, excludes archived title/body/tag/
+comment canaries, and checks retained card/state/entries/history plus native/
+generic archive output. Its Node oracle executes the unchanged source collector
+with explicit neutral-cache/disabled-field/no-op anonymization adapters and
+checks that every implemented tool format participates. Add a format to this
+regression when extending the private queue. The Planner-specific batch canary
+also verifies retained data. Legacy active/archived missing-list cards exercise
+Todoist's separate No section branch for both actors. The complete scope/auth/
+eventlog paths remain
+separate existing tests and TODO work.
+
 The final file snapshot crosses the native command boundary as base64 JSON.
 `batch-export.js` bounds and validates the JSON/table/Excel envelope, writes
 stored UTF-8 ZIP or OOXML entries with CRC-32 and a central directory, and never

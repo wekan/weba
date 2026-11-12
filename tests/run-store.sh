@@ -4,7 +4,7 @@ set -eu
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 work=$(mktemp -d "$TMPDIR/weba-test.XXXXXX")
 trap 'rm -rf -- "$work"' EXIT HUP INT TERM
-for test in AuthTest UserDeletionTest SessionGenerationTest NativeAuthTest PasswordPolicyTest StoreTest DragStoreTest WorkspaceTest BoardAccessTest BoardViewPreferenceTest DragHandlePreferenceTest BoardViewPolicyTest InstanceFeaturesTest BoardViewTransferTest SignedBoardViewsTest BoardVisibilityTest BoardVisibilityReadTest PublicBoardCatalogTest PublicAttachmentReadTest GuestBoardReadTest GuestCommandsTest InactiveMembersTest AssignedAccessTest CombinedScopeTest BoardLiveTest OverviewLiveTest BoardCatalogTest BoardOrderTest BoardSpacesTest WorkspaceIconColorTest BoardSpacePresentationTest BoardSpaceDropTest BoardDropTest BoardBatchDropTest BoardSelectionTest BoardSelectedStarsTest HomeBoardTest BoardRouteTest CardRouteTest BoardArchiveTest HomeDropTest HomeCatalogTest BoardPurgeTest ListDeletionTest AttachmentLifecycleTest TransferPolicyTest BoardAttachmentAllowanceTest BoardCopyAuthorizationTest BoardCopiesTest BoardBatchExportTest RedmineExportTest TasksOrgExportTest ExportNumberTest CopyOptionsTest BoardCreationTest MarkdownPolicyTest MarkdownTitlesTest ExternalLinkPolicyTest ImportExportPolicyTest AttachmentExportNativeTest SingleBoardCopyTest CardDraftTest DetailLiveTest PeopleLiveTest RelationLabelTest CardMembersTest NativeAssigneeTest CardDatesTest CardArchiveTest ItemChangesTest CardContentTest WorkspaceActionsTest BoardTransferTest ExportFieldsTest; do
+for test in AuthTest UserDeletionTest SessionGenerationTest NativeAuthTest PasswordPolicyTest StoreTest DragStoreTest WorkspaceTest BoardAccessTest BoardViewPreferenceTest DragHandlePreferenceTest BoardViewPolicyTest InstanceFeaturesTest BoardViewTransferTest SignedBoardViewsTest BoardVisibilityTest BoardVisibilityReadTest PublicBoardCatalogTest PublicAttachmentReadTest GuestBoardReadTest GuestCommandsTest InactiveMembersTest AssignedAccessTest CombinedScopeTest BoardLiveTest OverviewLiveTest BoardCatalogTest BoardOrderTest BoardSpacesTest WorkspaceIconColorTest BoardSpacePresentationTest BoardSpaceDropTest BoardDropTest BoardBatchDropTest BoardSelectionTest BoardSelectedStarsTest HomeBoardTest BoardRouteTest CardRouteTest BoardArchiveTest HomeDropTest HomeCatalogTest BoardPurgeTest ListDeletionTest AttachmentLifecycleTest TransferPolicyTest BoardAttachmentAllowanceTest BoardCopyAuthorizationTest BoardCopiesTest BoardBatchExportTest ExternalArchiveExportTest RedmineExportTest TasksOrgExportTest ExportNumberTest CopyOptionsTest BoardCreationTest MarkdownPolicyTest MarkdownTitlesTest ExternalLinkPolicyTest ImportExportPolicyTest AttachmentExportNativeTest SingleBoardCopyTest CardDraftTest DetailLiveTest PeopleLiveTest RelationLabelTest CardMembersTest NativeAssigneeTest CardDatesTest CardArchiveTest ItemChangesTest CardContentTest WorkspaceActionsTest BoardTransferTest ExportFieldsTest; do
   [ -f "$root/tests/$test.module" ] || continue
   project="$work/$test"
   mkdir -p "$project"
@@ -14,7 +14,9 @@ for test in AuthTest UserDeletionTest SessionGenerationTest NativeAuthTest Passw
   cp "$root/tests/$test.module" "$project/.src/$test.module"
   if [ "$test" = BoardVisibilityTest ]; then cp "$root/tests/BoardVisibilityMatrix.module" "$project/.src/BoardVisibilityMatrix.module"; fi
   "${GBC:-gbc3}" -j 1 -a "$project"
-  if [ "$test" = TasksOrgExportTest ]; then
+  if [ "$test" = ExternalArchiveExportTest ]; then
+    WEBA_TEST_EXTERNAL_ARCHIVE_PROJECT="$project" "${NODE:-node}" "$root/tests/external-archive-export-conformance.test.cjs"
+  elif [ "$test" = TasksOrgExportTest ]; then
     WEBA_TEST_TASKSORG_PROJECT="$project" "${NODE:-node}" "$root/tests/tasksorg-export-conformance.test.cjs"
   elif [ "$test" = ExportNumberTest ]; then
     WEBA_TEST_NUMBER_PROJECT="$project" "${NODE:-node}" "$root/tests/export-number-conformance.test.cjs"

@@ -18,6 +18,8 @@ Public Sub Main()
   Dim taskwarriorBatch As Collection
   Dim focalboardBatch As Collection
   Dim todoistBatch As Collection
+  Dim plannerArchived As Integer
+  Dim plannerRetained As Result
   Dim plannerBatch As Collection
   Dim meisterTaskBatch As Collection
   Dim obsidianBatch As Collection
@@ -326,10 +328,16 @@ Public Sub Main()
   If InStr(todoist, "section,Todo" & String(12, ",") & Chr(13) & Chr(10)) = 0 Or InStr(todoist, "task,Plan valve @shop_floor," & Chr(34) & "Two, " & Chr(34) & Chr(34) & "DN50" & Chr(34) & Chr(34) & Chr(10) & "now" & Chr(34) & ",2,1,,batch-export-owner,2026-11-10 01:02,en,UTC,,,2026-11-12 05:06,en" & Chr(13) & Chr(10)) = 0 Then Error.Raise("Todoist section, task, priority, label, text, owner or dates drifted")
   If InStr(todoist, "task,Open step,,4,2" & String(9, ",") & Chr(13) & Chr(10)) = 0 Or InStr(todoist, "Closed step") Or InStr(todoist, "note," & Chr(34) & "Call, vendor" & Chr(34) & ",,,,batch-export-owner" & String(8, ",") & Chr(13) & Chr(10)) = 0 Then Error.Raise("Todoist checklist filtering or comment row drifted")
   If InStr(files[1]["content"], "section,Todo") = 0 Or InStr(files[1]["content"], "task,Bravo card,Bravo body,4,1") = 0 Then Error.Raise("Todoist second-board template drifted")
+  plannerArchived = KanbanStore.SaveCard(a, 0, "Planner archived canary", "Planner retained archived body", "Default", "Todo", "", "", "")
+  KanbanStore.ArchiveCard(a, plannerArchived, True)
   plannerBatch = BoardBatchExport.NewBatch(selection, "planner")
   BoardBatchExport.Run(plannerBatch, selection)
   files = BoardBatchExport.Files(plannerBatch)
   If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".xlsx" Or BoardBatchExport.Format(plannerBatch) <> "planner" Then Error.Raise("Planner batch lost format, order or extension")
+  If InStr(files[0]["content"], "Planner archived canary") Or InStr(files[0]["content"], "Planner retained archived body") Then Error.Raise("Planner exported archived card content")
+  plannerRetained = WebDatabase.OpenConnection().Find("kb_cards", "board_id=&1 AND id=&2", a, plannerArchived)
+  If Not plannerRetained.Available Then Error.Raise("Planner export deleted retained archived card")
+  If Not CBool(plannerRetained!archived) Or plannerRetained!description <> "Planner retained archived body" Then Error.Raise("Planner export changed archived retention state")
   data = JSON.Decode(files[0]["content"])
   plannerRows = data["rows"]
   If data["sheet"] <> "Tasks" Or plannerRows.Count < 6 Or JSON.Encode(plannerRows[4]) <> JSON.Encode(BoardPlannerExport.Headers()) Then Error.Raise("Planner sheet or header contract drifted")

@@ -121,6 +121,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   selected Focalboard JSONL ZIP with deterministic block IDs, board/view/status/
   label/date records, card descriptions, checklist items and comments is
   recorded there;
+  external-tool archived-card exclusion across all current formats, with
+  retained card/history and native/generic CSV/TSV/Excel archive behavior
+  matching the source collector, is recorded there;
   selected TickTick 7.2 CSV ZIP with its quoted preamble and 25-column rows,
   folders/priorities, labels, checklist glyphs, UTC dates, stable task IDs/order
   and inverse subtask parents is recorded there;

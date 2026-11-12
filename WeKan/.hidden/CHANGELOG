@@ -1,4 +1,10 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- External archive scope: Match source active-card collection in ten older
+  tool exporters, including Focalboard/Todoist prepasses. Verify forty actual
+  owner/readonly snapshots across all twenty current formats and preserve
+  retained data plus native/generic CSV/TSV/Excel archive behavior.
+  Complete host tests and legacy missing-list/Todoist branch checks pass.
+
 - Tasks.org selected export: Add source backup JSON ZIPs with stable account/
   calendar/task/tag IDs, date conventions, notes/comments, stopped seconds and
   exact estimates. Preserve checklist positions and same-calendar card parents;

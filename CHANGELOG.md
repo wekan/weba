@@ -2,6 +2,17 @@
 
 This work adds the following features and fixes:
 
+- Match the source active-card collector in ten older external-tool exports:
+  Kanboard, Markdown, Leo, OPML, Org mode, todo.txt, Taskwarrior, Focalboard,
+  Todoist and Planner. Exclude archived titles/bodies and derived tags/comments,
+  including metadata/section prepasses. Forty real owner/read-only exports
+  across all twenty implemented tool formats verify active content and archive
+  exclusion. Retained cards, entries and history remain intact; native backup
+  and generic CSV/TSV/Excel retain their intentional archive behavior. Keep
+  existing full-read/policy/transaction checks. Complete host tests pass,
+  including 69 Python tests; the expanded legacy missing-list/Todoist branch
+  regression and eight parent Planner contracts pass. Thanks to xet7.
+
 - Add Tasks.org as the twentieth selected-board external-tool export. Download
   `wekan-boards-tasksorg.zip` with strict `board-ID.json` backups matching source
   local accounts/calendars, stable task/tag IDs, priorities, date conventions,

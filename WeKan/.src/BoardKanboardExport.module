@@ -85,7 +85,7 @@ Public Function Build(boardId As Integer, db As Connection) As String
     swimlanes.Add(item)
   Next
   data.Add(swimlanes, "swimlanes")
-  r = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 ORDER BY c.id", boardId)
+  r = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&2 ORDER BY c.id", boardId, False)
   For Each r
     Inc index
     row = New Collection
