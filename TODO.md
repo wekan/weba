@@ -136,6 +136,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   selected Redmine English CSV ZIP with BOM/CRLF, native issue/custom fields,
   exact numeric text, stopped hours and scoped parent/related IDs is recorded
   there;
+  selected Tasks.org backup JSON ZIP with stable account/calendar/task/tag IDs,
+  date conventions, comments/seconds/estimates and same-calendar indexed
+  subtasks is recorded there;
   original remaining formats/API route, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded

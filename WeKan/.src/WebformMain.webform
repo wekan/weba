@@ -1524,6 +1524,9 @@
             { ExportSelectedRedmine WebButton
               Text = "Redmine"
             }
+            { ExportSelectedTasksOrg WebButton
+              Text = "Tasks.org"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton

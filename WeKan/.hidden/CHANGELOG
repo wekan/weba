@@ -1,4 +1,10 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Tasks.org selected export: Add source backup JSON ZIPs with stable account/
+  calendar/task/tag IDs, date conventions, notes/comments, stopped seconds and
+  exact estimates. Preserve checklist positions and same-calendar card parents;
+  omit archived/running content and verify rich source equality and scope gates.
+  Complete host and source/packaged 25-download browser checks pass.
+
 - Redmine selected export: Add BOM/CRLF issue-import CSV ZIPs with native
   fields/custom columns, stopped hours and scoped parent/untyped-related IDs.
   Match decimal, percent and large numeric text; verify exact rich parent CSV

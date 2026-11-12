@@ -1379,6 +1379,38 @@ archived omission and assigned-only refusal. Both oracles run from run-store.sh
 in separate initially empty projects/databases. Real source/packaged downloads
 compare empty-board bytes with the actual parent formatter.
 
+The `tasksorg` format writes `wekan-boards-tasksorg.zip` with ordered strict
+`board-ID.json` backups. `BoardTasksOrgExport` reproduces `formatTasksOrgBackup`:
+one local account, native list calendars (including duplicate names/empty lists),
+stable native card IDs, per-name tag definitions and UTF-16-equivalent ID
+sanitization, exact priority choices, all-day/noon versus timed-minute/second-one
+dates, positive completion times, notes, filtered comments and stopped tracked
+hours converted to seconds. Use finite JavaScript numeric parsing/rounding for
+estimates; JSON-normalize overflowing seconds to null and preserve large integer
+values with the existing exact numeric text helpers. Standard JSON encoding
+still escapes every key/string; the private tree encoder handles only the
+backup's rounded numeric fields.
+
+Checklist entries become indexed subtask records, retaining original checklist/
+item positions when blank items are skipped. Completed entries use the card end
+date or export-time fallback. Link the first in-file native parent only within
+the same calendar; cross-list links are omitted as in the source. Archived and
+deleted cards are excluded, and native running timers are not exported. Native
+cards have no source creation time, so use the source export clock fallback;
+undated comments use the same fallback, and Tasks.org comments carry no author.
+Attachments, alarms, locations and account preferences stay empty/absent exactly
+as the current parent formatter writes them. Source-only identity/storage/import
+and full original UI/API/security integration remain open.
+
+`TasksOrgExportTest` compares a rich native SQLite backup to the unchanged parent
+formatter after JSON wire normalization, with explicit numeric-ID/list/clock/
+stopped-time adapters. It covers Unicode/astral tag IDs, deduplication, empty and
+duplicate calendars, dates including pre-epoch omission, undated/blank comments,
+blank/indexed checklist items, same/cross-list parents, exact/tiny/overflow
+estimates, running-time omission, archived content and assigned-only/global-policy
+refusal. The normal store runner isolates its database. Real source/package
+selected-export downloads compare empty backups to the actual parent formatter.
+
 The final file snapshot crosses the native command boundary as base64 JSON.
 `batch-export.js` bounds and validates the JSON/table/Excel envelope, writes
 stored UTF-8 ZIP or OOXML entries with CRC-32 and a central directory, and never
@@ -1387,7 +1419,7 @@ bytes, no-write failure,
 immutable snapshots, retry/replay/reentrancy, stale/foreign/archive/policy denial
 and ZIP structure. `python3 tests/run-http.py --selected-export` (add `--archive`)
 checks the real controls, live and forged global gate, selection retention and
-all twenty-four download contents. The original caption is among 271 source keys in all
+all twenty-five download contents. The original caption is among 271 source keys in all
 237 catalogs. Remaining external-tool formats and the original HTTP route stay
 open.
 

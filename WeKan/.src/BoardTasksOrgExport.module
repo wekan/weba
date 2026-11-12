@@ -1,0 +1,340 @@
+' Native counterpart of the parent Tasks.org backup formatter.
+Export
+Private $db As Connection
+Private $boardId As Integer
+Private $timestamp As Long
+Private $account As String
+Private $calendars As Variant[]
+Private $calendarByList As Collection
+Private $tagDefs As Variant[]
+Private $tagByName As Collection
+Private $cards As Collection
+Private $tasks As Variant[]
+
+Private Function TextValue(value As Variant) As String
+  If IsNull(value) Then Return ""
+  Return CStr(value)
+End
+
+Private Function Whitespace(character As String) As Boolean
+  Dim code As Integer = String.Code(character)
+  Return (code >= 9 And code <= 13) Or code = 32 Or code = 160 Or code = 5760 Or (code >= 8192 And code <= 8202) Or code = 8232 Or code = 8233 Or code = 8239 Or code = 8287 Or code = 12288 Or code = 65279
+End
+
+Private Function TrimText(value As String) As String
+  Dim first As Integer = 1
+  Dim finish As Integer = String.Len(value)
+  While first <= finish
+    If Not Whitespace(String.Mid(value, first, 1)) Then Break
+    Inc first
+  Wend
+  While finish >= first
+    If Not Whitespace(String.Mid(value, finish, 1)) Then Break
+    Dec finish
+  Wend
+  If finish < first Then Return ""
+  Return String.Mid(value, first, finish - first + 1)
+End
+
+Private Function RemoteId(kind As String, value As String) As String
+  Dim clean As String
+  Dim character As String
+  Dim code As Integer
+  Dim index As Integer
+  For index = 1 To String.Len(value)
+    character = String.Mid(value, index, 1)
+    code = String.Code(character)
+    If (code >= 65 And code <= 90) Or (code >= 97 And code <= 122) Or (code >= 48 And code <= 57) Or character = "_" Or character = "-" Then
+      clean &= character
+    Else
+      clean &= If(code > 65535, "__", "_")
+    Endif
+  Next
+  Return "wekan-" & kind & "-" & clean
+End
+
+Private Function CalendarFor(listId As String, title As String) As String
+  Dim key As String = If(listId, listId, "title:" & If(title, title, "No list"))
+  Dim calendar As Collection
+  Dim uuid As String
+  If $calendarByList.Exist(key) Then Return $calendarByList[key]
+  uuid = RemoteId("list", If(listId, listId, If(title, title, "none")))
+  calendar = New Collection
+  calendar.Add($account, "account")
+  calendar.Add(uuid, "uuid")
+  calendar.Add(If(title, title, "No list"), "name")
+  calendar.Add($calendars.Count, "order")
+  $calendars.Add(calendar)
+  $calendarByList.Add(uuid, key)
+  Return uuid
+End
+
+Private Function Tags(value As String) As Variant[]
+  Dim result As New Variant[]
+  Dim seen As New Collection
+  Dim name As String
+  Dim tag As Collection
+  Dim definition As Collection
+  For Each name In Split(value, ",")
+    name = TrimText(name)
+    If Not name Or seen.Exist(name) Then Continue
+    seen.Add(True, name)
+    If Not $tagByName.Exist(name) Then
+      definition = New Collection
+      definition.Add(RemoteId("tag", name), "remoteId")
+      definition.Add(name, "name")
+      $tagDefs.Add(definition)
+      $tagByName.Add(definition["remoteId"], name)
+    Endif
+    tag = New Collection
+    tag.Add(name, "name")
+    tag.Add($tagByName[name], "tagUid")
+    result.Add(tag)
+  Next
+  Return result
+End
+
+Private Function DateValue(dates As Collection, key As String, Optional allDayAware As Boolean) As Long
+  Dim stamp As Long
+  Dim dayPart As Long
+  If Not dates.Exist(key) Then Return 0
+  stamp = dates[key]
+  If stamp <= 0 Then Return 0
+  If Not allDayAware Then Return stamp
+  dayPart = stamp - Int(stamp / 86400000.0) * 86400000.0
+  If dayPart = 0 Or dayPart = 43200000 Then Return stamp - dayPart + 43200000
+  Return CLong(Int(stamp / 60000.0) * 60000.0) + 1000
+End
+
+Private Function Rounded(value As Float) As Float
+  Dim whole As Float = Int(value)
+  If value - whole >= 0.5 Then whole += 1
+  Return whole
+End
+
+Private Sub AddSeconds(task As Collection, field As String, hours As Float)
+  Dim seconds As Float
+  Dim maximum As Float
+  If hours <= 0 Then Return
+  ExportNumber.ParseFinite("1.7976931348623157e308", ByRef maximum)
+  Try seconds = hours * 3600
+  If Error Then
+    task.Add(JSON.Null, field)
+  Else If seconds > maximum Then
+    task.Add(JSON.Null, field)
+  Else
+    task.Add(Rounded(seconds), field)
+  Endif
+End
+
+Private Function CustomFields(cardId As Integer) As Collection
+  Dim result As New Collection
+  Dim rows As Result = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "custom")
+  Dim name As String
+  For Each rows
+    name = TextValue(rows!title)
+    If name Then result[name] = TextValue(rows!body)
+  Next
+  Return result
+End
+
+Private Function Comments(cardId As Integer) As Variant[]
+  Dim result As New Variant[]
+  Dim rows As Result = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "comment")
+  Dim item As Collection
+  Dim stamp As Long
+  For Each rows
+    If Not TrimText(TextValue(rows!body)) Then Continue
+    stamp = 0
+    If Not IsNull(rows!created_at) Then stamp = ItemChanges.Epoch(rows!created_at)
+    item = New Collection
+    item.Add(RemoteId("comment", CStr(cardId) & "-" & CStr(result.Count)), "remoteId")
+    item.Add(TextValue(rows!body), "message")
+    item.Add(If(stamp > 0, stamp, $timestamp), "created")
+    result.Add(item)
+  Next
+  Return result
+End
+
+Private Function ParentId(cardId As Integer, calendar As String) As String
+  Dim rows As Result = $db.Find("kb_entries", "board_id=&1 AND kind=&2 AND amount=&3 ORDER BY id", $boardId, "subtask", cardId)
+  Dim parent As Collection
+  For Each rows
+    If Not $cards.Exist(CStr(rows!card_id)) Then Continue
+    parent = $cards[CStr(rows!card_id)]
+    If parent["calendar"] = calendar Then Return RemoteId("card", CStr(rows!card_id))
+    Return ""
+  Next
+  Return ""
+End
+
+Private Function Backup(task As Collection, remote As String, calendar As String, Optional parent As String, Optional tags As Variant[], Optional comments As Variant[]) As Collection
+  Dim item As New Collection
+  Dim caldav As New Collection
+  task.Add(remote, "remoteId")
+  caldav.Add(calendar, "calendar")
+  caldav.Add(remote, "remoteId")
+  caldav.Add(remote & ".ics", "object")
+  If parent Then caldav.Add(parent, "remoteParent")
+  item.Add(task, "task")
+  If tags Then
+    If tags.Count Then item.Add(tags, "tags")
+  Endif
+  If comments Then
+    If comments.Count Then item.Add(comments, "comments")
+  Endif
+  item.Add([caldav], "caldavTasks")
+  Return item
+End
+
+Private Sub CardBackup(card As Collection)
+  Dim task As New Collection
+  Dim fields As Collection = CustomFields(card["id"])
+  Dim dates As Collection = CardDates.ReadDates($boardId, card["id"])
+  Dim priority As Integer = -1
+  Dim estimate As Float
+  Dim timeRows As Result
+  Dim minutes As Float
+  Dim title As String = TrimText(TextValue(card["title"]))
+  Dim stamp As Long
+  Dim remote As String = RemoteId("card", CStr(card["id"]))
+  Dim calendar As String = card["calendar"]
+  Dim parent As String = ParentId(card["id"], calendar)
+  Dim checklistRows As Result
+  Dim itemRows As Result
+  Dim checklistIndex As Integer
+  Dim entryIndex As Integer
+  Dim child As Collection
+  If fields.Exist("Priority") Then priority = ["High", "Medium", "Low"].Find(TextValue(fields["Priority"]))
+  task.Add(If(title, title, "Untitled"), "title")
+  If priority >= 0 Then task.Add(priority, "priority")
+  stamp = DateValue(dates, "dueAt", True)
+  If stamp Then task.Add(stamp, "dueDate")
+  stamp = DateValue(dates, "startAt", True)
+  If stamp Then task.Add(stamp, "hideUntil")
+  task.Add($timestamp, "creationDate")
+  task.Add($timestamp, "modificationDate")
+  stamp = DateValue(dates, "endAt")
+  If stamp Then task.Add(stamp, "completionDate")
+  If card["description"] Then task.Add(TextValue(card["description"]), "notes")
+  If fields.Exist("Estimate (hours)") Then
+    If ExportNumber.ParseFinite(TextValue(fields["Estimate (hours)"]), ByRef estimate) Then AddSeconds(task, "estimatedSeconds", estimate)
+  Endif
+  timeRows = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND done=&4 ORDER BY id", $boardId, card["id"], "time", True)
+  For Each timeRows
+    minutes += CFloat(timeRows!amount)
+  Next
+  AddSeconds(task, "elapsedSeconds", minutes / 60)
+  $tasks.Add(Backup(task, remote, calendar, parent, Tags(TextValue(card["labels"])), Comments(card["id"])))
+  checklistRows = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, card["id"], "checklist")
+  For Each checklistRows
+    entryIndex = 0
+    itemRows = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, card["id"], "checkitem", checklistRows!id)
+    For Each itemRows
+      title = TrimText(TextValue(itemRows!title))
+      If title Then
+        child = New Collection
+        child.Add(title, "title")
+        child.Add($timestamp, "creationDate")
+        child.Add($timestamp, "modificationDate")
+        If CBool(itemRows!done) Then
+          stamp = DateValue(dates, "endAt")
+          child.Add(If(stamp, stamp, $timestamp), "completionDate")
+        Endif
+        $tasks.Add(Backup(child, RemoteId("item", CStr(card["id"]) & "-" & CStr(checklistIndex) & "-" & CStr(entryIndex)), calendar, remote))
+      Endif
+      Inc entryIndex
+    Next
+    Inc checklistIndex
+  Next
+End
+
+' Every floating value in this backup is a rounded integer. Preserve its
+' binary64 value using shortest round-trip text instead of Gambas display
+' precision; strings still pass through the standard safe JSON encoder.
+Private Function Encode(value As Variant) As String
+  Dim parts As New String[]
+  Dim name As String
+  Dim child As Variant
+  If TypeOf(value) = gb.Float Then
+    If Abs(value) >= 1.0E21 Then Return ExportNumber.LargeText(value)
+    Return ExportNumber.IntegerString(value)
+  Endif
+  If TypeOf(value) = gb.Object Then
+    If value Is Collection Then
+      For Each name In value.Keys
+        parts.Add(JSON.Encode(name) & ":" & Encode(value[name]))
+      Next
+      Return "{" & parts.Join(",") & "}"
+    Else If value Is Variant[] Then
+      For Each child In value
+        parts.Add(Encode(child))
+      Next
+      Return "[" & parts.Join(",") & "]"
+    Endif
+  Endif
+  Return JSON.Encode(value)
+End
+
+Public Function Build(boardId As Integer, db As Connection) As String
+  Dim output As New Collection
+  Dim emptyArray As Variant[]
+  Dim emptyObject As Collection
+  Dim data As New Collection
+  Dim account As New Collection
+  Dim board As Result
+  Dim rows As Result
+  Dim cards As New Variant[]
+  Dim card As Collection
+  Dim name As String
+  $db = db
+  $boardId = boardId
+  $timestamp = ItemChanges.UtcNow()
+  $account = RemoteId("board", CStr(boardId))
+  $calendars = New Variant[]
+  $calendarByList = New Collection
+  $tagDefs = New Variant[]
+  $tagByName = New Collection
+  $cards = New Collection
+  $tasks = New Variant[]
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  board = $db.Find("kb_boards", "id=&1", boardId)
+  If Not board.Available Then Error.Raise("Board not found")
+  rows = $db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
+  For Each rows
+    CalendarFor(CStr(rows!id), TextValue(rows!title))
+  Next
+  rows = $db.Exec("SELECT c.*,cl.list_id,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  For Each rows
+    card = New Collection
+    card.Add(CInt(rows!id), "id")
+    card.Add(TextValue(rows!title), "title")
+    card.Add(TextValue(rows!description), "description")
+    card.Add(TextValue(rows!labels), "labels")
+    card.Add(CalendarFor(TextValue(rows!list_id), TextValue(rows!list_title)), "calendar")
+    cards.Add(card)
+    $cards.Add(card, CStr(rows!id))
+  Next
+  For Each card In cards
+    CardBackup(card)
+  Next
+  data.Add($tasks, "tasks")
+  For Each name In ["places", "filters", "taskListMetadata", "taskAttachments"]
+    emptyArray = New Variant[]
+    data.Add(emptyArray, name)
+  Next
+  data.Add($tagDefs, "tags")
+  account.Add($account, "uuid")
+  account.Add(If(TextValue(board!title), TextValue(board!title), "WeKan board"), "name")
+  account.Add(2, "accountType")
+  data.Add([account], "caldavAccounts")
+  data.Add($calendars, "caldavCalendars")
+  For Each name In ["intPrefs", "longPrefs", "stringPrefs", "boolPrefs", "setPrefs"]
+    emptyObject = New Collection
+    data.Add(emptyObject, name)
+  Next
+  output.Add(151300, "version")
+  output.Add($timestamp, "timestamp")
+  output.Add(data, "data")
+  Return Encode(output) & Chr(10)
+End

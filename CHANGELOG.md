@@ -2,6 +2,19 @@
 
 This work adds the following features and fixes:
 
+- Add Tasks.org as the twentieth selected-board external-tool export. Download
+  `wekan-boards-tasksorg.zip` with strict `board-ID.json` backups matching source
+  local accounts/calendars, stable task/tag IDs, priorities, date conventions,
+  comments, stopped tracked seconds and estimates. Preserve empty/duplicate
+  lists; convert checklist entries to indexed subtasks and link real parents only
+  within the same calendar. Omit archived cards/running timers, use source
+  export-time creation/comment fallbacks and JSON-normalize numeric overflow.
+  Reuse private batch retry and locked active/full-read/export-policy checks.
+  Complete host tests pass, including 69 Python tests and rich native/source
+  backup equality. Focused source/packaged browser checks validate all 25 exact
+  downloads; four parent Tasks.org contracts pass. Other formats and complete
+  original suites remain pending. Thanks to xet7.
+
 - Add Redmine as the nineteenth selected-board external-tool export. Download
   `wekan-boards-redmine.zip` with strict English issue-import `board-ID.csv`
   entries, UTF-8 BOM, CRLF, native IDs/project/status/text/assignee/dates,

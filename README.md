@@ -2357,6 +2357,16 @@ JavaScript's two-decimal behavior, and `% Done` its rounded integer behavior.
 Native cards have no creator/requester/creation timestamp; those fields stay
 blank. Native dependencies have no source relation type and become `Related to`.
 
+Tasks.org produces `wekan-boards-tasksorg.zip` with strict `board-ID.json`
+backup documents. Match the source local account/calendars, stable task and
+UTF-16-sanitized tag IDs, priorities, date conventions, comments, tracked seconds
+and estimates. Preserve empty/duplicate-titled lists. Checklist items become
+positional subtasks; real card parents are linked only within the same calendar.
+Archived cards and running timers are omitted. Missing card creation dates and
+undated comments use the source export-time fallback; comments have no author
+field in this target. Unsupported attachments/alarms/location/preferences remain
+empty or absent as in the source backup formatter.
+
 The ordered ID list, revision and completed/pending queue remain private to the
 form. The queue is bound to the current account session and unchanged selection.
 Every board independently takes the existing locked whole-board export path and
@@ -2383,7 +2393,7 @@ comma-CSV, semicolon-CSV and TSV ZIPs, and the single two-sheet Excel workbook.
 They also verify the Kanboard container/task JSON, exact Markdown task-list,
 Leo XML, OPML outline, Org mode outline, todo.txt task, Taskwarrior JSON,
 Focalboard JSONL, Todoist CSV, Planner XLSX, MeisterTask CSV, Obsidian Kanban,
-Linear CSV, TickTick CSV, ClickUp CSV, Nullboard NBX, Kanri JSON, Pivotal Tracker CSV and Redmine CSV ZIPs. Remaining external-tool formats and the original HTTP route
+Linear CSV, TickTick CSV, ClickUp CSV, Nullboard NBX, Kanri JSON, Pivotal Tracker CSV, Redmine CSV and Tasks.org backup JSON ZIPs. Remaining external-tool formats and the original HTTP route
 remain pending.
 
 

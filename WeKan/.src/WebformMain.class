@@ -4029,6 +4029,10 @@ Public Sub ExportSelectedRedmine_Click()
   RunSelectedExport("redmine")
 End
 
+Public Sub ExportSelectedTasksOrg_Click()
+  RunSelectedExport("tasksorg")
+End
+
 Public Sub CancelSelectedExport_Click()
   ClearSelectedExport()
 End
