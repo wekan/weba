@@ -1996,3 +1996,13 @@ Test dispatch flags are confined to test files and do not enter production.
 The browser checks ordered Gitea filenames and exact source JSON in source and
 packaged applications; archive regression includes owner and read-only Gitea.
 Complete original route/options/model/security parity remains pending.
+
+Forgejo selected export has its own `ExportActiveBoardForgejo` locked transfer
+and selected batch/UI/download action, while sharing `BoardGithubExport` exactly
+as source `formatters.github/gitea/forgejo` share `githubLike`. The common fixture
+supports all three names; the Forgejo runner uses separate task-local SQLite
+data and compares all 27 rich/empty/legacy/orphan/state cases to the unchanged
+Forgejo alias. GitHub and Gitea regressions still run independently. Browser
+coverage downloads ordered per-board Forgejo JSON and compares it with source
+in source/packaged builds. Owner/read-only archive regression includes Forgejo.
+Complete original route/options/model/security parity remains pending.

@@ -3301,3 +3301,9 @@ Gitea uses the same source issue formatter as GitHub, with its own selected-expo
 action and download name. The same scoped active-card, full-read, export-policy,
 session and cached-publication checks apply. Remaining tools and complete original
 UI/API/security parity stay pending.
+
+Selected boards also export **Forgejo issue JSON** in `wekan-boards-forgejo.zip`.
+Forgejo shares WeKan's GitHub/Gitea issue formatter, with its own locked action,
+selected batch and download name. Active-card, full-read, policy, session and
+cached-publication checks apply. Remaining formats and complete original
+UI/API/security parity remain pending.

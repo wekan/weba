@@ -2,11 +2,12 @@
 Public Function FormatName() As String
   Dim value As String = Env["WEBA_TEST_ISSUE_FORMAT"]
   If Not value Then Return "github"
-  If value <> "gitea" Then Error.Raise("Unknown issue fixture format")
+  If value <> "github" And value <> "gitea" And value <> "forgejo" Then Error.Raise("Unknown issue fixture format")
   Return value
 End
 
 Public Function Build(boardId As Integer) As String
+  If FormatName() = "forgejo" Then Return BoardTransfer.ExportActiveBoardForgejo(boardId)
   If FormatName() = "gitea" Then Return BoardTransfer.ExportActiveBoardGitea(boardId)
   Return BoardTransfer.ExportActiveBoardGithub(boardId)
 End

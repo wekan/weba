@@ -5296,3 +5296,7 @@ End
 Public Sub ExportSelectedGitea_Click()
   RunSelectedExport("gitea")
 End
+
+Public Sub ExportSelectedForgejo_Click()
+  RunSelectedExport("forgejo")
+End

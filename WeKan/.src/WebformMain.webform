@@ -1557,6 +1557,9 @@
             { ExportSelectedOpenProject WebButton
               Text = "OpenProject JSON"
             }
+            { ExportSelectedForgejo WebButton
+              Text = "Forgejo JSON"
+            }
             { ExportSelectedGitea WebButton
               Text = "Gitea JSON"
             }

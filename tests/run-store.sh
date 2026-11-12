@@ -26,6 +26,7 @@ for test in AuthTest UserDeletionTest SessionGenerationTest NativeAuthTest Passw
   if [ "$test" = GithubExportTest ]; then
     WEBA_TEST_GITHUB_PROJECT="$project" "${NODE:-node}" "$root/tests/github-export-conformance.test.cjs"
     WEBA_TEST_GITHUB_PROJECT="$project" "${NODE:-node}" "$root/tests/gitea-export-conformance.test.cjs"
+    WEBA_TEST_GITHUB_PROJECT="$project" "${NODE:-node}" "$root/tests/forgejo-export-conformance.test.cjs"
   elif [ "$test" = OpenProjectExportTest ]; then
     WEBA_TEST_OPENPROJECT_PROJECT="$project" "${NODE:-node}" "$root/tests/openproject-export-conformance.test.cjs"
   elif [ "$test" = DeckExportTest ]; then

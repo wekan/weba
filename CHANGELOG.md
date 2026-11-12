@@ -2,6 +2,17 @@
 
 This work adds the following features and fixes:
 
+- Add Forgejo issue-array JSON as the thirty-fifth selected-board tool export.
+  Download `wekan-boards-forgejo.zip` through its distinct locked action and
+  private batch path, reusing the native issue formatter shared by all three
+  unchanged source aliases. Preserve source text/state/labels/optional dates
+  and active/full-read/policy/session/cached-scope guards. All 27 Forgejo
+  outputs and all GitHub/Gitea source regressions pass on independent data.
+  Complete host tests pass, including 69 Python tests and 70 archive/scope
+  snapshots; all 40 source/packaged browser downloads and cached revocation/
+  regrant checks pass. Five remaining tool formats and full original UI/API/security parity remain
+  pending. Thanks to xet7.
+
 - Add Gitea issue-array JSON as the thirty-fourth selected-board tool export.
   Download `wekan-boards-gitea.zip` through its own scoped action and private
   batch path. Reuse the native issue formatter because unchanged source uses

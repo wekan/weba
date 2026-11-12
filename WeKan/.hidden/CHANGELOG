@@ -1,4 +1,9 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Forgejo selected export: Add a distinct scoped issue-array JSON ZIP action,
+  sharing the source-equivalent GitHub/Gitea native formatter. Verify 27
+  independent Forgejo source comparisons and both earlier alias regressions.
+  Remaining formats and full original parity stay pending.
+
 - Gitea selected export: Add scoped issue-array JSON ZIP using the same native
   formatter as the source GitHub/Gitea aliases. Verify independent Gitea data,
   all 27 source comparisons, GitHub regressions and existing permission gates.

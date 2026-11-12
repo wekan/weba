@@ -1,4 +1,4 @@
-' Native counterpart of the shared source GitHub/Gitea issue-array formatter.
+' Native counterpart of the shared source GitHub/Gitea/Forgejo issue-array formatter.
 Export
 
 Private Function TextValue(value As Variant) As String

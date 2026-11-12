@@ -173,11 +173,13 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   and empty/missing-list cases is recorded there; selected GitHub issue-array
   JSON ZIP with source state matching, labels and optional due dates is
   recorded there; selected Gitea issue-array JSON ZIP with the same source
-  formatter and its own scoped action/download is recorded there;
+  formatter and its own scoped action/download is recorded there; selected
+  Forgejo issue-array JSON ZIP with a distinct scoped action/download and
+  independent source-alias comparisons is recorded there;
   Cached selected-export publication now rechecks current actor/session, full
   board access and policy; revocation/regrant browser coverage is recorded in
   CHANGELOG.md. Complete original security parity remains pending.
-  Remaining source tool formats: forgejo,
+  Remaining source tool formats:
   gitlab, trello, jira, asana and zenkit. Original API route, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded
