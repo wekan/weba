@@ -31,8 +31,16 @@ Private Function OneLine(value As Variant) As String
 End
 
 Private Function ClosedList(title As String) As Boolean
-  Dim lower As String = LCase(title)
-  Return InStr(lower, "done") > 0 Or InStr(lower, "closed") > 0 Or InStr(lower, "complete") > 0 Or InStr(lower, "archiv") > 0 Or InStr(lower, "finished") > 0
+  Dim code As Integer
+  Dim word As String
+  ' JavaScript's non-Unicode /i matches these ASCII literals only.
+  For code = 65 To 90
+    title = Replace(title, Chr(code), Chr(code + 32))
+  Next
+  For Each word In ["done", "closed", "complete", "archiv", "finished"]
+    If InStr(title, word) Then Return True
+  Next
+  Return False
 End
 
 Private Function PriorityLabel(label As String) As Boolean
@@ -40,11 +48,26 @@ Private Function PriorityLabel(label As String) As Boolean
   Return InStr("ABCDEFGHIJKLMNOPQRSTUVWXYZ", Right(label, 1)) > 0
 End
 
+Private Function TrimText(value As String) As String
+  Dim first As Integer = 1
+  Dim finish As Integer = String.Len(value)
+  While first <= finish
+    If Not Whitespace(String.Mid(value, first, 1)) Then Break
+    Inc first
+  Wend
+  While finish >= first
+    If Not Whitespace(String.Mid(value, finish, 1)) Then Break
+    Dec finish
+  Wend
+  If finish < first Then Return ""
+  Return String.Mid(value, first, finish - first + 1)
+End
+
 Private Function Labels(value As Variant) As String[]
   Dim result As New String[]
   Dim label As String
   For Each label In Split(TextValue(value), ",")
-    label = Trim(label)
+    label = TrimText(label)
     If label Then result.Add(label)
   Next
   Return result
@@ -55,17 +78,19 @@ Private Function DateDay(dates As Collection, key As String) As String
   Return Left(CardDates.Iso(CLong(dates[key])), 10)
 End
 
-Private Function Line(card As Result) As String
+Private Function Line(card As Result, wanted As Collection) As String
   Dim head As New String[]
   Dim tail As New String[]
-  Dim parsedLabels As String[] = Labels(card!labels)
+  Dim parsedLabels As String[] = Labels("")
   Dim label As String
   Dim priority As String
   Dim value As String
   Dim listTitle As String = TextValue(card!list_title)
   Dim done As Boolean = ClosedList(listTitle)
-  Dim dates As Collection = CardDates.ReadDates(card!board_id, card!id)
+  Dim dates As New Collection
   Dim title As String = OneLine(card!title)
+  If ExternalExportFields.Wants(wanted, "labels") Then parsedLabels = Labels(card!labels)
+  If ExternalExportFields.Wants(wanted, "dates") Then dates = CardDates.ReadDates(card!board_id, card!id)
   For Each label In parsedLabels
     If PriorityLabel(label) And Not priority Then priority = Right(label, 1)
   Next
@@ -79,12 +104,10 @@ Private Function Line(card As Result) As String
   If Not title Then title = "Untitled"
   For Each label In parsedLabels
     If PriorityLabel(label) Then Continue
-    value = Replace(OneLine(label), " ", "_")
-    If Not value Then Continue
-    If Left(value, 1) = "@" Then
-      tail.Add("@" & Mid(value, 2))
+    If Left(label, 1) = "@" Then
+      tail.Add("@" & Replace(OneLine(Mid(label, 2)), " ", "_"))
     Else
-      tail.Add("+" & value)
+      tail.Add("+" & Replace(OneLine(label), " ", "_"))
     Endif
   Next
   If done And priority Then tail.Add("pri:" & priority)
@@ -100,13 +123,13 @@ Private Function Line(card As Result) As String
   Return head.Join(" ")
 End
 
-Public Function Build(boardId As Integer, db As Connection) As String
+Public Function Build(boardId As Integer, db As Connection, Optional wanted As Collection) As String
   Dim lines As New String[]
   Dim cards As Result
   BoardAccess.RequireContainer(boardId, "board", boardId)
   cards = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
   For Each cards
-    lines.Add(Line(cards))
+    lines.Add(Line(cards, wanted))
   Next
   If Not lines.Count Then Return ""
   lines.Add("")

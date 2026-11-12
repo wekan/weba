@@ -2360,3 +2360,25 @@ schema and opaque missing-description failure. Shared 256-role/credential checks
 remain. Native creation stamps, SQL ID/label/lane/entry adapters, empty planning
 models/no-op anonymization and full security reporting remain explicit gaps;
 29 API renderers and complete original UI/API/security parity remain open.
+
+todo.txt shares the locked API at `GET /api/boards/:id/export/todotxt`, returning
+original text/plain UTF-8 bytes. Optional labels and dates gate independently;
+other selected sections have no todo.txt field, matching source. UI selected
+exports retain all-fields defaults. Terminal detection folds ASCII only and flat
+native labels use ECMAScript trimming. Contexts strip @ before trimming/collapsing
+whitespace, preserving source bare @ behavior. Completion stays list-derived;
+label `done` remains a project token, unlike Org mode. Native creation stamps
+stay absent, so completed tasks do not invent completion/creation date pairs.
+
+Rich fixtures cover first/duplicate/non-letter priorities, open/completed priority
+placement, spaced/bare contexts, projects, Unicode labels, negative-epoch threshold
+dates, whitespace titles/list tokens, ASCII/non-ASCII terminal names, independent
+field masks and empty active-card output. General duplicate/blank/deleted metadata
+and anonymous selection checks remain. All 539 actual responses across twelve
+formats match unchanged parseExportFields/collect/gateItem/formatters and original
+server success body/types. The todo route directly exercises late member/token/
+policy/public rollback, policy-before-lookup and opaque missing-label failure;
+shared 256-role and credential-scrubbing tests remain. SQL ID/label/lane/entry
+adapters, absent native creation, empty planning models/no-op anonymization,
+security reporting, remaining 28 API renderers and full original UI/API/security
+parity remain open.

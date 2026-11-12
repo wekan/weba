@@ -214,7 +214,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   attribute whitespace/outline state and live-list metadata resolution is
   recorded there; Org mode GET export with independent sections, source planning/
   state/tag/outline semantics and scoped final guards is recorded there;
-  remaining 29
+  todo.txt GET export with source label/date gates, completion/priority/context
+  tokens and scoped final guards is recorded there; remaining 28
   external-format API routes, native field-model guards, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded

@@ -2,6 +2,23 @@
 
 This work adds the following features and fixes:
 
+- Add GET `/api/boards/:id/export/todotxt` through the locked external-export
+  service with source `text/plain; charset=utf-8` bytes. Independently select
+  labels and dates; preserve completion markers, first priorities and completed
+  pri tokens, projects/contexts, day-only planning and list tokens. Normalize
+  context whitespace after removing its @ prefix, retain bare contexts and
+  match source Unicode label trimming/ASCII terminal-name rules. Compare 539
+  actual responses across twelve routes with unchanged collector/formatters
+  and original server types/bodies, retaining 256-role and direct todo late-
+  scope/token/policy/public rollback, policy-before-lookup and opaque failures.
+  Full host tests pass (70 Python tests, 240 complete selected descriptor pairs
+  and 80 archive/scope snapshots), as do both API builds, all 45 source/packaged
+  selected downloads and cached scope checks, five original todo.txt contracts
+  and original external export round-trips. Native creation metadata, remaining
+  28 API renderers, other field models/
+  anonymization/security reporting and full original parity remain pending.
+  Thanks to xet7.
+
 - Add GET `/api/boards/:id/export/orgmode` through the locked external-export
   service with source `text/x-org; charset=utf-8` bytes. Independently select
   descriptions, labels, dates and checklists. Preserve label-driven DONE state,

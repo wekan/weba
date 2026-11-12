@@ -3340,12 +3340,12 @@ current source tool formats now have native selected-export entries, checked
 against source EXTERNAL_EXPORT_FORMATS. Native model gaps and complete original
 UI/API/security parity remain pending.
 
-With `WITH_API=true`, GitHub/Gitea/Forgejo/GitLab issue, Trello board, Deck stack, Kanboard task, Markdown text, Leo XML, OPML and Org mode exports are available at
-`GET /api/boards/ID/export/github` (or `gitea` / `forgejo` / `gitlab` / `trello` / `deck` / `kanboard` / `markdown` / `leo` / `opml` / `orgmode`). Private boards require
+With `WITH_API=true`, GitHub/Gitea/Forgejo/GitLab issue, Trello board, Deck stack, Kanboard task, Markdown text, Leo XML, OPML, Org mode and todo.txt exports are available at
+`GET /api/boards/ID/export/github` (or `gitea` / `forgejo` / `gitlab` / `trello` / `deck` / `kanboard` / `markdown` / `leo` / `opml` / `orgmode` / `todotxt`). Private boards require
 a valid bearer or source-compatible query credential and full-board read access;
 public boards follow the source anonymous path. The `fields=labels,dates,description` query selects sections;
 unknown/empty/structured selections fall back as
-source does. Native JSON is written directly so empty strings survive. Other 29
+source does. Native JSON is written directly so empty strings survive. Other 28
 format API routes, native field-security models, anonymization/security reporting
 and complete original UI/API/security parity remain pending.
 
@@ -3416,3 +3416,12 @@ the original formatter. Deselected dates omit planning, and deselected labels
 do not set DONE or tags. Creation timestamps and other native field models stay
 pending. Shared credential, policy, full-board and final transaction guards
 apply before returning the text.
+
+todo.txt API export returns `text/plain; charset=utf-8`. Labels and dates select
+priority/project/context tokens and due/threshold dates independently. Completion
+comes from the list name; the `done` label stays an ordinary project token. Only
+the first matching priority is used, and a completed task writes it as `pri:A`.
+Spaced contexts normalize after the @ prefix. Native creation dates remain
+pending, so no completion/creation date pair is invented. Empty exports have an
+empty body. Shared credentials, policy, full-board and final transaction checks
+apply before the text is returned.

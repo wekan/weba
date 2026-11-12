@@ -1,4 +1,10 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- todo.txt export API: Add original plain text response and independent label/
+  date selection. Preserve completion/priority/project/context/date/list tokens,
+  Unicode whitespace and empty output; fix spaced contexts and terminal case
+  rules. Verify source output and direct access/error boundaries; creation/
+  other native models and complete original parity remain open.
+
 - Org mode export API: Add original text response and independently selected
   descriptions/labels/dates/checklists. Preserve source DONE/priority/Unicode
   tags, UTC planning and whitespace fallbacks; repair tag edge underscores and
