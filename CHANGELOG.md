@@ -2,6 +2,19 @@
 
 This work adds the following features and fixes:
 
+- Add Taiga as the twenty-fourth selected-board tool export. Download
+  `wekan-boards-taiga.zip` with project JSON dumps matching source status/slugs,
+  story/task/epic/issue references, typed custom attributes, people/history,
+  dates, checklist tasks, facets, colors and WIP metadata. Use scoped native
+  snapshots and strict local rendering bound to an explicit private format
+  marker; other JSON exports remain unchanged. Retain full-read/active/policy/
+  session guards and pending-only numeric/WIP repair/retry. Rich native/source
+  and legacy-cycle/empty-layout cases, renderer boundaries, 17 original Taiga
+  contracts and all 29 source/packaged browser downloads pass. Complete host
+  tests pass, including 69 Python tests and 48 archive-scope snapshots. Native Scrum,
+  label-definition and creation-date models, remaining formats and complete
+  original UI/API/security suites remain pending. Thanks to xet7.
+
 - Add Super Productivity as the twenty-third selected-board tool export.
   Download `wekan-boards-superproductivity.zip` with native JSON backups matching
   source project/task/tag/note/board/archive slices and required null settings.

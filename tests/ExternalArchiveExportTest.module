@@ -5,7 +5,7 @@ Public Sub Main()
   Dim archived As Integer
   Dim orphan As Integer
   Dim archivedOrphan As Integer
-  Dim formats As String[] = ["kanboard", "markdown", "leo", "opml", "orgmode", "todotxt", "taskwarrior", "focalboard", "todoist", "planner", "meistertask", "obsidian", "linear", "ticktick", "clickup", "nullboard", "kanri", "pivotal", "redmine", "tasksorg", "monday", "businessmap", "superproductivity"]
+  Dim formats As String[] = ["kanboard", "markdown", "leo", "opml", "orgmode", "todotxt", "taskwarrior", "focalboard", "todoist", "planner", "meistertask", "obsidian", "linear", "ticktick", "clickup", "nullboard", "kanri", "pivotal", "redmine", "tasksorg", "monday", "businessmap", "superproductivity", "taiga"]
   Dim result As New Collection
   Dim snapshots As New Variant[]
   Dim item As Collection

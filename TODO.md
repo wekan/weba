@@ -150,6 +150,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   selected Super Productivity native backup JSON ZIP with used-lane projects,
   filter panels, flattened subtask roots, checklist notes and dates/time/estimates
   is recorded there;
+  selected Taiga project JSON ZIP with story/task/epic/issue mapping, native
+  typed fields, checklist tasks, history and colors/WIP is recorded there;
+  native Scrum/label definitions/creation timestamps remain open;
   Cached selected-export publication now rechecks current actor/session, full
   board access and policy; revocation/regrant browser coverage is recorded in
   CHANGELOG.md. Complete original security parity remains pending.

@@ -1536,6 +1536,9 @@
             { ExportSelectedSuperProductivity WebButton
               Text = "Super Productivity"
             }
+            { ExportSelectedTaiga WebButton
+              Text = "Taiga"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton

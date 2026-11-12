@@ -5252,3 +5252,7 @@ End
 Public Sub ExportSelectedSuperProductivity_Click()
   RunSelectedExport("superproductivity")
 End
+
+Public Sub ExportSelectedTaiga_Click()
+  RunSelectedExport("taiga")
+End

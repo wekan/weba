@@ -1,4 +1,10 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Taiga selected export: Add scoped native snapshots and strictly validated
+  project JSON ZIP rendering with explicit format binding. Match source
+  story/task/epic/issue maps, typed fields, history/checklist tasks, colors/WIP
+  and status identity. Verify native/source cases, malformed-input boundaries,
+  pending numeric/WIP repair and source/packaged browser downloads.
+
 - Super Productivity selected export: Add native backup JSON ZIPs matching
   source project/task/tag/filter-panel slices, null settings, flattened roots,
   checklist notes, dates/time/estimates and active-card scope. Verify rich and

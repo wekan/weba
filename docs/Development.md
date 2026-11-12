@@ -1695,3 +1695,34 @@ normal APIs still reject them. Malformed numeric fields preserve pending work
 and retry after repair. Shared archive coverage includes every accepted tool
 format. The selected-export browser compares the actual backup ZIP with the
 source formatter. Complete original Meteor UI/API/security parity remains TODO.
+
+Taiga selected project export
+
+Taiga produces `wekan-boards-taiga.zip` with one project `board-ID.json` dump
+per selected board. Match source story/task/epic/issue mapping, sequential refs,
+unique status names/slugs, list identity, native colors/WIP, dates, people,
+comment history and typed custom attributes. Story checklist items become tasks;
+checklists of other item types append Markdown notes. Native snapshots retain
+only active cards and validated finite numeric fields; malformed numeric or WIP
+values fail before pending work is consumed and can be repaired/retried. A strict
+local renderer accepts only the native descriptor shape and canonical IDs/dates,
+then writes the actual dump into the ZIP. A private file format marker explicitly
+binds this transformation; other JSON stays unchanged. Source settings and null
+fields remain intact. Native numeric IDs, string label names and absent card/
+board creation dates are adapters; source fallback uses the snapshot timestamp.
+Native Scrum models/sprints and board label definitions remain TODO, so no sprint
+or label-color metadata is invented. Native snapshots support up to 50,000 cards.
+
+`TaigaExportTest` and `TaigaCasesTest` compare scoped native snapshots after
+rendering with unchanged `formatTaiga`. Cover duplicate-title list IDs, all four
+item kinds, epic-linked stories, nested tasks, story checklist tasks, issue
+facets, typed custom-attribute conflicts/consumed fields, people, dated histories,
+colors/WIP, empty/missing layouts, legacy cycles and archived parents. WIP
+corruption uses the actual native metadata schema; normal setters still validate
+it. Both malformed and negative WIP values and malformed numeric entries retain
+pending work and recover after repair. `taiga-renderer.test.cjs` checks strict
+shape/type/date/ID/count boundaries, Unicode/slug/literal values, real transformed
+ZIP JSON and unchanged unmarked JSON, even when it resembles a Taiga descriptor.
+Source and packaged Chromium compare actual ordered two-board JSON dumps with
+the parent formatter. Shared archive tests include every accepted external tool.
+These checks do not establish complete original Meteor UI/API/security parity.

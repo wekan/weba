@@ -2402,6 +2402,21 @@ timers, archived cards and source-unsupported content are excluded. Native cards
 have no creation timestamp, so use the source export-time fallback. Native
 unique lane titles and numeric card IDs remain explicit schema adapters.
 
+Taiga produces `wekan-boards-taiga.zip` with one project `board-ID.json` dump
+per selected board. Match source story/task/epic/issue mapping, sequential refs,
+unique status names/slugs, list identity, native colors/WIP, dates, people,
+comment history and typed custom attributes. Story checklist items become tasks;
+checklists of other item types append Markdown notes. Native snapshots retain
+only active cards and validated finite numeric fields; malformed numeric or WIP
+values fail before pending work is consumed and can be repaired/retried. A strict
+local renderer accepts only the native descriptor shape and canonical IDs/dates,
+then writes the actual dump into the ZIP. A private file format marker explicitly
+binds this transformation; other JSON stays unchanged. Source settings and null
+fields remain intact. Native numeric IDs, string label names and absent card/
+board creation dates are adapters; source fallback uses the snapshot timestamp.
+Native Scrum models/sprints and board label definitions remain TODO, so no sprint
+or label-color metadata is invented. Native snapshots support up to 50,000 cards.
+
 External-tool exports contain active cards. The native `weba-2` backup and
 generic CSV/TSV/Excel exports also retain archived cards.
 
@@ -2434,7 +2449,7 @@ comma-CSV, semicolon-CSV and TSV ZIPs, and the single two-sheet Excel workbook.
 They also verify the Kanboard container/task JSON, exact Markdown task-list,
 Leo XML, OPML outline, Org mode outline, todo.txt task, Taskwarrior JSON,
 Focalboard JSONL, Todoist CSV, Planner XLSX, MeisterTask CSV, Obsidian Kanban,
-Linear CSV, TickTick CSV, ClickUp CSV, Nullboard NBX, Kanri JSON, Pivotal Tracker CSV, Redmine CSV, Tasks.org backup JSON, monday.com XLSX, Businessmap XLSX and Super Productivity backup JSON ZIPs. Remaining external-tool formats and the original HTTP route
+Linear CSV, TickTick CSV, ClickUp CSV, Nullboard NBX, Kanri JSON, Pivotal Tracker CSV, Redmine CSV, Tasks.org backup JSON, monday.com XLSX, Businessmap XLSX, Super Productivity backup JSON and Taiga project JSON ZIPs. Remaining external-tool formats and the original HTTP route
 remain pending.
 
 
