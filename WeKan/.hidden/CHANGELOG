@@ -1,4 +1,9 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Zenkit selected export: Add scoped stages/items JSON ZIP with ordered stages,
+  typed fields, all assignees, grouped checklists/comments and parent/date
+  fields. Verify 27 source comparisons, strict renderer cases and all 40 source
+  format entries. Native model/full original parity remain pending.
+
 - Asana selected export: Add scoped source task JSON ZIP with completion/date
   logic, typed fields, parent references, checklist subtasks and comment
   stories. Verify 27 native/source cases and strict renderer boundaries;

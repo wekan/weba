@@ -119,6 +119,10 @@ Public Function ExportActiveBoardOpenProject(boardId As Integer) As String
   Return ExportChecked(boardId, "board", boardId, True, "openproject")
 End
 
+Public Function ExportActiveBoardZenkit(boardId As Integer) As String
+  Return ExportChecked(boardId, "board", boardId, True, "zenkit")
+End
+
 Public Function ExportActiveBoardAsana(boardId As Integer) As String
   Return ExportChecked(boardId, "board", boardId, True, "asana")
 End
@@ -261,6 +265,8 @@ Private Function ExportChecked(boardId As Integer, kind As String, itemId As Int
     text = BoardNullboardExport.Build(boardId, $db)
   Else If format = "openproject" And kind = "board" Then
     text = BoardOpenProjectExport.Build(boardId, $db)
+  Else If format = "zenkit" And kind = "board" Then
+    text = BoardZenkitExport.Build(boardId, $db)
   Else If format = "asana" And kind = "board" Then
     text = BoardAsanaExport.Build(boardId, $db)
   Else If format = "jira" And kind = "board" Then

@@ -2,6 +2,19 @@
 
 This work adds the following features and fixes:
 
+- Add Zenkit stages/items JSON as the fortieth selected-board tool export.
+  Download `wekan-boards-zenkit.zip` with ordered stages, source item/parent IDs,
+  all repeated assignees, typed field maps, grouped checklists, comments and
+  optional start/due dates. Use strict marked snapshots and existing locked
+  active/full-read/policy/session/cached-scope gates; omit unused color/lane/
+  time/WIP metadata and unrelated row caps. All 27 native/source cases and
+  renderer boundaries, original Zenkit import/round-trip contracts and complete
+  host tests pass (69 Python tests, 80 archive/scope snapshots); all 45 source/
+  packaged browser downloads and cached revocation/regrant pass. Audit all 40
+  current source format entries against
+  EXTERNAL_EXPORT_FORMATS. Native creation/other model gaps and complete original
+  UI/API/security parity remain pending. Thanks to xet7.
+
 - Add Asana task JSON as the thirty-ninth selected-board tool export.
   Download `wekan-boards-asana.zip` with source completion/conditional dates,
   task/parent IDs, section memberships, tags, typed custom fields, checklist

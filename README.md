@@ -3332,3 +3332,10 @@ with source completion/date behavior, typed custom fields, tags, section
 memberships, parent references, checklist subtasks and comment stories. Unused
 corrupt time data does not block export. Native creation metadata and complete
 original UI/API/security parity remain pending.
+
+Selected boards also export **Zenkit stages/items JSON** in
+`wekan-boards-zenkit.zip`, preserving ordered stages, all native assignees, typed
+field values, grouped checklists/comments and parent/start/due fields. All 40
+current source tool formats now have native selected-export entries, checked
+against source EXTERNAL_EXPORT_FORMATS. Native model gaps and complete original
+UI/API/security parity remain pending.

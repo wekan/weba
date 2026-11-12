@@ -80,9 +80,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   Original callback outcome comparisons expand from 52 to 156 single/multi/mixed
   cases. Native selection and confirmed sidebar actions now use this service;
   no new public HTTP route is exposed. Original full callbacks remain open.
-- Next: remaining copy-option models/controls and selected batch
-  external-format export,
-  Home/group targets and original
+- Next: remaining copy-option models/controls, selected-export API/model/
+  security parity, Home/group targets and original
   UI callbacks. Whole-board copy authorization and late actor/source/destination
   guards, selected native duplication with pending-only retry and source-style
   title numbering, eight native content-option controls in selected/single Copy,
@@ -185,12 +184,15 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   finished-time seconds is recorded there; Jira estimate/Scrum/reporter models
   remain pending; selected Asana JSON ZIP with completion/dates, typed fields,
   checklist subtasks, comment stories and parent references is recorded there;
-  native creation metadata remains pending;
+  native creation metadata remains pending; selected Zenkit stages/items JSON
+  ZIP with ordered stages, grouped checklists/comments, typed fields and all
+  people is recorded there; native creation metadata remains pending;
   Cached selected-export publication now rechecks current actor/session, full
   board access and policy; revocation/regrant browser coverage is recorded in
   CHANGELOG.md. Complete original security parity remains pending.
-  Remaining source tool formats:
-  zenkit. Original API route, avatar exclusions,
+  All 40 current source tool-format entries are implemented and audited against
+  EXTERNAL_EXPORT_FORMATS; full semantic/model parity remains open. Original
+  API route, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded
   in CHANGELOG.md. Its native selected-file action, session/API separation and

@@ -2101,3 +2101,27 @@ references, completion/subtasks/stories, malformed descriptors/markers/paths,
 actual JSON ZIP, unchanged unmarked JSON and 50,001 cards. Source/packaged browser
 downloads compare ordered per-board Asana JSON to source; owner/read-only archive
 coverage includes Asana. Full original UI/API/security parity remains pending.
+
+Zenkit selected export uses `BoardZenkitExport` through the existing locked
+full-read/policy/session transfer and private cached-publication checks. Strict
+marked JSON snapshots feed an isolated unchanged Zenkit formatter: ordered stage
+names, item/parent IDs, start/due dates, all repeated assignees, typed fields,
+grouped checklist names/items and comments. Native source-collector adapters for
+empty/prototype custom fields and numeric wrappers apply; whitespace comments
+remain literal. Unused board/list/card color, lane, WIP and time metadata is not
+read, and no unrelated row cap is imposed. Native creation metadata remains open.
+
+`ZenkitExportTest`, `ZenkitCasesTest` and `ZenkitStatesTest` compare 27 actual
+native snapshots to unchanged `formatters.zenkit`, including rich grouped/typed/
+people/parent/date data, empty/legacy/orphan stages, repeated/empty stage titles,
+Unicode labels, numeric repair, irrelevant corrupt time/WIP, archive exclusion
+and policy/assigned-only denial. Renderer tests verify numeric/prototype maps,
+parents/cycles, grouped data, malformed types/paths/markers, actual ZIP contents,
+unmarked JSON preservation and 50,001 cards. Both browsers compare ordered Zenkit
+downloads to source; owner/read-only archive coverage includes Zenkit.
+
+`external-export-format-coverage.test.cjs` compares the native selected-format
+whitelist with the live source EXTERNAL_EXPORT_FORMATS export, excluding the five
+native/generic formats. All 40 current source tool entries are represented. This
+is an entry coverage audit, while format-specific conformance, native model gaps
+and complete original UI/API/security parity remain separate requirements.
