@@ -56,6 +56,25 @@ def is_attachment_export_path(path):
             and bool(parts[5]) and parts[6] == 'export')
 
 
+def is_issue_export_path(path):
+    parts = path.rstrip('/').split('/')
+    return (len(parts) == 6 and parts[:3] == ['', 'api', 'boards']
+            and bool(parts[3]) and parts[4] == 'export'
+            and parts[5] in ('github', 'gitea', 'forgejo')
+            and path in ('/'.join(parts), '/'.join(parts) + '/'))
+
+
+def issue_export_fields(query):
+    try:
+        pairs = urllib.parse.parse_qsl(query, keep_blank_values=True, max_num_fields=1000)
+    except ValueError:
+        return ''
+    values = [value for key, value in pairs if key == 'fields']
+    if len(values) != 1 or any(key.startswith('fields[') for key, _ in pairs):
+        return ''
+    return values[0]
+
+
 def attachment_export_credential(query):
     """Strip the source-compatible URL credential before the CGI boundary."""
     try:
@@ -603,7 +622,8 @@ def handler(application, runner, environment):
             query = "" if entry_section or public_attachment else url.query
             env['WEBA_EXPORT_QUERY_STATE'] = ''
             env['WEBA_EXPORT_HEADER_PRESENT'] = '0'
-            if api and is_attachment_export_path(decoded_path):
+            env['WEBA_EXTERNAL_FIELDS'] = issue_export_fields(query) if api and is_issue_export_path(decoded_path) else ''
+            if api and (is_attachment_export_path(decoded_path) or is_issue_export_path(decoded_path)):
                 query, state, digest = attachment_export_credential(query)
                 env['WEBA_EXPORT_QUERY_STATE'] = state
                 env['WEBA_EXPORT_HEADER_PRESENT'] = '1' if authorization else '0'

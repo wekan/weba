@@ -2125,3 +2125,36 @@ whitelist with the live source EXTERNAL_EXPORT_FORMATS export, excluding the fiv
 native/generic formats. All 40 current source tool entries are represented. This
 is an entry coverage audit, while format-specific conformance, native model gaps
 and complete original UI/API/security parity remain separate requirements.
+
+The first native external-export HTTP routes are GET
+`/api/boards/:id/export/{github,gitea,forgejo}`. `ExternalIssueExport` uses the
+existing issue formatter without native browser-session authority. The runtime
+scopes/scrubs query credentials and passes only digests and a structured state
+across CGI; duplicate/structured field queries become the same all-fields fallback
+as source non-string values. `ExternalExportFields` uses the complete source
+board allowlist and ECMAScript whitespace. Selected native exports retain their
+all-fields default. Direct native JSON bytes preserve empty strings, which the
+Gambas JSON decode/re-encode path would drop.
+
+Policy is checked before board lookup/auth. Public boards ignore credentials as
+source does. Private boards validate query/bearer precedence and fresh tokens,
+then require full-board reads. Under account/token/policy/board locks, the service
+rechecks current authority before building and before commit; public visibility
+loss, membership narrowing, token revocation and disabled policy prevent a body.
+Archived boards remain readable and archived cards stay excluded. Unknown SQL
+failures return an opaque error. No new account, membership or generic API scope
+is granted for anonymous public export. Source native IDs, API token transport,
+absent native admin-only custom-field definitions/anonymization/security log and
+other 37 format API renderers remain explicit pending work.
+
+`api-issue-export.test.py` tests actual source/packaged HTTP and retained DB state,
+including field combinations, public/private/query/bearer/missing/disabled order,
+all 256 raw member-flag sets, global-admin nonmember and assigned-only denial,
+archive reads, late membership/token/policy/public mutation rollback and opaque
+serializer failures. `issue-export-rest-conformance.test.cjs` compares 58 actual
+bodies with unchanged parseExportFields, gateItem and source formatters, pins the
+full native field allowlist to source, and compares all 256 role outcomes with
+unchanged canExportBoardData/isAssignedOnlyMember. Visibility/membership-to-native
+SQL mapping is explicit. Credential host tests exercise actual CGI scrubbing and
+precedence for every supported export path; WITH_API=false remains authoritative.
+Full original route/model/UI/API/security parity is still pending.

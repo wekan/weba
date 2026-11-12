@@ -1,0 +1,6 @@
+Public Sub Main()
+  Session["username"] = "rest-other"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+  BoardVisibility.SavePermission(CInt(Env["WEBA_ISSUE_BOARD"]), Env["WEBA_ISSUE_PERMISSION"])
+  Print "{}"
+End

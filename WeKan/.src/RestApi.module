@@ -50,6 +50,10 @@ Public Sub Main()
     Return
   Endif
   fields = Split(Request.Path, "/", "", True)
+  If IsIssueExport(fields) Then
+    ExportIssues(fields)
+    Return
+  Endif
   If IsAttachmentExport(fields) Then
     ExportAttachment(fields)
     Return
@@ -657,6 +661,36 @@ Private Function RawDownload() As Boolean
     If Error Then Return False
   Next
   Return count = 1 And value = "1"
+End
+
+Private Function IsIssueExport(fields As String[]) As Boolean
+  Dim path As String
+  If fields.Count <> 5 Then Return False
+  If fields[0] <> "api" Or fields[1] <> "boards" Or fields[3] <> "export" Then Return False
+  If ["github", "gitea", "forgejo"].Find(fields[4]) < 0 Then Return False
+  path = "/api/boards/" & fields[2] & "/export/" & fields[4]
+  Return Request.Path = path Or Request.Path = path & "/"
+End
+
+Private Sub ExportIssues(fields As String[])
+  Dim outcome As Collection
+  If Request.Method <> "GET" Then
+    ReplyExport(405, ErrorData("Method not allowed"))
+    Return
+  Endif
+  outcome = ExternalIssueExport.Read(fields[2], Env["WEBA_EXTERNAL_FIELDS"])
+  If outcome["status"] = 200 Then
+    Print "Status: 200"
+    Print "Content-Type: application/json; charset=utf-8"
+    Print "Cache-Control: no-store"
+    Print "X-Content-Type-Options: nosniff"
+    Print
+    Write CStr(outcome["body"])
+  Else If outcome["plain"] = True Then
+    ReplyPlain(outcome["status"], outcome["data"]["error"])
+  Else
+    ReplyExport(outcome["status"], outcome["data"])
+  Endif
 End
 
 Private Function IsAttachmentExport(fields As String[]) As Boolean

@@ -39,7 +39,7 @@ Private Function ClosedList(title As String) As Boolean
   Return False
 End
 
-Public Function Build(boardId As Integer, db As Connection) As String
+Public Function Build(boardId As Integer, db As Connection, Optional wanted As Collection) As String
   Dim output As New Variant[]
   Dim rows As Result
   Dim item As Collection
@@ -52,19 +52,23 @@ Public Function Build(boardId As Integer, db As Connection) As String
   For Each rows
     item = New Collection
     item.Add(TextValue(rows!title), "title")
-    item.Add(TextValue(rows!description), "body")
+    item.Add(If(ExternalExportFields.Wants(wanted, "description"), TextValue(rows!description), ""), "body")
     item.Add(If(ClosedList(TextValue(rows!list_title)), "closed", "open"), "state")
     labels = New Variant[]
-    For Each label In Split(TextValue(rows!labels), ",")
-      label = TrimText(label)
-      If Not label Then Continue
-      entry = New Collection
-      entry.Add(label, "name")
-      labels.Add(entry)
-    Next
+    If ExternalExportFields.Wants(wanted, "labels") Then
+      For Each label In Split(TextValue(rows!labels), ",")
+        label = TrimText(label)
+        If Not label Then Continue
+        entry = New Collection
+        entry.Add(label, "name")
+        labels.Add(entry)
+      Next
+    Endif
     item.Add(labels, "labels")
-    dates = CardDates.ReadDates(boardId, rows!id)
-    If dates.Exist("dueAt") Then item.Add(CardDates.Iso(dates["dueAt"]), "due_date")
+    If ExternalExportFields.Wants(wanted, "dates") Then
+      dates = CardDates.ReadDates(boardId, rows!id)
+      If dates.Exist("dueAt") Then item.Add(CardDates.Iso(dates["dueAt"]), "due_date")
+    Endif
     output.Add(item)
   Next
   Return JSON.Encode(output) & Chr(10)

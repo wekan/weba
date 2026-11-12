@@ -3339,3 +3339,12 @@ field values, grouped checklists/comments and parent/start/due fields. All 40
 current source tool formats now have native selected-export entries, checked
 against source EXTERNAL_EXPORT_FORMATS. Native model gaps and complete original
 UI/API/security parity remain pending.
+
+With `WITH_API=true`, GitHub/Gitea/Forgejo issue exports are available at
+`GET /api/boards/ID/export/github` (or `gitea` / `forgejo`). Private boards require
+a valid bearer or source-compatible query credential and full-board read access;
+public boards follow the source anonymous path. The `fields=labels,dates,description` query selects sections;
+unknown/empty/structured selections fall back as
+source does. Native JSON is written directly so empty strings survive. Other 37
+format API routes, native field-security models, anonymization/security reporting
+and complete original UI/API/security parity remain pending.

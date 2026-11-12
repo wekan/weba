@@ -1,4 +1,9 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Issue export API: Add source GitHub/Gitea/Forgejo GET routes with field
+  selection, exact native JSON bytes, public/private/token ordering and final
+  locked guards. Verify source DTOs, all raw-role sets and rollback/no-write
+  boundaries. Other format routes and full original parity remain pending.
+
 - Zenkit selected export: Add scoped stages/items JSON ZIP with ordered stages,
   typed fields, all assignees, grouped checklists/comments and parent/date
   fields. Verify 27 source comparisons, strict renderer cases and all 40 source

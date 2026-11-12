@@ -1,0 +1,79 @@
+ ' Source-compatible HTTP issue export, independent of native session authority.
+Export
+Private Function Result(status As Integer, message As String) As Collection
+  Dim outcome As New Collection
+  Dim data As New Collection
+  data.Add(message, "error")
+  outcome.Add(status, "status")
+  outcome.Add(data, "data")
+  Return outcome
+End
+
+Private Sub Check(boardId As Integer, actor As String, isPublic As Boolean)
+  If isPublic Then
+    If BoardVisibility.Permission(boardId) <> "public" Or WebIdentity.Username <> "" Then Error.Raise("Forbidden")
+  Else
+    If Not actor Or WebIdentity.Username <> actor Or ApiTokens.Authenticate() <> actor Then Error.Raise("Invalid token")
+  Endif
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  ImportExportPolicy.RequireExport()
+End
+
+Public Function Read(reference As String, fields As String) As Collection
+  Dim boardId As Integer
+  Dim actor As String
+  Dim isPublic As Boolean
+  Dim db As Connection
+  Dim text As String
+  Dim outcome As Collection
+  Dim transaction As Boolean
+  Dim failure As String
+  If Env["WEBA_API_REQUEST"] <> "1" Then Return Result(403, "Forbidden")
+  ImportExportPolicy.RequireExport()
+  boardId = AttachmentExport.BoardId(reference)
+  db = WebDatabase.OpenConnection()
+  If boardId <= 0 Or Not db.Find("kb_boards", "id=&1", boardId).Available Then Return Result(404, "Not found")
+  isPublic = BoardVisibility.Permission(boardId) = "public"
+  If Not isPublic Then
+    If Env["WEBA_EXPORT_QUERY_STATE"] = "too-long" Or Env["WEBA_EXPORT_QUERY_STATE"] = "bad-query" Then Return Result(400, "Bad request")
+    actor = ApiTokens.Authenticate()
+    If Not actor Then
+      If Env["WEBA_EXPORT_QUERY_STATE"] = "none" And Env["WEBA_EXPORT_HEADER_PRESENT"] <> "1" Then Return Result(403, "Forbidden")
+      Return Result(401, "Invalid token")
+    Endif
+  Endif
+  WebIdentity.AuthenticateApi(actor)
+  CardContent.OpenStore()
+  DatabaseTransactions.Begin(db)
+  transaction = True
+  If actor Then
+    db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+    db.Exec("UPDATE api_tokens SET digest=digest WHERE digest=&1 AND username=&2", Env["WEBA_API_TOKEN_DIGEST"], actor)
+  Endif
+  ImportExportPolicy.Lock()
+  db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+  Check(boardId, actor, isPublic)
+  text = BoardGithubExport.Build(boardId, db, ExternalExportFields.Parse(fields))
+  Check(boardId, actor, isPublic)
+  DatabaseTransactions.Commit(db)
+  transaction = False
+  outcome = New Collection
+  outcome.Add(200, "status")
+  outcome.Add(text, "body")
+  Return outcome
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback(db)
+  Select failure
+    Case "Invalid token"
+      Return Result(401, failure)
+    Case "Forbidden", "Board not accessible", "Card not accessible", "Board permission denied", "Assigned-only members cannot copy, export or transfer containers"
+      Return Result(403, "Forbidden")
+    Case "Export is disabled by the administrator."
+      outcome = Result(403, failure)
+      outcome.Add(True, "plain")
+      Return outcome
+    Case Else
+      Return Result(500, "Board export failed")
+  End Select
+End

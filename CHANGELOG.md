@@ -2,6 +2,21 @@
 
 This work adds the following features and fixes:
 
+- Add source-path GET `/api/boards/:id/export/github`, `/gitea` and `/forgejo`
+  issue exports. Preserve source field-selection fallbacks/allowlist, empty
+  strings and arrays with direct native JSON bytes, and public-before-token
+  behavior. Scope query credentials to these routes and scrub them before CGI;
+  private boards require current token/full-board access. Recheck token, scope,
+  public visibility and export policy under transaction locks before publication.
+  Verify 58 actual HTTP bodies against source parsing/gating/formatters, all 256
+  raw-role combinations against source export access, no-write reads, archive
+  behavior, late member/token/policy/public rollback and opaque failures.
+  Disabled export avoids even a malformed board lookup. Final full host tests
+  pass (70 Python tests, 80 archive/scope snapshots), as do both API builds and
+  all 45 source/packaged selected downloads with cached scope checks.
+  Remaining 37 format API routes, native field/security models, anonymization
+  and security reporting/full original parity remain pending. Thanks to xet7.
+
 - Add Zenkit stages/items JSON as the fortieth selected-board tool export.
   Download `wekan-boards-zenkit.zip` with ordered stages, source item/parent IDs,
   all repeated assignees, typed field maps, grouped checklists, comments and

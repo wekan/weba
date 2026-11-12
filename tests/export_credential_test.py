@@ -1,4 +1,4 @@
-"""URL credentials are scoped to the attachment exporter and never reach CGI."""
+"""URL credentials are scoped to supported export routes and never reach CGI."""
 import hashlib
 import io
 from types import SimpleNamespace
@@ -20,6 +20,19 @@ class ExportCredentialTest(unittest.TestCase):
                      '/api/boards/1//attachments/2/export', '/api/boards/1/attachments/2/export//',
                      '/other/api/boards/1/attachments/2/export', '/API/boards/1/attachments/2/export']:
             self.assertFalse(server.is_attachment_export_path(path))
+
+    def test_issue_route_scope_and_fields(self):
+        for name in ['github', 'gitea', 'forgejo']:
+            for suffix in ['', '/']:
+                self.assertTrue(server.is_issue_export_path('/api/boards/1/export/' + name + suffix))
+        for path in ['/api/boards/1/export/gitlab', '/api/boards/1/export/github//',
+                     '/API/boards/1/export/github', '/api/boards//export/github',
+                     '/other/api/boards/1/export/github']:
+            self.assertFalse(server.is_issue_export_path(path))
+        for query, expected in [('fields=labels', 'labels'), ('fields=labels,dates', 'labels,dates'),
+                                ('fields=labels&fields=dates', ''), ('fields[x]=labels', ''),
+                                ('fields=labels&fields[x]=dates', ''), ('', '')]:
+            self.assertEqual(server.issue_export_fields(query), expected)
 
     def test_digest_and_scrub(self):
         token = 'Ab09-_' * 7 + 'z'
@@ -57,23 +70,28 @@ class ExportCredentialTest(unittest.TestCase):
                  ('unused&authToken[]=' + query_token, 'bad-query', ''),
                  ('', 'none', hashlib.sha256(header_token.encode()).hexdigest())]
         for value, state, digest in cases:
-            request = NativeOriginTest().request('GET',
-                '/api/boards/1/attachments/2/export?x=keep&authToken=' + value,
-                {'Authorization': 'Bearer ' + header_token})
-            request.rfile = io.BytesIO()
-            request.wfile = io.BytesIO()
-            request.client_address = ('127.0.0.1', 12345)
-            request.send_response = Mock()
-            request.send_header = Mock()
-            request.end_headers = Mock()
-            result = SimpleNamespace(returncode=0, stdout=b'Content-Type: application/json\r\n\r\n{}')
-            with patch.object(server, 'run_application', return_value=result) as runner:
-                request._run_cgi()
-            env = runner.call_args.kwargs['env']
-            self.assertEqual(env['QUERY_STRING'], 'x=keep')
-            self.assertEqual(env['WEBA_EXPORT_QUERY_STATE'], state)
-            self.assertEqual(env['WEBA_API_TOKEN_DIGEST'], digest)
-            self.assertEqual(env['WEBA_EXPORT_HEADER_PRESENT'], '1')
-            self.assertNotIn(query_token, repr(env))
-            self.assertNotIn(header_token, repr(env))
-            self.assertEqual(runner.call_args.kwargs['input'], b'')
+            for path in ['/api/boards/1/attachments/2/export', '/api/boards/1/export/github', '/api/boards/1/export/gitea', '/api/boards/1/export/forgejo']:
+                self.check_boundary(path, value, state, digest, query_token, header_token)
+
+    def check_boundary(self, path, value, state, digest, query_token, header_token):
+        from server_test import NativeOriginTest
+        request = NativeOriginTest().request('GET',
+            path + '?x=keep&authToken=' + value,
+            {'Authorization': 'Bearer ' + header_token})
+        request.rfile = io.BytesIO()
+        request.wfile = io.BytesIO()
+        request.client_address = ('127.0.0.1', 12345)
+        request.send_response = Mock()
+        request.send_header = Mock()
+        request.end_headers = Mock()
+        result = SimpleNamespace(returncode=0, stdout=b'Content-Type: application/json\r\n\r\n{}')
+        with patch.object(server, 'run_application', return_value=result) as runner:
+            request._run_cgi()
+        env = runner.call_args.kwargs['env']
+        self.assertEqual(env['QUERY_STRING'], 'x=keep')
+        self.assertEqual(env['WEBA_EXPORT_QUERY_STATE'], state)
+        self.assertEqual(env['WEBA_API_TOKEN_DIGEST'], digest)
+        self.assertEqual(env['WEBA_EXPORT_HEADER_PRESENT'], '1')
+        self.assertNotIn(query_token, repr(env))
+        self.assertNotIn(header_token, repr(env))
+        self.assertEqual(runner.call_args.kwargs['input'], b'')

@@ -192,7 +192,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   CHANGELOG.md. Complete original security parity remains pending.
   All 40 current source tool-format entries are implemented and audited against
   EXTERNAL_EXPORT_FORMATS; full semantic/model parity remains open. Original
-  API route, avatar exclusions,
+  GitHub/Gitea/Forgejo source-shaped HTTP export routes, field selections and
+  public/private final guards are recorded in CHANGELOG.md; remaining 37
+  external-format API routes, native field-model guards, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded
   in CHANGELOG.md. Its native selected-file action, session/API separation and
