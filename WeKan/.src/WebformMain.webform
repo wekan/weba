@@ -1539,6 +1539,9 @@
             { ExportSelectedTaiga WebButton
               Text = "Taiga"
             }
+            { ExportSelectedVikunja WebButton
+              Text = "Vikunja"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton

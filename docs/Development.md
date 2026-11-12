@@ -1726,3 +1726,38 @@ ZIP JSON and unchanged unmarked JSON, even when it resembles a Taiga descriptor.
 Source and packaged Chromium compare actual ordered two-board JSON dumps with
 the parent formatter. Shared archive tests include every accepted external tool.
 These checks do not establish complete original Meteor UI/API/security parity.
+
+Vikunja selected nested archive export
+
+Vikunja produces `wekan-boards-vikunja.zip` with one actual `board-ID.zip` per
+selected board. The inner archive contains exactly `data.json`, `filters.json`
+and `VERSION` (`v1.0.0`, without a trailing newline). Match source projects and
+child projects per native lane, four views, list buckets and WIP limits, task
+positions/bucket links, users, deduplicated labels, done/priority/percent fields,
+RFC 3339 dates and zero time, comments and parent/subtask pairs. Cross-project
+parent references retain the source behavior; Vikunja may discard them on import.
+Descriptions/comments are escaped paragraphs and checklist items become TipTap
+HTML task lists. Attachment/background bytes and saved filters are absent as in
+the source formatter. A strict private format marker permits only this generated
+fixed-path inner archive. Taiga and Vikunja share native collection and strict
+snapshot normalization; their shapes, limits and renderers remain distinct.
+Native Vikunja snapshots support up to 20,000 cards. Native numeric IDs and
+absent creation/creator metadata remain adapters; source timestamps use the
+snapshot time and unknown creators stay absent. Remaining original transport
+and content-model work stays TODO.
+
+`BoardExternalSnapshot` holds the existing Taiga collector with a checked format
+argument and format-dependent date shape/card bound. Taiga's wrapper preserves
+its descriptor. Vikunja adds start dates and uses the same full-scope metadata
+reads and exact finite-number envelopes. `VikunjaExportTest` and
+`VikunjaCasesTest` compare native snapshots after rendering with unchanged
+`formatVikunja`/`vikunjaArchiveFiles`, then read actual generated ZIPs through the
+source archive reader and compare with the source writer. Cover rich native
+values, empty/legacy layouts, multiple lanes, nested/cyclic/archived parents,
+comments/checklists, metadata WIP corruption and numeric repair/retry.
+`vikunja-renderer.test.cjs` verifies priority/percent/date matrices, zero time,
+escaped literal HTML, TipTap task lists, exact files/VERSION, actual nested ZIPs,
+strict descriptors/types/IDs/counts/dates and marker/path mismatches. Existing
+Taiga native/renderer tests verify shared-code compatibility. Both Chromium
+builds compare actual nested two-board downloads with the source files. Complete
+original Meteor UI/API/security parity remains unproven and open in TODO.

@@ -2,6 +2,20 @@
 
 This work adds the following features and fixes:
 
+- Add Vikunja as the twenty-fifth selected-board tool export. Download
+  `wekan-boards-vikunja.zip` with one real `board-ID.zip` per selected board;
+  each contains exact `data.json`, `filters.json` and newline-free `VERSION`.
+  Match source projects/views/buckets/positions, users/labels, parent pairs,
+  done/priority/percent fields, dates/zero time, comments and escaped HTML with
+  TipTap checklists. Share scoped native snapshots and strict normalization
+  with Taiga while keeping format markers and renderers separate. Preserve
+  active/full-read/policy/session gates and pending-only repair/retry.
+  Native/source archive readback, strict descriptor/path/HTML boundaries,
+  10 original contracts and all 30 source/packaged browser downloads pass.
+  Complete host tests pass, including 69 Python tests and 50 archive-scope
+  snapshots. Remaining formats and complete original UI/API/security parity stay pending.
+  Thanks to xet7.
+
 - Add Taiga as the twenty-fourth selected-board tool export. Download
   `wekan-boards-taiga.zip` with project JSON dumps matching source status/slugs,
   story/task/epic/issue references, typed custom attributes, people/history,

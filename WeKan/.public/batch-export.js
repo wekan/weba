@@ -30,8 +30,13 @@
     if(!Array.isArray(entries)||!entries.length||entries.length>1000)throw new Error('Invalid board export');
     const normalized=[];
     for(const entry of entries){
-      if(!entry||typeof entry.name!=='string'||!/^board-[1-9][0-9]*\.(json|jsonl|csv|tsv|md|leo|opml|org|txt|xlsx|nbx)$/.test(entry.name))throw new Error('Invalid board export');
-      if(entry.format!==undefined&&(entry.format!=='taiga'||!entry.name.endsWith('.json')))throw new Error('Invalid board export');
+      if(!entry||typeof entry.name!=='string'||!/^board-[1-9][0-9]*\.(json|jsonl|csv|tsv|md|leo|opml|org|txt|xlsx|nbx|zip)$/.test(entry.name))throw new Error('Invalid board export');
+      if(entry.format!==undefined&&!((entry.format==='taiga'&&entry.name.endsWith('.json'))||(entry.format==='vikunja'&&entry.name.endsWith('.zip'))))throw new Error('Invalid board export');
+      if(entry.name.endsWith('.zip')){
+        if(entry.format!=='vikunja'||typeof entry.content!=='string')throw new Error('Invalid board export');
+        let descriptor;try{descriptor=JSON.parse(entry.content);}catch{throw new Error('Invalid board export');}
+        normalized.push({name:entry.name,bytes:vikunjaArchive(descriptor)});continue;
+      }
       if(entry.name.endsWith('.xlsx')){
         if(typeof entry.content!=='string')throw new Error('Invalid board export');
         let descriptor;try{descriptor=JSON.parse(entry.content);}catch{throw new Error('Invalid board export');}
@@ -314,6 +319,36 @@ function formatBusinessmapSheets({ board, items }) {
   }
   function businessmapWorkbook(data){return typedWorkbook(businessmapData(data));}
 
+
+  const nativeSnapshot=(()=>{
+    const exact=(value,keys)=>value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).sort().join(',')===keys;
+    const textArray=value=>Array.isArray(value)&&value.every(item=>typeof item==='string');
+    const dateText=value=>typeof value==='string'&&(!value||/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(value)&&Number.isFinite(Date.parse(value))&&new Date(value).toISOString()===value);
+    const canonical=value=>typeof value==='string'&&/^[1-9][0-9]*$/.test(value);
+    return function(data,format){
+      if(!['taiga','vikunja'].includes(format))throw new Error('Invalid board export');
+      if(!exact(data,'board,format,items,lists,now,swimlanes')||data.format!==format||!dateText(data.now)||!data.now||!exact(data.board,'description,title')||typeof data.board.title!=='string'||typeof data.board.description!=='string'||!Array.isArray(data.items)||data.items.length>(format==='vikunja'?20000:50000)||!Array.isArray(data.lists)||!Array.isArray(data.swimlanes))throw new Error('Invalid board export');
+      const listIds=new Set(),cardIds=new Set();
+      for(const item of data.lists){
+        if(!exact(item,'_id,color,title,wipLimit')||!canonical(item._id)||listIds.has(item._id)||typeof item.color!=='string'||typeof item.title!=='string'||!exact(item.wipLimit,'enabled,value')||typeof item.wipLimit.enabled!=='boolean'||typeof item.wipLimit.value!=='number'||!Number.isFinite(item.wipLimit.value)||item.wipLimit.value<0)throw new Error('Invalid board export');listIds.add(item._id);
+      }
+      for(const lane of data.swimlanes)if(!exact(lane,'title')||typeof lane.title!=='string')throw new Error('Invalid board export');
+      const items=data.items.map(item=>{
+        if(!exact(item,(format==='vikunja'?'assignees,cardId,checklists,color,comments,creator,customFields,description,dueAt,endAt,labels,listId,listTitle,owner,parentCardId,startAt,swimlaneTitle,title':'assignees,cardId,checklists,color,comments,creator,customFields,description,dueAt,endAt,labels,listId,listTitle,owner,parentCardId,swimlaneTitle,title'))||!['cardId','title','description','listId','listTitle','swimlaneTitle','color','creator','owner','parentCardId'].every(key=>typeof item[key]==='string')||!canonical(item.cardId)||cardIds.has(item.cardId)||item.listId&&!canonical(item.listId)||item.parentCardId&&!canonical(item.parentCardId)||!dateText(item.dueAt)||!dateText(item.endAt)||format==='vikunja'&&!dateText(item.startAt)||!textArray(item.assignees)||!textArray(item.labels)||!Array.isArray(item.comments)||!Array.isArray(item.checklists)||!item.customFields||typeof item.customFields!=='object'||Array.isArray(item.customFields))throw new Error('Invalid board export');cardIds.add(item.cardId);
+        for(const comment of item.comments)if(!exact(comment,'author,date,text')||typeof comment.author!=='string'||typeof comment.text!=='string'||!dateText(comment.date))throw new Error('Invalid board export');
+        for(const checklist of item.checklists)if(!exact(checklist,'items,title')||typeof checklist.title!=='string'||!Array.isArray(checklist.items)||!checklist.items.every(entry=>exact(entry,'done,title')&&typeof entry.title==='string'&&typeof entry.done==='boolean'))throw new Error('Invalid board export');
+        const customFields=Object.create(null);
+        for(let [name,value] of Object.entries(item.customFields)){
+          if(value&&typeof value==='object'){
+            if(!exact(value,'number')||typeof value.number!=='string'||!value.number.trim()||!Number.isFinite(Number(value.number)))throw new Error('Invalid board export');value=Number(value.number);
+          }
+          if(!['string','number','boolean'].includes(typeof value)||typeof value==='number'&&!Number.isFinite(value))throw new Error('Invalid board export');customFields[name]=value;
+        }
+        return {...item,customFields};
+      });
+      return {board:data.board,lists:data.lists,swimlanes:data.swimlanes,items};
+    };
+  })();
 
   // Taiga export semantics are isolated from other format helpers.
   const taigaData=(()=>{
@@ -834,33 +869,251 @@ function formatTaiga({ board, lists, swimlanes, items, scrumSprints } = {}, now 
   };
 }
 
-    const exact=(value,keys)=>value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).sort().join(',')===keys;
-    const textArray=value=>Array.isArray(value)&&value.every(item=>typeof item==='string');
-    const dateText=value=>typeof value==='string'&&(!value||/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(value)&&Number.isFinite(Date.parse(value))&&new Date(value).toISOString()===value);
-    const canonical=value=>typeof value==='string'&&/^[1-9][0-9]*$/.test(value);
-    return function(data){
-      if(!exact(data,'board,format,items,lists,now,swimlanes')||data.format!=='taiga'||!dateText(data.now)||!data.now||!exact(data.board,'description,title')||typeof data.board.title!=='string'||typeof data.board.description!=='string'||!Array.isArray(data.items)||data.items.length>MAX_TAIGA_ITEMS||!Array.isArray(data.lists)||!Array.isArray(data.swimlanes))throw new Error('Invalid board export');
-      const listIds=new Set(),cardIds=new Set();
-      for(const item of data.lists){
-        if(!exact(item,'_id,color,title,wipLimit')||!canonical(item._id)||listIds.has(item._id)||typeof item.color!=='string'||typeof item.title!=='string'||!exact(item.wipLimit,'enabled,value')||typeof item.wipLimit.enabled!=='boolean'||typeof item.wipLimit.value!=='number'||!Number.isFinite(item.wipLimit.value)||item.wipLimit.value<0)throw new Error('Invalid board export');listIds.add(item._id);
-      }
-      for(const lane of data.swimlanes)if(!exact(lane,'title')||typeof lane.title!=='string')throw new Error('Invalid board export');
-      const items=data.items.map(item=>{
-        if(!exact(item,'assignees,cardId,checklists,color,comments,creator,customFields,description,dueAt,endAt,labels,listId,listTitle,owner,parentCardId,swimlaneTitle,title')||!['cardId','title','description','listId','listTitle','swimlaneTitle','color','creator','owner','parentCardId'].every(key=>typeof item[key]==='string')||!canonical(item.cardId)||cardIds.has(item.cardId)||item.listId&&!canonical(item.listId)||item.parentCardId&&!canonical(item.parentCardId)||!dateText(item.dueAt)||!dateText(item.endAt)||!textArray(item.assignees)||!textArray(item.labels)||!Array.isArray(item.comments)||!Array.isArray(item.checklists)||!item.customFields||typeof item.customFields!=='object'||Array.isArray(item.customFields))throw new Error('Invalid board export');cardIds.add(item.cardId);
-        for(const comment of item.comments)if(!exact(comment,'author,date,text')||typeof comment.author!=='string'||typeof comment.text!=='string'||!dateText(comment.date))throw new Error('Invalid board export');
-        for(const checklist of item.checklists)if(!exact(checklist,'items,title')||typeof checklist.title!=='string'||!Array.isArray(checklist.items)||!checklist.items.every(entry=>exact(entry,'done,title')&&typeof entry.title==='string'&&typeof entry.done==='boolean'))throw new Error('Invalid board export');
-        const customFields=Object.create(null);
-        for(let [name,value] of Object.entries(item.customFields)){
-          if(value&&typeof value==='object'){
-            if(!exact(value,'number')||typeof value.number!=='string'||!value.number.trim()||!Number.isFinite(Number(value.number)))throw new Error('Invalid board export');value=Number(value.number);
-          }
-          if(!['string','number','boolean'].includes(typeof value)||typeof value==='number'&&!Number.isFinite(value))throw new Error('Invalid board export');customFields[name]=value;
-        }
-        return {...item,customFields};
-      });
-      return formatTaiga({board:data.board,lists:data.lists,swimlanes:data.swimlanes,items},new Date(data.now));
-    };
+    return data=>formatTaiga(nativeSnapshot(data,'taiga'),new Date(data.now));
   })();
+
+
+  const vikunjaExport=(()=>{
+const VIKUNJA_EXPORT_VERSION = 'v1.0.0';
+const VIKUNJA_MIN_VERSION = [0, 20, 1];
+const MAX_VIKUNJA_DATA_CHARS = 64 * 1024 * 1024;
+const MAX_VIKUNJA_TASKS = 20000;
+const VIKUNJA_PRIORITIES = ['', 'Low', 'Medium', 'High', 'Urgent', 'DO NOW'];
+const ZERO_TIME = '0001-01-01T00:00:00Z';
+const POSITION_STEP = 65536;
+const DEFAULT_TITLE = 'Checklist';
+
+const isObject = value => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+const list = value => (Array.isArray(value) ? value : []);
+const str = value => (typeof value === 'string' ? value : typeof value === 'number' && Number.isFinite(value) ? String(value) : '');
+const num = value => (typeof value === 'number' && Number.isFinite(value) ? value : Number.isFinite(Number(value)) && value !== '' && value !== null ? Number(value) : undefined);
+
+function vikunjaDate(value) {
+  if (typeof value !== 'string' || !value || value.startsWith('0001-01-01')) return undefined;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+}
+
+const vikunjaTime = value => vikunjaDate(value) || ZERO_TIME;
+
+const escapeHtml = value => String(value)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+// WeKan text (and checklists) as the HTML Vikunja's editor stores: paragraphs,
+// line breaks, and TipTap task lists - each under a heading with its title,
+// except a single list with the default title.
+function vikunjaHtml(text, checklists = []) {
+  const paragraphs = String(text || '').replace(/\r\n?/g, '\n').split(/\n{2,}/)
+    .map(part => part.trim()).filter(Boolean)
+    .map(part => `<p>${part.split('\n').map(escapeHtml).join('<br>')}</p>`);
+  const lists = list(checklists).filter(c => list(c && c.items).length);
+  lists.forEach(checklist => {
+    const title = String(checklist.title || '').trim();
+    if (title && !(lists.length === 1 && title === DEFAULT_TITLE)) paragraphs.push(`<h3>${escapeHtml(title)}</h3>`);
+    paragraphs.push(`<ul data-type="taskList">${checklist.items
+      .map(entry => `<li data-checked="${entry.done ? 'true' : 'false'}" data-type="taskItem"><p>${escapeHtml(String(entry.title || '').trim())}</p></li>`)
+      .join('')}</ul>`);
+  });
+  return paragraphs.join('');
+}
+
+function vikunjaPriority(value) {
+  if (typeof value === 'number') return Number.isInteger(value) && value >= 0 && value <= 5 ? value : 0;
+  const text = String(value || '').trim().toLowerCase();
+  if (/^[0-5]$/.test(text)) return +text;
+  const index = VIKUNJA_PRIORITIES.findIndex(name => name && name.toLowerCase() === text);
+  if (index > 0) return index;
+  return { important: 3, 'do now': 5 }[text] || 0;
+}
+
+// The collected board (models/lib/externalExporters.js) as Vikunja projects:
+// one project named after the board, or - with several swimlanes - that
+// project as the parent of one child project per swimlane. Each has Vikunja's
+// four views; the kanban view's buckets are the lists (a list called Done is
+// its done bucket), and labels, people, dates, Priority, Percent Done and
+// Done custom fields, comments and parent cards go to their Vikunja fields.
+// Descriptions and comments stay text here, so the export boundary checks
+// them as text; vikunjaArchiveFiles() turns them into Vikunja's HTML.
+function formatVikunja({ board, lists, swimlanes, items }, now = new Date()) {
+  const stamp = now.toISOString();
+  const title = String((board && board.title) || 'WeKan board').trim() || 'WeKan board';
+  const lanes = list(swimlanes).map(lane => String(lane.title || '').trim() || 'Default');
+  const several = lanes.length > 1;
+  const counters = { project: 0, view: 0, bucket: 0, comment: 0 };
+  const id = kind => { counters[kind] += 1; return counters[kind]; };
+  const users = new Map();
+  const user = name => {
+    const key = String(name || '').trim();
+    if (!key) return null;
+    if (!users.has(key)) users.set(key, { id: users.size + 1, name: '', username: key, created: stamp, updated: stamp });
+    return users.get(key);
+  };
+  const labels = new Map();
+  const label = name => {
+    if (!labels.has(name)) labels.set(name, { id: labels.size + 1, title: name, description: '', hex_color: '', created: stamp, updated: stamp });
+    return labels.get(name);
+  };
+  const listTitles = list(lists).map(entry => String(entry.title || '').trim() || 'Untitled');
+  list(items).forEach(item => {
+    const name = String(item.listTitle || '').trim() || 'Untitled';
+    if (!listTitles.includes(name)) listTitles.push(name);
+  });
+  const wip = new Map(list(lists).map(entry => [String(entry.title || '').trim() || 'Untitled',
+    entry.wipLimit && entry.wipLimit.enabled && Number(entry.wipLimit.value) > 0 ? Number(entry.wipLimit.value) : 0]));
+
+  const projects = [];
+  const parentId = several ? id('project') : 0;
+  if (several) {
+    projects.push({ id: parentId, title, description: '', identifier: '', hex_color: '', parent_project_id: 0,
+      is_archived: false, background_information: null, position: POSITION_STEP, views: [], child_projects: null,
+      tasks: [], buckets: [], task_buckets: [], positions: [], background_file_id: 0, created: stamp, updated: stamp });
+  }
+  const laneProjects = (several ? lanes : [title]).map((laneTitle, index) => {
+    const projectId = id('project');
+    const views = ['list', 'gantt', 'table', 'kanban'].map((kind, viewIndex) => ({
+      id: id('view'),
+      title: kind[0].toUpperCase() + kind.slice(1),
+      project_id: projectId,
+      view_kind: kind,
+      filter: null,
+      position: (viewIndex + 1) * 100,
+      bucket_configuration_mode: kind === 'kanban' ? 'manual' : 'none',
+      bucket_configuration: null,
+      default_bucket_id: 0,
+      done_bucket_id: 0,
+      created: stamp,
+      updated: stamp,
+    }));
+    const buckets = listTitles.map((bucketTitle, bucketIndex) => ({
+      id: id('bucket'),
+      title: bucketTitle,
+      project_view_id: views[3].id,
+      limit: wip.get(bucketTitle) || 0,
+      position: (bucketIndex + 1) * POSITION_STEP,
+      created: stamp,
+      updated: stamp,
+    }));
+    const kanban = views[3];
+    kanban.default_bucket_id = buckets.length ? buckets[0].id : 0;
+    const done = buckets.find(bucket => /^done$/i.test(bucket.title));
+    kanban.done_bucket_id = done ? done.id : 0;
+    return { id: projectId, title: laneTitle, description: '', identifier: '', hex_color: '',
+      parent_project_id: parentId, is_archived: false, background_information: null,
+      position: (index + 1) * POSITION_STEP, views, child_projects: null, tasks: [], buckets,
+      task_buckets: [], positions: [], background_file_id: 0, created: stamp, updated: stamp,
+      kanbanId: kanban.id, doneBucketId: kanban.done_bucket_id };
+  });
+
+  const taskIdOf = new Map();
+  const checklists = {};
+  let taskId = 0;
+  list(items).forEach(item => {
+    taskId += 1;
+    if (item.cardId && !taskIdOf.has(item.cardId)) taskIdOf.set(item.cardId, { taskId, task: null });
+  });
+  taskId = 0;
+  list(items).forEach(item => {
+    taskId += 1;
+    const lane = several ? Math.max(0, lanes.indexOf(String(item.swimlaneTitle || '').trim() || 'Default')) : 0;
+    const project = laneProjects[lane];
+
+    const bucket = project.buckets.find(entry => entry.title === (String(item.listTitle || '').trim() || 'Untitled')) || project.buckets[0];
+    const fields = item.customFields || {};
+    const isDone = fields.Done === true || Boolean(bucket && bucket.id === project.doneBucketId);
+    const percent = Number(fields['Percent Done']);
+    const people = [item.owner, ...list(item.assignees)].map(user).filter(Boolean);
+    const position = (project.tasks.length + 1) * POSITION_STEP;
+    const task = {
+      id: taskId,
+      title: String(item.title || '').trim() || 'Untitled',
+      description: item.description || '',
+      done: isDone,
+      done_at: isDone ? vikunjaTime(item.endAt || stamp) : ZERO_TIME,
+      due_date: vikunjaTime(item.dueAt),
+      start_date: vikunjaTime(item.startAt),
+      end_date: vikunjaTime(item.endAt),
+      reminders: [],
+      repeat_after: 0,
+      repeat_mode: 0,
+      priority: vikunjaPriority(fields.Priority),
+      assignees: [...new Set(people)],
+      labels: [...new Set(list(item.labels).map(name => String(name).trim()).filter(Boolean))].map(label),
+      hex_color: '',
+      percent_done: Number.isFinite(percent) && percent > 0 ? Math.min(percent, 100) / 100 : 0,
+      identifier: '',
+      index: project.tasks.length + 1,
+      project_id: project.id,
+      related_tasks: {},
+      attachments: [],
+      cover_image_attachment_id: 0,
+      is_favorite: false,
+      bucket_id: bucket ? bucket.id : 0,
+      position,
+      created: vikunjaTime(item.createdAt || stamp),
+      updated: stamp,
+      ...(user(item.creator || item.requestedBy) ? { created_by: user(item.creator || item.requestedBy) } : {}),
+      comments: list(item.comments).filter(comment => String(comment.text || '').trim()).map(comment => ({
+        id: id('comment'),
+        comment: String(comment.text || ''),
+        ...(user(comment.author) ? { author: user(comment.author) } : {}),
+        created: vikunjaTime(comment.date || stamp),
+        updated: vikunjaTime(comment.date || stamp),
+      })),
+    };
+    if (list(item.checklists).some(entry => list(entry.items).length)) {
+      checklists[taskId] = list(item.checklists).map(entry => ({ title: String(entry.title || ''),
+        items: list(entry.items).map(it => ({ title: String(it.title || ''), done: Boolean(it.done) })) }));
+    }
+    project.tasks.push(task);
+    if (item.cardId && taskIdOf.get(item.cardId).taskId === taskId) taskIdOf.get(item.cardId).task = task;
+    if (bucket) project.task_buckets.push({ bucket_id: bucket.id, task_id: taskId, project_view_id: project.kanbanId });
+    project.positions.push({ task_id: taskId, project_view_id: project.kanbanId, position });
+  });
+  // Parent cards as Vikunja's subtask/parenttask pair, by id only: an id
+  // that is not in the same project is dropped by Vikunja's import, never
+  // duplicated as a new task.
+  list(items).forEach(item => {
+    const child = item.cardId && taskIdOf.get(item.cardId);
+    const parent = item.parentCardId && taskIdOf.get(item.parentCardId);
+    if (!child || !parent || !child.task || !parent.task || child.taskId === parent.taskId) return;
+    const childTask = child.task;
+    const parentTask = parent.task;
+    childTask.related_tasks.parenttask = [{ id: parent.taskId }];
+    (parentTask.related_tasks.subtask = parentTask.related_tasks.subtask || []).push({ id: child.taskId });
+  });
+  laneProjects.forEach(project => {
+    delete project.kanbanId;
+    delete project.doneBucketId;
+    projects.push(project);
+  });
+  return { version: VIKUNJA_EXPORT_VERSION, projects, checklists };
+}
+
+// The files of the export zip for formatVikunja()'s result, descriptions and
+// comments as Vikunja's HTML; server/lib/vikunjaArchive.js zips them.
+function vikunjaArchiveFiles({ version, projects, checklists } = {}) {
+  const lists = isObject(checklists) ? checklists : {};
+  const data = list(projects).map(project => ({
+    ...project,
+    tasks: list(project.tasks).map(task => ({
+      ...task,
+      description: vikunjaHtml(task.description, lists[task.id]),
+      comments: list(task.comments).map(comment => ({ ...comment, comment: vikunjaHtml(comment.comment) })),
+    })),
+  }));
+  return {
+    'data.json': JSON.stringify(data),
+    'filters.json': '[]',
+    // Vikunja parses this file as it is: no trailing newline.
+    VERSION: String(version || VIKUNJA_EXPORT_VERSION).trim(),
+  };
+}
+
+    const data=snapshot=>formatVikunja(nativeSnapshot(snapshot,'vikunja'),new Date(snapshot.now));
+    return {data,files:snapshot=>vikunjaArchiveFiles(data(snapshot))};
+  })();
+  const vikunjaData=vikunjaExport.data,vikunjaFiles=vikunjaExport.files;
+  const vikunjaArchive=data=>stored(Object.entries(vikunjaFiles(data)).map(([name,content])=>({name,content})));
 
   function workbook(entries){
     if(!Array.isArray(entries)||!entries.length||entries.length>1000)throw new Error('Invalid board export');
@@ -887,7 +1140,7 @@ function formatTaiga({ board, lists, swimlanes, items, scrumSprints } = {}, now 
     return stored(files);
   }
   function downloadPayload(encoded,filename='wekan-boards-weba.zip'){
-    if(!/^wekan-boards-(weba|csv|scsv|tsv|kanboard|markdown|leo|opml|orgmode|todotxt|taskwarrior|focalboard|todoist|planner|meistertask|obsidian|linear|ticktick|clickup|nullboard|kanri|pivotal|redmine|tasksorg|monday|businessmap|superproductivity|taiga)\.zip$/.test(filename))throw new Error('Invalid board export');
+    if(!/^wekan-boards-(weba|csv|scsv|tsv|kanboard|markdown|leo|opml|orgmode|todotxt|taskwarrior|focalboard|todoist|planner|meistertask|obsidian|linear|ticktick|clickup|nullboard|kanri|pivotal|redmine|tasksorg|monday|businessmap|superproductivity|taiga|vikunja)\.zip$/.test(filename))throw new Error('Invalid board export');
     const url=URL.createObjectURL(new Blob([archive(payload(encoded))],{type:'application/zip'})),link=document.createElement('a');
     link.href=url;link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
@@ -895,5 +1148,5 @@ function formatTaiga({ board, lists, swimlanes, items, scrumSprints } = {}, now 
     const url=URL.createObjectURL(new Blob([workbook(payload(encoded))],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})),link=document.createElement('a');
     link.href=url;link.download='wekan-boards.xlsx';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
-  window.webaBatchExport={archive,workbook,plannerWorkbook,mondayWorkbook,mondayData,businessmapWorkbook,businessmapData,taigaData,uniqueSheetNames,downloadPayload,downloadWorkbook};
+  window.webaBatchExport={archive,workbook,plannerWorkbook,mondayWorkbook,mondayData,businessmapWorkbook,businessmapData,taigaData,vikunjaData,vikunjaFiles,vikunjaArchive,uniqueSheetNames,downloadPayload,downloadWorkbook};
 })();

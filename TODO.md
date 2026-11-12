@@ -153,6 +153,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   selected Taiga project JSON ZIP with story/task/epic/issue mapping, native
   typed fields, checklist tasks, history and colors/WIP is recorded there;
   native Scrum/label definitions/creation timestamps remain open;
+  selected Vikunja nested export ZIP with source project/view/bucket/task maps,
+  fixed data/filters/VERSION files and escaped HTML/checklists is recorded there;
   Cached selected-export publication now rechecks current actor/session, full
   board access and policy; revocation/regrant browser coverage is recorded in
   CHANGELOG.md. Complete original security parity remains pending.

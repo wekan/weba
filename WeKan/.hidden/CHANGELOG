@@ -1,4 +1,10 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Vikunja selected export: Add real nested export ZIPs with fixed data/filters/
+  VERSION files and source project/view/bucket/task mappings, HTML/checklists,
+  people/labels, dates and parent pairs. Share validated native collection with
+  Taiga and verify both formats, actual source archive readback, malformed
+  descriptors/paths and source/packaged browser downloads.
+
 - Taiga selected export: Add scoped native snapshots and strictly validated
   project JSON ZIP rendering with explicit format binding. Match source
   story/task/epic/issue maps, typed fields, history/checklist tasks, colors/WIP

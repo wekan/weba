@@ -7,7 +7,7 @@ Public Function NewBatch(selection As Collection, Optional format As String = "w
   Dim data As New Collection
   Dim ids As Integer[] = BoardSelection.ActionIds(selection)
   If ids.Count > 1000 Then Error.Raise("Select at most 1000 boards")
-  If format <> "weba" And format <> "csv" And format <> "scsv" And format <> "tsv" And format <> "excel" And format <> "kanboard" And format <> "markdown" And format <> "leo" And format <> "opml" And format <> "orgmode" And format <> "todotxt" And format <> "taskwarrior" And format <> "focalboard" And format <> "todoist" And format <> "planner" And format <> "meistertask" And format <> "obsidian" And format <> "linear" And format <> "ticktick" And format <> "clickup" And format <> "nullboard" And format <> "kanri" And format <> "pivotal" And format <> "redmine" And format <> "tasksorg" And format <> "monday" And format <> "businessmap" And format <> "superproductivity" And format <> "taiga" Then Error.Raise("Unknown export format")
+  If format <> "weba" And format <> "csv" And format <> "scsv" And format <> "tsv" And format <> "excel" And format <> "kanboard" And format <> "markdown" And format <> "leo" And format <> "opml" And format <> "orgmode" And format <> "todotxt" And format <> "taskwarrior" And format <> "focalboard" And format <> "todoist" And format <> "planner" And format <> "meistertask" And format <> "obsidian" And format <> "linear" And format <> "ticktick" And format <> "clickup" And format <> "nullboard" And format <> "kanri" And format <> "pivotal" And format <> "redmine" And format <> "tasksorg" And format <> "monday" And format <> "businessmap" And format <> "superproductivity" And format <> "taiga" And format <> "vikunja" Then Error.Raise("Unknown export format")
   data["username"] = WebIdentity.Username
   data["generation"] = WebDatabase.SessionGeneration(WebIdentity.Username)
   data["revision"] = BoardSelection.Revision(selection)
@@ -93,6 +93,7 @@ Public Sub Run(batch As Collection, selection As Collection)
     Check(batch, selection)
     file = New Collection
     file["name"] = "board-" & CStr(pending[0]) & If(batch["format"] = "weba" Or batch["format"] = "kanboard" Or batch["format"] = "taskwarrior" Or batch["format"] = "kanri" Or batch["format"] = "tasksorg" Or batch["format"] = "superproductivity" Or batch["format"] = "taiga", ".json", If(batch["format"] = "focalboard", ".jsonl", If(batch["format"] = "nullboard", ".nbx", If(batch["format"] = "tsv", ".tsv", If(batch["format"] = "excel" Or batch["format"] = "planner" Or batch["format"] = "monday" Or batch["format"] = "businessmap", ".xlsx", If(batch["format"] = "markdown" Or batch["format"] = "obsidian", ".md", If(batch["format"] = "leo", ".leo", If(batch["format"] = "opml", ".opml", If(batch["format"] = "orgmode", ".org", If(batch["format"] = "todotxt", ".txt", ".csv"))))))))))
+    If batch["format"] = "vikunja" Then file["name"] = "board-" & CStr(pending[0]) & ".zip"
     If batch["format"] = "csv" Then
       file["content"] = BoardTransfer.ExportActiveBoardCsv(pending[0])
     Else If batch["format"] = "scsv" Then
@@ -141,6 +142,9 @@ Public Sub Run(batch As Collection, selection As Collection)
       file["content"] = BoardTransfer.ExportActiveBoardRedmine(pending[0])
     Else If batch["format"] = "tasksorg" Then
       file["content"] = BoardTransfer.ExportActiveBoardTasksOrg(pending[0])
+    Else If batch["format"] = "vikunja" Then
+      file["format"] = "vikunja"
+      file["content"] = BoardTransfer.ExportActiveBoardVikunja(pending[0])
     Else If batch["format"] = "taiga" Then
       file["format"] = "taiga"
       file["content"] = BoardTransfer.ExportActiveBoardTaiga(pending[0])

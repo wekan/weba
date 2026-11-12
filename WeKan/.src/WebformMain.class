@@ -5256,3 +5256,7 @@ End
 Public Sub ExportSelectedTaiga_Click()
   RunSelectedExport("taiga")
 End
+
+Public Sub ExportSelectedVikunja_Click()
+  RunSelectedExport("vikunja")
+End

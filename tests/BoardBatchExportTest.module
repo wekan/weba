@@ -26,6 +26,8 @@ Public Sub Main()
   Dim linearBatch As Collection
   Dim tickTickBatch As Collection
   Dim clickUpBatch As Collection
+  Dim vikunjaBatch As Collection
+  Dim vikunjaData As Collection
   Dim taigaBatch As Collection
   Dim taigaData As Collection
   Dim spBatch As Collection
@@ -555,6 +557,15 @@ Public Sub Main()
   If InStr(files[0]["content"], "Ignored archived card") Or InStr(files[0]["content"], "Planner archived canary") Then Error.Raise("Taiga exported archived content")
   taigaData = JSON.Decode(files[1]["content"])
   If taigaData["board"]["title"] <> "Export Bravo" Or taigaData["items"].Count <> 1 Or taigaData["items"][0]["title"] <> "Bravo card" Then Error.Raise("Taiga board isolation drifted")
+  vikunjaBatch = BoardBatchExport.NewBatch(selection, "vikunja")
+  BoardBatchExport.Run(vikunjaBatch, selection)
+  files = BoardBatchExport.Files(vikunjaBatch)
+  If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".zip" Or files[0]["format"] <> "vikunja" Or BoardBatchExport.Format(vikunjaBatch) <> "vikunja" Then Error.Raise("Vikunja format or batch order drifted")
+  vikunjaData = JSON.Decode(files[0]["content"])
+  If vikunjaData["format"] <> "vikunja" Or vikunjaData["board"]["title"] <> "Export Alpha" Then Error.Raise("Vikunja snapshot metadata drifted")
+  If InStr(files[0]["content"], "Ignored archived card") Or InStr(files[0]["content"], "Planner archived canary") Then Error.Raise("Vikunja exported archived content")
+  vikunjaData = JSON.Decode(files[1]["content"])
+  If vikunjaData["board"]["title"] <> "Export Bravo" Or vikunjaData["items"].Count <> 1 Or vikunjaData["items"][0]["title"] <> "Bravo card" Then Error.Raise("Vikunja board isolation drifted")
   batch = BoardBatchExport.NewBatch(selection)
   batch["busy"] = True
   Try BoardBatchExport.Run(batch, selection)

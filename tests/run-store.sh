@@ -4,7 +4,7 @@ set -eu
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 work=$(mktemp -d "$TMPDIR/weba-test.XXXXXX")
 trap 'rm -rf -- "$work"' EXIT HUP INT TERM
-for test in AuthTest UserDeletionTest SessionGenerationTest NativeAuthTest PasswordPolicyTest StoreTest DragStoreTest WorkspaceTest BoardAccessTest BoardViewPreferenceTest DragHandlePreferenceTest BoardViewPolicyTest InstanceFeaturesTest BoardViewTransferTest SignedBoardViewsTest BoardVisibilityTest BoardVisibilityReadTest PublicBoardCatalogTest PublicAttachmentReadTest GuestBoardReadTest GuestCommandsTest InactiveMembersTest AssignedAccessTest CombinedScopeTest BoardLiveTest OverviewLiveTest BoardCatalogTest BoardOrderTest BoardSpacesTest WorkspaceIconColorTest BoardSpacePresentationTest BoardSpaceDropTest BoardDropTest BoardBatchDropTest BoardSelectionTest BoardSelectedStarsTest HomeBoardTest BoardRouteTest CardRouteTest BoardArchiveTest HomeDropTest HomeCatalogTest BoardPurgeTest ListDeletionTest AttachmentLifecycleTest TransferPolicyTest BoardAttachmentAllowanceTest BoardCopyAuthorizationTest BoardCopiesTest BoardBatchExportTest CachedExportScopeTest ExternalArchiveExportTest RedmineExportTest TasksOrgExportTest MondayExportTest BusinessmapExportTest SuperProductivityExportTest TaigaExportTest ExportNumberTest CopyOptionsTest BoardCreationTest MarkdownPolicyTest MarkdownTitlesTest ExternalLinkPolicyTest ImportExportPolicyTest AttachmentExportNativeTest SingleBoardCopyTest CardDraftTest DetailLiveTest PeopleLiveTest RelationLabelTest CardMembersTest NativeAssigneeTest CardDatesTest CardArchiveTest ItemChangesTest CardContentTest WorkspaceActionsTest BoardTransferTest ExportFieldsTest; do
+for test in AuthTest UserDeletionTest SessionGenerationTest NativeAuthTest PasswordPolicyTest StoreTest DragStoreTest WorkspaceTest BoardAccessTest BoardViewPreferenceTest DragHandlePreferenceTest BoardViewPolicyTest InstanceFeaturesTest BoardViewTransferTest SignedBoardViewsTest BoardVisibilityTest BoardVisibilityReadTest PublicBoardCatalogTest PublicAttachmentReadTest GuestBoardReadTest GuestCommandsTest InactiveMembersTest AssignedAccessTest CombinedScopeTest BoardLiveTest OverviewLiveTest BoardCatalogTest BoardOrderTest BoardSpacesTest WorkspaceIconColorTest BoardSpacePresentationTest BoardSpaceDropTest BoardDropTest BoardBatchDropTest BoardSelectionTest BoardSelectedStarsTest HomeBoardTest BoardRouteTest CardRouteTest BoardArchiveTest HomeDropTest HomeCatalogTest BoardPurgeTest ListDeletionTest AttachmentLifecycleTest TransferPolicyTest BoardAttachmentAllowanceTest BoardCopyAuthorizationTest BoardCopiesTest BoardBatchExportTest CachedExportScopeTest ExternalArchiveExportTest RedmineExportTest TasksOrgExportTest MondayExportTest BusinessmapExportTest SuperProductivityExportTest TaigaExportTest VikunjaExportTest ExportNumberTest CopyOptionsTest BoardCreationTest MarkdownPolicyTest MarkdownTitlesTest ExternalLinkPolicyTest ImportExportPolicyTest AttachmentExportNativeTest SingleBoardCopyTest CardDraftTest DetailLiveTest PeopleLiveTest RelationLabelTest CardMembersTest NativeAssigneeTest CardDatesTest CardArchiveTest ItemChangesTest CardContentTest WorkspaceActionsTest BoardTransferTest ExportFieldsTest; do
   [ -f "$root/tests/$test.module" ] || continue
   project="$work/$test"
   mkdir -p "$project"
@@ -12,10 +12,13 @@ for test in AuthTest UserDeletionTest SessionGenerationTest NativeAuthTest Passw
   cp -R "$root/WeKan/.src" "$root/WeKan/.public" "$project/"
   cp "$root/WeKan/.project" "$project/"
   cp "$root/tests/$test.module" "$project/.src/$test.module"
+  if [ "$test" = VikunjaExportTest ]; then cp "$root/tests/VikunjaCasesTest.module" "$project/.src/"; fi
   if [ "$test" = TaigaExportTest ]; then cp "$root/tests/TaigaCasesTest.module" "$project/.src/"; fi
   if [ "$test" = BoardVisibilityTest ]; then cp "$root/tests/BoardVisibilityMatrix.module" "$project/.src/BoardVisibilityMatrix.module"; fi
   "${GBC:-gbc3}" -j 1 -a "$project"
-  if [ "$test" = TaigaExportTest ]; then
+  if [ "$test" = VikunjaExportTest ]; then
+    WEBA_TEST_VIKUNJA_PROJECT="$project" "${NODE:-node}" "$root/tests/vikunja-export-conformance.test.cjs"
+  elif [ "$test" = TaigaExportTest ]; then
     WEBA_TEST_TAIGA_PROJECT="$project" "${NODE:-node}" "$root/tests/taiga-export-conformance.test.cjs"
   elif [ "$test" = SuperProductivityExportTest ]; then
     cp "$root/tests/SuperProductivityCasesTest.module" "$project/.src/"
@@ -72,6 +75,7 @@ done
 "${NODE:-node}" "$root/tests/monday-workbook.test.cjs"
 "${NODE:-node}" "$root/tests/businessmap-workbook.test.cjs"
 "${NODE:-node}" "$root/tests/taiga-renderer.test.cjs"
+"${NODE:-node}" "$root/tests/vikunja-renderer.test.cjs"
 
 python3 "$root/tests/change-clock.test.py"
 
