@@ -3340,12 +3340,12 @@ current source tool formats now have native selected-export entries, checked
 against source EXTERNAL_EXPORT_FORMATS. Native model gaps and complete original
 UI/API/security parity remain pending.
 
-With `WITH_API=true`, GitHub/Gitea/Forgejo/GitLab issue, Trello board, Deck stack, Kanboard task and Markdown text exports are available at
-`GET /api/boards/ID/export/github` (or `gitea` / `forgejo` / `gitlab` / `trello` / `deck` / `kanboard` / `markdown`). Private boards require
+With `WITH_API=true`, GitHub/Gitea/Forgejo/GitLab issue, Trello board, Deck stack, Kanboard task, Markdown text and Leo XML exports are available at
+`GET /api/boards/ID/export/github` (or `gitea` / `forgejo` / `gitlab` / `trello` / `deck` / `kanboard` / `markdown` / `leo`). Private boards require
 a valid bearer or source-compatible query credential and full-board read access;
 public boards follow the source anonymous path. The `fields=labels,dates,description` query selects sections;
 unknown/empty/structured selections fall back as
-source does. Native JSON is written directly so empty strings survive. Other 32
+source does. Native JSON is written directly so empty strings survive. Other 31
 format API routes, native field-security models, anonymization/security reporting
 and complete original UI/API/security parity remain pending.
 
@@ -3381,3 +3381,11 @@ Terminal-state names use the same ASCII case rules as source. Empty board titles
 use the source fallback, and an empty board retains its header and newline.
 Shared export policy, credentials, full-board scope and final transaction checks
 apply to text responses too.
+
+Leo API export returns `application/xml; charset=utf-8`. The `description` and
+`checklists` selections independently control body nodes and checklist children;
+list/card headings stay present, including empty lists and checklists. Node IDs,
+marked terminal cards/finished checklist items and escaped XML text follow the
+original formatter. Duplicate/blank list titles use source title grouping;
+missing links match a blank title. Shared credentials, policy, full-board scope
+and final rollback guards apply before XML is returned.

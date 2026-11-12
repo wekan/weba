@@ -1,4 +1,10 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Leo export API: Add original XML response bytes/type and independently
+  selected card bodies/checklists. Preserve deterministic nodes, marks, escaped
+  text and empty outlines; fix blank-title/missing-link grouping and terminal
+  case rules. Verify source output and direct late-scope/error boundaries;
+  remaining models/routes and complete original parity stay open.
+
 - Markdown export API: Add original text response type/body and independent
   description selection through shared access/transaction guards. Fix blank
   title/missing-link grouping and terminal-state case rules; verify literal

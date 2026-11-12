@@ -2275,3 +2275,25 @@ mutation rollback checks, policy-before-lookup with an unavailable board ID
 column, and a missing-description-column failure. These verify a denied/error
 text request returns the shared opaque error with no partial Markdown or
 persisted mutations; the shared GitHub controls remain alongside them.
+
+Leo XML shares the locked API at `GET /api/boards/:id/export/leo`, using the
+original application/xml UTF-8 type and formatter bytes. The optional field
+selection is reset on every native Build call; descriptions and checklists gate
+independently, while UI selected exports retain all-fields defaults. ASCII-only
+terminal detection and COALESCE blank-title grouping now follow source behavior.
+Deterministic list/card/checklist/checkitem IDs and tnode/body correspondence,
+marked cards/items, XML escaping and empty nodes match unchanged formatLeo.
+
+Fixtures exercise real SQL grouped checks, orphan/cross-card checkitems (excluded),
+escaped board/card/checklist/item text, CRLF/blank/whitespace/astral bodies,
+finished/open and empty checks, duplicate/blank titles, missing links, empty
+board names/active-card sets, Unicode terminal nonmatches and anonymous public
+selections. All 317 actual responses across nine routes match unchanged source
+parseExportFields/collect/gateItem/formatters, with original server response
+body/type comparisons for initial successes. The Leo route itself exercises
+late member/token/policy/public loss rollback, policy-before-lookup under broken
+board schema and opaque missing-description failure. Shared 256-role and
+credential-scrubbing tests remain. SQL IDs/label names/lane IDs/entry adapters,
+empty planning and no-op anonymization remain explicit; remaining 31 API
+renderers, native field models/security reporting and complete original
+UI/API/security parity remain pending.

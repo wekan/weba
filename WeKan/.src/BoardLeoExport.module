@@ -4,6 +4,7 @@ Private $db As Connection
 Private $boardId As Integer
 Private $next As Integer
 Private $bodies As String[]
+Private $wanted As Collection
 
 Private Function TextValue(value As Variant) As String
   If IsNull(value) Then Return ""
@@ -20,8 +21,16 @@ Private Function EscapeXml(value As Variant) As String
 End
 
 Private Function ClosedList(title As String) As Boolean
-  Dim lower As String = LCase(title)
-  Return InStr(lower, "done") > 0 Or InStr(lower, "closed") > 0 Or InStr(lower, "complete") > 0 Or InStr(lower, "archiv") > 0 Or InStr(lower, "finished") > 0
+  Dim code As Integer
+  Dim word As String
+  ' JavaScript's non-Unicode /i matches these ASCII literals only.
+  For code = 65 To 90
+    title = Replace(title, Chr(code), Chr(code + 32))
+  Next
+  For Each word In ["done", "closed", "complete", "archiv", "finished"]
+    If InStr(title, word) Then Return True
+  Next
+  Return False
 End
 
 Private Function NextGnx() As String
@@ -51,14 +60,16 @@ Private Function CardNode(card As Result, listTitle As String, indent As String)
   Dim gnx As String = NextGnx()
   Dim children As New String[]
   Dim checklist As Result
-  Dim body As String = TextValue(card!description)
+  Dim body As String = If(ExternalExportFields.Wants($wanted, "description"), TextValue(card!description), "")
   Dim nodeOpen As String
   If body Then $bodies.Add("<t tx=" & Chr(34) & gnx & Chr(34) & ">" & EscapeXml(body) & "</t>")
   nodeOpen = indent & "<v t=" & Chr(34) & gnx & Chr(34) & If(ClosedList(listTitle), " a=" & Chr(34) & "M" & Chr(34), "") & "><vh>" & EscapeXml(card!title) & "</vh>"
-  checklist = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, card!id, "checklist")
-  For Each checklist
-    children.Add(ChecklistNode(checklist, indent & "  "))
-  Next
+  If ExternalExportFields.Wants($wanted, "checklists") Then
+    checklist = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, card!id, "checklist")
+    For Each checklist
+      children.Add(ChecklistNode(checklist, indent & "  "))
+    Next
+  Endif
   If Not children.Count Then Return nodeOpen & "</v>"
   Return nodeOpen & Chr(10) & children.Join(Chr(10)) & Chr(10) & indent & "</v>"
 End
@@ -69,7 +80,7 @@ Private Function ListNode(listRow As Result) As String
   Dim card As Result
   Dim title As String = TextValue(listRow!title)
   Dim nodeOpen As String = "<v t=" & Chr(34) & gnx & Chr(34) & "><vh>" & EscapeXml(title) & "</vh>"
-  card = $db.Exec("SELECT c.* FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND l.title=&3 AND c.archived=&4 ORDER BY COALESCE(o.sort_order,c.id),c.id", $boardId, "card", title, False)
+  card = $db.Exec("SELECT c.* FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND COALESCE(l.title,'')=&3 AND c.archived=&4 ORDER BY COALESCE(o.sort_order,c.id),c.id", $boardId, "card", title, False)
   For Each card
     children.Add(CardNode(card, title, "  "))
   Next
@@ -77,11 +88,12 @@ Private Function ListNode(listRow As Result) As String
   Return nodeOpen & Chr(10) & children.Join(Chr(10)) & Chr(10) & "</v>"
 End
 
-Public Function Build(boardId As Integer, db As Connection) As String
+Public Function Build(boardId As Integer, db As Connection, Optional wanted As Collection) As String
   Dim lines As New String[]
   Dim board As Result
   Dim lists As Result
   Dim title As String
+  $wanted = wanted
   $db = db
   $boardId = boardId
   $next = 0

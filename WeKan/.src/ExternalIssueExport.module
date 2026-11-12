@@ -30,7 +30,7 @@ Public Function Read(reference As String, fields As String, Optional format As S
   Dim failure As String
   If Env["WEBA_API_REQUEST"] <> "1" Then Return Result(403, "Forbidden")
   ImportExportPolicy.RequireExport()
-  If ["github", "gitea", "forgejo", "gitlab", "trello", "deck", "kanboard", "markdown"].Find(format) < 0 Then Return Result(404, "Not found")
+  If ["github", "gitea", "forgejo", "gitlab", "trello", "deck", "kanboard", "markdown", "leo"].Find(format) < 0 Then Return Result(404, "Not found")
   boardId = AttachmentExport.BoardId(reference)
   db = WebDatabase.OpenConnection()
   If boardId <= 0 Or Not db.Find("kb_boards", "id=&1", boardId).Available Then Return Result(404, "Not found")
@@ -54,7 +54,9 @@ Public Function Read(reference As String, fields As String, Optional format As S
   ImportExportPolicy.Lock()
   db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
   Check(boardId, actor, isPublic)
-  If format = "markdown" Then
+  If format = "leo" Then
+    text = BoardLeoExport.Build(boardId, db, ExternalExportFields.Parse(fields))
+  Else If format = "markdown" Then
     text = BoardMarkdownExport.Build(boardId, db, ExternalExportFields.Parse(fields))
   Else If format = "kanboard" Then
     text = BoardKanboardExport.Build(boardId, db, ExternalExportFields.Parse(fields))
@@ -73,7 +75,7 @@ Public Function Read(reference As String, fields As String, Optional format As S
   outcome = New Collection
   outcome.Add(200, "status")
   outcome.Add(text, "body")
-  outcome.Add(If(format = "markdown", "text/markdown; charset=utf-8", "application/json; charset=utf-8"), "contentType")
+  outcome.Add(If(format = "markdown", "text/markdown; charset=utf-8", If(format = "leo", "application/xml; charset=utf-8", "application/json; charset=utf-8")), "contentType")
   Return outcome
 Catch
   failure = Error.Text

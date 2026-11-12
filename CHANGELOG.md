@@ -2,6 +2,21 @@
 
 This work adds the following features and fixes:
 
+- Add GET `/api/boards/:id/export/leo` through the locked external-export
+  service with source `application/xml; charset=utf-8` bytes. Gate descriptions
+  and checklists independently; retain deterministic node IDs, marks, escaped
+  titles/bodies and empty list/checklist nodes. Match blank-title/missing-link
+  grouping and source ASCII terminal-state rules. Compare 317 actual HTTP
+  bodies across nine routes with unchanged collector/formatters and original
+  server response types/bodies. Direct Leo late member/token/policy/public
+  rollback, policy-before-lookup and opaque failure checks pass alongside the
+  shared 256-role tests. Full host tests pass (70 Python tests and 80 archive/
+  scope snapshots), as do both API builds, all 45 source/packaged selected
+  downloads and cached scope checks, eight original Leo contracts and original
+  external export round-trips. Remaining 31 API renderers, native models/anonymization/
+  security reporting and full original UI/API/security parity remain pending.
+  Thanks to xet7.
+
 - Add GET `/api/boards/:id/export/markdown` through the locked external-export
   service, with source `text/markdown; charset=utf-8` response bytes and an
   independent description gate. Preserve literal continuation lines, duplicate

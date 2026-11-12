@@ -202,7 +202,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   independent checklist/relationship/people gates, scoped public comments and
   source reciprocal-link numbering is recorded there; Markdown GET text export
   with source response bytes/type, description selection and heading/state
-  semantics is recorded there; remaining 32
+  semantics is recorded there; Leo GET XML export with independent body/checklist
+  selection, source node/mark/escaping semantics and scoped final guards is
+  recorded there; remaining 31
   external-format API routes, native field-model guards, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded
