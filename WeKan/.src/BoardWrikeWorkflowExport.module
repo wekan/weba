@@ -1,0 +1,31 @@
+' Scoped native metadata for Wrike's GET /workflows-shaped export.
+Export
+
+Private Function TextValue(value As Variant) As String
+  If IsNull(value) Then Return ""
+  Return CStr(value)
+End
+
+Public Function Build(boardId As Integer, db As Connection) As String
+  Dim output As New Collection
+  Dim board As Result
+  Dim metadata As New Collection
+  Dim lists As New Variant[]
+  Dim rows As Result
+  Dim item As Collection
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  board = db.Find("kb_boards", "id=&1", boardId)
+  If Not board.Available Then Error.Raise("Board not found")
+  metadata.Add(TextValue(board!title), "title")
+  rows = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
+  For Each rows
+    item = New Collection
+    item.Add(TextValue(rows!title), "title")
+    item.Add(WorkspaceStore.Setting(boardId, "list", rows!id, "color"), "color")
+    lists.Add(item)
+  Next
+  output.Add("wrikeworkflow", "format")
+  output.Add(metadata, "board")
+  output.Add(lists, "lists")
+  Return JSON.Encode(output)
+End

@@ -1,0 +1,105 @@
+Public Sub Main()
+  Dim cases As New Variant[]
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim fieldId As Integer
+  Dim listId As Integer
+  Dim mode As String
+  Dim title As String
+  Dim rows As Result
+  Dim sample As Collection
+  Dim board As Collection
+  Dim lists As Variant[]
+  Dim item As Collection
+  Dim selection As Collection
+  Dim batch As Collection
+  Dim files As Variant[]
+  Dim denied As Boolean
+  Dim before As Integer
+  Dim historyBefore As Integer
+  WebDatabase.Register("wrike-workflow-owner", "x")
+  WebDatabase.Register("wrike-workflow-other", "x")
+  SignIn("wrike-workflow-owner")
+  CardContent.OpenStore()
+  WorkspaceStore.OpenStore()
+  For Each mode In ["empty", "rich", "only-closed"]
+    boardId = KanbanStore.AddBoard(" Workflow " & mode & " Ω <literal> ")
+    If mode = "rich" Then
+      KanbanStore.Lanes(boardId)
+      KanbanStore.AddLane(boardId, "Second")
+      KanbanStore.AddList(boardId, "Second", "Todo", "")
+      For Each title In ["On hold", "Rejected", "Active", "Completed", "é Ω", String(128, "x") & "A", String(128, "x") & "B"]
+        If String.Len(title) > 32 Then
+          KanbanStore.AddList(boardId, "Default", "Long " & Right(title, 1), "")
+          WebDatabase.OpenConnection().Exec("UPDATE kb_lists SET title=&1 WHERE board_id=&2 AND lane=&3 AND title=&4", title, boardId, "Default", "Long " & Right(title, 1))
+        Else
+          KanbanStore.AddList(boardId, "Default", title, "")
+        Endif
+      Next
+      rows = WebDatabase.OpenConnection().Find("kb_lists", "board_id=&1 AND title=&2 ORDER BY id", boardId, "On hold")
+      listId = rows!id
+      WorkspaceStore.SetSetting(boardId, "list", listId, "color", "#123456")
+      cardId = KanbanStore.SaveCard(boardId, 0, "WORKFLOW_CARD_SECRET", "WORKFLOW_BODY_SECRET", "Default", "Todo", "", "WORKFLOW_LABEL_SECRET", "")
+      fieldId = CardContent.Save(boardId, cardId, 0, "custom", "Malformed irrelevant field", "1", 0, False, 0, "number")
+      WebDatabase.OpenConnection().Exec("UPDATE kb_entries SET body=&1 WHERE id=&2", "invalid", fieldId)
+    Endif
+    If mode = "only-closed" Then
+      KanbanStore.AddLane(boardId, "Closed lane")
+      KanbanStore.AddList(boardId, "Closed lane", "Done", "")
+      KanbanStore.AddList(boardId, "Closed lane", "Rejected", "")
+    Endif
+    board = New Collection
+    rows = WebDatabase.OpenConnection().Find("kb_boards", "id=&1", boardId)
+    board["title"] = CStr(rows!title)
+    lists = New Variant[]
+    rows = WebDatabase.OpenConnection().Find("kb_lists", "board_id=&1 ORDER BY lane,sort_order,id", boardId)
+    For Each rows
+      item = New Collection
+      item["title"] = CStr(rows!title)
+      If rows!id = listId And mode = "rich" Then item["color"] = "#123456"
+      lists.Add(item)
+    Next
+    selection = BoardSelection.NewState()
+    BoardSelection.SetActive(selection, True)
+    BoardSelection.AddVisible(selection, [boardId])
+    before = WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_entries")!total
+    historyBefore = WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_history")!total
+    batch = BoardBatchExport.NewBatch(selection, "wrikeworkflow")
+    BoardBatchExport.Run(batch, selection)
+    files = BoardBatchExport.Files(batch)
+    If files.Count <> 1 Or files[0]["name"] <> "board-" & CStr(boardId) & ".json" Or files[0]["format"] <> "wrikeworkflow" Then Error.Raise("Wrike workflow file envelope drifted")
+    If InStr(files[0]["content"], "WORKFLOW_CARD_SECRET") Or InStr(files[0]["content"], "WORKFLOW_BODY_SECRET") Or InStr(files[0]["content"], "WORKFLOW_LABEL_SECRET") Then Error.Raise("Workflow snapshot included unrelated card data")
+    If WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_entries")!total <> before Or WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_history")!total <> historyBefore Then Error.Raise("Workflow export wrote content/history")
+    sample = New Collection
+    sample["mode"] = mode
+    sample["board"] = board
+    sample["lists"] = lists
+    sample["actual"] = files[0]["content"]
+    cases.Add(sample)
+  Next
+  BoardAccess.SetMember(boardId, "wrike-workflow-other", "read-only")
+  SignIn("wrike-workflow-other")
+  BoardTransfer.ExportActiveBoardWrikeWorkflow(boardId)
+  SignIn("wrike-workflow-owner")
+  BoardAccess.SetMember(boardId, "wrike-workflow-other", "normal-assigned-only")
+  SignIn("wrike-workflow-other")
+  Try BoardTransfer.ExportActiveBoardWrikeWorkflow(boardId)
+  denied = Error
+  If Not denied Then Error.Raise("Workflow export skipped the source full-board scope gate")
+  SignIn("wrike-workflow-owner")
+  ImportExportPolicy.Save(False, True)
+  Try BoardTransfer.ExportActiveBoardWrikeWorkflow(boardId)
+  denied = Error
+  If Not denied Then Error.Raise("Workflow ignored disabled export")
+  ImportExportPolicy.Save(False, False)
+  KanbanStore.ArchiveBoard(boardId, True)
+  Try BoardTransfer.ExportActiveBoardWrikeWorkflow(boardId)
+  denied = Error
+  If Not denied Then Error.Raise("Workflow selected export accepted an archived board")
+  Print JSON.Encode(cases)
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

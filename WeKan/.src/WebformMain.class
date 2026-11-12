@@ -5260,3 +5260,7 @@ End
 Public Sub ExportSelectedVikunja_Click()
   RunSelectedExport("vikunja")
 End
+
+Public Sub ExportSelectedWrikeWorkflow_Click()
+  RunSelectedExport("wrikeworkflow")
+End

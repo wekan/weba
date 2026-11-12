@@ -115,6 +115,10 @@ Public Function ExportActiveBoardTasksOrg(boardId As Integer) As String
   Return ExportChecked(boardId, "board", boardId, True, "tasksorg")
 End
 
+Public Function ExportActiveBoardWrikeWorkflow(boardId As Integer) As String
+  Return ExportChecked(boardId, "board", boardId, True, "wrikeworkflow")
+End
+
 Public Function ExportActiveBoardVikunja(boardId As Integer) As String
   Return ExportChecked(boardId, "board", boardId, True, "vikunja")
 End
@@ -211,6 +215,8 @@ Private Function ExportChecked(boardId As Integer, kind As String, itemId As Int
     text = BoardRedmineExport.Build(boardId, $db)
   Else If format = "tasksorg" And kind = "board" Then
     text = BoardTasksOrgExport.Build(boardId, $db)
+  Else If format = "wrikeworkflow" And kind = "board" Then
+    text = BoardWrikeWorkflowExport.Build(boardId, $db)
   Else If format = "vikunja" And kind = "board" Then
     text = BoardVikunjaExport.Build(boardId, $db)
   Else If format = "taiga" And kind = "board" Then

@@ -1761,3 +1761,32 @@ strict descriptors/types/IDs/counts/dates and marker/path mismatches. Existing
 Taiga native/renderer tests verify shared-code compatibility. Both Chromium
 builds compare actual nested two-board downloads with the source files. Complete
 original Meteor UI/API/security parity remains unproven and open in TODO.
+
+Wrike workflow metadata export
+
+Wrike workflow produces `wekan-boards-wrikeworkflow.zip` with one
+`board-ID.json` per selected board, shaped like the source GET /workflows
+response. Lists become ordered custom statuses; names are trimmed/truncated and
+collision-safe, and required Active/Completed groups are supplied. Use source
+list-name group inference and color fallback. The native collector reads only
+board/list metadata, so unrelated card text and malformed card fields are absent.
+The source full-board, active-board and policy gates still apply. Strict format
+binding renders only the known descriptor and preserves other JSON exports.
+Wrike applies a workbook's Workflow/Custom Status cells only when the matching
+workflow exists in Wrike. The matching XLSX exporter is the next step. Native
+automation-rule models remain TODO; their move/complete overrides are not
+invented, and this export currently uses the source no-rule fallback.
+
+`WrikeWorkflowExportTest` compares native empty/rich/closed-only snapshots after
+rendering with unchanged `formatWrikeWorkflow`. Verify duplicate list names,
+legacy long-name collisions, required status groups, source colors, no-write
+content/history behavior, no card-body collection, read-only success and
+assigned-only/disabled/archived denial. Long names exceed the current native UI
+limit, so those cases use explicit legacy SQL fixture mutation. The renderer
+checks native descriptor shapes/types/markers/paths, Unicode/UTF-16 and palette
+fallback matrices and actual generated JSON ZIP bytes. Shared archive coverage
+asserts metadata-only shape for this format while preserving active-card
+presence and archive exclusion for every card-bearing format. Source/packaged
+selected-export browser checks compare actual workflow documents with the
+source helper. Matching Wrike XLSX, native rules and full original Meteor
+UI/API/security parity remain pending.

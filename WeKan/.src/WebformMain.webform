@@ -1542,6 +1542,9 @@
             { ExportSelectedVikunja WebButton
               Text = "Vikunja"
             }
+            { ExportSelectedWrikeWorkflow WebButton
+              Text = "Wrike workflow"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton

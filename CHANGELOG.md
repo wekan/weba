@@ -2,6 +2,18 @@
 
 This work adds the following features and fixes:
 
+- Add Wrike workflow JSON as the twenty-sixth selected-board tool export.
+  Download `wekan-boards-wrikeworkflow.zip` with source-shaped workflow/status
+  documents, required Active/Completed groups, list-name group inference,
+  duplicate/truncated status handling and source color fallback. Collect only
+  board/list metadata; unrelated card content and malformed custom fields do
+  not enter this export. Retain full-board/active/policy/session gates and
+  immutable private queues. Native/source and strict renderer/ZIP comparisons,
+  10 original contracts and all 31 source/packaged browser downloads pass.
+  Complete host tests pass, including 69 Python tests and 52 archive/scope
+  snapshots. The matching Wrike XLSX export is next; native automation-rule models and complete original
+  UI/API/security parity remain pending. Thanks to xet7.
+
 - Add Vikunja as the twenty-fifth selected-board tool export. Download
   `wekan-boards-vikunja.zip` with one real `board-ID.zip` per selected board;
   each contains exact `data.json`, `filters.json` and newline-free `VERSION`.

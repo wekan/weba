@@ -155,6 +155,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   native Scrum/label definitions/creation timestamps remain open;
   selected Vikunja nested export ZIP with source project/view/bucket/task maps,
   fixed data/filters/VERSION files and escaped HTML/checklists is recorded there;
+  selected Wrike workflow metadata JSON ZIP with source status/group/name/color
+  mapping is recorded there; matching Wrike XLSX and native automation-rule
+  models remain pending;
   Cached selected-export publication now rechecks current actor/session, full
   board access and policy; revocation/regrant browser coverage is recorded in
   CHANGELOG.md. Complete original security parity remains pending.

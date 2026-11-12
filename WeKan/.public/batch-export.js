@@ -31,7 +31,7 @@
     const normalized=[];
     for(const entry of entries){
       if(!entry||typeof entry.name!=='string'||!/^board-[1-9][0-9]*\.(json|jsonl|csv|tsv|md|leo|opml|org|txt|xlsx|nbx|zip)$/.test(entry.name))throw new Error('Invalid board export');
-      if(entry.format!==undefined&&!((entry.format==='taiga'&&entry.name.endsWith('.json'))||(entry.format==='vikunja'&&entry.name.endsWith('.zip'))))throw new Error('Invalid board export');
+      if(entry.format!==undefined&&!((['taiga','wrikeworkflow'].includes(entry.format)&&entry.name.endsWith('.json'))||(entry.format==='vikunja'&&entry.name.endsWith('.zip'))))throw new Error('Invalid board export');
       if(entry.name.endsWith('.zip')){
         if(entry.format!=='vikunja'||typeof entry.content!=='string')throw new Error('Invalid board export');
         let descriptor;try{descriptor=JSON.parse(entry.content);}catch{throw new Error('Invalid board export');}
@@ -44,9 +44,9 @@
       }
       let content=entry.content==null&&entry.name.endsWith('.txt')?'':entry.content;
       if(entry.format!==undefined){
-        if(entry.format!=='taiga'||!entry.name.endsWith('.json')||typeof content!=='string')throw new Error('Invalid board export');
+        if(!['taiga','wrikeworkflow'].includes(entry.format)||!entry.name.endsWith('.json')||typeof content!=='string')throw new Error('Invalid board export');
         let descriptor;try{descriptor=JSON.parse(content);}catch{throw new Error('Invalid board export');}
-        content=JSON.stringify(taigaData(descriptor))+'\n';
+        content=JSON.stringify(entry.format==='wrikeworkflow'?wrikeWorkflowData(descriptor):taigaData(descriptor))+'\n';
       }
       if(typeof content!=='string')throw new Error('Invalid board export');
       normalized.push({name:entry.name,content});
@@ -1115,6 +1115,127 @@ function vikunjaArchiveFiles({ version, projects, checklists } = {}) {
   const vikunjaData=vikunjaExport.data,vikunjaFiles=vikunjaExport.files;
   const vikunjaArchive=data=>stored(Object.entries(vikunjaFiles(data)).map(([name,content])=>({name,content})));
 
+
+  const wrikeWorkflowData=(()=>{
+const WRIKE_STATUS_GROUPS = ['Active', 'Completed', 'Deferred', 'Cancelled'];
+const WRIKE_STATUS_COLORS = ['Brown', 'DarkCyan', 'Gray', 'Blue', 'DarkBlue', 'Orange', 'Red', 'YellowGreen',
+  'Purple', 'Yellow', 'Indigo', 'DarkRed', 'Turquoise', 'Green'];
+const MAX_WRIKE_NAME = 128;
+
+const GROUP_COLOR = { Active: 'Blue', Completed: 'Green', Deferred: 'Gray', Cancelled: 'Red' };
+const WRIKE_TO_WEKAN = {
+  Brown: 'saddlebrown', DarkCyan: 'sky', Gray: 'gray', Blue: 'blue', DarkBlue: 'navy', Orange: 'orange', Red: 'red',
+  YellowGreen: 'lime', Purple: 'purple', Yellow: 'yellow', Indigo: 'indigo', DarkRed: 'crimson', Turquoise: 'paleturquoise',
+  Green: 'green',
+};
+const WEKAN_TO_WRIKE = {
+  ...Object.fromEntries(Object.entries(WRIKE_TO_WEKAN).map(([wrike, wekan]) => [wekan, wrike])),
+  white: 'Gray', black: 'Gray', silver: 'Gray', peachpuff: 'Orange', pink: 'Red', mistyrose: 'Red', plum: 'Purple',
+  magenta: 'Purple', darkgreen: 'Green', slateblue: 'Indigo', gold: 'Yellow',
+};
+
+const NAMED_GROUPS = [
+  ['Completed', /^(completed?|done|closed|finished|resolved|shipped|released|delivered|approved|accepted)$/i],
+  ['Cancelled', /^(cancell?ed|canceled|rejected|won'?t (do|fix)|wontfix|abandoned|dropped|declined|obsolete|invalid|duplicate)$/i],
+  ['Deferred', /^(deferred|on hold|paused|someday|later|parked|icebox|postponed|waiting)$/i],
+];
+
+// The group a list's name alone suggests.
+function wrikeGroupForName(name) {
+  const text = String(name || '').trim();
+  const own = WRIKE_STATUS_GROUPS.find(group => group.toLowerCase() === text.toLowerCase());
+  if (own) return own;
+  const named = NAMED_GROUPS.find(([, pattern]) => pattern.test(text));
+  return named ? named[0] : 'Active';
+}
+
+const wrikeName = name => String(name || '').trim().slice(0, MAX_WRIKE_NAME);
+
+// A WeKan list color (a named palette color or '#rrggbb') as a Wrike color.
+function wrikeColorForList(color, group) {
+  const named = WEKAN_TO_WRIKE[String(color || '').toLowerCase()];
+  return named || GROUP_COLOR[group] || 'Gray';
+}
+
+const wekanColorForWrike = color => WRIKE_TO_WEKAN[color] || '';
+
+// The list a moveCard rule names, when it names exactly one.
+const movedTo = trigger => (trigger && trigger.activityType === 'moveCard' && trigger.listName && trigger.listName !== '*'
+  ? String(trigger.listName) : '');
+
+// rules: [{ trigger, action }] in the portable shape of the Rules export.
+// Returns Map(list title -> 'complete' | 'incomplete') for the lists whose
+// move rule marks a card complete or incomplete; when rules disagree about a
+// list, the last one wins, as it is the one that runs last.
+function completionByList(rules) {
+  const byList = new Map();
+  for (const rule of Array.isArray(rules) ? rules : []) {
+    const list = movedTo(rule && rule.trigger);
+    const type = rule && rule.action && rule.action.actionType;
+    if (!list) continue;
+    if (type === 'markCardComplete') byList.set(list, 'complete');
+    else if (type === 'markCardIncomplete') byList.set(list, 'incomplete');
+  }
+  return byList;
+}
+
+// The group of a list: its rule first, then its name.
+function wrikeGroupForList(title, completion) {
+  const byName = wrikeGroupForName(title);
+  const rule = completion && completion.get(String(title || ''));
+  if (rule === 'complete') return byName === 'Cancelled' ? 'Cancelled' : 'Completed';
+  if (rule === 'incomplete') return byName === 'Deferred' ? 'Deferred' : 'Active';
+  return byName;
+}
+
+// A board's lists and rules as a Wrike workflow, in the shape GET /workflows
+// returns. Wrike requires a workflow to have an Active and a Completed status;
+// when no list is one, a status of that group is added, named after it.
+// Returns { workflow, statusOf } where statusOf(list title) is the
+// { name, group } the Excel export writes for a card in that list.
+function wrikeWorkflowFromBoard({ boardTitle, lists, rules }) {
+  const completion = completionByList(rules);
+  const statuses = [];
+  const byTitle = new Map();
+  for (const list of Array.isArray(lists) ? lists : []) {
+    const title = String((list && list.title) || '').trim();
+    if (!title || byTitle.has(title)) continue;
+    let name = wrikeName(title);
+    // Two lists whose names only differ after 128 symbols stay two statuses.
+    for (let n = 2; statuses.some(status => status.name === name); n += 1) name = `${wrikeName(title).slice(0, MAX_WRIKE_NAME - 4)} (${n})`;
+    const group = wrikeGroupForList(title, completion);
+    const status = { name, standardName: false, color: wrikeColorForList(list.color, group), standard: false, group, hidden: false };
+    statuses.push(status);
+    byTitle.set(title, status);
+  }
+  for (const group of ['Active', 'Completed']) {
+    if (statuses.some(status => status.group === group)) continue;
+    let name = group;
+    for (let n = 2; statuses.some(status => status.name === name); n += 1) name = `${group} (${n})`;
+    const added = { name, standardName: false, color: GROUP_COLOR[group], standard: false, group, hidden: false };
+    if (group === 'Active') statuses.unshift(added); else statuses.push(added);
+  }
+  const workflow = {
+    kind: 'workflows',
+    data: [{ name: wrikeName(boardTitle) || 'WeKan board', standard: false, hidden: false, customStatuses: statuses }],
+  };
+  const statusOf = title => {
+    const status = byTitle.get(String(title || '').trim());
+    if (status) return { name: status.name, group: status.group };
+    const first = statuses.find(candidate => candidate.group === 'Active');
+    return { name: first.name, group: first.group };
+  };
+  return { workflow, statusOf };
+}
+
+
+    return data=>{
+      const exact=(value,keys)=>value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).sort().join(',')===keys;
+      if(!exact(data,'board,format,lists')||data.format!=='wrikeworkflow'||!exact(data.board,'title')||typeof data.board.title!=='string'||!Array.isArray(data.lists)||!data.lists.every(item=>exact(item,'color,title')&&typeof item.title==='string'&&typeof item.color==='string'))throw new Error('Invalid board export');
+      return wrikeWorkflowFromBoard({boardTitle:data.board.title,lists:data.lists}).workflow;
+    };
+  })();
+
   function workbook(entries){
     if(!Array.isArray(entries)||!entries.length||entries.length>1000)throw new Error('Invalid board export');
     const descriptors=entries.map(entry=>{
@@ -1140,7 +1261,7 @@ function vikunjaArchiveFiles({ version, projects, checklists } = {}) {
     return stored(files);
   }
   function downloadPayload(encoded,filename='wekan-boards-weba.zip'){
-    if(!/^wekan-boards-(weba|csv|scsv|tsv|kanboard|markdown|leo|opml|orgmode|todotxt|taskwarrior|focalboard|todoist|planner|meistertask|obsidian|linear|ticktick|clickup|nullboard|kanri|pivotal|redmine|tasksorg|monday|businessmap|superproductivity|taiga|vikunja)\.zip$/.test(filename))throw new Error('Invalid board export');
+    if(!/^wekan-boards-(weba|csv|scsv|tsv|kanboard|markdown|leo|opml|orgmode|todotxt|taskwarrior|focalboard|todoist|planner|meistertask|obsidian|linear|ticktick|clickup|nullboard|kanri|pivotal|redmine|tasksorg|monday|businessmap|superproductivity|taiga|vikunja|wrikeworkflow)\.zip$/.test(filename))throw new Error('Invalid board export');
     const url=URL.createObjectURL(new Blob([archive(payload(encoded))],{type:'application/zip'})),link=document.createElement('a');
     link.href=url;link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
@@ -1148,5 +1269,5 @@ function vikunjaArchiveFiles({ version, projects, checklists } = {}) {
     const url=URL.createObjectURL(new Blob([workbook(payload(encoded))],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})),link=document.createElement('a');
     link.href=url;link.download='wekan-boards.xlsx';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
-  window.webaBatchExport={archive,workbook,plannerWorkbook,mondayWorkbook,mondayData,businessmapWorkbook,businessmapData,taigaData,vikunjaData,vikunjaFiles,vikunjaArchive,uniqueSheetNames,downloadPayload,downloadWorkbook};
+  window.webaBatchExport={archive,workbook,plannerWorkbook,mondayWorkbook,mondayData,businessmapWorkbook,businessmapData,taigaData,vikunjaData,vikunjaFiles,vikunjaArchive,wrikeWorkflowData,uniqueSheetNames,downloadPayload,downloadWorkbook};
 })();
