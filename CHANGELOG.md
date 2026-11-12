@@ -2,6 +2,19 @@
 
 This work adds the following features and fixes:
 
+- Add Quire CSV as the twenty-ninth selected-board tool export. Download
+  `wekan-boards-quire.zip` with byte-exact source headers, dynamic deduplicated
+  Assignee/Tag columns, sequential #IDs/parent refs, list statuses, Priority
+  defaults, English UTC dates and CRLF/formula-safe quoted text. Read only
+  the needed custom Priority value; unrelated malformed fields and WIP do not
+  block export. Retain active/full-read/policy/session guards. Rich native,
+  legacy/cycle and twelve-month/typed-priority/formula matrices match source
+  bytes; six original contracts and all 34 source/packaged browser downloads
+  pass. Complete host tests pass, including 69 Python tests and 58 archive/scope
+  snapshots. Native creation/creator/label-definition adapters, remaining
+  formats and complete original UI/API/security parity remain pending. Thanks
+  to xet7.
+
 - Add Teamwork XLSX as the twenty-eighth selected-board tool export.
   Download `wekan-boards-teamwork.zip` with real ten-column workbooks matching
   source same-list subtask hierarchy, title-prefix cleanup, people/priority,

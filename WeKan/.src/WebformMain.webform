@@ -1551,6 +1551,9 @@
             { ExportSelectedTeamwork WebButton
               Text = "Teamwork XLSX"
             }
+            { ExportSelectedQuire WebButton
+              Text = "Quire CSV"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton

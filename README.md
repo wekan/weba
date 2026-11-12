@@ -2476,6 +2476,19 @@ content. Native card IDs/parent relations and absent due-completion flags remain
 explicit adapters; Complete custom fields and end dates supply completion.
 Remaining native model and original transport work stays TODO.
 
+Quire produces `wekan-boards-quire.zip` with one native `board-ID.csv` per
+selected board. Match the source fixed and repeated Assignee/Tag columns,
+deduplicated ordered people/labels, sequential #1 references and exported-parent
+numbers, statuses/Priority defaults, English UTC month/day/year text and exact
+CRLF/RFC 4180/formula-prefix quoting. Only the custom Priority value is read;
+unused malformed fields and WIP do not affect this export. Numeric/checkbox
+Priority values use the source Medium fallback. Native creation timestamps and
+creator/requester fields are absent, so Created/Created by stay blank. Native
+comma-separated labels and numeric/first-parent IDs are explicit adapters;
+source board-defined label metadata remains TODO. Archive/full-board/policy/
+session guards remain shared with the other selected exports. Full original
+transport and content-model work stays open.
+
 Card-bearing external-tool exports contain active cards; workflow JSON contains
 only board/list metadata. The native `weba-2` backup and
 generic CSV/TSV/Excel exports also retain archived cards.
@@ -2509,7 +2522,7 @@ comma-CSV, semicolon-CSV and TSV ZIPs, and the single two-sheet Excel workbook.
 They also verify the Kanboard container/task JSON, exact Markdown task-list,
 Leo XML, OPML outline, Org mode outline, todo.txt task, Taskwarrior JSON,
 Focalboard JSONL, Todoist CSV, Planner XLSX, MeisterTask CSV, Obsidian Kanban,
-Linear CSV, TickTick CSV, ClickUp CSV, Nullboard NBX, Kanri JSON, Pivotal Tracker CSV, Redmine CSV, Tasks.org backup JSON, monday.com XLSX, Businessmap XLSX, Super Productivity backup JSON, Taiga project JSON, nested Vikunja export, Wrike workflow JSON, Wrike XLSX and Teamwork XLSX ZIPs. Remaining external-tool formats and the original HTTP route
+Linear CSV, TickTick CSV, ClickUp CSV, Nullboard NBX, Kanri JSON, Pivotal Tracker CSV, Redmine CSV, Tasks.org backup JSON, monday.com XLSX, Businessmap XLSX, Super Productivity backup JSON, Taiga project JSON, nested Vikunja export, Wrike workflow JSON, Wrike XLSX, Teamwork XLSX and Quire CSV ZIPs. Remaining external-tool formats and the original HTTP route
 remain pending.
 
 

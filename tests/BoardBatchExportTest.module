@@ -26,6 +26,7 @@ Public Sub Main()
   Dim linearBatch As Collection
   Dim tickTickBatch As Collection
   Dim clickUpBatch As Collection
+  Dim quireBatch As Collection
   Dim teamworkBatch As Collection
   Dim teamworkData As Collection
   Dim wrikeBatch As Collection
@@ -599,6 +600,13 @@ Public Sub Main()
   If InStr(files[0]["content"], "Ignored archived card") Or InStr(files[0]["content"], "Planner archived canary") Then Error.Raise("Teamwork exported archived content")
   teamworkData = JSON.Decode(files[1]["content"])
   If teamworkData["board"]["title"] <> "Export Bravo" Or teamworkData["items"].Count <> 1 Or teamworkData["items"][0]["title"] <> "Bravo card" Then Error.Raise("Teamwork board isolation drifted")
+  quireBatch = BoardBatchExport.NewBatch(selection, "quire")
+  BoardBatchExport.Run(quireBatch, selection)
+  files = BoardBatchExport.Files(quireBatch)
+  If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".csv" Or BoardBatchExport.Format(quireBatch) <> "quire" Then Error.Raise("Quire format or batch order drifted")
+  If Left(files[0]["content"], 8) <> "ID,Paren" Or InStr(files[0]["content"], "Alpha card") = 0 Then Error.Raise("Quire CSV header/content drifted")
+  If InStr(files[0]["content"], "Ignored archived card") Or InStr(files[0]["content"], "Planner archived canary") Then Error.Raise("Quire exported archived content")
+  If InStr(files[1]["content"], "Bravo card") = 0 Or InStr(files[1]["content"], "Alpha card") Then Error.Raise("Quire board isolation drifted")
   batch = BoardBatchExport.NewBatch(selection)
   batch["busy"] = True
   Try BoardBatchExport.Run(batch, selection)

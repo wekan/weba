@@ -1,4 +1,10 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Quire selected export: Add native CSV ZIPs with dynamic deduplicated people/
+  tag columns, sequential ID/parent refs, source statuses/priorities, English
+  UTC dates and exact CRLF/quoting/formula guards. Verify rich/legacy/matrix
+  source-byte equality, scope/policy gates and browser downloads. Creation/
+  creator metadata and full original UI/API/security parity remain pending.
+
 - Teamwork selected export: Add source-matching ten-column XLSX ZIPs with
   same-list hierarchy, title-prefix cleanup, people/priority/estimates/status,
   tags and date cells/styles. Verify rich source workbook readback, names and

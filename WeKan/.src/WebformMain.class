@@ -5272,3 +5272,7 @@ End
 Public Sub ExportSelectedTeamwork_Click()
   RunSelectedExport("teamwork")
 End
+
+Public Sub ExportSelectedQuire_Click()
+  RunSelectedExport("quire")
+End

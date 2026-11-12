@@ -1,0 +1,161 @@
+' Native counterpart of the source Quire CSV formatter.
+Export
+Private $db As Connection
+Private $boardId As Integer
+Private $numbers As Collection
+
+Private Function TextValue(value As Variant) As String
+  If IsNull(value) Then Return ""
+  Return CStr(value)
+End
+
+Private Function SpaceCode(code As Integer) As Boolean
+  Return (code >= 9 And code <= 13) Or code = 32 Or code = 160 Or code = 5760 Or (code >= 8192 And code <= 8202) Or code = 8232 Or code = 8233 Or code = 8239 Or code = 8287 Or code = 12288 Or code = 65279
+End
+
+Private Function TrimText(value As String) As String
+  Dim first As Integer = 1
+  Dim finish As Integer = String.Len(value)
+  While first <= finish
+    If Not SpaceCode(String.Code(String.Mid(value, first, 1))) Then Break
+    Inc first
+  Wend
+  While finish >= first
+    If Not SpaceCode(String.Code(String.Mid(value, finish, 1))) Then Break
+    Dec finish
+  Wend
+  If finish < first Then Return ""
+  Return String.Mid(value, first, finish - first + 1)
+End
+
+Private Function Row(values As String[]) As String
+  Dim result As New String[]
+  Dim value As String
+  For Each value In values
+    If value Then
+      If InStr("+-=@", Left(value, 1)) Then value = "'" & value
+    Endif
+    If InStr(value, ",") Or InStr(value, Chr(34)) Or InStr(value, Chr(13)) Or InStr(value, Chr(10)) Then value = Chr(34) & Replace(value, Chr(34), Chr(34) & Chr(34)) & Chr(34)
+    result.Add(value)
+  Next
+  Return result.Join(",") & Chr(13) & Chr(10)
+End
+
+Private Function Clean(values As String[]) As String[]
+  Dim result As New String[]
+  Dim value As String
+  For Each value In values
+    value = TrimText(Replace(value, ",", " "))
+    If value And result.Find(value) < 0 Then result.Add(value)
+  Next
+  Return result
+End
+
+Private Function DateText(dates As Collection, key As String) As String
+  Dim iso As String
+  Dim months As String[] = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+  If Not dates.Exist(key) Then Return ""
+  iso = CardDates.Iso(dates[key])
+  Return months[CInt(Mid(iso, 6, 2)) - 1] & " " & CStr(CInt(Mid(iso, 9, 2))) & ", " & CStr(CInt(Left(iso, 4)))
+End
+
+Private Function Priority(cardId As Integer) As String
+  Dim rows As Result = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND title=&4 ORDER BY id DESC", $boardId, cardId, "custom", "Priority")
+  Dim index As Integer
+  If Not rows.Available Then Return "Medium"
+  If TextValue(rows!value_type) = "number" Or TextValue(rows!value_type) = "checkbox" Then Return "Medium"
+  index = ["low", "medium", "high", "urgent"].Find(LCase(TextValue(rows!body)))
+  If index < 0 Then Return "Medium"
+  Return ["Low", "Medium", "High", "Urgent"][index]
+End
+
+Private Function ParentNumber(cardId As Integer) As String
+  Dim rows As Result = $db.Find("kb_entries", "board_id=&1 AND kind=&2 AND amount=&3 ORDER BY id", $boardId, "subtask", cardId)
+  Dim id As String
+  If Not rows.Available Then Return ""
+  id = CStr(rows!card_id)
+  If $numbers.Exist(id) Then Return $numbers[id]
+  Return ""
+End
+
+Public Function Build(boardId As Integer, db As Connection) As String
+  Dim rows As Result
+  Dim cards As New Variant[]
+  Dim card As Collection
+  Dim people As String[]
+  Dim members As String[]
+  Dim tags As String[]
+  Dim person As String
+  Dim header As String[] = ["ID", "Parent", "Name", "Status", "Completed", "Priority", "Start", "Due"]
+  Dim values As String[]
+  Dim dates As Collection
+  Dim maxPeople As Integer = 1
+  Dim maxTags As Integer = 1
+  Dim index As Integer
+  Dim title As String
+  Dim status As String
+  Dim csvText As String
+  $db = db
+  $boardId = boardId
+  $numbers = New Collection
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  rows = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  For Each rows
+    card = New Collection
+    card.Add(CInt(rows!id), "id")
+    card.Add(TextValue(rows!title), "title")
+    card.Add(TextValue(rows!description), "description")
+    card.Add(TextValue(rows!list_title), "status")
+    people = BoardAccess.Assignees(boardId, rows!id)
+    members = BoardAccess.CardMembers(boardId, rows!id)
+    For Each person In members
+      people.Add(person)
+    Next
+    people = Clean(people)
+    tags = Clean(Split(TextValue(rows!labels), ","))
+    card.Add(people, "people")
+    card.Add(tags, "tags")
+    maxPeople = Max(maxPeople, people.Count)
+    maxTags = Max(maxTags, tags.Count)
+    cards.Add(card)
+    $numbers[CStr(rows!id)] = "#" & CStr(cards.Count)
+  Next
+  For index = 1 To maxPeople
+    header.Add("Assignee")
+  Next
+  For index = 1 To maxTags
+    header.Add("Tag")
+  Next
+  header.Add("Created")
+  header.Add("Created by")
+  header.Add("Description")
+  csvText = Row(header)
+  For Each card In cards
+    dates = CardDates.ReadDates(boardId, card["id"])
+    title = TrimText(card["title"])
+    status = TrimText(card["status"])
+    values = [$numbers[CStr(card["id"])], ParentNumber(card["id"]), If(title, title, "Untitled"), If(status, status, "To-Do"), DateText(dates, "endAt"), Priority(card["id"]), DateText(dates, "startAt"), DateText(dates, "dueAt")]
+    people = card["people"]
+    tags = card["tags"]
+    For index = 0 To maxPeople - 1
+      If index < people.Count Then
+        values.Add(people[index])
+      Else
+        values.Add("")
+      Endif
+    Next
+    For index = 0 To maxTags - 1
+      If index < tags.Count Then
+        values.Add(tags[index])
+      Else
+        values.Add("")
+      Endif
+    Next
+    ' Native cards have no creation timestamp or creator/requester metadata.
+    values.Add("")
+    values.Add("")
+    values.Add(TextValue(card["description"]))
+    csvText &= Row(values)
+  Next
+  Return csvText
+End

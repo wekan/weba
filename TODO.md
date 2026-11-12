@@ -162,6 +162,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   selected Teamwork ten-column XLSX ZIP with same-list hierarchy, prefix
   cleanup, people/estimates/status/date fields and name/row repair is recorded
   there;
+  selected Quire CSV ZIP with dynamic people/tags, sequential parent refs,
+  source dates/priorities and exact formula-safe CRLF quoting is recorded there;
   Cached selected-export publication now rechecks current actor/session, full
   board access and policy; revocation/regrant browser coverage is recorded in
   CHANGELOG.md. Complete original security parity remains pending.

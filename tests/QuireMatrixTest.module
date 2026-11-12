@@ -1,0 +1,60 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim index As Integer
+  Dim fieldId As Integer
+  Dim value As Variant
+  Dim priorities As Variant[] = ["low", "Medium", "HIGH", "Urgent", " high ", True, False, 0, 1, -1, "invalid", ""]
+  Dim title As String
+  Dim stamp As String
+  Dim item As Collection
+  Dim fields As Collection
+  Dim dates As Collection
+  Dim items As New Variant[]
+  Dim result As New Collection
+  WebDatabase.Register("quire-matrix-owner", "x")
+  Session["username"] = "quire-matrix-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("quire-matrix-owner")
+  boardId = KanbanStore.AddBoard("Quire priorities and dates")
+  For index = 0 To 11
+    title = ["+sum", "-minus", "=equals", "@at", "'literal", "<safe>", "Ω", "Comma, quote " & Chr(34), "Line" & Chr(13) & Chr(10) & "break", "∑math", "＞wide", "Last"][index]
+    cardId = KanbanStore.SaveCard(boardId, 0, title, title, "Default", "Todo", "", "tag, tag, Ω", "")
+    fields = New Collection
+    value = priorities[index]
+    fields.Add(value, "Priority")
+    If TypeOf(value) = gb.Boolean Then
+      CardContent.Save(boardId, cardId, 0, "custom", "Priority", "", 0, value, 0, "checkbox")
+    Else If TypeOf(value) = gb.Integer Then
+      CardContent.Save(boardId, cardId, 0, "custom", "Priority", CStr(value), 0, False, 0, "number")
+    Else
+      fieldId = CardContent.Save(boardId, cardId, 0, "custom", "Priority", CStr(value), 0, False, 0, "text")
+    Endif
+    stamp = "2026-" & If(index < 9, "0", "") & CStr(index + 1) & "-15T12:34:56.789Z"
+    dates = New Collection
+    dates["startAt"] = CardDates.Parse(stamp)
+    dates["dueAt"] = CardDates.Parse(stamp)
+    dates["endAt"] = CardDates.Parse(stamp)
+    CardDates.Apply(boardId, cardId, dates)
+    item = New Collection
+    item["cardId"] = CStr(cardId)
+    item["title"] = title
+    item["description"] = title
+    item["listTitle"] = "Todo"
+    item["startAt"] = stamp
+    item["dueAt"] = stamp
+    item["endAt"] = stamp
+    item["customFields"] = fields
+    item["labels"] = ["tag", "tag", "Ω"]
+    items.Add(item)
+  Next
+  cardId = KanbanStore.SaveCard(boardId, 0, "Legacy placeholder", "", "Default", "Todo", "", "", "")
+  WebDatabase.OpenConnection().Exec("UPDATE kb_cards SET title=&1 WHERE id=&2", String.Chr(160), cardId)
+  WebDatabase.OpenConnection().Exec("DELETE FROM kb_card_lists WHERE board_id=&1 AND card_id=&2", boardId, cardId)
+  item = New Collection
+  item["cardId"] = CStr(cardId)
+  item["title"] = String.Chr(160)
+  items.Add(item)
+  result["items"] = items
+  result["actual"] = BoardTransfer.ExportActiveBoardQuire(boardId)
+  Print JSON.Encode(result)
+End

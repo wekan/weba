@@ -1852,3 +1852,30 @@ The saved-board-title expectation reflects the native API's trimming; raw name
 edge cases are covered separately. Shared-writer Wrike tests remain green.
 Source/packaged browser tests compare actual ordered workbook downloads with
 the parent writer. Full original Meteor UI/API/security parity remains open.
+
+Quire selected CSV export
+
+Quire produces `wekan-boards-quire.zip` with one native `board-ID.csv` per
+selected board. Match the source fixed and repeated Assignee/Tag columns,
+deduplicated ordered people/labels, sequential #1 references and exported-parent
+numbers, statuses/Priority defaults, English UTC month/day/year text and exact
+CRLF/RFC 4180/formula-prefix quoting. Only the custom Priority value is read;
+unused malformed fields and WIP do not affect this export. Numeric/checkbox
+Priority values use the source Medium fallback. Native creation timestamps and
+creator/requester fields are absent, so Created/Created by stay blank. Native
+comma-separated labels and numeric/first-parent IDs are explicit adapters;
+source board-defined label metadata remains TODO. Archive/full-board/policy/
+session guards remain shared with the other selected exports. Full original
+transport and content-model work stays open.
+
+`QuireExportTest`, `QuireCasesTest` and `QuireMatrixTest` compare actual native
+CSV bytes with unchanged `formatQuireCsv`. Cover rich repeated/deduplicated
+people/tag columns, parent refs, empty/legacy/cyclic/archived-parent states,
+all twelve UTC months and epoch dates, every supported priority/default type,
+formula prefixes, quoted commas/quotes/newlines and Unicode literals. Malformed
+unrelated numeric fields and list WIP are deliberately ignored, while disabled
+export and assigned-only full-board access are denied. The original contract
+suite is `tests/quireCsv.test.cjs`. Shared batch/archive tests retain ordering,
+isolation and active-card scope. Real source/packaged Chromium compare actual
+ordered two-board CSV ZIPs with the parent formatter. Complete original Meteor
+UI/API/security parity remains unproven in TODO.
