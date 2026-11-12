@@ -1,0 +1,47 @@
+' Cached files stay private until every completed source still grants export.
+Export
+
+Private Sub Identity(actor As String, generation As Long)
+  If Not actor Or WebIdentity.Username <> actor Or WebDatabase.SessionGeneration(actor) <> generation Then Error.Raise("Sign in required")
+End
+
+Private Sub BoardScope(boardId As Integer, db As Connection)
+  Dim board As Result
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  board = db.Find("kb_boards", "id=&1 AND archived=&2", boardId, False)
+  If Not board.Available Then Error.Raise("Select active boards first")
+End
+
+Public Sub Validate(ids As Integer[], actor As String, generation As Long)
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim ordered As Integer[] = ids.Copy()
+  Dim boardId As Integer
+  Dim transaction As Boolean
+  Dim failure As String
+  Identity(actor, generation)
+  ImportExportPolicy.RequireExport()
+  If Not ordered.Count Then Return
+  ordered.Sort()
+  DatabaseTransactions.Begin(db)
+  transaction = True
+  db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+  ImportExportPolicy.Lock()
+  Identity(actor, generation)
+  ImportExportPolicy.RequireExport()
+  For Each boardId In ordered
+    db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+    BoardScope(boardId, db)
+  Next
+  ' Later locks/hooks must not revoke a source already checked earlier.
+  For Each boardId In ordered
+    BoardScope(boardId, db)
+  Next
+  Identity(actor, generation)
+  ImportExportPolicy.RequireExport()
+  DatabaseTransactions.Commit(db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback(db)
+  Error.Raise(failure)
+End

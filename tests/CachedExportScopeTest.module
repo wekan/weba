@@ -1,0 +1,101 @@
+Public Sub Main()
+  Dim a As Integer
+  Dim b As Integer
+  Dim cardId As Integer
+  Dim selection As Collection
+  Dim batch As Collection
+  Dim files As Variant[]
+  Dim denied As Boolean
+  Dim mode As String
+  Dim rows As Result
+  WebDatabase.Register("cache-owner", "x")
+  WebDatabase.Register("cache-reader", "x")
+  SignIn("cache-owner")
+  a = KanbanStore.AddBoard("Cached first private board")
+  b = KanbanStore.AddBoard("Second retry board")
+  cardId = KanbanStore.SaveCard(a, 0, "First private card", "CACHE_OLD_SECRET", "Default", "Todo", "", "", "")
+  For Each mode In ["removed", "assigned", "archived", "policy"]
+    SignIn("cache-owner")
+    KanbanStore.SaveCard(a, cardId, "First private card", "CACHE_OLD_SECRET", "Default", "Todo", "", "", "")
+    BoardAccess.SetMember(a, "cache-reader", "read-only")
+    BoardAccess.SetMember(b, "cache-reader", "read-only")
+    SignIn("cache-reader")
+    selection = BoardSelection.NewState()
+    BoardSelection.SetActive(selection, True)
+    BoardSelection.AddVisible(selection, [a, b])
+    batch = BoardBatchExport.NewBatch(selection, "csv")
+    SignIn("cache-owner")
+    KanbanStore.ArchiveBoard(b, True)
+    SignIn("cache-reader")
+    Try BoardBatchExport.Run(batch, selection)
+    denied = Error
+    If Not denied Or BoardBatchExport.Completed(batch) <> 1 Or BoardBatchExport.Remaining(batch) <> 1 Then Error.Raise("Cache fixture did not retain one pending export")
+    SignIn("cache-owner")
+    KanbanStore.ArchiveBoard(b, False)
+    KanbanStore.SaveCard(a, cardId, "First private card", "CACHE_NEW_SECRET", "Default", "Todo", "", "", "")
+    Select mode
+      Case "removed"
+        BoardAccess.RemoveMember(a, "cache-reader")
+      Case "assigned"
+        BoardAccess.SetMember(a, "cache-reader", "normal-assigned-only")
+      Case "archived"
+        KanbanStore.ArchiveBoard(a, True)
+      Case "policy"
+        ImportExportPolicy.Save(False, True)
+    End Select
+    SignIn("cache-reader")
+    Try BoardBatchExport.Files(batch)
+    denied = Error
+    If Not denied Then Error.Raise("Cache getter leaked completed source after " & mode)
+    Try BoardBatchExport.Run(batch, selection)
+    denied = Error
+    If Not denied Or BoardBatchExport.Completed(batch) <> 1 Or BoardBatchExport.Remaining(batch) <> 1 Then Error.Raise("Cache retry emitted or consumed pending source after " & mode)
+    SignIn("cache-owner")
+    ImportExportPolicy.Save(False, False)
+    If mode = "archived" Then KanbanStore.ArchiveBoard(a, False)
+    BoardAccess.SetMember(a, "cache-reader", "read-only")
+    SignIn("cache-reader")
+    BoardBatchExport.Run(batch, selection)
+    files = BoardBatchExport.Files(batch)
+    If files.Count <> 2 Or InStr(files[0]["content"], "CACHE_OLD_SECRET") = 0 Then Error.Raise("Reauthorized cache retry lost immutable snapshot")
+  Next
+  ' Fresh lookup after later lock must detect revocation and roll back hooks.
+  SignIn("cache-owner")
+  WebDatabase.OpenConnection().Exec("CREATE TEMP TRIGGER revoke_cached AFTER UPDATE OF title ON kb_boards WHEN new.id=" & CStr(b) & " BEGIN DELETE FROM kb_members WHERE board_id=" & CStr(a) & " AND username='cache-reader'; END")
+  SignIn("cache-reader")
+  Try BoardBatchExport.Files(batch)
+  denied = Error
+  If Not denied Then Error.Raise("Cache late source revocation returned files")
+  BoardAccess.RequireRead(a)
+  WebDatabase.OpenConnection().Exec("DROP TRIGGER revoke_cached")
+  files = BoardBatchExport.Files(batch)
+  If files.Count <> 2 Then Error.Raise("Cache scope rollback did not recover")
+  ' Lock sorted IDs while preserving caller/file order.
+  selection = BoardSelection.NewState()
+  BoardSelection.SetActive(selection, True)
+  BoardSelection.AddVisible(selection, [b, a])
+  batch = BoardBatchExport.NewBatch(selection, "csv")
+  BoardBatchExport.Run(batch, selection)
+  WebDatabase.OpenConnection().Exec("CREATE TEMP TABLE cache_lock_order (seq INTEGER PRIMARY KEY AUTOINCREMENT,board_id INTEGER)")
+  WebDatabase.OpenConnection().Exec("CREATE TEMP TRIGGER record_cache_lock AFTER UPDATE OF title ON kb_boards BEGIN INSERT INTO cache_lock_order(board_id) VALUES(new.id); END")
+  files = BoardBatchExport.Files(batch)
+  rows = WebDatabase.OpenConnection().Exec("SELECT board_id FROM cache_lock_order ORDER BY seq")
+  If rows.Count <> 2 Or rows!board_id <> a Then Error.Raise("Cache locks were not sorted")
+  rows.MoveNext()
+  If rows!board_id <> b Or files[0]["name"] <> "board-" & CStr(b) & ".csv" Then Error.Raise("Cache guard changed lock/file order")
+  WebDatabase.OpenConnection().Exec("DROP TRIGGER record_cache_lock")
+  SignIn("cache-owner")
+  Try BoardBatchExport.Files(batch)
+  denied = Error
+  If Not denied Then Error.Raise("Foreign actor read retained snapshot")
+  WebDatabase.ForceResetPassword("cache-owner", "cache-reader", "new-x")
+  SignIn("cache-reader")
+  Try BoardBatchExport.Files(batch)
+  denied = Error
+  If Not denied Then Error.Raise("New login generation read an old export cache")
+  Print "Cached export scope: removed/assigned/archived/policy loss blocks getter and pending retry, regrant recovers snapshots, late-lock revocation rolls back, sorted locks preserve file order and foreign actor/new login generation refused"
+End
+Private Sub SignIn(name As String)
+  Session["username"] = name
+  Session["auth_generation"] = WebDatabase.SessionGeneration(name)
+End

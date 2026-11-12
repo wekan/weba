@@ -24,10 +24,26 @@ Public Function Format(batch As Collection) As String
   Return batch["format"]
 End
 
-Private Sub Check(batch As Collection, selection As Collection)
+Private Sub CheckIdentity(batch As Collection)
   If Not batch Then Error.Raise("Board selection changed")
   If WebIdentity.Username = "" Or WebIdentity.Username <> batch["username"] Then Error.Raise("Sign in required")
   If WebDatabase.SessionGeneration(WebIdentity.Username) <> batch["generation"] Then Error.Raise("Sign in required")
+End
+
+Private Sub CheckCached(batch As Collection)
+  Dim ids As Integer[] = batch["ids"]
+  Dim files As Variant[] = batch["files"]
+  Dim completed As New Integer[]
+  Dim index As Integer
+  CheckIdentity(batch)
+  For index = 0 To files.Count - 1
+    completed.Add(ids[index])
+  Next
+  BoardExportCacheGuard.Validate(completed, batch["username"], batch["generation"])
+End
+
+Private Sub Check(batch As Collection, selection As Collection)
+  CheckIdentity(batch)
   If Not BoardSelection.Active(selection) Or BoardSelection.Revision(selection) <> batch["revision"] Then Error.Raise("Board selection changed")
   If JSON.Encode(BoardSelection.ActionIds(selection)) <> JSON.Encode(batch["ids"]) Then Error.Raise("Board selection changed")
 End
@@ -50,6 +66,9 @@ End
 Public Function Files(batch As Collection) As Variant[]
   Dim result As New Variant[]
   Dim file As Collection
+  CheckIdentity(batch)
+  ImportExportPolicy.RequireExport()
+  CheckCached(batch)
   For Each file In batch["files"]
     result.Add(file.Copy())
   Next
@@ -65,6 +84,7 @@ Public Sub Run(batch As Collection, selection As Collection)
   Check(batch, selection)
   ImportExportPolicy.RequireExport()
   If batch["busy"] Then Error.Raise("Board export is already running")
+  CheckCached(batch)
   batch["busy"] = True
   acquired = True
   pending = batch["remaining"]
@@ -129,6 +149,7 @@ Public Sub Run(batch As Collection, selection As Collection)
   Wend
   Check(batch, selection)
   ImportExportPolicy.RequireExport()
+  CheckCached(batch)
   batch["busy"] = False
 Catch
   failure = Error.Text

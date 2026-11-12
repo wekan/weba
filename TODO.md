@@ -142,6 +142,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   selected Tasks.org backup JSON ZIP with stable account/calendar/task/tag IDs,
   date conventions, comments/seconds/estimates and same-calendar indexed
   subtasks is recorded there;
+  Cached selected-export publication now rechecks current actor/session, full
+  board access and policy; revocation/regrant browser coverage is recorded in
+  CHANGELOG.md. Complete original security parity remains pending.
   original remaining formats/API route, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded

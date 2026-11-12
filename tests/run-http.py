@@ -23,6 +23,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
         shutil.copy2(root / 'tests/ApiFixture.module', project / '.src/ApiFixture.module')
     if '--members' in sys.argv:
         shutil.copy2(root / 'tests/BoardCatalogFixture.module', project / '.src/BoardCatalogFixture.module')
+        shutil.copy2(root / 'tests/CachedExportFixture.module', project / '.src/CachedExportFixture.module')
         shutil.copy2(root / 'tests/OriginalCatalogFixture.module', project / '.src/OriginalCatalogFixture.module')
         shutil.copy2(root / 'tests/ListDeletionFixture.module', project / '.src/ListDeletionFixture.module')
         shutil.copy2(root / 'tests/AttachmentFixture.module', project / '.src/AttachmentFixture.module')
@@ -204,6 +205,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-selection.browser.cjs')], check=True, env=env)
         elif '--selected-export' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/selected-export.browser.cjs')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/cached-export.browser.cjs')], check=True, env=env)
         elif '--board-drops' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-drops.browser.cjs')], check=True, env=env)
         elif '--workspace-order' in sys.argv:
@@ -289,6 +291,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-drops.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-selection.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/selected-export.browser.cjs')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/cached-export.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/selection-archive.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-purge.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/list-deletion.browser.cjs')], check=True, env=env)

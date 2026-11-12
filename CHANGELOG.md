@@ -2,6 +2,14 @@
 
 This work adds the following features and fixes:
 
+- Recheck cached selected-export snapshots before access, retry and publication.
+  Require the original actor/session generation, current full-board read access,
+  active boards and current export policy under deterministic metadata locks.
+  Revocation blocks private cached downloads without consuming pending work;
+  regrant resumes the original immutable snapshot. Native rollback/lock-order
+  tests, complete host tests and source/packaged browser API-403/retry checks
+  pass. Complete original UI/API/security parity remains pending. Thanks to xet7.
+
 - Match the source active-card collector in ten older external-tool exports:
   Kanboard, Markdown, Leo, OPML, Org mode, todo.txt, Taskwarrior, Focalboard,
   Todoist and Planner. Exclude archived titles/bodies and derived tags/comments,

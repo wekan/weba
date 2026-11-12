@@ -1,0 +1,29 @@
+Public Sub Main()
+  Dim a As Integer
+  Dim b As Integer
+  Dim data As New Collection
+  If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
+  If Env["WEBA_CACHE_FIRST"] Then a = CInt(Env["WEBA_CACHE_FIRST"])
+  If Env["WEBA_CACHE_SECOND"] Then b = CInt(Env["WEBA_CACHE_SECOND"])
+  Session["username"] = "rest-other"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+  Select Env["WEBA_CACHE_MODE"]
+    Case "seed"
+      a = KanbanStore.AddBoard("Cached scope Alpha")
+      b = KanbanStore.AddBoard("Cached scope Bravo")
+      KanbanStore.SaveCard(a, 0, "Cached private card", "CACHED_BROWSER_PRIVATE_BODY", "Default", "Todo", "", "", "")
+      BoardAccess.SetMember(a, "rest-member", "read-only")
+      BoardAccess.SetMember(b, "rest-member", "read-only")
+      data["ids"] = [a, b]
+    Case "fail-second"
+      KanbanStore.ArchiveBoard(b, True)
+    Case "revoke-first"
+      KanbanStore.ArchiveBoard(b, False)
+      BoardAccess.RemoveMember(a, "rest-member")
+    Case "grant-first"
+      BoardAccess.SetMember(a, "rest-member", "read-only")
+    Case Else
+      Error.Raise("Unknown cache fixture mode")
+  End Select
+  Print JSON.Encode(data)
+End
