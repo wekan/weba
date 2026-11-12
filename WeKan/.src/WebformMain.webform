@@ -1527,6 +1527,9 @@
             { ExportSelectedTasksOrg WebButton
               Text = "Tasks.org"
             }
+            { ExportSelectedMonday WebButton
+              Text = "monday.com"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton

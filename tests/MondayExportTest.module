@@ -1,0 +1,92 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim archived As Integer
+  Dim data As New Collection
+  Dim board As New Collection
+  Dim item As New Collection
+  Dim items As New Variant[]
+  Dim fields As New Collection
+  Dim dates As New Collection
+  Dim selection As Collection
+  Dim batch As Collection
+  Dim retryBatch As Collection
+  Dim badField As Integer
+  Dim denied As Boolean
+  Dim sheetTitle As String
+  WebDatabase.Register("monday-owner", "x")
+  WebDatabase.Register("monday-other", "x")
+  Session["username"] = "monday-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("monday-owner")
+  boardId = KanbanStore.AddBoard("İ/BOARD Ω")
+  KanbanStore.AddLane(boardId, "Sprint Ω")
+  cardId = KanbanStore.SaveCard(boardId, 0, String.Chr(160) & "=SUM(1,2)" & String.Chr(160), "Literal <safe> & " & Chr(34) & "quoted" & Chr(34) & Chr(10) & "Ω", "Sprint Ω", "Todo", "", "urgent, Ω", "")
+  BoardAccess.SetMember(boardId, "monday-other", "normal")
+  BoardAccess.SetAssignees(boardId, cardId, ["monday-owner", "monday-other"])
+  BoardAccess.RestoreCardMembers(boardId, cardId, ["monday-owner"])
+  CardContent.Save(boardId, cardId, 0, "custom", "Priority", "", 0, True, 0, "checkbox")
+  CardContent.Save(boardId, cardId, 0, "custom", "Amount", "2.675", 0, False, 0, "number")
+  CardContent.Save(boardId, cardId, 0, "custom", "Enabled", "", 0, False, 0, "checkbox")
+  CardContent.Save(boardId, cardId, 0, "custom", "Date field", "2026-11-13", 0, False, 0, "date")
+  CardContent.Save(boardId, cardId, 0, "custom", "Formula text", "=1+1", 0, False, 0, "text")
+  CardContent.Save(boardId, cardId, 0, "custom", "priority", "lowercase extra", 0, False, 0, "text")
+  CardContent.Save(boardId, cardId, 0, "custom", String.Chr(160) & "Person" & String.Chr(160), "alias must not become a column", 0, False, 0, "text")
+  dates["startAt"] = CardDates.Parse("2026-11-01T01:02:03.004Z")
+  dates["dueAt"] = CardDates.Parse("2026-11-13T23:59:59.999Z")
+  CardDates.Apply(boardId, cardId, dates)
+  archived = KanbanStore.SaveCard(boardId, 0, "Monday archived canary", "HIDDEN_MONDAY_BODY", "Default", "Todo", "", "", "")
+  KanbanStore.ArchiveCard(boardId, archived, True)
+  board["title"] = "İ/BOARD Ω"
+  item["cardId"] = CStr(cardId)
+  item["title"] = String.Chr(160) & "=SUM(1,2)" & String.Chr(160)
+  item["description"] = "Literal <safe> & " & Chr(34) & "quoted" & Chr(34) & Chr(10) & "Ω"
+  item["swimlaneTitle"] = "Sprint Ω"
+  item["listTitle"] = "Todo"
+  item["owner"] = "monday-owner"
+  item["assignees"] = ["monday-other", "monday-owner"]
+  item["labels"] = ["urgent", "Ω"]
+  item["startAt"] = "2026-11-01T01:02:03.004Z"
+  item["dueAt"] = "2026-11-13T23:59:59.999Z"
+  fields["Priority"] = True
+  fields["Amount"] = 2.675
+  fields["Enabled"] = False
+  fields["Date field"] = "2026-11-13"
+  fields["Formula text"] = "=1+1"
+  fields["priority"] = "lowercase extra"
+  fields[String.Chr(160) & "Person" & String.Chr(160)] = "alias must not become a column"
+  item["customFields"] = fields
+  items.Add(item)
+  data["board"] = board
+  data["items"] = items
+  selection = BoardSelection.NewState()
+  BoardSelection.SetActive(selection, True)
+  BoardSelection.AddVisible(selection, [boardId])
+  batch = BoardBatchExport.NewBatch(selection, "monday")
+  BoardBatchExport.Run(batch, selection)
+  If BoardBatchExport.Files(batch)[0]["name"] <> "board-" & CStr(boardId) & ".xlsx" Then Error.Raise("Monday file extension drifted")
+  data["actual"] = BoardBatchExport.Files(batch)[0]["content"]
+  If InStr(data["actual"], "Monday archived canary") Or InStr(data["actual"], "HIDDEN_MONDAY_BODY") Then Error.Raise("Monday exported archived content")
+  badField = CardContent.Save(boardId, cardId, 0, "custom", "Invalid numeric", "1", 0, False, 0, "number")
+  WebDatabase.OpenConnection().Exec("UPDATE kb_entries SET body=&1 WHERE id=&2", "not numeric", badField)
+  retryBatch = BoardBatchExport.NewBatch(selection, "monday")
+  Try BoardBatchExport.Run(retryBatch, selection)
+  denied = Error
+  If Not denied Or BoardBatchExport.Completed(retryBatch) Or BoardBatchExport.Remaining(retryBatch) <> 1 Then Error.Raise("Monday invalid numeric failure consumed its pending queue")
+  WebDatabase.OpenConnection().Exec("DELETE FROM kb_entries WHERE id=&1", badField)
+  BoardBatchExport.Run(retryBatch, selection)
+  If BoardBatchExport.Completed(retryBatch) <> 1 Then Error.Raise("Monday repaired numeric field could not retry")
+  For Each sheetTitle In ["'invalid", "invalid'", "123456789012345678901234567890'after"]
+    WebDatabase.OpenConnection().Exec("UPDATE kb_boards SET title=&1 WHERE id=&2", sheetTitle, boardId)
+    Try BoardTransfer.ExportActiveBoardMonday(boardId)
+    denied = Error
+    If Not denied Then Error.Raise("Monday accepted an invalid source worksheet name")
+  Next
+  WebDatabase.OpenConnection().Exec("UPDATE kb_boards SET title=&1 WHERE id=&2", "İ/BOARD Ω", boardId)
+  BoardAccess.SetMember(boardId, "monday-other", "normal-assigned-only")
+  Session["username"] = "monday-other"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("monday-other")
+  Try BoardTransfer.ExportActiveBoardMonday(boardId)
+  denied = Error
+  If Not denied Then Error.Raise("Monday allowed assigned-only full export")
+  Print JSON.Encode(data)
+End

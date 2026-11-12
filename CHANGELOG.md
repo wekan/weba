@@ -10,6 +10,18 @@ This work adds the following features and fixes:
   tests, complete host tests and source/packaged browser API-403/retry checks
   pass. Complete original UI/API/security parity remains pending. Thanks to xet7.
 
+- Add monday.com as the twenty-first selected-board external-tool export.
+  Download `wekan-boards-monday.zip` with real `board-ID.xlsx` workbooks matching
+  the source flat table, fixed/extra columns, people order, dates/timeline,
+  labels and native custom fields. Preserve numeric/checkbox cell types, empty
+  shared strings, literal formula text, bold headers and source Unicode/safe
+  worksheet naming/XML handling. Reject invalid numeric/name/grid inputs before
+  consuming pending exports; retain repair/retry and source scope/policy guards.
+  Complete host tests pass, including 69 Python tests, rich source workbook
+  readback and 42 archive-scope snapshots. All 26 selected-export downloads
+  pass in source and packaged browser runs. Other formats and complete original
+  suites remain pending. Thanks to xet7.
+
 - Match the source active-card collector in ten older external-tool exports:
   Kanboard, Markdown, Leo, OPML, Org mode, todo.txt, Taskwarrior, Focalboard,
   Todoist and Planner. Exclude archived titles/bodies and derived tags/comments,

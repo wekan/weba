@@ -34,7 +34,7 @@
       if(entry.name.endsWith('.xlsx')){
         if(typeof entry.content!=='string')throw new Error('Invalid board export');
         let descriptor;try{descriptor=JSON.parse(entry.content);}catch{throw new Error('Invalid board export');}
-        normalized.push({name:entry.name,bytes:plannerWorkbook(descriptor)});continue;
+        normalized.push({name:entry.name,bytes:descriptor&&descriptor.format==='monday'?mondayWorkbook(descriptor):plannerWorkbook(descriptor)});continue;
       }
       const content=entry.content==null&&entry.name.endsWith('.txt')?'':entry.content;
       if(typeof content!=='string')throw new Error('Invalid board export');
@@ -86,6 +86,50 @@
     ];
     return stored(files);
   }
+  const mondayHeaders=['Name','Group','Status','Person','Date','Timeline','Tags','Priority','Description','Item ID'];
+  function mondayData(data){
+    if(!data||Object.keys(data).sort().join(',')!=='format,rows,title'||data.format!=='monday'||typeof data.title!=='string'||!Array.isArray(data.rows)||!data.rows.length||data.rows.length>1048576)throw new Error('Invalid board export');
+    const header=data.rows[0];
+    if(!Array.isArray(header)||header.length<10||header.length>16384||!mondayHeaders.every((key,index)=>header[index]===key)||!header.every(key=>typeof key==='string')||new Set(header).size!==header.length)throw new Error('Invalid board export');
+    const rows=data.rows.map((values,rowIndex)=>{
+      if(!Array.isArray(values)||values.length!==header.length)throw new Error('Invalid board export');
+      return values.map((value,index)=>{
+        if(value&&typeof value==='object'){
+          if(Array.isArray(value)||Object.keys(value).join(',')!=='number'||typeof value.number!=='string'||!Number.isFinite(Number(value.number)))throw new Error('Invalid board export');
+          value=Number(value.number);
+        }
+        if(value==null)value='';
+        if(!['string','number','boolean'].includes(typeof value)||typeof value==='number'&&!Number.isFinite(value)||rowIndex===0&&typeof value!=='string')throw new Error('Invalid board export');
+        return rowIndex>0&&index===7?String(value):value;
+      });
+    });
+    let name=(data.title||'board').toLowerCase().slice(0,31);
+    name=String(name||'sheet1').replace(/[\\/?*\[\]:]/g,' ').slice(0,31)||'sheet1';
+    if(name.startsWith("'")||name.endsWith("'"))throw new Error('Invalid board export');
+    return {name,rows};
+  }
+  function mondayWorkbook(data){
+    const {name,rows}=mondayData(data);
+    const mondayXml=value=>xml(String(value).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g,''));
+    const shared=[],indices=new Map();let stringCount=0;
+    const stringIndex=value=>{stringCount++;if(!indices.has(value)){indices.set(value,shared.length);shared.push(value);}return indices.get(value);};
+    const mondayRows=rows.map((values,index)=>`<row r="${index+1}">${values.map((value,cellIndex)=>{
+      const attrs=`r="${column(cellIndex)}${index+1}"${index===0?' s="1"':''}`;
+      if(typeof value==='number')return `<c ${attrs} t="n"><v>${value}</v></c>`;
+      if(typeof value==='boolean')return `<c ${attrs} t="b"><v>${value?1:0}</v></c>`;
+      return `<c ${attrs} t="s"><v>${stringIndex(value)}</v></c>`;
+    }).join('')}</row>`).join('');
+    const files=[
+      {name:'[Content_Types].xml',content:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/></Types>'},
+      {name:'_rels/.rels',content:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
+      {name:'xl/workbook.xml',content:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${mondayXml(name)}" sheetId="1" r:id="rId1"/></sheets></workbook>`},
+      {name:'xl/_rels/workbook.xml.rels',content:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/></Relationships>'},
+      {name:'xl/styles.xml',content:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>'},
+      {name:'xl/worksheets/sheet1.xml',content:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${mondayRows}</sheetData></worksheet>`}
+    ];
+    files.push({name:'xl/sharedStrings.xml',content:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="${stringCount}" uniqueCount="${shared.length}">${shared.map(value=>`<si><t xml:space="preserve">${mondayXml(value)}</t></si>`).join('')}</sst>`});
+    return stored(files);
+  }
   function workbook(entries){
     if(!Array.isArray(entries)||!entries.length||entries.length>1000)throw new Error('Invalid board export');
     const descriptors=entries.map(entry=>{
@@ -111,7 +155,7 @@
     return stored(files);
   }
   function downloadPayload(encoded,filename='wekan-boards-weba.zip'){
-    if(!/^wekan-boards-(weba|csv|scsv|tsv|kanboard|markdown|leo|opml|orgmode|todotxt|taskwarrior|focalboard|todoist|planner|meistertask|obsidian|linear|ticktick|clickup|nullboard|kanri|pivotal|redmine|tasksorg)\.zip$/.test(filename))throw new Error('Invalid board export');
+    if(!/^wekan-boards-(weba|csv|scsv|tsv|kanboard|markdown|leo|opml|orgmode|todotxt|taskwarrior|focalboard|todoist|planner|meistertask|obsidian|linear|ticktick|clickup|nullboard|kanri|pivotal|redmine|tasksorg|monday)\.zip$/.test(filename))throw new Error('Invalid board export');
     const url=URL.createObjectURL(new Blob([archive(payload(encoded))],{type:'application/zip'})),link=document.createElement('a');
     link.href=url;link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
@@ -119,5 +163,5 @@
     const url=URL.createObjectURL(new Blob([workbook(payload(encoded))],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})),link=document.createElement('a');
     link.href=url;link.download='wekan-boards.xlsx';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
-  window.webaBatchExport={archive,workbook,plannerWorkbook,uniqueSheetNames,downloadPayload,downloadWorkbook};
+  window.webaBatchExport={archive,workbook,plannerWorkbook,mondayWorkbook,mondayData,uniqueSheetNames,downloadPayload,downloadWorkbook};
 })();

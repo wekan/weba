@@ -142,6 +142,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   selected Tasks.org backup JSON ZIP with stable account/calendar/task/tag IDs,
   date conventions, comments/seconds/estimates and same-calendar indexed
   subtasks is recorded there;
+  selected monday.com actual XLSX ZIP with fixed/extra typed columns, source
+  worksheet naming, literal formulas and actual workbook readback is recorded
+  there;
   Cached selected-export publication now rechecks current actor/session, full
   board access and policy; revocation/regrant browser coverage is recorded in
   CHANGELOG.md. Complete original security parity remains pending.

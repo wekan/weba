@@ -2367,6 +2367,16 @@ undated comments use the source export-time fallback; comments have no author
 field in this target. Unsupported attachments/alarms/location/preferences remain
 empty or absent as in the source backup formatter.
 
+monday.com produces `wekan-boards-monday.zip` with one actual `board-ID.xlsx`
+workbook per selected board. Match the source flat first-sheet import table,
+fixed columns and case-sensitive extra fields, ordered people, ISO date/timeline
+text, labels and custom values. Numeric and checkbox cells retain their types;
+date fields keep the native ISO date text. Formula-looking text stays literal.
+Worksheet names follow the source lowercase/UTF-16/sanitization rules and row 1
+is bold. Preserve empty cells through shared strings. Archived cards are excluded.
+Comments/checklists/source board-defined field models remain outside the current
+source Monday table; native field types are adapted explicitly.
+
 External-tool exports contain active cards. The native `weba-2` backup and
 generic CSV/TSV/Excel exports also retain archived cards.
 
@@ -2396,7 +2406,7 @@ comma-CSV, semicolon-CSV and TSV ZIPs, and the single two-sheet Excel workbook.
 They also verify the Kanboard container/task JSON, exact Markdown task-list,
 Leo XML, OPML outline, Org mode outline, todo.txt task, Taskwarrior JSON,
 Focalboard JSONL, Todoist CSV, Planner XLSX, MeisterTask CSV, Obsidian Kanban,
-Linear CSV, TickTick CSV, ClickUp CSV, Nullboard NBX, Kanri JSON, Pivotal Tracker CSV, Redmine CSV and Tasks.org backup JSON ZIPs. Remaining external-tool formats and the original HTTP route
+Linear CSV, TickTick CSV, ClickUp CSV, Nullboard NBX, Kanri JSON, Pivotal Tracker CSV, Redmine CSV, Tasks.org backup JSON and monday.com XLSX ZIPs. Remaining external-tool formats and the original HTTP route
 remain pending.
 
 

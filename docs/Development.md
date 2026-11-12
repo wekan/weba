@@ -1411,6 +1411,38 @@ estimates, running-time omission, archived content and assigned-only/global-poli
 refusal. The normal store runner isolates its database. Real source/package
 selected-export downloads compare empty backups to the actual parent formatter.
 
+The `monday` format writes `wekan-boards-monday.zip` with strict ordered
+`board-ID.xlsx` entries containing actual workbook bytes. `BoardMondayExport`
+collects native active rows inside the locked export transaction and emits a
+private `format/title/rows` descriptor. Follow the source ten columns, first-seen
+case-sensitive non-role custom columns, combined assignee/member order (including
+cross-list duplicates), ISO dates/timeline and native text/number/date/checkbox
+values. Numeric envelopes retain stored decimal text until JavaScript's Number
+conversion; checkbox values remain booleans, Priority is rendered as source
+String(value), and native date fields remain ISO date strings. Source board-level
+definitions/dropdowns/admin-only rules and full original transport remain TODO.
+
+`batch-export.js` validates the exact Monday root/header/row/cell shapes and Excel
+grid limits before producing fixed-path OOXML. It preserves finite numeric and
+boolean cell types and uses shared strings for text, including empty cells and
+formula-looking values. No formula or external-link XML is generated. Match the
+installed source writer's XML control-character removal and lowercase/UTF-16/
+invalid-character worksheet naming. Native preflight rejects source-invalid
+leading/trailing apostrophe names before consuming the queue and enforces Excel
+row/column bounds; U+0130's sole JS lowercase UTF-16 length expansion is accounted
+for, while actual casing stays in JavaScript. The main generic/Planner workbook
+paths retain their existing behavior.
+
+`MondayExportTest` compares rich typed rows and real XLSX readback with unchanged
+`formatMondaySheets`/`writeMondayWorkbook`/`readMondayWorkbook`, using explicit
+native field/identity adapters. It verifies aliases, case-sensitive extras,
+Unicode naming/text, dates, people order, numeric/checkbox/date cells, literal
+formulas, bold header, archive exclusion, invalid-number pending retry and
+assigned-only refusal. Workbook boundary tests compare actual source name/
+empty/control/Unicode/wide-column behavior and reject malformed descriptors,
+cells and ZIP paths. Real source/package downloads open nested XLSX entries with
+the actual source reader. Monday participates in the all-tool archive regression.
+
 ### External-tool archive scope
 
 The source `collect()` in `models/lib/externalExporters.js` selects active cards.
@@ -1440,7 +1472,7 @@ bytes, no-write failure,
 immutable snapshots, retry/replay/reentrancy, stale/foreign/archive/policy denial
 and ZIP structure. `python3 tests/run-http.py --selected-export` (add `--archive`)
 checks the real controls, live and forged global gate, selection retention and
-all twenty-five download contents. The original caption is among 271 source keys in all
+all twenty-six download contents. The original caption is among 271 source keys in all
 237 catalogs. Remaining external-tool formats and the original HTTP route stay
 open.
 

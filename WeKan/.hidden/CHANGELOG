@@ -3,6 +3,11 @@
   boards and export policy under sorted locks before cached snapshot publication.
   Verify revocation, rollback, immutable retry and source/packaged browser denial.
 
+- Monday selected export: Add actual XLSX ZIPs with typed native cells, source
+  flat table/custom columns, Unicode worksheet names, shared empty strings,
+  literal formulas and bold header. Verify rich source workbook readback,
+  descriptor/path/type boundaries, repair/retry and archive/assigned scope.
+
 - External archive scope: Match source active-card collection in ten older
   tool exporters, including Focalboard/Todoist prepasses. Verify forty actual
   owner/readonly snapshots across all twenty current formats and preserve

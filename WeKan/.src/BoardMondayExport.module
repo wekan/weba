@@ -1,0 +1,193 @@
+' Native descriptor for the source monday.com first-sheet import workbook.
+Export
+Private $db As Connection
+Private $boardId As Integer
+
+Public Function Headers() As String[]
+  Return ["Name", "Group", "Status", "Person", "Date", "Timeline", "Tags", "Priority", "Description", "Item ID"]
+End
+
+Private Function TextValue(value As Variant) As String
+  If IsNull(value) Then Return ""
+  Return CStr(value)
+End
+
+Private Function Whitespace(character As String) As Boolean
+  Dim code As Integer = String.Code(character)
+  Return (code >= 9 And code <= 13) Or code = 32 Or code = 160 Or code = 5760 Or (code >= 8192 And code <= 8202) Or code = 8232 Or code = 8233 Or code = 8239 Or code = 8287 Or code = 12288 Or code = 65279
+End
+
+Private Function TrimText(value As String) As String
+  Dim first As Integer = 1
+  Dim finish As Integer = String.Len(value)
+  While first <= finish
+    If Not Whitespace(String.Mid(value, first, 1)) Then Break
+    Inc first
+  Wend
+  While finish >= first
+    If Not Whitespace(String.Mid(value, finish, 1)) Then Break
+    Dec finish
+  Wend
+  If finish < first Then Return ""
+  Return String.Mid(value, first, finish - first + 1)
+End
+
+Private Sub ValidateSheetName(title As String)
+  Dim index As Integer
+  Dim units As Integer
+  Dim width As Integer
+  Dim character As String
+  Dim ending As String
+  Dim code As Integer
+  If Left(title, 1) = "'" Then Error.Raise("Invalid worksheet name")
+  For index = 1 To String.Len(title)
+    character = String.Mid(title, index, 1)
+    code = String.Code(character)
+    ' U+0130 is the sole lower-case UTF-16 length expansion in JavaScript.
+    width = If(code > 65535 Or code = 304, 2, 1)
+    If units + width > 31 Then
+      ending = ""
+      Break
+    Endif
+    units += width
+    ending = If(width = 1, character, "")
+    If units = 31 Then Break
+  Next
+  If ending = "'" Then Error.Raise("Invalid worksheet name")
+End
+
+Private Function RoleName(name As String) As Boolean
+  name = LCase(TrimText(name))
+  Return ["name", "status", "group", "person", "people", "owner", "owners", "assignee", "assignees", "date", "due date", "due", "deadline", "timeline", "tag", "tags", "item id", "long text", "description", "notes"].Find(name) >= 0
+End
+
+Private Function CustomFields(cardId As Integer) As Collection
+  Dim result As New Collection
+  Dim rows As Result = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "custom")
+  Dim number As Float
+  Dim value As Variant
+  Dim numeric As Collection
+  For Each rows
+    If Not TextValue(rows!title) Then Continue
+    Select TextValue(rows!value_type)
+      Case "checkbox"
+        value = CBool(rows!done)
+      Case "number"
+        If Not ExportNumber.ParseFinite(TextValue(rows!body), ByRef number) Then Error.Raise("Invalid numeric export field")
+        ' Keep exact stored decimal text until JavaScript constructs the cell.
+        numeric = New Collection
+        numeric.Add(TextValue(rows!body), "number")
+        value = numeric
+      Case Else
+        value = TextValue(rows!body)
+    End Select
+    result[TextValue(rows!title)] = value
+  Next
+  Return result
+End
+
+Private Function DateDay(dates As Collection, key As String) As String
+  If Not dates.Exist(key) Then Return ""
+  Return Left(CardDates.Iso(dates[key]), 10)
+End
+
+Public Function Build(boardId As Integer, db As Connection) As String
+  Dim output As New Collection
+  Dim rows As New Variant[]
+  Dim cards As New Variant[]
+  Dim columns As String[] = Headers()
+  Dim extra As New String[]
+  Dim board As Result
+  Dim records As Result
+  Dim card As Collection
+  Dim fields As Collection
+  Dim dates As Collection
+  Dim values As Variant[]
+  Dim header As New Variant[]
+  Dim name As String
+  Dim title As String
+  Dim group As String
+  Dim people As String[]
+  Dim members As String[]
+  Dim person As String
+  Dim tags As String[]
+  Dim tag As String
+  $db = db
+  $boardId = boardId
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  board = db.Find("kb_boards", "id=&1", boardId)
+  If Not board.Available Then Error.Raise("Board not found")
+  ValidateSheetName(TextValue(board!title))
+  records = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  For Each records
+    card = New Collection
+    card.Add(CInt(records!id), "id")
+    card.Add(TextValue(records!title), "title")
+    card.Add(TextValue(records!description), "description")
+    card.Add(TextValue(records!lane), "lane")
+    card.Add(TextValue(records!list_title), "list")
+    card.Add(TextValue(records!labels), "labels")
+    fields = CustomFields(records!id)
+    card.Add(fields, "fields")
+    For Each name In fields.Keys
+      If Not RoleName(name) And columns.Find(name) < 0 And extra.Find(name) < 0 Then extra.Add(name)
+    Next
+    cards.Add(card)
+  Next
+  If columns.Count + extra.Count > 16384 Or cards.Count + 1 > 1048576 Then Error.Raise("Worksheet exceeds Excel dimensions")
+  For Each name In extra
+    columns.Add(name)
+  Next
+  For Each name In columns
+    header.Add(name)
+  Next
+  rows.Add(header)
+  For Each card In cards
+    fields = card["fields"]
+    dates = CardDates.ReadDates(boardId, card["id"])
+    title = TrimText(TextValue(card["title"]))
+    group = TextValue(card["lane"])
+    If group = "Default" Then group = ""
+    people = BoardAccess.Assignees(boardId, card["id"])
+    members = BoardAccess.CardMembers(boardId, card["id"])
+    For Each person In members
+      people.Add(person)
+    Next
+    tags = New String[]
+    For Each tag In Split(TextValue(card["labels"]), ",")
+      tag = TrimText(tag)
+      If tag Then tags.Add(tag)
+    Next
+    values = New Variant[]
+    values.Add(If(title, title, "Untitled"))
+    values.Add(group)
+    values.Add(TextValue(card["list"]))
+    values.Add(people.Join(", "))
+    values.Add(DateDay(dates, "dueAt"))
+    If dates.Exist("startAt") And dates.Exist("dueAt") Then
+      values.Add(DateDay(dates, "startAt") & " - " & DateDay(dates, "dueAt"))
+    Else
+      values.Add("")
+    Endif
+    values.Add(tags.Join(", "))
+    If fields.Exist("Priority") Then
+      values.Add(fields["Priority"])
+    Else
+      values.Add("")
+    Endif
+    values.Add(TextValue(card["description"]))
+    values.Add(CStr(card["id"]))
+    For Each name In extra
+      If fields.Exist(name) Then
+        values.Add(fields[name])
+      Else
+        values.Add("")
+      Endif
+    Next
+    rows.Add(values)
+  Next
+  output.Add("monday", "format")
+  output.Add(If(TextValue(board!title), TextValue(board!title), "board"), "title")
+  output.Add(rows, "rows")
+  Return JSON.Encode(output)
+End
