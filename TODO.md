@@ -86,6 +86,12 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   240 all-format selected descriptor pair and original collector evidence is
   recorded in CHANGELOG.md; broader field models/security parity remain open.
 
+- Next export text regression: audit control/NUL fidelity in other native
+  renderers. Taskwarrior now avoids the built-in Quote keyword and preserves
+  SQLite text through guarded binary projections; other renderer text reads
+  and Unicode helpers need exact source comparisons before their parity is
+  established. Keep other DB driver conformance explicit.
+
 - Next: remaining copy-option models/controls, selected-export API/model/
   security parity, Home/group targets and original
   UI callbacks. Whole-board copy authorization and late actor/source/destination
@@ -215,7 +221,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   recorded there; Org mode GET export with independent sections, source planning/
   state/tag/outline semantics and scoped final guards is recorded there;
   todo.txt GET export with source label/date gates, completion/priority/context
-  tokens and scoped final guards is recorded there; remaining 28
+  tokens and scoped final guards is recorded there; Taskwarrior GET JSON text
+  with selected sections, scoped annotations and control/NUL-safe SQLite reads
+  is recorded there; remaining 27
   external-format API routes, native field-model guards, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded

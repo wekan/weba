@@ -1,4 +1,10 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Taskwarrior export API: Add exact original JSON text, selected sections,
+  compact dates/UUIDs and scoped public annotations. Fix control-character JSON
+  quoting and preserve NUL text with guarded SQLite binary projections; verify
+  exact source bytes and direct access/error boundaries. Creation/other native
+  field and text models plus complete original parity remain open.
+
 - todo.txt export API: Add original plain text response and independent label/
   date selection. Preserve completion/priority/project/context/date/list tokens,
   Unicode whitespace and empty output; fix spaced contexts and terminal case

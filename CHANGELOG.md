@@ -2,6 +2,25 @@
 
 This work adds the following features and fixes:
 
+- Add GET `/api/boards/:id/export/taskwarrior` through the locked external
+  service, preserving original JSON text bytes and selected descriptions,
+  labels, dates and comments. Match deterministic numeric-ID UUIDs, first
+  priority/project, compact dates, scoped public annotations, Unicode blank
+  filtering and missing author/timestamp omission. Fix invalid control escapes
+  from the built-in Quote keyword and NUL truncation: use the canonical JSON
+  helper, byte-safe escaping, NUL-safe Unicode counts and guarded SQLite binary
+  text projections, retaining the normal path for other DB drivers. Compare
+  628 actual responses across thirteen routes with unchanged collector/formatters
+  and original server body/types, retaining 256-role and direct late-scope/token/
+  policy/public rollback, policy-before-lookup and opaque failure tests. Full
+  host tests pass (70 Python tests, 240 complete selected descriptor pairs and
+  80 archive/scope snapshots), as do both API builds, all 45 source/packaged
+  selected downloads and cached scope checks, five original Taskwarrior
+  contracts and original external export round-trips. Native
+  creation metadata, remaining 27 API renderers, other text/field models/
+  anonymization/security reporting and full original parity remain pending.
+  Thanks to xet7.
+
 - Add GET `/api/boards/:id/export/todotxt` through the locked external-export
   service with source `text/plain; charset=utf-8` bytes. Independently select
   labels and dates; preserve completion markers, first priorities and completed

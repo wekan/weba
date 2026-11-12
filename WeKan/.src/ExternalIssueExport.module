@@ -30,7 +30,7 @@ Public Function Read(reference As String, fields As String, Optional format As S
   Dim failure As String
   If Env["WEBA_API_REQUEST"] <> "1" Then Return Result(403, "Forbidden")
   ImportExportPolicy.RequireExport()
-  If ["github", "gitea", "forgejo", "gitlab", "trello", "deck", "kanboard", "markdown", "leo", "opml", "orgmode", "todotxt"].Find(format) < 0 Then Return Result(404, "Not found")
+  If ["github", "gitea", "forgejo", "gitlab", "trello", "deck", "kanboard", "markdown", "leo", "opml", "orgmode", "todotxt", "taskwarrior"].Find(format) < 0 Then Return Result(404, "Not found")
   boardId = AttachmentExport.BoardId(reference)
   db = WebDatabase.OpenConnection()
   If boardId <= 0 Or Not db.Find("kb_boards", "id=&1", boardId).Available Then Return Result(404, "Not found")
@@ -54,7 +54,9 @@ Public Function Read(reference As String, fields As String, Optional format As S
   ImportExportPolicy.Lock()
   db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
   Check(boardId, actor, isPublic)
-  If format = "todotxt" Then
+  If format = "taskwarrior" Then
+    text = BoardTaskwarriorExport.Build(boardId, db, ExternalExportFields.Parse(fields))
+  Else If format = "todotxt" Then
     text = BoardTodoTxtExport.Build(boardId, db, ExternalExportFields.Parse(fields))
   Else If format = "orgmode" Then
     text = BoardOrgModeExport.Build(boardId, db, ExternalExportFields.Parse(fields))

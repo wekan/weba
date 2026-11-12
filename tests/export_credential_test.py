@@ -22,7 +22,7 @@ class ExportCredentialTest(unittest.TestCase):
             self.assertFalse(server.is_attachment_export_path(path))
 
     def test_issue_route_scope_and_fields(self):
-        for name in ['github', 'gitea', 'forgejo', 'gitlab', 'trello', 'deck', 'kanboard', 'markdown', 'leo', 'opml', 'orgmode', 'todotxt']:
+        for name in ['github', 'gitea', 'forgejo', 'gitlab', 'trello', 'deck', 'kanboard', 'markdown', 'leo', 'opml', 'orgmode', 'todotxt', 'taskwarrior']:
             for suffix in ['', '/']:
                 self.assertTrue(server.is_issue_export_path('/api/boards/1/export/' + name + suffix))
         for path in ['/api/boards/1/export/unknown', '/api/boards/1/export/github//',
@@ -70,7 +70,7 @@ class ExportCredentialTest(unittest.TestCase):
                  ('unused&authToken[]=' + query_token, 'bad-query', ''),
                  ('', 'none', hashlib.sha256(header_token.encode()).hexdigest())]
         for value, state, digest in cases:
-            for path in ['/api/boards/1/attachments/2/export', '/api/boards/1/export/github', '/api/boards/1/export/gitea', '/api/boards/1/export/forgejo', '/api/boards/1/export/gitlab', '/api/boards/1/export/trello', '/api/boards/1/export/deck', '/api/boards/1/export/kanboard', '/api/boards/1/export/markdown', '/api/boards/1/export/leo', '/api/boards/1/export/opml', '/api/boards/1/export/orgmode', '/api/boards/1/export/todotxt']:
+            for path in ['/api/boards/1/attachments/2/export', '/api/boards/1/export/github', '/api/boards/1/export/gitea', '/api/boards/1/export/forgejo', '/api/boards/1/export/gitlab', '/api/boards/1/export/trello', '/api/boards/1/export/deck', '/api/boards/1/export/kanboard', '/api/boards/1/export/markdown', '/api/boards/1/export/leo', '/api/boards/1/export/opml', '/api/boards/1/export/orgmode', '/api/boards/1/export/todotxt', '/api/boards/1/export/taskwarrior']:
                 self.check_boundary(path, value, state, digest, query_token, header_token)
 
     def check_boundary(self, path, value, state, digest, query_token, header_token):

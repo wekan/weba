@@ -2,10 +2,22 @@
 Export
 Private $db As Connection
 Private $boardId As Integer
+Private $wanted As Collection
 
 Private Function TextValue(value As Variant) As String
   If IsNull(value) Then Return ""
   Return CStr(value)
+End
+
+Private Function ReadText(row As Result, field As String) As String
+  Dim value As Variant
+  If $db.Type = "sqlite3" Then
+    value = row[field & "_bytes"]
+    If IsNull(value) Then Return ""
+    If TypeOf(value) = gb.String Then Return value
+    Return value.Data
+  Endif
+  Return TextValue(row[field])
 End
 
 Private Function Whitespace(character As String) As Boolean
@@ -19,7 +31,7 @@ Private Function OneLine(value As Variant) As String
   Dim character As String
   Dim pendingSpace As Boolean
   Dim i As Integer
-  For i = 1 To String.Len(source)
+  For i = 1 To String.Len(Replace(source, Chr(0), "x"))
     character = String.Mid(source, i, 1)
     If Whitespace(character) Then
       pendingSpace = True
@@ -33,15 +45,49 @@ Private Function OneLine(value As Variant) As String
 End
 
 Private Function ClosedList(title As String) As Boolean
-  Dim lower As String = LCase(title)
-  Return InStr(lower, "done") > 0 Or InStr(lower, "closed") > 0 Or InStr(lower, "complete") > 0 Or InStr(lower, "archiv") > 0 Or InStr(lower, "finished") > 0
+  Dim code As Integer
+  Dim word As String
+  ' JavaScript's non-Unicode /i matches these ASCII literals only.
+  For code = 65 To 90
+    title = Replace(title, Chr(code), Chr(code + 32))
+  Next
+  For Each word In ["done", "closed", "complete", "archiv", "finished"]
+    If InStr(title, word) Then Return True
+  Next
+  Return False
+End
+
+Private Function TrimText(value As String) As String
+  Dim first As Integer = 1
+  Dim finish As Integer = String.Len(Replace(value, Chr(0), "x"))
+  While first <= finish
+    If Not Whitespace(String.Mid(value, first, 1)) Then Break
+    Inc first
+  Wend
+  While finish >= first
+    If Not Whitespace(String.Mid(value, finish, 1)) Then Break
+    Dec finish
+  Wend
+  If finish < first Then Return ""
+  Return String.Mid(value, first, finish - first + 1)
+End
+
+Private Function ProjectLabel(label As String) As Boolean
+  Dim i As Integer
+  Dim code As Integer
+  If Len(label) <= 8 Or Left(label, 8) <> "project:" Then Return False
+  For i = 1 To String.Len(Replace(label, Chr(0), "x"))
+    code = String.Code(String.Mid(label, i, 1))
+    If code = 10 Or code = 13 Or code = 8232 Or code = 8233 Then Return False
+  Next
+  Return True
 End
 
 Private Function Labels(value As Variant) As String[]
   Dim result As New String[]
   Dim label As String
   For Each label In Split(TextValue(value), ",")
-    label = Trim(label)
+    label = TrimText(label)
     If label Then result.Add(label)
   Next
   Return result
@@ -52,15 +98,15 @@ Private Function CompactEpoch(epoch As Long) As String
   Return Left(iso, 4) & Mid(iso, 6, 2) & Mid(iso, 9, 2) & "T" & Mid(iso, 12, 2) & Mid(iso, 15, 2) & Mid(iso, 18, 2) & "Z"
 End
 
-Private Function Quote(value As Variant) As String
+Private Function JsonQuote(value As Variant) As String
   Dim source As String = TextValue(value)
   Dim result As String = Chr(34)
   Dim character As String
   Dim code As Integer
   Dim i As Integer
-  For i = 1 To String.Len(source)
-    character = String.Mid(source, i, 1)
-    code = String.Code(character)
+  For i = 1 To Len(source)
+    character = Mid(source, i, 1)
+    code = Asc(character)
     Select code
       Case 8
         result &= Chr(92) & "b"
@@ -110,9 +156,9 @@ Private Function StringArrayProperty(key As String, values As String[]) As Strin
   Dim lines As New String[]
   Dim value As String
   Dim index As Integer
-  lines.Add(Quote(key) & ": [")
+  lines.Add(JsonQuote(key) & ": [")
   For Each value In values
-    lines.Add("  " & Quote(value) & If(index < values.Count - 1, ",", ""))
+    lines.Add("  " & JsonQuote(value) & If(index < values.Count - 1, ",", ""))
     Inc index
   Next
   lines.Add("]")
@@ -128,14 +174,20 @@ Private Function AnnotationProperty(cardId As Integer) As String
   Dim author As String
   Dim index As Integer
   Dim fieldIndex As Integer
-  comments = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "comment")
+  Dim query As String = "SELECT *"
+  ' The SQLite text conversion stops at NUL; its blob projection retains the
+  ' complete UTF-8 bytes. Keep the normal text path for other DB drivers.
+  If $db.Type = "sqlite3" Then query &= ",CAST(body AS BLOB) AS body_bytes"
+  query &= " FROM kb_entries WHERE board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id"
+  comments = $db.Exec(query, $boardId, cardId, "comment")
   For Each comments
-    text = TextValue(comments!body)
-    If Not Trim(text) Then Continue
+    text = ReadText(comments, "body")
+    If Not TrimText(text) Then Continue
     fields = New String[]
-    If TypeOf(comments!created_at) = gb.Date And Not IsNull(comments!created_at) Then fields.Add(Quote("entry") & ": " & Quote(CompactEpoch(ItemChanges.Epoch(comments!created_at))))
-    author = CardContent.AuthorName($boardId, cardId, "entry", CInt(comments!id))
-    fields.Add(Quote("description") & ": " & Quote(If(author, author & ": ", "") & text))
+    If TypeOf(comments!created_at) = gb.Date And Not IsNull(comments!created_at) Then fields.Add(JsonQuote("entry") & ": " & JsonQuote(CompactEpoch(ItemChanges.Epoch(comments!created_at))))
+    BoardAccess.RequireCard($boardId, cardId)
+    author = RetiredAuthors.DisplayName("entry", comments!id, TextValue(comments!author))
+    fields.Add(JsonQuote("description") & ": " & JsonQuote(If(author, author & ": ", "") & text))
     lines = New String[]
     lines.Add("{")
     fieldIndex = 0
@@ -148,7 +200,7 @@ Private Function AnnotationProperty(cardId As Integer) As String
   Next
   If Not entries.Count Then Return ""
   lines = New String[]
-  lines.Add(Quote("annotations") & ": [")
+  lines.Add(JsonQuote("annotations") & ": [")
   index = 0
   For Each text In entries
     lines.Add("  " & Replace(text, Chr(10), Chr(10) & "  ") & If(index < entries.Count - 1, ",", ""))
@@ -160,43 +212,46 @@ End
 
 Private Function TaskJson(card As Result) As String
   Dim properties As New String[]
-  Dim parsedLabels As String[] = Labels(card!labels)
+  Dim parsedLabels As String[] = Labels("")
   Dim tags As New String[]
   Dim label As String
   Dim priority As String
   Dim project As String
   Dim value As String
-  Dim dates As Collection = CardDates.ReadDates($boardId, card!id)
-  Dim listTitle As String = TextValue(card!list_title)
+  Dim dates As New Collection
+  Dim listTitle As String = ReadText(card, "list_title")
   Dim done As Boolean = ClosedList(listTitle)
   Dim annotation As String
   Dim lines As New String[]
   Dim index As Integer
+  If ExternalExportFields.Wants($wanted, "labels") Then parsedLabels = Labels(ReadText(card, "labels"))
+  If ExternalExportFields.Wants($wanted, "dates") Then dates = CardDates.ReadDates($boardId, card!id)
   For Each label In parsedLabels
     If Len(label) = 10 And Left(label, 9) = "priority:" And InStr("HML", Right(label, 1)) Then
       If Not priority Then priority = Right(label, 1)
-    Else If Left(label, 8) = "project:" And Len(label) > 8 Then
+    Else If ProjectLabel(label) Then
       If Not project Then project = Mid(label, 9)
     Else
       value = Replace(OneLine(label), " ", "_")
       If value Then tags.Add(value)
     Endif
   Next
-  properties.Add(Quote("uuid") & ": " & Quote(Uuid(card!id)))
-  properties.Add(Quote("status") & ": " & Quote(If(done, "completed", "pending")))
-  value = OneLine(card!title)
-  properties.Add(Quote("description") & ": " & Quote(If(value, value, "Untitled")))
-  If done And dates.Exist("endAt") Then properties.Add(Quote("end") & ": " & Quote(CompactEpoch(dates["endAt"])))
-  If dates.Exist("dueAt") Then properties.Add(Quote("due") & ": " & Quote(CompactEpoch(dates["dueAt"])))
-  If dates.Exist("startAt") Then properties.Add(Quote("scheduled") & ": " & Quote(CompactEpoch(dates["startAt"])))
-  If project Then properties.Add(Quote("project") & ": " & Quote(project))
-  If priority Then properties.Add(Quote("priority") & ": " & Quote(priority))
+  properties.Add(JsonQuote("uuid") & ": " & JsonQuote(Uuid(card!id)))
+  properties.Add(JsonQuote("status") & ": " & JsonQuote(If(done, "completed", "pending")))
+  value = OneLine(ReadText(card, "title"))
+  properties.Add(JsonQuote("description") & ": " & JsonQuote(If(value, value, "Untitled")))
+  If done And dates.Exist("endAt") Then properties.Add(JsonQuote("end") & ": " & JsonQuote(CompactEpoch(dates["endAt"])))
+  If dates.Exist("dueAt") Then properties.Add(JsonQuote("due") & ": " & JsonQuote(CompactEpoch(dates["dueAt"])))
+  If dates.Exist("startAt") Then properties.Add(JsonQuote("scheduled") & ": " & JsonQuote(CompactEpoch(dates["startAt"])))
+  If project Then properties.Add(JsonQuote("project") & ": " & JsonQuote(project))
+  If priority Then properties.Add(JsonQuote("priority") & ": " & JsonQuote(priority))
   If tags.Count Then properties.Add(StringArrayProperty("tags", tags))
-  annotation = AnnotationProperty(card!id)
+  If ExternalExportFields.Wants($wanted, "comments") Then annotation = AnnotationProperty(card!id)
   If annotation Then properties.Add(annotation)
-  If listTitle Then properties.Add(Quote("wekanlist") & ": " & Quote(listTitle))
-  value = TextValue(card!description)
-  If value Then properties.Add(Quote("wekandescription") & ": " & Quote(value))
+  If listTitle Then properties.Add(JsonQuote("wekanlist") & ": " & JsonQuote(listTitle))
+  value = ""
+  If ExternalExportFields.Wants($wanted, "description") Then value = ReadText(card, "description")
+  If value Then properties.Add(JsonQuote("wekandescription") & ": " & JsonQuote(value))
   lines.Add("{")
   For Each value In properties
     lines.Add("  " & Replace(value, Chr(10), Chr(10) & "  ") & If(index < properties.Count - 1, ",", ""))
@@ -206,14 +261,19 @@ Private Function TaskJson(card As Result) As String
   Return lines.Join(Chr(10))
 End
 
-Public Function Build(boardId As Integer, db As Connection) As String
+Public Function Build(boardId As Integer, db As Connection, Optional wanted As Collection) As String
   Dim tasks As New String[]
   Dim cards As Result
   Dim task As String
+  Dim query As String
+  $wanted = wanted
   $db = db
   $boardId = boardId
   BoardAccess.RequireContainer(boardId, "board", boardId)
-  cards = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  query = "SELECT c.*,l.title AS list_title"
+  If db.Type = "sqlite3" Then query &= ",CAST(c.title AS BLOB) AS title_bytes,CAST(c.labels AS BLOB) AS labels_bytes,CAST(c.description AS BLOB) AS description_bytes,CAST(l.title AS BLOB) AS list_title_bytes"
+  query &= " FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id"
+  cards = db.Exec(query, boardId, "card", False)
   For Each cards
     task = TaskJson(cards)
     tasks.Add("  " & Replace(task, Chr(10), Chr(10) & "  "))

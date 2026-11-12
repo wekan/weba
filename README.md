@@ -3340,12 +3340,12 @@ current source tool formats now have native selected-export entries, checked
 against source EXTERNAL_EXPORT_FORMATS. Native model gaps and complete original
 UI/API/security parity remain pending.
 
-With `WITH_API=true`, GitHub/Gitea/Forgejo/GitLab issue, Trello board, Deck stack, Kanboard task, Markdown text, Leo XML, OPML, Org mode and todo.txt exports are available at
-`GET /api/boards/ID/export/github` (or `gitea` / `forgejo` / `gitlab` / `trello` / `deck` / `kanboard` / `markdown` / `leo` / `opml` / `orgmode` / `todotxt`). Private boards require
+With `WITH_API=true`, GitHub/Gitea/Forgejo/GitLab issue, Trello board, Deck stack, Kanboard task, Markdown text, Leo XML, OPML, Org mode, todo.txt and Taskwarrior exports are available at
+`GET /api/boards/ID/export/github` (or `gitea` / `forgejo` / `gitlab` / `trello` / `deck` / `kanboard` / `markdown` / `leo` / `opml` / `orgmode` / `todotxt` / `taskwarrior`). Private boards require
 a valid bearer or source-compatible query credential and full-board read access;
 public boards follow the source anonymous path. The `fields=labels,dates,description` query selects sections;
 unknown/empty/structured selections fall back as
-source does. Native JSON is written directly so empty strings survive. Other 28
+source does. Native JSON is written directly so empty strings survive. Other 27
 format API routes, native field-security models, anonymization/security reporting
 and complete original UI/API/security parity remain pending.
 
@@ -3425,3 +3425,14 @@ Spaced contexts normalize after the @ prefix. Native creation dates remain
 pending, so no completion/creation date pair is invented. Empty exports have an
 empty body. Shared credentials, policy, full-board and final transaction checks
 apply before the text is returned.
+
+Taskwarrior API export returns the original formatted JSON text with
+`application/json; charset=utf-8`. Description, labels, dates and comments select
+independently. Numeric card IDs map to deterministic UUIDs; priority/project use
+the first source-compatible label. Annotations preserve literal nonblank text,
+omit missing dates/authors and use scoped public provenance. Control characters
+are escaped as JSON; guarded SQLite binary projections preserve embedded NUL
+and complete UTF-8 text, with the normal text path retained for other drivers.
+Native creation metadata and other-driver conformance stay pending. The original
+formatter does not write dependency fields. Shared full-board/policy/credential
+and final transaction checks apply before returning the text.

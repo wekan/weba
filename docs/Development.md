@@ -2382,3 +2382,33 @@ shared 256-role and credential-scrubbing tests remain. SQL ID/label/lane/entry
 adapters, absent native creation, empty planning models/no-op anonymization,
 security reporting, remaining 28 API renderers and full original UI/API/security
 parity remain open.
+
+Taskwarrior shares the locked API at `GET /api/boards/:id/export/taskwarrior`.
+It returns original formatted JSON text, not a decoded/re-encoded document, with
+application/json UTF-8 type. Optional description/labels/dates/comments reset per
+Build call; selected UI exports retain all-fields defaults. Numeric IDs retain
+source deterministic UUIDs, first H/M/L priority/project rules and compact dates.
+Multiline project labels follow source regex behavior and become tags. Public
+annotations use already scoped entry authors; Unicode-only blank notes are
+excluded and missing author/timestamps omit prefix/entry fields independently.
+
+Rich fixtures exposed two existing native text faults: bare Quote calls invoked
+the Gambas built-in, emitting invalid JSON control escapes; SQLite text conversion
+truncated at NUL. Renamed JsonQuote calls use the actual canonical JSON encoder,
+iterating bytes to preserve complete UTF-8/control text. Unicode helper counts
+replace NUL with a one-character sentinel only for counting. SQLite-only binary
+projections recover complete title/labels/description/list/comment text; other
+DB types retain their text path. Source comparisons include NUL-leading notes,
+embedded NUL titles/labels/descriptions, control/backslash/quote/astral content,
+legacy missing author/dates, negative epochs, independent masks and empty JSON.
+All 628 actual responses across thirteen formats match unchanged source collector/
+formatters and original server success bodies/types, with shared 256-role and
+direct Taskwarrior rollback/policy-before-lookup/opaque failure checks retained.
+Native creation, other renderer NUL/text fidelity and other DB conformance,
+SQL/label/lane/entry adapters, empty planning/no-op anonymization/security reports,
+remaining 27 API renderers and full original UI/API/security parity stay open.
+
+The full native suite exposed string-valued projections as well as Blob values.
+ReadText now accepts null, string and Blob results. A dedicated API regression
+starts with missing list metadata followed by a live list row, verifying mixed
+projection values in both builds.
