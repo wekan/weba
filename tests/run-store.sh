@@ -4,7 +4,7 @@ set -eu
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 work=$(mktemp -d "$TMPDIR/weba-test.XXXXXX")
 trap 'rm -rf -- "$work"' EXIT HUP INT TERM
-for test in AuthTest UserDeletionTest SessionGenerationTest NativeAuthTest PasswordPolicyTest StoreTest DragStoreTest WorkspaceTest BoardAccessTest BoardViewPreferenceTest DragHandlePreferenceTest BoardViewPolicyTest InstanceFeaturesTest BoardViewTransferTest SignedBoardViewsTest BoardVisibilityTest BoardVisibilityReadTest PublicBoardCatalogTest PublicAttachmentReadTest GuestBoardReadTest GuestCommandsTest InactiveMembersTest AssignedAccessTest CombinedScopeTest BoardLiveTest OverviewLiveTest BoardCatalogTest BoardOrderTest BoardSpacesTest WorkspaceIconColorTest BoardSpacePresentationTest BoardSpaceDropTest BoardDropTest BoardBatchDropTest BoardSelectionTest BoardSelectedStarsTest HomeBoardTest BoardRouteTest CardRouteTest BoardArchiveTest HomeDropTest HomeCatalogTest BoardPurgeTest ListDeletionTest AttachmentLifecycleTest TransferPolicyTest BoardAttachmentAllowanceTest BoardCopyAuthorizationTest BoardCopiesTest BoardBatchExportTest CachedExportScopeTest ExternalArchiveExportTest RedmineExportTest TasksOrgExportTest MondayExportTest BusinessmapExportTest SuperProductivityExportTest TaigaExportTest VikunjaExportTest WrikeWorkflowExportTest WrikeExportTest TeamworkExportTest QuireExportTest NotionExportTest DeckExportTest OpenProjectExportTest ExportNumberTest CopyOptionsTest BoardCreationTest MarkdownPolicyTest MarkdownTitlesTest ExternalLinkPolicyTest ImportExportPolicyTest AttachmentExportNativeTest SingleBoardCopyTest CardDraftTest DetailLiveTest PeopleLiveTest RelationLabelTest CardMembersTest NativeAssigneeTest CardDatesTest CardArchiveTest ItemChangesTest CardContentTest WorkspaceActionsTest BoardTransferTest ExportFieldsTest; do
+for test in AuthTest UserDeletionTest SessionGenerationTest NativeAuthTest PasswordPolicyTest StoreTest DragStoreTest WorkspaceTest BoardAccessTest BoardViewPreferenceTest DragHandlePreferenceTest BoardViewPolicyTest InstanceFeaturesTest BoardViewTransferTest SignedBoardViewsTest BoardVisibilityTest BoardVisibilityReadTest PublicBoardCatalogTest PublicAttachmentReadTest GuestBoardReadTest GuestCommandsTest InactiveMembersTest AssignedAccessTest CombinedScopeTest BoardLiveTest OverviewLiveTest BoardCatalogTest BoardOrderTest BoardSpacesTest WorkspaceIconColorTest BoardSpacePresentationTest BoardSpaceDropTest BoardDropTest BoardBatchDropTest BoardSelectionTest BoardSelectedStarsTest HomeBoardTest BoardRouteTest CardRouteTest BoardArchiveTest HomeDropTest HomeCatalogTest BoardPurgeTest ListDeletionTest AttachmentLifecycleTest TransferPolicyTest BoardAttachmentAllowanceTest BoardCopyAuthorizationTest BoardCopiesTest BoardBatchExportTest CachedExportScopeTest ExternalArchiveExportTest RedmineExportTest TasksOrgExportTest MondayExportTest BusinessmapExportTest SuperProductivityExportTest TaigaExportTest VikunjaExportTest WrikeWorkflowExportTest WrikeExportTest TeamworkExportTest QuireExportTest NotionExportTest DeckExportTest OpenProjectExportTest GithubExportTest ExportNumberTest CopyOptionsTest BoardCreationTest MarkdownPolicyTest MarkdownTitlesTest ExternalLinkPolicyTest ImportExportPolicyTest AttachmentExportNativeTest SingleBoardCopyTest CardDraftTest DetailLiveTest PeopleLiveTest RelationLabelTest CardMembersTest NativeAssigneeTest CardDatesTest CardArchiveTest ItemChangesTest CardContentTest WorkspaceActionsTest BoardTransferTest ExportFieldsTest; do
   [ -f "$root/tests/$test.module" ] || continue
   project="$work/$test"
   mkdir -p "$project"
@@ -14,6 +14,7 @@ for test in AuthTest UserDeletionTest SessionGenerationTest NativeAuthTest Passw
   cp "$root/tests/$test.module" "$project/.src/$test.module"
   if [ "$test" = VikunjaExportTest ]; then cp "$root/tests/VikunjaCasesTest.module" "$project/.src/"; fi
   if [ "$test" = OpenProjectExportTest ]; then cp "$root/tests/OpenProjectCasesTest.module" "$project/.src/"; fi
+  if [ "$test" = GithubExportTest ]; then cp "$root/tests/GithubCasesTest.module" "$root/tests/GithubStatesTest.module" "$project/.src/"; fi
   if [ "$test" = DeckExportTest ]; then cp "$root/tests/DeckCasesTest.module" "$project/.src/"; fi
   if [ "$test" = NotionExportTest ]; then cp "$root/tests/NotionCasesTest.module" "$project/.src/"; fi
   if [ "$test" = QuireExportTest ]; then cp "$root/tests/QuireCasesTest.module" "$root/tests/QuireMatrixTest.module" "$project/.src/"; fi
@@ -22,7 +23,9 @@ for test in AuthTest UserDeletionTest SessionGenerationTest NativeAuthTest Passw
   if [ "$test" = TaigaExportTest ]; then cp "$root/tests/TaigaCasesTest.module" "$project/.src/"; fi
   if [ "$test" = BoardVisibilityTest ]; then cp "$root/tests/BoardVisibilityMatrix.module" "$project/.src/BoardVisibilityMatrix.module"; fi
   "${GBC:-gbc3}" -j 1 -a "$project"
-  if [ "$test" = OpenProjectExportTest ]; then
+  if [ "$test" = GithubExportTest ]; then
+    WEBA_TEST_GITHUB_PROJECT="$project" "${NODE:-node}" "$root/tests/github-export-conformance.test.cjs"
+  elif [ "$test" = OpenProjectExportTest ]; then
     WEBA_TEST_OPENPROJECT_PROJECT="$project" "${NODE:-node}" "$root/tests/openproject-export-conformance.test.cjs"
   elif [ "$test" = DeckExportTest ]; then
     WEBA_TEST_DECK_PROJECT="$project" "${NODE:-node}" "$root/tests/deck-export-conformance.test.cjs"

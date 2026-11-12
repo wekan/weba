@@ -1964,3 +1964,22 @@ harness compares ordered two-board downloads with source output in source and
 packaged applications. Native numeric IDs, stored label/member models and absent
 creator/creation/Scrum data remain explicit adapters; complete original parity
 is pending.
+
+GitHub selected export uses `BoardGithubExport` beneath the existing locked
+`ExportChecked` full-read/policy/session boundary and private batch publication
+scope recheck. It emits a plain source-shaped issue array, preserving active card
+order, literal titles/descriptions, repeated label-name objects and optional UTC
+due dates. The source non-Unicode `/done|closed|complete|archiv|finished/i` rule is
+implemented with ASCII-only lowercasing and substring matching, preserving both
+surprising matches (`incomplete`, `undone`) and Unicode nonmatches. Native comma
+label splitting/ECMAScript whitespace trimming and numeric IDs are explicit
+storage adapters. No unused custom/checklist/people/comment/WIP model is read.
+
+`GithubExportTest`, `GithubCasesTest` and `GithubStatesTest` compare 27 actual
+native batch/direct outputs with unchanged `formatters.github`, covering rich
+Unicode text, repeated labels, empty/legacy/missing-list cases, all terminal
+substrings, casing and Unicode lookalikes, optional/pre-epoch dates, irrelevant
+malformed custom/WIP independence, archive exclusion, disabled export and
+assigned-only full-read denial. The browser harness downloads exact ordered
+per-board JSON and compares to source in both source and packaged applications.
+Complete original import routes/model options/security integration remain pending.

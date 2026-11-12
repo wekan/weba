@@ -1,4 +1,9 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- GitHub selected export: Add source issue-array JSON ZIP with literal text,
+  exact ASCII terminal-list substring states, repeated labels and optional due
+  dates. Verify 27 native/source outputs and full-read/policy gates. Remaining
+  formats and complete original parity stay pending.
+
 - OpenProject selected export: Add source HAL JSON ZIP with sequential work
   package IDs, typed custom schemas, people/status/parent links, comments and
   optional dates. Verify source/renderer boundaries, pending numeric repair

@@ -2,6 +2,19 @@
 
 This work adds the following features and fixes:
 
+- Add GitHub issue-array JSON as the thirty-third selected-board tool export.
+  Download `wekan-boards-github.zip` with source literal titles/bodies,
+  ASCII-insensitive terminal-list substring states, repeated label objects and
+  optional due dates. Read only the needed active card/list/label/date models;
+  unrelated malformed custom/WIP values do not block export. Retain locked
+  full-read/policy/session and cached-scope checks. All 27 rich, empty, legacy,
+  missing-list and state/Unicode/date native outputs match unchanged source.
+  All 11 original GitHub import contracts, complete host tests (69 Python
+  tests and 66 archive/scope snapshots), and all 38 source/packaged browser
+  downloads with cached revocation/regrant pass. Seven remaining tool formats
+  and full original UI/API/security parity remain
+  pending. Thanks to xet7.
+
 - Add OpenProject HAL JSON as the thirty-second selected-board tool export.
   Download `wekan-boards-openproject.zip` with source sequential work-package
   IDs, ordered typed custom schemas, status/people/parent links, comments and

@@ -1,0 +1,51 @@
+Public Sub Main()
+  Dim result As New Variant[]
+  Dim sample As Collection
+  Dim board As Collection
+  Dim lists As Variant[]
+  Dim items As Variant[]
+  Dim item As Collection
+  Dim row As Collection
+  Dim rows As Result
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim labels As String[]
+  Dim mode As String
+  WebDatabase.Register("github-cases", "x")
+  Session["username"] = "github-cases"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("github-cases")
+  For Each mode In ["empty", "legacy-empty", "orphan-empty-title"]
+    boardId = KanbanStore.AddBoard(mode)
+    items = New Variant[]
+    If mode = "legacy-empty" Then WebDatabase.OpenConnection().Exec("DELETE FROM kb_lists WHERE board_id=&1", boardId)
+    If mode = "orphan-empty-title" Then
+      cardId = KanbanStore.SaveCard(boardId, 0, "Orphan Ω", "literal <&>", "Default", "Todo", "", "", "")
+      WebDatabase.OpenConnection().Exec("DELETE FROM kb_card_lists WHERE board_id=&1 AND card_id=&2", boardId, cardId)
+      WebDatabase.OpenConnection().Exec("UPDATE kb_lists SET title=&1 WHERE board_id=&2 AND title=&3", "", boardId, "Todo")
+      item = New Collection
+      item.Add(CStr(cardId), "cardId")
+      item.Add("Orphan Ω", "title")
+      item.Add("literal <&>", "description")
+      item.Add("", "listTitle")
+      labels = New String[]
+      item.Add(labels, "labels")
+      items.Add(item)
+    Endif
+    lists = New Variant[]
+    rows = WebDatabase.OpenConnection().Find("kb_lists", "board_id=&1 ORDER BY lane,sort_order,id", boardId)
+    For Each rows
+      row = New Collection
+      row.Add(CStr(rows!title), "title")
+      lists.Add(row)
+    Next
+    board = New Collection
+    board.Add(mode, "title")
+    sample = New Collection
+    sample.Add(board, "board")
+    sample.Add(lists, "lists")
+    sample.Add(items, "items")
+    sample.Add(BoardTransfer.ExportActiveBoardGithub(boardId), "actual")
+    result.Add(sample)
+  Next
+  Print JSON.Encode(result)
+End

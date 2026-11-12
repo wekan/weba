@@ -3288,3 +3288,10 @@ work packages with sequential IDs, typed custom-field schemas, status and people
 links, parent links, comments and optional dates. Explicit format binding keeps
 native JSON exports unchanged. Native Scrum/creation/creator models and complete
 original UI/API/security parity remain pending.
+
+Selected boards also export **GitHub issue JSON** in `wekan-boards-github.zip`.
+Each `board-ID.json` contains an issue array with title, body, source open/closed
+state, label objects and optional due date. The state rule matches terminal-name
+substrings, so `incomplete` and `undone` are closed just as in WeKan's source.
+Archived cards are excluded; unrelated custom fields and WIP settings are not
+read. Remaining tools and complete original UI/API/security parity stay pending.

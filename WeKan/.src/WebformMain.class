@@ -5288,3 +5288,7 @@ End
 Public Sub ExportSelectedOpenProject_Click()
   RunSelectedExport("openproject")
 End
+
+Public Sub ExportSelectedGithub_Click()
+  RunSelectedExport("github")
+End
