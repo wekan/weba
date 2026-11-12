@@ -197,7 +197,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   with independently gated notes/people/dates and scoped public authors is
   recorded there too; Trello GET board export with source card-section gates,
   retained palette metadata and native list/card references is recorded there;
-  remaining 35
+  Deck GET stack export with title grouping, independently selected sections
+  and scoped public comments is recorded there; remaining 34
   external-format API routes, native field-model guards, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded

@@ -1,4 +1,9 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Deck export API: Add source stack JSON with independently selected sections,
+  duplicate/empty-title grouping, scoped public comments and legacy timestamp
+  omission. Verify source collector/formatter and existing security boundaries;
+  other routes/native model/full original parity remain pending.
+
 - Trello export API: Add source GET board JSON with per-card section gates,
   retained palette/list metadata, null deselected dates and missing-reference
   omission. Verify source collector/formatter and shared security boundaries;

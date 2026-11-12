@@ -2203,3 +2203,24 @@ and opaque failure tests apply. Source neutral documents/user names/label IDs,
 empty planning and no-op anonymization remain explicit oracle adapters.
 Other 35 format API renderers and complete original model/UI/API/security parity
 remain pending.
+
+Deck now shares the external API boundary at
+`GET /api/boards/:id/export/deck`. Its native formatter accepts optional source
+sections, while selected UI exports retain their all-fields default. Labels stay
+present as arrays; description may be empty; deselected date/people/comment fields
+are omitted. End dates do not depend on terminal status, and note timestamps do
+not depend on selecting card dates. Duplicate stack titles repeat matching cards;
+empty-titled stacks match missing links through the existing empty-title adapter.
+Native comma-label trimming now uses ECMAScript whitespace consistently.
+
+Public note authors use the scoped entry row after a card access check. Missing
+legacy note timestamps are omitted, matching source undefined fields. Workspace
+session requirements stay unchanged. API fixtures now verify duplicate stack
+metadata, blank-title/missing-link grouping, missing timestamps, public comments/
+full output and Unicode label edges. All 152 actual bodies across six routes
+match unchanged parseExportFields/collect/gateItem/formatters with explicit SQL/
+label/user-name/empty-planning/no-op-anonymization adapters. The shared 256-role,
+no-write, policy-before-lookup, credential scrubbing, late scope/token/policy/public
+rollback and opaque failure tests remain in place. Native creator/creation export
+parity and other models, remaining 34 API renderers and complete original
+UI/API/security parity remain pending.

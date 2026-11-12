@@ -22,7 +22,7 @@ def main():
     fixture('ImportExportPolicyFixture',{'WEBA_EXCHANGE_MODE':'save','WEBA_EXCHANGE_FLAGS':'{"import":false,"export":false}'})
     seeded=fixture('IssueApiFixture',{'WEBA_ISSUE_BOARD':str(board),'WEBA_ISSUE_PERMISSION':'private','WEBA_ISSUE_SEED':'1','WEBA_ISSUE_CARD':str(f['cardId'])})
     with sqlite3.connect(Path(os.environ['WEBA_DB_HOST'])/os.environ['WEBA_DB_NAME']) as db:
-        db.execute('UPDATE kb_cards SET description=?,labels=?,due_day=? WHERE id=?',('<literal> Ω\nquote "', 'one,one, Ω','2026-11-14',f['cardId']))
+        db.execute('UPDATE kb_cards SET description=?,labels=?,due_day=? WHERE id=?',('<literal> Ω\nquote "', '\u00a0one\ufeff,one, Ω','2026-11-14',f['cardId']))
         db.execute('UPDATE kb_lists SET title=? WHERE board_id=? AND title=?',('incomplete',board,'Todo'));db.commit()
         items=[{'title':'Retained attachments','description':'<literal> Ω\nquote "','listTitle':'incomplete','labels':['one','one','Ω'],'dueAt':'2026-11-14T00:00:00.000Z','endAt':'2026-11-13T01:02:03.004Z','owner':'rest-file-assigned','assignees':['rest-member','rest-file-assigned'],'comments':seeded['comments']}, {'title':'Unassigned attachments','description':'','listTitle':'incomplete','labels':[]}]
         active_cards=db.execute('SELECT c.id,cl.list_id FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id WHERE c.board_id=? AND c.archived=0 ORDER BY c.id',(board,)).fetchall()
@@ -34,7 +34,7 @@ def main():
         def snapshot():
             names=[row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table' AND (name LIKE 'kb_%' OR name IN ('api_tokens','import_export_settings','users'))")]
             return {name:sorted(db.execute('SELECT * FROM '+name).fetchall(),key=repr) for name in names}
-        for fmt in ['github','gitea','forgejo','gitlab','trello']:
+        for fmt in ['github','gitea','forgejo','gitlab','trello','deck']:
             url=f'/api/boards/{board}/export/{fmt}'
             status,data,headers=call(url,token=owner);assert status==200,(status,data)
             assert headers['Cache-Control']=='no-store' and headers['X-Content-Type-Options']=='nosniff'
@@ -68,6 +68,26 @@ def main():
                 orphan_items[0]['listTitle']=''
                 cases.append({'format':fmt,'fields':None,'items':orphan_items,'actual':data})
                 db.execute('INSERT INTO kb_card_lists(board_id,card_id,list_id) VALUES(?,?,?)',(board,f['cardId'],f['listId']));db.commit()
+            if fmt=='deck':
+                other_list=next(row for row in source_lists if row['title']=='Doing')
+                db.execute('UPDATE kb_lists SET title=? WHERE board_id=? AND id=?',('incomplete',board,int(other_list['_id'])));db.commit()
+                status,data=pair(url,token=owner);assert status==200
+                repeated=[stack for stack in data['stacks'] if stack['title']=='incomplete'];assert len(repeated)==2 and all(len(stack['cards'])==2 for stack in repeated)
+                cases.append({'format':fmt,'fields':None,'items':items,'lists':[{**row,'title':'incomplete' if row['_id']==other_list['_id'] else row['title']} for row in source_lists],'actual':data})
+                db.execute('UPDATE kb_lists SET title=? WHERE board_id=? AND id=?',('Doing',board,int(other_list['_id'])));db.commit()
+                db.execute('DELETE FROM kb_card_lists WHERE board_id=? AND card_id=?',(board,f['cardId']))
+                db.execute('UPDATE kb_lists SET title=? WHERE board_id=? AND id=?',('',board,f['listId']));db.commit()
+                status,data=pair(url,token=owner);assert status==200 and len(next(stack for stack in data['stacks'] if stack['title']=='')['cards'])==2
+                orphan_items=[{**{key:value for key,value in item.items() if index!=0 or key!='listId'},'listTitle':''} for index,item in enumerate(items)]
+                cases.append({'format':fmt,'fields':None,'items':orphan_items,'lists':[{**row,'title':'' if row['_id']==str(f['listId']) else row['title']} for row in source_lists],'actual':data})
+                db.execute('INSERT INTO kb_card_lists(board_id,card_id,list_id) VALUES(?,?,?)',(board,f['cardId'],f['listId']))
+                db.execute('UPDATE kb_lists SET title=? WHERE board_id=? AND id=?',('incomplete',board,f['listId']));db.commit()
+                note_id,created=db.execute("SELECT id,created_at FROM kb_entries WHERE board_id=? AND card_id=? AND kind='comment' ORDER BY id LIMIT 1",(board,f['cardId'])).fetchone()
+                db.execute('UPDATE kb_entries SET created_at=NULL WHERE id=?',(note_id,));db.commit()
+                status,data=pair(url,token=owner);assert status==200 and 'creationDateTime' not in data['stacks'][0]['cards'][0]['comments'][0]
+                legacy_items=[dict(item) for item in items];legacy_items[0]['comments']=[{key:value for key,value in note.items() if index!=0 or key!='date'} for index,note in enumerate(items[0]['comments'])]
+                cases.append({'format':fmt,'fields':None,'items':legacy_items,'actual':data})
+                db.execute('UPDATE kb_entries SET created_at=? WHERE id=?',(created,note_id));db.commit()
             if fmt=='gitlab':
                 db.execute('UPDATE kb_lists SET title=? WHERE board_id=? AND id=?',('Doing',board,f['listId']));db.commit()
                 status,data=pair(url,token=owner);assert status==200
@@ -104,6 +124,11 @@ def main():
             status,data=pair(url+suffix);assert status==200,(status,data)
             cases.append({'format':'github','fields':None,'items':items,'actual':data})
         assert pair(url,token=assigned)[0]==200
+        deck_url=f'/api/boards/{board}/export/deck'
+        for fields in [None,'comments']:
+            query='?authToken=bad'+('' if fields is None else '&fields='+fields)
+            status,data=pair(deck_url+query);assert status==200
+            cases.append({'format':'deck','fields':fields,'items':items,'actual':data})
         trello_url=f'/api/boards/{board}/export/trello'
         status,data=pair(trello_url+'?fields=people&authToken=bad');assert status==200
         assert data['labels'] and all(not card['idLabels'] and card['due'] is None and card['desc']=='' for card in data['cards'])
@@ -130,7 +155,7 @@ def main():
         sample.setdefault('board',source_board);sample.setdefault('lists',source_lists)
     Path(os.environ['WEBA_TEST_PROJECT'],'issue-export-cases.json').write_text(json.dumps(cases))
     Path(os.environ['WEBA_TEST_PROJECT'],'issue-export-roles.json').write_text(json.dumps(role_cases))
-    print('Issue export HTTP: five source routes, public/private/query-bearer auth precedence, field selections, archive reads, no writes, assigned-only/global-admin denial, all 256 raw role sets, late member/token/policy/public rollback and opaque failure passed')
+    print('Issue export HTTP: six source routes, public/private/query-bearer auth precedence, field selections, archive reads, no writes, assigned-only/global-admin denial, all 256 raw role sets, late member/token/policy/public rollback and opaque failure passed')
 try:main()
 except Exception as error:
     message=traceback.format_exc()+"\nLast response: "+repr(last)

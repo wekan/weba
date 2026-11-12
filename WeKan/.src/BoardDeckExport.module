@@ -5,7 +5,27 @@ Private Function TextValue(value As Variant) As String
   Return CStr(value)
 End
 
-Public Function Build(boardId As Integer, db As Connection) As String
+Private Function Whitespace(character As String) As Boolean
+  Dim code As Integer = String.Code(character)
+  Return (code >= 9 And code <= 13) Or code = 32 Or code = 160 Or code = 5760 Or (code >= 8192 And code <= 8202) Or code = 8232 Or code = 8233 Or code = 8239 Or code = 8287 Or code = 12288 Or code = 65279
+End
+
+Private Function TrimText(value As String) As String
+  Dim first As Integer = 1
+  Dim finish As Integer = String.Len(value)
+  While first <= finish
+    If Not Whitespace(String.Mid(value, first, 1)) Then Break
+    Inc first
+  Wend
+  While finish >= first
+    If Not Whitespace(String.Mid(value, finish, 1)) Then Break
+    Dec finish
+  Wend
+  If finish < first Then Return ""
+  Return String.Mid(value, first, finish - first + 1)
+End
+
+Public Function Build(boardId As Integer, db As Connection, Optional wanted As Collection) As String
   Dim output As New Collection
   Dim stacks As New Variant[]
   Dim cards As New Variant[]
@@ -35,46 +55,53 @@ Public Function Build(boardId As Integer, db As Connection) As String
     For Each rows
       card = New Collection
       card.Add(TextValue(rows!title), "title")
-      card.Add(TextValue(rows!description), "description")
-      dates = CardDates.ReadDates(boardId, rows!id)
-      If dates.Exist("dueAt") Then card.Add(CardDates.Iso(dates["dueAt"]), "duedate")
-      If dates.Exist("endAt") Then card.Add(CardDates.Iso(dates["endAt"]), "done")
+      card.Add(If(ExternalExportFields.Wants(wanted, "description"), TextValue(rows!description), ""), "description")
+      If ExternalExportFields.Wants(wanted, "dates") Then
+        dates = CardDates.ReadDates(boardId, rows!id)
+        If dates.Exist("dueAt") Then card.Add(CardDates.Iso(dates["dueAt"]), "duedate")
+        If dates.Exist("endAt") Then card.Add(CardDates.Iso(dates["endAt"]), "done")
+      Endif
       labels = New Variant[]
-      For Each label In Split(TextValue(rows!labels), ",")
-        label = Trim(label)
-        If Not label Then Continue
-        item = New Collection
-        item.Add(label, "title")
-        labels.Add(item)
-      Next
+      If ExternalExportFields.Wants(wanted, "labels") Then
+        For Each label In Split(TextValue(rows!labels), ",")
+          label = TrimText(label)
+          If Not label Then Continue
+          item = New Collection
+          item.Add(label, "title")
+          labels.Add(item)
+        Next
+      Endif
       card.Add(labels, "labels")
-      people = BoardAccess.Assignees(boardId, rows!id)
-      For Each person In BoardAccess.CardMembers(boardId, rows!id)
-        people.Add(person)
-      Next
-      assigned = New Variant[]
-      For Each person In people
-        participant = New Collection
-        participant.Add(person, "uid")
-        item = New Collection
-        item.Add(participant, "participant")
-        assigned.Add(item)
-      Next
-      If assigned.Count Then card.Add(assigned, "assignedUsers")
+      If ExternalExportFields.Wants(wanted, "people") Then
+        people = BoardAccess.Assignees(boardId, rows!id)
+        For Each person In BoardAccess.CardMembers(boardId, rows!id)
+          people.Add(person)
+        Next
+        assigned = New Variant[]
+        For Each person In people
+          participant = New Collection
+          participant.Add(person, "uid")
+          item = New Collection
+          item.Add(participant, "participant")
+          assigned.Add(item)
+        Next
+        If assigned.Count Then card.Add(assigned, "assignedUsers")
+      Endif
       comments = New Variant[]
-      entries = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, rows!id, "comment")
-      For Each entries
-        item = New Collection
-        item.Add(TextValue(entries!body), "message")
-        item.Add(CardContent.AuthorName(boardId, rows!id, "entry", entries!id), "actorId")
-        If IsNull(entries!created_at) Then
-          item.Add("", "creationDateTime")
-        Else
-          item.Add(CardDates.Iso(ItemChanges.Epoch(entries!created_at)), "creationDateTime")
-        Endif
-        comments.Add(item)
-      Next
-      If comments.Count Then card.Add(comments, "comments")
+      If ExternalExportFields.Wants(wanted, "comments") Then
+        entries = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, rows!id, "comment")
+        For Each entries
+          item = New Collection
+          item.Add(TextValue(entries!body), "message")
+          BoardAccess.RequireCard(boardId, rows!id)
+          item.Add(RetiredAuthors.DisplayName("entry", entries!id, TextValue(entries!author)), "actorId")
+          If Not IsNull(entries!created_at) Then
+            item.Add(CardDates.Iso(ItemChanges.Epoch(entries!created_at)), "creationDateTime")
+          Endif
+          comments.Add(item)
+        Next
+        If comments.Count Then card.Add(comments, "comments")
+      Endif
       cards.Add(card)
     Next
     stack = New Collection

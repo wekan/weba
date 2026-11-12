@@ -3340,12 +3340,12 @@ current source tool formats now have native selected-export entries, checked
 against source EXTERNAL_EXPORT_FORMATS. Native model gaps and complete original
 UI/API/security parity remain pending.
 
-With `WITH_API=true`, GitHub/Gitea/Forgejo/GitLab issue and Trello board exports are available at
-`GET /api/boards/ID/export/github` (or `gitea` / `forgejo` / `gitlab` / `trello`). Private boards require
+With `WITH_API=true`, GitHub/Gitea/Forgejo/GitLab issue, Trello board and Deck stack exports are available at
+`GET /api/boards/ID/export/github` (or `gitea` / `forgejo` / `gitlab` / `trello` / `deck`). Private boards require
 a valid bearer or source-compatible query credential and full-board read access;
 public boards follow the source anonymous path. The `fields=labels,dates,description` query selects sections;
 unknown/empty/structured selections fall back as
-source does. Native JSON is written directly so empty strings survive. Other 35
+source does. Native JSON is written directly so empty strings survive. Other 34
 format API routes, native field-security models, anonymization/security reporting
 and complete original UI/API/security parity remain pending.
 
@@ -3358,3 +3358,7 @@ Trello API selections gate card descriptions, label IDs and dates; board palette
 list and preference metadata remains as in source. Missing list links omit
 `idList`. Native label names still serve as explicit IDs until board-defined
 label IDs/colors have persisted models.
+
+Deck API exports preserve source title-based stack grouping, including duplicate
+and empty titles. Dates, people and comments are selected independently; missing
+comment timestamps are omitted. Public note display uses scoped provenance.

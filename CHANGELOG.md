@@ -2,6 +2,20 @@
 
 This work adds the following features and fixes:
 
+- Add GET `/api/boards/:id/export/deck` through the locked external-export
+  service. Gate description, labels, dates, people and comments as source does;
+  preserve duplicate-title stack repetition, empty-title/missing-link matching,
+  end dates independent of terminal status, repeated participants and whitespace
+  comments. Use scoped public note provenance, omit missing comment timestamps
+  and normalize native comma-label whitespace consistently. Compare 152 actual
+  HTTP bodies across six routes with unchanged source parsing/collect/formatters,
+  plus the shared 256-role/security/rollback cases. Complete host tests pass
+  (70 Python tests, 80 archive/scope snapshots), as do both API builds, original
+  round-trip contracts and all 45 source/packaged selected downloads with cached
+  scope checks. Remaining 34 API renderers,
+  native model/anonymization/security reporting and full original parity stay
+  pending. Thanks to xet7.
+
 - Add GET `/api/boards/:id/export/trello` through the locked external-export
   service. Apply source per-card description/label/date gates while retaining
   board name, prefs, lists and palette metadata; use null due dates and empty
