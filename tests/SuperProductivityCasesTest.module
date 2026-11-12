@@ -1,0 +1,139 @@
+Public Sub Main()
+  Dim cases As New Variant[]
+  Dim sample As Collection
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim archived As Integer
+  Dim items As Variant[]
+  Dim item As Collection
+  Dim defs As Variant[]
+  Dim definition As Collection
+  Dim ids As New Integer[]
+  Dim dates As Collection
+  Dim fields As Collection
+  Dim index As Integer
+  Dim mode As String
+  Dim rows As Result
+  Dim denied As Boolean
+  Dim selection As Collection
+  Dim batch As Collection
+  Dim badField As Integer
+  Dim timeEntry As Integer
+  Dim hugeMinutes As Float
+  WebDatabase.Register("sp-case-owner", "x")
+  Session["username"] = "sp-case-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("sp-case-owner")
+  For Each mode In ["empty", "legacy-empty", "multi", "legacy-orphan", "legacy-time-overflow"]
+    boardId = KanbanStore.AddBoard("  Super Productivity " & mode & " Ω  ")
+    items = New Variant[]
+    If mode = "legacy-empty" Then
+      WebDatabase.OpenConnection().Exec("DELETE FROM kb_lists WHERE board_id=&1", boardId)
+      WebDatabase.OpenConnection().Exec("DELETE FROM kb_lanes WHERE board_id=&1", boardId)
+    Endif
+    If mode = "multi" Then
+      KanbanStore.AddLane(boardId, "Alpha")
+      KanbanStore.AddLane(boardId, "Beta")
+      KanbanStore.AddLane(boardId, "Unused")
+      defs = JSON.Decode("[{\"title\":\"  \",\"lane\":\"Alpha\",\"list\":\"Backlog\",\"labels\":\"Ω, Today, Ω\"},{\"title\":\"Child\",\"lane\":\"Beta\",\"list\":\"In Progress\"},{\"title\":\"Grandchild\",\"lane\":\"Beta\",\"list\":\"Review\"},{\"title\":\"Cycle A\",\"lane\":\"Beta\",\"list\":\"To Do\"},{\"title\":\"Cycle B\",\"lane\":\"Beta\",\"list\":\"To Do\"},{\"title\":\"Done fallback\",\"lane\":\"Beta\",\"list\":\"Done\"},{\"title\":\"Epoch ended\",\"lane\":\"Alpha\",\"list\":\"Review\"}]")
+      ids = New Integer[]
+      For Each definition In defs
+        If Not definition.Exist("labels") Then definition.Add("", "labels")
+        KanbanStore.AddList(boardId, definition["lane"], definition["list"], "")
+        cardId = KanbanStore.SaveCard(boardId, 0, "Fixture title", "", definition["lane"], definition["list"], "", definition["labels"], "")
+        WebDatabase.OpenConnection().Exec("UPDATE kb_cards SET title=&1 WHERE id=&2", definition["title"], cardId)
+        ids.Add(cardId)
+        item = New Collection
+        item["cardId"] = CStr(cardId)
+        item.Add(definition["title"], "title")
+        item["swimlaneTitle"] = definition["lane"]
+        item["listTitle"] = definition["list"]
+        If definition["labels"] Then item["labels"] = ["Ω", "Today", "Ω"]
+        items.Add(item)
+      Next
+      CardContent.Save(boardId, ids[0], 0, "subtask", "", "", 0, False, ids[1])
+      CardContent.Save(boardId, ids[1], 0, "subtask", "", "", 0, False, ids[2])
+      CardContent.Save(boardId, ids[3], 0, "subtask", "", "", 0, False, ids[4])
+      CardContent.Save(boardId, ids[4], 0, "subtask", "", "", 0, False, ids[5])
+      WebDatabase.OpenConnection().Exec("UPDATE kb_entries SET amount=&1 WHERE board_id=&2 AND card_id=&3 AND kind=&4", ids[3], boardId, ids[4], "subtask")
+      items[1]["parentCardId"] = CStr(ids[0])
+      items[2]["parentCardId"] = CStr(ids[1])
+      items[3]["parentCardId"] = CStr(ids[4])
+      items[4]["parentCardId"] = CStr(ids[3])
+      fields = New Collection
+      fields["Priority"] = 2
+      fields["Time estimate (hours)"] = True
+      items[0]["customFields"] = fields
+      CardContent.Save(boardId, ids[0], 0, "custom", "Priority", "2", 0, False, 0, "number")
+      CardContent.Save(boardId, ids[0], 0, "custom", "Time estimate (hours)", "", 0, True, 0, "checkbox")
+      KanbanStore.MoveLane(boardId, "Beta", "Alpha")
+      dates = New Collection
+      dates["endAt"] = CardDates.Parse(0)
+      CardDates.Apply(boardId, ids[6], dates)
+      CardContent.Save(boardId, ids[6], 0, "time", "Stopped", "", 0, True, 1)
+      items[6]["endAt"] = "1970-01-01T00:00:00.000Z"
+      items[6]["spentTime"] = 1.0 / 60
+    Endif
+    If mode = "legacy-orphan" Then
+      archived = KanbanStore.SaveCard(boardId, 0, "HIDDEN SP PARENT", "", "Default", "Todo", "", "", "")
+      KanbanStore.ArchiveCard(boardId, archived, True)
+      cardId = KanbanStore.SaveCard(boardId, 0, "Orphan", "", "Default", "Todo", "", "", "")
+      CardContent.Save(boardId, archived, 0, "subtask", "", "", 0, False, cardId)
+      WebDatabase.OpenConnection().Exec("DELETE FROM kb_card_lists WHERE board_id=&1 AND card_id=&2", boardId, cardId)
+      item = New Collection
+      item["cardId"] = CStr(cardId)
+      item["title"] = "Orphan"
+      item["parentCardId"] = CStr(archived)
+      item["swimlaneTitle"] = "Default"
+      item.Add("", "listTitle")
+      items.Add(item)
+    Endif
+    If mode = "legacy-time-overflow" Then
+      cardId = KanbanStore.SaveCard(boardId, 0, "Huge stopped time", "", "Default", "Todo", "", "", "")
+      timeEntry = CardContent.Save(boardId, cardId, 0, "time", "Stopped", "", 0, True, 1)
+      ExportNumber.ParseFinite("1e305", ByRef hugeMinutes)
+      WebDatabase.OpenConnection().Exec("UPDATE kb_entries SET amount=&1 WHERE id=&2", hugeMinutes, timeEntry)
+      item = New Collection
+      item["cardId"] = CStr(cardId)
+      item["title"] = "Huge stopped time"
+      item["swimlaneTitle"] = "Default"
+      item["listTitle"] = "Todo"
+      item["spentTime"] = hugeMinutes / 60
+      items.Add(item)
+    Endif
+    sample = New Collection
+    sample["mode"] = mode
+    sample["board"] = New Collection
+    sample["board"]["title"] = "  Super Productivity " & mode & " Ω  "
+    sample["items"] = items
+    sample["lists"] = Layout(boardId, "kb_lists", "lane,sort_order,id")
+    sample["swimlanes"] = Layout(boardId, "kb_lanes", "id")
+    If mode = "multi" Then sample["swimlanes"] = JSON.Decode("[{\"title\":\"Default\"},{\"title\":\"Beta\"},{\"title\":\"Alpha\"},{\"title\":\"Unused\"}]")
+    sample["actual"] = BoardTransfer.ExportActiveBoardSuperProductivity(boardId)
+    cases.Add(sample)
+  Next
+  badField = CardContent.Save(boardId, cardId, 0, "custom", "Time estimate (hours)", "1", 0, False, 0, "number")
+  WebDatabase.OpenConnection().Exec("UPDATE kb_entries SET body=&1 WHERE id=&2", "invalid", badField)
+  selection = BoardSelection.NewState()
+  BoardSelection.SetActive(selection, True)
+  BoardSelection.AddVisible(selection, [boardId])
+  batch = BoardBatchExport.NewBatch(selection, "superproductivity")
+  Try BoardBatchExport.Run(batch, selection)
+  denied = Error
+  If Not denied Or BoardBatchExport.Completed(batch) Or BoardBatchExport.Remaining(batch) <> 1 Then Error.Raise("Super Productivity malformed numeric export consumed pending work")
+  WebDatabase.OpenConnection().Exec("UPDATE kb_entries SET body=&1 WHERE id=&2", "2.675", badField)
+  BoardBatchExport.Run(batch, selection)
+  If BoardBatchExport.Completed(batch) <> 1 Then Error.Raise("Super Productivity numeric repair could not retry")
+  Print JSON.Encode(cases)
+End
+
+Private Function Layout(boardId As Integer, table As String, order As String) As Variant[]
+  Dim result As New Variant[]
+  Dim rows As Result = WebDatabase.OpenConnection().Exec("SELECT title FROM " & table & " WHERE board_id=&1 ORDER BY " & order, boardId)
+  Dim item As Collection
+  For Each rows
+    item = New Collection
+    item["title"] = CStr(rows!title)
+    result.Add(item)
+  Next
+  Return result
+End

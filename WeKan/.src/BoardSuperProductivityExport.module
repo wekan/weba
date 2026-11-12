@@ -1,0 +1,464 @@
+' Native counterpart of the source Super Productivity backup formatter.
+Export
+Private $db As Connection
+Private $boardId As Integer
+Private $now As Long
+Private $cards As Collection
+Private $project As Collection
+Private $task As Collection
+Private $tag As Collection
+Private $tagNames As Collection
+Private $projectFor As Collection
+Private $single As Boolean
+Private Const TODAY As String = "TODAY"
+Private Const PROGRESS As String = "KANBAN_IN_PROGRESS"
+
+Private Function TextValue(value As Variant) As String
+  If IsNull(value) Then Return ""
+  Return CStr(value)
+End
+
+Private Function TrimText(value As String) As String
+  Dim first As Integer = 1
+  Dim finish As Integer = String.Len(value)
+  Dim code As Integer
+  While first <= finish
+    code = String.Code(String.Mid(value, first, 1))
+    If Not SpaceCode(code) Then Break
+    Inc first
+  Wend
+  While finish >= first
+    code = String.Code(String.Mid(value, finish, 1))
+    If Not SpaceCode(code) Then Break
+    Dec finish
+  Wend
+  If finish < first Then Return ""
+  Return String.Mid(value, first, finish - first + 1)
+End
+
+Private Function SpaceCode(code As Integer) As Boolean
+  Return (code >= 9 And code <= 13) Or code = 32 Or code = 160 Or code = 5760 Or (code >= 8192 And code <= 8202) Or code = 8232 Or code = 8233 Or code = 8239 Or code = 8287 Or code = 12288 Or code = 65279
+End
+
+Private Function State() As Collection
+  Dim result As New Collection
+  result["ids"] = New Variant[]
+  result["entities"] = New Collection
+  Return result
+End
+
+Private Sub Entity(state As Collection, value As Collection)
+  Dim ids As Variant[] = state["ids"]
+  Dim entities As Collection = state["entities"]
+  ids.Add(value["id"])
+  entities[value["id"]] = value
+End
+
+Private Function Theme(primary As String) As Collection
+  Dim result As Collection = JSON.Decode("{\"isAutoContrast\":true,\"isDisableBackgroundTint\":false,\"huePrimary\":\"500\",\"accent\":\"#ff4081\",\"hueAccent\":\"500\",\"warn\":\"#e11826\",\"hueWarn\":\"500\",\"backgroundImageDark\":null,\"backgroundImageLight\":null,\"backgroundOverlayOpacity\":20,\"backgroundImageBlur\":0}")
+  result["backgroundImageDark"] = JSON.Null
+  result["backgroundImageLight"] = JSON.Null
+  result["primary"] = primary
+  Return result
+End
+
+Private Function Config() As Collection
+  Dim result As Collection = JSON.Decode("{\"worklogExportSettings\":{\"cols\":[\"DATE\",\"START\",\"END\",\"TIME_CLOCK\",\"TITLES_INCLUDING_SUB\"],\"roundWorkTimeTo\":null,\"roundStartTimeTo\":null,\"roundEndTimeTo\":null,\"separateTasksBy\":\" | \",\"groupBy\":\"DATE\"}}")
+  result["worklogExportSettings"]["roundWorkTimeTo"] = JSON.Null
+  result["worklogExportSettings"]["roundStartTimeTo"] = JSON.Null
+  result["worklogExportSettings"]["roundEndTimeTo"] = JSON.Null
+  Return result
+End
+
+Private Function EmptyArchive() As Collection
+  Return JSON.Decode("{\"task\":{\"ids\":[],\"entities\":{}},\"timeTracking\":{\"project\":{},\"tag\":{}},\"lastTimeTrackingFlush\":0}")
+End
+
+Private Function TagRecord(id As String, title As String, primary As String, Optional icon As String) As Collection
+  Dim result As New Collection
+  result["id"] = id
+  result["title"] = title
+  result["color"] = JSON.Null
+  result["created"] = $now
+  result["taskIds"] = New Variant[]
+  If icon Then
+    result["icon"] = icon
+  Else
+    result["icon"] = JSON.Null
+  Endif
+  result["theme"] = Theme(primary)
+  result["advancedCfg"] = Config()
+  Return result
+End
+
+Private Function TagFor(title As String) As String
+  Dim id As String
+  title = TrimText(title)
+  If Not title Then Return ""
+  If $tagNames.Exist(title) Then Return $tagNames[title]
+  id = "wekan-tag-" & CStr($tagNames.Count + 1)
+  $tagNames[title] = id
+  Entity($tag, TagRecord(id, title, "#a05db1"))
+  Return id
+End
+
+Private Function ListTag(title As String) As String
+  title = TrimText(title)
+  Return TagFor(If(title, title, "Untitled"))
+End
+
+Private Function ProgressTag() As String
+  Dim entities As Collection = $tag["entities"]
+  If Not entities.Exist(PROGRESS) Then Entity($tag, TagRecord(PROGRESS, "in-progress", "#ffa726"))
+  Return PROGRESS
+End
+
+Private Function Kind(title As String) As String
+  title = LCase(TrimText(title))
+  Select title
+    Case "done", "backlog"
+      Return title
+    Case "in progress"
+      Return "progress"
+    Case "to do", "todo"
+      Return "todo"
+  End Select
+  Return "other"
+End
+
+Private Function RootOf(card As Collection) As String
+  Dim seen As New Collection
+  Dim id As String = card["parent"]
+  Dim root As String
+  seen[card["id"]] = True
+  While id
+    If Not $cards.Exist(id) Then Break
+    If seen.Exist(id) Then Return ""
+    seen[id] = True
+    root = id
+    card = $cards[id]
+    id = card["parent"]
+  Wend
+  Return root
+End
+
+Private Function Notes(card As Collection) As String
+  Dim result As String = TrimText(card["description"])
+  Dim rows As Result = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, CInt(card["id"]), "checklist")
+  Dim items As Result
+  Dim lines As String[]
+  Dim title As String
+  For Each rows
+    items = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, CInt(card["id"]), "checkitem", rows!id)
+    If Not items.Available Then Continue
+    title = TextValue(rows!title)
+    If Not title Then title = "Checklist"
+    lines = ["### " & TrimText(title)]
+    For Each items
+      lines.Add("- [" & If(CBool(items!done), "x", " ") & "] " & TrimText(TextValue(items!title)))
+    Next
+    If result Then result &= Chr(10) & Chr(10)
+    result &= lines.Join(Chr(10))
+  Next
+  Return result
+End
+
+Private Function CustomFields(cardId As Integer) As Collection
+  Dim result As New Collection
+  Dim rows As Result = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "custom")
+  Dim number As Float
+  For Each rows
+    If TextValue(rows!title) <> "Priority" And TextValue(rows!title) <> "Time estimate (hours)" Then Continue
+    If TextValue(rows!value_type) = "checkbox" Then
+      result[TextValue(rows!title)] = CBool(rows!done)
+    Else If TextValue(rows!value_type) = "number" Then
+      If Not ExportNumber.ParseFinite(TextValue(rows!body), ByRef number) Then Error.Raise("Invalid numeric export field")
+      result[TextValue(rows!title)] = number
+    Else
+      result[TextValue(rows!title)] = TextValue(rows!body)
+    Endif
+  Next
+  Return result
+End
+
+Private Function Milliseconds(hours As Float) As Variant
+  If hours <= 0 Then Return 0
+  Dim value As Float
+  Dim whole As Float
+  Dim maximum As Float
+  ExportNumber.ParseFinite("1.7976931348623157e308", ByRef maximum)
+  Try value = hours * 3600000
+  If Error Then Return JSON.Null
+  If value > maximum Then Return JSON.Null
+  whole = Int(value)
+  If value - whole >= 0.5 Then whole += 1
+  Return whole
+End
+
+Private Function Estimate(value As Variant) As Variant
+  Dim hours As Float
+  If IsNull(value) Then Return 0
+  If TypeOf(value) = gb.Boolean Then Return If(CBool(value), 3600000, 0)
+  If Not ExportNumber.ParseFinite(TextValue(value), ByRef hours) Then Return 0
+  Return Milliseconds(hours)
+End
+
+Public Function Build(boardId As Integer, db As Connection) As String
+  Dim board As Result
+  Dim rows As Result
+  Dim entries As Result
+  Dim ordered As New Variant[]
+  Dim laneOrder As New String[]
+  Dim usedLanes As New String[]
+  Dim lanesUsed As Integer
+  Dim projectIndex As Integer
+  Dim listTitles As New String[]
+  Dim panelTasks As New Collection
+  Dim otherTags As New Variant[]
+  Dim card As Collection
+  Dim ancestor As Collection
+  Dim record As Collection
+  Dim fields As Collection
+  Dim dates As Collection
+  Dim tags As String[]
+  Dim ids As Variant[]
+  Dim entities As Collection
+  Dim list As String
+  Dim lane As String
+  Dim id As String
+  Dim root As String
+  Dim projectId As String
+  Dim category As String
+  Dim tagId As String
+  Dim label As String
+  Dim priority As String
+  Dim minutes As Float
+  Dim spent As Variant
+  Dim ended As Long
+  Dim due As Long
+  Dim done As Boolean
+  Dim backlogUsed As Boolean
+  Dim title As String
+  Dim index As Integer
+  Dim panels As New Variant[]
+  Dim boards As New Variant[]
+  Dim backup As New Collection
+  Dim data As New Collection
+  Dim perDay As Collection
+  $db = db
+  $boardId = boardId
+  $now = ItemChanges.UtcNow()
+  $cards = New Collection
+  $project = State()
+  $task = State()
+  $tag = State()
+  $tagNames = New Collection
+  $projectFor = New Collection
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  board = db.Find("kb_boards", "id=&1", boardId)
+  If Not board.Available Then Error.Raise("Board not found")
+  title = TrimText(TextValue(board!title))
+  If Not title Then title = "WeKan board"
+  rows = db.Exec("SELECT l.title FROM kb_lanes l LEFT JOIN kb_order o ON o.board_id=l.board_id AND o.kind=&2 AND o.item=l.title WHERE " & ListDeletion.LiveSql("lane", "l") & " AND l.board_id=&1 ORDER BY COALESCE(o.sort_order,l.id),l.id", boardId, "lane")
+  For Each rows
+    laneOrder.Add(TextValue(rows!title))
+  Next
+  rows = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
+  For Each rows
+    list = TextValue(rows!title)
+    If listTitles.Find(list) < 0 Then listTitles.Add(list)
+  Next
+  rows = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  For Each rows
+    card = New Collection
+    id = CStr(rows!id)
+    lane = TextValue(rows!lane)
+    If Not lane Then lane = "Default"
+    list = TextValue(rows!list_title)
+    card["id"] = id
+    card["title"] = TextValue(rows!title)
+    card["description"] = TextValue(rows!description)
+    card["lane"] = lane
+    card["list"] = list
+    card["labels"] = TextValue(rows!labels)
+    card["parent"] = ""
+    entries = db.Find("kb_entries", "board_id=&1 AND kind=&2 AND amount=&3 ORDER BY id", boardId, "subtask", rows!id)
+    If entries.Available Then card["parent"] = CStr(entries!card_id)
+    ordered.Add(card)
+    $cards[id] = card
+    If laneOrder.Find(lane) < 0 Then laneOrder.Add(lane)
+    If usedLanes.Find(lane) < 0 Then usedLanes.Add(lane)
+    If listTitles.Find(list) < 0 Then listTitles.Add(list)
+  Next
+  If Not laneOrder.Count Then laneOrder.Add("Default")
+  For Each lane In laneOrder
+    If usedLanes.Find(lane) >= 0 Then Inc lanesUsed
+  Next
+  $single = lanesUsed <= 1
+  For Each lane In laneOrder
+    If Not $single And usedLanes.Find(lane) < 0 Then Continue
+    If $single And $projectFor.Count Then Break
+    Inc projectIndex
+    id = "wekan-project-" & CStr(projectIndex)
+    $projectFor[If($single, "single", "lane:" & lane)] = id
+    record = JSON.Decode("{\"isHiddenFromMenu\":false,\"isArchived\":false,\"isEnableBacklog\":false,\"taskIds\":[],\"backlogTaskIds\":[],\"noteIds\":[],\"icon\":null}")
+    record["id"] = id
+    record["title"] = If($single, title, lane)
+    record["icon"] = JSON.Null
+    record["theme"] = Theme("#29a1aa")
+    record["advancedCfg"] = Config()
+    record["created"] = $now
+    Entity($project, record)
+  Next
+  If Not $projectFor.Count Then Error.Raise("No project for board")
+  Entity($tag, TagRecord(TODAY, "Today", "#6495ED", "wb_sunny"))
+  For Each list In listTitles
+    panelTasks["list:" & list] = New Variant[]
+  Next
+  For Each card In ordered
+    id = card["id"]
+    root = RootOf(card)
+    ancestor = card
+    If root Then ancestor = $cards[root]
+    projectId = $projectFor[If($single, "single", "lane:" & ancestor["lane"])]
+    category = Kind(card["list"])
+    dates = CardDates.ReadDates(boardId, CInt(id))
+    ended = 0
+    If dates.Exist("endAt") Then ended = dates["endAt"]
+    done = category = "done" Or dates.Exist("endAt")
+    tags = New String[]
+    For Each label In Split(card["labels"], ",")
+      tagId = TagFor(label)
+      If tagId And tags.Find(tagId) < 0 Then tags.Add(tagId)
+    Next
+    If category = "progress" And Not done Then
+      tagId = ProgressTag()
+      If tags.Find(tagId) < 0 Then tags.Add(tagId)
+    Endif
+    If category = "other" Then
+      tagId = ListTag(card["list"])
+      If tags.Find(tagId) < 0 Then tags.Add(tagId)
+    Endif
+    minutes = 0
+    entries = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND done=&4 ORDER BY id", boardId, CInt(id), "time", True)
+    For Each entries
+      minutes += CFloat(entries!amount)
+    Next
+    spent = Milliseconds(minutes / 60)
+    record = New Collection
+    record["id"] = id
+    label = TrimText(card["title"])
+    record["title"] = If(label, label, "Untitled")
+    record["subTaskIds"] = New Variant[]
+    perDay = New Collection
+    If IsNull(spent) Or spent > 0 Then perDay[Left(CardDates.Iso(If(ended, ended, $now)), 10)] = spent
+    record["timeSpentOnDay"] = perDay
+    record["timeSpent"] = spent
+    fields = CustomFields(CInt(id))
+    record["timeEstimate"] = Estimate(fields["Time estimate (hours)"])
+    record["isDone"] = done
+    record.Add(Notes(card), "notes")
+    record["tagIds"] = tags
+    record["created"] = $now
+    record["attachments"] = New Variant[]
+    record["projectId"] = projectId
+    If root Then record["parentId"] = root
+    If done Then record["doneOn"] = If(ended, ended, $now)
+    If dates.Exist("dueAt") Then
+      due = dates["dueAt"]
+      label = CardDates.Iso(due)
+      If Right(label, 14) = "T00:00:00.000Z" Then
+        record["dueDay"] = Left(label, 10)
+      Else
+        record["dueWithTime"] = due
+      Endif
+    Endif
+    priority = LCase(TrimText(TextValue(fields["Priority"])))
+    index = ["low", "medium", "high"].Find(priority)
+    If ["1", "2", "3"].Find(priority) >= 0 Then index = CInt(priority) - 1
+    If index >= 0 Then record["priority"] = index + 1
+    Entity($task, record)
+    entities = $tag["entities"]
+    For Each tagId In tags
+      record = entities[tagId]
+      ids = record["taskIds"]
+      ids.Add(id)
+    Next
+    ids = panelTasks["list:" & card["list"]]
+    ids.Add(id)
+    If root Then Continue
+    entities = $project["entities"]
+    record = entities[projectId]
+    If category = "backlog" And Not done Then
+      ids = record["backlogTaskIds"]
+      record["isEnableBacklog"] = True
+      backlogUsed = True
+    Else
+      ids = record["taskIds"]
+    Endif
+    ids.Add(id)
+  Next
+  entities = $task["entities"]
+  For Each card In ordered
+    root = RootOf(card)
+    If Not root Then Continue
+    record = entities[root]
+    ids = record["subTaskIds"]
+    ids.Add(card["id"])
+  Next
+  For Each list In listTitles
+    If Kind(list) = "other" Then otherTags.Add(ListTag(list))
+  Next
+  For Each list In listTitles
+    record = JSON.Decode("{\"includedTagIds\":[],\"excludedTagIds\":[],\"projectIds\":[\"\"],\"taskDoneState\":3,\"scheduledState\":1,\"backlogState\":2,\"isParentTasksOnly\":false}")
+    record["id"] = "wekan-panel-" & CStr(panels.Count + 1)
+    record["title"] = If(list, list, "Untitled")
+    record["taskIds"] = panelTasks["list:" & list]
+    Select Kind(list)
+      Case "done"
+        record["taskDoneState"] = 2
+        record["backlogState"] = 1
+      Case "progress"
+        record["includedTagIds"] = [ProgressTag()]
+      Case "backlog"
+        record["backlogState"] = 3
+      Case "todo"
+        ids = New Variant[]
+        entities = $tag["entities"]
+        If entities.Exist(PROGRESS) Then ids.Add(PROGRESS)
+        For Each tagId In otherTags
+          ids.Add(tagId)
+        Next
+        record["excludedTagIds"] = ids
+        record["backlogState"] = If(backlogUsed, 2, 1)
+      Case Else
+        record["includedTagIds"] = [ListTag(list)]
+    End Select
+    panels.Add(record)
+  Next
+  If panels.Count Then
+    record = New Collection
+    record["id"] = "wekan-board"
+    record["title"] = title
+    record["cols"] = Min(panels.Count, 4)
+    record["panels"] = panels
+    boards.Add(record)
+  Endif
+  $task["currentTaskId"] = JSON.Null
+  $task["selectedTaskId"] = JSON.Null
+  $task["lastCurrentTaskId"] = JSON.Null
+  $task["isDataLoaded"] = False
+  data["project"] = $project
+  data["task"] = $task
+  data["tag"] = $tag
+  data["note"] = JSON.Decode("{\"ids\":[],\"entities\":{},\"todayOrder\":[]}")
+  data["boards"] = New Collection
+  data["boards"]["boardCfgs"] = boards
+  data["archiveYoung"] = EmptyArchive()
+  data["archiveOld"] = EmptyArchive()
+  backup["timestamp"] = $now
+  backup["lastUpdate"] = $now
+  backup["crossModelVersion"] = 4.5
+  backup["data"] = data
+  Return JSON.Encode(backup) & Chr(10)
+End

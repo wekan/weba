@@ -26,6 +26,8 @@ Public Sub Main()
   Dim linearBatch As Collection
   Dim tickTickBatch As Collection
   Dim clickUpBatch As Collection
+  Dim spBatch As Collection
+  Dim spData As Collection
   Dim businessmapBatch As Collection
   Dim businessmapData As Collection
   Dim mondayBatch As Collection
@@ -533,6 +535,15 @@ Public Sub Main()
   If InStr(files[0]["content"], "Ignored archived card") Or InStr(files[0]["content"], "Planner archived canary") Then Error.Raise("Businessmap exported archived content")
   businessmapData = JSON.Decode(files[1]["content"])
   If businessmapData["title"] <> "Export Bravo" Or businessmapData["items"].Count <> 1 Or businessmapData["items"][0]["title"] <> "Bravo card" Then Error.Raise("Businessmap board isolation drifted")
+  spBatch = BoardBatchExport.NewBatch(selection, "superproductivity")
+  BoardBatchExport.Run(spBatch, selection)
+  files = BoardBatchExport.Files(spBatch)
+  If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".json" Or BoardBatchExport.Format(spBatch) <> "superproductivity" Then Error.Raise("Super Productivity format or batch order drifted")
+  spData = JSON.Decode(files[0]["content"])
+  If spData["crossModelVersion"] <> 4.5 Or spData["data"]["boards"]["boardCfgs"][0]["title"] <> "Export Alpha" Then Error.Raise("Super Productivity board metadata drifted")
+  If InStr(files[0]["content"], "Ignored archived card") Or InStr(files[0]["content"], "Planner archived canary") Then Error.Raise("Super Productivity exported archived content")
+  spData = JSON.Decode(files[1]["content"])
+  If spData["data"]["project"]["entities"]["wekan-project-1"]["title"] <> "Export Bravo" Or spData["data"]["task"]["ids"].Count <> 1 Then Error.Raise("Super Productivity board isolation drifted")
   batch = BoardBatchExport.NewBatch(selection)
   batch["busy"] = True
   Try BoardBatchExport.Run(batch, selection)

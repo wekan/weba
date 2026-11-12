@@ -5248,3 +5248,7 @@ End
 Public Sub ExportSelectedBusinessmap_Click()
   RunSelectedExport("businessmap")
 End
+
+Public Sub ExportSelectedSuperProductivity_Click()
+  RunSelectedExport("superproductivity")
+End

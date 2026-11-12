@@ -1,0 +1,205 @@
+' Independent rich native fixture for the unchanged parent backup formatter.
+Public Sub Main()
+  Dim boardId As Integer
+  Dim parent As Integer
+  Dim child As Integer
+  Dim cross As Integer
+  Dim archived As Integer
+  Dim cardId As Integer
+  Dim checklistId As Integer
+  Dim blankItem As Integer
+  Dim commentId As Integer
+  Dim selection As Collection
+  Dim batch As Collection
+  Dim result As New Collection
+  Dim board As New Collection
+  Dim lists As New Variant[]
+  Dim items As New Variant[]
+  Dim item As Collection
+  Dim fields As Collection
+  Dim dates As Collection
+  Dim list As Collection
+  Dim checklist As Collection
+  Dim entries As Variant[]
+  Dim entry As Collection
+  Dim checklists As New Variant[]
+  Dim comments As New Variant[]
+  Dim comment As Collection
+  Dim rows As Result
+  Dim value As String
+  Dim denied As Boolean
+  Dim before As Integer
+  Dim note As String = "</script>" & String.Chr(8232) & "line" & Chr(13) & Chr(10) & String.Chr(160)
+  Dim parentTitle As String = String.Chr(160) & "Parent Ω" & String.Chr(160)
+  WebDatabase.Register("superproductivity-owner", "x")
+  WebDatabase.Register("superproductivity-other", "x")
+  Session["username"] = "superproductivity-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("superproductivity-owner")
+  boardId = KanbanStore.AddBoard("Super Productivity Ω <literal>")
+  parent = KanbanStore.SaveCard(boardId, 0, parentTitle, note, "Default", "Todo", "", "high, emoji 😀, high, Ω", "")
+  child = KanbanStore.SaveCard(boardId, 0, "Child", "", "Default", "Todo", "", "Ω", "")
+  cross = KanbanStore.SaveCard(boardId, 0, "Cross-list child", "", "Default", "Doing", "", "", "")
+  archived = KanbanStore.SaveCard(boardId, 0, "Archived Super Productivity canary", "Hidden archived content", "Default", "Todo", "", "", "")
+  KanbanStore.ArchiveCard(boardId, archived, True)
+  CardContent.Save(boardId, parent, 0, "subtask", "", "", 0, False, child)
+  CardContent.Save(boardId, parent, 0, "subtask", "", "", 0, False, cross)
+  KanbanStore.AddList(boardId, "Default", "Todo", "")
+  fields = New Collection
+  fields["Priority"] = "High"
+  fields["Time estimate (hours)"] = "1.005"
+  For Each value In fields.Keys
+    CardContent.Save(boardId, parent, 0, "custom", value, fields[value], 0, False, 0, "text")
+  Next
+  dates = New Collection
+  dates["startAt"] = CardDates.Parse("2026-11-12T12:00:00.000Z")
+  dates["dueAt"] = CardDates.Parse("2026-11-12T12:34:56.789Z")
+  dates["endAt"] = CardDates.Parse("2026-11-13T00:00:00.123Z")
+  CardDates.Apply(boardId, parent, dates)
+  dates = New Collection
+  dates["dueAt"] = CardDates.Parse("2026-11-12T00:00:00.000Z")
+  CardDates.Apply(boardId, child, dates)
+  dates = New Collection
+  dates["startAt"] = CardDates.Parse(-1)
+  dates["dueAt"] = CardDates.Parse(0)
+  CardDates.Apply(boardId, cross, dates)
+  CardContent.Save(boardId, parent, 0, "time", "Stopped time", "", 0, True, 150)
+  CardContent.StartTimer(boardId, parent)
+  CardContent.Save(boardId, parent, 0, "checklist", "Empty checklist", "", 0, False, 0)
+  checklistId = CardContent.Save(boardId, parent, 0, "checklist", "Steps", "", 0, False, 0)
+  blankItem = CardContent.Save(boardId, parent, 0, "checkitem", "Temporary blank item", "", checklistId, False, 0)
+  WebDatabase.OpenConnection().Exec("UPDATE kb_entries SET title=&1 WHERE id=&2", String.Chr(160), blankItem)
+  CardContent.Save(boardId, parent, 0, "checkitem", " Open step ", "", checklistId, False, 0)
+  CardContent.Save(boardId, parent, 0, "checkitem", "Done step", "", checklistId, True, 0)
+  checklist = New Collection
+  checklist["title"] = "Empty checklist"
+  entries = New Variant[]
+  checklist["items"] = entries
+  checklists.Add(checklist)
+  checklist = New Collection
+  checklist["title"] = "Steps"
+  entries = New Variant[]
+  entry = New Collection
+  entry["title"] = String.Chr(160)
+  entries.Add(entry)
+  entry = New Collection
+  entry["title"] = " Open step "
+  entry["done"] = False
+  entries.Add(entry)
+  entry = New Collection
+  entry["title"] = "Done step"
+  entry["done"] = True
+  entries.Add(entry)
+  checklist["items"] = entries
+  checklists.Add(checklist)
+  commentId = CardContent.Save(boardId, parent, 0, "comment", "", "Literal " & Chr(34) & "comment" & Chr(34) & Chr(10) & "Ω", 0, False, 0)
+  rows = WebDatabase.OpenConnection().Find("kb_entries", "id=&1", commentId)
+  comment = New Collection
+  comment["text"] = TextValue(rows!body)
+  comment["date"] = CardDates.Iso(ItemChanges.Epoch(rows!created_at))
+  comments.Add(comment)
+  commentId = CardContent.Save(boardId, parent, 0, "comment", "", "Blank placeholder", 0, False, 0)
+  WebDatabase.OpenConnection().Exec("UPDATE kb_entries SET body=&1 WHERE id=&2", String.Chr(160), commentId)
+  commentId = CardContent.Save(boardId, parent, 0, "comment", "", "Undated comment", 0, False, 0)
+  WebDatabase.OpenConnection().Exec("UPDATE kb_entries SET created_at=&1 WHERE id=&2", Null, commentId)
+  comment = New Collection
+  comment["text"] = "Undated comment"
+  comments.Add(comment)
+  item = New Collection
+  item["cardId"] = CStr(parent)
+  item["listId"] = CStr(KanbanStore.CardListId(boardId, parent))
+  item["listTitle"] = "Todo"
+  item["title"] = parentTitle
+  item["description"] = note
+  item["labels"] = ["high", "emoji 😀", "high", "Ω"]
+  item["startAt"] = "2026-11-12T12:00:00.000Z"
+  item["dueAt"] = "2026-11-12T12:34:56.789Z"
+  item["endAt"] = "2026-11-13T00:00:00.123Z"
+  item["spentTime"] = 2.5
+  item["customFields"] = fields
+  item["checklists"] = checklists
+  item["comments"] = comments
+  items.Add(item)
+  checklistId = CardContent.Save(boardId, child, 0, "checklist", "Child steps", "", 0, False, 0)
+  CardContent.Save(boardId, child, 0, "checkitem", "Child complete", "", checklistId, True, 0)
+  item = New Collection
+  item["cardId"] = CStr(child)
+  item["listId"] = CStr(KanbanStore.CardListId(boardId, child))
+  item["listTitle"] = "Todo"
+  item["title"] = "Child"
+  item["parentCardId"] = CStr(parent)
+  item["labels"] = ["Ω"]
+  item["dueAt"] = "2026-11-12T00:00:00.000Z"
+  checklists = New Variant[]
+  checklist = New Collection
+  entry = New Collection
+  entry["title"] = "Child complete"
+  entry["done"] = True
+  checklist["title"] = "Child steps"
+  checklist["items"] = [entry]
+  checklists.Add(checklist)
+  item["checklists"] = checklists
+  items.Add(item)
+  item = New Collection
+  item["cardId"] = CStr(cross)
+  item["listId"] = CStr(KanbanStore.CardListId(boardId, cross))
+  item["listTitle"] = "Doing"
+  item["title"] = "Cross-list child"
+  item["parentCardId"] = CStr(parent)
+  item["startAt"] = "1969-12-31T23:59:59.999Z"
+  item["dueAt"] = "1970-01-01T00:00:00.000Z"
+  items.Add(item)
+  For Each value In ["1e21", "1.7976931348623157e308", "5e-324", "-1", "invalid"]
+    cardId = KanbanStore.SaveCard(boardId, 0, "Estimate " & value, "", "Default", "Todo", "", "", "")
+    CardContent.Save(boardId, cardId, 0, "custom", "Time estimate (hours)", value, 0, False, 0, "text")
+    item = New Collection
+    item["cardId"] = CStr(cardId)
+    item["listId"] = CStr(KanbanStore.CardListId(boardId, cardId))
+    item["listTitle"] = "Todo"
+    item["title"] = "Estimate " & value
+    fields = New Collection
+    fields["Time estimate (hours)"] = value
+    item["customFields"] = fields
+    items.Add(item)
+  Next
+  rows = WebDatabase.OpenConnection().Find("kb_lists", "board_id=&1 ORDER BY lane,sort_order,id", boardId)
+  For Each rows
+    list = New Collection
+    list["_id"] = CStr(rows!id)
+    list["title"] = TextValue(rows!title)
+    lists.Add(list)
+  Next
+  board["_id"] = CStr(boardId)
+  board["title"] = "Super Productivity Ω <literal>"
+  result["board"] = board
+  result["lists"] = lists
+  result["items"] = items
+  selection = BoardSelection.NewState()
+  BoardSelection.SetActive(selection, True)
+  BoardSelection.AddVisible(selection, [boardId])
+  batch = BoardBatchExport.NewBatch(selection, "superproductivity")
+  BoardBatchExport.Run(batch, selection)
+  If BoardBatchExport.Files(batch).Count <> 1 Or BoardBatchExport.Files(batch)[0]["name"] <> "board-" & CStr(boardId) & ".json" Then Error.Raise("Super Productivity batch format or filename drifted")
+  result["actual"] = BoardBatchExport.Files(batch)[0]["content"]
+  If InStr(result["actual"], "Archived Super Productivity canary") Or InStr(result["actual"], "Hidden archived content") Then Error.Raise("Super Productivity leaked archived content")
+  before = WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_entries")!total
+  BoardAccess.SetMember(boardId, "superproductivity-other", "normal-assigned-only")
+  Session["username"] = "superproductivity-other"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("superproductivity-other")
+  Try BoardTransfer.ExportActiveBoardSuperProductivity(boardId)
+  denied = Error
+  If Not denied Then Error.Raise("Super Productivity leaked full-board data to assigned-only member")
+  If WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_entries")!total <> before Then Error.Raise("Denied Super Productivity export wrote entries")
+  Session["username"] = "superproductivity-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("superproductivity-owner")
+  ImportExportPolicy.Save(False, True)
+  Try BoardTransfer.ExportActiveBoardSuperProductivity(boardId)
+  denied = Error
+  If Not denied Then Error.Raise("Super Productivity ignored global export disable")
+  ImportExportPolicy.Save(False, False)
+  Print JSON.Encode(result)
+End
+
+Private Function TextValue(value As Variant) As String
+  If IsNull(value) Then Return ""
+  Return CStr(value)
+End

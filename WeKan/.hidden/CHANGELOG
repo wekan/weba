@@ -1,4 +1,9 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Super Productivity selected export: Add native backup JSON ZIPs matching
+  source project/task/tag/filter-panel slices, null settings, flattened roots,
+  checklist notes, dates/time/estimates and active-card scope. Verify rich and
+  legacy/multi-project/cycle source comparisons and numeric repair/retry.
+
 - Businessmap selected export: Add actual XLSX ZIPs with optional and typed
   columns, repeated comments, source colors/dates and parent Card IDs. Verify
   unchanged source workbook readback, descriptor/name boundaries, native

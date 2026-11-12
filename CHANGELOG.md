@@ -2,6 +2,20 @@
 
 This work adds the following features and fixes:
 
+- Add Super Productivity as the twenty-third selected-board tool export.
+  Download `wekan-boards-superproductivity.zip` with native JSON backups matching
+  source project/task/tag/note/board/archive slices and required null settings.
+  Preserve used-lane projects, list filter panels, backlog/progress/done states,
+  flattened subtask roots, checklist notes, due-day/timed dates, stopped time and
+  numeric estimates/priorities. Exclude archived cards and running timers; retain
+  full-board/policy/session guards and pending-only numeric repair/retry.
+  Rich native/source equality, five empty/legacy/multi-project/cycle/overflow
+  cases and independent reordered-project expectations pass. Nine source
+  contracts and all 28 source/packaged browser downloads pass. Complete host
+  tests pass, including 69 Python tests and 46 archive-scope snapshots. Other
+  formats and complete original UI/API/security suites remain pending. Thanks
+  to xet7.
+
 - Add Businessmap (Kanbanize) as the twenty-second selected-board tool export.
   Download real XLSX workbooks in `wekan-boards-businessmap.zip`. Match source
   optional columns, ordered people, ISO dates, palette/hex colors, priorities,

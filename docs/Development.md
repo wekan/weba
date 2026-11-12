@@ -1668,3 +1668,30 @@ archive test includes every accepted external-tool format. Real source and
 packaged selected-export browser runs now cover 27 formats/download paths and
 cached scope revocation/API-403/regrant. These focused checks do not establish
 complete original Meteor UI/API/security parity.
+
+Super Productivity selected backup export
+
+Super Productivity produces `wekan-boards-superproductivity.zip` with one
+native `board-ID.json` backup per selected board. Match the current source
+cross-model version and project/task/tag/note/boards/archive slices, including
+required null settings. Used swimlanes become projects; lists become filter
+panels with source backlog/progress/done behavior. Flatten nested descendants
+under the top-level ancestor, inherit its project, and leave cyclic or absent
+parents unlinked. Preserve checklist Markdown notes, deduplicated labels, all-day
+versus timed due dates, stopped time and numeric estimates/priorities. Running
+timers, archived cards and source-unsupported content are excluded. Native cards
+have no creation timestamp, so use the source export-time fallback. Native
+unique lane titles and numeric card IDs remain explicit schema adapters.
+
+`SuperProductivityExportTest` and `SuperProductivityCasesTest` compare actual
+native SQL backups with unchanged `formatSuperProductivity` at the emitted
+export timestamp. Cover literal/Unicode text, required null/empty values,
+checklist notes, midnight/timed/pre-epoch dates, stopped/running time, finite and
+overflow estimates, empty/legacy-empty layouts, multiple used/unused lanes with independently expected native reorder,
+backlog/state panels, cross-project nested roots, legacy cycles, missing lists
+and archived parents, including stopped-time millisecond overflow to JSON null.
+Legacy invalid states are explicit SQL fixture mutations;
+normal APIs still reject them. Malformed numeric fields preserve pending work
+and retry after repair. Shared archive coverage includes every accepted tool
+format. The selected-export browser compares the actual backup ZIP with the
+source formatter. Complete original Meteor UI/API/security parity remains TODO.

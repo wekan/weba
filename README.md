@@ -2390,6 +2390,18 @@ and apostrophe refusal. Native snapshots bound cards and possible column counts
 before queue completion; malformed numbers/names retain pending-only retry.
 Source board-defined field models and unsupported original transport remain TODO.
 
+Super Productivity produces `wekan-boards-superproductivity.zip` with one
+native `board-ID.json` backup per selected board. Match the current source
+cross-model version and project/task/tag/note/boards/archive slices, including
+required null settings. Used swimlanes become projects in native lane order; lists become filter
+panels with source backlog/progress/done behavior. Flatten nested descendants
+under the top-level ancestor, inherit its project, and leave cyclic or absent
+parents unlinked. Preserve checklist Markdown notes, deduplicated labels, all-day
+versus timed due dates, stopped time and numeric estimates/priorities. Running
+timers, archived cards and source-unsupported content are excluded. Native cards
+have no creation timestamp, so use the source export-time fallback. Native
+unique lane titles and numeric card IDs remain explicit schema adapters.
+
 External-tool exports contain active cards. The native `weba-2` backup and
 generic CSV/TSV/Excel exports also retain archived cards.
 
@@ -2422,7 +2434,7 @@ comma-CSV, semicolon-CSV and TSV ZIPs, and the single two-sheet Excel workbook.
 They also verify the Kanboard container/task JSON, exact Markdown task-list,
 Leo XML, OPML outline, Org mode outline, todo.txt task, Taskwarrior JSON,
 Focalboard JSONL, Todoist CSV, Planner XLSX, MeisterTask CSV, Obsidian Kanban,
-Linear CSV, TickTick CSV, ClickUp CSV, Nullboard NBX, Kanri JSON, Pivotal Tracker CSV, Redmine CSV, Tasks.org backup JSON, monday.com XLSX and Businessmap XLSX ZIPs. Remaining external-tool formats and the original HTTP route
+Linear CSV, TickTick CSV, ClickUp CSV, Nullboard NBX, Kanri JSON, Pivotal Tracker CSV, Redmine CSV, Tasks.org backup JSON, monday.com XLSX, Businessmap XLSX and Super Productivity backup JSON ZIPs. Remaining external-tool formats and the original HTTP route
 remain pending.
 
 

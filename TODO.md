@@ -147,6 +147,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   there;
   selected Businessmap actual XLSX ZIP with optional/typed columns, comments,
   parent Card IDs and unchanged source workbook readback is recorded there;
+  selected Super Productivity native backup JSON ZIP with used-lane projects,
+  filter panels, flattened subtask roots, checklist notes and dates/time/estimates
+  is recorded there;
   Cached selected-export publication now rechecks current actor/session, full
   board access and policy; revocation/regrant browser coverage is recorded in
   CHANGELOG.md. Complete original security parity remains pending.

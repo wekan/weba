@@ -1533,6 +1533,9 @@
             { ExportSelectedBusinessmap WebButton
               Text = "Businessmap"
             }
+            { ExportSelectedSuperProductivity WebButton
+              Text = "Super Productivity"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton
