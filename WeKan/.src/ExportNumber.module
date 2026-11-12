@@ -1,0 +1,318 @@
+' Correctly rounded finite ECMAScript Number strings for external export fields.
+' Decimal long division avoids platform-specific libc bindings and the legacy
+' Gambas parser's accumulation rounding; binary/octal/hex use exact bit groups.
+Export
+
+Private Function IsWhitespace(character As String) As Boolean
+  Dim code As Integer
+  If Not character Then Return False
+  code = String.Code(character)
+  Return (code >= 9 And code <= 13) Or code = 32 Or code = 160 Or code = 5760 Or (code >= 8192 And code <= 8202) Or code = 8232 Or code = 8233 Or code = 8239 Or code = 8287 Or code = 12288 Or code = 65279
+End
+
+Private Function Clean(value As String) As String
+  Dim first As Integer = 1
+  Dim endIndex As Integer = String.Len(value)
+  While first <= endIndex
+    If Not IsWhitespace(String.Mid(value, first, 1)) Then Break
+    Inc first
+  Wend
+  While endIndex >= first
+    If Not IsWhitespace(String.Mid(value, endIndex, 1)) Then Break
+    Dec endIndex
+  Wend
+  If endIndex < first Then Return ""
+  Return String.Mid(value, first, endIndex - first + 1)
+End
+
+Private Function Strip(value As String) As String
+  While Len(value) > 1 And Left(value, 1) = "0"
+    value = Mid(value, 2)
+  Wend
+  If value = "0" Then Return ""
+  Return value
+End
+
+Private Function IntegerBits(value As String) As String
+  Dim bits As String
+  Dim quotient As String
+  Dim carry As Integer
+  Dim digit As Integer
+  Dim index As Integer
+  value = Strip(value)
+  While value
+    quotient = ""
+    carry = 0
+    For index = 1 To Len(value)
+      digit = carry * 10 + CInt(Mid(value, index, 1))
+      quotient &= CStr(digit Div 2)
+      carry = digit Mod 2
+    Next
+    bits = CStr(carry) & bits
+    value = Strip(quotient)
+  Wend
+  Return bits
+End
+
+Private Function FractionBit(ByRef value As String) As String
+  Dim result As String
+  Dim carry As Integer
+  Dim digit As Integer
+  Dim index As Integer
+  For index = Len(value) DownTo 1
+    digit = CInt(Mid(value, index, 1)) * 2 + carry
+    result = CStr(digit Mod 10) & result
+    carry = digit Div 10
+  Next
+  While Right(result, 1) = "0"
+    result = Left(result, -1)
+  Wend
+  value = result
+  Return CStr(carry)
+End
+
+Public Function ParseFinite(value As String, ByRef number As Float) As Boolean
+  Dim negative As Boolean
+  Dim signed As Boolean
+  Dim digits As String
+  Dim fraction As String
+  Dim integer As String
+  Dim bits As String
+  Dim allBits As String
+  Dim tail As String
+  Dim character As String
+  Dim exponentText As String
+  Dim exponent As Integer
+  Dim exponentLimit As Integer
+  Dim decimalExponent As Integer
+  Dim fractionDigits As Integer
+  Dim point As Boolean
+  Dim hasDigit As Boolean
+  Dim at As Integer = 1
+  Dim index As Integer
+  Dim digit As Integer
+  Dim width As Integer
+  Dim base As Integer
+  Dim precision As Integer
+  Dim scale As Integer
+  Dim significand As Float
+  Dim guard As String
+  Dim sticky As Boolean
+  number = 0
+  value = Clean(value)
+  If Not value Then Return True
+  If Left(value, 1) = "+" Or Left(value, 1) = "-" Then
+    signed = True
+    negative = Left(value, 1) = "-"
+    value = Mid(value, 2)
+    If Not value Then Return False
+  Endif
+  If Len(value) > 2 And Left(value, 1) = "0" And InStr("xob", LCase(Mid(value, 2, 1))) Then
+    If signed Then Return False
+    Select LCase(Mid(value, 2, 1))
+      Case "x"
+        base = 16
+        width = 4
+      Case "o"
+        base = 8
+        width = 3
+      Case "b"
+        base = 2
+        width = 1
+    End Select
+    For index = 3 To Len(value)
+      digit = InStr("0123456789abcdef", LCase(Mid(value, index, 1))) - 1
+      If digit < 0 Or digit >= base Then Return False
+      character = ""
+      For at = 1 To width
+        character = CStr(digit Mod 2) & character
+        digit = digit Div 2
+      Next
+      bits &= character
+    Next
+    bits = Strip(bits)
+  Else
+    at = 1
+    While at <= Len(value)
+      character = Mid(value, at, 1)
+      If character = "e" Or character = "E" Then Break
+      If character = "." Then
+        If point Then Return False
+        point = True
+      Else
+        If InStr("0123456789", character) = 0 Then Return False
+        hasDigit = True
+        digits &= character
+        If point Then Inc fractionDigits
+      Endif
+      Inc at
+    Wend
+    If Not hasDigit Then Return False
+    If at <= Len(value) Then
+      exponentText = Mid(value, at + 1)
+      If Left(exponentText, 1) = "+" Or Left(exponentText, 1) = "-" Then exponentText = Mid(exponentText, 2)
+      If Not exponentText Then Return False
+      exponentLimit = Len(value) + 2048
+      For index = 1 To Len(exponentText)
+        If InStr("0123456789", Mid(exponentText, index, 1)) = 0 Then Return False
+        If exponent > exponentLimit Div 10 Then
+          exponent = exponentLimit
+        Else
+          exponent = Min(exponentLimit, exponent * 10 + CInt(Mid(exponentText, index, 1)))
+        Endif
+      Next
+      If Mid(value, at + 1, 1) = "-" Then exponent = -exponent
+    Endif
+    digits = Strip(digits)
+    If Not digits Then Return True
+    decimalExponent = exponent - fractionDigits
+    If Len(digits) + decimalExponent > 309 Then Return False
+    If Len(digits) + decimalExponent < -324 Then Return True
+    at = Len(digits) + decimalExponent
+    If at <= 0 Then
+      fraction = String(-at, "0") & digits
+    Else If at < Len(digits) Then
+      integer = Left(digits, at)
+      fraction = Mid(digits, at + 1)
+    Else
+      integer = digits & String(at - Len(digits), "0")
+    Endif
+    While Right(fraction, 1) = "0"
+      fraction = Left(fraction, -1)
+    Wend
+    bits = IntegerBits(integer)
+  Endif
+  If bits Then
+    exponent = Len(bits) - 1
+  Else
+    exponent = -1
+    While fraction
+      character = FractionBit(ByRef fraction)
+      If character = "1" Then
+        bits = "1"
+        Break
+      Endif
+      Dec exponent
+      If exponent < -1075 Then Return True
+    Wend
+    If Not bits Then Return True
+  Endif
+  If exponent > 1023 Then Return False
+  precision = Min(53, 1075 + exponent)
+  If precision < 0 Then Return True
+  While Len(bits) < precision + 1
+    If fraction Then
+      bits &= FractionBit(ByRef fraction)
+    Else
+      bits &= "0"
+    Endif
+  Wend
+  allBits = Left(bits, precision)
+  guard = Mid(bits, precision + 1, 1)
+  tail = Mid(bits, precision + 2)
+  sticky = InStr(tail, "1") > 0 Or CBool(fraction)
+  For index = 1 To Len(allBits)
+    significand = significand * 2 + CInt(Mid(allBits, index, 1))
+  Next
+  If guard = "1" And (sticky Or significand - Int(significand / 2) * 2 = 1) Then significand += 1
+  If significand = 0 Then Return True
+  scale = exponent - precision + 1
+  If exponent = 1023 And significand >= 2 ^ 53 Then Return False
+  number = significand
+  If scale < 0 Then
+    For index = 1 To -scale
+      number /= 2
+    Next
+  Else
+    For index = 1 To scale
+      number *= 2
+    Next
+  Endif
+  If negative Then number = -number
+  Return True
+End
+
+' Exact base-ten integer text; Gambas display conversion keeps fewer than
+' binary64's 53 bits and must not round long Redmine estimates a second time.
+Public Function IntegerText(number As Float) As String
+  Dim bits As String
+  Dim digits As String = "0"
+  Dim result As String
+  Dim half As Float
+  Dim carry As Integer
+  Dim digit As Integer
+  Dim bitIndex As Integer
+  Dim index As Integer
+  Dim negative As Boolean = number < 0
+  number = Abs(number)
+  While number >= 1
+    half = Int(number / 2)
+    bits = CStr(CInt(number - half * 2)) & bits
+    number = half
+  Wend
+  For bitIndex = 1 To Len(bits)
+    carry = CInt(Mid(bits, bitIndex, 1))
+    result = ""
+    For index = Len(digits) DownTo 1
+      digit = CInt(Mid(digits, index, 1)) * 2 + carry
+      result = CStr(digit Mod 10) & result
+      carry = digit Div 10
+    Next
+    If carry Then result = CStr(carry) & result
+    digits = result
+  Next
+  Return If(negative And digits <> "0", "-", "") & digits
+End
+
+' Number.toString's shortest, nearest round-tripping scientific form for the
+' >=1e21 range where Number.toFixed returns Number.toString instead.
+Public Function LargeText(number As Float) As String
+  Return ShortestInteger(number, True)
+End
+
+Public Function IntegerString(number As Float) As String
+  If Abs(number) < 1.0E15 Then Return IntegerText(number)
+  Return ShortestInteger(number, False)
+End
+
+Private Function ShortestInteger(number As Float, scientific As Boolean) As String
+  Dim integer As String = IntegerText(Abs(number))
+  Dim digits As String
+  Dim tail As String
+  Dim candidate As String
+  Dim precision As Integer
+  Dim exponent As Integer = Len(integer) - 1
+  Dim candidateExponent As Integer
+  Dim index As Integer
+  Dim digit As Integer
+  Dim roundUp As Boolean
+  Dim parsed As Float
+  For precision = 1 To Min(17, Len(integer))
+    If precision = Len(integer) Then Return If(number < 0, "-", "") & integer
+    digits = Left(integer, precision)
+    tail = Mid(integer, precision + 2)
+    digit = CInt(Mid(integer, precision + 1, 1))
+    roundUp = digit > 5 Or (digit = 5 And (Len(Replace(tail, "0", "")) > 0 Or CInt(Right(digits, 1)) Mod 2 = 1))
+    If roundUp Then
+      For index = Len(digits) DownTo 1
+        digit = CInt(Mid(digits, index, 1)) + 1
+        digits = Left(digits, index - 1) & CStr(digit Mod 10) & Mid(digits, index + 1)
+        If digit < 10 Then Break
+      Next
+      If index = 0 Then digits = "1" & digits
+    Endif
+    candidateExponent = exponent
+    If Len(digits) > precision Then Inc candidateExponent
+    While Len(digits) > 1 And Right(digits, 1) = "0"
+      digits = Left(digits, -1)
+    Wend
+    candidate = Left(digits, 1)
+    If Len(digits) > 1 Then candidate &= "." & Mid(digits, 2)
+    candidate &= "e+" & CStr(candidateExponent)
+    If ParseFinite(candidate, ByRef parsed) And parsed = Abs(number) Then
+      If Not scientific Then candidate = digits & String(candidateExponent - Len(digits) + 1, "0")
+      Return If(number < 0, "-", "") & candidate
+    Endif
+  Next
+  Error.Raise("Invalid finite export number")
+End

@@ -2347,6 +2347,16 @@ leading equals signs for spreadsheet safety. Omit archived cards. Native cards
 lack creation/requester fields; those columns remain blank. Source Scrum,
 iteration, blocker/link and other model-only metadata is not invented.
 
+Redmine produces `wekan-boards-redmine.zip` with strict `board-ID.csv`
+English issue-import files. Preserve the UTF-8 BOM, CRLF, selective CSV quoting,
+native IDs/project/status/text, first label/assignee, dates, standard fields and
+case-sensitive nonreserved custom columns. Export stopped time records as hours,
+parent IDs and reciprocal untyped dependencies only for cards included in that
+board's file. Running timers and archived cards are excluded. Estimates follow
+JavaScript's two-decimal behavior, and `% Done` its rounded integer behavior.
+Native cards have no creator/requester/creation timestamp; those fields stay
+blank. Native dependencies have no source relation type and become `Related to`.
+
 The ordered ID list, revision and completed/pending queue remain private to the
 form. The queue is bound to the current account session and unchanged selection.
 Every board independently takes the existing locked whole-board export path and
@@ -2373,7 +2383,7 @@ comma-CSV, semicolon-CSV and TSV ZIPs, and the single two-sheet Excel workbook.
 They also verify the Kanboard container/task JSON, exact Markdown task-list,
 Leo XML, OPML outline, Org mode outline, todo.txt task, Taskwarrior JSON,
 Focalboard JSONL, Todoist CSV, Planner XLSX, MeisterTask CSV, Obsidian Kanban,
-Linear CSV, TickTick CSV, ClickUp CSV, Nullboard NBX, Kanri JSON and Pivotal Tracker CSV ZIPs. Remaining external-tool formats and the original HTTP route
+Linear CSV, TickTick CSV, ClickUp CSV, Nullboard NBX, Kanri JSON, Pivotal Tracker CSV and Redmine CSV ZIPs. Remaining external-tool formats and the original HTTP route
 remain pending.
 
 

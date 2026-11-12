@@ -1,4 +1,10 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Redmine selected export: Add BOM/CRLF issue-import CSV ZIPs with native
+  fields/custom columns, stopped hours and scoped parent/untyped-related IDs.
+  Match decimal, percent and large numeric text; verify exact rich parent CSV
+  and 1,547 JavaScript numeric outcomes, plus batch/archive/scope controls.
+  Complete host and source/packaged 24-download browser checks pass.
+
 - Pivotal selected export: Add source-shaped dynamic owner/comment/task CSV
   ZIPs with dates/type/state/points/priority, formula safety, quoting and CRLF.
   Guard short-row padding, omit archived canaries and reuse locked private

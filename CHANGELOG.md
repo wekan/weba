@@ -2,6 +2,20 @@
 
 This work adds the following features and fixes:
 
+- Add Redmine as the nineteenth selected-board external-tool export. Download
+  `wekan-boards-redmine.zip` with strict English issue-import `board-ID.csv`
+  entries, UTF-8 BOM, CRLF, native IDs/project/status/text/assignee/dates,
+  standard and nonreserved custom fields, stopped tracked hours and scoped
+  parent/related IDs. Exclude archived cards, running timers and out-of-file
+  links. Match source decimal/percent/large-number behavior with portable exact
+  numeric conversion and keep absent native creator/requester/typed relations
+  explicit. Reuse private batch retry and locked full-read/policy checks.
+  Complete host tests pass, including 69 Python tests, rich source CSV matching
+  and 1,547 numeric IEEE/integer/scientific comparisons. Focused source and
+  packaged browser checks validate all 24 exact downloads; eight parent Redmine
+  contracts pass. Other formats and complete original suites remain pending.
+  Thanks to xet7.
+
 - Add Pivotal Tracker as the eighteenth selected-board external-tool export.
   Download `wekan-boards-pivotal.zip` with ordered strict `board-ID.csv` files.
   Match the source import columns and per-board repeated owner/comment/task

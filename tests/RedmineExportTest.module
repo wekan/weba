@@ -1,0 +1,130 @@
+' Synthetic fixture plus native negatives; source comparison runs in Node.
+Public Sub Main()
+  Dim boardId As Integer
+  Dim parent As Integer
+  Dim child As Integer
+  Dim archived As Integer
+  Dim cardId As Integer
+  Dim selection As Collection
+  Dim batch As Collection
+  Dim data As New Collection
+  Dim items As New Variant[]
+  Dim item As Collection
+  Dim fields As Collection
+  Dim dates As Collection
+  Dim dependency As Collection
+  Dim dependencies As Variant[]
+  Dim value As String
+  Dim start As String = "2026-11-12T05:06:07.008Z"
+  Dim due As String = "2026-11-13T23:59:59.999Z"
+  Dim ending As String = "2026-11-14T01:02:03.004Z"
+  Dim denied As Boolean
+  Dim before As Integer
+  WebDatabase.Register("redmine-owner", "x")
+  WebDatabase.Register("redmine-other", "x")
+  Session["username"] = "redmine-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("redmine-owner")
+  boardId = KanbanStore.AddBoard("Redmine source comparison")
+  KanbanStore.AddLane(boardId, "Project, Ω")
+  KanbanStore.AddList(boardId, "Project, Ω", "In progress", "")
+  parent = KanbanStore.SaveCard(boardId, 0, "  =Parent, Ω  ", "Line one" & Chr(10) & Chr(34) & "quoted" & Chr(34), "Project, Ω", "In progress", "redmine-owner", "Bug, extra", "")
+  BoardAccess.SetAssignees(boardId, parent, ["redmine-owner"])
+  child = KanbanStore.SaveCard(boardId, 0, "Child", "", "Default", "Todo", "", "", "")
+  archived = KanbanStore.SaveCard(boardId, 0, "Archived canary", "Hidden archived bytes", "Default", "Todo", "", "", "")
+  CardContent.Save(boardId, parent, 0, "subtask", "", "", 0, False, child)
+  CardContent.Save(boardId, parent, 0, "dependency", "", "", 0, False, child)
+  CardContent.Save(boardId, parent, 0, "dependency", "", "", 0, False, archived)
+  KanbanStore.ArchiveCard(boardId, archived, True)
+  fields = New Collection
+  fields["Priority"] = "High"
+  fields["Category"] = "Frontend"
+  fields["Target version"] = "2.0"
+  fields["Estimated time"] = "2.675"
+  fields["% Done"] = "30.5"
+  fields["Customer"] = "ACME, " & Chr(34) & "Ω" & Chr(34)
+  fields["Files"] = "Reserved file field must not become a new column"
+  fields["subject"] = "Reserved subject must not override the real title"
+  For Each value In fields.Keys
+    CardContent.Save(boardId, parent, 0, "custom", value, fields[value], 0, False, 0, "text")
+  Next
+  dates = New Collection
+  dates["startAt"] = CardDates.Parse(start)
+  dates["dueAt"] = CardDates.Parse(due)
+  dates["endAt"] = CardDates.Parse(ending)
+  CardDates.Apply(boardId, parent, dates)
+  CardContent.Save(boardId, parent, 0, "time", "Tracked time", "", 0, True, 120)
+  CardContent.StartTimer(boardId, parent)
+  item = New Collection
+  item["cardId"] = CStr(parent)
+  item["title"] = "  =Parent, Ω  "
+  item["description"] = "Line one" & Chr(10) & Chr(34) & "quoted" & Chr(34)
+  item["swimlaneTitle"] = "Project, Ω"
+  item["listTitle"] = "In progress"
+  item["labels"] = ["Bug", "extra"]
+  item["owner"] = "redmine-owner"
+  item["startAt"] = start
+  item["dueAt"] = due
+  item["endAt"] = ending
+  item["spentTime"] = 2
+  item["customFields"] = fields
+  dependency = New Collection
+  dependency["cardId"] = CStr(child)
+  dependency["type"] = "related-to"
+  dependencies = New Variant[]
+  dependencies.Add(dependency)
+  dependency = New Collection
+  dependency["cardId"] = CStr(archived)
+  dependency["type"] = "related-to"
+  dependencies.Add(dependency)
+  item["dependencies"] = dependencies
+  items.Add(item)
+  item = New Collection
+  item["cardId"] = CStr(child)
+  item["title"] = "Child"
+  item["listTitle"] = "Todo"
+  item["swimlaneTitle"] = "Default"
+  item["parentCardId"] = CStr(parent)
+  fields = New Collection
+  fields["customer"] = "different case"
+  CardContent.Save(boardId, child, 0, "custom", "customer", "different case", 0, False, 0, "text")
+  item["customFields"] = fields
+  dependencies = New Variant[]
+  dependency = New Collection
+  dependency["cardId"] = CStr(parent)
+  dependency["type"] = "related-to"
+  dependencies.Add(dependency)
+  item["dependencies"] = dependencies
+  items.Add(item)
+  For Each value In ["0.615", "1.005", "0.125", "-0.125", "-0.001", "9999.995", "2.675", "1.335", "invalid", " ", "1e21", "-1.2345678901234568e21", "1000000000000000100", "1.7976931348623157e308", "0x10", "0o10", "0b10", "5e-324", "0.49999999999999994", "4503599627370497", "1000000000000000100", "-1.5"]
+    cardId = KanbanStore.SaveCard(boardId, 0, "Decimal " & value, "", "Default", "Todo", "", "", "")
+    CardContent.Save(boardId, cardId, 0, "custom", "Estimated time", value, 0, False, 0, "text")
+    CardContent.Save(boardId, cardId, 0, "custom", "% Done", value, 0, False, 0, "text")
+    item = New Collection
+    item["cardId"] = CStr(cardId)
+    item["title"] = "Decimal " & value
+    item["listTitle"] = "Todo"
+    fields = New Collection
+    fields["Estimated time"] = value
+    fields["% Done"] = value
+    item["customFields"] = fields
+    items.Add(item)
+  Next
+  data["items"] = items
+  selection = BoardSelection.NewState()
+  BoardSelection.SetActive(selection, True)
+  BoardSelection.Toggle(selection, boardId, [boardId])
+  batch = BoardBatchExport.NewBatch(selection, "redmine")
+  BoardBatchExport.Run(batch, selection)
+  If BoardBatchExport.Files(batch).Count <> 1 Or BoardBatchExport.Files(batch)[0]["name"] <> "board-" & CStr(boardId) & ".csv" Then Error.Raise("Redmine queue format/filename drifted")
+  data["actual"] = BoardBatchExport.Files(batch)[0]["content"]
+  If InStr(data["actual"], "Archived canary") Or InStr(data["actual"], "Hidden archived bytes") Then Error.Raise("Redmine exported archived content")
+  before = WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_entries")!total
+  BoardAccess.SetMember(boardId, "redmine-other", "normal-assigned-only")
+  Session["username"] = "redmine-other"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("redmine-other")
+  Try BoardTransfer.ExportActiveBoardRedmine(boardId)
+  denied = Error
+  If Not denied Then Error.Raise("Redmine leaked full-board data to assigned-only member")
+  If WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_entries")!total <> before Then Error.Raise("Denied Redmine export wrote card entries")
+  Print JSON.Encode(data)
+End

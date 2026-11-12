@@ -107,6 +107,10 @@ Public Function ExportActiveBoardPivotal(boardId As Integer) As String
   Return ExportChecked(boardId, "board", boardId, True, "pivotal")
 End
 
+Public Function ExportActiveBoardRedmine(boardId As Integer) As String
+  Return ExportChecked(boardId, "board", boardId, True, "redmine")
+End
+
 Private Sub RequireActiveBoard(boardId As Integer)
   Dim r As Result = $db.Find("kb_boards", "id=&1 AND archived=&2", boardId, False)
   If Not r.Available Then Error.Raise("Select active boards first")
@@ -179,6 +183,8 @@ Private Function ExportChecked(boardId As Integer, kind As String, itemId As Int
     text = BoardKanriExport.Build(boardId, $db)
   Else If format = "pivotal" And kind = "board" Then
     text = BoardPivotalExport.Build(boardId, $db)
+  Else If format = "redmine" And kind = "board" Then
+    text = BoardRedmineExport.Build(boardId, $db)
   Else
     Error.Raise("Unknown export format")
   Endif

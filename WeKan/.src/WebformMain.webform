@@ -1521,6 +1521,9 @@
             { ExportSelectedPivotal WebButton
               Text = "Pivotal Tracker"
             }
+            { ExportSelectedRedmine WebButton
+              Text = "Redmine"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton

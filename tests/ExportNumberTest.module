@@ -1,0 +1,30 @@
+Public Sub Main()
+  Dim inputValues As Variant[] = JSON.Decode(File.Load(Env["WEBA_NUMBER_INPUT"]))
+  Dim output As New Variant[]
+  Dim value As String
+  Dim number As Float
+  Dim row As Collection
+  Dim bytes As String
+  Dim index As Integer
+  Dim bytePointer As Pointer
+  For Each value In inputValues
+    row = New Collection
+    row["ok"] = ExportNumber.ParseFinite(value, ByRef number)
+    If row["ok"] Then
+      If Abs(number) >= 1.0E21 Then
+        row["large"] = ExportNumber.LargeText(number)
+      Else
+        row["integer"] = ExportNumber.IntegerText(Int(number))
+        row["shortest"] = ExportNumber.IntegerString(Int(number))
+      Endif
+    Endif
+    bytePointer = VarPtr(number)
+    bytes = ""
+    For index = 0 To 7
+      bytes &= Hex(Byte@(bytePointer + index), 2)
+    Next
+    row["bytes"] = bytes
+    output.Add(row)
+  Next
+  Print JSON.Encode(output)
+End

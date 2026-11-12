@@ -4025,6 +4025,10 @@ Public Sub ExportSelectedPivotal_Click()
   RunSelectedExport("pivotal")
 End
 
+Public Sub ExportSelectedRedmine_Click()
+  RunSelectedExport("redmine")
+End
+
 Public Sub CancelSelectedExport_Click()
   ClearSelectedExport()
 End

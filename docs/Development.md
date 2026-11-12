@@ -1354,6 +1354,31 @@ source/packaged empty-board downloads to actual `formatPivotalCsv`; rich native
 fixtures cover owners/comments/tasks/dates/escaping and per-board widths.
 The exporter runs inside the same locked active-board policy/scope transaction.
 
+The `redmine` format writes `wekan-boards-redmine.zip` with ordered strict
+`board-ID.csv` entries. `BoardRedmineExport` matches the English import columns,
+UTF-8 BOM/CRLF/quoting, case-insensitive reserved captions and case-sensitive
+extra custom columns. Map native IDs, project/status/text, first label/assignee,
+Priority/Category/Target version, UTC day/minute dates, stopped minutes to hours,
+scoped subtask parent and reciprocal untyped dependencies (`Related to`).
+Exclude archived/deleted/out-of-file references and running timers. Native cards
+lack creation/requester fields and typed dependencies, so keep those limitations
+explicit instead of inventing actors or relation types.
+
+`ExportNumber` parses finite JavaScript Number strings with portable decimal
+long division and exact binary rounding, avoiding Gambas 3.20 parser/display
+precision differences. Redmine estimates match `toFixed(2)`, including half-cent
+and negative-zero cases; percent fields use `Math.round` and shortest integer
+text. Large values use shortest round-tripping scientific text. The numeric
+oracle compares 1,547 deterministic decimal/radix/long-mantissa/overflow/
+subnormal/tie/whitespace cases against actual JavaScript IEEE bytes and integer/
+scientific strings. `RedmineExportTest` compares a rich SQLite export exactly to
+the unchanged parent `formatRedmineCsv`, with explicit native numeric-ID,
+first-assignee/stopped-hours/untyped-link/absent-creator adapters. It tests
+reserved/case-sensitive custom names, dates, BOM/quoting, scoped hierarchy,
+archived omission and assigned-only refusal. Both oracles run from run-store.sh
+in separate initially empty projects/databases. Real source/packaged downloads
+compare empty-board bytes with the actual parent formatter.
+
 The final file snapshot crosses the native command boundary as base64 JSON.
 `batch-export.js` bounds and validates the JSON/table/Excel envelope, writes
 stored UTF-8 ZIP or OOXML entries with CRC-32 and a central directory, and never
@@ -1362,7 +1387,7 @@ bytes, no-write failure,
 immutable snapshots, retry/replay/reentrancy, stale/foreign/archive/policy denial
 and ZIP structure. `python3 tests/run-http.py --selected-export` (add `--archive`)
 checks the real controls, live and forged global gate, selection retention and
-all twenty-three download contents. The original caption is among 271 source keys in all
+all twenty-four download contents. The original caption is among 271 source keys in all
 237 catalogs. Remaining external-tool formats and the original HTTP route stay
 open.
 

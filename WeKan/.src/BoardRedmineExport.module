@@ -1,0 +1,220 @@
+' Native counterpart of the parent Redmine English issue-import CSV.
+Export
+Private $db As Connection
+Private $boardId As Integer
+Private $ids As Collection
+
+Public Function Headers() As String[]
+  Return ["Unique ID", "Project", "Tracker", "Status", "Priority", "Subject", "Description", "Author", "Assignee", "Category", "Target version", "Start date", "Due date", "Estimated time", "% Done", "Spent time", "Created", "Closed", "Parent task", "Related to", "Blocks", "Blocked by", "Is duplicate of", "Has duplicate"]
+End
+
+Private Function TextValue(value As Variant) As String
+  If IsNull(value) Then Return ""
+  Return CStr(value)
+End
+
+Private Function Row(values As String[]) As String
+  Dim cells As New String[]
+  Dim value As String
+  For Each value In values
+    If InStr(value, ",") Or InStr(value, Chr(34)) Or InStr(value, Chr(13)) Or InStr(value, Chr(10)) Then value = Chr(34) & Replace(value, Chr(34), Chr(34) & Chr(34)) & Chr(34)
+    cells.Add(value)
+  Next
+  Return cells.Join(",")
+End
+
+Private Function Reserved(name As String) As Boolean
+  Dim values As String[] = Headers()
+  Dim value As String
+  For Each value In ["#", "Parent task subject", "Watchers", "Updated", "Estimated remaining time", "Total estimated time", "Total spent time", "Last updated by", "Related issues", "Files", "Last notes", "Private", "Precedes", "Follows", "Copied to", "Copied from"]
+    values.Add(value)
+  Next
+  For Each value In values
+    If LCase(value) = LCase(name) Then Return True
+  Next
+  Return False
+End
+
+Private Function CustomFields(cardId As Integer) As Collection
+  Dim result As New Collection
+  Dim rows As Result = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "custom")
+  Dim name As String
+  For Each rows
+    name = TextValue(rows!title)
+    If name Then result[name] = TextValue(rows!body)
+  Next
+  Return result
+End
+
+' Round the exact binary fraction as Number.toFixed(2), avoiding a rounded
+' multiply at a half-cent (0.615, 2.675) and preserving negative zero text.
+Private Function Decimal(value As String) As String
+  Dim number As Float
+  If Not value Or Not ExportNumber.ParseFinite(value, ByRef number) Then Return ""
+  Return DecimalNumber(number)
+End
+
+Private Function DecimalNumber(number As Float) As String
+  Dim magnitude As Float
+  Dim whole As Float
+  Dim fraction As Float
+  Dim product As Float
+  Dim split As Float
+  Dim high As Float
+  Dim low As Float
+  Dim residual As Float
+  Dim cents As Integer
+  Dim tail As Float
+  magnitude = Abs(number)
+  If magnitude >= 1.0E21 Then Return ExportNumber.LargeText(number)
+  whole = Int(magnitude)
+  fraction = magnitude - whole
+  product = fraction * 100
+  split = fraction * 134217729.0
+  high = split - (split - fraction)
+  low = fraction - high
+  residual = (high * 100 - product) + low * 100
+  cents = Int(product)
+  tail = product - cents
+  If tail > 0.5 Or (tail = 0.5 And residual >= 0) Then Inc cents
+  If cents = 100 Then
+    whole += 1
+    cents = 0
+  Endif
+  Return If(number < 0, "-", "") & ExportNumber.IntegerText(whole) & "." & If(cents < 10, "0", "") & CStr(cents)
+End
+
+Private Function Percent(value As String) As String
+  Dim number As Float
+  Dim rounded As Float
+  If Not value Or Not ExportNumber.ParseFinite(value, ByRef number) Then Return ""
+  rounded = Int(number)
+  If number - rounded >= 0.5 Then rounded += 1
+  number = rounded
+  If Abs(number) >= 1.0E21 Then Return ExportNumber.LargeText(number)
+  Return ExportNumber.IntegerString(number)
+End
+
+Private Function DateValue(dates As Collection, key As String, Optional withTime As Boolean) As String
+  Dim iso As String
+  If Not dates.Exist(key) Then Return ""
+  iso = CardDates.Iso(dates[key])
+  If withTime Then Return Replace(Left(iso, 16), "T", " ")
+  Return Left(iso, 10)
+End
+
+Private Function SpentHours(cardId As Integer) As String
+  Dim rows As Result = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND done=&4 ORDER BY id", $boardId, cardId, "time", True)
+  Dim minutes As Float
+  For Each rows
+    minutes += CFloat(rows!amount)
+  Next
+  If minutes <= 0 Then Return ""
+  Return DecimalNumber(minutes / 60)
+End
+
+Private Function ParentId(cardId As Integer) As String
+  Dim rows As Result = $db.Find("kb_entries", "board_id=&1 AND kind=&2 AND amount=&3 ORDER BY id", $boardId, "subtask", cardId)
+  Dim id As String
+  For Each rows
+    id = CStr(rows!card_id)
+    If $ids.Exist(id) Then Return id
+  Next
+  Return ""
+End
+
+Private Function RelatedIds(cardId As Integer) As String
+  Dim rows As Result = $db.Find("kb_entries", "board_id=&1 AND kind=&2 AND (card_id=&3 OR amount=&3) ORDER BY id", $boardId, "dependency", cardId)
+  Dim related As New String[]
+  Dim id As String
+  For Each rows
+    id = If(rows!card_id = cardId, CStr(CInt(rows!amount)), CStr(rows!card_id))
+    If id = CStr(cardId) Or Not $ids.Exist(id) Or related.Find(id) >= 0 Then Continue
+    related.Add(id)
+  Next
+  Return related.Join(", ")
+End
+
+Public Function Build(boardId As Integer, db As Connection) As String
+  Dim rows As Result
+  Dim cards As New Variant[]
+  Dim card As Collection
+  Dim fields As Collection
+  Dim dates As Collection
+  Dim values As Collection
+  Dim columns As String[] = Headers()
+  Dim extra As New String[]
+  Dim cells As String[]
+  Dim lines As New String[]
+  Dim name As String
+  Dim lane As String
+  Dim labels As String[]
+  Dim label As String
+  Dim people As String[]
+  Dim title As String
+  $db = db
+  $boardId = boardId
+  $ids = New Collection
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  rows = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  For Each rows
+    card = New Collection
+    card.Add(CInt(rows!id), "id")
+    card.Add(TextValue(rows!title), "title")
+    card.Add(TextValue(rows!description), "description")
+    card.Add(TextValue(rows!lane), "lane")
+    card.Add(TextValue(rows!list_title), "list")
+    card.Add(TextValue(rows!labels), "labels")
+    fields = CustomFields(rows!id)
+    card.Add(fields, "fields")
+    For Each name In fields.Keys
+      If Not Reserved(name) And extra.Find(name) < 0 Then extra.Add(name)
+    Next
+    cards.Add(card)
+    $ids.Add(True, CStr(rows!id))
+  Next
+  For Each name In extra
+    columns.Add(name)
+  Next
+  lines.Add(Row(columns))
+  For Each card In cards
+    fields = card["fields"]
+    dates = CardDates.ReadDates(boardId, card["id"])
+    values = New Collection
+    values["Unique ID"] = CStr(card["id"])
+    lane = card["lane"]
+    If lane And lane <> "Default" Then values["Project"] = lane
+    labels = New String[]
+    For Each label In Split(TextValue(card["labels"]), ",")
+      label = Trim(label)
+      If label Then labels.Add(label)
+    Next
+    If labels.Count Then values["Tracker"] = labels[0]
+    values["Status"] = If(card["list"], card["list"], "New")
+    For Each name In ["Priority", "Category", "Target version"]
+      If fields.Exist(name) Then values[name] = fields[name]
+    Next
+    title = Trim(TextValue(card["title"]))
+    values["Subject"] = If(title, title, "Untitled")
+    values["Description"] = TextValue(card["description"])
+    people = BoardAccess.Assignees(boardId, card["id"])
+    If people.Count Then values["Assignee"] = people[0]
+    values["Start date"] = DateValue(dates, "startAt")
+    values["Due date"] = DateValue(dates, "dueAt")
+    If fields.Exist("Estimated time") Then values["Estimated time"] = Decimal(TextValue(fields["Estimated time"]))
+    If fields.Exist("% Done") Then values["% Done"] = Percent(TextValue(fields["% Done"]))
+    values["Spent time"] = SpentHours(card["id"])
+    values["Closed"] = DateValue(dates, "endAt", True)
+    values["Parent task"] = ParentId(card["id"])
+    values["Related to"] = RelatedIds(card["id"])
+    For Each name In extra
+      If fields.Exist(name) Then values[name] = TextValue(fields[name])
+    Next
+    cells = New String[]
+    For Each name In columns
+      cells.Add(If(values.Exist(name), TextValue(values[name]), ""))
+    Next
+    lines.Add(Row(cells))
+  Next
+  Return String.Chr(65279) & lines.Join(Chr(13) & Chr(10)) & Chr(13) & Chr(10)
+End

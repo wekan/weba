@@ -24,6 +24,8 @@ Public Sub Main()
   Dim linearBatch As Collection
   Dim tickTickBatch As Collection
   Dim clickUpBatch As Collection
+  Dim redmineBatch As Collection
+  Dim redmine As String
   Dim pivotalBatch As Collection
   Dim pivotalCard As Integer
   Dim pivotalArchived As Integer
@@ -483,6 +485,13 @@ Public Sub Main()
   If InStr(pivotal, "First note (batch-export-owner - ") = 0 Or InStr(pivotal, "Second note (batch-export-owner - ") = 0 Or InStr(pivotal, ",Open task,not completed,Done task,completed" & Chr(13) & Chr(10)) = 0 Then Error.Raise("Pivotal comments/tasks or row ending drifted")
   If InStr(pivotal, "Ignored archived card") Then Error.Raise("Pivotal exported archived content")
   If files[1]["content"] <> "Title,Labels,Type,Estimate,Priority,Current State,Created at,Accepted at,Deadline,Requested By,Description,Owned By" & Chr(13) & Chr(10) & "Bravo card,,feature,,,unstarted,,,,,Bravo body," & Chr(13) & Chr(10) Then Error.Raise("Pivotal per-board column counts or padded empty metadata drifted")
+  redmineBatch = BoardBatchExport.NewBatch(selection, "redmine")
+  BoardBatchExport.Run(redmineBatch, selection)
+  files = BoardBatchExport.Files(redmineBatch)
+  If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".csv" Or BoardBatchExport.Format(redmineBatch) <> "redmine" Then Error.Raise("Redmine format or batch order drifted")
+  redmine = files[0]["content"]
+  If Left(redmine, 3) <> String.Chr(65279) Or InStr(redmine, "Unique ID,Project,Tracker,Status,Priority,Subject,Description") = 0 Or Right(redmine, 2) <> Chr(13) & Chr(10) Then Error.Raise("Redmine BOM, source columns or row endings drifted")
+  If InStr(redmine, "Ignored archived card") Or InStr(redmine, "Private archived canary") Then Error.Raise("Redmine leaked archived content")
   batch = BoardBatchExport.NewBatch(selection)
   batch["busy"] = True
   Try BoardBatchExport.Run(batch, selection)
@@ -512,7 +521,7 @@ Public Sub Main()
   Try BoardBatchExport.Run(batch, selection)
   denied = Error
   If Not denied Or Error.Text <> "Export is disabled by the administrator." Or BoardBatchExport.Completed(batch) Then Error.Raise("Disabled export leaked or advanced its queue")
-  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML/Org mode/todo.txt/Taskwarrior/Focalboard/Todoist/Planner/MeisterTask/Obsidian/Linear/TickTick/ClickUp/Nullboard/Kanri/Pivotal batch export: exact ordered files, generic and Planner workbook data, native Kanboard data, text/XML/JSON/JSONL/CSV tool formats, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
+  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML/Org mode/todo.txt/Taskwarrior/Focalboard/Todoist/Planner/MeisterTask/Obsidian/Linear/TickTick/ClickUp/Nullboard/Kanri/Pivotal/Redmine batch export: exact ordered files, generic and Planner workbook data, native Kanboard data, text/XML/JSON/JSONL/CSV tool formats, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
 End
 
 Private Function Frame() As String

@@ -133,6 +133,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   flattened tasks and used tags is recorded there;
   selected Pivotal Tracker CSV ZIP with dynamic owner/comment/task columns,
   state/type/points/priority/dates and formula-safe CRLF is recorded there;
+  selected Redmine English CSV ZIP with BOM/CRLF, native issue/custom fields,
+  exact numeric text, stopped hours and scoped parent/related IDs is recorded
+  there;
   original remaining formats/API route, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded
