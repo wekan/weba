@@ -2006,3 +2006,22 @@ Forgejo alias. GitHub and Gitea regressions still run independently. Browser
 coverage downloads ordered per-board Forgejo JSON and compares it with source
 in source/packaged builds. Owner/read-only archive regression includes Forgejo.
 Complete original route/options/model/security parity remains pending.
+
+GitLab selected export uses `BoardGitlabExport` through the existing locked
+`ExportChecked` full-read/policy/session and private cached-publication checks.
+It emits source Issues API v4 arrays: literal title/description, exact ASCII
+terminal-list state (`closed` or `opened`), repeated label names, optional UTC
+due dates, ordered native assignees/members and comments as non-system notes with
+native authors/timestamps. Close dates appear only when the list is terminal;
+`iid` stays absent to avoid an extra Source line on import. Creator, card creation
+and Scrum planning have no native persisted model yet and are left absent.
+No unrelated custom/WIP/checklist data is read and no source-absent row cap added.
+
+The shared issue fixture dispatches to the real GitLab transfer/batch entry with
+fresh SQLite data, comparing 27 rich/empty/legacy/orphan/state outputs against
+unchanged `formatters.gitlab`. State cases also store end dates: comparisons
+and explicit assertions verify conditional close dates, opened issues without
+close dates, notes/assignees and iid omission. Existing three issue-format
+regressions still run independently. Browser coverage checks ordered per-board
+GitLab JSON vs source output in source/packaged applications; archive coverage
+includes owner and read-only exports. Full original parity remains pending.

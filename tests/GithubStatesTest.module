@@ -30,6 +30,8 @@ Public Sub Main()
     If result.Count Mod 2 = 0 Then
       dates = New Collection
       dates.Add(CardDates.Parse("1969-12-31T23:59:59.999Z"), "dueAt")
+      dates.Add(CardDates.Parse("2026-11-13T01:02:03.004Z"), "endAt")
+      item.Add("2026-11-13T01:02:03.004Z", "endAt")
       CardDates.Apply(boardId, cardId, dates)
       item.Add("1969-12-31T23:59:59.999Z", "dueAt")
     Endif

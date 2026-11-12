@@ -5300,3 +5300,7 @@ End
 Public Sub ExportSelectedForgejo_Click()
   RunSelectedExport("forgejo")
 End
+
+Public Sub ExportSelectedGitlab_Click()
+  RunSelectedExport("gitlab")
+End

@@ -119,6 +119,10 @@ Public Function ExportActiveBoardOpenProject(boardId As Integer) As String
   Return ExportChecked(boardId, "board", boardId, True, "openproject")
 End
 
+Public Function ExportActiveBoardGitlab(boardId As Integer) As String
+  Return ExportChecked(boardId, "board", boardId, True, "gitlab")
+End
+
 Public Function ExportActiveBoardForgejo(boardId As Integer) As String
   Return ExportChecked(boardId, "board", boardId, True, "forgejo")
 End
@@ -245,6 +249,8 @@ Private Function ExportChecked(boardId As Integer, kind As String, itemId As Int
     text = BoardNullboardExport.Build(boardId, $db)
   Else If format = "openproject" And kind = "board" Then
     text = BoardOpenProjectExport.Build(boardId, $db)
+  Else If format = "gitlab" And kind = "board" Then
+    text = BoardGitlabExport.Build(boardId, $db)
   Else If (format = "github" Or format = "gitea" Or format = "forgejo") And kind = "board" Then
     text = BoardGithubExport.Build(boardId, $db)
   Else If format = "deck" And kind = "board" Then

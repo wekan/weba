@@ -1,4 +1,9 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- GitLab selected export: Add scoped Issues API JSON ZIP with repeated
+  assignees, notes, optional due dates, terminal-only close dates and source
+  iid omission. Verify 27 native/source outcomes and permission/policy gates.
+  Native creator/creation/Scrum models and full parity remain pending.
+
 - Forgejo selected export: Add a distinct scoped issue-array JSON ZIP action,
   sharing the source-equivalent GitHub/Gitea native formatter. Verify 27
   independent Forgejo source comparisons and both earlier alias regressions.

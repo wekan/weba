@@ -3307,3 +3307,9 @@ Forgejo shares WeKan's GitHub/Gitea issue formatter, with its own locked action,
 selected batch and download name. Active-card, full-read, policy, session and
 cached-publication checks apply. Remaining formats and complete original
 UI/API/security parity remain pending.
+
+Selected boards also export **GitLab Issues API JSON** in
+`wekan-boards-gitlab.zip`, with opened/closed state, labels, all native assignees,
+comments as notes, optional due dates and close dates only for terminal lists.
+The source `iid` omission is preserved. Creator/creation/Scrum models and complete
+original UI/API/security parity remain pending.

@@ -2,6 +2,19 @@
 
 This work adds the following features and fixes:
 
+- Add GitLab Issues API JSON as the thirty-sixth selected-board tool export.
+  Download `wekan-boards-gitlab.zip` with source literal text/labels, opened or
+  closed states, all repeated assignees, notes with authors/timestamps, optional
+  due dates and terminal-only close dates. Omit `iid` as source does; do not
+  read unrelated malformed custom/WIP/checklist data. Retain locked active/full-
+  read/policy/session and cached-scope gates. All 27 rich/empty/legacy/orphan/
+  state native outputs match unchanged source, including no-close-date opened
+  issues. All eight original GitLab import contracts and complete host tests
+  pass (69 Python tests and 72 archive/scope snapshots); all 41 source/packaged
+  browser downloads and cached revocation/regrant pass. Native creator/creation/
+  Scrum models, four remaining tool formats and
+  full original UI/API/security parity remain pending. Thanks to xet7.
+
 - Add Forgejo issue-array JSON as the thirty-fifth selected-board tool export.
   Download `wekan-boards-forgejo.zip` through its distinct locked action and
   private batch path, reusing the native issue formatter shared by all three
