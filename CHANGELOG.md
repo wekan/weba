@@ -2,6 +2,21 @@
 
 This work adds the following features and fixes:
 
+- Add Nullboard as the sixteenth selected-board external-tool export. Download
+  one `wekan-boards-nullboard.zip` with ordered strict `board-ID.nbx` entries.
+  Match the parent compact JSON board shape, format 20190412, nonzero export
+  epoch ID, revision 1, title and ordered lists including empty/duplicate names.
+  Map active cards to normalized title/description/checklist notes, the exact
+  `raw` label and explicit `min:false`. Omit metadata the target cannot hold;
+  native boards lack creation time, so use the parent export-time ID fallback.
+  Reuse the private session/selection-bound retry queue and locked full-read,
+  active-board and global export-policy checks. Verify exact NBX bytes and reject
+  malformed/path-shaped filenames and absent/non-string content. The complete
+  host suite (69 Python tests plus native/HTTP/JavaScript checks) and complete
+  source/packaged live suites pass, including all 21 exact export downloads.
+  Other formats and complete original UI/API/security suites remain pending.
+  Thanks to xet7.
+
 - Update attachment-upload source comparisons for the current list-write gate.
   Execute unchanged `mayWriteInCardList` and `listException` bodies with the
   actual pure list-role helper. Keep native no-exception fixtures explicit and

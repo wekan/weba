@@ -1316,6 +1316,17 @@ Archived cards are excluded. Link, creation, attachment, comment and tracked-tim
 columns stay blank or use ClickUp's empty defaults because the native export has
 no safe counterpart. It uses the same locked transaction.
 
+The `nullboard` format writes `wekan-boards-nullboard.zip` with ordered strict
+`board-ID.nbx` entries. `BoardNullboardExport` reproduces Nullboard's compact
+JSON board object with format `20190412`, nonzero export-time ID, revision 1,
+title and all ordered native lists, preserving empty and duplicate-titled lists.
+Active cards become notes with a normalized one-line title, trimmed description,
+readable checklist blocks, exact `raw` label mapping and explicit `min:false`.
+Other labels, dates, people, comments and attachments are omitted because a
+Nullboard note has no corresponding fields. Native boards lack creation time,
+so the parent formatter's fallback export epoch supplies the required ID. The
+document is built inside the same locked transfer transaction.
+
 The final file snapshot crosses the native command boundary as base64 JSON.
 `batch-export.js` bounds and validates the JSON/table/Excel envelope, writes
 stored UTF-8 ZIP or OOXML entries with CRC-32 and a central directory, and never
@@ -1324,7 +1335,7 @@ bytes, no-write failure,
 immutable snapshots, retry/replay/reentrancy, stale/foreign/archive/policy denial
 and ZIP structure. `python3 tests/run-http.py --selected-export` (add `--archive`)
 checks the real controls, live and forged global gate, selection retention and
-all twenty download contents. The original caption is among 271 source keys in all
+all twenty-one download contents. The original caption is among 271 source keys in all
 237 catalogs. Remaining external-tool formats and the original HTTP route stay
 open.
 

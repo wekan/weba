@@ -1,4 +1,10 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Nullboard selected export: Add strict NBX ZIP downloads with the parent board/
+  list/note shape, raw flags and readable checklists. Preserve empty/duplicate
+  lists, omit unsupported metadata and reuse locked private batch guards.
+  Add native mapping, browser download and filename/content security tests.
+  Complete host and source/packaged live suites pass, including 21 downloads.
+
 - Upload source adapter: Execute the current list-write gate and actual role
   helper, with explicit native no-exception fixtures and source-only refusal
   negatives. All 140 focused real HTTP comparisons pass.

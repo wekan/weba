@@ -1,6 +1,6 @@
 # Work in progress
 
-Updated 2026-11-11. Target: the signed-in pages of the current `wekan/wekan`
+Updated 2026-11-12. Target: the signed-in pages of the current `wekan/wekan`
 checkout, implemented with Gambas Web UI, SQLite persistence and portable Gambas
 DB operations. This is an initial implementation, not complete WeKan parity.
 
@@ -127,6 +127,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   selected ClickUp CSV ZIP with its exact workspace/importer columns, CRLF,
   date pairs, bracketed people/tags, custom fields, checklists and bidirectional
   subtask references is recorded there;
+  selected Nullboard NBX JSON ZIP with ordered empty/duplicate lists, normalized
+  title/description/checklist notes and exact raw flags is recorded there;
   original remaining formats/API route, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded

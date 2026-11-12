@@ -1,0 +1,153 @@
+' Native counterpart of the parent Nullboard .nbx JSON formatter.
+Export
+Private $db As Connection
+Private $boardId As Integer
+
+Private Function TextValue(value As Variant) As String
+  If IsNull(value) Then Return ""
+  Return CStr(value)
+End
+
+Private Function OneLineTitle(value As Variant) As String
+  Dim parts As New String[]
+  Dim segment As String
+  Dim text As String = Replace(Replace(TextValue(value), Chr(13) & Chr(10), Chr(10)), Chr(13), Chr(10))
+  For Each segment In Split(text, Chr(10))
+    segment = Trim(segment)
+    If segment Then parts.Add(segment)
+  Next
+  text = Trim(parts.Join(" "))
+  If Not text Then text = "Untitled"
+  Return text
+End
+
+Private Function HasRawLabel(value As Variant) As Boolean
+  Dim label As String
+  For Each label In Split(TextValue(value), ",")
+    If Trim(label) = "raw" Then Return True
+  Next
+  Return False
+End
+
+Private Function ChecklistBlocks(cardId As Integer) As String[]
+  Dim blocks As New String[]
+  Dim lines As String[]
+  Dim checklistRows As Result
+  Dim items As Result
+  Dim title As String
+  checklistRows = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "checklist")
+  For Each checklistRows
+    items = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, cardId, "checkitem", checklistRows!id)
+    If Not items.Available Then Continue
+    lines = New String[]
+    title = Trim(TextValue(checklistRows!title))
+    lines.Add(If(title, title, "Checklist"))
+    For Each items
+      lines.Add("[" & If(CBool(items!done), "x", " ") & "] " & Trim(TextValue(items!title)))
+    Next
+    blocks.Add(lines.Join(Chr(10)))
+  Next
+  Return blocks
+End
+
+Private Function NoteText(card As Collection) As String
+  Dim blocks As New String[]
+  Dim checklistData As String[] = ChecklistBlocks(card["id"])
+  Dim description As String = RTrim(TextValue(card["description"]))
+  Dim block As String
+  If description Then blocks.Add(description)
+  For Each block In checklistData
+    blocks.Add(block)
+  Next
+  If blocks.Count Then Return OneLineTitle(card["title"]) & Chr(10) & blocks.Join(Chr(10) & Chr(10))
+  Return OneLineTitle(card["title"])
+End
+
+Private Function Note(card As Collection) As Collection
+  Dim noteData As New Collection
+  noteData.Add(NoteText(card), "text")
+  noteData.Add(HasRawLabel(card["labels"]), "raw")
+  noteData.Add(False, "min")
+  Return noteData
+End
+
+Private Function ListData(title As String, notes As Variant[]) As Collection
+  Dim list As New Collection
+  list.Add(title, "title")
+  list.Add(notes, "notes")
+  Return list
+End
+
+Public Function Build(boardId As Integer, db As Connection) As String
+  Dim output As New Collection
+  Dim lists As New Variant[]
+  Dim listRows As New Variant[]
+  Dim cards As New Variant[]
+  Dim used As New Collection
+  Dim fallback As New Collection
+  Dim listTitles As New Collection
+  Dim board As Result
+  Dim rows As Result
+  Dim row As Collection
+  Dim list As Collection
+  Dim card As Collection
+  Dim notes As Variant[]
+  Dim key As String
+  Dim title As String
+  Dim exportTime As Long = ItemChanges.UtcNow()
+  $db = db
+  $boardId = boardId
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  board = db.Find("kb_boards", "id=&1", boardId)
+  If Not board.Available Then Error.Raise("Board not found")
+  rows = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
+  For Each rows
+    row = New Collection
+    row.Add(CStr(rows!id), "id")
+    row.Add(TextValue(rows!title), "title")
+    listRows.Add(row)
+    listTitles.Add(TextValue(rows!title), CStr(rows!id))
+  Next
+  rows = db.Exec("SELECT c.*,cl.list_id FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  For Each rows
+    card = New Collection
+    card.Add(CInt(rows!id), "id")
+    card.Add(TextValue(rows!title), "title")
+    card.Add(TextValue(rows!description), "description")
+    card.Add(TextValue(rows!labels), "labels")
+    card.Add(TextValue(rows!list_id), "listId")
+    cards.Add(card)
+  Next
+  For Each row In listRows
+    notes = New Variant[]
+    For Each card In cards
+      If card["listId"] <> row["id"] Then Continue
+      notes.Add(Note(card))
+      used.Add(True, CStr(card["id"]))
+    Next
+    lists.Add(ListData(row["title"], notes))
+  Next
+  For Each card In cards
+    key = CStr(card["id"])
+    If used.Exist(key) Then Continue
+    title = "List"
+    If card["listId"] And listTitles.Exist(card["listId"]) Then title = listTitles[card["listId"]]
+    If fallback.Exist(title) Then
+      list = fallback[title]
+      notes = list["notes"]
+    Else
+      notes = New Variant[]
+      list = ListData(title, notes)
+      fallback.Add(list, title)
+      lists.Add(list)
+    Endif
+    notes.Add(Note(card))
+  Next
+  output.Add(20190412, "format")
+  output.Add(exportTime, "id")
+  output.Add(1, "revision")
+  title = TextValue(board!title)
+  output.Add(If(title, title, "WeKan board"), "title")
+  output.Add(lists, "lists")
+  Return JSON.Encode(output) & Chr(10)
+End

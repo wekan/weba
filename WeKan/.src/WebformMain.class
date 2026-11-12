@@ -4013,6 +4013,10 @@ Public Sub ExportSelectedClickUp_Click()
   RunSelectedExport("clickup")
 End
 
+Public Sub ExportSelectedNullboard_Click()
+  RunSelectedExport("nullboard")
+End
+
 Public Sub CancelSelectedExport_Click()
   ClearSelectedExport()
 End

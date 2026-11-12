@@ -14,6 +14,13 @@ const jsonl=window.webaBatchExport.archive([{name:'board-15.jsonl',content:'{"ve
 assert.equal(unzipStored(window.webaBatchExport.archive([{name:'board-16.txt',content:null}])).get('board-16.txt'),'');
 assert.equal(unzipStored(window.webaBatchExport.archive([{name:'board-17.txt'}])).get('board-17.txt'),'');
 for(const bad of [[],[{name:'../escape.json',content:'{}'}],[{name:'board-0.json',content:'{}'}],[{name:'board-1.xlsx',content:'x'}],[{name:'board-1.json',content:1}],[{name:'board-1.json',content:null}],[{name:'board-1.jsonl',content:null}],[{name:'board-1.org'}]])assert.throws(()=>window.webaBatchExport.archive(bad),/Invalid board export/);
+// NBX shares the strict board-ID boundary; accepting its extension must not
+// admit paths, alternate IDs or absent/non-string content.
+const nbxText=JSON.stringify({format:20190412,id:1,revision:1,title:'Ω </script>',lists:[]})+'\n';
+const nbxParts=unzipStored(window.webaBatchExport.archive([{name:'board-19.nbx',content:nbxText}]));
+assert.deepEqual([...nbxParts.keys()],['board-19.nbx']);assert.equal(nbxParts.get('board-19.nbx'),nbxText);
+for(const name of ['../board-19.nbx','board-19.nbx/escape','board-19.nbx.exe','board-019.nbx','board-0.nbx','board-19.NBX','board-19.nbx\n'])assert.throws(()=>window.webaBatchExport.archive([{name,content:nbxText}]),/Invalid board export/);
+for(const content of [null,undefined,19,{},[]])assert.throws(()=>window.webaBatchExport.archive([{name:'board-19.nbx',content}]),/Invalid board export/);
 const headers=['number','title','description','parent-card','owner','createdAt','last-modified-at','card-received','card-start','card-due','card-end','list','swimlane','assignee','members','requested-by','assigned-by','labels','overtime-hours','spent-time-hours'];
 const descriptor=(title,value)=>({title,description:'Board <description>',createdAt:'',modifiedAt:'',boardMembers:'alice,bob',headerKeys:headers,rows:[['1',value,'Body \0 & text','','','','','','2026-11-10T01:02:03.004Z','','','Todo','Default','alice','alice bob','','','red','false','']]});
 const xlsx=window.webaBatchExport.workbook([{name:'board-7.xlsx',content:JSON.stringify(descriptor('A/B?C','=1+1'))},{name:'board-9.xlsx',content:JSON.stringify(descriptor('a b c','Bravo'))}]);

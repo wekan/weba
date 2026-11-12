@@ -2315,6 +2315,17 @@ cards are omitted; task link, creation time, attachments, comments and tracked
 time remain blank or use ClickUp's empty defaults where native data has no safe
 counterpart.
 
+Nullboard produces `wekan-boards-nullboard.zip` with one strict `board-ID.nbx`
+JSON document per selected board. Each object has Nullboard format `20190412`,
+a nonzero export-time ID, revision 1, the board title, and every ordered native
+list including empty or duplicate-titled lists. Active cards become notes whose
+first line is a one-line title, followed by the trimmed description and readable
+checklist blocks with `[x]`/`[ ]` items. The exact `raw` label maps to
+`raw:true`; every note uses `min:false`. Dates, other labels, people, comments
+and attachments are omitted because Nullboard notes have no corresponding
+fields. Native boards have no creation timestamp, so the parent formatter's
+fallback export epoch is used as the required board ID.
+
 The ordered ID list, revision and completed/pending queue remain private to the
 form. The queue is bound to the current account session and unchanged selection.
 Every board independently takes the existing locked whole-board export path and
@@ -2341,7 +2352,7 @@ comma-CSV, semicolon-CSV and TSV ZIPs, and the single two-sheet Excel workbook.
 They also verify the Kanboard container/task JSON, exact Markdown task-list,
 Leo XML, OPML outline, Org mode outline, todo.txt task, Taskwarrior JSON,
 Focalboard JSONL, Todoist CSV, Planner XLSX, MeisterTask CSV, Obsidian Kanban,
-Linear CSV, TickTick CSV and ClickUp CSV ZIPs. Remaining external-tool formats and the original HTTP route
+Linear CSV, TickTick CSV, ClickUp CSV and Nullboard NBX ZIPs. Remaining external-tool formats and the original HTTP route
 remain pending.
 
 

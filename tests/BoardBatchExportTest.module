@@ -24,6 +24,7 @@ Public Sub Main()
   Dim linearBatch As Collection
   Dim tickTickBatch As Collection
   Dim clickUpBatch As Collection
+  Dim nullboardBatch As Collection
   Dim files As Variant[]
   Dim data As Collection
   Dim settings As Collection
@@ -41,6 +42,7 @@ Public Sub Main()
   Dim taskwarrior As String
   Dim taskCard As Integer
   Dim tickTickCard As Integer
+  Dim nullboardCard As Integer
   Dim taskwarriorData As Variant[]
   Dim taskwarriorTask As Collection
   Dim focalboard As String
@@ -65,6 +67,11 @@ Public Sub Main()
   Dim linear As String
   Dim tickTick As String
   Dim clickUp As String
+  Dim nullboard As String
+  Dim nullboardData As Collection
+  Dim nullboardList As Collection
+  Dim nullboardNote As Collection
+  Dim nullboardFound As Boolean
   Dim i As Integer
   Dim checklist As Integer
   Dim denied As Boolean
@@ -388,6 +395,29 @@ Public Sub Main()
   If InStr(clickUp, String(9, ",") & "Checked" & Chr(13) & Chr(10)) = 0 Then Error.Raise("ClickUp flattened checklist or trailing empty columns drifted")
   If InStr(clickUp, "," & CStr(formulaCard) & ",,[],") = 0 Then Error.Raise("ClickUp inverse parent reference drifted")
   If InStr(files[1]["content"], ",Bravo card,Bravo body,Todo") = 0 Then Error.Raise("ClickUp second-board CSV drifted")
+  KanbanStore.AddList(a, "Default", "Todo", "")
+  nullboardCard = KanbanStore.SaveCard(a, 0, "Heading" & Chr(10) & "line", "Body line   ", "Default", "Todo", "", "raw, dropme", "")
+  checklist = CardContent.Save(a, nullboardCard, 0, "checklist", "NB steps", "", 0, False, 0)
+  CardContent.Save(a, nullboardCard, 0, "checkitem", "Quote", "", checklist, True, 0)
+  CardContent.Save(a, nullboardCard, 0, "checkitem", "Pay", "", checklist, False, 0)
+  nullboardBatch = BoardBatchExport.NewBatch(selection, "nullboard")
+  BoardBatchExport.Run(nullboardBatch, selection)
+  files = BoardBatchExport.Files(nullboardBatch)
+  If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".nbx" Or BoardBatchExport.Format(nullboardBatch) <> "nullboard" Then Error.Raise("Nullboard batch lost format, order or extension")
+  nullboard = files[0]["content"]
+  nullboardData = JSON.Decode(nullboard)
+  If nullboardData["format"] <> 20190412 Or nullboardData["id"] <= 0 Or nullboardData["revision"] <> 1 Or nullboardData["title"] <> "Export Alpha" Or Right(nullboard, 1) <> Chr(10) Then Error.Raise("Nullboard required board fields or trailing newline drifted")
+  If nullboardData["lists"].Count <> 4 Or nullboardData["lists"][0]["title"] <> "Todo" Or nullboardData["lists"][1]["title"] <> "Doing" Or nullboardData["lists"][2]["title"] <> "Done" Or nullboardData["lists"][3]["title"] <> "Todo" Or nullboardData["lists"][3]["notes"].Count Then Error.Raise("Nullboard ordered duplicate or empty lists drifted")
+  For Each nullboardList In nullboardData["lists"]
+    For Each nullboardNote In nullboardList["notes"]
+      If Not CBool(nullboardNote["raw"]) Then Continue
+      nullboardFound = True
+      If nullboardList["title"] <> "Todo" Or nullboardNote["text"] <> "Heading line" & Chr(10) & "Body line" & Chr(10) & Chr(10) & "NB steps" & Chr(10) & "[x] Quote" & Chr(10) & "[ ] Pay" Or CBool(nullboardNote["min"]) Then Error.Raise("Nullboard note title, description, checklist, raw or min mapping drifted")
+    Next
+  Next
+  If Not nullboardFound Or InStr(nullboard, "dropme") Or InStr(nullboard, "2026-11-12") Then Error.Raise("Nullboard raw label or unsupported metadata filtering drifted")
+  nullboardData = JSON.Decode(files[1]["content"])
+  If nullboardData["title"] <> "Export Bravo" Or nullboardData["lists"].Count <> 3 Or nullboardData["lists"][0]["notes"].Count <> 1 Or nullboardData["lists"][0]["notes"][0]["text"] <> "Bravo card" & Chr(10) & "Bravo body" Then Error.Raise("Nullboard second-board lists or note drifted")
   batch = BoardBatchExport.NewBatch(selection)
   batch["busy"] = True
   Try BoardBatchExport.Run(batch, selection)
@@ -417,7 +447,7 @@ Public Sub Main()
   Try BoardBatchExport.Run(batch, selection)
   denied = Error
   If Not denied Or Error.Text <> "Export is disabled by the administrator." Or BoardBatchExport.Completed(batch) Then Error.Raise("Disabled export leaked or advanced its queue")
-  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML/Org mode/todo.txt/Taskwarrior/Focalboard/Todoist/Planner/MeisterTask/Obsidian/Linear/TickTick/ClickUp batch export: exact ordered files, generic and Planner workbook data, native Kanboard data, text/XML/JSON/JSONL/CSV tool formats, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
+  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML/Org mode/todo.txt/Taskwarrior/Focalboard/Todoist/Planner/MeisterTask/Obsidian/Linear/TickTick/ClickUp/Nullboard batch export: exact ordered files, generic and Planner workbook data, native Kanboard data, text/XML/JSON/JSONL/CSV tool formats, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
 End
 
 Private Function Frame() As String
