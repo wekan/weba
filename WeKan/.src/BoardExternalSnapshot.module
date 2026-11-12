@@ -36,7 +36,7 @@ Private Function CustomFields(cardId As Integer, format As String) As Collection
   Dim numeric As Collection
   For Each rows
     If Not TextValue(rows!title) Then Continue
-    If format = "openproject" And TextValue(rows!title) = "__proto__" Then Continue
+    If (format = "openproject" Or format = "jira") And TextValue(rows!title) = "__proto__" Then Continue
     If format = "notion" Then
       If ["__proto__", "constructor", "prototype"].Find(TextValue(rows!title)) >= 0 Then Continue
       If ["name", "status", "assignee", "tags", "start", "due", "description", "swimlane"].Find(LCase(TrimText(TextValue(rows!title)))) >= 0 Then Continue
@@ -48,7 +48,7 @@ Private Function CustomFields(cardId As Integer, format As String) As Collection
         If Not ExportNumber.ParseFinite(TextValue(rows!body), ByRef number) Then Error.Raise("Invalid numeric export field")
         ' Keep exact stored decimal text until JavaScript normalizes the value.
         numeric = New Collection
-        If (format = "notion" Or format = "openproject") And Not TrimText(TextValue(rows!body)) Then
+        If (format = "notion" Or format = "openproject" Or format = "jira") And Not TrimText(TextValue(rows!body)) Then
           numeric.Add("0", "number")
         Else
           numeric.Add(TextValue(rows!body), "number")
@@ -57,7 +57,7 @@ Private Function CustomFields(cardId As Integer, format As String) As Collection
       Case Else
         value = TextValue(rows!body)
     End Select
-    If format = "openproject" And TypeOf(value) = gb.String Then
+    If (format = "openproject" Or format = "jira") And TypeOf(value) = gb.String Then
       If Not CStr(value) Then Continue
     Endif
     If format = "notion" Then
@@ -119,9 +119,10 @@ Public Function Build(boardId As Integer, db As Connection, format As String) As
   Dim label As String
   Dim wip As String
   Dim limit As Float
+  Dim spentMinutes As String[]
   Dim folderNames As New Collection
   Dim laneName As String
-  If format <> "taiga" And format <> "vikunja" And format <> "wrike" And format <> "teamwork" And format <> "notion" And format <> "openproject" Then Error.Raise("Unknown snapshot export format")
+  If format <> "taiga" And format <> "vikunja" And format <> "wrike" And format <> "teamwork" And format <> "notion" And format <> "openproject" And format <> "jira" Then Error.Raise("Unknown snapshot export format")
   $db = db
   $boardId = boardId
   BoardAccess.RequireContainer(boardId, "board", boardId)
@@ -136,12 +137,12 @@ Public Function Build(boardId As Integer, db As Connection, format As String) As
     If CLong(entries!total) + 1 > 20000 Then Error.Raise("Teamwork export exceeds 20000 rows")
   Endif
   metadata.Add(TextValue(board!title), "title")
-  If format = "notion" Or format = "openproject" Then
+  If format = "notion" Or format = "openproject" Or format = "jira" Then
     metadata.Add("", "description")
   Else
     metadata.Add(WorkspaceStore.Setting(boardId, "board", boardId, "description"), "description")
   Endif
-  If format <> "notion" And format <> "openproject" Then
+  If format <> "notion" And format <> "openproject" And format <> "jira" Then
     rows = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
     For Each rows
       item = New Collection
@@ -176,7 +177,7 @@ Public Function Build(boardId As Integer, db As Connection, format As String) As
     item.Add(TextValue(rows!lane), "swimlaneTitle")
     item.Add(TextValue(rows!list_id), "listId")
     item.Add(TextValue(rows!list_title), "listTitle")
-    If format = "notion" Or format = "openproject" Then
+    If format = "notion" Or format = "openproject" Or format = "jira" Then
       item.Add("", "color")
     Else
       item.Add(WorkspaceStore.Setting(boardId, "card", rows!id, "color"), "color")
@@ -225,7 +226,7 @@ Public Function Build(boardId As Integer, db As Connection, format As String) As
       comments = New Variant[]
       entries = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, rows!id, "comment")
       For Each entries
-        If Not TrimText(TextValue(entries!body)) Then Continue
+        If format <> "jira" And Not TrimText(TextValue(entries!body)) Then Continue
         comment = New Collection
         comment.Add(TextValue(entries!body), "text")
         comment.Add(CardContent.AuthorName(boardId, rows!id, "entry", entries!id), "author")
@@ -249,6 +250,16 @@ Public Function Build(boardId As Integer, db As Connection, format As String) As
         item.Add("", "parentCardId")
       Endif
     Endif
+    If format = "jira" Then
+      spentMinutes = New String[]
+      entries = db.Exec("SELECT typeof(amount) AS value_type,printf('%!.17g',COALESCE(amount,0)) AS minutes FROM kb_entries WHERE board_id=&1 AND card_id=&2 AND kind=&3 AND done=&4 ORDER BY id", boardId, rows!id, "time", True)
+      For Each entries
+        If ["integer", "real", "null"].Find(CStr(entries!value_type)) < 0 Then Error.Raise("Invalid Jira time entry")
+        If Not ExportNumber.ParseFinite(CStr(entries!minutes), ByRef limit) Then Error.Raise("Invalid Jira time entry")
+        spentMinutes.Add(CStr(entries!minutes))
+      Next
+      item.Add(spentMinutes, "spentMinutes")
+    Endif
     items.Add(item)
     If format = "wrike" Then
       laneName = TextValue(rows!lane)
@@ -256,7 +267,7 @@ Public Function Build(boardId As Integer, db As Connection, format As String) As
     Endif
   Next
   If format = "wrike" And items.Count + folderNames.Count + 1 > 65000 Then Error.Raise("Wrike export exceeds 65000 rows")
-  If format <> "notion" And format <> "openproject" And items.Count > If(format = "vikunja", 20000, If(format = "wrike", 65000, 50000)) Then Error.Raise("Too many cards for this export")
+  If format <> "notion" And format <> "openproject" And format <> "jira" And items.Count > If(format = "vikunja", 20000, If(format = "wrike", 65000, 50000)) Then Error.Raise("Too many cards for this export")
   output.Add(format, "format")
   output.Add(CardDates.Iso(ItemChanges.UtcNow()), "now")
   output.Add(metadata, "board")

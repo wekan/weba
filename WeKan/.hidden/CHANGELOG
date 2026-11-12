@@ -1,4 +1,9 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Jira selected export: Add source-shaped issues JSON ZIP with sequential
+  keys, typed custom names/fields, parent/checklist/comment links and native
+  finished-time seconds. Verify numeric/time repair and strict source/renderer
+  boundaries. Native Jira models and full original parity remain pending.
+
 - Trello selected export: Add scoped source-shaped board JSON ZIP with list/
   card references, nullable dates, explicit label-name IDs and source empty
   arrays. Verify legacy/duplicate/prototype/scope/irrelevant-field cases;

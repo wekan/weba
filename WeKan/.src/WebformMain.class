@@ -5308,3 +5308,7 @@ End
 Public Sub ExportSelectedTrello_Click()
   RunSelectedExport("trello")
 End
+
+Public Sub ExportSelectedJira_Click()
+  RunSelectedExport("jira")
+End

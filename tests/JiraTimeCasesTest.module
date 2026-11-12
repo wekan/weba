@@ -1,0 +1,38 @@
+Public Sub Main()
+  Dim result As New Variant[]
+  Dim sample As Collection
+  Dim item As Collection
+  Dim items As Variant[]
+  Dim labels As String[]
+  Dim minutes As String[]
+  Dim text As String
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim entryId As Integer
+  WebDatabase.Register("jira-times", "x")
+  Session["username"] = "jira-times"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("jira-times")
+  For Each text In ["0", "0.008333333333333333", "0.025", "150.25", "-1", "1.0000000000000002", "1e16"]
+    boardId = KanbanStore.AddBoard("Time " & CStr(result.Count))
+    cardId = KanbanStore.SaveCard(boardId, 0, "Time", "", "Default", "Todo", "", "", "")
+    entryId = CardContent.Save(boardId, cardId, 0, "time", "Finished", "", 0, True, 1)
+    WebDatabase.OpenConnection().Exec("UPDATE kb_entries SET amount=CAST(&1 AS REAL) WHERE id=&2", text, entryId)
+    item = New Collection
+    item.Add(CStr(cardId), "cardId")
+    item.Add("Time", "title")
+    item.Add("", "description")
+    item.Add("Todo", "listTitle")
+    labels = New String[]
+    item.Add(labels, "labels")
+    items = New Variant[]
+    items.Add(item)
+    sample = New Collection
+    sample.Add(JSON.Decode("{\"title\":\"Time " & CStr(result.Count) & "\"}"), "board")
+    sample.Add(items, "items")
+    minutes = [text]
+    sample.Add(minutes, "minutes")
+    sample.Add(BoardTransfer.ExportActiveBoardJira(boardId), "actual")
+    result.Add(sample)
+  Next
+  Print JSON.Encode(result)
+End

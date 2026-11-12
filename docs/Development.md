@@ -2048,3 +2048,33 @@ canaries, irrelevant malformed custom fields, policy and assigned-only denial.
 Browser downloads compare ordered per-board Trello JSON to source; allocated SQL
 list IDs remain the explicit native adapter. Owner/read-only archive coverage
 includes Trello. Complete original route/options/model/security parity is pending.
+
+Jira selected export uses `BoardJiraExport` and the existing locked full-read/
+policy/session transfer, private selected queue and cached-publication checks.
+Marked JSON entries pass strict snapshot validation and an isolated unchanged
+Jira formatter. It assigns sequential WEKAN keys, named typed custom fields,
+parent links, assignee/status, comments and checklist-derived subtasks. Native
+empty duplicate fields and primitive __proto__ entries follow the source
+collector's skip behavior; whitespace comments remain literal. Unused list/
+lane/color metadata and unrelated 50,000-card caps are omitted.
+
+Finished native time entries store minutes. SQLite printf('%!.17g', amount)
+retains round-trip double precision as strings; the native collector rejects
+nonnumeric/nonfinite storage before caching a completed snapshot. The strict
+browser boundary checks the minute array and converts its sum to hours, then
+calls unchanged `jiraTimeTrackingExport` for seconds, Math.round and safe-integer
+omission. An absent log stays absent, explicit zero stays zero, running entries
+are omitted, and negative/unsafe totals follow source omission. Persisted Jira
+estimate/time-field mappings, Scrum metadata, reporter/creator and card creation
+models remain pending; names are not guessed into estimate semantics.
+
+`JiraExportTest`, `JiraCasesTest` and `JiraTimeCasesTest` compare rich/empty/legacy/
+missing-list/time outputs with unchanged formatter/time helper. They cover
+precise numeric handoff, half-second rounding, zero/negative/unsafe totals,
+finished vs running entries, whitespace comments, checklist done states, typed
+fields/parents, archive exclusion, numeric and corrupt/nonfinite time pending
+repair, disabled export and assigned-only denial. Renderer tests cover numeric/
+prototype/custom-field cases, parent cycles/missing targets, time overflow,
+malformed types/paths/format binding, actual JSON ZIP, unchanged unmarked JSON
+and 50,001 cards. Both browsers compare ordered Jira downloads to source output.
+Complete original UI/API/security parity remains pending.

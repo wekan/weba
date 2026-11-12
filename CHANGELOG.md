@@ -2,6 +2,21 @@
 
 This work adds the following features and fixes:
 
+- Add Jira issues JSON as the thirty-eighth selected-board tool export.
+  Download `wekan-boards-jira.zip` with source sequential keys, parent links,
+  typed named custom fields, assignee/status, comments and checklist subtasks.
+  Convert finished native minutes through source Jira seconds/rounding rules;
+  preserve double precision and ignore running entries/unsafe totals. Reject
+  corrupt/nonfinite time and malformed numbers before consuming pending work,
+  then resume after repair. Use strict explicitly bound snapshots, source
+  empty/prototype-field behavior and whitespace comments; omit unused layout
+  metadata and unrelated row caps. Native/source and renderer comparisons,
+  original Jira time/extras/round-trip contracts and complete host tests pass
+  (69 Python tests, 76 archive/scope snapshots); all 43 source/packaged browser
+  downloads and cached revocation/regrant pass. Native estimate/Scrum/reporter/creation
+  models, two remaining formats and full original UI/API/security parity stay
+  pending. Thanks to xet7.
+
 - Add Trello board JSON as the thirty-seventh selected-board tool export.
   Download `wekan-boards-trello.zip` with source prefs, live list IDs, active
   cards/references, nullable due dates, repeated label IDs and empty member/

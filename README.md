@@ -3319,3 +3319,10 @@ with list/card references, nullable due dates and source-defined empty member,
 checklist and action arrays. Native label names serve as explicit IDs; definitions
 are derived from active cards in first-use order. Persisted board-defined label
 IDs/colors and complete original UI/API/security parity remain pending.
+
+Selected boards also export **Jira issues JSON** in `wekan-boards-jira.zip`,
+with sequential issue keys, named typed custom fields, parent links, checklist
+subtasks, comments and source-rounded finished time in seconds. Running entries
+are excluded; malformed numeric/time entries keep the board pending for repair.
+Native estimate mappings, Scrum/reporter/creation models and complete original
+UI/API/security parity remain pending.
