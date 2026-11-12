@@ -10,14 +10,7 @@ Private Function TextValue(value As Variant) As String
 End
 
 Private Function ReadText(row As Result, field As String) As String
-  Dim value As Variant
-  If $db.Type = "sqlite3" Then
-    value = row[field & "_bytes"]
-    If IsNull(value) Then Return ""
-    If TypeOf(value) = gb.String Then Return value
-    Return value.Data
-  Endif
-  Return TextValue(row[field])
+  Return ExportText.ReadValue(row, field)
 End
 
 Private Function Whitespace(character As String) As Boolean
@@ -175,11 +168,8 @@ Private Function AnnotationProperty(cardId As Integer) As String
   Dim index As Integer
   Dim fieldIndex As Integer
   Dim query As String = "SELECT *"
-  ' The SQLite text conversion stops at NUL; its blob projection retains the
-  ' complete UTF-8 bytes. Keep the normal text path for other DB drivers.
-  If $db.Type = "sqlite3" Then query &= ",CAST(body AS BLOB) AS body_bytes"
   query &= " FROM kb_entries WHERE board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id"
-  comments = $db.Exec(query, $boardId, cardId, "comment")
+  comments = $db.Exec(ExportText.Preserve($db, query), $boardId, cardId, "comment")
   For Each comments
     text = ReadText(comments, "body")
     If Not TrimText(text) Then Continue
@@ -271,9 +261,8 @@ Public Function Build(boardId As Integer, db As Connection, Optional wanted As C
   $boardId = boardId
   BoardAccess.RequireContainer(boardId, "board", boardId)
   query = "SELECT c.*,l.title AS list_title"
-  If db.Type = "sqlite3" Then query &= ",CAST(c.title AS BLOB) AS title_bytes,CAST(c.labels AS BLOB) AS labels_bytes,CAST(c.description AS BLOB) AS description_bytes,CAST(l.title AS BLOB) AS list_title_bytes"
   query &= " FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id"
-  cards = db.Exec(query, boardId, "card", False)
+  cards = db.Exec(ExportText.Preserve(db, query), boardId, "card", False)
   For Each cards
     task = TaskJson(cards)
     tasks.Add("  " & Replace(task, Chr(10), Chr(10) & "  "))

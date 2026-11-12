@@ -19,7 +19,7 @@ End
 
 Private Function TrimText(value As String) As String
   Dim first As Integer = 1
-  Dim finish As Integer = String.Len(value)
+  Dim finish As Integer = ExportText.Length(value)
   While first <= finish
     If Not Whitespace(String.Mid(value, first, 1)) Then Break
     Inc first
@@ -40,7 +40,7 @@ Private Sub ValidateSheetName(title As String)
   Dim ending As String
   Dim code As Integer
   If Left(title, 1) = "'" Then Error.Raise("Invalid worksheet name")
-  For index = 1 To String.Len(title)
+  For index = 1 To ExportText.Length(title)
     character = String.Mid(title, index, 1)
     code = String.Code(character)
     ' U+0130 is the sole lower-case UTF-16 length expansion in JavaScript.
@@ -63,25 +63,25 @@ End
 
 Private Function CustomFields(cardId As Integer) As Collection
   Dim result As New Collection
-  Dim rows As Result = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "custom")
+  Dim rows As Result = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "custom")
   Dim number As Float
   Dim value As Variant
   Dim numeric As Collection
   For Each rows
-    If Not TextValue(rows!title) Then Continue
-    Select TextValue(rows!value_type)
+    If Not ExportText.ReadValue(rows, "title") Then Continue
+    Select ExportText.ReadValue(rows, "value_type")
       Case "checkbox"
         value = CBool(rows!done)
       Case "number"
-        If Not ExportNumber.ParseFinite(TextValue(rows!body), ByRef number) Then Error.Raise("Invalid numeric export field")
+        If Not ExportNumber.ParseFinite(ExportText.ReadValue(rows, "body"), ByRef number) Then Error.Raise("Invalid numeric export field")
         ' Keep exact stored decimal text until JavaScript constructs the cell.
         numeric = New Collection
-        numeric.Add(TextValue(rows!body), "number")
+        numeric.Add(ExportText.ReadValue(rows, "body"), "number")
         value = numeric
       Case Else
-        value = TextValue(rows!body)
+        value = ExportText.ReadValue(rows, "body")
     End Select
-    result[TextValue(rows!title)] = value
+    result[ExportText.ReadValue(rows, "title")] = value
   Next
   Return result
 End
@@ -115,18 +115,18 @@ Public Function Build(boardId As Integer, db As Connection) As String
   $db = db
   $boardId = boardId
   BoardAccess.RequireContainer(boardId, "board", boardId)
-  board = db.Find("kb_boards", "id=&1", boardId)
+  board = db.Exec(ExportText.SelectRows(db, "kb_boards") & " WHERE " & "id=&1", boardId)
   If Not board.Available Then Error.Raise("Board not found")
-  ValidateSheetName(TextValue(board!title))
-  records = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  ValidateSheetName(ExportText.ReadValue(board, "title"))
+  records = db.Exec(ExportText.Preserve(db, "SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id"), boardId, "card", False)
   For Each records
     card = New Collection
     card.Add(CInt(records!id), "id")
-    card.Add(TextValue(records!title), "title")
-    card.Add(TextValue(records!description), "description")
-    card.Add(TextValue(records!lane), "lane")
-    card.Add(TextValue(records!list_title), "list")
-    card.Add(TextValue(records!labels), "labels")
+    card.Add(ExportText.ReadValue(records, "title"), "title")
+    card.Add(ExportText.ReadValue(records, "description"), "description")
+    card.Add(ExportText.ReadValue(records, "lane"), "lane")
+    card.Add(ExportText.ReadValue(records, "list_title"), "list")
+    card.Add(ExportText.ReadValue(records, "labels"), "labels")
     fields = CustomFields(records!id)
     card.Add(fields, "fields")
     For Each name In fields.Keys
@@ -187,7 +187,7 @@ Public Function Build(boardId As Integer, db As Connection) As String
     rows.Add(values)
   Next
   output.Add("monday", "format")
-  output.Add(If(TextValue(board!title), TextValue(board!title), "board"), "title")
+  output.Add(If(ExportText.ReadValue(board, "title"), ExportText.ReadValue(board, "title"), "board"), "title")
   output.Add(rows, "rows")
   Return JSON.Encode(output)
 End

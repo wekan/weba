@@ -40,15 +40,15 @@ End
 
 Private Function ItemNode(item As Result, indent As String) As String
   Dim gnx As String = NextGnx()
-  Return indent & "<v t=" & Chr(34) & gnx & Chr(34) & If(CBool(item!done), " a=" & Chr(34) & "M" & Chr(34), "") & "><vh>" & EscapeXml(item!title) & "</vh></v>"
+  Return indent & "<v t=" & Chr(34) & gnx & Chr(34) & If(CBool(item!done), " a=" & Chr(34) & "M" & Chr(34), "") & "><vh>" & EscapeXml(ExportText.ReadValue(item, "title")) & "</vh></v>"
 End
 
 Private Function ChecklistNode(checklist As Result, indent As String) As String
   Dim gnx As String = NextGnx()
   Dim children As New String[]
   Dim item As Result
-  Dim nodeOpen As String = indent & "<v t=" & Chr(34) & gnx & Chr(34) & "><vh>" & EscapeXml(checklist!title) & "</vh>"
-  item = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, checklist!card_id, "checkitem", checklist!id)
+  Dim nodeOpen As String = indent & "<v t=" & Chr(34) & gnx & Chr(34) & "><vh>" & EscapeXml(ExportText.ReadValue(checklist, "title")) & "</vh>"
+  item = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, checklist!card_id, "checkitem", checklist!id)
   For Each item
     children.Add(ItemNode(item, indent & "  "))
   Next
@@ -60,12 +60,12 @@ Private Function CardNode(card As Result, listTitle As String, indent As String)
   Dim gnx As String = NextGnx()
   Dim children As New String[]
   Dim checklist As Result
-  Dim body As String = If(ExternalExportFields.Wants($wanted, "description"), TextValue(card!description), "")
+  Dim body As String = If(ExternalExportFields.Wants($wanted, "description"), ExportText.ReadValue(card, "description"), "")
   Dim nodeOpen As String
   If body Then $bodies.Add("<t tx=" & Chr(34) & gnx & Chr(34) & ">" & EscapeXml(body) & "</t>")
-  nodeOpen = indent & "<v t=" & Chr(34) & gnx & Chr(34) & If(ClosedList(listTitle), " a=" & Chr(34) & "M" & Chr(34), "") & "><vh>" & EscapeXml(card!title) & "</vh>"
+  nodeOpen = indent & "<v t=" & Chr(34) & gnx & Chr(34) & If(ClosedList(listTitle), " a=" & Chr(34) & "M" & Chr(34), "") & "><vh>" & EscapeXml(ExportText.ReadValue(card, "title")) & "</vh>"
   If ExternalExportFields.Wants($wanted, "checklists") Then
-    checklist = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, card!id, "checklist")
+    checklist = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, card!id, "checklist")
     For Each checklist
       children.Add(ChecklistNode(checklist, indent & "  "))
     Next
@@ -78,9 +78,9 @@ Private Function ListNode(listRow As Result) As String
   Dim gnx As String = NextGnx()
   Dim children As New String[]
   Dim card As Result
-  Dim title As String = TextValue(listRow!title)
+  Dim title As String = ExportText.ReadValue(listRow, "title")
   Dim nodeOpen As String = "<v t=" & Chr(34) & gnx & Chr(34) & "><vh>" & EscapeXml(title) & "</vh>"
-  card = $db.Exec("SELECT c.* FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND COALESCE(l.title,'')=&3 AND c.archived=&4 ORDER BY COALESCE(o.sort_order,c.id),c.id", $boardId, "card", title, False)
+  card = $db.Exec(ExportText.Preserve($db, "SELECT c.* FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND " & ExportText.MatchText($db, "COALESCE(l.title,'')", 3, title) & " AND c.archived=&4 ORDER BY COALESCE(o.sort_order,c.id),c.id"), $boardId, "card", ExportText.BindText($db, title), False)
   For Each card
     children.Add(CardNode(card, title, "  "))
   Next
@@ -99,13 +99,13 @@ Public Function Build(boardId As Integer, db As Connection, Optional wanted As C
   $next = 0
   $bodies = New String[]
   BoardAccess.RequireContainer(boardId, "board", boardId)
-  board = db.Find("kb_boards", "id=&1", boardId)
+  board = db.Exec(ExportText.SelectRows(db, "kb_boards") & " WHERE " & "id=&1", boardId)
   If Not board.Available Then Error.Raise("Board not found")
   lines.Add("<?xml version=" & Chr(34) & "1.0" & Chr(34) & " encoding=" & Chr(34) & "utf-8" & Chr(34) & "?>")
   lines.Add("<leo_file xmlns:leo=" & Chr(34) & "http://leoeditor.com/namespaces/leo-python-editor/1.1" & Chr(34) & ">")
-  lines.Add("<leo_header file_format=" & Chr(34) & "2" & Chr(34) & " wekan_board=" & Chr(34) & EscapeXml(board!title) & Chr(34) & "/>")
+  lines.Add("<leo_header file_format=" & Chr(34) & "2" & Chr(34) & " wekan_board=" & Chr(34) & EscapeXml(ExportText.ReadValue(board, "title")) & Chr(34) & "/>")
   lines.Add("<vnodes>")
-  lists = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
+  lists = db.Exec(ExportText.SelectRows(db, "kb_lists") & " WHERE " & ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
   For Each lists
     lines.Add(ListNode(lists))
   Next

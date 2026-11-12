@@ -23,7 +23,7 @@ End
 
 Private Function TrimText(value As String) As String
   Dim first As Integer = 1
-  Dim finish As Integer = String.Len(value)
+  Dim finish As Integer = ExportText.Length(value)
   While first <= finish
     If Not Whitespace(String.Mid(value, first, 1)) Then Break
     Inc first
@@ -41,7 +41,7 @@ Private Function RemoteId(kind As String, value As String) As String
   Dim character As String
   Dim code As Integer
   Dim index As Integer
-  For index = 1 To String.Len(value)
+  For index = 1 To ExportText.Length(value)
     character = String.Mid(value, index, 1)
     code = String.Code(character)
     If (code >= 65 And code <= 90) Or (code >= 97 And code <= 122) Or (code >= 48 And code <= 57) Or character = "_" Or character = "-" Then
@@ -129,27 +129,27 @@ End
 
 Private Function CustomFields(cardId As Integer) As Collection
   Dim result As New Collection
-  Dim rows As Result = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "custom")
+  Dim rows As Result = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "custom")
   Dim name As String
   For Each rows
-    name = TextValue(rows!title)
-    If name Then result[name] = TextValue(rows!body)
+    name = ExportText.ReadValue(rows, "title")
+    If name Then result[name] = ExportText.ReadValue(rows, "body")
   Next
   Return result
 End
 
 Private Function Comments(cardId As Integer) As Variant[]
   Dim result As New Variant[]
-  Dim rows As Result = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "comment")
+  Dim rows As Result = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "comment")
   Dim item As Collection
   Dim stamp As Long
   For Each rows
-    If Not TrimText(TextValue(rows!body)) Then Continue
+    If Not TrimText(ExportText.ReadValue(rows, "body")) Then Continue
     stamp = 0
     If Not IsNull(rows!created_at) Then stamp = ItemChanges.Epoch(rows!created_at)
     item = New Collection
     item.Add(RemoteId("comment", CStr(cardId) & "-" & CStr(result.Count)), "remoteId")
-    item.Add(TextValue(rows!body), "message")
+    item.Add(ExportText.ReadValue(rows, "body"), "message")
     item.Add(If(stamp > 0, stamp, $timestamp), "created")
     result.Add(item)
   Next
@@ -157,7 +157,7 @@ Private Function Comments(cardId As Integer) As Variant[]
 End
 
 Private Function ParentId(cardId As Integer, calendar As String) As String
-  Dim rows As Result = $db.Find("kb_entries", "board_id=&1 AND kind=&2 AND amount=&3 ORDER BY id", $boardId, "subtask", cardId)
+  Dim rows As Result = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND kind=&2 AND amount=&3 ORDER BY id", $boardId, "subtask", cardId)
   Dim parent As Collection
   For Each rows
     If Not $cards.Exist(CStr(rows!card_id)) Then Continue
@@ -220,18 +220,18 @@ Private Sub CardBackup(card As Collection)
   If fields.Exist("Estimate (hours)") Then
     If ExportNumber.ParseFinite(TextValue(fields["Estimate (hours)"]), ByRef estimate) Then AddSeconds(task, "estimatedSeconds", estimate)
   Endif
-  timeRows = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND done=&4 ORDER BY id", $boardId, card["id"], "time", True)
+  timeRows = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 AND done=&4 ORDER BY id", $boardId, card["id"], "time", True)
   For Each timeRows
     minutes += CFloat(timeRows!amount)
   Next
   AddSeconds(task, "elapsedSeconds", minutes / 60)
   $tasks.Add(Backup(task, remote, calendar, parent, Tags(TextValue(card["labels"])), Comments(card["id"])))
-  checklistRows = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, card["id"], "checklist")
+  checklistRows = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, card["id"], "checklist")
   For Each checklistRows
     entryIndex = 0
-    itemRows = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, card["id"], "checkitem", checklistRows!id)
+    itemRows = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, card["id"], "checkitem", checklistRows!id)
     For Each itemRows
-      title = TrimText(TextValue(itemRows!title))
+      title = TrimText(ExportText.ReadValue(itemRows, "title"))
       If title Then
         child = New Collection
         child.Add(title, "title")
@@ -298,20 +298,20 @@ Public Function Build(boardId As Integer, db As Connection) As String
   $cards = New Collection
   $tasks = New Variant[]
   BoardAccess.RequireContainer(boardId, "board", boardId)
-  board = $db.Find("kb_boards", "id=&1", boardId)
+  board = $db.Exec(ExportText.SelectRows($db, "kb_boards") & " WHERE " & "id=&1", boardId)
   If Not board.Available Then Error.Raise("Board not found")
-  rows = $db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
+  rows = $db.Exec(ExportText.SelectRows($db, "kb_lists") & " WHERE " & ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
   For Each rows
-    CalendarFor(CStr(rows!id), TextValue(rows!title))
+    CalendarFor(CStr(rows!id), ExportText.ReadValue(rows, "title"))
   Next
-  rows = $db.Exec("SELECT c.*,cl.list_id,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  rows = $db.Exec(ExportText.Preserve($db, "SELECT c.*,cl.list_id,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id"), boardId, "card", False)
   For Each rows
     card = New Collection
     card.Add(CInt(rows!id), "id")
-    card.Add(TextValue(rows!title), "title")
-    card.Add(TextValue(rows!description), "description")
-    card.Add(TextValue(rows!labels), "labels")
-    card.Add(CalendarFor(TextValue(rows!list_id), TextValue(rows!list_title)), "calendar")
+    card.Add(ExportText.ReadValue(rows, "title"), "title")
+    card.Add(ExportText.ReadValue(rows, "description"), "description")
+    card.Add(ExportText.ReadValue(rows, "labels"), "labels")
+    card.Add(CalendarFor(ExportText.ReadValue(rows, "list_id"), ExportText.ReadValue(rows, "list_title")), "calendar")
     cards.Add(card)
     $cards.Add(card, CStr(rows!id))
   Next
@@ -325,7 +325,7 @@ Public Function Build(boardId As Integer, db As Connection) As String
   Next
   data.Add($tagDefs, "tags")
   account.Add($account, "uuid")
-  account.Add(If(TextValue(board!title), TextValue(board!title), "WeKan board"), "name")
+  account.Add(If(ExportText.ReadValue(board, "title"), ExportText.ReadValue(board, "title"), "WeKan board"), "name")
   account.Add(2, "accountType")
   data.Add([account], "caldavAccounts")
   data.Add($calendars, "caldavCalendars")

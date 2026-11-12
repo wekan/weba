@@ -14,13 +14,13 @@ Public Function Build(boardId As Integer, db As Connection) As String
   Dim rows As Result
   Dim item As Collection
   BoardAccess.RequireContainer(boardId, "board", boardId)
-  board = db.Find("kb_boards", "id=&1", boardId)
+  board = db.Exec(ExportText.SelectRows(db, "kb_boards") & " WHERE " & "id=&1", boardId)
   If Not board.Available Then Error.Raise("Board not found")
-  metadata.Add(TextValue(board!title), "title")
-  rows = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
+  metadata.Add(ExportText.ReadValue(board, "title"), "title")
+  rows = db.Exec(ExportText.SelectRows(db, "kb_lists") & " WHERE " & ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
   For Each rows
     item = New Collection
-    item.Add(TextValue(rows!title), "title")
+    item.Add(ExportText.ReadValue(rows, "title"), "title")
     item.Add(WorkspaceStore.Setting(boardId, "list", rows!id, "color"), "color")
     lists.Add(item)
   Next

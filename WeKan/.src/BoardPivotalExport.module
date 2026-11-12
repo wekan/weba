@@ -44,10 +44,10 @@ Private Function CustomFields(cardId As Integer) As Collection
   Dim result As New Collection
   Dim fields As Result
   Dim name As String
-  fields = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "custom")
+  fields = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "custom")
   For Each fields
-    name = TextValue(fields!title)
-    If name Then result[name] = TextValue(fields!body)
+    name = ExportText.ReadValue(fields, "title")
+    If name Then result[name] = ExportText.ReadValue(fields, "body")
   Next
   Return result
 End
@@ -74,11 +74,11 @@ Private Function TaskCells(cardId As Integer) As String[]
   Dim checklists As Result
   Dim items As Result
   Dim title As String
-  checklists = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "checklist")
+  checklists = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "checklist")
   For Each checklists
-    items = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, cardId, "checkitem", checklists!id)
+    items = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, cardId, "checkitem", checklists!id)
     For Each items
-      title = Trim(TextValue(items!title))
+      title = Trim(ExportText.ReadValue(items, "title"))
       If Not title Then Continue
       result.Add(title)
       result.Add(If(CBool(items!done), "completed", "not completed"))
@@ -94,9 +94,9 @@ Private Function CommentCells(cardId As Integer) As String[]
   Dim text As String
   Dim author As String
   Dim day As String
-  comments = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "comment")
+  comments = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "comment")
   For Each comments
-    text = TextValue(comments!body)
+    text = ExportText.ReadValue(comments, "body")
     If Not Trim(text) Then Continue
     author = CardContent.AuthorName($boardId, cardId, "entry", CInt(comments!id))
     dates = New Collection
@@ -134,13 +134,13 @@ Public Function Build(boardId As Integer, db As Connection) As String
   $db = db
   $boardId = boardId
   BoardAccess.RequireContainer(boardId, "board", boardId)
-  cards = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  cards = db.Exec(ExportText.Preserve(db, "SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id"), boardId, "card", False)
   For Each cards
     dates = CardDates.ReadDates(boardId, cards!id)
     fields = CustomFields(cards!id)
     labels = New String[]
     typeLabel = ""
-    For Each label In Split(TextValue(cards!labels), ",")
+    For Each label In Split(ExportText.ReadValue(cards, "labels"), ",")
       label = Trim(label)
       If Not label Then Continue
       labels.Add(label)
@@ -152,12 +152,12 @@ Public Function Build(boardId As Integer, db As Connection) As String
         If labels[index] = typeLabel Then labels.Remove(index)
       Next
     Endif
-    state = LCase(Trim(TextValue(cards!list_title)))
+    state = LCase(Trim(ExportText.ReadValue(cards, "list_title")))
     If ["unscheduled", "unstarted", "planned", "started", "finished", "delivered", "accepted", "rejected"].Find(state) < 0 Then state = If(dates.Exist("endAt") And If(dates.Exist("endAt"), dates["endAt"], 0) <> 0, "accepted", "unstarted")
-    title = Trim(TextValue(cards!title))
+    title = Trim(ExportText.ReadValue(cards, "title"))
     priority = If(fields.Exist("Priority"), TextValue(fields["Priority"]), "")
     If Len(priority) < 6 Or Left(LCase(priority), 1) <> "p" Or InStr("0123", Mid(priority, 2, 1)) = 0 Or Mid(priority, 3, 3) <> " - " Or Whitespace(String.Mid(priority, 6, 1)) Then priority = ""
-    values = [If(title, title, "Untitled"), labels.Join(", "), storyType, Estimate(fields), priority, state, "", If(state = "accepted", DateText(dates, "endAt"), ""), If(storyType = "release", DateText(dates, "dueAt"), ""), "", TextValue(cards!description)]
+    values = [If(title, title, "Untitled"), labels.Join(", "), storyType, Estimate(fields), priority, state, "", If(state = "accepted", DateText(dates, "endAt"), ""), If(storyType = "release", DateText(dates, "dueAt"), ""), "", ExportText.ReadValue(cards, "description")]
     people = BoardAccess.Assignees(boardId, cards!id)
     If people.Count > 5 Then people = people.Copy(0, 5)
     comments = CommentCells(cards!id)

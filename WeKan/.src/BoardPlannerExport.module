@@ -37,13 +37,13 @@ Private Function ChecklistData(cardId As Integer) As Collection
   Dim title As String
   Dim total As Integer
   Dim done As Integer
-  checklist = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "checklist")
+  checklist = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "checklist")
   For Each checklist
-    item = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, cardId, "checkitem", checklist!id)
+    item = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, cardId, "checkitem", checklist!id)
     For Each item
       Inc total
       If CBool(item!done) Then Inc done
-      title = Trim(Replace(TextValue(item!title), ";", ","))
+      title = Trim(Replace(ExportText.ReadValue(item, "title"), ";", ","))
       If title Then names.Add(title)
     Next
   Next
@@ -58,8 +58,8 @@ Private Function CardRow(card As Result, exportTime As Long) As String[]
   Dim dates As Collection = CardDates.ReadDates($boardId, card!id)
   Dim people As String[] = BoardAccess.Assignees($boardId, card!id)
   Dim checkValues As Collection = ChecklistData(card!id)
-  Dim title As String = Trim(TextValue(card!title))
-  Dim listTitle As String = TextValue(card!list_title)
+  Dim title As String = Trim(ExportText.ReadValue(card, "title"))
+  Dim listTitle As String = ExportText.ReadValue(card, "list_title")
   Dim completed As Boolean = dates.Exist("endAt")
   Dim due As Long
   Dim startText As String
@@ -86,10 +86,10 @@ Private Function CardRow(card As Result, exportTime As Long) As String[]
   values.Add(If(due > 0 And Not completed And due < exportTime, "true", "false"))
   values.Add(endText)
   values.Add("")
-  values.Add(TextValue(card!description))
+  values.Add(ExportText.ReadValue(card, "description"))
   values.Add(If(checkValues["total"] > 0, CStr(checkValues["done"]) & "/" & CStr(checkValues["total"]), ""))
   values.Add(checkValues["items"])
-  values.Add(Labels(card!labels))
+  values.Add(Labels(ExportText.ReadValue(card, "labels")))
   Return values
 End
 
@@ -104,9 +104,9 @@ Public Function Build(boardId As Integer, db As Connection) As String
   $db = db
   $boardId = boardId
   BoardAccess.RequireContainer(boardId, "board", boardId)
-  board = db.Find("kb_boards", "id=&1", boardId)
+  board = db.Exec(ExportText.SelectRows(db, "kb_boards") & " WHERE " & "id=&1", boardId)
   If Not board.Available Then Error.Raise("Board not found")
-  meta = ["Plan name", If(TextValue(board!title), TextValue(board!title), "WeKan board")]
+  meta = ["Plan name", If(ExportText.ReadValue(board, "title"), ExportText.ReadValue(board, "title"), "WeKan board")]
   rows.Add(meta)
   meta = ["Plan ID", CStr(boardId)]
   rows.Add(meta)
@@ -114,7 +114,7 @@ Public Function Build(boardId As Integer, db As Connection) As String
   rows.Add(meta)
   rows.Add(empty)
   rows.Add(Headers())
-  cards = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  cards = db.Exec(ExportText.Preserve(db, "SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id"), boardId, "card", False)
   For Each cards
     rows.Add(CardRow(cards, exportTime))
   Next

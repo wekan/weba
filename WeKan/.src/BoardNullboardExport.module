@@ -35,15 +35,15 @@ Private Function ChecklistBlocks(cardId As Integer) As String[]
   Dim checklistRows As Result
   Dim items As Result
   Dim title As String
-  checklistRows = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "checklist")
+  checklistRows = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "checklist")
   For Each checklistRows
-    items = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, cardId, "checkitem", checklistRows!id)
+    items = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, cardId, "checkitem", checklistRows!id)
     If Not items.Available Then Continue
     lines = New String[]
-    title = Trim(TextValue(checklistRows!title))
+    title = Trim(ExportText.ReadValue(checklistRows, "title"))
     lines.Add(If(title, title, "Checklist"))
     For Each items
-      lines.Add("[" & If(CBool(items!done), "x", " ") & "] " & Trim(TextValue(items!title)))
+      lines.Add("[" & If(CBool(items!done), "x", " ") & "] " & Trim(ExportText.ReadValue(items, "title")))
     Next
     blocks.Add(lines.Join(Chr(10)))
   Next
@@ -98,24 +98,24 @@ Public Function Build(boardId As Integer, db As Connection) As String
   $db = db
   $boardId = boardId
   BoardAccess.RequireContainer(boardId, "board", boardId)
-  board = db.Find("kb_boards", "id=&1", boardId)
+  board = db.Exec(ExportText.SelectRows(db, "kb_boards") & " WHERE " & "id=&1", boardId)
   If Not board.Available Then Error.Raise("Board not found")
-  rows = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
+  rows = db.Exec(ExportText.SelectRows(db, "kb_lists") & " WHERE " & ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
   For Each rows
     row = New Collection
     row.Add(CStr(rows!id), "id")
-    row.Add(TextValue(rows!title), "title")
+    row.Add(ExportText.ReadValue(rows, "title"), "title")
     listRows.Add(row)
-    listTitles.Add(TextValue(rows!title), CStr(rows!id))
+    listTitles.Add(ExportText.ReadValue(rows, "title"), CStr(rows!id))
   Next
-  rows = db.Exec("SELECT c.*,cl.list_id FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  rows = db.Exec(ExportText.Preserve(db, "SELECT c.*,cl.list_id FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id"), boardId, "card", False)
   For Each rows
     card = New Collection
     card.Add(CInt(rows!id), "id")
-    card.Add(TextValue(rows!title), "title")
-    card.Add(TextValue(rows!description), "description")
-    card.Add(TextValue(rows!labels), "labels")
-    card.Add(TextValue(rows!list_id), "listId")
+    card.Add(ExportText.ReadValue(rows, "title"), "title")
+    card.Add(ExportText.ReadValue(rows, "description"), "description")
+    card.Add(ExportText.ReadValue(rows, "labels"), "labels")
+    card.Add(ExportText.ReadValue(rows, "list_id"), "listId")
     cards.Add(card)
   Next
   For Each row In listRows
@@ -146,7 +146,7 @@ Public Function Build(boardId As Integer, db As Connection) As String
   output.Add(20190412, "format")
   output.Add(exportTime, "id")
   output.Add(1, "revision")
-  title = TextValue(board!title)
+  title = ExportText.ReadValue(board, "title")
   output.Add(If(title, title, "WeKan board"), "title")
   output.Add(lists, "lists")
   Return JSON.Encode(output) & Chr(10)

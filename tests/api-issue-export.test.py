@@ -80,6 +80,32 @@ def main():
             assert pair(f'/api/boards/99999999/export/{fmt}?authToken=bad')==(404,{'error':'Not found'})
             assert pair(f'/api/boards/0{board}/export/{fmt}',token=owner)==(404,{'error':'Not found'})
             assert snapshot()==before
+            original_row=db.execute('SELECT title,description,labels FROM kb_cards WHERE id=?',(f['cardId'],)).fetchone()
+            first_note,original_note=db.execute("SELECT id,body FROM kb_entries WHERE board_id=? AND card_id=? AND kind='comment' ORDER BY id LIMIT 1",(board,f['cardId'])).fetchone()
+            for text_field in ['title','description','labels','comments','board','list']:
+                literal='Before\x00 after Ω'
+                rich_items=[dict(item) for item in items]
+                sample_board=source_board
+                sample_lists=source_lists
+                if text_field=='board':
+                    db.execute('UPDATE kb_boards SET title=? WHERE id=?',(literal,board));sample_board={'title':literal}
+                elif text_field=='list':
+                    db.execute('UPDATE kb_lists SET title=? WHERE id=?',(literal,f['listId']))
+                    rich_items=[{**item,'listTitle':literal} for item in rich_items]
+                    sample_lists=[{**row,'title':literal if row['_id']==str(f['listId']) else row['title']} for row in source_lists]
+                elif text_field=='comments':
+                    db.execute('UPDATE kb_entries SET body=? WHERE id=?',(literal,first_note))
+                    rich_items[0]['comments']=[{**note,'text':literal} if index==0 else note for index,note in enumerate(items[0]['comments'])]
+                else:
+                    db.execute('UPDATE kb_cards SET '+text_field+'=? WHERE id=?',(literal,f['cardId']))
+                    rich_items[0][text_field]=[literal] if text_field=='labels' else literal
+                db.commit();before_text=snapshot();status,data=pair(url,token=reader);assert status==200,(fmt,text_field,status,data)
+                assert snapshot()==before_text
+                cases.append({'format':fmt,'fields':None,'items':rich_items,'board':sample_board,'lists':sample_lists,'actual':data})
+                db.execute('UPDATE kb_boards SET title=? WHERE id=?',(source_board['title'],board))
+                db.execute('UPDATE kb_lists SET title=? WHERE id=?',('incomplete',f['listId']))
+                db.execute('UPDATE kb_cards SET title=?,description=?,labels=? WHERE id=?',(*original_row,f['cardId']))
+                db.execute('UPDATE kb_entries SET body=? WHERE id=?',(original_note,first_note));db.commit()
             other_list=next(row for row in source_lists if row['title']=='Doing')
             for live_title in ['incomplete','','Doing']:
                 db.execute('UPDATE kb_lists SET title=? WHERE id=?',(live_title,int(other_list['_id'])))

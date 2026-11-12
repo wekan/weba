@@ -1,4 +1,10 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Export text fidelity: Share guarded SQLite binary/null projections and text
+  readers across native renderers, preserving control/NUL text and grouped list
+  lookup. Complete Focalboard generic custom properties and strict canonical
+  numeric JSONL output. Verify original API and all-format text contracts;
+  generic backup migration/other drivers/full original parity remain open.
+
 - Taskwarrior export API: Add exact original JSON text, selected sections,
   compact dates/UUIDs and scoped public annotations. Fix control-character JSON
   quoting and preserve NUL text with guarded SQLite binary projections; verify

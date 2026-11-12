@@ -12,7 +12,7 @@ End
 
 Private Function Clean(value As String) As String
   Dim first As Integer = 1
-  Dim endIndex As Integer = String.Len(value)
+  Dim endIndex As Integer = ExportText.Length(value)
   While first <= endIndex
     If Not IsWhitespace(String.Mid(value, first, 1)) Then Break
     Inc first

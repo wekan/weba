@@ -12,7 +12,7 @@ End
 
 Private Function TrimText(value As String) As String
   Dim first As Integer = 1
-  Dim finish As Integer = String.Len(value)
+  Dim finish As Integer = ExportText.Length(value)
   While first <= finish
     If Not Whitespace(String.Mid(value, first, 1)) Then Break
     Inc first
@@ -41,26 +41,26 @@ Public Function Build(boardId As Integer, db As Connection, Optional wanted As C
   Dim definition As Collection
   Dim dates As Collection
   BoardAccess.RequireContainer(boardId, "board", boardId)
-  board = db.Find("kb_boards", "id=&1", boardId)
+  board = db.Exec(ExportText.SelectRows(db, "kb_boards") & " WHERE " & "id=&1", boardId)
   If Not board.Available Then Error.Raise("Board not found")
-  output.Add(TextValue(board!title), "name")
+  output.Add(ExportText.ReadValue(board, "title"), "name")
   prefs.Add("blue", "background")
   prefs.Add("private", "permissionLevel")
   output.Add(prefs, "prefs")
-  rows = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
+  rows = db.Exec(ExportText.SelectRows(db, "kb_lists") & " WHERE " & ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
   For Each rows
     item = New Collection
     item.Add(CStr(rows!id), "id")
-    item.Add(TextValue(rows!title), "name")
+    item.Add(ExportText.ReadValue(rows, "title"), "name")
     item.Add(False, "closed")
     lists.Add(item)
   Next
-  rows = db.Exec("SELECT c.*,cl.list_id FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  rows = db.Exec(ExportText.Preserve(db, "SELECT c.*,cl.list_id FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id"), boardId, "card", False)
   For Each rows
     item = New Collection
     item.Add(CStr(rows!id), "id")
-    item.Add(TextValue(rows!title), "name")
-    item.Add(If(ExternalExportFields.Wants(wanted, "description"), TextValue(rows!description), ""), "desc")
+    item.Add(ExportText.ReadValue(rows, "title"), "name")
+    item.Add(If(ExternalExportFields.Wants(wanted, "description"), ExportText.ReadValue(rows, "description"), ""), "desc")
     If Not IsNull(rows!list_id) Then item.Add(CStr(rows!list_id), "idList")
     item.Add(JSON.Null, "due")
     If ExternalExportFields.Wants(wanted, "dates") Then
@@ -69,7 +69,7 @@ Public Function Build(boardId As Integer, db As Connection, Optional wanted As C
     Endif
     item.Add(False, "closed")
     labelIds = New String[]
-    For Each label In Split(TextValue(rows!labels), ",")
+    For Each label In Split(ExportText.ReadValue(rows, "labels"), ",")
       label = TrimText(label)
       If Not label Then Continue
       If ExternalExportFields.Wants(wanted, "labels") Then labelIds.Add(label)

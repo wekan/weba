@@ -17,7 +17,7 @@ Private Function OneLine(value As Variant) As String
   Dim character As String
   Dim pendingSpace As Boolean
   Dim i As Integer
-  For i = 1 To String.Len(source)
+  For i = 1 To ExportText.Length(source)
     character = String.Mid(source, i, 1)
     If Whitespace(character) Then
       pendingSpace = True
@@ -50,7 +50,7 @@ End
 
 Private Function TrimText(value As String) As String
   Dim first As Integer = 1
-  Dim finish As Integer = String.Len(value)
+  Dim finish As Integer = ExportText.Length(value)
   While first <= finish
     If Not Whitespace(String.Mid(value, first, 1)) Then Break
     Inc first
@@ -85,11 +85,11 @@ Private Function Line(card As Result, wanted As Collection) As String
   Dim label As String
   Dim priority As String
   Dim value As String
-  Dim listTitle As String = TextValue(card!list_title)
+  Dim listTitle As String = ExportText.ReadValue(card, "list_title")
   Dim done As Boolean = ClosedList(listTitle)
   Dim dates As New Collection
-  Dim title As String = OneLine(card!title)
-  If ExternalExportFields.Wants(wanted, "labels") Then parsedLabels = Labels(card!labels)
+  Dim title As String = OneLine(ExportText.ReadValue(card, "title"))
+  If ExternalExportFields.Wants(wanted, "labels") Then parsedLabels = Labels(ExportText.ReadValue(card, "labels"))
   If ExternalExportFields.Wants(wanted, "dates") Then dates = CardDates.ReadDates(card!board_id, card!id)
   For Each label In parsedLabels
     If PriorityLabel(label) And Not priority Then priority = Right(label, 1)
@@ -127,7 +127,7 @@ Public Function Build(boardId As Integer, db As Connection, Optional wanted As C
   Dim lines As New String[]
   Dim cards As Result
   BoardAccess.RequireContainer(boardId, "board", boardId)
-  cards = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  cards = db.Exec(ExportText.Preserve(db, "SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id"), boardId, "card", False)
   For Each cards
     lines.Add(Line(cards, wanted))
   Next

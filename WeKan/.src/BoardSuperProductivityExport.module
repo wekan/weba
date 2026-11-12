@@ -20,7 +20,7 @@ End
 
 Private Function TrimText(value As String) As String
   Dim first As Integer = 1
-  Dim finish As Integer = String.Len(value)
+  Dim finish As Integer = ExportText.Length(value)
   Dim code As Integer
   While first <= finish
     code = String.Code(String.Mid(value, first, 1))
@@ -144,18 +144,18 @@ End
 
 Private Function Notes(card As Collection) As String
   Dim result As String = TrimText(card["description"])
-  Dim rows As Result = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, CInt(card["id"]), "checklist")
+  Dim rows As Result = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, CInt(card["id"]), "checklist")
   Dim items As Result
   Dim lines As String[]
   Dim title As String
   For Each rows
-    items = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, CInt(card["id"]), "checkitem", rows!id)
+    items = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, CInt(card["id"]), "checkitem", rows!id)
     If Not items.Available Then Continue
-    title = TextValue(rows!title)
+    title = ExportText.ReadValue(rows, "title")
     If Not title Then title = "Checklist"
     lines = ["### " & TrimText(title)]
     For Each items
-      lines.Add("- [" & If(CBool(items!done), "x", " ") & "] " & TrimText(TextValue(items!title)))
+      lines.Add("- [" & If(CBool(items!done), "x", " ") & "] " & TrimText(ExportText.ReadValue(items, "title")))
     Next
     If result Then result &= Chr(10) & Chr(10)
     result &= lines.Join(Chr(10))
@@ -165,17 +165,17 @@ End
 
 Private Function CustomFields(cardId As Integer) As Collection
   Dim result As New Collection
-  Dim rows As Result = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "custom")
+  Dim rows As Result = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "custom")
   Dim number As Float
   For Each rows
-    If TextValue(rows!title) <> "Priority" And TextValue(rows!title) <> "Time estimate (hours)" Then Continue
-    If TextValue(rows!value_type) = "checkbox" Then
-      result[TextValue(rows!title)] = CBool(rows!done)
-    Else If TextValue(rows!value_type) = "number" Then
-      If Not ExportNumber.ParseFinite(TextValue(rows!body), ByRef number) Then Error.Raise("Invalid numeric export field")
-      result[TextValue(rows!title)] = number
+    If ExportText.ReadValue(rows, "title") <> "Priority" And ExportText.ReadValue(rows, "title") <> "Time estimate (hours)" Then Continue
+    If ExportText.ReadValue(rows, "value_type") = "checkbox" Then
+      result[ExportText.ReadValue(rows, "title")] = CBool(rows!done)
+    Else If ExportText.ReadValue(rows, "value_type") = "number" Then
+      If Not ExportNumber.ParseFinite(ExportText.ReadValue(rows, "body"), ByRef number) Then Error.Raise("Invalid numeric export field")
+      result[ExportText.ReadValue(rows, "title")] = number
     Else
-      result[TextValue(rows!title)] = TextValue(rows!body)
+      result[ExportText.ReadValue(rows, "title")] = ExportText.ReadValue(rows, "body")
     Endif
   Next
   Return result
@@ -255,34 +255,34 @@ Public Function Build(boardId As Integer, db As Connection) As String
   $tagNames = New Collection
   $projectFor = New Collection
   BoardAccess.RequireContainer(boardId, "board", boardId)
-  board = db.Find("kb_boards", "id=&1", boardId)
+  board = db.Exec(ExportText.SelectRows(db, "kb_boards") & " WHERE " & "id=&1", boardId)
   If Not board.Available Then Error.Raise("Board not found")
-  title = TrimText(TextValue(board!title))
+  title = TrimText(ExportText.ReadValue(board, "title"))
   If Not title Then title = "WeKan board"
-  rows = db.Exec("SELECT l.title FROM kb_lanes l LEFT JOIN kb_order o ON o.board_id=l.board_id AND o.kind=&2 AND o.item=l.title WHERE " & ListDeletion.LiveSql("lane", "l") & " AND l.board_id=&1 ORDER BY COALESCE(o.sort_order,l.id),l.id", boardId, "lane")
+  rows = db.Exec(ExportText.Preserve(db, "SELECT l.title FROM kb_lanes l LEFT JOIN kb_order o ON o.board_id=l.board_id AND o.kind=&2 AND o.item=l.title WHERE " & ListDeletion.LiveSql("lane", "l") & " AND l.board_id=&1 ORDER BY COALESCE(o.sort_order,l.id),l.id"), boardId, "lane")
   For Each rows
-    laneOrder.Add(TextValue(rows!title))
+    laneOrder.Add(ExportText.ReadValue(rows, "title"))
   Next
-  rows = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
+  rows = db.Exec(ExportText.SelectRows(db, "kb_lists") & " WHERE " & ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
   For Each rows
-    list = TextValue(rows!title)
+    list = ExportText.ReadValue(rows, "title")
     If listTitles.Find(list) < 0 Then listTitles.Add(list)
   Next
-  rows = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  rows = db.Exec(ExportText.Preserve(db, "SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id"), boardId, "card", False)
   For Each rows
     card = New Collection
     id = CStr(rows!id)
-    lane = TextValue(rows!lane)
+    lane = ExportText.ReadValue(rows, "lane")
     If Not lane Then lane = "Default"
-    list = TextValue(rows!list_title)
+    list = ExportText.ReadValue(rows, "list_title")
     card["id"] = id
-    card["title"] = TextValue(rows!title)
-    card["description"] = TextValue(rows!description)
+    card["title"] = ExportText.ReadValue(rows, "title")
+    card["description"] = ExportText.ReadValue(rows, "description")
     card["lane"] = lane
     card["list"] = list
-    card["labels"] = TextValue(rows!labels)
+    card["labels"] = ExportText.ReadValue(rows, "labels")
     card["parent"] = ""
-    entries = db.Find("kb_entries", "board_id=&1 AND kind=&2 AND amount=&3 ORDER BY id", boardId, "subtask", rows!id)
+    entries = db.Exec(ExportText.SelectRows(db, "kb_entries") & " WHERE " & "board_id=&1 AND kind=&2 AND amount=&3 ORDER BY id", boardId, "subtask", rows!id)
     If entries.Available Then card["parent"] = CStr(entries!card_id)
     ordered.Add(card)
     $cards[id] = card
@@ -340,7 +340,7 @@ Public Function Build(boardId As Integer, db As Connection) As String
       If tags.Find(tagId) < 0 Then tags.Add(tagId)
     Endif
     minutes = 0
-    entries = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND done=&4 ORDER BY id", boardId, CInt(id), "time", True)
+    entries = db.Exec(ExportText.SelectRows(db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 AND done=&4 ORDER BY id", boardId, CInt(id), "time", True)
     For Each entries
       minutes += CFloat(entries!amount)
     Next

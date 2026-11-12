@@ -2412,3 +2412,39 @@ The full native suite exposed string-valued projections as well as Blob values.
 ReadText now accepts null, string and Blob results. A dedicated API regression
 starts with missing list metadata followed by a live list row, verifying mixed
 projection values in both builds.
+
+The shared ExportText module retains full text for export queries without changing
+original result columns. SQLite SELECTs gain binary projections and explicit SQL
+null flags for text fields; ReadValue accepts null/string/Blob and normalizes
+empty strings before SQL binding. Other drivers return unchanged queries and
+normal text reads. Projection generation handles current static renderer aliases,
+star columns and parenthesized selected expressions, with quoted identifiers.
+Unicode counts replace NUL only in the counting copy. MatchText/BindText use an
+ASCII hex predicate and safe unused parameter only for SQLite NUL values; normal
+binding remains for ordinary text and other drivers. Renderer/snapshot read paths,
+including generic CSV/Excel, use this layer. Taskwarrior delegates to it as well.
+
+Six per-format API text mutations cover title/description/labels/comments and board/
+list metadata, with full before/after SQL snapshots. All 706 responses across
+thirteen formats match unchanged source collector/formatters. The native archive
+fixture adds 80 text snapshots across all 40 tool formats and two roles; original
+formatters decide which markers are exported, and every suffix after NUL must
+survive. This is marker-presence coverage, separately from 240 complete live-list
+pairs, 80 archive snapshots and exact API comparisons. Fixed-clock/SQL/native model
+adapters remain explicit. The text fixture resets its orphan link after the generic
+backup checks (which prime legacy links), then asserts external exports leave it
+missing. Generic backup priming is separate follow-up work.
+
+The corpus exposed Focalboard's missing generic custom properties. Native fields
+now preserve text, Boolean values, finite numeric input, JavaScript index-key order,
+last duplicate values and source prototype exclusion. A private header contains
+only validated numeric card/property references. focalboardText validates marker,
+header, field/card references, raw values, duplicate cards and finite numbers, then
+writes canonical String(Number(raw)) values and removes the private header. Actual
+ZIP bytes match source, and unmarked JSONL is unchanged. Two complete native typed
+exports match original formatFocalboard under the same fixed clock, including NUL
+text, integer-like names, duplicate/prototype fields and exponent/subnormal values.
+NUL-invalid numeric fields fail without entry/history writes. Renderer tests also
+cover IEEE edge strings and malformed/forged references. Other DBs, backup migration,
+remaining native field/anonymization/security models, 27 API renderers and complete
+original UI/API/security parity remain open.

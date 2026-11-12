@@ -12,7 +12,7 @@ End
 
 Private Function TrimText(value As String) As String
   Dim first As Integer = 1
-  Dim finish As Integer = String.Len(value)
+  Dim finish As Integer = ExportText.Length(value)
   While first <= finish
     If Not Whitespace(String.Mid(value, first, 1)) Then Break
     Inc first
@@ -45,17 +45,17 @@ Public Function Build(boardId As Integer, db As Connection, Optional wanted As C
   Dim participant As Collection
   Dim dates As Collection
   BoardAccess.RequireContainer(boardId, "board", boardId)
-  board = db.Find("kb_boards", "id=&1", boardId)
+  board = db.Exec(ExportText.SelectRows(db, "kb_boards") & " WHERE " & "id=&1", boardId)
   If Not board.Available Then Error.Raise("Board not found")
-  output.Add(TextValue(board!title), "title")
-  lists = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
+  output.Add(ExportText.ReadValue(board, "title"), "title")
+  lists = db.Exec(ExportText.SelectRows(db, "kb_lists") & " WHERE " & ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
   For Each lists
     cards = New Variant[]
-    rows = db.Exec("SELECT c.* FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 AND COALESCE(l.title,'')=&4 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False, TextValue(lists!title))
+    rows = db.Exec(ExportText.Preserve(db, "SELECT c.* FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 AND " & ExportText.MatchText(db, "COALESCE(l.title,'')", 4, ExportText.ReadValue(lists, "title")) & " ORDER BY COALESCE(o.sort_order,c.id),c.id"), boardId, "card", False, ExportText.BindText(db, ExportText.ReadValue(lists, "title")))
     For Each rows
       card = New Collection
-      card.Add(TextValue(rows!title), "title")
-      card.Add(If(ExternalExportFields.Wants(wanted, "description"), TextValue(rows!description), ""), "description")
+      card.Add(ExportText.ReadValue(rows, "title"), "title")
+      card.Add(If(ExternalExportFields.Wants(wanted, "description"), ExportText.ReadValue(rows, "description"), ""), "description")
       If ExternalExportFields.Wants(wanted, "dates") Then
         dates = CardDates.ReadDates(boardId, rows!id)
         If dates.Exist("dueAt") Then card.Add(CardDates.Iso(dates["dueAt"]), "duedate")
@@ -63,7 +63,7 @@ Public Function Build(boardId As Integer, db As Connection, Optional wanted As C
       Endif
       labels = New Variant[]
       If ExternalExportFields.Wants(wanted, "labels") Then
-        For Each label In Split(TextValue(rows!labels), ",")
+        For Each label In Split(ExportText.ReadValue(rows, "labels"), ",")
           label = TrimText(label)
           If Not label Then Continue
           item = New Collection
@@ -89,12 +89,12 @@ Public Function Build(boardId As Integer, db As Connection, Optional wanted As C
       Endif
       comments = New Variant[]
       If ExternalExportFields.Wants(wanted, "comments") Then
-        entries = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, rows!id, "comment")
+        entries = db.Exec(ExportText.SelectRows(db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, rows!id, "comment")
         For Each entries
           item = New Collection
-          item.Add(TextValue(entries!body), "message")
+          item.Add(ExportText.ReadValue(entries, "body"), "message")
           BoardAccess.RequireCard(boardId, rows!id)
-          item.Add(RetiredAuthors.DisplayName("entry", entries!id, TextValue(entries!author)), "actorId")
+          item.Add(RetiredAuthors.DisplayName("entry", entries!id, ExportText.ReadValue(entries, "author")), "actorId")
           If Not IsNull(entries!created_at) Then
             item.Add(CardDates.Iso(ItemChanges.Epoch(entries!created_at)), "creationDateTime")
           Endif
@@ -105,7 +105,7 @@ Public Function Build(boardId As Integer, db As Connection, Optional wanted As C
       cards.Add(card)
     Next
     stack = New Collection
-    stack.Add(TextValue(lists!title), "title")
+    stack.Add(ExportText.ReadValue(lists, "title"), "title")
     stack.Add(cards, "cards")
     stacks.Add(stack)
   Next

@@ -86,11 +86,13 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   240 all-format selected descriptor pair and original collector evidence is
   recorded in CHANGELOG.md; broader field models/security parity remain open.
 
-- Next export text regression: audit control/NUL fidelity in other native
-  renderers. Taskwarrior now avoids the built-in Quote keyword and preserves
-  SQLite text through guarded binary projections; other renderer text reads
-  and Unicode helpers need exact source comparisons before their parity is
-  established. Keep other DB driver conformance explicit.
+- Completed shared export text projections/readers and NUL-safe grouping,
+  with original-source API comparisons and text suffix coverage across all
+  40 tool formats. Focalboard generic text/Boolean/number properties, canonical
+  numeric output and strict private-marker handling are recorded in CHANGELOG.md.
+- Next data follow-up: audit generic native backup's legacy link priming on read
+  and separate any needed migration from export. Other DB driver conformance,
+  remaining field models/security reporting and full original suites stay open.
 
 - Next: remaining copy-option models/controls, selected-export API/model/
   security parity, Home/group targets and original

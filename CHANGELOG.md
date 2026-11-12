@@ -2,6 +2,24 @@
 
 This work adds the following features and fixes:
 
+- Preserve complete control/NUL text across native exports with shared guarded
+  SQLite projections, explicit null flags, string/Blob readers and NUL-safe
+  Unicode counts. Preserve original columns and other-driver SQL. Use hex text
+  matching only for SQLite NUL list names, retaining normal parameter binding
+  otherwise. Reproduce the old title truncation, then compare 706 API responses
+  across thirteen formats with unchanged source collector/formatters and 256
+  roles. Verify 80 owner/readonly text snapshots across all 40 formats retain
+  every source-exported suffix, alongside 240 complete live-list descriptor
+  pairs and 80 archive snapshots. Complete Focalboard generic custom properties
+  exposed by that corpus: text/Boolean/number values, source key order/last-value/
+  prototype rules and canonical numeric strings through strict private JSONL
+  normalization. Two complete native typed exports match unchanged source;
+  malformed markers and NUL-invalid numeric values are refused. Full host tests,
+  both source/packaged 706-response API checks, both 45-download selected-export
+  browser checks and cached revoke/regrant retries pass. Generic backup
+  legacy-link priming, other-driver conformance, 27 API renderers and remaining
+  field/anonymization/security/full original parity stay open. Thanks to xet7.
+
 - Add GET `/api/boards/:id/export/taskwarrior` through the locked external
   service, preserving original JSON text bytes and selected descriptions,
   labels, dates and comments. Match deterministic numeric-ID UUIDs, first

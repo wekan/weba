@@ -15,7 +15,7 @@ End
 
 Private Function TrimText(value As String) As String
   Dim first As Integer = 1
-  Dim finish As Integer = String.Len(value)
+  Dim finish As Integer = ExportText.Length(value)
   While first <= finish
     If Not Whitespace(String.Mid(value, first, 1)) Then Break
     Inc first
@@ -30,40 +30,40 @@ End
 
 Private Function CustomFields(cardId As Integer, format As String) As Collection
   Dim result As New Collection
-  Dim rows As Result = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "custom")
+  Dim rows As Result = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "custom")
   Dim number As Float
   Dim value As Variant
   Dim numeric As Collection
   For Each rows
-    If Not TextValue(rows!title) Then Continue
-    If (format = "openproject" Or format = "jira" Or format = "asana" Or format = "zenkit") And TextValue(rows!title) = "__proto__" Then Continue
+    If Not ExportText.ReadValue(rows, "title") Then Continue
+    If (format = "openproject" Or format = "jira" Or format = "asana" Or format = "zenkit") And ExportText.ReadValue(rows, "title") = "__proto__" Then Continue
     If format = "notion" Then
-      If ["__proto__", "constructor", "prototype"].Find(TextValue(rows!title)) >= 0 Then Continue
-      If ["name", "status", "assignee", "tags", "start", "due", "description", "swimlane"].Find(LCase(TrimText(TextValue(rows!title)))) >= 0 Then Continue
+      If ["__proto__", "constructor", "prototype"].Find(ExportText.ReadValue(rows, "title")) >= 0 Then Continue
+      If ["name", "status", "assignee", "tags", "start", "due", "description", "swimlane"].Find(LCase(TrimText(ExportText.ReadValue(rows, "title")))) >= 0 Then Continue
     Endif
-    Select TextValue(rows!value_type)
+    Select ExportText.ReadValue(rows, "value_type")
       Case "checkbox"
         value = CBool(rows!done)
       Case "number"
-        If Not ExportNumber.ParseFinite(TextValue(rows!body), ByRef number) Then Error.Raise("Invalid numeric export field")
+        If Not ExportNumber.ParseFinite(ExportText.ReadValue(rows, "body"), ByRef number) Then Error.Raise("Invalid numeric export field")
         ' Keep exact stored decimal text until JavaScript normalizes the value.
         numeric = New Collection
-        If (format = "notion" Or format = "openproject" Or format = "jira" Or format = "asana" Or format = "zenkit") And Not TrimText(TextValue(rows!body)) Then
+        If (format = "notion" Or format = "openproject" Or format = "jira" Or format = "asana" Or format = "zenkit") And Not TrimText(ExportText.ReadValue(rows, "body")) Then
           numeric.Add("0", "number")
         Else
-          numeric.Add(TextValue(rows!body), "number")
+          numeric.Add(ExportText.ReadValue(rows, "body"), "number")
         Endif
         value = numeric
       Case Else
-        value = TextValue(rows!body)
+        value = ExportText.ReadValue(rows, "body")
     End Select
     If (format = "openproject" Or format = "jira" Or format = "asana" Or format = "zenkit") And TypeOf(value) = gb.String Then
       If Not CStr(value) Then Continue
     Endif
     If format = "notion" Then
-      result.Add(value, TextValue(rows!title))
+      result.Add(value, ExportText.ReadValue(rows, "title"))
     Else
-      result[TextValue(rows!title)] = value
+      result[ExportText.ReadValue(rows, "title")] = value
     Endif
   Next
   Return result
@@ -72,19 +72,19 @@ End
 
 Private Function Checklists(cardId As Integer) As Variant[]
   Dim result As New Variant[]
-  Dim rows As Result = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "checklist")
+  Dim rows As Result = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "checklist")
   Dim entries As Result
   Dim checklist As Collection
   Dim item As Collection
   Dim items As Variant[]
   For Each rows
     checklist = New Collection
-    checklist.Add(TextValue(rows!title), "title")
+    checklist.Add(ExportText.ReadValue(rows, "title"), "title")
     items = New Variant[]
-    entries = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, cardId, "checkitem", rows!id)
+    entries = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, cardId, "checkitem", rows!id)
     For Each entries
       item = New Collection
-      item.Add(TextValue(entries!title), "title")
+      item.Add(ExportText.ReadValue(entries, "title"), "title")
       item.Add(CBool(entries!done), "done")
       items.Add(item)
     Next
@@ -126,28 +126,28 @@ Public Function Build(boardId As Integer, db As Connection, format As String) As
   $db = db
   $boardId = boardId
   BoardAccess.RequireContainer(boardId, "board", boardId)
-  board = db.Find("kb_boards", "id=&1", boardId)
+  board = db.Exec(ExportText.SelectRows(db, "kb_boards") & " WHERE " & "id=&1", boardId)
   If Not board.Available Then Error.Raise("Board not found")
   If format = "wrike" Then
-    entries = db.Exec("SELECT COUNT(*) AS total,COUNT(DISTINCT CASE WHEN c.lane IS NOT NULL AND c.lane<>&2 AND c.lane<>&3 THEN c.lane END) AS folders FROM kb_cards c WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&4", boardId, "", "Default", False)
+    entries = db.Exec(ExportText.Preserve(db, "SELECT COUNT(*) AS total,COUNT(DISTINCT CASE WHEN c.lane IS NOT NULL AND c.lane<>&2 AND c.lane<>&3 THEN c.lane END) AS folders FROM kb_cards c WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&4"), boardId, "", "Default", False)
     If CLong(entries!total) + CLong(entries!folders) + 1 > 65000 Then Error.Raise("Wrike export exceeds 65000 rows")
   Endif
   If format = "teamwork" Then
-    entries = db.Exec("SELECT COUNT(*) AS total FROM kb_cards c WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&2", boardId, False)
+    entries = db.Exec(ExportText.Preserve(db, "SELECT COUNT(*) AS total FROM kb_cards c WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&2"), boardId, False)
     If CLong(entries!total) + 1 > 20000 Then Error.Raise("Teamwork export exceeds 20000 rows")
   Endif
-  metadata.Add(TextValue(board!title), "title")
+  metadata.Add(ExportText.ReadValue(board, "title"), "title")
   If format = "notion" Or format = "openproject" Or format = "jira" Or format = "asana" Or format = "zenkit" Then
     metadata.Add("", "description")
   Else
     metadata.Add(WorkspaceStore.Setting(boardId, "board", boardId, "description"), "description")
   Endif
   If format <> "notion" And format <> "openproject" And format <> "jira" And format <> "asana" Then
-    rows = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
+    rows = db.Exec(ExportText.SelectRows(db, "kb_lists") & " WHERE " & ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
     For Each rows
       item = New Collection
       item.Add(CStr(rows!id), "_id")
-      item.Add(TextValue(rows!title), "title")
+      item.Add(ExportText.ReadValue(rows, "title"), "title")
       If format = "zenkit" Then
         item.Add("", "color")
       Else
@@ -166,23 +166,23 @@ Public Function Build(boardId As Integer, db As Connection, format As String) As
       lists.Add(item)
     Next
     If format <> "zenkit" Then
-      rows = db.Exec("SELECT l.title FROM kb_lanes l LEFT JOIN kb_order o ON o.board_id=l.board_id AND o.kind=&2 AND o.item=l.title WHERE " & ListDeletion.LiveSql("lane", "l") & " AND l.board_id=&1 ORDER BY COALESCE(o.sort_order,l.id),l.id", boardId, "lane")
+      rows = db.Exec(ExportText.Preserve(db, "SELECT l.title FROM kb_lanes l LEFT JOIN kb_order o ON o.board_id=l.board_id AND o.kind=&2 AND o.item=l.title WHERE " & ListDeletion.LiveSql("lane", "l") & " AND l.board_id=&1 ORDER BY COALESCE(o.sort_order,l.id),l.id"), boardId, "lane")
       For Each rows
         item = New Collection
-        item.Add(TextValue(rows!title), "title")
+        item.Add(ExportText.ReadValue(rows, "title"), "title")
         lanes.Add(item)
       Next
     Endif
   Endif
-  rows = db.Exec("SELECT c.*,l.title AS list_title,cl.list_id FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  rows = db.Exec(ExportText.Preserve(db, "SELECT c.*,l.title AS list_title,cl.list_id FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id"), boardId, "card", False)
   For Each rows
     item = New Collection
     item.Add(CStr(rows!id), "cardId")
-    item.Add(TextValue(rows!title), "title")
-    item.Add(TextValue(rows!description), "description")
-    item.Add(TextValue(rows!lane), "swimlaneTitle")
-    item.Add(TextValue(rows!list_id), "listId")
-    item.Add(TextValue(rows!list_title), "listTitle")
+    item.Add(ExportText.ReadValue(rows, "title"), "title")
+    item.Add(ExportText.ReadValue(rows, "description"), "description")
+    item.Add(ExportText.ReadValue(rows, "lane"), "swimlaneTitle")
+    item.Add(ExportText.ReadValue(rows, "list_id"), "listId")
+    item.Add(ExportText.ReadValue(rows, "list_title"), "listTitle")
     If format = "notion" Or format = "openproject" Or format = "jira" Or format = "asana" Or format = "zenkit" Then
       item.Add("", "color")
     Else
@@ -203,7 +203,7 @@ Public Function Build(boardId As Integer, db As Connection, format As String) As
     Endif
     item.Add(people, "assignees")
     labels = New String[]
-    For Each label In Split(TextValue(rows!labels), ",")
+    For Each label In Split(ExportText.ReadValue(rows, "labels"), ",")
       label = TrimText(label)
       If label Then labels.Add(label)
     Next
@@ -230,11 +230,11 @@ Public Function Build(boardId As Integer, db As Connection, format As String) As
       item.Add("", "parentCardId")
     Else
       comments = New Variant[]
-      entries = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, rows!id, "comment")
+      entries = db.Exec(ExportText.SelectRows(db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, rows!id, "comment")
       For Each entries
-        If format <> "jira" And format <> "asana" And format <> "zenkit" And Not TrimText(TextValue(entries!body)) Then Continue
+        If format <> "jira" And format <> "asana" And format <> "zenkit" And Not TrimText(ExportText.ReadValue(entries, "body")) Then Continue
         comment = New Collection
-        comment.Add(TextValue(entries!body), "text")
+        comment.Add(ExportText.ReadValue(entries, "body"), "text")
         comment.Add(CardContent.AuthorName(boardId, rows!id, "entry", entries!id), "author")
         If Not IsNull(entries!created_at) Then
           comment.Add(CardDates.Iso(ItemChanges.Epoch(entries!created_at)), "date")
@@ -249,7 +249,7 @@ Public Function Build(boardId As Integer, db As Connection, format As String) As
       Else
         item.Add(Checklists(rows!id), "checklists")
       Endif
-      entries = db.Find("kb_entries", "board_id=&1 AND kind=&2 AND amount=&3 ORDER BY id", boardId, "subtask", rows!id)
+      entries = db.Exec(ExportText.SelectRows(db, "kb_entries") & " WHERE " & "board_id=&1 AND kind=&2 AND amount=&3 ORDER BY id", boardId, "subtask", rows!id)
       If entries.Available Then
         item.Add(CStr(entries!card_id), "parentCardId")
       Else
@@ -258,9 +258,9 @@ Public Function Build(boardId As Integer, db As Connection, format As String) As
     Endif
     If format = "jira" Then
       spentMinutes = New String[]
-      entries = db.Exec("SELECT typeof(amount) AS value_type,printf('%!.17g',COALESCE(amount,0)) AS minutes FROM kb_entries WHERE board_id=&1 AND card_id=&2 AND kind=&3 AND done=&4 ORDER BY id", boardId, rows!id, "time", True)
+      entries = db.Exec(ExportText.Preserve(db, "SELECT typeof(amount) AS value_type,printf('%!.17g',COALESCE(amount,0)) AS minutes FROM kb_entries WHERE board_id=&1 AND card_id=&2 AND kind=&3 AND done=&4 ORDER BY id"), boardId, rows!id, "time", True)
       For Each entries
-        If ["integer", "real", "null"].Find(CStr(entries!value_type)) < 0 Then Error.Raise("Invalid Jira time entry")
+        If ["integer", "real", "null"].Find(CStr(ExportText.ReadValue(entries, "value_type"))) < 0 Then Error.Raise("Invalid Jira time entry")
         If Not ExportNumber.ParseFinite(CStr(entries!minutes), ByRef limit) Then Error.Raise("Invalid Jira time entry")
         spentMinutes.Add(CStr(entries!minutes))
       Next
@@ -268,7 +268,7 @@ Public Function Build(boardId As Integer, db As Connection, format As String) As
     Endif
     items.Add(item)
     If format = "wrike" Then
-      laneName = TextValue(rows!lane)
+      laneName = ExportText.ReadValue(rows, "lane")
       If laneName And laneName <> "Default" Then folderNames[laneName] = True
     Endif
   Next

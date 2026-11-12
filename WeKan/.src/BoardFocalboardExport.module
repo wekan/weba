@@ -58,7 +58,7 @@ Public Function Id(prefix As String, sourceValue As Variant) As String
   Dim i As Integer
   While Len(result) < 26
     h = 2166136261 Xor round
-    For i = 1 To String.Len(source)
+    For i = 1 To ExportText.Length(source)
       character = String.Mid(source, i, 1)
       code = String.Code(character)
       ' JavaScript for-of visits an astral character once, while charCodeAt(0)
@@ -118,10 +118,86 @@ End
 Private Function CommentLine(cardId As Integer, comment As Result, index As Integer, cardBlockId As String, created As Long, exportTime As Long) As String
   Dim fields As New Collection
   Dim author As String = CardContent.AuthorName($boardId, cardId, "entry", CInt(comment!id))
-  Dim text As String = TextValue(comment!body)
+  Dim text As String = ExportText.ReadValue(comment, "body")
   Dim stamp As Long = created
   If TypeOf(comment!created_at) = gb.Date And Not IsNull(comment!created_at) Then stamp = ItemChanges.Epoch(comment!created_at)
   Return Line("block", BaseBlock(Id("m", cardBlockId & ":comment:" & CStr(index)), cardBlockId, "comment", If(author, author & ": ", "") & text, fields, stamp, exportTime))
+End
+
+Private Function FieldKey(name As String) As String
+  Dim result As String = "field:"
+  Dim i As Integer
+  For i = 1 To Len(name)
+    result &= Hex$(Asc(Mid(name, i, 1)), 2)
+  Next
+  Return result
+End
+
+Private Function ArrayIndex(name As String) As Boolean
+  Dim i As Integer
+  Dim code As Integer
+  If Not name Or Len(name) > 10 Or (Len(name) > 1 And Left(name, 1) = "0") Then Return False
+  For i = 1 To Len(name)
+    code = Asc(Mid(name, i, 1))
+    If code < 48 Or code > 57 Then Return False
+  Next
+  Return CLong(name) <= 4294967294
+End
+
+Private Function CustomFields(cardId As Integer) As Variant[]
+  Dim rows As Result = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "custom")
+  Dim records As New Collection
+  Dim keys As New String[]
+  Dim indices As New Variant[]
+  Dim ordinary As New Variant[]
+  Dim result As New Variant[]
+  Dim item As Collection
+  Dim name As String
+  Dim key As String
+  Dim value As String
+  Dim number As Float
+  Dim i As Integer
+  For Each rows
+    name = ExportText.ReadValue(rows, "title")
+    If Not name Or name = "__proto__" Then Continue
+    key = FieldKey(name)
+    item = New Collection
+    item["name"] = name
+    value = ExportText.ReadValue(rows, "body")
+    Select ExportText.ReadValue(rows, "value_type")
+      Case "checkbox"
+        value = If(CBool(rows!done), "true", "false")
+      Case "number"
+        If Not ExportNumber.ParseFinite(value, ByRef number) Then Error.Raise("Invalid numeric export field")
+        If number = 0 Then value = "0"
+        item["number"] = value
+      Case Else
+        If Not value Then Continue
+    End Select
+    item["value"] = value
+    If Not records.Exist(key) Then keys.Add(key)
+    records[key] = item
+  Next
+  For Each key In keys
+    item = records[key]
+    If ArrayIndex(item["name"]) Then
+      i = 0
+      While i < indices.Count
+        If CLong(indices[i]["name"]) > CLong(item["name"]) Then Break
+        Inc i
+      Wend
+      indices.Add(item, i)
+    Else
+      ordinary.Add(item)
+    Endif
+  Next
+  For Each item In indices
+    result.Add(item)
+  Next
+  For Each item In ordinary
+    result.Add(item)
+  Next
+  Return result
 End
 
 Public Function Build(boardId As Integer, db As Connection) As String
@@ -146,6 +222,14 @@ Public Function Build(boardId As Integer, db As Connection) As String
   Dim viewFields As New Collection
   Dim filter As New Collection
   Dim fields As Collection
+  Dim custom As Variant[]
+  Dim customField As Collection
+  Dim fieldNames As New String[]
+  Dim fieldKeys As New String[]
+  Dim numericCards As New Collection
+  Dim numericValues As Collection
+  Dim fieldId As String
+  Dim fieldName As String
   Dim properties As Collection
   Dim range As Collection
   Dim dates As Collection
@@ -172,23 +256,34 @@ Public Function Build(boardId As Integer, db As Connection) As String
   $db = db
   $boardId = boardId
   BoardAccess.RequireContainer(boardId, "board", boardId)
-  board = db.Find("kb_boards", "id=&1", boardId)
+  board = db.Exec(ExportText.SelectRows(db, "kb_boards") & " WHERE " & "id=&1", boardId)
   If Not board.Available Then Error.Raise("Board not found")
   boardBlockId = Id("b", boardId)
   statusId = Id("p", boardBlockId & ":status")
   labelsId = Id("p", boardBlockId & ":labels")
   dueId = Id("p", boardBlockId & ":due")
-  lists = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
+  lists = db.Exec(ExportText.SelectRows(db, "kb_lists") & " WHERE " & ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
   For Each lists
-    AddUnique(statusTitles, TextValue(lists!title))
+    AddUnique(statusTitles, ExportText.ReadValue(lists, "title"))
   Next
-  cards = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  cards = db.Exec(ExportText.Preserve(db, "SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id"), boardId, "card", False)
   For Each cards
-    AddUnique(statusTitles, TextValue(cards!list_title))
-    parsedLabels = Labels(cards!labels)
+    AddUnique(statusTitles, ExportText.ReadValue(cards, "list_title"))
+    parsedLabels = Labels(ExportText.ReadValue(cards, "labels"))
     For Each label In parsedLabels
       AddUnique(labelNames, label)
     Next
+    custom = CustomFields(cards!id)
+    numericValues = New Collection
+    For Each customField In custom
+      fieldName = customField["name"]
+      If IndexOf(fieldKeys, FieldKey(fieldName)) < 0 Then
+        fieldKeys.Add(FieldKey(fieldName))
+        fieldNames.Add(fieldName)
+      Endif
+      If customField.Exist("number") Then numericValues[Id("p", boardBlockId & ":field:" & fieldName)] = customField["number"]
+    Next
+    If numericValues.Count Then numericCards[Id("c", cards!id)] = numericValues
   Next
   For Each title In statusTitles
     childId = Id("o", boardBlockId & ":status:" & title)
@@ -203,8 +298,12 @@ Public Function Build(boardId As Integer, db As Connection) As String
   cardProperties.Add(Property(statusId, "Status", "select", options))
   cardProperties.Add(Property(labelsId, "Labels", "multiSelect", labelOptions))
   cardProperties.Add(Property(dueId, "Due", "date", emptyVariants))
+  For Each fieldName In fieldNames
+    cardProperties.Add(Property(Id("p", boardBlockId & ":field:" & fieldName), fieldName, "text", emptyVariants))
+  Next
   header.Add(1, "version")
   header.Add(exportTime, "date")
+  If numericCards.Count Then header.Add(numericCards, "__weba_focalboard_numbers")
   out.Add(JSON.Encode(header))
   boardData.Add(boardBlockId, "id")
   boardData.Add("0", "teamId")
@@ -213,7 +312,7 @@ Public Function Build(boardId As Integer, db As Connection) As String
   boardData.Add("", "modifiedBy")
   boardData.Add("P", "type")
   boardData.Add("", "minimumRole")
-  boardData.Add(If(TextValue(board!title), TextValue(board!title), "WeKan board"), "title")
+  boardData.Add(If(ExportText.ReadValue(board, "title"), ExportText.ReadValue(board, "title"), "WeKan board"), "title")
   boardData.Add("", "description")
   boardData.Add("", "icon")
   boardData.Add(False, "showDescription")
@@ -243,15 +342,15 @@ Public Function Build(boardId As Integer, db As Connection) As String
   viewFields.Add(emptyCollection, "kanbanCalculations")
   viewFields.Add("", "defaultTemplateId")
   out.Add(Line("block", BaseBlock(Id("v", boardBlockId & ":view"), boardBlockId, "view", "Board view", viewFields, exportTime, exportTime)))
-  cards = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  cards = db.Exec(ExportText.Preserve(db, "SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id"), boardId, "card", False)
   For Each cards
     cardBlockId = Id("c", cards!id)
     created = exportTime
     properties = New Collection
-    index = IndexOf(statusTitles, TextValue(cards!list_title))
+    index = IndexOf(statusTitles, ExportText.ReadValue(cards, "list_title"))
     If index >= 0 Then properties.Add(statusIds[index], statusId)
     chosen = New String[]
-    parsedLabels = Labels(cards!labels)
+    parsedLabels = Labels(ExportText.ReadValue(cards, "labels"))
     For Each label In parsedLabels
       index = IndexOf(labelNames, label)
       If index >= 0 Then chosen.Add(labelIds[index])
@@ -270,25 +369,30 @@ Public Function Build(boardId As Integer, db As Connection) As String
       Endif
       properties.Add(JSON.Encode(range), dueId)
     Endif
+    custom = CustomFields(cards!id)
+    For Each customField In custom
+      fieldId = Id("p", boardBlockId & ":field:" & customField["name"])
+      properties[fieldId] = customField["value"]
+    Next
     contentLines = New String[]
     contentOrder = New String[]
-    If TextValue(cards!description) Then
+    If ExportText.ReadValue(cards, "description") Then
       childId = Id("a", cardBlockId & ":description")
       fields = New Collection
       contentOrder.Add(childId)
-      contentLines.Add(Line("block", BaseBlock(childId, cardBlockId, "text", TextValue(cards!description), fields, created, exportTime)))
+      contentLines.Add(Line("block", BaseBlock(childId, cardBlockId, "text", ExportText.ReadValue(cards, "description"), fields, created, exportTime)))
     Endif
     checklistIndex = 0
-    entry = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, cards!id, "checklist")
+    entry = db.Exec(ExportText.SelectRows(db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, cards!id, "checklist")
     For Each entry
       itemIndex = 0
-      item = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", boardId, cards!id, "checkitem", entry!id)
+      item = db.Exec(ExportText.SelectRows(db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", boardId, cards!id, "checkitem", entry!id)
       For Each item
         childId = Id("x", cardBlockId & ":" & CStr(checklistIndex) & ":" & CStr(itemIndex))
         fields = New Collection
         fields.Add(CBool(item!done), "value")
         contentOrder.Add(childId)
-        contentLines.Add(Line("block", BaseBlock(childId, cardBlockId, "checkbox", TextValue(item!title), fields, created, exportTime)))
+        contentLines.Add(Line("block", BaseBlock(childId, cardBlockId, "checkbox", ExportText.ReadValue(item, "title"), fields, created, exportTime)))
         Inc itemIndex
       Next
       Inc checklistIndex
@@ -298,14 +402,14 @@ Public Function Build(boardId As Integer, db As Connection) As String
     fields.Add(properties, "properties")
     fields.Add(contentOrder, "contentOrder")
     fields.Add(False, "isTemplate")
-    out.Add(Line("block", BaseBlock(cardBlockId, boardBlockId, "card", If(TextValue(cards!title), TextValue(cards!title), "Untitled"), fields, created, exportTime)))
+    out.Add(Line("block", BaseBlock(cardBlockId, boardBlockId, "card", If(ExportText.ReadValue(cards, "title"), ExportText.ReadValue(cards, "title"), "Untitled"), fields, created, exportTime)))
     For Each title In contentLines
       out.Add(title)
     Next
     commentIndex = 0
-    entry = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, cards!id, "comment")
+    entry = db.Exec(ExportText.SelectRows(db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, cards!id, "comment")
     For Each entry
-      If Trim(TextValue(entry!body)) Then out.Add(CommentLine(cards!id, entry, commentIndex, cardBlockId, created, exportTime))
+      If Trim(ExportText.ReadValue(entry, "body")) Then out.Add(CommentLine(cards!id, entry, commentIndex, cardBlockId, created, exportTime))
       Inc commentIndex
     Next
   Next

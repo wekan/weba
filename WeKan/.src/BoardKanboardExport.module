@@ -20,7 +20,7 @@ End
 
 Private Function TrimText(value As String) As String
   Dim first As Integer = 1
-  Dim finish As Integer = String.Len(value)
+  Dim finish As Integer = ExportText.Length(value)
   While first <= finish
     If Not Whitespace(String.Mid(value, first, 1)) Then Break
     Inc first
@@ -89,36 +89,36 @@ Public Function Build(boardId As Integer, db As Connection, Optional wanted As C
   Dim person As String
   Dim nextLinkId As Integer
   BoardAccess.RequireContainer(boardId, "board", boardId)
-  board = db.Find("kb_boards", "id=&1", boardId)
+  board = db.Exec(ExportText.SelectRows(db, "kb_boards") & " WHERE " & "id=&1", boardId)
   If Not board.Available Then Error.Raise("Board not found")
-  boardData.Add(TextValue(board!title), "name")
+  boardData.Add(ExportText.ReadValue(board, "title"), "name")
   data.Add(boardData, "board")
-  r = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
+  r = db.Exec(ExportText.SelectRows(db, "kb_lists") & " WHERE " & ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
   For Each r
     item = New Collection
-    item.Add(TextValue(r!title), "title")
+    item.Add(ExportText.ReadValue(r, "title"), "title")
     columns.Add(item)
   Next
   data.Add(columns, "columns")
-  r = db.Find("kb_lanes", "board_id=&1 ORDER BY id", boardId)
+  r = db.Exec(ExportText.SelectRows(db, "kb_lanes") & " WHERE " & "board_id=&1 ORDER BY id", boardId)
   For Each r
     item = New Collection
-    item.Add(TextValue(r!title), "name")
+    item.Add(ExportText.ReadValue(r, "title"), "name")
     swimlanes.Add(item)
   Next
   data.Add(swimlanes, "swimlanes")
-  r = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&2 ORDER BY c.id", boardId, False)
+  r = db.Exec(ExportText.Preserve(db, "SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&2 ORDER BY c.id"), boardId, False)
   For Each r
     Inc index
     row = New Collection
     row.Add(CInt(r!id), "cardId")
     row.Add(index, "number")
-    row.Add(TextValue(r!title), "title")
-    row.Add(If(ExternalExportFields.Wants(wanted, "description"), TextValue(r!description), ""), "description")
-    row.Add(TextValue(r!list_title), "column")
-    row.Add(If(TextValue(r!lane), TextValue(r!lane), "Default"), "swimlane")
+    row.Add(ExportText.ReadValue(r, "title"), "title")
+    row.Add(If(ExternalExportFields.Wants(wanted, "description"), ExportText.ReadValue(r, "description"), ""), "description")
+    row.Add(ExportText.ReadValue(r, "list_title"), "column")
+    row.Add(If(ExportText.ReadValue(r, "lane"), ExportText.ReadValue(r, "lane"), "Default"), "swimlane")
     If ExternalExportFields.Wants(wanted, "labels") Then
-      row.Add(Labels(r!labels), "tags")
+      row.Add(Labels(ExportText.ReadValue(r, "labels")), "tags")
     Else
       row.Add(Labels(""), "tags")
     Endif
@@ -135,11 +135,11 @@ Public Function Build(boardId As Integer, db As Connection, Optional wanted As C
   For Each row In cards
     cardId = row["cardId"]
     If ExternalExportFields.Wants(wanted, "subtasks") Then
-      related = db.Find("kb_entries", "board_id=&1 AND amount=&2 AND kind=&3 ORDER BY id", boardId, cardId, "subtask")
+      related = db.Exec(ExportText.SelectRows(db, "kb_entries") & " WHERE " & "board_id=&1 AND amount=&2 AND kind=&3 ORDER BY id", boardId, cardId, "subtask")
       If related.Available Then AddLinkPair(linksByCard, numbers, seenLinks, cardId, CInt(related!card_id), "is a child of", "is a parent of", ByRef nextLinkId)
     Endif
     If ExternalExportFields.Wants(wanted, "dependencies") Then
-      related = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, cardId, "dependency")
+      related = db.Exec(ExportText.SelectRows(db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, cardId, "dependency")
       For Each related
         AddLinkPair(linksByCard, numbers, seenLinks, cardId, CInt(related!amount), "relates to", "relates to", ByRef nextLinkId)
       Next
@@ -166,10 +166,10 @@ Public Function Build(boardId As Integer, db As Connection, Optional wanted As C
     Endif
     subtasks = New Variant[]
     If ExternalExportFields.Wants(wanted, "checklists") Then
-      related = db.Exec("SELECT e.* FROM kb_entries e JOIN kb_entries p ON p.id=e.parent_id AND p.board_id=e.board_id AND p.card_id=e.card_id AND p.kind=&4 WHERE e.board_id=&1 AND e.card_id=&2 AND e.kind=&3 ORDER BY p.id,e.id", boardId, cardId, "checkitem", "checklist")
+      related = db.Exec(ExportText.Preserve(db, "SELECT e.* FROM kb_entries e JOIN kb_entries p ON p.id=e.parent_id AND p.board_id=e.board_id AND p.card_id=e.card_id AND p.kind=&4 WHERE e.board_id=&1 AND e.card_id=&2 AND e.kind=&3 ORDER BY p.id,e.id"), boardId, cardId, "checkitem", "checklist")
       For Each related
         item = New Collection
-        item.Add(TextValue(related!title), "title")
+        item.Add(ExportText.ReadValue(related, "title"), "title")
         item.Add(If(CBool(related!done), 2, 0), "status")
         subtasks.Add(item)
       Next
@@ -177,12 +177,12 @@ Public Function Build(boardId As Integer, db As Connection, Optional wanted As C
     If subtasks.Count Then task.Add(subtasks, "subtasks")
     comments = New Variant[]
     If ExternalExportFields.Wants(wanted, "comments") Then
-      related = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, cardId, "comment")
+      related = db.Exec(ExportText.SelectRows(db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, cardId, "comment")
       For Each related
         item = New Collection
-        item.Add(TextValue(related!body), "comment")
+        item.Add(ExportText.ReadValue(related, "body"), "comment")
         BoardAccess.RequireCard(boardId, cardId)
-        item.Add(RetiredAuthors.DisplayName("entry", related!id, TextValue(related!author)), "username")
+        item.Add(RetiredAuthors.DisplayName("entry", related!id, ExportText.ReadValue(related, "author")), "username")
         If TypeOf(related!created_at) = gb.Date And Not IsNull(related!created_at) Then item.Add(CardDates.Iso(ItemChanges.Epoch(related!created_at)), "date_creation")
         comments.Add(item)
       Next

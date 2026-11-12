@@ -22,6 +22,10 @@ Public Sub Main()
   Dim mode As String
   Dim title As String
   Dim listSnapshots As New Variant[]
+  Dim textSnapshots As New Variant[]
+  Dim checklistId As Integer
+  Dim focalSnapshots As New Variant[]
+  Dim badId As Integer
   WebDatabase.Register("external-archive-owner", "x")
   WebDatabase.Register("external-archive-reader", "x")
   Session["username"] = "external-archive-owner"
@@ -105,6 +109,71 @@ Public Sub Main()
   WebDatabase.OpenConnection().Exec("UPDATE kb_lists SET title='Doing' WHERE id=&1", otherListId)
   If WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_entries")!total <> before Or WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_history")!total <> historyBefore Then Error.Raise("Live-list export changed entries/history")
   If WebDatabase.OpenConnection().Find("kb_card_lists", "board_id=&1 AND card_id=&2", boardId, active)!list_id <> listId Then Error.Raise("Live-list export rewrote retained card link")
+  WebDatabase.OpenConnection().Exec("DELETE FROM kb_card_lists WHERE board_id=&1 AND card_id=&2", boardId, orphan)
+  WebDatabase.OpenConnection().Exec("UPDATE kb_cards SET title=CAST(X'4265666f7265004e554c5f5449544c455f535546464958' AS TEXT),description=CAST(X'4265666f7265004e554c5f4445534352495054494f4e5f535546464958' AS TEXT),labels=CAST(X'4265666f7265004e554c5f4c4142454c535f535546464958' AS TEXT) WHERE id=&1", active)
+  WebDatabase.OpenConnection().Exec("UPDATE kb_boards SET title=CAST(X'4265666f7265004e554c5f424f4152445f535546464958' AS TEXT) WHERE id=&1", boardId)
+  WebDatabase.OpenConnection().Exec("UPDATE kb_lists SET title=CAST(X'4265666f7265004e554c5f4c4953545f535546464958' AS TEXT) WHERE id=&1", listId)
+  WebDatabase.OpenConnection().Exec("INSERT INTO kb_entries(board_id,card_id,kind,body,author) VALUES(&1,&2,'comment',CAST(X'4265666f7265004e554c5f434f4d4d454e545f535546464958' AS TEXT),'external-archive-owner')", boardId, active)
+  WebDatabase.OpenConnection().Exec("INSERT INTO kb_entries(board_id,card_id,kind,title) VALUES(&1,&2,'checklist',CAST(X'4265666f7265004e554c5f434845434b4c4953545f535546464958' AS TEXT))", boardId, active)
+  checklistId = WebDatabase.OpenConnection().LastInsertId
+  WebDatabase.OpenConnection().Exec("INSERT INTO kb_entries(board_id,card_id,kind,parent_id,title,done) VALUES(&1,&2,'checkitem',&3,CAST(X'4265666f7265004e554c5f434845434b4954454d5f535546464958' AS TEXT),1)", boardId, active, checklistId)
+  WebDatabase.OpenConnection().Exec("INSERT INTO kb_entries(board_id,card_id,kind,title,body,value_type) VALUES(&1,&2,'custom','LiteralText',CAST(X'4265666f7265004e554c5f435553544f4d5f535546464958' AS TEXT),'text')", boardId, active)
+  before = WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_entries")!total
+  historyBefore = WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_history")!total
+  For Each actor In ["external-archive-owner", "external-archive-reader"]
+    Session["username"] = actor
+    Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+    selection = BoardSelection.NewState()
+    BoardSelection.SetActive(selection, True)
+    BoardSelection.AddVisible(selection, [boardId])
+    For Each format In formats
+      batch = BoardBatchExport.NewBatch(selection, format)
+      Try BoardBatchExport.Run(batch, selection)
+      If Error Then Error.Raise(actor & "/text/" & format & ": " & Error.Text)
+      item = New Collection
+      item["actor"] = actor
+      item["format"] = format
+      item["content"] = BoardBatchExport.Files(batch)[0]["content"]
+      textSnapshots.Add(item)
+    Next
+  Next
+  If WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_entries")!total <> before Or WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_history")!total <> historyBefore Then Error.Raise("Text export changed entries/history")
+  WebDatabase.OpenConnection().Exec("INSERT INTO kb_entries(board_id,card_id,kind,title,body,value_type) VALUES(&1,&2,'custom','Amount','1000000000000000100','number')", boardId, active)
+  WebDatabase.OpenConnection().Exec("INSERT INTO kb_entries(board_id,card_id,kind,title,body,value_type) VALUES(&1,&2,'custom','Tiny','5e-324','number')", boardId, active)
+  WebDatabase.OpenConnection().Exec("INSERT INTO kb_entries(board_id,card_id,kind,title,body,value_type,done) VALUES(&1,&2,'custom','Enabled','','checkbox',0)", boardId, active)
+  WebDatabase.OpenConnection().Exec("INSERT INTO kb_entries(board_id,card_id,kind,title,body,value_type,done) VALUES(&1,&2,'custom','EnabledTrue','','checkbox',1)", boardId, active)
+  WebDatabase.OpenConnection().Exec("INSERT INTO kb_entries(board_id,card_id,kind,title,body,value_type) VALUES(&1,&2,'custom','2','two','text')", boardId, active)
+  WebDatabase.OpenConnection().Exec("INSERT INTO kb_entries(board_id,card_id,kind,title,body,value_type) VALUES(&1,&2,'custom','1','one','text')", boardId, active)
+  WebDatabase.OpenConnection().Exec("INSERT INTO kb_entries(board_id,card_id,kind,title,body,value_type) VALUES(&1,&2,'custom','01','leading','text')", boardId, active)
+  WebDatabase.OpenConnection().Exec("INSERT INTO kb_entries(board_id,card_id,kind,title,body,value_type) VALUES(&1,&2,'custom','__proto__','DROP_PROTO','text')", boardId, active)
+  WebDatabase.OpenConnection().Exec("INSERT INTO kb_entries(board_id,card_id,kind,title,body,value_type) VALUES(&1,&2,'custom','Amount','1e21','number')", boardId, active)
+  before = WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_entries")!total
+  For Each actor In ["external-archive-owner", "external-archive-reader"]
+    Session["username"] = actor
+    Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+    selection = BoardSelection.NewState()
+    BoardSelection.SetActive(selection, True)
+    BoardSelection.AddVisible(selection, [boardId])
+    batch = BoardBatchExport.NewBatch(selection, "focalboard")
+    BoardBatchExport.Run(batch, selection)
+    item = New Collection
+    item["actor"] = actor
+    item["content"] = BoardBatchExport.Files(batch)[0]["content"]
+    focalSnapshots.Add(item)
+  Next
+  WebDatabase.OpenConnection().Exec("INSERT INTO kb_entries(board_id,card_id,kind,title,body,value_type) VALUES(&1,&2,'custom','Invalid',CAST(X'31007461696c' AS TEXT),'number')", boardId, active)
+  badId = WebDatabase.OpenConnection().LastInsertId
+  batch = BoardBatchExport.NewBatch(selection, "focalboard")
+  Try BoardBatchExport.Run(batch, selection)
+  If Not Error Then Error.Raise("Focalboard accepted NUL in a numeric value")
+  WebDatabase.OpenConnection().Exec("DELETE FROM kb_entries WHERE id=&1", badId)
+  If WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_entries")!total <> before Or WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_history")!total <> historyBefore Then Error.Raise("Custom-field export changed entries/history")
+  If WebDatabase.OpenConnection().Find("kb_card_lists", "board_id=&1 AND card_id=&2", boardId, orphan).Available Then Error.Raise("External text export rewrote missing list link")
+  result["focalSnapshots"] = focalSnapshots
+  result["boardId"] = CStr(boardId)
+  result["activeId"] = CStr(active)
+  result["orphanId"] = CStr(orphan)
+  result["textSnapshots"] = textSnapshots
   result["listSnapshots"] = listSnapshots
   result["formats"] = formats
   result["snapshots"] = snapshots

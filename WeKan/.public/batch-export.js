@@ -26,6 +26,26 @@
     u32(view,at,0x06054b50);u16(view,at+8,prepared.length);u16(view,at+10,prepared.length);u32(view,at+12,centralSize);u32(view,at+16,centralOffset);
     return bytes;
   }
+  function focalboardText(content){
+    if(typeof content!=='string')throw new Error('Invalid board export');
+    const lines=content.split('\n');let header;try{header=JSON.parse(lines[0]);}catch{return content;}
+    if(!header||!Object.prototype.hasOwnProperty.call(header,'__weba_focalboard_numbers'))return content;
+    const object=value=>value&&typeof value==='object'&&!Array.isArray(value),numbers=header.__weba_focalboard_numbers;
+    if(Object.keys(header).sort().join(',')!=='__weba_focalboard_numbers,date,version'||header.version!==1||!Number.isSafeInteger(header.date)||!object(numbers)||!Object.keys(numbers).length||lines.pop()!=='')throw new Error('Invalid board export');
+    let records;try{records=lines.slice(1).map(line=>JSON.parse(line));}catch{throw new Error('Invalid board export');}
+    const boards=records.filter(row=>row&&row.type==='board');if(boards.length!==1||!object(boards[0].data)||!Array.isArray(boards[0].data.cardProperties))throw new Error('Invalid board export');
+    const fields=new Set(boards[0].data.cardProperties.filter(field=>field&&field.type==='text'&&/^p[a-z0-9]{26}$/.test(field.id)).map(field=>field.id)),found=new Set();
+    for(const [card,values] of Object.entries(numbers))if(!/^c[a-z0-9]{26}$/.test(card)||!object(values)||!Object.keys(values).length||Object.entries(values).some(([key,value])=>!fields.has(key)||typeof value!=='string'||!value.trim()||!Number.isFinite(Number(value))))throw new Error('Invalid board export');
+    for(const row of records){
+      if(!row||row.type!=='block'||!row.data||row.data.type!=='card')continue;
+      if(typeof row.data.id!=='string')throw new Error('Invalid board export');
+      if(!Object.prototype.hasOwnProperty.call(numbers,row.data.id))continue;
+      const id=row.data.id,values=numbers[id];if(found.has(id)||!object(row.data.fields)||!object(row.data.fields.properties))throw new Error('Invalid board export');found.add(id);
+      for(const [key,value] of Object.entries(values)){if(row.data.fields.properties[key]!==value)throw new Error('Invalid board export');row.data.fields.properties[key]=String(Number(value));}
+    }
+    if(found.size!==Object.keys(numbers).length)throw new Error('Invalid board export');delete header.__weba_focalboard_numbers;
+    return [header,...records].map(row=>JSON.stringify(row)).join('\n')+'\n';
+  }
   function archive(entries){
     if(!Array.isArray(entries)||!entries.length||entries.length>1000)throw new Error('Invalid board export');
     const normalized=[];
@@ -43,6 +63,7 @@
         normalized.push({name:entry.name,bytes:descriptor&&descriptor.format==='teamwork'?teamworkWorkbook(descriptor):descriptor&&descriptor.format==='wrike'?wrikeWorkbook(descriptor):descriptor&&descriptor.format==='businessmap'?businessmapWorkbook(descriptor):descriptor&&descriptor.format==='monday'?mondayWorkbook(descriptor):plannerWorkbook(descriptor)});continue;
       }
       let content=entry.content==null&&entry.name.endsWith('.txt')?'':entry.content;
+      if(entry.name.endsWith('.jsonl'))content=focalboardText(content);
       if(entry.format!==undefined){
         if(typeof content!=='string')throw new Error('Invalid board export');
         let descriptor;try{descriptor=JSON.parse(content);}catch{throw new Error('Invalid board export');}
@@ -1780,5 +1801,5 @@ function formatNotionCsv({ items } = {}) {
     const url=URL.createObjectURL(new Blob([workbook(payload(encoded))],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})),link=document.createElement('a');
     link.href=url;link.download='wekan-boards.xlsx';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
-  window.webaBatchExport={archive,workbook,plannerWorkbook,mondayWorkbook,mondayData,businessmapWorkbook,businessmapData,taigaData,vikunjaData,vikunjaFiles,vikunjaArchive,wrikeWorkflowData,wrikeData,wrikeWorkbook,teamworkData,teamworkWorkbook,notionCsv,openprojectData,jiraData,asanaData,zenkitData,uniqueSheetNames,downloadPayload,downloadWorkbook};
+  window.webaBatchExport={archive,focalboardText,workbook,plannerWorkbook,mondayWorkbook,mondayData,businessmapWorkbook,businessmapData,taigaData,vikunjaData,vikunjaFiles,vikunjaArchive,wrikeWorkflowData,wrikeData,wrikeWorkbook,teamworkData,teamworkWorkbook,notionCsv,openprojectData,jiraData,asanaData,zenkitData,uniqueSheetNames,downloadPayload,downloadWorkbook};
 })();

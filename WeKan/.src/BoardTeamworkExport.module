@@ -13,7 +13,7 @@ End
 
 Private Function TrimText(value As String) As String
   Dim first As Integer = 1
-  Dim finish As Integer = String.Len(value)
+  Dim finish As Integer = ExportText.Length(value)
   While first <= finish
     If Not Whitespace(String.Mid(value, first, 1)) Then Break
     Inc first
@@ -33,7 +33,7 @@ Private Sub ValidateName(title As String)
   Dim character As String
   Dim ending As String
   Dim cleaned As String
-  For index = 1 To String.Len(title)
+  For index = 1 To ExportText.Length(title)
     character = String.Mid(title, index, 1)
     If InStr("\\/?*[]:", character) Then character = " "
     cleaned &= character
@@ -41,7 +41,7 @@ Private Sub ValidateName(title As String)
   title = TrimText(cleaned)
   If title = "History" Then Error.Raise("Invalid worksheet name")
   If Left(title, 1) = "'" Then Error.Raise("Invalid worksheet name")
-  For index = 1 To String.Len(title)
+  For index = 1 To ExportText.Length(title)
     character = String.Mid(title, index, 1)
     width = If(String.Code(character) > 65535, 2, 1)
     If units + width > 31 Then
@@ -58,8 +58,8 @@ End
 Public Function Build(boardId As Integer, db As Connection) As String
   Dim board As Result
   BoardAccess.RequireContainer(boardId, "board", boardId)
-  board = db.Find("kb_boards", "id=&1", boardId)
+  board = db.Exec(ExportText.SelectRows(db, "kb_boards") & " WHERE " & "id=&1", boardId)
   If Not board.Available Then Error.Raise("Board not found")
-  ValidateName(TextValue(board!title))
+  ValidateName(ExportText.ReadValue(board, "title"))
   Return BoardExternalSnapshot.Build(boardId, db, "teamwork")
 End

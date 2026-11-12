@@ -27,22 +27,22 @@ Public Function Build(boardId As Integer, db As Connection, Optional wanted As C
   Dim title As String
   Dim descriptionLine As String
   BoardAccess.RequireContainer(boardId, "board", boardId)
-  board = db.Find("kb_boards", "id=&1", boardId)
+  board = db.Exec(ExportText.SelectRows(db, "kb_boards") & " WHERE " & "id=&1", boardId)
   If Not board.Available Then Error.Raise("Board not found")
-  title = TextValue(board!title)
+  title = ExportText.ReadValue(board, "title")
   If Not title Then title = "Imported board"
   lines.Add("# " & title)
   lines.Add("")
-  lists = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
+  lists = db.Exec(ExportText.SelectRows(db, "kb_lists") & " WHERE " & ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
   For Each lists
-    cards = db.Exec("SELECT c.* FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND COALESCE(l.title,'')=&3 AND c.archived=&4 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", TextValue(lists!title), False)
+    cards = db.Exec(ExportText.Preserve(db, "SELECT c.* FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND " & ExportText.MatchText(db, "COALESCE(l.title,'')", 3, ExportText.ReadValue(lists, "title")) & " AND c.archived=&4 ORDER BY COALESCE(o.sort_order,c.id),c.id"), boardId, "card", ExportText.BindText(db, ExportText.ReadValue(lists, "title")), False)
     If Not cards.Available Then Continue
-    lines.Add("## " & TextValue(lists!title))
+    lines.Add("## " & ExportText.ReadValue(lists, "title"))
     lines.Add("")
     For Each cards
-      lines.Add("- [" & If(ClosedList(TextValue(lists!title)), "x", " ") & "] " & TextValue(cards!title))
+      lines.Add("- [" & If(ClosedList(ExportText.ReadValue(lists, "title")), "x", " ") & "] " & ExportText.ReadValue(cards, "title"))
       If Not ExternalExportFields.Wants(wanted, "description") Then Continue
-      For Each descriptionLine In Split(TextValue(cards!description), Chr(10))
+      For Each descriptionLine In Split(ExportText.ReadValue(cards, "description"), Chr(10))
         If descriptionLine Then lines.Add("  " & descriptionLine)
       Next
     Next

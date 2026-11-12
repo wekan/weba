@@ -1,0 +1,137 @@
+' Preserve complete SQLite text without changing the normal result columns.
+Export
+
+Public Function Length(value As String) As Integer
+  Return String.Len(Replace(value, Chr(0), "x"))
+End
+
+Private Function Identifier(value As String) As String
+  Return Chr(34) & Replace(value, Chr(34), Chr(34) & Chr(34)) & Chr(34)
+End
+
+Private Function Columns(value As String) As String[]
+  Dim result As New String[]
+  Dim start As Integer = 1
+  Dim depth As Integer
+  Dim quoted As Boolean
+  Dim character As String
+  Dim i As Integer
+  For i = 1 To Len(value)
+    character = Mid(value, i, 1)
+    If character = "'" Then quoted = Not quoted
+    If quoted Then Continue
+    If character = "(" Then Inc depth
+    If character = ")" Then Dec depth
+    If character = "," And depth = 0 Then
+      result.Add(Trim(Mid(value, start, i - start)))
+      start = i + 1
+    Endif
+  Next
+  result.Add(Trim(Mid(value, start)))
+  Return result
+End
+
+Private Sub AddColumn(extra As String[], seen As Collection, expression As String, name As String)
+  If seen.Exist(name) Then Return
+  seen[name] = True
+  extra.Add("CAST(" & expression & " AS BLOB) AS " & Identifier("__weba_text_" & name))
+  extra.Add("(" & expression & ") IS NULL AS " & Identifier("__weba_null_" & name))
+End
+
+Public Function Preserve(conn As Connection, sql As String) As String
+  Dim fromAt As Integer = InStr(sql, " FROM ")
+  Dim tokens As String[]
+  Dim aliases As New Collection
+  Dim defaultAlias As String
+  Dim tableName As String
+  Dim alias As String
+  Dim column As Variant
+  Dim selected As String
+  Dim expression As String
+  Dim name As String
+  Dim at As Integer
+  Dim textField As Boolean
+  Dim extra As New String[]
+  Dim seen As New Collection
+  Dim i As Integer
+  If conn.Type <> "sqlite3" Or Left(sql, 7) <> "SELECT " Or fromAt = 0 Then Return sql
+  tokens = Split(sql, " ", "", True)
+  For i = 0 To tokens.Count - 2
+    If tokens[i] <> "FROM" And tokens[i] <> "JOIN" Then Continue
+    tableName = Replace(tokens[i + 1], Chr(34), "")
+    If Not conn.Tables.Exist(tableName) Then Continue
+    alias = tableName
+    If i + 2 < tokens.Count Then
+      If ["WHERE", "LEFT", "RIGHT", "INNER", "OUTER", "JOIN", "ON", "ORDER", "GROUP", "LIMIT"].Find(tokens[i + 2]) < 0 Then alias = tokens[i + 2]
+    Endif
+    aliases[alias] = tableName
+    If Not defaultAlias Then defaultAlias = alias
+  Next
+  For Each selected In Columns(Mid(sql, 8, fromAt - 8))
+    If selected = "*" Or Right(selected, 2) = ".*" Then
+      alias = If(selected = "*", defaultAlias, Left(selected, Len(selected) - 2))
+      If Not aliases.Exist(alias) Then Continue
+      For Each column In conn.Tables[aliases[alias]].Fields
+        If column.Type = DB.String Then AddColumn(extra, seen, alias & "." & Identifier(column.Name), column.Name)
+      Next
+      Continue
+    Endif
+    at = InStr(selected, " AS ")
+    expression = If(at, Left(selected, at - 1), selected)
+    name = If(at, Mid(selected, at + 4), selected)
+    If Not at And InStr(name, ".") Then name = Mid(name, InStr(name, ".") + 1)
+    If InStr(name, "(") Or InStr(name, ")") Then Continue
+    textField = False
+    For Each alias In aliases.Keys
+      For Each column In conn.Tables[aliases[alias]].Fields
+        If column.Type <> DB.String Then Continue
+        If expression = column.Name Or InStr(expression, alias & "." & column.Name) Then textField = True
+      Next
+    Next
+    If textField Then AddColumn(extra, seen, expression, name)
+  Next
+  If Not extra.Count Then Return sql
+  Return Left(sql, fromAt - 1) & "," & extra.Join(",") & Mid(sql, fromAt)
+End
+
+Public Function SelectRows(conn As Connection, tableName As String) As String
+  Return Preserve(conn, "SELECT * FROM " & Identifier(tableName))
+End
+
+Public Function MatchText(conn As Connection, expression As String, parameter As Integer, value As String) As String
+  Dim encoded As String
+  Dim i As Integer
+  If conn.Type <> "sqlite3" Or InStr(value, Chr(0)) = 0 Then Return expression & "=&" & CStr(parameter)
+  For i = 1 To Len(value)
+    encoded &= Hex$(Asc(Mid(value, i, 1)), 2)
+  Next
+  Return "hex(" & expression & ")='" & encoded & "'"
+End
+
+Public Function BindText(conn As Connection, value As String) As String
+  If conn.Type = "sqlite3" And InStr(value, Chr(0)) Then Return ""
+  Return value
+End
+
+Public Function ReadValue(row As Result, field As String) As String
+  Dim value As Variant
+  Dim text As String
+  Dim key As String = "__weba_text_" & field
+  If row.Fields.Exist(key) Then
+    If row.Fields.Exist("__weba_null_" & field) Then
+      If CBool(row["__weba_null_" & field]) Then Return ""
+    Endif
+    value = row[key]
+    If IsNull(value) Then Return ""
+    If TypeOf(value) = gb.String Then
+      text = value
+    Else
+      text = value.Data
+    Endif
+    If Len(text) = 0 Then Return ""
+    Return text
+  Endif
+  value = row[field]
+  If IsNull(value) Then Return ""
+  Return CStr(value)
+End

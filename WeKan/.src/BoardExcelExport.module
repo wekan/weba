@@ -28,20 +28,20 @@ Public Function Build(boardId As Integer, db As Connection) As String
   Dim r As Result
   Dim index As Integer
   BoardAccess.RequireContainer(boardId, "board", boardId)
-  board = db.Find("kb_boards", "id=&1", boardId)
+  board = db.Exec(ExportText.SelectRows(db, "kb_boards") & " WHERE " & "id=&1", boardId)
   If Not board.Available Then Error.Raise("Board not found")
-  data["title"] = TextValue(board!title)
+  data["title"] = ExportText.ReadValue(board, "title")
   data["description"] = ""
   data["createdAt"] = ""
   data["modifiedAt"] = ""
   values = New String[]
   r = BoardAccess.Members(boardId)
   For Each r
-    values.Add(TextValue(r!username))
+    values.Add(ExportText.ReadValue(r, "username"))
   Next
   data["boardMembers"] = values.Join(",")
   data["headerKeys"] = HeaderKeys()
-  r = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 ORDER BY c.id", boardId)
+  r = db.Exec(ExportText.Preserve(db, "SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 ORDER BY c.id"), boardId)
   For Each r
     Inc index
     members = BoardAccess.CardMembers(boardId, r!id)
@@ -49,8 +49,8 @@ Public Function Build(boardId As Integer, db As Connection) As String
     dates = CardDates.ReadDates(boardId, r!id)
     values = New String[]
     values.Add(CStr(index))
-    values.Add(TextValue(r!title))
-    values.Add(TextValue(r!description))
+    values.Add(ExportText.ReadValue(r, "title"))
+    values.Add(ExportText.ReadValue(r, "description"))
     values.Add("")
     values.Add("")
     values.Add("")
@@ -59,13 +59,13 @@ Public Function Build(boardId As Integer, db As Connection) As String
     values.Add(DateValue(dates, "startAt"))
     values.Add(DateValue(dates, "dueAt"))
     values.Add(DateValue(dates, "endAt"))
-    values.Add(TextValue(r!list_title))
-    values.Add(TextValue(r!lane))
+    values.Add(ExportText.ReadValue(r, "list_title"))
+    values.Add(ExportText.ReadValue(r, "lane"))
     values.Add(assignees.Join(" "))
     values.Add(members.Join(" "))
     values.Add("")
     values.Add("")
-    values.Add(TextValue(r!labels))
+    values.Add(ExportText.ReadValue(r, "labels"))
     values.Add("false")
     values.Add("")
     rows.Add(values)

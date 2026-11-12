@@ -65,7 +65,7 @@ End
 
 Private Function TrimWhitespace(value As String) As String
   Dim first As Integer = 1
-  Dim finalCode As Integer = String.Len(value)
+  Dim finalCode As Integer = ExportText.Length(value)
   While first <= finalCode And Whitespace(String.Mid(value, first, 1))
     Inc first
   Wend
@@ -82,7 +82,7 @@ Private Function OneLine(value As Variant) As String
   Dim character As String
   Dim pendingSpace As Boolean
   Dim i As Integer
-  For i = 1 To String.Len(source)
+  For i = 1 To ExportText.Length(source)
     character = String.Mid(source, i, 1)
     If Whitespace(character) Then
       pendingSpace = True
@@ -120,7 +120,7 @@ Private Function OrgTag(value As String) As String
   Dim character As String
   Dim separator As Boolean
   Dim i As Integer
-  For i = 1 To String.Len(value)
+  For i = 1 To ExportText.Length(value)
     character = String.Mid(value, i, 1)
     If UnicodeLetterNumber(character) Or InStr("_@#%", character) > 0 Then
       If separator And result Then result &= "_"
@@ -168,7 +168,7 @@ Private Function CardLines(card As Result, listTitle As String) As String[]
   Dim tag As String
   Dim priority As String
   Dim done As Boolean = ClosedList(listTitle)
-  Dim title As String = OneLine(card!title)
+  Dim title As String = OneLine(ExportText.ReadValue(card, "title"))
   Dim dates As Collection
   Dim planning As New String[]
   Dim description As String
@@ -176,7 +176,7 @@ Private Function CardLines(card As Result, listTitle As String) As String[]
   Dim checklist As Result
   Dim item As Result
   Dim itemLines As New String[]
-  If ExternalExportFields.Wants($wanted, "labels") Then parsedLabels = Labels(card!labels)
+  If ExternalExportFields.Wants($wanted, "labels") Then parsedLabels = Labels(ExportText.ReadValue(card, "labels"))
   For Each label In parsedLabels
     If label = "done" Then
       done = True
@@ -196,7 +196,7 @@ Private Function CardLines(card As Result, listTitle As String) As String[]
   If done And dates.Exist("endAt") Then planning.Add("CLOSED: " & Stamp(dates["endAt"], False))
   If planning.Count Then lines.Add("   " & planning.Join(" "))
   If ExternalExportFields.Wants($wanted, "description") Then
-    description = Replace(TextValue(card!description), Chr(13) & Chr(10), Chr(10))
+    description = Replace(ExportText.ReadValue(card, "description"), Chr(13) & Chr(10), Chr(10))
   Endif
   description = Replace(description, Chr(13), Chr(10))
   If description Then
@@ -205,17 +205,17 @@ Private Function CardLines(card As Result, listTitle As String) As String[]
     Next
   Endif
   If ExternalExportFields.Wants($wanted, "checklists") Then
-    checklist = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, card!id, "checklist")
+    checklist = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, card!id, "checklist")
     For Each checklist
       itemLines = New String[]
-      item = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, card!id, "checkitem", checklist!id)
+      item = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, card!id, "checkitem", checklist!id)
       For Each item
-        title = OneLine(item!title)
+        title = OneLine(ExportText.ReadValue(item, "title"))
         If Not title Then title = "Item"
         itemLines.Add("**** " & If(CBool(item!done), "DONE ", "TODO ") & title)
       Next
       If itemLines.Count Then
-        title = OneLine(checklist!title)
+        title = OneLine(ExportText.ReadValue(checklist, "title"))
         If Not title Then title = "Checklist"
         lines.Add("*** " & title)
         For Each descriptionLine In itemLines
@@ -238,19 +238,19 @@ Public Function Build(boardId As Integer, db As Connection, Optional wanted As C
   $db = db
   $boardId = boardId
   BoardAccess.RequireContainer(boardId, "board", boardId)
-  board = db.Find("kb_boards", "id=&1", boardId)
+  board = db.Exec(ExportText.SelectRows(db, "kb_boards") & " WHERE " & "id=&1", boardId)
   If Not board.Available Then Error.Raise("Board not found")
-  lines.Add("#+TITLE: " & OneLine(board!title))
+  lines.Add("#+TITLE: " & OneLine(ExportText.ReadValue(board, "title")))
   lines.Add("#+TODO: TODO | DONE")
   lines.Add("")
-  lists = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
+  lists = db.Exec(ExportText.SelectRows(db, "kb_lists") & " WHERE " & ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
   For Each lists
-    title = OneLine(lists!title)
+    title = OneLine(ExportText.ReadValue(lists, "title"))
     If Not title Then title = "List"
     lines.Add("* " & title)
-    cards = db.Exec("SELECT c.* FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND COALESCE(l.title,'')=&3 AND c.archived=&4 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", TextValue(lists!title), False)
+    cards = db.Exec(ExportText.Preserve(db, "SELECT c.* FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND " & ExportText.MatchText(db, "COALESCE(l.title,'')", 3, ExportText.ReadValue(lists, "title")) & " AND c.archived=&4 ORDER BY COALESCE(o.sort_order,c.id),c.id"), boardId, "card", ExportText.BindText(db, ExportText.ReadValue(lists, "title")), False)
     For Each cards
-      For Each cardLine In CardLines(cards, TextValue(lists!title))
+      For Each cardLine In CardLines(cards, ExportText.ReadValue(lists, "title"))
         lines.Add(cardLine)
       Next
     Next

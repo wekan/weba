@@ -32,14 +32,14 @@ Private Function CustomFields(cardId As Integer) As Collection
   Dim result As New Collection
   Dim fields As Result
   Dim name As String
-  fields = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "custom")
+  fields = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "custom")
   For Each fields
-    name = TextValue(fields!title)
+    name = ExportText.ReadValue(fields, "title")
     If Not name Then Continue
     If result.Exist(name) Then
-      result[name] = TextValue(fields!body)
+      result[name] = ExportText.ReadValue(fields, "body")
     Else
-      result.Add(TextValue(fields!body), name)
+      result.Add(ExportText.ReadValue(fields, "body"), name)
     Endif
   Next
   Return result
@@ -87,11 +87,11 @@ Private Function Checklist(cardId As Integer) As String
   Dim names As New String[]
   Dim checklistRows As Result
   Dim items As Result
-  checklistRows = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "checklist")
+  checklistRows = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "checklist")
   For Each checklistRows
-    items = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, cardId, "checkitem", checklistRows!id)
+    items = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, cardId, "checkitem", checklistRows!id)
     For Each items
-      names.Add(Replace(TextValue(items!title), ",", " "))
+      names.Add(Replace(ExportText.ReadValue(items, "title"), ",", " "))
     Next
   Next
   Return names.Join(",")
@@ -124,7 +124,7 @@ Private Function Estimate(value As String) As String
 End
 
 Private Function ParentId(cardId As Integer) As String
-  Dim relation As Result = $db.Find("kb_entries", "board_id=&1 AND kind=&2 AND amount=&3 ORDER BY id", $boardId, "subtask", cardId)
+  Dim relation As Result = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND kind=&2 AND amount=&3 ORDER BY id", $boardId, "subtask", cardId)
   Dim parent As String
   If relation.Available Then parent = CStr(relation!card_id)
   If parent And $ids.Exist(parent) Then Return parent
@@ -133,7 +133,7 @@ End
 
 Private Function Children(cardId As Integer) As String
   Dim values As New String[]
-  Dim relations As Result = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "subtask")
+  Dim relations As Result = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "subtask")
   Dim child As String
   For Each relations
     child = CStr(relations!amount)
@@ -146,9 +146,9 @@ Private Function CardRow(card As Result, boardTitle As String) As String
   Dim values As New Collection
   Dim dates As Collection = CardDates.ReadDates($boardId, card!id)
   Dim customData As Collection = CustomFields(card!id)
-  Dim title As String = Trim(TextValue(card!title))
-  Dim status As String = TextValue(card!list_title)
-  Dim lane As String = TextValue(card!lane)
+  Dim title As String = Trim(ExportText.ReadValue(card, "title"))
+  Dim status As String = ExportText.ReadValue(card, "list_title")
+  Dim lane As String = ExportText.ReadValue(card, "lane")
   Dim value As String
   If Not title Then title = "Untitled"
   If Not status Then status = "No status"
@@ -158,7 +158,7 @@ Private Function CardRow(card As Result, boardTitle As String) As String
   values.Add(value, "Task Type")
   If customData.Exist("Custom ID") Then values.Add(customData["Custom ID"], "Task Custom ID")
   values.Add(title, "Task Name")
-  values.Add(TextValue(card!description), "Task Content")
+  values.Add(ExportText.ReadValue(card, "description"), "Task Content")
   values.Add(status, "Status")
   values.Add(DateMillis(dates, "dueAt"), "Due date")
   values.Add(DateIso(dates, "dueAt"), "Due date Text")
@@ -168,7 +168,7 @@ Private Function CardRow(card As Result, boardTitle As String) As String
   values.Add(Children(card!id), "Subtask IDs")
   values.Add("[]", "Attachments")
   values.Add(People(card!id), "Assignees")
-  values.Add(Labels(card!labels), "Tags")
+  values.Add(Labels(ExportText.ReadValue(card, "labels")), "Tags")
   If customData.Exist("Priority") Then values.Add(Priority(customData["Priority"]), "Priority")
   If lane And lane <> "Default" Then values.Add(lane, "List Name")
   If customData.Exist("Folder") Then values.Add(customData["Folder"], "Folder Name/Path")
@@ -187,15 +187,15 @@ Public Function Build(boardId As Integer, db As Connection) As String
   $boardId = boardId
   $ids = New Collection
   BoardAccess.RequireContainer(boardId, "board", boardId)
-  board = db.Find("kb_boards", "id=&1", boardId)
+  board = db.Exec(ExportText.SelectRows(db, "kb_boards") & " WHERE " & "id=&1", boardId)
   If Not board.Available Then Error.Raise("Board not found")
-  boardTitle = TextValue(board!title)
-  cards = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  boardTitle = ExportText.ReadValue(board, "title")
+  cards = db.Exec(ExportText.Preserve(db, "SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id"), boardId, "card", False)
   For Each cards
     $ids.Add(True, CStr(cards!id))
   Next
   rows.Add(Headers().Join(","))
-  cards = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  cards = db.Exec(ExportText.Preserve(db, "SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id"), boardId, "card", False)
   For Each cards
     rows.Add(CardRow(cards, boardTitle))
   Next

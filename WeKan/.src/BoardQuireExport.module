@@ -15,7 +15,7 @@ End
 
 Private Function TrimText(value As String) As String
   Dim first As Integer = 1
-  Dim finish As Integer = String.Len(value)
+  Dim finish As Integer = ExportText.Length(value)
   While first <= finish
     If Not SpaceCode(String.Code(String.Mid(value, first, 1))) Then Break
     Inc first
@@ -60,17 +60,17 @@ Private Function DateText(dates As Collection, key As String) As String
 End
 
 Private Function Priority(cardId As Integer) As String
-  Dim rows As Result = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND title=&4 ORDER BY id DESC", $boardId, cardId, "custom", "Priority")
+  Dim rows As Result = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 AND title=&4 ORDER BY id DESC", $boardId, cardId, "custom", "Priority")
   Dim index As Integer
   If Not rows.Available Then Return "Medium"
-  If TextValue(rows!value_type) = "number" Or TextValue(rows!value_type) = "checkbox" Then Return "Medium"
-  index = ["low", "medium", "high", "urgent"].Find(LCase(TextValue(rows!body)))
+  If ExportText.ReadValue(rows, "value_type") = "number" Or ExportText.ReadValue(rows, "value_type") = "checkbox" Then Return "Medium"
+  index = ["low", "medium", "high", "urgent"].Find(LCase(ExportText.ReadValue(rows, "body")))
   If index < 0 Then Return "Medium"
   Return ["Low", "Medium", "High", "Urgent"][index]
 End
 
 Private Function ParentNumber(cardId As Integer) As String
-  Dim rows As Result = $db.Find("kb_entries", "board_id=&1 AND kind=&2 AND amount=&3 ORDER BY id", $boardId, "subtask", cardId)
+  Dim rows As Result = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id=&1 AND kind=&2 AND amount=&3 ORDER BY id", $boardId, "subtask", cardId)
   Dim id As String
   If Not rows.Available Then Return ""
   id = CStr(rows!card_id)
@@ -99,20 +99,20 @@ Public Function Build(boardId As Integer, db As Connection) As String
   $boardId = boardId
   $numbers = New Collection
   BoardAccess.RequireContainer(boardId, "board", boardId)
-  rows = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  rows = db.Exec(ExportText.Preserve(db, "SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id"), boardId, "card", False)
   For Each rows
     card = New Collection
     card.Add(CInt(rows!id), "id")
-    card.Add(TextValue(rows!title), "title")
-    card.Add(TextValue(rows!description), "description")
-    card.Add(TextValue(rows!list_title), "status")
+    card.Add(ExportText.ReadValue(rows, "title"), "title")
+    card.Add(ExportText.ReadValue(rows, "description"), "description")
+    card.Add(ExportText.ReadValue(rows, "list_title"), "status")
     people = BoardAccess.Assignees(boardId, rows!id)
     members = BoardAccess.CardMembers(boardId, rows!id)
     For Each person In members
       people.Add(person)
     Next
     people = Clean(people)
-    tags = Clean(Split(TextValue(rows!labels), ","))
+    tags = Clean(Split(ExportText.ReadValue(rows, "labels"), ","))
     card.Add(people, "people")
     card.Add(tags, "tags")
     maxPeople = Max(maxPeople, people.Count)

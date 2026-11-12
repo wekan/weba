@@ -12,7 +12,7 @@ End
 
 Private Function TrimText(value As String) As String
   Dim first As Integer = 1
-  Dim finish As Integer = String.Len(value)
+  Dim finish As Integer = ExportText.Length(value)
   While first <= finish
     If Not Whitespace(String.Mid(value, first, 1)) Then Break
     Inc first
@@ -54,16 +54,16 @@ Public Function Build(boardId As Integer, db As Connection, Optional wanted As C
   Dim dates As Collection
   Dim closed As Boolean
   BoardAccess.RequireContainer(boardId, "board", boardId)
-  rows = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  rows = db.Exec(ExportText.Preserve(db, "SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id"), boardId, "card", False)
   For Each rows
-    closed = ClosedList(TextValue(rows!list_title))
+    closed = ClosedList(ExportText.ReadValue(rows, "list_title"))
     item = New Collection
-    item.Add(TextValue(rows!title), "title")
-    item.Add(If(ExternalExportFields.Wants(wanted, "description"), TextValue(rows!description), ""), "description")
+    item.Add(ExportText.ReadValue(rows, "title"), "title")
+    item.Add(If(ExternalExportFields.Wants(wanted, "description"), ExportText.ReadValue(rows, "description"), ""), "description")
     item.Add(If(closed, "closed", "opened"), "state")
     labels = New String[]
     If ExternalExportFields.Wants(wanted, "labels") Then
-      For Each label In Split(TextValue(rows!labels), ",")
+      For Each label In Split(ExportText.ReadValue(rows, "labels"), ",")
         label = TrimText(label)
         If label Then labels.Add(label)
       Next
@@ -89,13 +89,13 @@ Public Function Build(boardId As Integer, db As Connection, Optional wanted As C
     Endif
     notes = New Variant[]
     If ExternalExportFields.Wants(wanted, "comments") Then
-      entries = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, rows!id, "comment")
+      entries = db.Exec(ExportText.SelectRows(db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, rows!id, "comment")
       For Each entries
         entry = New Collection
-        entry.Add(TextValue(entries!body), "body")
+        entry.Add(ExportText.ReadValue(entries, "body"), "body")
         author = New Collection
         BoardAccess.RequireCard(boardId, rows!id)
-        author.Add(RetiredAuthors.DisplayName("entry", entries!id, TextValue(entries!author)), "username")
+        author.Add(RetiredAuthors.DisplayName("entry", entries!id, ExportText.ReadValue(entries, "author")), "username")
         entry.Add(author, "author")
         If Not IsNull(entries!created_at) Then entry.Add(CardDates.Iso(ItemChanges.Epoch(entries!created_at)), "created_at")
         entry.Add(False, "system")

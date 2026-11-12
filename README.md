@@ -3436,3 +3436,17 @@ and complete UTF-8 text, with the normal text path retained for other drivers.
 Native creation metadata and other-driver conformance stay pending. The original
 formatter does not write dependency fields. Shared full-board/policy/credential
 and final transaction checks apply before returning the text.
+
+Native exports share a text reader that preserves embedded NUL and complete UTF-8
+through guarded SQLite projections. Original result columns remain available;
+other drivers retain their existing SQL/text path. NUL list names use safe hex
+comparison in SQLite; ordinary values keep normal bound parameters. Coverage
+includes 706 source-compared API responses and 80 text snapshots across all 40
+tool formats, plus existing role, archive and live-list checks.
+
+Focalboard now exports generic custom text, Boolean and numeric properties with
+source key ordering, duplicate-value and prototype rules. A strict private header
+normalizes numeric property strings at ZIP rendering so IEEE edge values match
+JavaScript exactly; unmarked JSONL stays unchanged. Native typed output is compared
+to the unchanged source formatter. Other-driver conformance, generic backup's
+legacy-link migration behavior and full model/UI/API/security parity stay open.
