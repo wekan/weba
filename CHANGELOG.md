@@ -2,6 +2,21 @@
 
 This work adds the following features and fixes:
 
+- Add GET `/api/boards/:id/export/opml` through the locked external-export
+  service with source `text/x-opml; charset=utf-8` bytes. Independently select
+  descriptions and checklists; preserve escaped attribute whitespace, notes,
+  completed items and empty outlines. Match source ASCII terminal-state rules,
+  duplicate/blank-title grouping and missing/deleted list metadata resolution.
+  Compare 370 actual HTTP bodies across ten routes with unchanged collector/
+  formatters and original server response types/bodies. Direct OPML late member/
+  token/policy/public rollback, policy-before-lookup and opaque failures pass
+  alongside shared 256-role checks. Full host tests pass (70 Python tests,
+  80 archive/scope snapshots), as do both API builds, all 45 source/packaged
+  selected downloads and cached scope checks, four original OPML contracts
+  and original external export round-trips. Remaining 30 API renderers, native field
+  models/anonymization/security reporting and complete original UI/API/security
+  parity remain pending. Thanks to xet7.
+
 - Add GET `/api/boards/:id/export/leo` through the locked external-export
   service with source `application/xml; charset=utf-8` bytes. Gate descriptions
   and checklists independently; retain deterministic node IDs, marks, escaped

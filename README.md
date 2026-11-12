@@ -3340,12 +3340,12 @@ current source tool formats now have native selected-export entries, checked
 against source EXTERNAL_EXPORT_FORMATS. Native model gaps and complete original
 UI/API/security parity remain pending.
 
-With `WITH_API=true`, GitHub/Gitea/Forgejo/GitLab issue, Trello board, Deck stack, Kanboard task, Markdown text and Leo XML exports are available at
-`GET /api/boards/ID/export/github` (or `gitea` / `forgejo` / `gitlab` / `trello` / `deck` / `kanboard` / `markdown` / `leo`). Private boards require
+With `WITH_API=true`, GitHub/Gitea/Forgejo/GitLab issue, Trello board, Deck stack, Kanboard task, Markdown text, Leo XML and OPML exports are available at
+`GET /api/boards/ID/export/github` (or `gitea` / `forgejo` / `gitlab` / `trello` / `deck` / `kanboard` / `markdown` / `leo` / `opml`). Private boards require
 a valid bearer or source-compatible query credential and full-board read access;
 public boards follow the source anonymous path. The `fields=labels,dates,description` query selects sections;
 unknown/empty/structured selections fall back as
-source does. Native JSON is written directly so empty strings survive. Other 31
+source does. Native JSON is written directly so empty strings survive. Other 30
 format API routes, native field-security models, anonymization/security reporting
 and complete original UI/API/security parity remain pending.
 
@@ -3389,3 +3389,11 @@ marked terminal cards/finished checklist items and escaped XML text follow the
 original formatter. Duplicate/blank list titles use source title grouping;
 missing links match a blank title. Shared credentials, policy, full-board scope
 and final rollback guards apply before XML is returned.
+
+OPML API export returns `text/x-opml; charset=utf-8`. Description and checklist
+selection independently control `_note` attributes and nested checklist nodes.
+Attribute tabs and line breaks use XML character references; completion and empty
+outlines follow the original formatter. Duplicate/blank list titles use source
+grouping, and missing/deleted list metadata resolves through blank-title matching.
+Shared credential, policy, full-board and final transaction guards apply before
+returning the document.

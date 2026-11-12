@@ -51,10 +51,10 @@ def main():
         def snapshot():
             names=[row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table' AND (name LIKE 'kb_%' OR name IN ('api_tokens','import_export_settings','users'))")]
             return {name:sorted(db.execute('SELECT * FROM '+name).fetchall(),key=repr) for name in names}
-        for fmt in ['github','gitea','forgejo','gitlab','trello','deck','kanboard','markdown','leo']:
+        for fmt in ['github','gitea','forgejo','gitlab','trello','deck','kanboard','markdown','leo','opml']:
             url=f'/api/boards/{board}/export/{fmt}'
             status,data,headers=call(url,token=owner);assert status==200,(status,data)
-            assert headers['Content-Type']==('text/markdown; charset=utf-8' if fmt=='markdown' else 'application/xml; charset=utf-8' if fmt=='leo' else 'application/json; charset=utf-8')
+            assert headers['Content-Type']==('text/markdown; charset=utf-8' if fmt=='markdown' else 'application/xml; charset=utf-8' if fmt=='leo' else 'text/x-opml; charset=utf-8' if fmt=='opml' else 'application/json; charset=utf-8')
             cases.append({'format':fmt,'fields':None,'items':items,'actual':data,'contentType':headers['Content-Type']})
             assert headers['Cache-Control']=='no-store' and headers['X-Content-Type-Options']=='nosniff'
             before=snapshot()
@@ -87,14 +87,15 @@ def main():
                 orphan_items[0]['listTitle']=''
                 cases.append({'format':fmt,'fields':None,'items':orphan_items,'actual':data})
                 db.execute('INSERT INTO kb_card_lists(board_id,card_id,list_id) VALUES(?,?,?)',(board,f['cardId'],f['listId']));db.commit()
-            if fmt in ['deck','markdown','leo']:
+            if fmt in ['deck','markdown','leo','opml']:
                 other_list=next(row for row in source_lists if row['title']=='Doing')
                 db.execute('UPDATE kb_lists SET title=? WHERE board_id=? AND id=?',('incomplete',board,int(other_list['_id'])));db.commit()
                 status,data=pair(url,token=owner);assert status==200
                 if fmt=='deck':
                     repeated=[stack for stack in data['stacks'] if stack['title']=='incomplete'];assert len(repeated)==2 and all(len(stack['cards'])==2 for stack in repeated)
                 elif fmt=='markdown':assert data.count('## incomplete\n')==2
-                else:assert data.count('<vh>incomplete</vh>')==2
+                elif fmt=='leo':assert data.count('<vh>incomplete</vh>')==2
+                else:assert data.count('text="incomplete"')==2
                 cases.append({'format':fmt,'fields':None,'items':items,'lists':[{**row,'title':'incomplete' if row['_id']==other_list['_id'] else row['title']} for row in source_lists],'actual':data})
                 db.execute('UPDATE kb_lists SET title=? WHERE board_id=? AND id=?',('Doing',board,int(other_list['_id'])));db.commit()
                 db.execute('DELETE FROM kb_card_lists WHERE board_id=? AND card_id=?',(board,f['cardId']))
@@ -102,7 +103,8 @@ def main():
                 status,data=pair(url,token=owner);assert status==200
                 if fmt=='deck':assert len(next(stack for stack in data['stacks'] if stack['title']=='')['cards'])==2
                 elif fmt=='markdown':assert data.count('- [ ] Retained attachments')==1 and data.count('- [ ] Unassigned attachments')==1
-                else:assert data.count('<vh>Retained attachments</vh>')==1 and data.count('<vh>Unassigned attachments</vh>')==1
+                elif fmt=='leo':assert data.count('<vh>Retained attachments</vh>')==1 and data.count('<vh>Unassigned attachments</vh>')==1
+                else:assert data.count('text="Retained attachments"')==1 and data.count('text="Unassigned attachments"')==1
                 orphan_items=[{**{key:value for key,value in item.items() if index!=0 or key!='listId'},'listTitle':''} for index,item in enumerate(items)]
                 cases.append({'format':fmt,'fields':None,'items':orphan_items,'lists':[{**row,'title':'' if row['_id']==str(f['listId']) else row['title']} for row in source_lists],'actual':data})
                 db.execute('INSERT INTO kb_card_lists(board_id,card_id,list_id) VALUES(?,?,?)',(board,f['cardId'],f['listId']))
@@ -114,7 +116,7 @@ def main():
                     legacy_items=[dict(item) for item in items];legacy_items[0]['comments']=[{key:value for key,value in note.items() if index!=0 or key!='date'} for index,note in enumerate(items[0]['comments'])]
                     cases.append({'format':fmt,'fields':None,'items':legacy_items,'actual':data})
                     db.execute('UPDATE kb_entries SET created_at=? WHERE id=?',(created,note_id));db.commit()
-            if fmt in ['markdown','leo']:
+            if fmt in ['markdown','leo','opml']:
                 for title in ['FINISHED','unfinished','fınıshed','FİNISHED','finiſhed','archiv Ω']:
                     db.execute('UPDATE kb_lists SET title=? WHERE board_id=? AND id=?',(title,board,f['listId']));db.commit()
                     status,data=pair(url,token=owner);assert status==200
@@ -129,16 +131,17 @@ def main():
                 db.execute('UPDATE kb_boards SET title=? WHERE id=?',('',board));db.commit()
                 status,data=pair(url,token=owner);assert status==200
                 if fmt=='markdown':assert data.startswith('# Imported board\n')
-                else:assert ET.fromstring(data).find('leo_header').attrib['wekan_board']==''
+                elif fmt=='leo':assert ET.fromstring(data).find('leo_header').attrib['wekan_board']==''
+                else:assert not ET.fromstring(data).findtext('head/title')
                 cases.append({'format':fmt,'fields':None,'items':items,'board':{'title':''},'actual':data})
                 db.execute('UPDATE kb_boards SET title=? WHERE id=?',(source_board['title'],board))
                 db.executemany('UPDATE kb_cards SET archived=1 WHERE id=?',[(int(item['cardId']),) for item in items]);db.commit()
                 status,data=pair(url,token=owner);assert status==200
                 if fmt=='markdown':assert data=='# '+source_board['title']+'\n'
-                else:assert len(ET.fromstring(data).find('vnodes'))==len(source_lists)
+                else:assert len(ET.fromstring(data).find('vnodes' if fmt=='leo' else 'body'))==len(source_lists)
                 cases.append({'format':fmt,'fields':None,'items':[],'actual':data})
                 db.executemany('UPDATE kb_cards SET archived=0 WHERE id=?',[(int(item['cardId']),) for item in items]);db.commit()
-            if fmt=='leo':
+            if fmt in ['leo','opml']:
                 literal='<outline & "quoted"> Ω 😀'
                 body='XML <&> "body"\n\nlast\r\n'
                 db.execute('UPDATE kb_boards SET title=? WHERE id=?',(literal,board))
@@ -150,13 +153,36 @@ def main():
                 rich_items=[{**item,'title':literal,'description':body,'checklists':[{'title':literal,'items':[{'title':literal,'done':True},{'title':'Unchecked','done':False}]},{'title':'Empty & check','items':[]}]} if index==0 else item for index,item in enumerate(items)]
                 for fields in [None,'description','checklists','description,checklists','labels']:
                     status,data=pair(url+('' if fields is None else '?fields='+fields),token=reader);assert status==200
-                    parsed=ET.fromstring(data);assert parsed.find('leo_header').attrib['wekan_board']==literal
+                    parsed=ET.fromstring(data)
+                    assert (parsed.find('leo_header').attrib['wekan_board'] if fmt=='leo' else parsed.findtext('head/title'))==literal
                     cases.append({'format':fmt,'fields':fields,'items':rich_items,'board':{'title':literal},'actual':data})
                 db.execute('UPDATE kb_boards SET title=? WHERE id=?',(source_board['title'],board))
                 db.execute('UPDATE kb_cards SET title=?,description=? WHERE id=?',(items[0]['title'],items[0]['description'],f['cardId']))
                 db.execute('UPDATE kb_entries SET title=? WHERE id=?',('Literal checklist Ω',checklist))
                 db.execute('UPDATE kb_entries SET title=? WHERE id=?',('Checked Ω',check_id))
                 db.execute('DELETE FROM kb_entries WHERE id=?',(empty_check,));db.commit()
+            if fmt=='opml':
+                literal='Attribute\t\r\nnext\rline\nend <&"'
+                body='Note\t\r\nsecond\rtail\n'
+                db.execute('UPDATE kb_boards SET title=? WHERE id=?',(literal,board))
+                db.execute('UPDATE kb_lists SET title=? WHERE id=?',(literal,f['listId']))
+                db.execute('UPDATE kb_cards SET title=?,description=? WHERE id=?',(literal,body,f['cardId']));db.commit()
+                status,data=pair(url,token=reader);assert status==200 and '&#9;' in data and '&#10;' in data
+                tree=ET.fromstring(data);first=tree.find('body/outline/outline')
+                assert first.attrib['text']==literal.replace('\r\n','\n').replace('\r','\n')
+                assert first.attrib['_note']==body.replace('\r\n','\n').replace('\r','\n')
+                cases.append({'format':fmt,'fields':None,'items':[{**item,'listTitle':literal,**({'title':literal,'description':body} if index==0 else {})} for index,item in enumerate(items)],'lists':[{**row,'title':literal if row['_id']==str(f['listId']) else row['title']} for row in source_lists],'board':{'title':literal},'actual':data})
+                db.execute('UPDATE kb_boards SET title=? WHERE id=?',(source_board['title'],board))
+                db.execute('UPDATE kb_lists SET title=? WHERE id=?',('incomplete',f['listId']))
+                db.execute('UPDATE kb_cards SET title=?,description=? WHERE id=?',(items[0]['title'],items[0]['description'],f['cardId']))
+                other_list=next(row for row in source_lists if row['title']=='Doing')
+                db.execute('UPDATE kb_lists SET title=? WHERE id=?',('',int(other_list['_id'])))
+                db.execute("INSERT INTO kb_deleted_items(board_id,kind,item_id,batch_id,actor,deleted_at) VALUES(?,'list',?,0,'rest-other',1)",(board,f['listId']));db.commit()
+                status,data=pair(url,token=reader);assert status==200
+                assert 'text="incomplete"' not in data and 'text="Retained attachments"' in data
+                cases.append({'format':fmt,'fields':None,'items':[{**item,'listTitle':''} for item in items],'lists':[{**row,'title':'' if row['_id']==other_list['_id'] else row['title']} for row in source_lists if row['_id']!=str(f['listId'])],'actual':data})
+                db.execute("DELETE FROM kb_deleted_items WHERE board_id=? AND kind='list' AND item_id=?",(board,f['listId']))
+                db.execute('UPDATE kb_lists SET title=? WHERE id=?',('Doing',int(other_list['_id'])));db.commit()
             if fmt=='gitlab':
                 db.execute('UPDATE kb_lists SET title=? WHERE board_id=? AND id=?',('Doing',board,f['listId']));db.commit()
                 status,data=pair(url,token=owner);assert status==200
@@ -177,14 +203,14 @@ def main():
             role_cases.append({'flags':flags,'status':status})
         db.execute('DELETE FROM kb_member_flags WHERE board_id=? AND username=?',(board,'rest-file-reader'));db.commit()
         db.execute(f"CREATE TRIGGER issue_role AFTER UPDATE OF title ON kb_boards WHEN NEW.id={board} BEGIN UPDATE kb_members SET role='normal-assigned-only' WHERE board_id={board} AND username='rest-file-reader'; END");db.commit();before=snapshot()
-        for target in [url,f'/api/boards/{board}/export/markdown',f'/api/boards/{board}/export/leo']:
+        for target in [url,f'/api/boards/{board}/export/markdown',f'/api/boards/{board}/export/leo',f'/api/boards/{board}/export/opml']:
             assert pair(target,token=reader)==(403,{'error':'Forbidden'});assert snapshot()==before
         db.execute('DROP TRIGGER issue_role');db.commit()
         # Final token and export policy checks roll back injected mutations.
         digest=hashlib.sha256(owner.encode()).hexdigest()
         for effect,expected in [(f"DELETE FROM api_tokens WHERE digest='{digest}'",(401,{'error':'Invalid token'})),('UPDATE import_export_settings SET disable_export=1 WHERE id=1',(403,'Export is disabled by the administrator.'))]:
             db.execute(f'CREATE TRIGGER issue_late AFTER UPDATE OF title ON kb_boards WHEN NEW.id={board} BEGIN {effect}; END');db.commit();before=snapshot()
-            for target in [url,f'/api/boards/{board}/export/markdown',f'/api/boards/{board}/export/leo']:
+            for target in [url,f'/api/boards/{board}/export/markdown',f'/api/boards/{board}/export/leo',f'/api/boards/{board}/export/opml']:
                 assert pair(target,token=owner)==expected;assert snapshot()==before
             db.execute('DROP TRIGGER issue_late');db.commit();assert pair(url,token=owner)[0]==200
         db.execute('UPDATE kb_boards SET archived=1 WHERE id=?',(board,));db.commit();assert pair(url,token=owner)[0]==200
@@ -195,6 +221,10 @@ def main():
             status,data=pair(url+suffix);assert status==200,(status,data)
             cases.append({'format':'github','fields':None,'items':items,'actual':data})
         assert pair(url,token=assigned)[0]==200
+        opml_url=f'/api/boards/{board}/export/opml'
+        for fields in [None,'description','checklists','people']:
+            status,data=pair(opml_url+'?authToken=bad'+('' if fields is None else '&fields='+fields));assert status==200
+            cases.append({'format':'opml','fields':fields,'items':items,'actual':data})
         leo_url=f'/api/boards/{board}/export/leo'
         for fields in [None,'description','checklists','people']:
             status,data=pair(leo_url+'?authToken=bad'+('' if fields is None else '&fields='+fields));assert status==200
@@ -223,13 +253,13 @@ def main():
         cases.append({'format':'gitlab','fields':None,'items':items,'actual':data})
         assert snapshot()==before
         db.execute(f"CREATE TRIGGER issue_public AFTER UPDATE OF title ON kb_boards WHEN NEW.id={board} BEGIN UPDATE kb_board_visibility SET permission='private' WHERE board_id={board}; END");db.commit();before=snapshot()
-        for target in [url,markdown_url,leo_url]:
+        for target in [url,markdown_url,leo_url,opml_url]:
             assert pair(target)==(403,{'error':'Forbidden'});assert snapshot()==before
         db.execute('DROP TRIGGER issue_public');db.commit()
         fixture('ImportExportPolicyFixture',{'WEBA_EXCHANGE_MODE':'save','WEBA_EXCHANGE_FLAGS':'{"import":false,"export":true}'})
         assert pair('/api/boards/99999999/export/github?authToken=bad')==(403,'Export is disabled by the administrator.')
         db.execute('ALTER TABLE kb_boards RENAME COLUMN id TO issue_hidden_id');db.commit();before=snapshot()
-        for target in [url,markdown_url,leo_url]:
+        for target in [url,markdown_url,leo_url,opml_url]:
             assert pair(target+'?authToken=bad')==(403,'Export is disabled by the administrator.');assert snapshot()==before
         db.execute('ALTER TABLE kb_boards RENAME COLUMN issue_hidden_id TO id');db.commit()
         fixture('ImportExportPolicyFixture',{'WEBA_EXCHANGE_MODE':'save','WEBA_EXCHANGE_FLAGS':'{"import":false,"export":false}'})
@@ -237,14 +267,14 @@ def main():
         assert pair(url)==(500,{'error':'Board export failed'});assert snapshot()==before
         db.execute('ALTER TABLE kb_cards RENAME COLUMN opaque_export_canary TO labels');db.commit()
         db.execute('ALTER TABLE kb_cards RENAME COLUMN description TO opaque_markdown_canary');db.commit();before=snapshot()
-        for target in [markdown_url,leo_url]:
+        for target in [markdown_url,leo_url,opml_url]:
             assert pair(target)==(500,{'error':'Board export failed'});assert snapshot()==before
         db.execute('ALTER TABLE kb_cards RENAME COLUMN opaque_markdown_canary TO description');db.commit()
     for sample in cases:
         sample.setdefault('board',source_board);sample.setdefault('lists',source_lists);sample.setdefault('swimlanes',source_swimlanes)
     Path(os.environ['WEBA_TEST_PROJECT'],'issue-export-cases.json').write_text(json.dumps(cases))
     Path(os.environ['WEBA_TEST_PROJECT'],'issue-export-roles.json').write_text(json.dumps(role_cases))
-    print('Issue export HTTP: nine source routes, public/private/query-bearer auth precedence, field selections, archive reads, no writes, assigned-only/global-admin denial, all 256 raw role sets, late member/token/policy/public rollback and opaque failure passed')
+    print('Issue export HTTP: ten source routes, public/private/query-bearer auth precedence, field selections, archive reads, no writes, assigned-only/global-admin denial, all 256 raw role sets, late member/token/policy/public rollback and opaque failure passed')
 try:main()
 except Exception as error:
     message=traceback.format_exc()+"\nLast response: "+repr(last)

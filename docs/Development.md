@@ -2297,3 +2297,23 @@ credential-scrubbing tests remain. SQL IDs/label names/lane IDs/entry adapters,
 empty planning and no-op anonymization remain explicit; remaining 31 API
 renderers, native field models/security reporting and complete original
 UI/API/security parity remain pending.
+
+OPML shares the locked API at `GET /api/boards/:id/export/opml`, returning original
+text/x-opml UTF-8 bytes. Optional descriptions/checklists are independent and reset
+on every Build call; selected UI exports keep all-fields defaults. Attribute
+escaping preserves tabs and normalizes CRLF/CR/LF to source newline references.
+Completion uses ASCII-only terminal case rules. COALESCE handles missing links,
+and the list join filters tombstones so a retained card cannot resolve deleted
+metadata as a live list title; it follows source collect's blank-title result.
+
+Fixtures cover parsed attribute whitespace recovery, escaped board/card/checklist/
+item text, notes/finished items/empty outlines, duplicate/blank titles, missing
+and tombstoned list links, Unicode terminal nonmatches, empty board names/cards
+and anonymous selected sections. All 370 actual responses across ten formats
+match unchanged source parseExportFields/collect/gateItem/formatters, with original
+server body/type comparisons for initial successes. The OPML route itself runs
+late member/token/policy/public rollback, policy-before-lookup under broken board
+schema and opaque missing-description checks. Shared 256-role/credential tests
+remain. SQL IDs/label names/lane IDs/entry adapters, empty planning and no-op
+anonymization remain explicit; remaining 30 API renderers, native field models/
+security reporting and complete original UI/API/security parity remain open.

@@ -1,4 +1,10 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- OPML export API: Add original XML response bytes/type and independently
+  selected notes/checklists. Preserve escaped attribute whitespace, completion
+  and empty nodes; match blank/deleted list metadata and terminal case rules.
+  Verify original-source responses and direct access/rollback/error boundaries;
+  remaining models/routes and full original parity stay open.
+
 - Leo export API: Add original XML response bytes/type and independently
   selected card bodies/checklists. Preserve deterministic nodes, marks, escaped
   text and empty outlines; fix blank-title/missing-link grouping and terminal

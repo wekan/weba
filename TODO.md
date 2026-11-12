@@ -1,6 +1,6 @@
 # Work in progress
 
-Updated 2026-11-12. Target: the signed-in pages of the current `wekan/wekan`
+Updated 2026-11-13. Target: the signed-in pages of the current `wekan/wekan`
 checkout, implemented with Gambas Web UI, SQLite persistence and portable Gambas
 DB operations. This is an initial implementation, not complete WeKan parity.
 
@@ -80,6 +80,13 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   Original callback outcome comparisons expand from 52 to 156 single/multi/mixed
   cases. Native selection and confirmed sidebar actions now use this service;
   no new public HTTP route is exposed. Original full callbacks remain open.
+- Next export regression: verify and fix retained cards linked to tombstoned
+  lists in Deck, Markdown, Leo and Kanboard. OPML now filters live list metadata;
+  those four renderers still join the physical list row without its live filter.
+  Compare their blank-title fallback/container membership with unchanged source
+  collect, including a live duplicate title, and cover API and selected exports.
+  Audit the other native formatters for the same lookup/state derivation gap.
+
 - Next: remaining copy-option models/controls, selected-export API/model/
   security parity, Home/group targets and original
   UI callbacks. Whole-board copy authorization and late actor/source/destination
@@ -204,7 +211,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   with source response bytes/type, description selection and heading/state
   semantics is recorded there; Leo GET XML export with independent body/checklist
   selection, source node/mark/escaping semantics and scoped final guards is
-  recorded there; remaining 31
+  recorded there; OPML GET XML export with independent notes/checklists, source
+  attribute whitespace/outline state and live-list metadata resolution is
+  recorded there; remaining 30
   external-format API routes, native field-model guards, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded
