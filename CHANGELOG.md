@@ -2,6 +2,12 @@
 
 This work adds the following features and fixes:
 
+- Update attachment-upload source comparisons for the current list-write gate.
+  Execute unchanged `mayWriteInCardList` and `listException` bodies with the
+  actual pure list-role helper. Keep native no-exception fixtures explicit and
+  assert source list-refusal behavior independently. All 140 focused HTTP
+  comparisons pass; native list exceptions remain pending. Thanks to xet7.
+
 - Keep another board administrator in the live people-role fixture before
   demoting the owner. Preserve the production last-administrator guard while
   testing live owner demotion and membership revocation. Focused source and

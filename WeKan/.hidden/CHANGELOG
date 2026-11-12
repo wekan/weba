@@ -1,4 +1,8 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Upload source adapter: Execute the current list-write gate and actual role
+  helper, with explicit native no-exception fixtures and source-only refusal
+  negatives. All 140 focused real HTTP comparisons pass.
+
 - People-role browser fixture: Retain a second administrator before owner
   demotion; preserve the last-admin guard and live revocation assertions.
   Focused source and packaged browser checks pass.
