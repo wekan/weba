@@ -26,6 +26,8 @@ Public Sub Main()
   Dim linearBatch As Collection
   Dim tickTickBatch As Collection
   Dim clickUpBatch As Collection
+  Dim teamworkBatch As Collection
+  Dim teamworkData As Collection
   Dim wrikeBatch As Collection
   Dim wrikeData As Collection
   Dim workflowBatch As Collection
@@ -588,6 +590,15 @@ Public Sub Main()
   If InStr(files[0]["content"], "Ignored archived card") Or InStr(files[0]["content"], "Planner archived canary") Then Error.Raise("Wrike workbook exported archived content")
   wrikeData = JSON.Decode(files[1]["content"])
   If wrikeData["board"]["title"] <> "Export Bravo" Or wrikeData["items"].Count <> 1 Or wrikeData["items"][0]["title"] <> "Bravo card" Then Error.Raise("Wrike workbook board isolation drifted")
+  teamworkBatch = BoardBatchExport.NewBatch(selection, "teamwork")
+  BoardBatchExport.Run(teamworkBatch, selection)
+  files = BoardBatchExport.Files(teamworkBatch)
+  If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".xlsx" Or BoardBatchExport.Format(teamworkBatch) <> "teamwork" Then Error.Raise("Teamwork format or batch order drifted")
+  teamworkData = JSON.Decode(files[0]["content"])
+  If teamworkData["format"] <> "teamwork" Or teamworkData["board"]["title"] <> "Export Alpha" Then Error.Raise("Teamwork snapshot metadata drifted")
+  If InStr(files[0]["content"], "Ignored archived card") Or InStr(files[0]["content"], "Planner archived canary") Then Error.Raise("Teamwork exported archived content")
+  teamworkData = JSON.Decode(files[1]["content"])
+  If teamworkData["board"]["title"] <> "Export Bravo" Or teamworkData["items"].Count <> 1 Or teamworkData["items"][0]["title"] <> "Bravo card" Then Error.Raise("Teamwork board isolation drifted")
   batch = BoardBatchExport.NewBatch(selection)
   batch["busy"] = True
   Try BoardBatchExport.Run(batch, selection)

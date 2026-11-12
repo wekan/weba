@@ -2,6 +2,20 @@
 
 This work adds the following features and fixes:
 
+- Add Teamwork XLSX as the twenty-eighth selected-board tool export.
+  Download `wekan-boards-teamwork.zip` with real ten-column workbooks matching
+  source same-list subtask hierarchy, title-prefix cleanup, people/priority,
+  estimates/completion, tags and date cells. Preserve source worksheet-name
+  sanitization/UTF-16 truncation, bold headers and date-column styles. Guard
+  invalid/protected names and the 20,000-row bound before consuming pending
+  work; native name/row/numeric repair and assigned-only count privacy pass.
+  Ignore source-unused WIP metadata. Rich native/source workbook readback,
+  hierarchy/cycle/date/year/name/estimate boundary tests, six original contracts
+  and all 33 source/packaged browser downloads pass. Complete host tests pass,
+  including 69 Python tests and 56 archive/scope snapshots. Native metadata
+  adapters, remaining formats and complete original UI/API/security parity
+  stay pending. Thanks to xet7.
+
 - Add Wrike XLSX as the twenty-seventh selected-board tool export. Download
   `wekan-boards-wrike.zip` with real Tasks workbooks matching source fixed/extra
   typed columns, lane folders/default ordering, keys/parent links, people,

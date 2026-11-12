@@ -1821,3 +1821,34 @@ columns, literal formulas, strict malformed inputs and actual ZIP-contained XLSX
 Monday/Businessmap/workflow tests verify shared-writer/mapper compatibility.
 Source/packaged Chromium compare actual ordered two-board workbook downloads
 with the parent writer. Complete original Meteor UI/API/security parity is open.
+
+Teamwork selected workbook export
+
+Teamwork produces `wekan-boards-teamwork.zip` with one actual `board-ID.xlsx`
+per selected board. Match the source ten-column task template, same-list nested
+subtasks with dash prefixes, cross-list roots/cycle fallback, title-prefix
+cleanup, people, priorities, estimated hours-to-time text, completion, labels
+and UTC date cells. The worksheet keeps the source name sanitization and UTF-16
+truncation; native prechecks reject protected History/apostrophe names before
+pending work completes. Date columns retain yyyy-mm-dd formatting on headers,
+empty cells and dates. Native SQL preflight checks the 20,000-row bound before
+collection, behind full-board authorization; row/name/numeric failures can be
+repaired and retried. As in Wrike, unused WIP metadata is ignored. The source
+template omits swimlanes, other custom fields, comments/checklists and attachment
+content. Native card IDs/parent relations and absent due-completion flags remain
+explicit adapters; Complete custom fields and end dates supply completion.
+Remaining native model and original transport work stays TODO.
+
+`TeamworkExportTest`/`TeamworkCasesTest` compare native snapshots after rendering
+with unchanged `formatTeamworkSheet` and actual source workbook readback. Cover
+ten columns, same-list nesting, cross-list roots and cycles, title prefixes,
+people, numeric hours/completion, dates, legacy layouts and archive/scope gates.
+Native `TeamworkBoundaryTest` seeds 20,000 cards, confirms count privacy for an
+assigned-only user, verifies pending-only row repair, and tests sanitized
+History/apostrophe/UTF-16-boundary names plus name repair. The renderer matrix
+checks source date/year/name/estimate behavior, real date cells and formats,
+literal formula text, hierarchy and malformed descriptors with nested XLSX.
+The saved-board-title expectation reflects the native API's trimming; raw name
+edge cases are covered separately. Shared-writer Wrike tests remain green.
+Source/packaged browser tests compare actual ordered workbook downloads with
+the parent writer. Full original Meteor UI/API/security parity remains open.

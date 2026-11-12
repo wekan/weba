@@ -1548,6 +1548,9 @@
             { ExportSelectedWrike WebButton
               Text = "Wrike XLSX"
             }
+            { ExportSelectedTeamwork WebButton
+              Text = "Teamwork XLSX"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton

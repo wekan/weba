@@ -1,0 +1,47 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim selection As Collection
+  Dim batch As Collection
+  Dim denied As Boolean
+  Dim message As String
+  Dim title As String
+  WebDatabase.Register("teamwork-bound-owner", "x")
+  WebDatabase.Register("teamwork-bound-assigned", "x")
+  Session["username"] = "teamwork-bound-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("teamwork-bound-owner")
+  boardId = KanbanStore.AddBoard("Teamwork row bound")
+  WebDatabase.OpenConnection().Exec("WITH RECURSIVE n(x) AS (SELECT 1 UNION ALL SELECT x+1 FROM n WHERE x<20000) INSERT INTO kb_cards(board_id,title,lane,status,archived) SELECT &1,'Bound card','Default','Todo',0 FROM n", boardId)
+  BoardAccess.SetMember(boardId, "teamwork-bound-assigned", "normal-assigned-only")
+  Session["username"] = "teamwork-bound-assigned"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("teamwork-bound-assigned")
+  Try BoardTransfer.ExportActiveBoardTeamwork(boardId)
+  denied = Error
+  message = Error.Text
+  If Not denied Or InStr(message, "20000") Then Error.Raise("Teamwork row count leaked before scope checks")
+  Session["username"] = "teamwork-bound-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("teamwork-bound-owner")
+  selection = BoardSelection.NewState()
+  BoardSelection.SetActive(selection, True)
+  BoardSelection.AddVisible(selection, [boardId])
+  batch = BoardBatchExport.NewBatch(selection, "teamwork")
+  Try BoardBatchExport.Run(batch, selection)
+  denied = Error
+  message = Error.Text
+  If Not denied Or InStr(message, "20000 rows") = 0 Or BoardBatchExport.Completed(batch) Or BoardBatchExport.Remaining(batch) <> 1 Then Error.Raise("Teamwork row-bound failure consumed pending work")
+  WebDatabase.OpenConnection().Exec("DELETE FROM kb_cards WHERE board_id=&1", boardId)
+  KanbanStore.Lanes(boardId)
+  KanbanStore.SaveCard(boardId, 0, "Repaired board", "", "Default", "Todo", "", "", "")
+  BoardBatchExport.Run(batch, selection)
+  If BoardBatchExport.Completed(batch) <> 1 Then Error.Raise("Teamwork row repair failed")
+  For Each title In ["History", " History/ ", "'invalid", " invalid' ", "123456789012345678901234567890'after"]
+    WebDatabase.OpenConnection().Exec("UPDATE kb_boards SET title=&1 WHERE id=&2", title, boardId)
+    batch = BoardBatchExport.NewBatch(selection, "teamwork")
+    Try BoardBatchExport.Run(batch, selection)
+    denied = Error
+    If Not denied Or BoardBatchExport.Completed(batch) Or BoardBatchExport.Remaining(batch) <> 1 Then Error.Raise("Teamwork invalid sheet name consumed pending work")
+    WebDatabase.OpenConnection().Exec("UPDATE kb_boards SET title=&1 WHERE id=&2", "Repaired name", boardId)
+    BoardBatchExport.Run(batch, selection)
+    If BoardBatchExport.Completed(batch) <> 1 Then Error.Raise("Teamwork name repair failed")
+  Next
+  Print "Teamwork row/name bounds and repair passed"
+End

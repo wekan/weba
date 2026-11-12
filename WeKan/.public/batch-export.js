@@ -40,7 +40,7 @@
       if(entry.name.endsWith('.xlsx')){
         if(typeof entry.content!=='string')throw new Error('Invalid board export');
         let descriptor;try{descriptor=JSON.parse(entry.content);}catch{throw new Error('Invalid board export');}
-        normalized.push({name:entry.name,bytes:descriptor&&descriptor.format==='wrike'?wrikeWorkbook(descriptor):descriptor&&descriptor.format==='businessmap'?businessmapWorkbook(descriptor):descriptor&&descriptor.format==='monday'?mondayWorkbook(descriptor):plannerWorkbook(descriptor)});continue;
+        normalized.push({name:entry.name,bytes:descriptor&&descriptor.format==='teamwork'?teamworkWorkbook(descriptor):descriptor&&descriptor.format==='wrike'?wrikeWorkbook(descriptor):descriptor&&descriptor.format==='businessmap'?businessmapWorkbook(descriptor):descriptor&&descriptor.format==='monday'?mondayWorkbook(descriptor):plannerWorkbook(descriptor)});continue;
       }
       let content=entry.content==null&&entry.name.endsWith('.txt')?'':entry.content;
       if(entry.format!==undefined){
@@ -334,15 +334,15 @@ function formatBusinessmapSheets({ board, items }) {
     const dateText=value=>typeof value==='string'&&(!value||/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(value)&&Number.isFinite(Date.parse(value))&&new Date(value).toISOString()===value);
     const canonical=value=>typeof value==='string'&&/^[1-9][0-9]*$/.test(value);
     return function(data,format){
-      if(!['taiga','vikunja','wrike'].includes(format))throw new Error('Invalid board export');
-      if(!exact(data,'board,format,items,lists,now,swimlanes')||data.format!==format||!dateText(data.now)||!data.now||!exact(data.board,'description,title')||typeof data.board.title!=='string'||typeof data.board.description!=='string'||!Array.isArray(data.items)||data.items.length>(format==='vikunja'?20000:format==='wrike'?65000:50000)||!Array.isArray(data.lists)||!Array.isArray(data.swimlanes))throw new Error('Invalid board export');
+      if(!['taiga','vikunja','wrike','teamwork'].includes(format))throw new Error('Invalid board export');
+      if(!exact(data,'board,format,items,lists,now,swimlanes')||data.format!==format||!dateText(data.now)||!data.now||!exact(data.board,'description,title')||typeof data.board.title!=='string'||typeof data.board.description!=='string'||!Array.isArray(data.items)||data.items.length>(['vikunja','teamwork'].includes(format)?20000:format==='wrike'?65000:50000)||!Array.isArray(data.lists)||!Array.isArray(data.swimlanes))throw new Error('Invalid board export');
       const listIds=new Set(),cardIds=new Set();
       for(const item of data.lists){
         if(!exact(item,'_id,color,title,wipLimit')||!canonical(item._id)||listIds.has(item._id)||typeof item.color!=='string'||typeof item.title!=='string'||!exact(item.wipLimit,'enabled,value')||typeof item.wipLimit.enabled!=='boolean'||typeof item.wipLimit.value!=='number'||!Number.isFinite(item.wipLimit.value)||item.wipLimit.value<0)throw new Error('Invalid board export');listIds.add(item._id);
       }
       for(const lane of data.swimlanes)if(!exact(lane,'title')||typeof lane.title!=='string')throw new Error('Invalid board export');
       const items=data.items.map(item=>{
-        if(!exact(item,(['vikunja','wrike'].includes(format)?'assignees,cardId,checklists,color,comments,creator,customFields,description,dueAt,endAt,labels,listId,listTitle,owner,parentCardId,startAt,swimlaneTitle,title':'assignees,cardId,checklists,color,comments,creator,customFields,description,dueAt,endAt,labels,listId,listTitle,owner,parentCardId,swimlaneTitle,title'))||!['cardId','title','description','listId','listTitle','swimlaneTitle','color','creator','owner','parentCardId'].every(key=>typeof item[key]==='string')||!canonical(item.cardId)||cardIds.has(item.cardId)||item.listId&&!canonical(item.listId)||item.parentCardId&&!canonical(item.parentCardId)||!dateText(item.dueAt)||!dateText(item.endAt)||['vikunja','wrike'].includes(format)&&!dateText(item.startAt)||!textArray(item.assignees)||!textArray(item.labels)||!Array.isArray(item.comments)||!Array.isArray(item.checklists)||!item.customFields||typeof item.customFields!=='object'||Array.isArray(item.customFields))throw new Error('Invalid board export');cardIds.add(item.cardId);
+        if(!exact(item,(['vikunja','wrike','teamwork'].includes(format)?'assignees,cardId,checklists,color,comments,creator,customFields,description,dueAt,endAt,labels,listId,listTitle,owner,parentCardId,startAt,swimlaneTitle,title':'assignees,cardId,checklists,color,comments,creator,customFields,description,dueAt,endAt,labels,listId,listTitle,owner,parentCardId,swimlaneTitle,title'))||!['cardId','title','description','listId','listTitle','swimlaneTitle','color','creator','owner','parentCardId'].every(key=>typeof item[key]==='string')||!canonical(item.cardId)||cardIds.has(item.cardId)||item.listId&&!canonical(item.listId)||item.parentCardId&&!canonical(item.parentCardId)||!dateText(item.dueAt)||!dateText(item.endAt)||['vikunja','wrike','teamwork'].includes(format)&&!dateText(item.startAt)||!textArray(item.assignees)||!textArray(item.labels)||!Array.isArray(item.comments)||!Array.isArray(item.checklists)||!item.customFields||typeof item.customFields!=='object'||Array.isArray(item.customFields))throw new Error('Invalid board export');cardIds.add(item.cardId);
         for(const comment of item.comments)if(!exact(comment,'author,date,text')||typeof comment.author!=='string'||typeof comment.text!=='string'||!dateText(comment.date))throw new Error('Invalid board export');
         for(const checklist of item.checklists)if(!exact(checklist,'items,title')||typeof checklist.title!=='string'||!Array.isArray(checklist.items)||!checklist.items.every(entry=>exact(entry,'done,title')&&typeof entry.title==='string'&&typeof entry.done==='boolean'))throw new Error('Invalid board export');
         const customFields=Object.create(null);
@@ -1376,6 +1376,95 @@ function formatWrikeRows({ board, items, lists, workflowRules }) {
     return typedWorkbook({name:result.sheet,rows,dateColumns});
   }
 
+
+  const teamworkData=(()=>{
+const TEAMWORK_COLUMNS = ['Tasklist', 'Task', 'Description', 'Assign to', 'Start date', 'Due date',
+  'Priority', 'Estimated time', 'Tags', 'Status'];
+const TEAMWORK_PRIORITY = ['low', 'medium', 'high'];
+const TEAMWORK_STATUS = ['Active', 'Complete'];
+const ESTIMATE_FIELD = 'Estimated time (hours)';
+const MAX_TEAMWORK_ROWS = 20000;
+const DEFAULT_LIST = 'Tasks';
+function teamworkEstimateText(minutes) {
+  const total = Math.round(Number(minutes));
+  if (!Number.isFinite(total) || total <= 0) return '';
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+}
+
+const day = value => {
+  if (!value) return '';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? '' : new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+};
+
+// The template's rows for a collected board (models/lib/externalExporters.js);
+// server/lib/teamworkWorkbook.js writes them. Dates are date cells, which
+// Excel shows in the reader's own format. A subtask follows its parent with
+// one "-" per level, when both are in the same list (a Teamwork subtask is in
+// its parent's task list); a title's own leading -, # or > would read as a
+// subtask prefix, and the template has no escape for it, so it is dropped.
+// The template has ten fixed columns: swimlanes, other custom fields,
+// checklists, comments and attachments have no place in it.
+function formatTeamworkSheet({ board, items }) {
+  const all = Array.isArray(items) ? items : [];
+  const byId = new Map(all.map(item => [item.cardId, item]));
+  const parentOf = item => {
+    const parent = item.parentCardId && byId.get(item.parentCardId);
+    return parent && parent !== item && parent.listTitle === item.listTitle ? parent : null;
+  };
+  const children = new Map();
+  const roots = [];
+  for (const item of all) {
+    const parent = parentOf(item);
+    if (parent) {
+      if (!children.has(parent.cardId)) children.set(parent.cardId, []);
+      children.get(parent.cardId).push(item);
+    } else roots.push(item);
+  }
+  const rows = [TEAMWORK_COLUMNS];
+  const seen = new Set();
+  const write = (item, depth) => {
+    if (seen.has(item)) return;
+    seen.add(item);
+    const fields = item.customFields || {};
+    const people = [item.owner, ...(Array.isArray(item.assignees) ? item.assignees : [])].filter(Boolean);
+    const priority = String(fields.Priority || '').toLowerCase();
+    const complete = fields.Complete === true || item.dueComplete === true || Boolean(item.endAt);
+    const title = String(item.title || '').replace(/^[-#>\s]+/, '').trim() || 'Untitled';
+    const values = {
+      Tasklist: item.listTitle || DEFAULT_LIST,
+      Task: `${'-'.repeat(depth)}${title}`,
+      Description: item.description || '',
+      'Assign to': people.join(', '),
+      'Start date': day(item.startAt),
+      'Due date': day(item.dueAt),
+      Priority: TEAMWORK_PRIORITY.includes(priority) ? priority : '',
+      'Estimated time': teamworkEstimateText(Number(fields[ESTIMATE_FIELD]) * 60),
+      Tags: (Array.isArray(item.labels) ? item.labels : []).map(tag => String(tag).replace(/,/g, ' ').trim()).filter(Boolean).join(', '),
+      Status: complete ? 'Complete' : 'Active',
+    };
+    rows.push(TEAMWORK_COLUMNS.map(name => values[name]));
+    for (const child of children.get(item.cardId) || []) write(child, depth + 1);
+  };
+  roots.forEach(item => write(item, 0));
+  // A parent loop leaves cards no root reaches: they are written as tasks.
+  all.forEach(item => write(item, 0));
+  return { name: String((board && board.title) || 'Tasks'), rows };
+}
+
+    return data=>{
+      const result=formatTeamworkSheet(nativeSnapshot(data,'teamwork'));
+      if(result.rows.length>20000)throw new Error('Invalid board export');
+      return result;
+    };
+  })();
+  function teamworkWorkbook(data){
+    const result=teamworkData(data),name=String(result.name||'Tasks').replace(/[\\/?*\[\]:]/g,' ').trim().slice(0,31)||'Tasks';
+    if(name==='History'||name.startsWith("'")||name.endsWith("'"))throw new Error('Invalid board export');
+    return typedWorkbook({name,rows:result.rows,dateColumns:[4,5]});
+  }
+
   function workbook(entries){
     if(!Array.isArray(entries)||!entries.length||entries.length>1000)throw new Error('Invalid board export');
     const descriptors=entries.map(entry=>{
@@ -1401,7 +1490,7 @@ function formatWrikeRows({ board, items, lists, workflowRules }) {
     return stored(files);
   }
   function downloadPayload(encoded,filename='wekan-boards-weba.zip'){
-    if(!/^wekan-boards-(weba|csv|scsv|tsv|kanboard|markdown|leo|opml|orgmode|todotxt|taskwarrior|focalboard|todoist|planner|meistertask|obsidian|linear|ticktick|clickup|nullboard|kanri|pivotal|redmine|tasksorg|monday|businessmap|superproductivity|taiga|vikunja|wrikeworkflow|wrike)\.zip$/.test(filename))throw new Error('Invalid board export');
+    if(!/^wekan-boards-(weba|csv|scsv|tsv|kanboard|markdown|leo|opml|orgmode|todotxt|taskwarrior|focalboard|todoist|planner|meistertask|obsidian|linear|ticktick|clickup|nullboard|kanri|pivotal|redmine|tasksorg|monday|businessmap|superproductivity|taiga|vikunja|wrikeworkflow|wrike|teamwork)\.zip$/.test(filename))throw new Error('Invalid board export');
     const url=URL.createObjectURL(new Blob([archive(payload(encoded))],{type:'application/zip'})),link=document.createElement('a');
     link.href=url;link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
@@ -1409,5 +1498,5 @@ function formatWrikeRows({ board, items, lists, workflowRules }) {
     const url=URL.createObjectURL(new Blob([workbook(payload(encoded))],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})),link=document.createElement('a');
     link.href=url;link.download='wekan-boards.xlsx';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
-  window.webaBatchExport={archive,workbook,plannerWorkbook,mondayWorkbook,mondayData,businessmapWorkbook,businessmapData,taigaData,vikunjaData,vikunjaFiles,vikunjaArchive,wrikeWorkflowData,wrikeData,wrikeWorkbook,uniqueSheetNames,downloadPayload,downloadWorkbook};
+  window.webaBatchExport={archive,workbook,plannerWorkbook,mondayWorkbook,mondayData,businessmapWorkbook,businessmapData,taigaData,vikunjaData,vikunjaFiles,vikunjaArchive,wrikeWorkflowData,wrikeData,wrikeWorkbook,teamworkData,teamworkWorkbook,uniqueSheetNames,downloadPayload,downloadWorkbook};
 })();

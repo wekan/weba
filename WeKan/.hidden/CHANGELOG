@@ -1,4 +1,10 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Teamwork selected export: Add source-matching ten-column XLSX ZIPs with
+  same-list hierarchy, title-prefix cleanup, people/priority/estimates/status,
+  tags and date cells/styles. Verify rich source workbook readback, names and
+  row preflight with pending repair, irrelevant WIP independence and browser
+  downloads. Complete original UI/API/security parity remains pending.
+
 - Wrike XLSX selected export: Add source-matching Tasks workbooks with folders,
   keys/parent references, typed fields, shared workflow/status names and real
   date cells/styles. Verify rich actual workbook readback, dates/empty styles,

@@ -1,4 +1,4 @@
-' Scoped native snapshot shared by Taiga, Vikunja and Wrike renderers.
+' Scoped native snapshots shared by validated external format renderers.
 Export
 Private $db As Connection
 Private $boardId As Integer
@@ -101,7 +101,7 @@ Public Function Build(boardId As Integer, db As Connection, format As String) As
   Dim limit As Float
   Dim folderNames As New Collection
   Dim laneName As String
-  If format <> "taiga" And format <> "vikunja" And format <> "wrike" Then Error.Raise("Unknown snapshot export format")
+  If format <> "taiga" And format <> "vikunja" And format <> "wrike" And format <> "teamwork" Then Error.Raise("Unknown snapshot export format")
   $db = db
   $boardId = boardId
   BoardAccess.RequireContainer(boardId, "board", boardId)
@@ -110,6 +110,10 @@ Public Function Build(boardId As Integer, db As Connection, format As String) As
   If format = "wrike" Then
     entries = db.Exec("SELECT COUNT(*) AS total,COUNT(DISTINCT CASE WHEN c.lane IS NOT NULL AND c.lane<>&2 AND c.lane<>&3 THEN c.lane END) AS folders FROM kb_cards c WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&4", boardId, "", "Default", False)
     If CLong(entries!total) + CLong(entries!folders) + 1 > 65000 Then Error.Raise("Wrike export exceeds 65000 rows")
+  Endif
+  If format = "teamwork" Then
+    entries = db.Exec("SELECT COUNT(*) AS total FROM kb_cards c WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&2", boardId, False)
+    If CLong(entries!total) + 1 > 20000 Then Error.Raise("Teamwork export exceeds 20000 rows")
   Endif
   metadata.Add(TextValue(board!title), "title")
   metadata.Add(WorkspaceStore.Setting(boardId, "board", boardId, "description"), "description")
@@ -120,7 +124,7 @@ Public Function Build(boardId As Integer, db As Connection, format As String) As
     item.Add(TextValue(rows!title), "title")
     item.Add(WorkspaceStore.Setting(boardId, "list", rows!id, "color"), "color")
     limit = 0
-    If format <> "wrike" Then
+    If format = "taiga" Or format = "vikunja" Then
       wip = WorkspaceStore.Setting(boardId, "list", rows!id, "wip", "0")
       If Not ExportNumber.ParseFinite(wip, ByRef limit) Then Error.Raise("Invalid list WIP export value")
       If limit < 0 Then Error.Raise("Invalid list WIP export value")
@@ -175,7 +179,7 @@ Public Function Build(boardId As Integer, db As Connection, format As String) As
         item.Add("", key)
       Endif
     Next
-    If format = "vikunja" Or format = "wrike" Then
+    If format = "vikunja" Or format = "wrike" Or format = "teamwork" Then
       If dates.Exist("startAt") Then
         item.Add(CardDates.Iso(dates["startAt"]), "startAt")
       Else
