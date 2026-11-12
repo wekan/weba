@@ -624,7 +624,12 @@ Public Function CardListId(boardId As Integer, cardId As Integer) As Integer
   Return ResolveCardList(boardId, cardId)
 End
 
-Private Function ResolveCardList(boardId As Integer, cardId As Integer) As Integer
+Public Function ReadCardListId(boardId As Integer, cardId As Integer) As Integer
+  BoardAccess.RequireCard(boardId, cardId)
+  Return ResolveCardList(boardId, cardId, False)
+End
+
+Private Function ResolveCardList(boardId As Integer, cardId As Integer, Optional persist As Boolean = True) As Integer
   Dim r As Result
   Dim c As Result
   Dim laneTitle As String
@@ -636,7 +641,7 @@ Private Function ResolveCardList(boardId As Integer, cardId As Integer) As Integ
   laneTitle = If(Trim(c!lane), c!lane, "Default")
   r = $db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND lane = &2 AND title = &3 ORDER BY sort_order, id", boardId, laneTitle, c!status)
   If Not r.Available Then Return 0
-  PutCardList(boardId, cardId, r!id)
+  If persist Then PutCardList(boardId, cardId, r!id)
   Return r!id
 End
 

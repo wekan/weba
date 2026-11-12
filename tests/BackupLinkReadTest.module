@@ -1,0 +1,79 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim listId As Integer
+  Dim target As Integer
+  Dim db As Connection
+  Dim rows As Result
+  Dim data As Collection
+  Dim card As Collection
+  Dim archivedId As Integer
+  Dim laneId As Integer
+  Dim mode As String
+  Dim itemId As Integer
+  Dim denied As Boolean
+  Dim actor As String
+  Dim text As String
+  Dim before As Integer
+  WebDatabase.Register("backup-link-owner", "x")
+  WebDatabase.Register("backup-link-reader", "x")
+  SignIn("backup-link-owner")
+  boardId = KanbanStore.AddBoard("Legacy backup link")
+  rows = KanbanStore.Lanes(boardId)
+  laneId = rows!id
+  rows = KanbanStore.Lists(boardId, "Default")
+  listId = rows!id
+  cardId = KanbanStore.SaveCard(boardId, 0, "Legacy card", "Keep body", "Default", "Todo", "", "", "", listId)
+  archivedId = KanbanStore.SaveCard(boardId, 0, "Archived legacy card", "Keep retained body", "Default", "Todo", "", "", "", listId)
+  KanbanStore.ArchiveCard(boardId, archivedId, True)
+  BoardAccess.SetMember(boardId, "backup-link-reader", "read-only")
+  db = WebDatabase.OpenConnection()
+  db.Exec("DELETE FROM kb_card_lists WHERE board_id=&1", boardId)
+  db.Exec("CREATE TEMP TRIGGER backup_link_read_guard BEFORE INSERT ON kb_card_lists WHEN NEW.board_id=" & CStr(boardId) & " BEGIN SELECT RAISE(ABORT,'backup link read write'); END")
+  before = db.Exec("SELECT COUNT(*) AS total FROM kb_history")!total
+  For Each actor In ["backup-link-owner", "backup-link-reader"]
+    SignIn(actor)
+    For Each mode In ["board", "lane", "list", "card"]
+      itemId = boardId
+      If mode = "lane" Then itemId = laneId
+      If mode = "list" Then itemId = listId
+      If mode = "card" Then itemId = cardId
+      text = BoardTransfer.ExportData(boardId, mode, itemId)
+      data = BoardTransfer.ReadData(text)
+      If data["cards"].Count <> If(mode = "card", 1, 2) Then Error.Raise("Backup lost active or retained legacy cards")
+      For Each card In data["cards"]
+        If card["list_id"] <> listId Then Error.Raise("Read-only backup lost legacy list resolution")
+      Next
+      rows = db.Find("kb_card_lists", "board_id=&1", boardId)
+      If rows.Available Then Error.Raise("Backup read persisted a missing card/list link")
+      If db.Exec("SELECT COUNT(*) AS total FROM kb_history")!total <> before Then Error.Raise("Backup read changed history")
+      target = BoardTransfer.ImportData(text, "Read-only legacy round trip")
+      rows = db.Find("kb_cards", "board_id=&1", target)
+      If rows.Count <> If(mode = "card", 1, 2) Then Error.Raise("Legacy backup import lost cards")
+      rows = db.Find("kb_card_lists", "board_id=&1", target)
+      If rows.Count <> If(mode = "card", 1, 2) Then Error.Raise("Legacy backup import did not create target links")
+      before = db.Exec("SELECT COUNT(*) AS total FROM kb_history")!total
+    Next
+  Next
+  db.Exec("DROP TRIGGER backup_link_read_guard")
+  SignIn("backup-link-owner")
+  If KanbanStore.ReadCardListId(boardId, cardId) <> listId Then Error.Raise("Read-only list lookup failed")
+  If db.Find("kb_card_lists", "board_id=&1", boardId).Available Then Error.Raise("Pure list lookup wrote a link")
+  If KanbanStore.CardListId(boardId, cardId) <> listId Then Error.Raise("Explicit legacy migration failed")
+  If Not db.Find("kb_card_lists", "board_id=&1 AND card_id=&2", boardId, cardId).Available Then Error.Raise("Explicit migration did not persist link")
+  Try KanbanStore.ReadCardListId(target, cardId)
+  denied = Error
+  If Not denied Then Error.Raise("Foreign card read resolved a list")
+  SignIn("backup-link-reader")
+  BoardAccess.OpenStore()
+  db.Exec("DELETE FROM kb_members WHERE board_id=&1 AND username=&2", boardId, "backup-link-reader")
+  Try BoardTransfer.ExportData(boardId, "board", boardId)
+  denied = Error
+  If Not denied Then Error.Raise("Revoked member exported backup")
+  Print "Native backup link reads: owner/readonly board/lane/list/card legacy active+archived resolution, guarded no-insert/import round trips, explicit migration and foreign/revoked denial passed"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

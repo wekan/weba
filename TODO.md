@@ -90,8 +90,13 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   with original-source API comparisons and text suffix coverage across all
   40 tool formats. Focalboard generic text/Boolean/number properties, canonical
   numeric output and strict private-marker handling are recorded in CHANGELOG.md.
-- Next data follow-up: audit generic native backup's legacy link priming on read
-  and separate any needed migration from export. Other DB driver conformance,
+- Completed native backup legacy card/list resolution without persisting missing
+  source links. Owner/readonly board/lane/list/card exports include retained cards
+  and import correctly under an insert-refusing source-link trigger. Explicit
+  write-side migration and foreign/revoked denials remain tested.
+- Next data follow-up: separate native backup's legacy lane/default-list
+  initialization from reads; its remaining Lanes() call can still create missing
+  containers. Other DB driver conformance, generic-backup full text fidelity,
   remaining field models/security reporting and full original suites stay open.
 
 - Next: remaining copy-option models/controls, selected-export API/model/

@@ -1,3 +1,8 @@
+Native backup link reads: resolve missing legacy card/list relationships without
+persisting source links; retain explicit migration and scoped authorization.
+Owner/readonly board/lane/list/card active/retained round trips pass under a
+source insert-refusing trigger. Lane/default-list read initialization remains open.
+
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
 - Export text fidelity: Share guarded SQLite binary/null projections and text
   readers across native renderers, preserving control/NUL text and grouped list

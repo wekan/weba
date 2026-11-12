@@ -2,6 +2,17 @@
 
 This work adds the following features and fixes:
 
+- Resolve native backup legacy card/list links in memory without saving missing
+  source links. Keep explicit write-side migration behavior and source-scoped
+  access checks. Reproduce the prior mutation, then verify owner/readonly
+  board/lane/list/card exports with active/archived cards while a trigger forbids
+  inserting source links; each backup imports into an independent valid target.
+  Check foreign-card/revoked-member denial and explicit migration. Full native
+  store/security/renderer tests and both source/packaged 45-download selected
+  browser plus cached revoke/regrant retry checks pass. Legacy
+  lane/default-list initialization, full generic-backup text fidelity and broader
+  original parity remain open. Thanks to xet7.
+
 - Preserve complete control/NUL text across native exports with shared guarded
   SQLite projections, explicit null flags, string/Blob readers and NUL-safe
   Unicode counts. Preserve original columns and other-driver SQL. Use hex text

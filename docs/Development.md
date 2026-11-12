@@ -2448,3 +2448,15 @@ NUL-invalid numeric fields fail without entry/history writes. Renderer tests als
 cover IEEE edge strings and malformed/forged references. Other DBs, backup migration,
 remaining native field/anonymization/security models, 27 API renderers and complete
 original UI/API/security parity remain open.
+
+Native backup legacy card/list reads use `KanbanStore.ReadCardListId`, retaining
+fresh card scope checks and deterministic live-list title/lane fallback without
+`PutCardList`. Normal `CardListId` and explicit priming retain their write-side
+migration behavior. `BackupLinkReadTest` first reproduces the prior source-link
+mutation, then guards the source board with an insert-refusing trigger during
+owner and readonly board/lane/list/card exports, including archived cards. Each
+export is imported into a separate target and checked for complete target links.
+Foreign card scope and revoked membership remain denied. This is a link migration
+fix: native backup still calls `Lanes`, whose missing-lane/default-list creation
+requires a separate read-boundary change; full native backup text preservation is
+also still pending.

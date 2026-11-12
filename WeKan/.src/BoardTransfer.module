@@ -350,7 +350,7 @@ Private Function BuildExport(boardId As Integer, kind As String, itemId As Integ
   source = WorkspaceStore.Record(boardId, kind, itemId)
   CardContent.OpenStore()
   $db = WebDatabase.OpenConnection()
-  KanbanStore.PrimeCardLinks(boardId)
+  r = KanbanStore.Lanes(boardId)
   data["format"] = "weba-2"
   data["kind"] = kind
   data["title"] = source!title
@@ -362,7 +362,7 @@ Private Function BuildExport(boardId As Integer, kind As String, itemId As Integ
   Endif
   r = BoardAccess.CardRows(boardId)
   For Each r
-    listId = KanbanStore.CardListId(boardId, r!id)
+    listId = KanbanStore.ReadCardListId(boardId, r!id)
     If kind = "card" And r!id <> itemId Then Continue
     If kind = "list" And listId <> itemId Then Continue
     If kind = "lane" And r!lane <> source!title And Not (source!title = "Default" And Not r!lane) Then Continue
