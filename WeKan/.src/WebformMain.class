@@ -5284,3 +5284,7 @@ End
 Public Sub ExportSelectedDeck_Click()
   RunSelectedExport("deck")
 End
+
+Public Sub ExportSelectedOpenProject_Click()
+  RunSelectedExport("openproject")
+End

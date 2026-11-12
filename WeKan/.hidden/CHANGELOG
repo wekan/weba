@@ -1,4 +1,9 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- OpenProject selected export: Add source HAL JSON ZIP with sequential work
+  package IDs, typed custom schemas, people/status/parent links, comments and
+  optional dates. Verify source/renderer boundaries, pending numeric repair
+  and full-read/policy gates. Native Scrum and full parity remain pending.
+
 - Nextcloud Deck selected export: Add source-shaped JSON ZIPs with stack-title
   matching, duplicate/empty lists, comments/people/labels and optional dates.
   Verify rich/legacy/empty/missing-list source comparisons and full-read/policy

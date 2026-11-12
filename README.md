@@ -3281,3 +3281,10 @@ stacks and cards, comments, repeated assignments, labels and optional due/done
 dates. Matching uses list titles, including duplicate and empty-title stacks.
 Archived cards stay excluded. Creator/creation metadata and complete original
 UI/API/security parity remain pending.
+
+Selected boards also support **OpenProject HAL JSON** in
+`wekan-boards-openproject.zip`. Each `board-ID.json` contains source-shaped
+work packages with sequential IDs, typed custom-field schemas, status and people
+links, parent links, comments and optional dates. Explicit format binding keeps
+native JSON exports unchanged. Native Scrum/creation/creator models and complete
+original UI/API/security parity remain pending.

@@ -1939,3 +1939,28 @@ export-policy denial and assigned-only full-read denial. The selected-export
 browser harness downloads ordered per-board JSON files through the real Deck
 button in both source and packaged applications. Complete original feature and
 security parity remains separate pending work.
+
+OpenProject selected export builds scoped native snapshots with
+`BoardOpenProjectExport` and renders explicitly marked `.json` entries through
+`openprojectData`. Its isolated source formatter retains numeric work-package
+IDs, ordered dynamic schema fields, typed values, HAL people/status/parent links,
+comments and optional dates. The strict snapshot validator rejects unexpected
+keys, types, invalid dates/numbers, duplicate IDs and path/format mismatches.
+Missing native due dates are omitted as in the source collector. Native empty
+custom text is skipped before assignment, so an empty duplicate does not erase
+an earlier field; primitive `__proto__` entries are ignored as the source object
+setter does. Empty numeric storage becomes explicit zero. Layout/color/checklist
+metadata is omitted where the formatter does not use it; no unrelated row cap
+is introduced. Existing other-format behavior remains separate.
+
+`OpenProjectExportTest` and `OpenProjectCasesTest` compare actual native snapshots
+through the renderer to unchanged `formatters.openproject`, covering rich typed
+fields, comments/people/date/parent links, empty/legacy/missing-list cases,
+archive exclusion, malformed-number pending repair, disabled exports and
+assigned-only denial. Renderer comparisons cover numeric extremes, prototype and
+integer-like field names, cyclic/missing parent links, literal comments, actual
+JSON ZIP contents, unmarked JSON preservation and 50,001 cards. The browser
+harness compares ordered two-board downloads with source output in source and
+packaged applications. Native numeric IDs, stored label/member models and absent
+creator/creation/Scrum data remain explicit adapters; complete original parity
+is pending.

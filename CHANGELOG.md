@@ -2,6 +2,20 @@
 
 This work adds the following features and fixes:
 
+- Add OpenProject HAL JSON as the thirty-second selected-board tool export.
+  Download `wekan-boards-openproject.zip` with source sequential work-package
+  IDs, ordered typed custom schemas, status/people/parent links, comments and
+  optional dates. Use explicitly bound, strictly validated scoped snapshots;
+  retain active/full-read/policy/session and cached-scope gates. Preserve source
+  empty-duplicate/custom-prototype behavior and numeric pending-repair; omit
+  unused layout/checklist metadata and unrelated 50,000-card limits. Rich,
+  empty/legacy/missing-list and renderer edge comparisons pass, including
+  50,001 cards and original round-trip contracts. Complete host tests pass,
+  including 69 Python tests and 64 archive/scope snapshots; all 37 source and
+  packaged browser downloads plus cached revocation/regrant pass. Native Scrum/creation/creator
+  models, eight remaining tool formats and full original UI/API/security parity
+  remain pending. Thanks to xet7.
+
 - Add Nextcloud Deck JSON as the thirty-first selected-board tool export.
   Download `wekan-boards-deck.zip` with source stack-title grouping, duplicate
   and empty-title behavior, literal card text/labels, due/completion dates,

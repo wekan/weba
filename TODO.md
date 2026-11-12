@@ -168,11 +168,13 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   column, reserved-name filtering and source-exact numeric/literal CSV values
   is recorded there; selected Nextcloud Deck JSON ZIP with source stack-title
   matching (including duplicate/empty titles), comments/people/labels/dates and
-  empty/legacy boards is recorded there;
+  empty/legacy boards is recorded there; selected OpenProject HAL JSON ZIP
+  with sequential IDs, typed custom schemas, people/comments/date/parent links
+  and empty/missing-list cases is recorded there;
   Cached selected-export publication now rechecks current actor/session, full
   board access and policy; revocation/regrant browser coverage is recorded in
   CHANGELOG.md. Complete original security parity remains pending.
-  Remaining source tool formats: openproject, github, gitea, forgejo,
+  Remaining source tool formats: github, gitea, forgejo,
   gitlab, trello, jira, asana and zenkit. Original API route, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded

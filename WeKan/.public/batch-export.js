@@ -31,7 +31,7 @@
     const normalized=[];
     for(const entry of entries){
       if(!entry||typeof entry.name!=='string'||!/^board-[1-9][0-9]*\.(json|jsonl|csv|tsv|md|leo|opml|org|txt|xlsx|nbx|zip)$/.test(entry.name))throw new Error('Invalid board export');
-      if(entry.format!==undefined&&!((['taiga','wrikeworkflow'].includes(entry.format)&&entry.name.endsWith('.json'))||(entry.format==='vikunja'&&entry.name.endsWith('.zip'))||(entry.format==='notion'&&entry.name.endsWith('.csv'))))throw new Error('Invalid board export');
+      if(entry.format!==undefined&&!((['taiga','wrikeworkflow','openproject'].includes(entry.format)&&entry.name.endsWith('.json'))||(entry.format==='vikunja'&&entry.name.endsWith('.zip'))||(entry.format==='notion'&&entry.name.endsWith('.csv'))))throw new Error('Invalid board export');
       if(entry.name.endsWith('.zip')){
         if(entry.format!=='vikunja'||typeof entry.content!=='string')throw new Error('Invalid board export');
         let descriptor;try{descriptor=JSON.parse(entry.content);}catch{throw new Error('Invalid board export');}
@@ -46,7 +46,7 @@
       if(entry.format!==undefined){
         if(typeof content!=='string')throw new Error('Invalid board export');
         let descriptor;try{descriptor=JSON.parse(content);}catch{throw new Error('Invalid board export');}
-        content=entry.format==='notion'?notionCsv(descriptor):JSON.stringify(entry.format==='wrikeworkflow'?wrikeWorkflowData(descriptor):taigaData(descriptor))+'\n';
+        content=entry.format==='notion'?notionCsv(descriptor):JSON.stringify(entry.format==='openproject'?openprojectData(descriptor):entry.format==='wrikeworkflow'?wrikeWorkflowData(descriptor):taigaData(descriptor))+'\n';
       }
       if(typeof content!=='string')throw new Error('Invalid board export');
       normalized.push({name:entry.name,content});
@@ -334,15 +334,15 @@ function formatBusinessmapSheets({ board, items }) {
     const dateText=value=>typeof value==='string'&&(!value||/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(value)&&Number.isFinite(Date.parse(value))&&new Date(value).toISOString()===value);
     const canonical=value=>typeof value==='string'&&/^[1-9][0-9]*$/.test(value);
     return function(data,format){
-      if(!['taiga','vikunja','wrike','teamwork','notion'].includes(format))throw new Error('Invalid board export');
-      if(!exact(data,'board,format,items,lists,now,swimlanes')||data.format!==format||!dateText(data.now)||!data.now||!exact(data.board,'description,title')||typeof data.board.title!=='string'||typeof data.board.description!=='string'||!Array.isArray(data.items)||data.items.length>(format==='notion'?Infinity:['vikunja','teamwork'].includes(format)?20000:format==='wrike'?65000:50000)||!Array.isArray(data.lists)||!Array.isArray(data.swimlanes))throw new Error('Invalid board export');
+      if(!['taiga','vikunja','wrike','teamwork','notion','openproject'].includes(format))throw new Error('Invalid board export');
+      if(!exact(data,'board,format,items,lists,now,swimlanes')||data.format!==format||!dateText(data.now)||!data.now||!exact(data.board,'description,title')||typeof data.board.title!=='string'||typeof data.board.description!=='string'||!Array.isArray(data.items)||data.items.length>(['notion','openproject'].includes(format)?Infinity:['vikunja','teamwork'].includes(format)?20000:format==='wrike'?65000:50000)||!Array.isArray(data.lists)||!Array.isArray(data.swimlanes))throw new Error('Invalid board export');
       const listIds=new Set(),cardIds=new Set();
       for(const item of data.lists){
         if(!exact(item,'_id,color,title,wipLimit')||!canonical(item._id)||listIds.has(item._id)||typeof item.color!=='string'||typeof item.title!=='string'||!exact(item.wipLimit,'enabled,value')||typeof item.wipLimit.enabled!=='boolean'||typeof item.wipLimit.value!=='number'||!Number.isFinite(item.wipLimit.value)||item.wipLimit.value<0)throw new Error('Invalid board export');listIds.add(item._id);
       }
       for(const lane of data.swimlanes)if(!exact(lane,'title')||typeof lane.title!=='string')throw new Error('Invalid board export');
       const items=data.items.map(item=>{
-        if(!exact(item,(['vikunja','wrike','teamwork','notion'].includes(format)?'assignees,cardId,checklists,color,comments,creator,customFields,description,dueAt,endAt,labels,listId,listTitle,owner,parentCardId,startAt,swimlaneTitle,title':'assignees,cardId,checklists,color,comments,creator,customFields,description,dueAt,endAt,labels,listId,listTitle,owner,parentCardId,swimlaneTitle,title'))||!['cardId','title','description','listId','listTitle','swimlaneTitle','color','creator','owner','parentCardId'].every(key=>typeof item[key]==='string')||!canonical(item.cardId)||cardIds.has(item.cardId)||item.listId&&!canonical(item.listId)||item.parentCardId&&!canonical(item.parentCardId)||!dateText(item.dueAt)||!dateText(item.endAt)||['vikunja','wrike','teamwork','notion'].includes(format)&&!dateText(item.startAt)||!textArray(item.assignees)||!textArray(item.labels)||!Array.isArray(item.comments)||!Array.isArray(item.checklists)||!item.customFields||typeof item.customFields!=='object'||Array.isArray(item.customFields))throw new Error('Invalid board export');cardIds.add(item.cardId);
+        if(!exact(item,(['vikunja','wrike','teamwork','notion','openproject'].includes(format)?'assignees,cardId,checklists,color,comments,creator,customFields,description,dueAt,endAt,labels,listId,listTitle,owner,parentCardId,startAt,swimlaneTitle,title':'assignees,cardId,checklists,color,comments,creator,customFields,description,dueAt,endAt,labels,listId,listTitle,owner,parentCardId,swimlaneTitle,title'))||!['cardId','title','description','listId','listTitle','swimlaneTitle','color','creator','owner','parentCardId'].every(key=>typeof item[key]==='string')||!canonical(item.cardId)||cardIds.has(item.cardId)||item.listId&&!canonical(item.listId)||item.parentCardId&&!canonical(item.parentCardId)||!dateText(item.dueAt)||!dateText(item.endAt)||['vikunja','wrike','teamwork','notion','openproject'].includes(format)&&!dateText(item.startAt)||!textArray(item.assignees)||!textArray(item.labels)||!Array.isArray(item.comments)||!Array.isArray(item.checklists)||!item.customFields||typeof item.customFields!=='object'||Array.isArray(item.customFields))throw new Error('Invalid board export');cardIds.add(item.cardId);
         for(const comment of item.comments)if(!exact(comment,'author,date,text')||typeof comment.author!=='string'||typeof comment.text!=='string'||!dateText(comment.date))throw new Error('Invalid board export');
         for(const checklist of item.checklists)if(!exact(checklist,'items,title')||typeof checklist.title!=='string'||!Array.isArray(checklist.items)||!checklist.items.every(entry=>exact(entry,'done,title')&&typeof entry.title==='string'&&typeof entry.done==='boolean'))throw new Error('Invalid board export');
         const customFields=Object.create(null);
@@ -1466,6 +1466,88 @@ function formatTeamworkSheet({ board, items }) {
   }
 
 
+
+  const openprojectData=(()=>{
+const has = value => value !== undefined && value !== null && value !== '';
+const list = value => (Array.isArray(value) ? value : []);
+const numericIds = items => new Map(items.map((item, index) => [item.cardId, index + 1]));
+
+// Sprints and releases, for the formats with a place for them (GitLab
+// iterations and milestones, OpenProject sprints and versions), numbered as
+// those APIs number theirs. What the importer reads back is
+// models/lib/externalScrumPlanning.js. A cancelled sprint or release has no
+// equivalent in either and is left out, with its cards unassigned.
+const day = value => (value ? new Date(value).toISOString().slice(0, 10) : undefined);
+function planningIndex({ scrumSprints, scrumReleases }) {
+  const numbered = rows => new Map(list(rows).filter(row => row && row.state !== 'cancelled')
+    .map((row, index) => [row._id, { ...row, number: index + 1 }]));
+  return { sprints: numbered(scrumSprints), releases: numbered(scrumReleases) };
+}
+const GITLAB_ITERATION_STATE = { planned: 1, active: 2, closed: 3 };
+const OPENPROJECT_SPRINT_STATUS = { planned: 'in_planning', active: 'active', closed: 'completed' };
+const OPENPROJECT_SPRINT_TITLE = { planned: 'In planning', active: 'Active', closed: 'Completed' };
+const sprintOf = (planning, item) => (item.scrum && planning.sprints.get(item.scrum.sprintId)) || null;
+const releaseOf = (planning, item) => (item.scrum && planning.releases.get(item.scrum.firstReleaseId)) || null;
+// Backlog rank as OpenProject's integer position: 1..n in rank order.
+function positions(items) {
+  const ranked = items.filter(i => i.scrum && typeof i.scrum.backlogRank === 'number')
+    .sort((a, b) => a.scrum.backlogRank - b.scrum.backlogRank);
+  return new Map(ranked.map((item, index) => [item.cardId, index + 1]));
+}
+
+
+const formatOpenProject=collected => {
+    const { items } = collected;
+    const ids = numericIds(items);
+    const planning = planningIndex(collected);
+    const ranks = positions(items);
+    const versions = [...planning.releases.values()].map(r => ({ _type: 'Version', id: r.number, name: r.name,
+      ...(has(r.notes) ? { description: { raw: r.notes } } : {}),
+      ...(r.plannedStart ? { startDate: day(r.plannedStart) } : {}), ...(r.plannedEnd ? { endDate: day(r.plannedEnd) } : {}),
+      status: r.state === 'released' ? 'closed' : 'open' }));
+    const sprints = [...planning.sprints.values()].map(sp => ({ _type: 'Sprint', id: sp.number, name: sp.name,
+      ...(has(sp.goal) ? { description: { raw: sp.goal } } : {}),
+      ...(sp.plannedStart ? { startDate: day(sp.plannedStart) } : {}), ...(sp.plannedEnd ? { finishDate: day(sp.plannedEnd) } : {}),
+      _links: { self: { href: `/api/v3/sprints/${sp.number}`, title: sp.name },
+        status: { href: `urn:openproject-org:api:v3:sprints:status:${OPENPROJECT_SPRINT_STATUS[sp.state] || 'in_planning'}`,
+          title: OPENPROJECT_SPRINT_TITLE[sp.state] || 'In planning' } } }));
+    const fieldNames = [...new Set(items.flatMap(i => Object.keys(i.customFields || {})))];
+    const fieldKey = name => `customField${fieldNames.indexOf(name) + 1}`;
+    return {
+      _embedded: {
+        ...(fieldNames.length ? { schemas: [Object.fromEntries(fieldNames.map(name => [fieldKey(name), { name }]))] } : {}),
+        ...(versions.length ? { versions } : {}),
+        ...(sprints.length ? { sprints } : {}),
+        elements: items.map(i => ({
+          id: ids.get(i.cardId),
+          subject: i.title,
+          description: { raw: i.description },
+          dueDate: i.dueAt,
+          ...(has(i.startAt) ? { startDate: i.startAt } : {}),
+          ...(has(i.createdAt) ? { createdAt: i.createdAt } : {}),
+          ...(ranks.has(i.cardId) ? { position: ranks.get(i.cardId) } : {}),
+          ...Object.fromEntries(Object.entries(i.customFields || {}).map(([name, value]) => [fieldKey(name), value])),
+          _links: {
+            status: { title: i.listTitle },
+            ...(releaseOf(planning, i) ? { version: { href: `/api/v3/versions/${releaseOf(planning, i).number}`,
+              title: releaseOf(planning, i).name } } : {}),
+            ...(sprintOf(planning, i) ? { sprint: { href: `/api/v3/sprints/${sprintOf(planning, i).number}`,
+              title: sprintOf(planning, i).name } } : {}),
+            ...(has(i.owner) ? { assignee: { title: i.owner } } : {}),
+            ...(list(i.assignees).length ? { responsible: { title: i.assignees[0] } } : {}),
+            ...(has(i.creator) ? { author: { title: i.creator } } : {}),
+            ...(ids.has(i.parentCardId) ? { parent: { href: `/api/v3/work_packages/${ids.get(i.parentCardId)}` } } : {}),
+          },
+          ...(list(i.comments).length ? { _embedded: { activities: i.comments.map(c => ({
+            _type: 'Activity::Comment', comment: { raw: c.text }, createdAt: c.date,
+            _links: { user: { title: c.author } } })) } } : {}),
+        })),
+      },
+    };
+  };
+return data=>{const normalized=nativeSnapshot(data,'openproject');for(const item of normalized.items){if(!item.dueAt)delete item.dueAt;}return formatOpenProject(normalized);};
+})();
+
   const notionCsv=(()=>{
     const NOTION_EXPORT_COLUMNS=['Name','Status','Assignee','Tags','Start','Due','Description'];
     const UNSAFE_NAMES=new Set(['__proto__','constructor','prototype']);
@@ -1554,7 +1636,7 @@ function formatNotionCsv({ items } = {}) {
     return stored(files);
   }
   function downloadPayload(encoded,filename='wekan-boards-weba.zip'){
-    if(!/^wekan-boards-(weba|csv|scsv|tsv|kanboard|markdown|leo|opml|orgmode|todotxt|taskwarrior|focalboard|todoist|planner|meistertask|obsidian|linear|ticktick|clickup|nullboard|kanri|pivotal|redmine|tasksorg|monday|businessmap|superproductivity|taiga|vikunja|wrikeworkflow|wrike|teamwork|quire|notion|deck)\.zip$/.test(filename))throw new Error('Invalid board export');
+    if(!/^wekan-boards-(weba|csv|scsv|tsv|kanboard|markdown|leo|opml|orgmode|todotxt|taskwarrior|focalboard|todoist|planner|meistertask|obsidian|linear|ticktick|clickup|nullboard|kanri|pivotal|redmine|tasksorg|monday|businessmap|superproductivity|taiga|vikunja|wrikeworkflow|wrike|teamwork|quire|notion|deck|openproject)\.zip$/.test(filename))throw new Error('Invalid board export');
     const url=URL.createObjectURL(new Blob([archive(payload(encoded))],{type:'application/zip'})),link=document.createElement('a');
     link.href=url;link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
@@ -1562,5 +1644,5 @@ function formatNotionCsv({ items } = {}) {
     const url=URL.createObjectURL(new Blob([workbook(payload(encoded))],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})),link=document.createElement('a');
     link.href=url;link.download='wekan-boards.xlsx';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
-  window.webaBatchExport={archive,workbook,plannerWorkbook,mondayWorkbook,mondayData,businessmapWorkbook,businessmapData,taigaData,vikunjaData,vikunjaFiles,vikunjaArchive,wrikeWorkflowData,wrikeData,wrikeWorkbook,teamworkData,teamworkWorkbook,notionCsv,uniqueSheetNames,downloadPayload,downloadWorkbook};
+  window.webaBatchExport={archive,workbook,plannerWorkbook,mondayWorkbook,mondayData,businessmapWorkbook,businessmapData,taigaData,vikunjaData,vikunjaFiles,vikunjaArchive,wrikeWorkflowData,wrikeData,wrikeWorkbook,teamworkData,teamworkWorkbook,notionCsv,openprojectData,uniqueSheetNames,downloadPayload,downloadWorkbook};
 })();

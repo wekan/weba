@@ -1554,6 +1554,9 @@
             { ExportSelectedQuire WebButton
               Text = "Quire CSV"
             }
+            { ExportSelectedOpenProject WebButton
+              Text = "OpenProject JSON"
+            }
             { ExportSelectedDeck WebButton
               Text = "Nextcloud Deck JSON"
             }
