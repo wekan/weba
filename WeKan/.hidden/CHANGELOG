@@ -1,4 +1,10 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Kanboard export API: Add source task JSON with independent field selection,
+  valid checklist parents, scoped public comments and native first participant.
+  Fix reciprocal link IDs and source traversal order; verify original-source
+  HTTP outputs and shared authorization/rollback boundaries. Native model and
+  full original parity remain pending.
+
 - Deck export API: Add source stack JSON with independently selected sections,
   duplicate/empty-title grouping, scoped public comments and legacy timestamp
   omission. Verify source collector/formatter and existing security boundaries;

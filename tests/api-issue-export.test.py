@@ -30,16 +30,32 @@ def main():
         for item,(card_id,list_id) in zip(items,active_cards):
             item['cardId']=str(card_id);item['listId']=str(list_id)
         source_lists=[{'_id':str(row[0]),'title':row[1]} for row in db.execute('SELECT id,title FROM kb_lists WHERE board_id=? ORDER BY lane,sort_order,id',(board,))]
+        source_swimlanes=[{'_id':row[0],'title':row[0]} for row in db.execute('SELECT title FROM kb_lanes WHERE board_id=? ORDER BY id',(board,))]
+        parent,child=(int(item['cardId']) for item in items)
+        checklist=db.execute("INSERT INTO kb_entries(board_id,card_id,kind,title) VALUES(?,?,'checklist','Literal checklist Ω')",(board,parent)).lastrowid
+        for title,done in [('Checked Ω',1),('Unchecked',0)]:
+            db.execute("INSERT INTO kb_entries(board_id,card_id,kind,parent_id,title,done) VALUES(?,?,'checkitem',?,?,?)",(board,parent,checklist,title,done))
+        db.execute("INSERT INTO kb_entries(board_id,card_id,kind,amount) VALUES(?,?,'subtask',?)",(board,parent,child))
+        for target,parent_id in [(parent,99999999),(child,checklist)]:
+            db.execute("INSERT INTO kb_entries(board_id,card_id,kind,parent_id,title,done) VALUES(?,?,'checkitem',?,'API_HIDDEN_ORPHAN_CHECK',0)",(board,target,parent_id))
+        # Reciprocal duplicates, self and missing targets must not duplicate links.
+        for origin,target in [(parent,child),(child,parent),(parent,parent),(parent,99999999)]:
+            db.execute("INSERT INTO kb_entries(board_id,card_id,kind,amount) VALUES(?,?,'dependency',?)",(board,origin,target))
+        db.commit()
+        items[0]['checklists']=[{'title':'Literal checklist Ω','items':[{'title':'Checked Ω','done':True},{'title':'Unchecked','done':False}]}]
+        items[1]['parentCardId']=str(parent)
+        items[0]['dependencies']=[{'cardId':str(target),'type':'relatesTo'} for target in [child,parent,99999999]]
+        items[1]['dependencies']=[{'cardId':str(parent),'type':'relatesTo'}]
         source_board={'title':'Attachment lifecycle board'}
         def snapshot():
             names=[row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table' AND (name LIKE 'kb_%' OR name IN ('api_tokens','import_export_settings','users'))")]
             return {name:sorted(db.execute('SELECT * FROM '+name).fetchall(),key=repr) for name in names}
-        for fmt in ['github','gitea','forgejo','gitlab','trello','deck']:
+        for fmt in ['github','gitea','forgejo','gitlab','trello','deck','kanboard']:
             url=f'/api/boards/{board}/export/{fmt}'
             status,data,headers=call(url,token=owner);assert status==200,(status,data)
             assert headers['Cache-Control']=='no-store' and headers['X-Content-Type-Options']=='nosniff'
             before=snapshot()
-            for fields in [None,'','unknown','labels','dates','description','people','labels,dates','labels,description','dates,description','labels,dates,description','\u00a0labels\ufeff, unknown','board-header','sort,scrum','Labels','comments','people,comments','dates,comments','description,people,comments','labels,dates,people,comments']:
+            for fields in [None,'','unknown','labels','dates','description','people','labels,dates','labels,description','dates,description','labels,dates,description','\u00a0labels\ufeff, unknown','board-header','sort,scrum','Labels','comments','people,comments','dates,comments','description,people,comments','labels,dates,people,comments','checklists','subtasks','dependencies','subtasks,dependencies','checklists,comments,people']:
                 query='' if fields is None else '?fields='+urllib.parse.quote(fields)
                 status,data=pair(url+query,token=reader);assert status==200,(status,data)
                 assert 'API_HIDDEN_' not in json.dumps(data) and 'API_ARCHIVED_' not in json.dumps(data)
@@ -124,6 +140,10 @@ def main():
             status,data=pair(url+suffix);assert status==200,(status,data)
             cases.append({'format':'github','fields':None,'items':items,'actual':data})
         assert pair(url,token=assigned)[0]==200
+        kanboard_url=f'/api/boards/{board}/export/kanboard'
+        for fields in [None,'comments','checklists','subtasks,dependencies']:
+            status,data=pair(kanboard_url+'?authToken=bad'+('' if fields is None else '&fields='+fields));assert status==200
+            cases.append({'format':'kanboard','fields':fields,'items':items,'actual':data})
         deck_url=f'/api/boards/{board}/export/deck'
         for fields in [None,'comments']:
             query='?authToken=bad'+('' if fields is None else '&fields='+fields)
@@ -152,10 +172,10 @@ def main():
         assert pair(url)==(500,{'error':'Board export failed'});assert snapshot()==before
         db.execute('ALTER TABLE kb_cards RENAME COLUMN opaque_export_canary TO labels');db.commit()
     for sample in cases:
-        sample.setdefault('board',source_board);sample.setdefault('lists',source_lists)
+        sample.setdefault('board',source_board);sample.setdefault('lists',source_lists);sample.setdefault('swimlanes',source_swimlanes)
     Path(os.environ['WEBA_TEST_PROJECT'],'issue-export-cases.json').write_text(json.dumps(cases))
     Path(os.environ['WEBA_TEST_PROJECT'],'issue-export-roles.json').write_text(json.dumps(role_cases))
-    print('Issue export HTTP: six source routes, public/private/query-bearer auth precedence, field selections, archive reads, no writes, assigned-only/global-admin denial, all 256 raw role sets, late member/token/policy/public rollback and opaque failure passed')
+    print('Issue export HTTP: seven source routes, public/private/query-bearer auth precedence, field selections, archive reads, no writes, assigned-only/global-admin denial, all 256 raw role sets, late member/token/policy/public rollback and opaque failure passed')
 try:main()
 except Exception as error:
     message=traceback.format_exc()+"\nLast response: "+repr(last)

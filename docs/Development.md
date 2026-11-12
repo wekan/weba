@@ -2224,3 +2224,25 @@ no-write, policy-before-lookup, credential scrubbing, late scope/token/policy/pu
 rollback and opaque failure tests remain in place. Native creator/creation export
 parity and other models, remaining 34 API renderers and complete original
 UI/API/security parity remain pending.
+
+Kanboard now shares the locked export API at
+`GET /api/boards/:id/export/kanboard`. The optional source field selection gates
+all current native sections independently: description/labels/dates/people,
+checklists/comments and subtasks/dependencies. Default selected UI exports retain
+all fields. The first native participant maps to owner_username; public notes
+resolve the already scoped entry author. Checkitems require a same-board/card
+checklist parent and are grouped by parent/item order. Reciprocal task links now
+forward the Gambas counter by reference at both call levels and traverse each
+card's first parent before dependencies, matching source numbering/order.
+
+API fixtures seed real finished/open checks, orphan/cross-card checkitems,
+parent/child and reciprocal/self/missing-target dependency rows. All 214 actual
+HTTP bodies across seven routes match unchanged source parseExportFields,
+collect, gateItem and formatters, with shared 256-role and all prior security
+checks retained. The oracle explicitly maps native lane titles to source lane
+IDs, native participants to source assignees and native flat entry models to
+checklists/parent/dependencies. Native untyped relationships map to source
+relates-to; multiple native parents use the earliest entry. These adapters do not
+prove full model fidelity: creation/creator, typed dependencies, parent modeling,
+anonymization/security reporting, remaining 33 API renderers and complete
+original UI/API/security parity remain open.

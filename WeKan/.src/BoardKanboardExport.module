@@ -13,11 +13,31 @@ Private Function DateValue(dates As Collection, key As String) As String
   Return CardDates.Iso(CLong(dates[key]))
 End
 
+Private Function Whitespace(character As String) As Boolean
+  Dim code As Integer = String.Code(character)
+  Return (code >= 9 And code <= 13) Or code = 32 Or code = 160 Or code = 5760 Or (code >= 8192 And code <= 8202) Or code = 8232 Or code = 8233 Or code = 8239 Or code = 8287 Or code = 12288 Or code = 65279
+End
+
+Private Function TrimText(value As String) As String
+  Dim first As Integer = 1
+  Dim finish As Integer = String.Len(value)
+  While first <= finish
+    If Not Whitespace(String.Mid(value, first, 1)) Then Break
+    Inc first
+  Wend
+  While finish >= first
+    If Not Whitespace(String.Mid(value, finish, 1)) Then Break
+    Dec finish
+  Wend
+  If finish < first Then Return ""
+  Return String.Mid(value, first, finish - first + 1)
+End
+
 Private Function Labels(value As Variant) As String[]
   Dim result As New String[]
   Dim label As String
   For Each label In Split(TextValue(value), ",")
-    label = Trim(label)
+    label = TrimText(label)
     If label Then result.Add(label)
   Next
   Return result
@@ -38,11 +58,11 @@ Private Sub AddLink(linksByCard As Collection, numbers As Collection, seen As Co
 End
 
 Private Sub AddLinkPair(linksByCard As Collection, numbers As Collection, seen As Collection, fromId As Integer, toId As Integer, label As String, opposite As String, ByRef nextId As Integer)
-  AddLink(linksByCard, numbers, seen, fromId, toId, label, nextId)
-  AddLink(linksByCard, numbers, seen, toId, fromId, opposite, nextId)
+  AddLink(linksByCard, numbers, seen, fromId, toId, label, ByRef nextId)
+  AddLink(linksByCard, numbers, seen, toId, fromId, opposite, ByRef nextId)
 End
 
-Public Function Build(boardId As Integer, db As Connection) As String
+Public Function Build(boardId As Integer, db As Connection, Optional wanted As Collection) As String
   Dim data As New Collection
   Dim boardData As New Collection
   Dim columns As New Variant[]
@@ -65,6 +85,8 @@ Public Function Build(boardId As Integer, db As Connection) As String
   Dim emptyLinks As Variant[]
   Dim cardId As Integer
   Dim index As Integer
+  Dim people As String[]
+  Dim person As String
   Dim nextLinkId As Integer
   BoardAccess.RequireContainer(boardId, "board", boardId)
   board = db.Find("kb_boards", "id=&1", boardId)
@@ -92,11 +114,16 @@ Public Function Build(boardId As Integer, db As Connection) As String
     row.Add(CInt(r!id), "cardId")
     row.Add(index, "number")
     row.Add(TextValue(r!title), "title")
-    row.Add(TextValue(r!description), "description")
+    row.Add(If(ExternalExportFields.Wants(wanted, "description"), TextValue(r!description), ""), "description")
     row.Add(TextValue(r!list_title), "column")
-    row.Add(TextValue(r!lane), "swimlane")
-    row.Add(Labels(r!labels), "tags")
-    dates = CardDates.ReadDates(boardId, r!id)
+    row.Add(If(TextValue(r!lane), TextValue(r!lane), "Default"), "swimlane")
+    If ExternalExportFields.Wants(wanted, "labels") Then
+      row.Add(Labels(r!labels), "tags")
+    Else
+      row.Add(Labels(""), "tags")
+    Endif
+    dates = New Collection
+    If ExternalExportFields.Wants(wanted, "dates") Then dates = CardDates.ReadDates(boardId, r!id)
     row.Add(DateValue(dates, "dueAt"), "due")
     row.Add(DateValue(dates, "startAt"), "start")
     row.Add(DateValue(dates, "endAt"), "end")
@@ -107,14 +134,16 @@ Public Function Build(boardId As Integer, db As Connection) As String
   Next
   For Each row In cards
     cardId = row["cardId"]
-    related = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, cardId, "subtask")
-    For Each related
-      AddLinkPair(linksByCard, numbers, seenLinks, CInt(related!amount), cardId, "is a child of", "is a parent of", nextLinkId)
-    Next
-    related = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, cardId, "dependency")
-    For Each related
-      AddLinkPair(linksByCard, numbers, seenLinks, cardId, CInt(related!amount), "relates to", "relates to", nextLinkId)
-    Next
+    If ExternalExportFields.Wants(wanted, "subtasks") Then
+      related = db.Find("kb_entries", "board_id=&1 AND amount=&2 AND kind=&3 ORDER BY id", boardId, cardId, "subtask")
+      If related.Available Then AddLinkPair(linksByCard, numbers, seenLinks, cardId, CInt(related!card_id), "is a child of", "is a parent of", ByRef nextLinkId)
+    Endif
+    If ExternalExportFields.Wants(wanted, "dependencies") Then
+      related = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, cardId, "dependency")
+      For Each related
+        AddLinkPair(linksByCard, numbers, seenLinks, cardId, CInt(related!amount), "relates to", "relates to", ByRef nextLinkId)
+      Next
+    Endif
   Next
   For Each row In cards
     cardId = row["cardId"]
@@ -128,24 +157,36 @@ Public Function Build(boardId As Integer, db As Connection) As String
     If row["start"] Then task.Add(row["start"], "date_started")
     If row["end"] Then task.Add(row["end"], "date_completed")
     task.Add(row["tags"], "tags")
+    If ExternalExportFields.Wants(wanted, "people") Then
+      people = BoardAccess.Assignees(boardId, cardId)
+      For Each person In BoardAccess.CardMembers(boardId, cardId)
+        people.Add(person)
+      Next
+      If people.Count Then task.Add(people[0], "owner_username")
+    Endif
     subtasks = New Variant[]
-    related = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, cardId, "checkitem")
-    For Each related
-      item = New Collection
-      item.Add(TextValue(related!title), "title")
-      item.Add(If(CBool(related!done), 2, 0), "status")
-      subtasks.Add(item)
-    Next
+    If ExternalExportFields.Wants(wanted, "checklists") Then
+      related = db.Exec("SELECT e.* FROM kb_entries e JOIN kb_entries p ON p.id=e.parent_id AND p.board_id=e.board_id AND p.card_id=e.card_id AND p.kind=&4 WHERE e.board_id=&1 AND e.card_id=&2 AND e.kind=&3 ORDER BY p.id,e.id", boardId, cardId, "checkitem", "checklist")
+      For Each related
+        item = New Collection
+        item.Add(TextValue(related!title), "title")
+        item.Add(If(CBool(related!done), 2, 0), "status")
+        subtasks.Add(item)
+      Next
+    Endif
     If subtasks.Count Then task.Add(subtasks, "subtasks")
     comments = New Variant[]
-    related = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, cardId, "comment")
-    For Each related
-      item = New Collection
-      item.Add(TextValue(related!body), "comment")
-      item.Add(CardContent.AuthorName(boardId, cardId, "entry", CInt(related!id)), "username")
-      If TypeOf(related!created_at) = gb.Date And Not IsNull(related!created_at) Then item.Add(CardDates.Iso(ItemChanges.Epoch(related!created_at)), "date_creation")
-      comments.Add(item)
-    Next
+    If ExternalExportFields.Wants(wanted, "comments") Then
+      related = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, cardId, "comment")
+      For Each related
+        item = New Collection
+        item.Add(TextValue(related!body), "comment")
+        BoardAccess.RequireCard(boardId, cardId)
+        item.Add(RetiredAuthors.DisplayName("entry", related!id, TextValue(related!author)), "username")
+        If TypeOf(related!created_at) = gb.Date And Not IsNull(related!created_at) Then item.Add(CardDates.Iso(ItemChanges.Epoch(related!created_at)), "date_creation")
+        comments.Add(item)
+      Next
+    Endif
     If comments.Count Then task.Add(comments, "comments")
     links = linksByCard[CStr(cardId)]
     If links.Count Then task.Add(links, "links")

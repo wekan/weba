@@ -60,7 +60,7 @@ def is_issue_export_path(path):
     parts = path.rstrip('/').split('/')
     return (len(parts) == 6 and parts[:3] == ['', 'api', 'boards']
             and bool(parts[3]) and parts[4] == 'export'
-            and parts[5] in ('github', 'gitea', 'forgejo', 'gitlab', 'trello', 'deck')
+            and parts[5] in ('github', 'gitea', 'forgejo', 'gitlab', 'trello', 'deck', 'kanboard')
             and path in ('/'.join(parts), '/'.join(parts) + '/'))
 
 

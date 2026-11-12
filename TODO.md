@@ -198,7 +198,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   recorded there too; Trello GET board export with source card-section gates,
   retained palette metadata and native list/card references is recorded there;
   Deck GET stack export with title grouping, independently selected sections
-  and scoped public comments is recorded there; remaining 34
+  and scoped public comments is recorded there; Kanboard GET task export with
+  independent checklist/relationship/people gates, scoped public comments and
+  source reciprocal-link numbering is recorded there; remaining 33
   external-format API routes, native field-model guards, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded

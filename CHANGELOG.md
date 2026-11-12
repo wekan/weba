@@ -2,6 +2,21 @@
 
 This work adds the following features and fixes:
 
+- Add GET `/api/boards/:id/export/kanboard` through the locked external-export
+  service. Gate descriptions, labels, dates, people, checklists, comments,
+  subtasks and dependencies independently; preserve columns/swimlanes and source
+  task numbering. Use scoped public comment authors, native first-participant
+  owner names and valid checklist parents. Fix repeated relationship IDs by
+  forwarding counters by reference and traverse parent/dependency links in
+  source order, excluding duplicate/self/missing targets. Compare 214 actual
+  HTTP bodies across seven routes with unchanged source collector/formatters
+  and shared 256-role/security/rollback cases. Full host tests pass (70 Python
+  tests and 80 archive/scope snapshots), plus both API builds, original round-trip
+  contracts and all 45 source/packaged selected downloads with cached scope
+  checks. Native creation/creator metadata,
+  typed dependencies/multiple-parent modeling, remaining 33 API renderers and
+  full original UI/API/security parity remain pending. Thanks to xet7.
+
 - Add GET `/api/boards/:id/export/deck` through the locked external-export
   service. Gate description, labels, dates, people and comments as source does;
   preserve duplicate-title stack repetition, empty-title/missing-link matching,
