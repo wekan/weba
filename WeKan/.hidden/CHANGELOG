@@ -1,4 +1,10 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Markdown export API: Add original text response type/body and independent
+  description selection through shared access/transaction guards. Fix blank
+  title/missing-link grouping and terminal-state case rules; verify literal
+  whitespace, duplicate headings and empty boards against original source.
+  Other routes/models and full UI/API/security parity remain pending.
+
 - Kanboard export API: Add source task JSON with independent field selection,
   valid checklist parents, scoped public comments and native first participant.
   Fix reciprocal link IDs and source traversal order; verify original-source

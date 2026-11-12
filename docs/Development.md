@@ -2246,3 +2246,32 @@ relates-to; multiple native parents use the earliest entry. These adapters do no
 prove full model fidelity: creation/creator, typed dependencies, parent modeling,
 anonymization/security reporting, remaining 33 API renderers and complete
 original UI/API/security parity remain open.
+
+Markdown shares the locked external API at
+`GET /api/boards/:id/export/markdown`. The service now returns explicit response
+metadata: text/markdown UTF-8 for Markdown and the existing application/json
+UTF-8 for all seven JSON routes. RestApi writes formatter bytes directly, keeping
+no-store/nosniff and shared final policy/identity/token/public-scope checks.
+The renderer accepts optional source sections and suppresses continuation text
+when description is deselected. Selected UI calls retain all-fields defaults.
+
+The Markdown query normalizes blank SQL title arguments through TextValue and
+matches missing list links with COALESCE, preserving source blank-title grouping.
+Terminal detection follows source non-Unicode regex case rules by folding ASCII
+only. New original-collector/formatter cases cover duplicate/blank headings,
+missing links, terminal substrings and Unicode nonmatches, CRLF/blank/whitespace/
+literal astral descriptions, empty board names, all archived cards and anonymous
+public selections. All 266 actual responses across eight formats match unchanged
+source parseExportFields/collect/gateItem/formatters. Initial response bodies and
+content types also match unchanged server renderExternalExport with only the
+already compared native collection adapter. The shared 256-role and security
+checks remain in place. SQL IDs/label names/lane IDs/empty planning/no-op
+anonymization remain explicit adapters; remaining 32 API renderers, native field
+models, security reporting and complete original UI/API/security parity remain
+pending.
+
+The Markdown endpoint itself also runs late member/token/policy/public-visibility
+mutation rollback checks, policy-before-lookup with an unavailable board ID
+column, and a missing-description-column failure. These verify a denied/error
+text request returns the shared opaque error with no partial Markdown or
+persisted mutations; the shared GitHub controls remain alongside them.

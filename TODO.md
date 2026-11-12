@@ -200,7 +200,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   Deck GET stack export with title grouping, independently selected sections
   and scoped public comments is recorded there; Kanboard GET task export with
   independent checklist/relationship/people gates, scoped public comments and
-  source reciprocal-link numbering is recorded there; remaining 33
+  source reciprocal-link numbering is recorded there; Markdown GET text export
+  with source response bytes/type, description selection and heading/state
+  semantics is recorded there; remaining 32
   external-format API routes, native field-model guards, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded

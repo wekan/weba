@@ -3340,12 +3340,12 @@ current source tool formats now have native selected-export entries, checked
 against source EXTERNAL_EXPORT_FORMATS. Native model gaps and complete original
 UI/API/security parity remain pending.
 
-With `WITH_API=true`, GitHub/Gitea/Forgejo/GitLab issue, Trello board, Deck stack and Kanboard task exports are available at
-`GET /api/boards/ID/export/github` (or `gitea` / `forgejo` / `gitlab` / `trello` / `deck` / `kanboard`). Private boards require
+With `WITH_API=true`, GitHub/Gitea/Forgejo/GitLab issue, Trello board, Deck stack, Kanboard task and Markdown text exports are available at
+`GET /api/boards/ID/export/github` (or `gitea` / `forgejo` / `gitlab` / `trello` / `deck` / `kanboard` / `markdown`). Private boards require
 a valid bearer or source-compatible query credential and full-board read access;
 public boards follow the source anonymous path. The `fields=labels,dates,description` query selects sections;
 unknown/empty/structured selections fall back as
-source does. Native JSON is written directly so empty strings survive. Other 33
+source does. Native JSON is written directly so empty strings survive. Other 32
 format API routes, native field-security models, anonymization/security reporting
 and complete original UI/API/security parity remain pending.
 
@@ -3372,3 +3372,12 @@ Public comment authors use scoped entry provenance. Native comma-label storage,
 first participant names, untyped dependencies and first-parent relationships are
 explicit model adapters; creation/creator metadata and full source parity remain
 pending.
+
+Markdown API export returns `text/markdown; charset=utf-8` with the formatter's
+literal bytes. The `description` field gate controls continuation text; headings
+and task titles remain. Empty lists have no headings, duplicate list titles
+repeat matching tasks, and empty titles match cards with missing list links.
+Terminal-state names use the same ASCII case rules as source. Empty board titles
+use the source fallback, and an empty board retains its header and newline.
+Shared export policy, credentials, full-board scope and final transaction checks
+apply to text responses too.

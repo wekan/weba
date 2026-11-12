@@ -667,7 +667,7 @@ Private Function IsIssueExport(fields As String[]) As Boolean
   Dim path As String
   If fields.Count <> 5 Then Return False
   If fields[0] <> "api" Or fields[1] <> "boards" Or fields[3] <> "export" Then Return False
-  If ["github", "gitea", "forgejo", "gitlab", "trello", "deck", "kanboard"].Find(fields[4]) < 0 Then Return False
+  If ["github", "gitea", "forgejo", "gitlab", "trello", "deck", "kanboard", "markdown"].Find(fields[4]) < 0 Then Return False
   path = "/api/boards/" & fields[2] & "/export/" & fields[4]
   Return Request.Path = path Or Request.Path = path & "/"
 End
@@ -681,7 +681,7 @@ Private Sub ExportIssues(fields As String[])
   outcome = ExternalIssueExport.Read(fields[2], Env["WEBA_EXTERNAL_FIELDS"], fields[4])
   If outcome["status"] = 200 Then
     Print "Status: 200"
-    Print "Content-Type: application/json; charset=utf-8"
+    Print "Content-Type: " & CStr(outcome["contentType"])
     Print "Cache-Control: no-store"
     Print "X-Content-Type-Options: nosniff"
     Print

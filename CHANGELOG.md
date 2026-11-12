@@ -2,6 +2,22 @@
 
 This work adds the following features and fixes:
 
+- Add GET `/api/boards/:id/export/markdown` through the locked external-export
+  service, with source `text/markdown; charset=utf-8` response bytes and an
+  independent description gate. Preserve literal continuation lines, duplicate
+  headings and empty-title/missing-link grouping; normalize empty SQL title
+  parameters and match source ASCII-only terminal-list state detection. Compare
+  266 actual HTTP bodies across eight routes with unchanged source collector/
+  formatters, plus successful response types/bodies with unchanged server
+  renderer and the shared 256-role/security/rollback cases. Direct Markdown
+  late-scope/token/policy/public rollback, policy-before-lookup and opaque
+  failure checks pass in both builds. Full host tests pass (70 Python tests,
+  80 archive/scope snapshots), as do all 45 source/packaged selected downloads
+  with cached scope checks, five original Markdown contracts and original
+  external export round-trips. Remaining 32 API
+  renderers, native field models/anonymization/security reporting and complete
+  original UI/API/security parity remain pending. Thanks to xet7.
+
 - Add GET `/api/boards/:id/export/kanboard` through the locked external-export
   service. Gate descriptions, labels, dates, people, checklists, comments,
   subtasks and dependencies independently; preserve columns/swimlanes and source

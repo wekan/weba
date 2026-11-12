@@ -7,11 +7,19 @@ Private Function TextValue(value As Variant) As String
 End
 
 Private Function ClosedList(title As String) As Boolean
-  Dim lower As String = LCase(title)
-  Return InStr(lower, "done") > 0 Or InStr(lower, "closed") > 0 Or InStr(lower, "complete") > 0 Or InStr(lower, "archiv") > 0 Or InStr(lower, "finished") > 0
+  Dim code As Integer
+  Dim word As String
+  ' JavaScript's non-Unicode /i matches these ASCII literals only.
+  For code = 65 To 90
+    title = Replace(title, Chr(code), Chr(code + 32))
+  Next
+  For Each word In ["done", "closed", "complete", "archiv", "finished"]
+    If InStr(title, word) Then Return True
+  Next
+  Return False
 End
 
-Public Function Build(boardId As Integer, db As Connection) As String
+Public Function Build(boardId As Integer, db As Connection, Optional wanted As Collection) As String
   Dim lines As New String[]
   Dim board As Result
   Dim lists As Result
@@ -27,12 +35,13 @@ Public Function Build(boardId As Integer, db As Connection) As String
   lines.Add("")
   lists = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
   For Each lists
-    cards = db.Exec("SELECT c.* FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND l.title=&3 AND c.archived=&4 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", lists!title, False)
+    cards = db.Exec("SELECT c.* FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND COALESCE(l.title,'')=&3 AND c.archived=&4 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", TextValue(lists!title), False)
     If Not cards.Available Then Continue
     lines.Add("## " & TextValue(lists!title))
     lines.Add("")
     For Each cards
       lines.Add("- [" & If(ClosedList(TextValue(lists!title)), "x", " ") & "] " & TextValue(cards!title))
+      If Not ExternalExportFields.Wants(wanted, "description") Then Continue
       For Each descriptionLine In Split(TextValue(cards!description), Chr(10))
         If descriptionLine Then lines.Add("  " & descriptionLine)
       Next

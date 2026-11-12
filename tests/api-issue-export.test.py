@@ -1,4 +1,4 @@
-"""Actual GitHub/Gitea/Forgejo export HTTP, field selections and final guards."""
+"""Actual external export HTTP, field selections, response bytes and final guards."""
 import hashlib,json,os,sqlite3,subprocess,traceback,urllib.error,urllib.parse,urllib.request
 from pathlib import Path
 base=os.environ['WEBA_TEST_URL'];secrets=[os.environ['WEBA_TEST_PASSWORD']];last=None;cases=[];role_cases=[]
@@ -50,9 +50,11 @@ def main():
         def snapshot():
             names=[row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table' AND (name LIKE 'kb_%' OR name IN ('api_tokens','import_export_settings','users'))")]
             return {name:sorted(db.execute('SELECT * FROM '+name).fetchall(),key=repr) for name in names}
-        for fmt in ['github','gitea','forgejo','gitlab','trello','deck','kanboard']:
+        for fmt in ['github','gitea','forgejo','gitlab','trello','deck','kanboard','markdown']:
             url=f'/api/boards/{board}/export/{fmt}'
             status,data,headers=call(url,token=owner);assert status==200,(status,data)
+            assert headers['Content-Type']==('text/markdown; charset=utf-8' if fmt=='markdown' else 'application/json; charset=utf-8')
+            cases.append({'format':fmt,'fields':None,'items':items,'actual':data,'contentType':headers['Content-Type']})
             assert headers['Cache-Control']=='no-store' and headers['X-Content-Type-Options']=='nosniff'
             before=snapshot()
             for fields in [None,'','unknown','labels','dates','description','people','labels,dates','labels,description','dates,description','labels,dates,description','\u00a0labels\ufeff, unknown','board-header','sort,scrum','Labels','comments','people,comments','dates,comments','description,people,comments','labels,dates,people,comments','checklists','subtasks','dependencies','subtasks,dependencies','checklists,comments,people']:
@@ -84,26 +86,51 @@ def main():
                 orphan_items[0]['listTitle']=''
                 cases.append({'format':fmt,'fields':None,'items':orphan_items,'actual':data})
                 db.execute('INSERT INTO kb_card_lists(board_id,card_id,list_id) VALUES(?,?,?)',(board,f['cardId'],f['listId']));db.commit()
-            if fmt=='deck':
+            if fmt in ['deck','markdown']:
                 other_list=next(row for row in source_lists if row['title']=='Doing')
                 db.execute('UPDATE kb_lists SET title=? WHERE board_id=? AND id=?',('incomplete',board,int(other_list['_id'])));db.commit()
                 status,data=pair(url,token=owner);assert status==200
-                repeated=[stack for stack in data['stacks'] if stack['title']=='incomplete'];assert len(repeated)==2 and all(len(stack['cards'])==2 for stack in repeated)
+                if fmt=='deck':
+                    repeated=[stack for stack in data['stacks'] if stack['title']=='incomplete'];assert len(repeated)==2 and all(len(stack['cards'])==2 for stack in repeated)
+                else:assert data.count('## incomplete\n')==2
                 cases.append({'format':fmt,'fields':None,'items':items,'lists':[{**row,'title':'incomplete' if row['_id']==other_list['_id'] else row['title']} for row in source_lists],'actual':data})
                 db.execute('UPDATE kb_lists SET title=? WHERE board_id=? AND id=?',('Doing',board,int(other_list['_id'])));db.commit()
                 db.execute('DELETE FROM kb_card_lists WHERE board_id=? AND card_id=?',(board,f['cardId']))
                 db.execute('UPDATE kb_lists SET title=? WHERE board_id=? AND id=?',('',board,f['listId']));db.commit()
-                status,data=pair(url,token=owner);assert status==200 and len(next(stack for stack in data['stacks'] if stack['title']=='')['cards'])==2
+                status,data=pair(url,token=owner);assert status==200
+                if fmt=='deck':assert len(next(stack for stack in data['stacks'] if stack['title']=='')['cards'])==2
+                else:assert data.count('- [ ] Retained attachments')==1 and data.count('- [ ] Unassigned attachments')==1
                 orphan_items=[{**{key:value for key,value in item.items() if index!=0 or key!='listId'},'listTitle':''} for index,item in enumerate(items)]
                 cases.append({'format':fmt,'fields':None,'items':orphan_items,'lists':[{**row,'title':'' if row['_id']==str(f['listId']) else row['title']} for row in source_lists],'actual':data})
                 db.execute('INSERT INTO kb_card_lists(board_id,card_id,list_id) VALUES(?,?,?)',(board,f['cardId'],f['listId']))
                 db.execute('UPDATE kb_lists SET title=? WHERE board_id=? AND id=?',('incomplete',board,f['listId']));db.commit()
-                note_id,created=db.execute("SELECT id,created_at FROM kb_entries WHERE board_id=? AND card_id=? AND kind='comment' ORDER BY id LIMIT 1",(board,f['cardId'])).fetchone()
-                db.execute('UPDATE kb_entries SET created_at=NULL WHERE id=?',(note_id,));db.commit()
-                status,data=pair(url,token=owner);assert status==200 and 'creationDateTime' not in data['stacks'][0]['cards'][0]['comments'][0]
-                legacy_items=[dict(item) for item in items];legacy_items[0]['comments']=[{key:value for key,value in note.items() if index!=0 or key!='date'} for index,note in enumerate(items[0]['comments'])]
-                cases.append({'format':fmt,'fields':None,'items':legacy_items,'actual':data})
-                db.execute('UPDATE kb_entries SET created_at=? WHERE id=?',(created,note_id));db.commit()
+                if fmt=='deck':
+                    note_id,created=db.execute("SELECT id,created_at FROM kb_entries WHERE board_id=? AND card_id=? AND kind='comment' ORDER BY id LIMIT 1",(board,f['cardId'])).fetchone()
+                    db.execute('UPDATE kb_entries SET created_at=NULL WHERE id=?',(note_id,));db.commit()
+                    status,data=pair(url,token=owner);assert status==200 and 'creationDateTime' not in data['stacks'][0]['cards'][0]['comments'][0]
+                    legacy_items=[dict(item) for item in items];legacy_items[0]['comments']=[{key:value for key,value in note.items() if index!=0 or key!='date'} for index,note in enumerate(items[0]['comments'])]
+                    cases.append({'format':fmt,'fields':None,'items':legacy_items,'actual':data})
+                    db.execute('UPDATE kb_entries SET created_at=? WHERE id=?',(created,note_id));db.commit()
+            if fmt=='markdown':
+                for title in ['FINISHED','unfinished','fınıshed','FİNISHED','finiſhed','archiv Ω']:
+                    db.execute('UPDATE kb_lists SET title=? WHERE board_id=? AND id=?',(title,board,f['listId']));db.commit()
+                    status,data=pair(url,token=owner);assert status==200
+                    cases.append({'format':fmt,'fields':None,'items':[{**item,'listTitle':title} for item in items],'lists':[{**row,'title':title if row['_id']==str(f['listId']) else row['title']} for row in source_lists],'actual':data})
+                db.execute('UPDATE kb_lists SET title=? WHERE board_id=? AND id=?',('incomplete',board,f['listId']))
+                description='Line one\r\n\n \n\t\n<literal> 😀\n'
+                db.execute('UPDATE kb_cards SET description=? WHERE id=?',(description,f['cardId']));db.commit()
+                for fields in [None,'description','labels']:
+                    status,data=pair(url+('' if fields is None else '?fields='+fields),token=owner);assert status==200
+                    cases.append({'format':fmt,'fields':fields,'items':[{**item,'description':description} if index==0 else item for index,item in enumerate(items)],'actual':data})
+                db.execute('UPDATE kb_cards SET description=? WHERE id=?',(items[0]['description'],f['cardId']))
+                db.execute('UPDATE kb_boards SET title=? WHERE id=?',('',board));db.commit()
+                status,data=pair(url,token=owner);assert status==200 and data.startswith('# Imported board\n')
+                cases.append({'format':fmt,'fields':None,'items':items,'board':{'title':''},'actual':data})
+                db.execute('UPDATE kb_boards SET title=? WHERE id=?',(source_board['title'],board))
+                db.executemany('UPDATE kb_cards SET archived=1 WHERE id=?',[(int(item['cardId']),) for item in items]);db.commit()
+                status,data=pair(url,token=owner);assert status==200 and data=='# '+source_board['title']+'\n'
+                cases.append({'format':fmt,'fields':None,'items':[],'actual':data})
+                db.executemany('UPDATE kb_cards SET archived=0 WHERE id=?',[(int(item['cardId']),) for item in items]);db.commit()
             if fmt=='gitlab':
                 db.execute('UPDATE kb_lists SET title=? WHERE board_id=? AND id=?',('Doing',board,f['listId']));db.commit()
                 status,data=pair(url,token=owner);assert status==200
@@ -124,13 +151,15 @@ def main():
             role_cases.append({'flags':flags,'status':status})
         db.execute('DELETE FROM kb_member_flags WHERE board_id=? AND username=?',(board,'rest-file-reader'));db.commit()
         db.execute(f"CREATE TRIGGER issue_role AFTER UPDATE OF title ON kb_boards WHEN NEW.id={board} BEGIN UPDATE kb_members SET role='normal-assigned-only' WHERE board_id={board} AND username='rest-file-reader'; END");db.commit();before=snapshot()
-        assert pair(url,token=reader)==(403,{'error':'Forbidden'});assert snapshot()==before
+        for target in [url,f'/api/boards/{board}/export/markdown']:
+            assert pair(target,token=reader)==(403,{'error':'Forbidden'});assert snapshot()==before
         db.execute('DROP TRIGGER issue_role');db.commit()
         # Final token and export policy checks roll back injected mutations.
         digest=hashlib.sha256(owner.encode()).hexdigest()
         for effect,expected in [(f"DELETE FROM api_tokens WHERE digest='{digest}'",(401,{'error':'Invalid token'})),('UPDATE import_export_settings SET disable_export=1 WHERE id=1',(403,'Export is disabled by the administrator.'))]:
             db.execute(f'CREATE TRIGGER issue_late AFTER UPDATE OF title ON kb_boards WHEN NEW.id={board} BEGIN {effect}; END');db.commit();before=snapshot()
-            assert pair(url,token=owner)==expected;assert snapshot()==before
+            for target in [url,f'/api/boards/{board}/export/markdown']:
+                assert pair(target,token=owner)==expected;assert snapshot()==before
             db.execute('DROP TRIGGER issue_late');db.commit();assert pair(url,token=owner)[0]==200
         db.execute('UPDATE kb_boards SET archived=1 WHERE id=?',(board,));db.commit();assert pair(url,token=owner)[0]==200
         db.execute('UPDATE kb_boards SET archived=0 WHERE id=?',(board,));db.commit()
@@ -140,6 +169,10 @@ def main():
             status,data=pair(url+suffix);assert status==200,(status,data)
             cases.append({'format':'github','fields':None,'items':items,'actual':data})
         assert pair(url,token=assigned)[0]==200
+        markdown_url=f'/api/boards/{board}/export/markdown'
+        for fields in [None,'labels','description']:
+            status,data=pair(markdown_url+'?authToken=bad'+('' if fields is None else '&fields='+fields));assert status==200
+            cases.append({'format':'markdown','fields':fields,'items':items,'actual':data})
         kanboard_url=f'/api/boards/{board}/export/kanboard'
         for fields in [None,'comments','checklists','subtasks,dependencies']:
             status,data=pair(kanboard_url+'?authToken=bad'+('' if fields is None else '&fields='+fields));assert status==200
@@ -160,22 +193,27 @@ def main():
         cases.append({'format':'gitlab','fields':None,'items':items,'actual':data})
         assert snapshot()==before
         db.execute(f"CREATE TRIGGER issue_public AFTER UPDATE OF title ON kb_boards WHEN NEW.id={board} BEGIN UPDATE kb_board_visibility SET permission='private' WHERE board_id={board}; END");db.commit();before=snapshot()
-        assert pair(url)==(403,{'error':'Forbidden'});assert snapshot()==before
+        for target in [url,markdown_url]:
+            assert pair(target)==(403,{'error':'Forbidden'});assert snapshot()==before
         db.execute('DROP TRIGGER issue_public');db.commit()
         fixture('ImportExportPolicyFixture',{'WEBA_EXCHANGE_MODE':'save','WEBA_EXCHANGE_FLAGS':'{"import":false,"export":true}'})
         assert pair('/api/boards/99999999/export/github?authToken=bad')==(403,'Export is disabled by the administrator.')
         db.execute('ALTER TABLE kb_boards RENAME COLUMN id TO issue_hidden_id');db.commit();before=snapshot()
-        assert pair(url+'?authToken=bad')==(403,'Export is disabled by the administrator.');assert snapshot()==before
+        for target in [url,markdown_url]:
+            assert pair(target+'?authToken=bad')==(403,'Export is disabled by the administrator.');assert snapshot()==before
         db.execute('ALTER TABLE kb_boards RENAME COLUMN issue_hidden_id TO id');db.commit()
         fixture('ImportExportPolicyFixture',{'WEBA_EXCHANGE_MODE':'save','WEBA_EXCHANGE_FLAGS':'{"import":false,"export":false}'})
         db.execute('ALTER TABLE kb_cards RENAME COLUMN labels TO opaque_export_canary');db.commit();before=snapshot()
         assert pair(url)==(500,{'error':'Board export failed'});assert snapshot()==before
         db.execute('ALTER TABLE kb_cards RENAME COLUMN opaque_export_canary TO labels');db.commit()
+        db.execute('ALTER TABLE kb_cards RENAME COLUMN description TO opaque_markdown_canary');db.commit();before=snapshot()
+        assert pair(markdown_url)==(500,{'error':'Board export failed'});assert snapshot()==before
+        db.execute('ALTER TABLE kb_cards RENAME COLUMN opaque_markdown_canary TO description');db.commit()
     for sample in cases:
         sample.setdefault('board',source_board);sample.setdefault('lists',source_lists);sample.setdefault('swimlanes',source_swimlanes)
     Path(os.environ['WEBA_TEST_PROJECT'],'issue-export-cases.json').write_text(json.dumps(cases))
     Path(os.environ['WEBA_TEST_PROJECT'],'issue-export-roles.json').write_text(json.dumps(role_cases))
-    print('Issue export HTTP: seven source routes, public/private/query-bearer auth precedence, field selections, archive reads, no writes, assigned-only/global-admin denial, all 256 raw role sets, late member/token/policy/public rollback and opaque failure passed')
+    print('Issue export HTTP: eight source routes, public/private/query-bearer auth precedence, field selections, archive reads, no writes, assigned-only/global-admin denial, all 256 raw role sets, late member/token/policy/public rollback and opaque failure passed')
 try:main()
 except Exception as error:
     message=traceback.format_exc()+"\nLast response: "+repr(last)
