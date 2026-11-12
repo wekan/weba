@@ -1,0 +1,96 @@
+' Native Trello board formatter; native label names are explicit label IDs.
+Export
+Private Function TextValue(value As Variant) As String
+  If IsNull(value) Then Return ""
+  Return CStr(value)
+End
+
+Private Function Whitespace(character As String) As Boolean
+  Dim code As Integer = String.Code(character)
+  Return (code >= 9 And code <= 13) Or code = 32 Or code = 160 Or code = 5760 Or (code >= 8192 And code <= 8202) Or code = 8232 Or code = 8233 Or code = 8239 Or code = 8287 Or code = 12288 Or code = 65279
+End
+
+Private Function TrimText(value As String) As String
+  Dim first As Integer = 1
+  Dim finish As Integer = String.Len(value)
+  While first <= finish
+    If Not Whitespace(String.Mid(value, first, 1)) Then Break
+    Inc first
+  Wend
+  While finish >= first
+    If Not Whitespace(String.Mid(value, finish, 1)) Then Break
+    Dec finish
+  Wend
+  If finish < first Then Return ""
+  Return String.Mid(value, first, finish - first + 1)
+End
+
+Public Function Build(boardId As Integer, db As Connection) As String
+  Dim output As New Collection
+  Dim prefs As New Collection
+  Dim lists As New Variant[]
+  Dim cards As New Variant[]
+  Dim labels As New Variant[]
+  Dim seen As New Collection
+  Dim empty As New Variant[]
+  Dim board As Result
+  Dim rows As Result
+  Dim item As Collection
+  Dim labelIds As String[]
+  Dim label As String
+  Dim definition As Collection
+  Dim dates As Collection
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  board = db.Find("kb_boards", "id=&1", boardId)
+  If Not board.Available Then Error.Raise("Board not found")
+  output.Add(TextValue(board!title), "name")
+  prefs.Add("blue", "background")
+  prefs.Add("private", "permissionLevel")
+  output.Add(prefs, "prefs")
+  rows = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
+  For Each rows
+    item = New Collection
+    item.Add(CStr(rows!id), "id")
+    item.Add(TextValue(rows!title), "name")
+    item.Add(False, "closed")
+    lists.Add(item)
+  Next
+  rows = db.Exec("SELECT c.*,cl.list_id FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  For Each rows
+    item = New Collection
+    item.Add(CStr(rows!id), "id")
+    item.Add(TextValue(rows!title), "name")
+    item.Add(TextValue(rows!description), "desc")
+    If Not IsNull(rows!list_id) Then item.Add(CStr(rows!list_id), "idList")
+    dates = CardDates.ReadDates(boardId, rows!id)
+    If dates.Exist("dueAt") Then
+      item.Add(CardDates.Iso(dates["dueAt"]), "due")
+    Else
+      item.Add(JSON.Null, "due")
+    Endif
+    item.Add(False, "closed")
+    labelIds = New String[]
+    For Each label In Split(TextValue(rows!labels), ",")
+      label = TrimText(label)
+      If Not label Then Continue
+      labelIds.Add(label)
+      If Not seen.Exist(label) Then
+        seen.Add(True, label)
+        definition = New Collection
+        definition.Add(label, "id")
+        definition.Add(label, "name")
+        labels.Add(definition)
+      Endif
+    Next
+    item.Add(labelIds, "idLabels")
+    item.Add(empty, "idMembers")
+    item.Add(empty, "idChecklists")
+    cards.Add(item)
+  Next
+  output.Add(labels, "labels")
+  output.Add(lists, "lists")
+  output.Add(cards, "cards")
+  output.Add(empty, "checklists")
+  output.Add(empty, "actions")
+  Return JSON.Encode(output) & Chr(10)
+End

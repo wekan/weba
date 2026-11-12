@@ -2025,3 +2025,26 @@ close dates, notes/assignees and iid omission. Existing three issue-format
 regressions still run independently. Browser coverage checks ordered per-board
 GitLab JSON vs source output in source/packaged applications; archive coverage
 includes owner and read-only exports. Full original parity remains pending.
+
+Trello selected export uses `BoardTrelloExport` beneath the existing locked
+full-read/policy/session transfer and private cached-publication scope check.
+Its source shape is a board with blue/private prefs, live list IDs, active cards,
+nullable due dates, closed=false flags and empty member/checklist/action arrays.
+Cards retain actual list links, so duplicate list titles do not duplicate cards;
+a missing native link omits idList as an undefined source field does. No unrelated
+custom/WIP/comment/people/checklist data is read and no source-absent row cap added.
+
+Native cards store comma-separated label names without board label definitions.
+The explicit adapter uses trimmed names as stable board-local IDs, preserves
+repeated card label IDs and creates one definition per name in first active-card
+encounter order. Colors stay absent; unused native board label definitions/IDs/
+colors need a persisted model and remain pending. The source oracle supplies
+these explicitly adapted definitions/IDs to unchanged `formatters.trello`.
+
+`TrelloExportTest` and `TrelloCasesTest` compare rich/empty/legacy/orphan outputs
+with source, including list-ID references, duplicate titles, repeated/prototype
+labels, nullable dates, exact source empty arrays, archive and unselected-board
+canaries, irrelevant malformed custom fields, policy and assigned-only denial.
+Browser downloads compare ordered per-board Trello JSON to source; allocated SQL
+list IDs remain the explicit native adapter. Owner/read-only archive coverage
+includes Trello. Complete original route/options/model/security parity is pending.

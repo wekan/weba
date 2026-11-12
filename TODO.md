@@ -178,12 +178,14 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   independent source-alias comparisons is recorded there; selected GitLab
   Issues API JSON ZIP with notes, repeated assignees, optional due dates and
   terminal-only close dates is recorded there; native Scrum/creation fields
-  remain pending;
+  remain pending; selected Trello board JSON ZIP with list/card references,
+  nullable dates, explicit label-name IDs and source empty arrays is recorded
+  there; board-defined label IDs/colors remain pending;
   Cached selected-export publication now rechecks current actor/session, full
   board access and policy; revocation/regrant browser coverage is recorded in
   CHANGELOG.md. Complete original security parity remains pending.
   Remaining source tool formats:
-  trello, jira, asana and zenkit. Original API route, avatar exclusions,
+  jira, asana and zenkit. Original API route, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded
   in CHANGELOG.md. Its native selected-file action, session/API separation and

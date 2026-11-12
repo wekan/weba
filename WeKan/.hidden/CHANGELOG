@@ -1,4 +1,9 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Trello selected export: Add scoped source-shaped board JSON ZIP with list/
+  card references, nullable dates, explicit label-name IDs and source empty
+  arrays. Verify legacy/duplicate/prototype/scope/irrelevant-field cases;
+  native board-defined labels/colors and full parity remain pending.
+
 - GitLab selected export: Add scoped Issues API JSON ZIP with repeated
   assignees, notes, optional due dates, terminal-only close dates and source
   iid omission. Verify 27 native/source outcomes and permission/policy gates.

@@ -2,6 +2,20 @@
 
 This work adds the following features and fixes:
 
+- Add Trello board JSON as the thirty-seventh selected-board tool export.
+  Download `wekan-boards-trello.zip` with source prefs, live list IDs, active
+  cards/references, nullable due dates, repeated label IDs and empty member/
+  checklist/action arrays. Use native label names as explicit IDs and derive
+  first-active-use label definitions; native board-defined IDs/colors remain
+  pending. Preserve duplicate list titles without duplicating cards, missing
+  list references and literal prototype-like labels. Verify rich/empty/legacy/
+  orphan source equality, archive/unselected-board exclusion, irrelevant bad
+  custom fields and policy/assigned-only denial. All 10 original planning/fake-
+  API contracts and complete host tests pass (69 Python tests, 74 archive/scope
+  snapshots); all 42 source/packaged browser downloads and cached revocation/
+  regrant pass. Three tool formats and full
+  original UI/API/security parity remain pending. Thanks to xet7.
+
 - Add GitLab Issues API JSON as the thirty-sixth selected-board tool export.
   Download `wekan-boards-gitlab.zip` with source literal text/labels, opened or
   closed states, all repeated assignees, notes with authors/timestamps, optional

@@ -5304,3 +5304,7 @@ End
 Public Sub ExportSelectedGitlab_Click()
   RunSelectedExport("gitlab")
 End
+
+Public Sub ExportSelectedTrello_Click()
+  RunSelectedExport("trello")
+End

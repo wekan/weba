@@ -3313,3 +3313,9 @@ Selected boards also export **GitLab Issues API JSON** in
 comments as notes, optional due dates and close dates only for terminal lists.
 The source `iid` omission is preserved. Creator/creation/Scrum models and complete
 original UI/API/security parity remain pending.
+
+Selected boards also export **Trello board JSON** in `wekan-boards-trello.zip`,
+with list/card references, nullable due dates and source-defined empty member,
+checklist and action arrays. Native label names serve as explicit IDs; definitions
+are derived from active cards in first-use order. Persisted board-defined label
+IDs/colors and complete original UI/API/security parity remain pending.
