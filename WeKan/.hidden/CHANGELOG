@@ -1,3 +1,8 @@
+* Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- People-role browser fixture: Retain a second administrator before owner
+  demotion; preserve the last-admin guard and live revocation assertions.
+  Focused source and packaged browser checks pass.
+
 * Mon Nov 09 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
 - Native attachment export: Add selected-live-file JSON download with session/
   card binding and separate API context guards. Respect native limits, full-board

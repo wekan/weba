@@ -2,6 +2,11 @@
 
 This work adds the following features and fixes:
 
+- Keep another board administrator in the live people-role fixture before
+  demoting the owner. Preserve the production last-administrator guard while
+  testing live owner demotion and membership revocation. Focused source and
+  packaged browser checks pass. Thanks to xet7.
+
 - Add ClickUp as the fifteenth selected-board external-tool export. Download
   one `wekan-boards-clickup.zip` with an ordered strict `board-ID.csv` workspace
   export per board. Match ClickUp's 31 workspace columns followed by the

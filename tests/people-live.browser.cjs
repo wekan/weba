@@ -79,6 +79,8 @@ const secrets=[process.env.WEBA_TEST_PASSWORD];
   expect((await api.post(memberRoute('rest-member')+'/remove',{headers,data:{action:'remove'}})).status()).toBe(200);
   await expect(owner.locator(control('MembersTree'))).not.toContainText('rest-member');
   await expect(owner.locator(input('MemberUsername'))).toHaveValue('');await expect(owner.locator(control('SaveMember'))).toBeDisabled();await expect(owner.locator(control('RemoveMember'))).toBeDisabled();
+  // Preserve the last-admin invariant while exercising live owner demotion.
+  expect((await api.post(memberRoute('rest-people-extra'),{headers,data:{role:'admin'}})).status()).toBe(200);
   expect((await api.post(memberRoute('rest-other'),{headers,data:{role:'readonly'}})).status()).toBe(200);
   await expect(owner.locator(control('SaveMember'))).toBeHidden();await expect(owner.locator(input('MemberUsername'))).toHaveJSProperty('readOnly',true);
   expect((await api.post(memberRoute('rest-other')+'/remove',{headers,data:{action:'remove'}})).status()).toBe(200);
