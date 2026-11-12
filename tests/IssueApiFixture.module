@@ -1,6 +1,35 @@
 Public Sub Main()
+  Dim boardId As Integer = CInt(Env["WEBA_ISSUE_BOARD"])
+  Dim cardId As Integer
+  Dim entryId As Integer
+  Dim data As New Collection
+  Dim comments As New Variant[]
+  Dim comment As Collection
+  Dim rows As Result
+  Dim dates As New Collection
+  Dim text As String
   Session["username"] = "rest-other"
   Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
-  BoardVisibility.SavePermission(CInt(Env["WEBA_ISSUE_BOARD"]), Env["WEBA_ISSUE_PERMISSION"])
-  Print "{}"
+  BoardVisibility.SavePermission(boardId, Env["WEBA_ISSUE_PERMISSION"])
+  If Env["WEBA_ISSUE_SEED"] = "1" Then
+    cardId = CInt(Env["WEBA_ISSUE_CARD"])
+    BoardAccess.RestoreCardMembers(boardId, cardId, ["rest-member", "rest-file-assigned"])
+    dates.Add(CardDates.Parse("2026-11-13T01:02:03.004Z"), "endAt")
+    CardDates.Apply(boardId, cardId, dates)
+    For Each text In ["<literal note> Ω", " "]
+      entryId = CardContent.Save(boardId, cardId, 0, "comment", "", "Seed note", 0, False, 0)
+      WebDatabase.OpenConnection().Exec("UPDATE kb_entries SET body=&1 WHERE id=&2", text, entryId)
+      rows = WebDatabase.OpenConnection().Find("kb_entries", "id=&1", entryId)
+      comment = New Collection
+      comment.Add(text, "text")
+      comment.Add("rest-other", "author")
+      comment.Add(CardDates.Iso(ItemChanges.Epoch(rows!created_at)), "date")
+      comments.Add(comment)
+    Next
+    data.Add(comments, "comments")
+    cardId = KanbanStore.SaveCard(boardId, 0, "API_ARCHIVED_CANARY", "API_HIDDEN_BODY", "Default", "Todo", "", "API_HIDDEN_LABEL", "")
+    CardContent.Save(boardId, cardId, 0, "comment", "", "API_HIDDEN_NOTE", 0, False, 0)
+    KanbanStore.ArchiveCard(boardId, cardId, True)
+  Endif
+  Print JSON.Encode(data)
 End

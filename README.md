@@ -3340,11 +3340,16 @@ current source tool formats now have native selected-export entries, checked
 against source EXTERNAL_EXPORT_FORMATS. Native model gaps and complete original
 UI/API/security parity remain pending.
 
-With `WITH_API=true`, GitHub/Gitea/Forgejo issue exports are available at
-`GET /api/boards/ID/export/github` (or `gitea` / `forgejo`). Private boards require
+With `WITH_API=true`, GitHub/Gitea/Forgejo/GitLab issue exports are available at
+`GET /api/boards/ID/export/github` (or `gitea` / `forgejo` / `gitlab`). Private boards require
 a valid bearer or source-compatible query credential and full-board read access;
 public boards follow the source anonymous path. The `fields=labels,dates,description` query selects sections;
 unknown/empty/structured selections fall back as
-source does. Native JSON is written directly so empty strings survive. Other 37
+source does. Native JSON is written directly so empty strings survive. Other 36
 format API routes, native field-security models, anonymization/security reporting
 and complete original UI/API/security parity remain pending.
+
+GitLab API selections independently gate `dates`, `people` and `comments`.
+Comments retain their timestamps when card dates are not selected; close dates
+appear only for terminal lists. Public note author display uses scoped entry
+provenance without granting a native browser session.

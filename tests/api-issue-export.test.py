@@ -20,22 +20,23 @@ def fixture(name,extra={}):return json.loads(subprocess.check_output([os.environ
 def main():
     f=fixture('AttachmentFixture');board=f['boardId'];owner,member,reader,assigned,admin=(login(name) for name in ['rest-other','rest-member','rest-file-reader','rest-file-assigned','rest-owner'])
     fixture('ImportExportPolicyFixture',{'WEBA_EXCHANGE_MODE':'save','WEBA_EXCHANGE_FLAGS':'{"import":false,"export":false}'})
-    fixture('IssueApiFixture',{'WEBA_ISSUE_BOARD':str(board),'WEBA_ISSUE_PERMISSION':'private'})
+    seeded=fixture('IssueApiFixture',{'WEBA_ISSUE_BOARD':str(board),'WEBA_ISSUE_PERMISSION':'private','WEBA_ISSUE_SEED':'1','WEBA_ISSUE_CARD':str(f['cardId'])})
     with sqlite3.connect(Path(os.environ['WEBA_DB_HOST'])/os.environ['WEBA_DB_NAME']) as db:
         db.execute('UPDATE kb_cards SET description=?,labels=?,due_day=? WHERE id=?',('<literal> Ω\nquote "', 'one,one, Ω','2026-11-14',f['cardId']))
         db.execute('UPDATE kb_lists SET title=? WHERE board_id=? AND title=?',('incomplete',board,'Todo'));db.commit()
-        items=[{'title':'Retained attachments','description':'<literal> Ω\nquote "','listTitle':'incomplete','labels':['one','one','Ω'],'dueAt':'2026-11-14T00:00:00.000Z'}, {'title':'Unassigned attachments','description':'','listTitle':'incomplete','labels':[]}]
+        items=[{'title':'Retained attachments','description':'<literal> Ω\nquote "','listTitle':'incomplete','labels':['one','one','Ω'],'dueAt':'2026-11-14T00:00:00.000Z','endAt':'2026-11-13T01:02:03.004Z','owner':'rest-file-assigned','assignees':['rest-member','rest-file-assigned'],'comments':seeded['comments']}, {'title':'Unassigned attachments','description':'','listTitle':'incomplete','labels':[]}]
         def snapshot():
             names=[row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table' AND (name LIKE 'kb_%' OR name IN ('api_tokens','import_export_settings','users'))")]
             return {name:sorted(db.execute('SELECT * FROM '+name).fetchall(),key=repr) for name in names}
-        for fmt in ['github','gitea','forgejo']:
+        for fmt in ['github','gitea','forgejo','gitlab']:
             url=f'/api/boards/{board}/export/{fmt}'
             status,data,headers=call(url,token=owner);assert status==200,(status,data)
             assert headers['Cache-Control']=='no-store' and headers['X-Content-Type-Options']=='nosniff'
             before=snapshot()
-            for fields in [None,'','unknown','labels','dates','description','people','labels,dates','labels,description','dates,description','labels,dates,description','\u00a0labels\ufeff, unknown','board-header','sort,scrum','Labels']:
+            for fields in [None,'','unknown','labels','dates','description','people','labels,dates','labels,description','dates,description','labels,dates,description','\u00a0labels\ufeff, unknown','board-header','sort,scrum','Labels','comments','people,comments','dates,comments','description,people,comments','labels,dates,people,comments']:
                 query='' if fields is None else '?fields='+urllib.parse.quote(fields)
                 status,data=pair(url+query,token=reader);assert status==200,(status,data)
+                assert 'API_HIDDEN_' not in json.dumps(data) and 'API_ARCHIVED_' not in json.dumps(data)
                 cases.append({'format':fmt,'fields':fields,'items':items,'actual':data})
             for query in ['?fields=labels&fields=dates','?fields[0]=labels','?fields=labels&fields[x]=dates']:
                 status,data=pair(url+query,token=owner);assert status==200
@@ -54,6 +55,12 @@ def main():
             assert pair(f'/api/boards/99999999/export/{fmt}?authToken=bad')==(404,{'error':'Not found'})
             assert pair(f'/api/boards/0{board}/export/{fmt}',token=owner)==(404,{'error':'Not found'})
             assert snapshot()==before
+            if fmt=='gitlab':
+                db.execute('UPDATE kb_lists SET title=? WHERE board_id=? AND title=?',('Doing',board,'incomplete'));db.commit()
+                status,data=pair(url,token=owner);assert status==200
+                assert all(row['state']=='opened' and 'closed_at' not in row for row in data)
+                cases.append({'format':fmt,'fields':None,'items':[{**item,'listTitle':'Doing'} for item in items],'actual':data})
+                db.execute('UPDATE kb_lists SET title=? WHERE board_id=? AND title=?',('incomplete',board,'Doing'));db.commit()
         url=f'/api/boards/{board}/export/github'
         role_flags=[entry['flag'] for entry in json.loads((Path(__file__).parent.parent/'WeKan/.public/api-member-roles.json').read_text())['roles'] if entry.get('flag')]
         assert len(role_flags)==8
@@ -84,6 +91,11 @@ def main():
             status,data=pair(url+suffix);assert status==200,(status,data)
             cases.append({'format':'github','fields':None,'items':items,'actual':data})
         assert pair(url,token=assigned)[0]==200
+        gitlab_url=f'/api/boards/{board}/export/gitlab'
+        status,data=pair(gitlab_url+'?fields=comments&authToken=bad');assert status==200
+        cases.append({'format':'gitlab','fields':'comments','items':items,'actual':data})
+        status,data=pair(gitlab_url+'?authToken=bad');assert status==200
+        cases.append({'format':'gitlab','fields':None,'items':items,'actual':data})
         assert snapshot()==before
         db.execute(f"CREATE TRIGGER issue_public AFTER UPDATE OF title ON kb_boards WHEN NEW.id={board} BEGIN UPDATE kb_board_visibility SET permission='private' WHERE board_id={board}; END");db.commit();before=snapshot()
         assert pair(url)==(403,{'error':'Forbidden'});assert snapshot()==before
@@ -99,7 +111,7 @@ def main():
         db.execute('ALTER TABLE kb_cards RENAME COLUMN opaque_export_canary TO labels');db.commit()
     Path(os.environ['WEBA_TEST_PROJECT'],'issue-export-cases.json').write_text(json.dumps(cases))
     Path(os.environ['WEBA_TEST_PROJECT'],'issue-export-roles.json').write_text(json.dumps(role_cases))
-    print('Issue export HTTP: three source routes, public/private/query-bearer auth precedence, field selections, archive reads, no writes, assigned-only/global-admin denial, all 256 raw role sets, late member/token/policy/public rollback and opaque failure passed')
+    print('Issue export HTTP: four source routes, public/private/query-bearer auth precedence, field selections, archive reads, no writes, assigned-only/global-admin denial, all 256 raw role sets, late member/token/policy/public rollback and opaque failure passed')
 try:main()
 except Exception as error:
     message=traceback.format_exc()+"\nLast response: "+repr(last)

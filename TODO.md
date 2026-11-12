@@ -193,7 +193,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   All 40 current source tool-format entries are implemented and audited against
   EXTERNAL_EXPORT_FORMATS; full semantic/model parity remains open. Original
   GitHub/Gitea/Forgejo source-shaped HTTP export routes, field selections and
-  public/private final guards are recorded in CHANGELOG.md; remaining 37
+  public/private final guards are recorded in CHANGELOG.md; GitLab GET export
+  with independently gated notes/people/dates and scoped public authors is
+  recorded there too; remaining 36
   external-format API routes, native field-model guards, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded

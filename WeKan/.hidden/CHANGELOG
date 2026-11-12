@@ -1,4 +1,9 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- GitLab export API: Add source GET route with independent section gating,
+  notes/people/close dates and scoped anonymous public note authors. Verify
+  original collector/formatter HTTP equality and shared security boundaries;
+  other routes/model/security parity remain pending.
+
 - Issue export API: Add source GitHub/Gitea/Forgejo GET routes with field
   selection, exact native JSON bytes, public/private/token ordering and final
   locked guards. Verify source DTOs, all raw-role sets and rollback/no-write

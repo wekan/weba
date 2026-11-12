@@ -2158,3 +2158,26 @@ unchanged canExportBoardData/isAssignedOnlyMember. Visibility/membership-to-nati
 SQL mapping is explicit. Credential host tests exercise actual CGI scrubbing and
 precedence for every supported export path; WITH_API=false remains authoritative.
 Full original route/model/UI/API/security parity is still pending.
+
+GitLab now shares the external issue API boundary at
+`GET /api/boards/:id/export/gitlab`, with explicit formatter dispatch. Its native
+formatter accepts optional source field selections; selected UI exports keep the
+all-fields default. Description and labels gate as before, card dates gate both
+due/close fields, people gate all assignees, and comments gate notes independently
+of card dates. Public note authors use the already board/card-scoped entry's
+provenance after `BoardAccess.RequireCard`; the workspace author helper's native
+session requirement stays unchanged. Repeated assignees, whitespace notes,
+opened/closed states and native retired-author display behavior are preserved.
+Native creator/creation/Scrum/anonymization/field-security models remain pending.
+
+Issue API fixtures now include note timestamps/whitespace, repeated people,
+terminal end dates, an opened state and archived card/note/label canaries.
+`issue-export-rest-conformance.test.cjs` runs unchanged source collect with
+explicit neutral SQL-document/label-ID/user-name adapters, empty planning and
+no-op anonymization, then unchanged formatters. All 99 actual HTTP bodies across
+four routes match source, including selected sections and anonymous public
+GitLab notes/full output. All 256 raw-role outcomes still match unchanged source
+export-access helpers. CGI credential tests include GitLab; WITH_API=false,
+no-write, policy-before-lookup, late scope/token/policy/public rollback and opaque
+failure cases remain covered. Other 36 format API renderers and complete original
+model/UI/API/security parity remain pending.

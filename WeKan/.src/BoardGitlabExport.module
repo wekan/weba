@@ -38,7 +38,7 @@ Private Function ClosedList(title As String) As Boolean
   Return False
 End
 
-Public Function Build(boardId As Integer, db As Connection) As String
+Public Function Build(boardId As Integer, db As Connection, Optional wanted As Collection) As String
   Dim output As New Variant[]
   Dim rows As Result
   Dim entries As Result
@@ -59,41 +59,50 @@ Public Function Build(boardId As Integer, db As Connection) As String
     closed = ClosedList(TextValue(rows!list_title))
     item = New Collection
     item.Add(TextValue(rows!title), "title")
-    item.Add(TextValue(rows!description), "description")
+    item.Add(If(ExternalExportFields.Wants(wanted, "description"), TextValue(rows!description), ""), "description")
     item.Add(If(closed, "closed", "opened"), "state")
     labels = New String[]
-    For Each label In Split(TextValue(rows!labels), ",")
-      label = TrimText(label)
-      If label Then labels.Add(label)
-    Next
+    If ExternalExportFields.Wants(wanted, "labels") Then
+      For Each label In Split(TextValue(rows!labels), ",")
+        label = TrimText(label)
+        If label Then labels.Add(label)
+      Next
+    Endif
     item.Add(labels, "labels")
-    dates = CardDates.ReadDates(boardId, rows!id)
-    If dates.Exist("dueAt") Then item.Add(CardDates.Iso(dates["dueAt"]), "due_date")
-    If closed And dates.Exist("endAt") Then item.Add(CardDates.Iso(dates["endAt"]), "closed_at")
-    people = BoardAccess.Assignees(boardId, rows!id)
-    For Each person In BoardAccess.CardMembers(boardId, rows!id)
-      people.Add(person)
-    Next
-    assigned = New Variant[]
-    For Each person In people
-      entry = New Collection
-      entry.Add(person, "username")
-      assigned.Add(entry)
-    Next
-    If assigned.Count Then item.Add(assigned, "assignees")
+    If ExternalExportFields.Wants(wanted, "dates") Then
+      dates = CardDates.ReadDates(boardId, rows!id)
+      If dates.Exist("dueAt") Then item.Add(CardDates.Iso(dates["dueAt"]), "due_date")
+      If closed And dates.Exist("endAt") Then item.Add(CardDates.Iso(dates["endAt"]), "closed_at")
+    Endif
+    If ExternalExportFields.Wants(wanted, "people") Then
+      people = BoardAccess.Assignees(boardId, rows!id)
+      For Each person In BoardAccess.CardMembers(boardId, rows!id)
+        people.Add(person)
+      Next
+      assigned = New Variant[]
+      For Each person In people
+        entry = New Collection
+        entry.Add(person, "username")
+        assigned.Add(entry)
+      Next
+      If assigned.Count Then item.Add(assigned, "assignees")
+    Endif
     notes = New Variant[]
-    entries = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, rows!id, "comment")
-    For Each entries
-      entry = New Collection
-      entry.Add(TextValue(entries!body), "body")
-      author = New Collection
-      author.Add(CardContent.AuthorName(boardId, rows!id, "entry", entries!id), "username")
-      entry.Add(author, "author")
-      If Not IsNull(entries!created_at) Then entry.Add(CardDates.Iso(ItemChanges.Epoch(entries!created_at)), "created_at")
-      entry.Add(False, "system")
-      notes.Add(entry)
-    Next
-    If notes.Count Then item.Add(notes, "notes")
+    If ExternalExportFields.Wants(wanted, "comments") Then
+      entries = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", boardId, rows!id, "comment")
+      For Each entries
+        entry = New Collection
+        entry.Add(TextValue(entries!body), "body")
+        author = New Collection
+        BoardAccess.RequireCard(boardId, rows!id)
+        author.Add(RetiredAuthors.DisplayName("entry", entries!id, TextValue(entries!author)), "username")
+        entry.Add(author, "author")
+        If Not IsNull(entries!created_at) Then entry.Add(CardDates.Iso(ItemChanges.Epoch(entries!created_at)), "created_at")
+        entry.Add(False, "system")
+        notes.Add(entry)
+      Next
+      If notes.Count Then item.Add(notes, "notes")
+    Endif
     output.Add(item)
   Next
   Return JSON.Encode(output) & Chr(10)

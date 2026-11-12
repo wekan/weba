@@ -19,7 +19,7 @@ Private Sub Check(boardId As Integer, actor As String, isPublic As Boolean)
   ImportExportPolicy.RequireExport()
 End
 
-Public Function Read(reference As String, fields As String) As Collection
+Public Function Read(reference As String, fields As String, Optional format As String = "github") As Collection
   Dim boardId As Integer
   Dim actor As String
   Dim isPublic As Boolean
@@ -30,6 +30,7 @@ Public Function Read(reference As String, fields As String) As Collection
   Dim failure As String
   If Env["WEBA_API_REQUEST"] <> "1" Then Return Result(403, "Forbidden")
   ImportExportPolicy.RequireExport()
+  If ["github", "gitea", "forgejo", "gitlab"].Find(format) < 0 Then Return Result(404, "Not found")
   boardId = AttachmentExport.BoardId(reference)
   db = WebDatabase.OpenConnection()
   If boardId <= 0 Or Not db.Find("kb_boards", "id=&1", boardId).Available Then Return Result(404, "Not found")
@@ -53,7 +54,11 @@ Public Function Read(reference As String, fields As String) As Collection
   ImportExportPolicy.Lock()
   db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
   Check(boardId, actor, isPublic)
-  text = BoardGithubExport.Build(boardId, db, ExternalExportFields.Parse(fields))
+  If format = "gitlab" Then
+    text = BoardGitlabExport.Build(boardId, db, ExternalExportFields.Parse(fields))
+  Else
+    text = BoardGithubExport.Build(boardId, db, ExternalExportFields.Parse(fields))
+  Endif
   Check(boardId, actor, isPublic)
   DatabaseTransactions.Commit(db)
   transaction = False

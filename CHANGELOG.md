@@ -2,6 +2,21 @@
 
 This work adds the following features and fixes:
 
+- Add GET `/api/boards/:id/export/gitlab` through the locked public/private
+  issue-export service. Gate description, labels, card dates, people and comments
+  independently as source collect does; retain note timestamps without card
+  dates, repeated assignees, terminal-only close dates and empty strings.
+  Serialize public note authors from scoped entries after card access checks,
+  preserving workspace session guards. Compare 99 actual HTTP bodies across all
+  four issue routes with unchanged source parsing/collect/gating/formatters,
+  plus 256 raw-role outcomes with source export access. Archive/no-write/late
+  authority-policy rollback and opaque failure checks remain in place.
+  Complete host tests pass (70 Python tests, 80 archive/scope snapshots), as do
+  both API builds and all 45 source/packaged selected downloads with cached
+  scope checks.
+  Remaining 36 API format renderers, native models, anonymization/security
+  reporting and full original parity stay pending. Thanks to xet7.
+
 - Add source-path GET `/api/boards/:id/export/github`, `/gitea` and `/forgejo`
   issue exports. Preserve source field-selection fallbacks/allowlist, empty
   strings and arrays with direct native JSON bytes, and public-before-token
