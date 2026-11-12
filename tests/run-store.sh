@@ -14,7 +14,7 @@ for test in AuthTest UserDeletionTest SessionGenerationTest NativeAuthTest Passw
   cp "$root/tests/$test.module" "$project/.src/$test.module"
   if [ "$test" = VikunjaExportTest ]; then cp "$root/tests/VikunjaCasesTest.module" "$project/.src/"; fi
   if [ "$test" = OpenProjectExportTest ]; then cp "$root/tests/OpenProjectCasesTest.module" "$project/.src/"; fi
-  if [ "$test" = GithubExportTest ]; then cp "$root/tests/GithubCasesTest.module" "$root/tests/GithubStatesTest.module" "$project/.src/"; fi
+  if [ "$test" = GithubExportTest ]; then cp "$root/tests/IssueExportFixture.module" "$root/tests/GithubCasesTest.module" "$root/tests/GithubStatesTest.module" "$project/.src/"; fi
   if [ "$test" = DeckExportTest ]; then cp "$root/tests/DeckCasesTest.module" "$project/.src/"; fi
   if [ "$test" = NotionExportTest ]; then cp "$root/tests/NotionCasesTest.module" "$project/.src/"; fi
   if [ "$test" = QuireExportTest ]; then cp "$root/tests/QuireCasesTest.module" "$root/tests/QuireMatrixTest.module" "$project/.src/"; fi
@@ -25,6 +25,7 @@ for test in AuthTest UserDeletionTest SessionGenerationTest NativeAuthTest Passw
   "${GBC:-gbc3}" -j 1 -a "$project"
   if [ "$test" = GithubExportTest ]; then
     WEBA_TEST_GITHUB_PROJECT="$project" "${NODE:-node}" "$root/tests/github-export-conformance.test.cjs"
+    WEBA_TEST_GITHUB_PROJECT="$project" "${NODE:-node}" "$root/tests/gitea-export-conformance.test.cjs"
   elif [ "$test" = OpenProjectExportTest ]; then
     WEBA_TEST_OPENPROJECT_PROJECT="$project" "${NODE:-node}" "$root/tests/openproject-export-conformance.test.cjs"
   elif [ "$test" = DeckExportTest ]; then

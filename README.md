@@ -3295,3 +3295,9 @@ state, label objects and optional due date. The state rule matches terminal-name
 substrings, so `incomplete` and `undone` are closed just as in WeKan's source.
 Archived cards are excluded; unrelated custom fields and WIP settings are not
 read. Remaining tools and complete original UI/API/security parity stay pending.
+
+Selected boards can export **Gitea issue JSON** in `wekan-boards-gitea.zip`.
+Gitea uses the same source issue formatter as GitHub, with its own selected-export
+action and download name. The same scoped active-card, full-read, export-policy,
+session and cached-publication checks apply. Remaining tools and complete original
+UI/API/security parity stay pending.

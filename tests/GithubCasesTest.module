@@ -44,7 +44,7 @@ Public Sub Main()
     sample.Add(board, "board")
     sample.Add(lists, "lists")
     sample.Add(items, "items")
-    sample.Add(BoardTransfer.ExportActiveBoardGithub(boardId), "actual")
+    sample.Add(IssueExportFixture.Build(boardId), "actual")
     result.Add(sample)
   Next
   Print JSON.Encode(result)

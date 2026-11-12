@@ -1983,3 +1983,16 @@ malformed custom/WIP independence, archive exclusion, disabled export and
 assigned-only full-read denial. The browser harness downloads exact ordered
 per-board JSON and compares to source in both source and packaged applications.
 Complete original import routes/model options/security integration remain pending.
+
+Gitea selected export has a distinct `ExportActiveBoardGitea` locked transfer
+entry and batch/UI/download action. `ExportChecked` delegates to the existing
+native issue formatter because unchanged `formatters.github` and
+`formatters.gitea` share `githubLike`. `IssueExportFixture` dispatches only test
+fixtures to the real selected/direct entry. The Gitea conformance runner creates
+fresh SQLite data beneath the task-local test project, runs the same 27 rich,
+empty/legacy/missing-list and state/date/Unicode cases, and compares to the
+unchanged Gitea alias. GitHub still runs independently with its default fixture.
+Test dispatch flags are confined to test files and do not enter production.
+The browser checks ordered Gitea filenames and exact source JSON in source and
+packaged applications; archive regression includes owner and read-only Gitea.
+Complete original route/options/model/security parity remains pending.

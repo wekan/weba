@@ -1,0 +1,12 @@
+' Shared fixture dispatch only; production exports do not read test flags.
+Public Function FormatName() As String
+  Dim value As String = Env["WEBA_TEST_ISSUE_FORMAT"]
+  If Not value Then Return "github"
+  If value <> "gitea" Then Error.Raise("Unknown issue fixture format")
+  Return value
+End
+
+Public Function Build(boardId As Integer) As String
+  If FormatName() = "gitea" Then Return BoardTransfer.ExportActiveBoardGitea(boardId)
+  Return BoardTransfer.ExportActiveBoardGithub(boardId)
+End

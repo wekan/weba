@@ -5292,3 +5292,7 @@ End
 Public Sub ExportSelectedGithub_Click()
   RunSelectedExport("github")
 End
+
+Public Sub ExportSelectedGitea_Click()
+  RunSelectedExport("gitea")
+End

@@ -136,19 +136,19 @@ Public Sub Main()
   selection = BoardSelection.NewState()
   BoardSelection.SetActive(selection, True)
   BoardSelection.AddVisible(selection, [boardId])
-  batch = BoardBatchExport.NewBatch(selection, "github")
+  batch = BoardBatchExport.NewBatch(selection, IssueExportFixture.FormatName())
   BoardBatchExport.Run(batch, selection)
   data["actual"] = BoardBatchExport.Files(batch)[0]["content"]
   If BoardBatchExport.Files(batch)[0]["name"] <> "board-" & CStr(boardId) & ".json" Then Error.Raise("Invalid Github filename")
   ImportExportPolicy.Save(False, True)
-  Try BoardTransfer.ExportActiveBoardGithub(boardId)
+  Try IssueExportFixture.Build(boardId)
   denied = Error
   If Not denied Then Error.Raise("Github ignored disabled export")
   ImportExportPolicy.Save(False, False)
   BoardAccess.SetMember(boardId, "github-other", "normal-assigned-only")
   Session["username"] = "github-other"
   Session["auth_generation"] = WebDatabase.SessionGeneration("github-other")
-  Try BoardTransfer.ExportActiveBoardGithub(boardId)
+  Try IssueExportFixture.Build(boardId)
   denied = Error
   If Not denied Then Error.Raise("Assigned-only Github export allowed")
   Print JSON.Encode(data)

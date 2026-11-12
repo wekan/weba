@@ -2,6 +2,18 @@
 
 This work adds the following features and fixes:
 
+- Add Gitea issue-array JSON as the thirty-fourth selected-board tool export.
+  Download `wekan-boards-gitea.zip` through its own scoped action and private
+  batch path. Reuse the native issue formatter because unchanged source uses
+  the same formatter for GitHub and Gitea. Preserve literal text, exact terminal
+  substring states, repeated labels, optional dates and active/full-read/policy/
+  session/cached-scope guards. Shared fixtures run with fresh Gitea data:
+  27 Gitea outputs and all 27 GitHub regressions match their source aliases.
+  Complete host tests pass, including 69 Python tests and 68 archive/scope
+  snapshots; all 39 source/packaged browser downloads and cached revocation/
+  regrant checks pass. Six remaining tool formats and complete original UI/API/security parity stay
+  pending. Thanks to xet7.
+
 - Add GitHub issue-array JSON as the thirty-third selected-board tool export.
   Download `wekan-boards-github.zip` with source literal titles/bodies,
   ASCII-insensitive terminal-list substring states, repeated label objects and
