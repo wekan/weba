@@ -124,7 +124,7 @@ Private Function CardRow(card As Result, index As Integer, listName As String) A
   values["Is All Day"] = If(hasPlanning, If(allDay, "true", "false"), "")
   values["Is Floating"] = "false"
   values["Column Name"] = columnName
-  values["Column Order"] = If($columns.Exist(columnName), $columns[columnName], "0")
+  values["Column Order"] = If($columns.Exist("title:" & columnName), $columns["title:" & columnName], "0")
   values["View Mode"] = "kanban"
   values["taskId"] = $ids[CStr(card!id)]
   values["parentId"] = ParentId(card!id)
@@ -152,10 +152,10 @@ Public Function Build(boardId As Integer, db As Connection) As String
   If Not title Then title = "WeKan board"
   lists = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
   For Each lists
-    If Not $columns.Exist(TextValue(lists!title)) Then $columns.Add(CStr(index), TextValue(lists!title))
+    If Not $columns.Exist("title:" & TextValue(lists!title)) Then $columns.Add(CStr(index), "title:" & TextValue(lists!title))
     Inc index
   Next
-  cards = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  cards = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
   index = 0
   For Each cards
     $ids.Add(CStr(index + 1), CStr(cards!id))
@@ -168,7 +168,7 @@ Public Function Build(boardId As Integer, db As Connection) As String
     headerCells.Add(Quoted(header))
   Next
   lines.Add(headerCells.Join(","))
-  cards = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  cards = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id AND " & ListDeletion.LiveSql("list", "l") & " LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
   index = 0
   For Each cards
     lines.Add(CardRow(cards, index, title))

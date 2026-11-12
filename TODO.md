@@ -80,12 +80,11 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   Original callback outcome comparisons expand from 52 to 156 single/multi/mixed
   cases. Native selection and confirmed sidebar actions now use this service;
   no new public HTTP route is exposed. Original full callbacks remain open.
-- Next export regression: verify and fix retained cards linked to tombstoned
-  lists in Deck, Markdown, Leo and Kanboard. OPML now filters live list metadata;
-  those four renderers still join the physical list row without its live filter.
-  Compare their blank-title fallback/container membership with unchanged source
-  collect, including a live duplicate title, and cover API and selected exports.
-  Audit the other native formatters for the same lookup/state derivation gap.
+- Completed the live-list metadata regression audit across native external
+  exports: tombstoned list titles no longer affect grouping/state, blank titles
+  remain valid, and retained card list IDs are preserved. The 400-response API,
+  240 all-format selected descriptor pair and original collector evidence is
+  recorded in CHANGELOG.md; broader field models/security parity remain open.
 
 - Next: remaining copy-option models/controls, selected-export API/model/
   security parity, Home/group targets and original

@@ -1,4 +1,10 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- External export list metadata: Filter tombstoned list joins in renderer and
+  shared snapshots without changing retained card IDs. Fix wrong issue state,
+  grouping, Org mode blank-title binding and TickTick empty map keys. Verify
+  original API responses and complete selected descriptor equivalence across
+  all tool formats; broader model/security parity remains open.
+
 - OPML export API: Add original XML response bytes/type and independently
   selected notes/checklists. Preserve escaped attribute whitespace, completion
   and empty nodes; match blank/deleted list metadata and terminal case rules.

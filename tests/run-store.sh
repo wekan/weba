@@ -12,6 +12,18 @@ for test in AuthTest UserDeletionTest SessionGenerationTest NativeAuthTest Passw
   cp -R "$root/WeKan/.src" "$root/WeKan/.public" "$project/"
   cp "$root/WeKan/.project" "$project/"
   cp "$root/tests/$test.module" "$project/.src/$test.module"
+  if [ "$test" = ExternalArchiveExportTest ]; then
+    # Only the isolated fixture copy: freeze export-time fallbacks so complete
+    # descriptors can be compared without hiding any data fields.
+    python3 - "$project/.src/ItemChanges.module" <<'PY_CLOCK'
+from pathlib import Path
+import sys
+p=Path(sys.argv[1]);text=p.read_text()
+old="Public Function UtcNow() As Long\n  Return Epoch(Now)\nEnd"
+assert text.count(old)==1
+p.write_text(text.replace(old,"Public Function UtcNow() As Long\n  Return 1767225600000\nEnd"))
+PY_CLOCK
+  fi
   if [ "$test" = VikunjaExportTest ]; then cp "$root/tests/VikunjaCasesTest.module" "$project/.src/"; fi
   if [ "$test" = OpenProjectExportTest ]; then cp "$root/tests/OpenProjectCasesTest.module" "$project/.src/"; fi
   if [ "$test" = GithubExportTest ]; then cp "$root/tests/IssueExportFixture.module" "$root/tests/GithubCasesTest.module" "$root/tests/GithubStatesTest.module" "$project/.src/"; fi

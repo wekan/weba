@@ -3397,3 +3397,13 @@ outlines follow the original formatter. Duplicate/blank list titles use source
 grouping, and missing/deleted list metadata resolves through blank-title matching.
 Shared credential, policy, full-board and final transaction guards apply before
 returning the document.
+
+External exports resolve list metadata only from live lists, preserving retained
+card list IDs when a physical list is tombstoned or missing. This prevents deleted
+terminal names from changing issue state or duplicate titles from regrouping
+cards. Blank-title lookup follows source behavior, and TickTick accepts blank
+list names. Coverage includes 400 source-compared API responses and 240 complete
+selected-descriptor pairs across all 40 formats, owner/readonly roles and live
+duplicate/blank/missing-title cases. The descriptor fixture freezes only its
+isolated copy's export clock; generic CSV/Excel archive-retention adapters keep
+their existing behavior. Full native model/UI/API/security parity remains open.

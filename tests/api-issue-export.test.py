@@ -80,6 +80,15 @@ def main():
             assert pair(f'/api/boards/99999999/export/{fmt}?authToken=bad')==(404,{'error':'Not found'})
             assert pair(f'/api/boards/0{board}/export/{fmt}',token=owner)==(404,{'error':'Not found'})
             assert snapshot()==before
+            other_list=next(row for row in source_lists if row['title']=='Doing')
+            for live_title in ['incomplete','','Doing']:
+                db.execute('UPDATE kb_lists SET title=? WHERE id=?',(live_title,int(other_list['_id'])))
+                db.execute("INSERT INTO kb_deleted_items(board_id,kind,item_id,batch_id,actor,deleted_at) VALUES(?,'list',?,0,'rest-other',1)",(board,f['listId']));db.commit();before_deleted=snapshot()
+                status,data=pair(url,token=reader);assert status==200
+                assert snapshot()==before_deleted
+                cases.append({'format':fmt,'fields':None,'items':[{**item,'listTitle':''} for item in items],'lists':[{**row,'title':live_title if row['_id']==other_list['_id'] else row['title']} for row in source_lists if row['_id']!=str(f['listId'])],'actual':data})
+                db.execute("DELETE FROM kb_deleted_items WHERE board_id=? AND kind='list' AND item_id=?",(board,f['listId']))
+                db.execute('UPDATE kb_lists SET title=? WHERE id=?',('Doing',int(other_list['_id'])));db.commit()
             if fmt=='trello':
                 db.execute('DELETE FROM kb_card_lists WHERE board_id=? AND card_id=?',(board,f['cardId']));db.commit()
                 status,data=pair(url,token=owner);assert status==200 and 'idList' not in data['cards'][0]

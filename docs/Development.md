@@ -2317,3 +2317,26 @@ schema and opaque missing-description checks. Shared 256-role/credential tests
 remain. SQL IDs/label names/lane IDs/entry adapters, empty planning and no-op
 anonymization remain explicit; remaining 30 API renderers, native field models/
 security reporting and complete original UI/API/security parity remain open.
+
+The live-list regression audit reproduced a GitHub closed/open mismatch when
+cards retained a reference to a tombstoned terminal-named list. All 24 direct
+external renderer list joins and BoardExternalSnapshot now apply the list's live
+predicate in the LEFT JOIN. Card list IDs stay intact. Org mode also normalizes
+blank lookup parameters and groups COALESCE titles; TickTick prefixes internal
+map keys so a valid blank source list title cannot raise a Void key error.
+
+Thirty new API cases cover every current route with a live duplicate, blank or
+unmatched title: all 400 responses match unchanged source collect/formatters,
+with per-case no-write snapshots and the existing 256-role/security checks.
+The native archive fixture additionally compares 240 complete descriptor pairs
+across 40 formats, two roles and three title contexts. Each pair retains identical
+card links/list IDs while removing only the already tombstoned physical row.
+Six executions of unchanged collect prove equivalent live metadata and blank
+fallback with the retained list ID under explicit neutral cache adapters.
+Only the disposable fixture copy of ItemChanges.UtcNow is fixed, before compile,
+so fallback creation/export timestamps are stable without dropping output fields.
+Native production clocks stay unchanged. Entry/history counts and card links are
+checked after the pairs; existing 80 archive snapshots and generic CSV/Excel
+archive behavior remain covered. Source custom/native field models, neutral
+anonymization/security reporting and complete original UI/API/security parity
+remain separate open work, along with 30 API renderers.

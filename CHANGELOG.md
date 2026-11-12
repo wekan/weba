@@ -2,6 +2,24 @@
 
 This work adds the following features and fixes:
 
+- Exclude tombstoned list metadata from native external exports while keeping
+  retained card list IDs. Fix deleted titles affecting issue open/closed state,
+  container grouping and descriptor metadata in 24 renderer modules and the
+  shared snapshot used by nine formats. Match source blank-title fallback;
+  repair Org mode blank-title binding and TickTick's empty-key map crash.
+  Reproduce the old GitHub closed/open mismatch, then compare 400 HTTP responses
+  across ten routes with unchanged source collector/formatters and 256 roles.
+  Verify 240 complete selected-export descriptor pairs across all 40 formats,
+  owner/readonly actors and duplicate/blank/missing live titles against the
+  same dangling list IDs. Freeze only the isolated fixture copy's clock; no
+  output fields are masked. Retained links/entries/history and existing archive
+  behavior remain covered. Full host tests pass (70 Python tests), as do both
+  API builds, all 45 source/packaged selected browser downloads with cached
+  scope checks and 25 original TickTick/Markdown/Leo/OPML/round-trip checks.
+  Remaining 30 API renderers, native field models/
+  anonymization/security reporting and full original parity remain pending.
+  Thanks to xet7.
+
 - Add GET `/api/boards/:id/export/opml` through the locked external-export
   service with source `text/x-opml; charset=utf-8` bytes. Independently select
   descriptions and checklists; preserve escaped attribute whitespace, notes,

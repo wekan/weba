@@ -17,6 +17,11 @@ Public Sub Main()
   Dim retained As Result
   Dim before As Integer
   Dim historyBefore As Integer
+  Dim listId As Integer
+  Dim otherListId As Integer
+  Dim mode As String
+  Dim title As String
+  Dim listSnapshots As New Variant[]
   WebDatabase.Register("external-archive-owner", "x")
   WebDatabase.Register("external-archive-reader", "x")
   Session["username"] = "external-archive-owner"
@@ -63,6 +68,44 @@ Public Sub Main()
   If Not retained.Available Then Error.Raise("External export deleted archived retention")
   If Not CBool(retained!archived) Or retained!description <> "SECRET_ARCHIVED_BODY_CANARY" Then Error.Raise("External export changed archived content/state")
   If WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_entries")!total <> before Or WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_history")!total <> historyBefore Then Error.Raise("External export changed retained entries/history")
+  listId = WebDatabase.OpenConnection().Find("kb_lists", "board_id=&1 AND title=&2", boardId, "Todo")!id
+  otherListId = WebDatabase.OpenConnection().Find("kb_lists", "board_id=&1 AND title=&2", boardId, "Doing")!id
+  ' Keep card links and IDs intact; source live-list lookup sees the same docs
+  ' whether the tombstoned physical row exists or has been removed.
+  For Each actor In ["external-archive-owner", "external-archive-reader"]
+    Session["username"] = actor
+    Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+    selection = BoardSelection.NewState()
+    BoardSelection.SetActive(selection, True)
+    BoardSelection.AddVisible(selection, [boardId])
+    For Each mode In ["duplicate", "blank", "missing"]
+      title = If(mode = "duplicate", "Todo", If(mode = "blank", "", "Doing"))
+      WebDatabase.OpenConnection().Exec("UPDATE kb_lists SET title=&1 WHERE id=&2", title, otherListId)
+      WebDatabase.OpenConnection().Exec("INSERT INTO kb_deleted_items(board_id,kind,item_id,batch_id,actor,deleted_at) VALUES(&1,'list',&2,0,'external-archive-owner',1)", boardId, listId)
+      For Each format In formats
+        batch = BoardBatchExport.NewBatch(selection, format)
+        Try BoardBatchExport.Run(batch, selection)
+        If Error Then Error.Raise(actor & "/" & mode & "/" & format & ": " & Error.Text)
+        item = New Collection
+        item["actor"] = actor
+        item["mode"] = mode
+        item["format"] = format
+        item["present"] = BoardBatchExport.Files(batch)[0]["content"]
+        WebDatabase.OpenConnection().Exec("DELETE FROM kb_lists WHERE id=&1", listId)
+        batch = BoardBatchExport.NewBatch(selection, format)
+        Try BoardBatchExport.Run(batch, selection)
+        If Error Then Error.Raise(actor & "/" & mode & "/" & format & ": " & Error.Text)
+        item["removed"] = BoardBatchExport.Files(batch)[0]["content"]
+        WebDatabase.OpenConnection().Exec("INSERT INTO kb_lists(id,board_id,lane,title,sort_order) VALUES(&1,&2,'Default','Todo',0)", listId, boardId)
+        listSnapshots.Add(item)
+      Next
+      WebDatabase.OpenConnection().Exec("DELETE FROM kb_deleted_items WHERE board_id=&1 AND kind='list' AND item_id=&2", boardId, listId)
+    Next
+  Next
+  WebDatabase.OpenConnection().Exec("UPDATE kb_lists SET title='Doing' WHERE id=&1", otherListId)
+  If WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_entries")!total <> before Or WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_history")!total <> historyBefore Then Error.Raise("Live-list export changed entries/history")
+  If WebDatabase.OpenConnection().Find("kb_card_lists", "board_id=&1 AND card_id=&2", boardId, active)!list_id <> listId Then Error.Raise("Live-list export rewrote retained card link")
+  result["listSnapshots"] = listSnapshots
   result["formats"] = formats
   result["snapshots"] = snapshots
   Print JSON.Encode(result)
