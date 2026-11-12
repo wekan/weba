@@ -2,6 +2,19 @@
 
 This work adds the following features and fixes:
 
+- Add Kanri as the seventeenth selected-board external-tool export. Download
+  `wekan-boards-kanri.zip` with ordered strict `board-ID.json` entries matching
+  the parent single-board shape. Preserve stable IDs, empty/duplicate columns,
+  literal card text, hex/default colors, UTC due dates, flattened checklist tasks
+  and per-board shared native tags. Write explicit null background/absent due
+  dates; use the source export-time board-date fallback. Native due completion
+  stays false and native label colors remain absent. Reuse the private retry
+  queue and locked active/full-read/export-policy guards. Complete host tests
+  pass (69 Python tests plus native/HTTP/JavaScript checks); focused source and
+  packaged browser runs validate all 22 exact downloads and policy refusal.
+  Rich native mapping and eight parent contract checks pass. Other formats and
+  complete original UI/API/security suites remain pending. Thanks to xet7.
+
 - Add Nullboard as the sixteenth selected-board external-tool export. Download
   one `wekan-boards-nullboard.zip` with ordered strict `board-ID.nbx` entries.
   Match the parent compact JSON board shape, format 20190412, nonzero export

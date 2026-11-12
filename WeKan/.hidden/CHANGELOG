@@ -1,4 +1,10 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Kanri selected export: Add strict single-board JSON ZIPs with stable IDs,
+  ordered columns, card colors/due dates, flattened tasks and shared used tags.
+  Preserve explicit JSON nulls and source export-time date fallback; reuse
+  private queue and locked policy/scope checks.
+  Full host and source/packaged 22-download checks pass.
+
 - Nullboard selected export: Add strict NBX ZIP downloads with the parent board/
   list/note shape, raw flags and readable checklists. Preserve empty/duplicate
   lists, omit unsupported metadata and reuse locked private batch guards.

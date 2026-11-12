@@ -2326,6 +2326,17 @@ and attachments are omitted because Nullboard notes have no corresponding
 fields. Native boards have no creation timestamp, so the parent formatter's
 fallback export epoch is used as the required board ID.
 
+Kanri produces `wekan-boards-kanri.zip` with one strict `board-ID.json`
+single-board export per selected board. Preserve stable native board/list/card
+IDs, empty and duplicate-titled columns, card text, lowercase native hex colors
+(or Kanri's default), UTC due dates, flattened checklist task IDs/completion and
+native label text as stable tag IDs/names. Deduplicate the used `globalTags`
+within each board; native labels have no source color definitions. Write explicit
+null background and absent due dates. Native boards lack source creation/modification
+timestamps, so both dates use the source formatter's export-time fallback;
+`isDueDateCompleted` stays false because the native model has no dueComplete flag.
+Archived cards and target-unsupported people/comments/attachments are omitted.
+
 The ordered ID list, revision and completed/pending queue remain private to the
 form. The queue is bound to the current account session and unchanged selection.
 Every board independently takes the existing locked whole-board export path and
@@ -2352,7 +2363,7 @@ comma-CSV, semicolon-CSV and TSV ZIPs, and the single two-sheet Excel workbook.
 They also verify the Kanboard container/task JSON, exact Markdown task-list,
 Leo XML, OPML outline, Org mode outline, todo.txt task, Taskwarrior JSON,
 Focalboard JSONL, Todoist CSV, Planner XLSX, MeisterTask CSV, Obsidian Kanban,
-Linear CSV, TickTick CSV, ClickUp CSV and Nullboard NBX ZIPs. Remaining external-tool formats and the original HTTP route
+Linear CSV, TickTick CSV, ClickUp CSV, Nullboard NBX and Kanri JSON ZIPs. Remaining external-tool formats and the original HTTP route
 remain pending.
 
 

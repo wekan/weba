@@ -1515,6 +1515,9 @@
             { ExportSelectedNullboard WebButton
               Text = "Nullboard"
             }
+            { ExportSelectedKanri WebButton
+              Text = "Kanri"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton

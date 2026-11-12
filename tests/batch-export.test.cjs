@@ -14,6 +14,8 @@ const jsonl=window.webaBatchExport.archive([{name:'board-15.jsonl',content:'{"ve
 assert.equal(unzipStored(window.webaBatchExport.archive([{name:'board-16.txt',content:null}])).get('board-16.txt'),'');
 assert.equal(unzipStored(window.webaBatchExport.archive([{name:'board-17.txt'}])).get('board-17.txt'),'');
 for(const bad of [[],[{name:'../escape.json',content:'{}'}],[{name:'board-0.json',content:'{}'}],[{name:'board-1.xlsx',content:'x'}],[{name:'board-1.json',content:1}],[{name:'board-1.json',content:null}],[{name:'board-1.jsonl',content:null}],[{name:'board-1.org'}]])assert.throws(()=>window.webaBatchExport.archive(bad),/Invalid board export/);
+// Kanri uses the existing strict JSON member envelope.
+assert.equal(unzipStored(window.webaBatchExport.archive([{name:'board-20.json',content:'{\"columns\":[],\"background\":null}\n'}])).get('board-20.json'),'{\"columns\":[],\"background\":null}\n');
 // NBX shares the strict board-ID boundary; accepting its extension must not
 // admit paths, alternate IDs or absent/non-string content.
 const nbxText=JSON.stringify({format:20190412,id:1,revision:1,title:'Ω </script>',lists:[]})+'\n';

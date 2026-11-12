@@ -129,6 +129,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   subtask references is recorded there;
   selected Nullboard NBX JSON ZIP with ordered empty/duplicate lists, normalized
   title/description/checklist notes and exact raw flags is recorded there;
+  selected Kanri JSON ZIP with stable native IDs, columns, colors/due dates,
+  flattened tasks and used tags is recorded there;
   original remaining formats/API route, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded

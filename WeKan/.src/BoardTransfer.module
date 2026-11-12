@@ -99,6 +99,10 @@ Public Function ExportActiveBoardNullboard(boardId As Integer) As String
   Return ExportChecked(boardId, "board", boardId, True, "nullboard")
 End
 
+Public Function ExportActiveBoardKanri(boardId As Integer) As String
+  Return ExportChecked(boardId, "board", boardId, True, "kanri")
+End
+
 Private Sub RequireActiveBoard(boardId As Integer)
   Dim r As Result = $db.Find("kb_boards", "id=&1 AND archived=&2", boardId, False)
   If Not r.Available Then Error.Raise("Select active boards first")
@@ -167,6 +171,8 @@ Private Function ExportChecked(boardId As Integer, kind As String, itemId As Int
     text = BoardClickUpExport.Build(boardId, $db)
   Else If format = "nullboard" And kind = "board" Then
     text = BoardNullboardExport.Build(boardId, $db)
+  Else If format = "kanri" And kind = "board" Then
+    text = BoardKanriExport.Build(boardId, $db)
   Else
     Error.Raise("Unknown export format")
   Endif

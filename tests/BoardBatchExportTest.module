@@ -24,6 +24,12 @@ Public Sub Main()
   Dim linearBatch As Collection
   Dim tickTickBatch As Collection
   Dim clickUpBatch As Collection
+  Dim kanriBatch As Collection
+  Dim kanriData As Collection
+  Dim kanriColumn As Collection
+  Dim kanriCard As Collection
+  Dim kanriFound As Boolean
+  Dim kanriDue As Long
   Dim nullboardBatch As Collection
   Dim files As Variant[]
   Dim data As Collection
@@ -418,6 +424,35 @@ Public Sub Main()
   If Not nullboardFound Or InStr(nullboard, "dropme") Or InStr(nullboard, "2026-11-12") Then Error.Raise("Nullboard raw label or unsupported metadata filtering drifted")
   nullboardData = JSON.Decode(files[1]["content"])
   If nullboardData["title"] <> "Export Bravo" Or nullboardData["lists"].Count <> 3 Or nullboardData["lists"][0]["notes"].Count <> 1 Or nullboardData["lists"][0]["notes"][0]["text"] <> "Bravo card" & Chr(10) & "Bravo body" Then Error.Raise("Nullboard second-board lists or note drifted")
+  WorkspaceStore.SetSetting(a, "card", nullboardCard, "color", "#ABCDEF")
+  kanriDue = ItemChanges.UtcNow()
+  data = New Collection
+  data["dueAt"] = kanriDue
+  CardDates.RestoreDates(a, nullboardCard, data)
+  kanriBatch = BoardBatchExport.NewBatch(selection, "kanri")
+  BoardBatchExport.Run(kanriBatch, selection)
+  files = BoardBatchExport.Files(kanriBatch)
+  If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".json" Or BoardBatchExport.Format(kanriBatch) <> "kanri" Then Error.Raise("Kanri format or batch order drifted")
+  kanriData = JSON.Decode(files[0]["content"], True)
+  If kanriData["id"] <> CStr(a) Or kanriData["title"] <> "Export Alpha" Or kanriData["columns"].Count <> 4 Or kanriData["columns"][3]["cards"].Count Then Error.Raise("Kanri board or empty duplicate column drifted")
+  If InStr(files[0]["content"], Chr(34) & "background" & Chr(34) & ":null") = 0 Then Error.Raise("Kanri background must be explicit null")
+  data = CardDates.Parse(kanriData["createdAt"])
+  If kanriData["lastEdited"] <> kanriData["createdAt"] Or Not data["valid"] Then Error.Raise("Kanri timestamp fallback drifted")
+  For Each kanriColumn In kanriData["columns"]
+    If Not kanriColumn["id"] Then Error.Raise("Kanri column lost stable identity")
+    For Each kanriCard In kanriColumn["cards"]
+      If kanriCard["id"] <> CStr(nullboardCard) Then Continue
+      kanriFound = True
+      If kanriCard["name"] <> "Heading" & Chr(10) & "line" Or kanriCard["description"] <> "Body line   " Or kanriCard["color"] <> "#abcdef" Then Error.Raise("Kanri literal text or color drifted")
+      If kanriCard["dueDate"] <> CardDates.Iso(kanriDue) Or kanriCard["isDueDateCompleted"] Or kanriCard["isDueDateCounterRelative"] Then Error.Raise("Kanri due flags drifted")
+      If kanriCard["tasks"].Count <> 2 Or kanriCard["tasks"][0]["id"] <> CStr(nullboardCard) & "-task-1" Or kanriCard["tasks"][0]["name"] <> "Quote" Or Not kanriCard["tasks"][0]["finished"] Or kanriCard["tasks"][1]["finished"] Then Error.Raise("Kanri flattened tasks drifted")
+      If kanriCard["tags"].Count <> 2 Or kanriCard["tags"][0]["id"] <> "raw" Or kanriCard["tags"][1]["text"] <> "dropme" Then Error.Raise("Kanri native tag mapping drifted")
+    Next
+  Next
+  If Not kanriFound Then Error.Raise("Kanri card was lost")
+  kanriData = JSON.Decode(files[1]["content"], True)
+  kanriCard = kanriData["columns"][0]["cards"][0]
+  If kanriData["title"] <> "Export Bravo" Or kanriCard["color"] <> "bg-elevation-2" Or InStr(files[1]["content"], Chr(34) & "dueDate" & Chr(34) & ":null") = 0 Or kanriData["globalTags"].Count Then Error.Raise("Kanri absent metadata or cross-board tag isolation drifted")
   batch = BoardBatchExport.NewBatch(selection)
   batch["busy"] = True
   Try BoardBatchExport.Run(batch, selection)
@@ -447,7 +482,7 @@ Public Sub Main()
   Try BoardBatchExport.Run(batch, selection)
   denied = Error
   If Not denied Or Error.Text <> "Export is disabled by the administrator." Or BoardBatchExport.Completed(batch) Then Error.Raise("Disabled export leaked or advanced its queue")
-  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML/Org mode/todo.txt/Taskwarrior/Focalboard/Todoist/Planner/MeisterTask/Obsidian/Linear/TickTick/ClickUp/Nullboard batch export: exact ordered files, generic and Planner workbook data, native Kanboard data, text/XML/JSON/JSONL/CSV tool formats, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
+  Print "Selected JSON/comma/semicolon-CSV/TSV/Excel/Kanboard/Markdown/Leo/OPML/Org mode/todo.txt/Taskwarrior/Focalboard/Todoist/Planner/MeisterTask/Obsidian/Linear/TickTick/ClickUp/Nullboard/Kanri batch export: exact ordered files, generic and Planner workbook data, native Kanboard data, text/XML/JSON/JSONL/CSV tool formats, no-write failure, private snapshots, pending-only retry, repeat/reentrant/revision/actor/archive/policy guards passed"
 End
 
 Private Function Frame() As String

@@ -4017,6 +4017,10 @@ Public Sub ExportSelectedNullboard_Click()
   RunSelectedExport("nullboard")
 End
 
+Public Sub ExportSelectedKanri_Click()
+  RunSelectedExport("kanri")
+End
+
 Public Sub CancelSelectedExport_Click()
   ClearSelectedExport()
 End

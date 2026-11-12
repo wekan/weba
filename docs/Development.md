@@ -1327,6 +1327,20 @@ Nullboard note has no corresponding fields. Native boards lack creation time,
 so the parent formatter's fallback export epoch supplies the required ID. The
 document is built inside the same locked transfer transaction.
 
+The `kanri` format writes `wekan-boards-kanri.zip` with ordered strict
+`board-ID.json` entries. `BoardKanriExport` reproduces the parent single-board
+JSON shape with native stable IDs, ordered empty/duplicate columns, literal card
+text, hex/default colors, UTC due dates, flattened checklist tasks and shared
+used label tags. Native labels use their name as ID and have no color definition.
+Use explicit `JSON.Null` values for background/absent due dates; native decoded
+null keys may appear absent, so test serialized bytes and browser-parsed JSON.
+The native model lacks board timestamps and dueComplete: both board dates use
+the source export-time fallback, and due completion stays false. Omit archived
+cards and unsupported comments/people/attachments. All reads run in the existing
+locked active-board export transaction. Browser tests compare empty-board
+snapshots with the actual parent `formatKanri`, using only explicit numeric-ID/
+list-ID/export-clock adapters; rich native tests cover card fields/tasks/tags.
+
 The final file snapshot crosses the native command boundary as base64 JSON.
 `batch-export.js` bounds and validates the JSON/table/Excel envelope, writes
 stored UTF-8 ZIP or OOXML entries with CRC-32 and a central directory, and never
@@ -1335,7 +1349,7 @@ bytes, no-write failure,
 immutable snapshots, retry/replay/reentrancy, stale/foreign/archive/policy denial
 and ZIP structure. `python3 tests/run-http.py --selected-export` (add `--archive`)
 checks the real controls, live and forged global gate, selection retention and
-all twenty-one download contents. The original caption is among 271 source keys in all
+all twenty-two download contents. The original caption is among 271 source keys in all
 237 catalogs. Remaining external-tool formats and the original HTTP route stay
 open.
 

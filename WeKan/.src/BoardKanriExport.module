@@ -1,0 +1,179 @@
+' Native counterpart of the parent Kanri single-board JSON formatter.
+Export
+Private $db As Connection
+Private $boardId As Integer
+
+Private Function TextValue(value As Variant) As String
+  If IsNull(value) Then Return ""
+  Return CStr(value)
+End
+
+Private $tags As Collection
+Private $globalTags As Variant[]
+
+Private Function Tasks(cardId As Integer) As Variant[]
+  Dim result As New Variant[]
+  Dim checklists As Result
+  Dim items As Result
+  Dim task As Collection
+  Dim title As String
+  checklists = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "checklist")
+  For Each checklists
+    items = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, cardId, "checkitem", checklists!id)
+    For Each items
+      title = Trim(TextValue(items!title))
+      If Not title Then Continue
+      task = New Collection
+      task.Add(CStr(cardId) & "-task-" & CStr(result.Count + 1), "id")
+      task.Add(title, "name")
+      task.Add(CBool(items!done), "finished")
+      result.Add(task)
+    Next
+  Next
+  Return result
+End
+
+Private Function Tags(value As Variant) As Variant[]
+  Dim result As New Variant[]
+  Dim label As String
+  Dim tag As Collection
+  For Each label In Split(TextValue(value), ",")
+    label = Trim(label)
+    If Not label Then Continue
+    If $tags.Exist(label) Then
+      tag = $tags[label]
+    Else
+      tag = New Collection
+      tag.Add(label, "id")
+      tag.Add(label, "text")
+      $tags.Add(tag, label)
+      $globalTags.Add(tag)
+    Endif
+    result.Add(tag)
+  Next
+  Return result
+End
+
+Private Function CardColor(cardId As Integer) As String
+  Dim value As String = LCase(WorkspaceStore.Setting($boardId, "card", cardId, "color"))
+  Dim index As Integer
+  Select value
+    Case "pink", "red", "orange", "yellow", "green", "blue", "purple"
+      Return "bg-" & value & "-600"
+  End Select
+  If Len(value) = 7 And Left(value, 1) = "#" Then
+    For index = 2 To 7
+      If InStr("0123456789abcdef", Mid(value, index, 1)) = 0 Then Return "bg-elevation-2"
+    Next
+    Return value
+  Endif
+  Return "bg-elevation-2"
+End
+
+Private Function CardData(card As Collection) As Collection
+  Dim result As New Collection
+  Dim dates As Collection = CardDates.ReadDates($boardId, card["id"])
+  Dim title As String = Trim(TextValue(card["title"]))
+  result.Add(CStr(card["id"]), "id")
+  result.Add(If(title, title, "Untitled"), "name")
+  result.Add(TextValue(card["description"]), "description")
+  result.Add(CardColor(card["id"]), "color")
+  If dates.Exist("dueAt") Then
+    result.Add(CardDates.Iso(dates["dueAt"]), "dueDate")
+  Else
+    result.Add(JSON.Null, "dueDate")
+  Endif
+  result.Add(False, "isDueDateCounterRelative")
+  ' Native cards do not persist the source dueComplete flag.
+  result.Add(False, "isDueDateCompleted")
+  result.Add(Tasks(card["id"]), "tasks")
+  result.Add(Tags(card["labels"]), "tags")
+  Return result
+End
+
+Private Function ListData(id As String, title As String, cards As Variant[]) As Collection
+  Dim list As New Collection
+  list.Add(id, "id")
+  list.Add(title, "title")
+  list.Add(cards, "cards")
+  Return list
+End
+
+Public Function Build(boardId As Integer, db As Connection) As String
+  Dim output As New Collection
+  Dim lists As New Variant[]
+  Dim listRows As New Variant[]
+  Dim cards As New Variant[]
+  Dim used As New Collection
+  Dim fallback As New Collection
+  Dim listTitles As New Collection
+  Dim board As Result
+  Dim rows As Result
+  Dim row As Collection
+  Dim list As Collection
+  Dim card As Collection
+  Dim notes As Variant[]
+  Dim key As String
+  Dim title As String
+  Dim edited As String = CardDates.Iso(ItemChanges.UtcNow())
+  $db = db
+  $boardId = boardId
+  $tags = New Collection
+  $globalTags = New Variant[]
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  board = db.Find("kb_boards", "id=&1", boardId)
+  If Not board.Available Then Error.Raise("Board not found")
+  rows = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
+  For Each rows
+    row = New Collection
+    row.Add(CStr(rows!id), "id")
+    row.Add(TextValue(rows!title), "title")
+    listRows.Add(row)
+    listTitles.Add(TextValue(rows!title), CStr(rows!id))
+  Next
+  rows = db.Exec("SELECT c.*,cl.list_id FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  For Each rows
+    card = New Collection
+    card.Add(CInt(rows!id), "id")
+    card.Add(TextValue(rows!title), "title")
+    card.Add(TextValue(rows!description), "description")
+    card.Add(TextValue(rows!labels), "labels")
+    card.Add(TextValue(rows!list_id), "listId")
+    cards.Add(card)
+  Next
+  For Each row In listRows
+    notes = New Variant[]
+    For Each card In cards
+      If card["listId"] <> row["id"] Then Continue
+      notes.Add(CardData(card))
+      used.Add(True, CStr(card["id"]))
+    Next
+    lists.Add(ListData(row["id"], row["title"], notes))
+  Next
+  For Each card In cards
+    key = CStr(card["id"])
+    If used.Exist(key) Then Continue
+    title = "Untitled"
+    If card["listId"] And listTitles.Exist(card["listId"]) Then title = listTitles[card["listId"]]
+    key = If(card["listId"], card["listId"], "no-list")
+    If fallback.Exist(key) Then
+      list = fallback[key]
+      notes = list["cards"]
+    Else
+      notes = New Variant[]
+      list = ListData(If(card["listId"], card["listId"], "no-list"), title, notes)
+      fallback.Add(list, key)
+      lists.Add(list)
+    Endif
+    notes.Add(CardData(card))
+  Next
+  output.Add(CStr(boardId), "id")
+  title = TextValue(board!title)
+  output.Add(If(title, title, "WeKan board"), "title")
+  output.Add(lists, "columns")
+  output.Add(JSON.Null, "background")
+  output.Add($globalTags, "globalTags")
+  output.Add(edited, "lastEdited")
+  output.Add(edited, "createdAt")
+  Return JSON.Encode(output) & Chr(10)
+End
