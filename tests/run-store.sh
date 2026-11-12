@@ -4,7 +4,7 @@ set -eu
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 work=$(mktemp -d "$TMPDIR/weba-test.XXXXXX")
 trap 'rm -rf -- "$work"' EXIT HUP INT TERM
-for test in AuthTest UserDeletionTest SessionGenerationTest NativeAuthTest PasswordPolicyTest StoreTest DragStoreTest WorkspaceTest BoardAccessTest BoardViewPreferenceTest DragHandlePreferenceTest BoardViewPolicyTest InstanceFeaturesTest BoardViewTransferTest SignedBoardViewsTest BoardVisibilityTest BoardVisibilityReadTest PublicBoardCatalogTest PublicAttachmentReadTest GuestBoardReadTest GuestCommandsTest InactiveMembersTest AssignedAccessTest CombinedScopeTest BoardLiveTest OverviewLiveTest BoardCatalogTest BoardOrderTest BoardSpacesTest WorkspaceIconColorTest BoardSpacePresentationTest BoardSpaceDropTest BoardDropTest BoardBatchDropTest BoardSelectionTest BoardSelectedStarsTest HomeBoardTest BoardRouteTest CardRouteTest BoardArchiveTest HomeDropTest HomeCatalogTest BoardPurgeTest ListDeletionTest AttachmentLifecycleTest TransferPolicyTest BoardAttachmentAllowanceTest BoardCopyAuthorizationTest BoardCopiesTest BoardBatchExportTest CachedExportScopeTest ExternalArchiveExportTest RedmineExportTest TasksOrgExportTest MondayExportTest BusinessmapExportTest SuperProductivityExportTest TaigaExportTest VikunjaExportTest WrikeWorkflowExportTest WrikeExportTest TeamworkExportTest QuireExportTest NotionExportTest DeckExportTest OpenProjectExportTest JiraExportTest TrelloExportTest GithubExportTest ExportNumberTest CopyOptionsTest BoardCreationTest MarkdownPolicyTest MarkdownTitlesTest ExternalLinkPolicyTest ImportExportPolicyTest AttachmentExportNativeTest SingleBoardCopyTest CardDraftTest DetailLiveTest PeopleLiveTest RelationLabelTest CardMembersTest NativeAssigneeTest CardDatesTest CardArchiveTest ItemChangesTest CardContentTest WorkspaceActionsTest BoardTransferTest ExportFieldsTest; do
+for test in AuthTest UserDeletionTest SessionGenerationTest NativeAuthTest PasswordPolicyTest StoreTest DragStoreTest WorkspaceTest BoardAccessTest BoardViewPreferenceTest DragHandlePreferenceTest BoardViewPolicyTest InstanceFeaturesTest BoardViewTransferTest SignedBoardViewsTest BoardVisibilityTest BoardVisibilityReadTest PublicBoardCatalogTest PublicAttachmentReadTest GuestBoardReadTest GuestCommandsTest InactiveMembersTest AssignedAccessTest CombinedScopeTest BoardLiveTest OverviewLiveTest BoardCatalogTest BoardOrderTest BoardSpacesTest WorkspaceIconColorTest BoardSpacePresentationTest BoardSpaceDropTest BoardDropTest BoardBatchDropTest BoardSelectionTest BoardSelectedStarsTest HomeBoardTest BoardRouteTest CardRouteTest BoardArchiveTest HomeDropTest HomeCatalogTest BoardPurgeTest ListDeletionTest AttachmentLifecycleTest TransferPolicyTest BoardAttachmentAllowanceTest BoardCopyAuthorizationTest BoardCopiesTest BoardBatchExportTest CachedExportScopeTest ExternalArchiveExportTest RedmineExportTest TasksOrgExportTest MondayExportTest BusinessmapExportTest SuperProductivityExportTest TaigaExportTest VikunjaExportTest WrikeWorkflowExportTest WrikeExportTest TeamworkExportTest QuireExportTest NotionExportTest DeckExportTest OpenProjectExportTest JiraExportTest AsanaExportTest TrelloExportTest GithubExportTest ExportNumberTest CopyOptionsTest BoardCreationTest MarkdownPolicyTest MarkdownTitlesTest ExternalLinkPolicyTest ImportExportPolicyTest AttachmentExportNativeTest SingleBoardCopyTest CardDraftTest DetailLiveTest PeopleLiveTest RelationLabelTest CardMembersTest NativeAssigneeTest CardDatesTest CardArchiveTest ItemChangesTest CardContentTest WorkspaceActionsTest BoardTransferTest ExportFieldsTest; do
   [ -f "$root/tests/$test.module" ] || continue
   project="$work/$test"
   mkdir -p "$project"
@@ -16,6 +16,7 @@ for test in AuthTest UserDeletionTest SessionGenerationTest NativeAuthTest Passw
   if [ "$test" = OpenProjectExportTest ]; then cp "$root/tests/OpenProjectCasesTest.module" "$project/.src/"; fi
   if [ "$test" = GithubExportTest ]; then cp "$root/tests/IssueExportFixture.module" "$root/tests/GithubCasesTest.module" "$root/tests/GithubStatesTest.module" "$project/.src/"; fi
   if [ "$test" = JiraExportTest ]; then cp "$root/tests/JiraCasesTest.module" "$root/tests/JiraTimeCasesTest.module" "$project/.src/"; fi
+  if [ "$test" = AsanaExportTest ]; then cp "$root/tests/AsanaCasesTest.module" "$root/tests/AsanaStatesTest.module" "$project/.src/"; fi
   if [ "$test" = TrelloExportTest ]; then cp "$root/tests/TrelloCasesTest.module" "$project/.src/"; fi
   if [ "$test" = DeckExportTest ]; then cp "$root/tests/DeckCasesTest.module" "$project/.src/"; fi
   if [ "$test" = NotionExportTest ]; then cp "$root/tests/NotionCasesTest.module" "$project/.src/"; fi
@@ -25,7 +26,9 @@ for test in AuthTest UserDeletionTest SessionGenerationTest NativeAuthTest Passw
   if [ "$test" = TaigaExportTest ]; then cp "$root/tests/TaigaCasesTest.module" "$project/.src/"; fi
   if [ "$test" = BoardVisibilityTest ]; then cp "$root/tests/BoardVisibilityMatrix.module" "$project/.src/BoardVisibilityMatrix.module"; fi
   "${GBC:-gbc3}" -j 1 -a "$project"
-  if [ "$test" = JiraExportTest ]; then
+  if [ "$test" = AsanaExportTest ]; then
+    WEBA_TEST_ASANA_PROJECT="$project" "${NODE:-node}" "$root/tests/asana-export-conformance.test.cjs"
+  elif [ "$test" = JiraExportTest ]; then
     WEBA_TEST_JIRA_PROJECT="$project" "${NODE:-node}" "$root/tests/jira-export-conformance.test.cjs"
   elif [ "$test" = TrelloExportTest ]; then
     WEBA_TEST_TRELLO_PROJECT="$project" "${NODE:-node}" "$root/tests/trello-export-conformance.test.cjs"
@@ -114,6 +117,7 @@ done
 "${NODE:-node}" "$root/tests/notion-renderer.test.cjs"
 "${NODE:-node}" "$root/tests/openproject-renderer.test.cjs"
 "${NODE:-node}" "$root/tests/jira-renderer.test.cjs"
+"${NODE:-node}" "$root/tests/asana-renderer.test.cjs"
 
 python3 "$root/tests/change-clock.test.py"
 

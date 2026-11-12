@@ -2,6 +2,20 @@
 
 This work adds the following features and fixes:
 
+- Add Asana task JSON as the thirty-ninth selected-board tool export.
+  Download `wekan-boards-asana.zip` with source completion/conditional dates,
+  task/parent IDs, section memberships, tags, typed custom fields, checklist
+  subtasks and comment stories. Preserve Boolean text and numeric field types,
+  literal whitespace comments and source parent-reference behavior. Use strict
+  explicitly bound snapshots and active/full-read/policy/session/cached-scope
+  gates; unrelated corrupt time/WIP and source-absent row caps do not interfere.
+  All 27 native/source cases, renderer boundaries, original Asana import and
+  round-trip contracts and complete host tests pass (69 Python tests, 78
+  archive/scope snapshots); all 44 source/packaged browser downloads and cached
+  revocation/regrant pass. Native creation
+  metadata, Zenkit and full original UI/API/security parity remain pending.
+  Thanks to xet7.
+
 - Add Jira issues JSON as the thirty-eighth selected-board tool export.
   Download `wekan-boards-jira.zip` with source sequential keys, parent links,
   typed named custom fields, assignee/status, comments and checklist subtasks.

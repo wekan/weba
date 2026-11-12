@@ -31,7 +31,7 @@
     const normalized=[];
     for(const entry of entries){
       if(!entry||typeof entry.name!=='string'||!/^board-[1-9][0-9]*\.(json|jsonl|csv|tsv|md|leo|opml|org|txt|xlsx|nbx|zip)$/.test(entry.name))throw new Error('Invalid board export');
-      if(entry.format!==undefined&&!((['taiga','wrikeworkflow','openproject','jira'].includes(entry.format)&&entry.name.endsWith('.json'))||(entry.format==='vikunja'&&entry.name.endsWith('.zip'))||(entry.format==='notion'&&entry.name.endsWith('.csv'))))throw new Error('Invalid board export');
+      if(entry.format!==undefined&&!((['taiga','wrikeworkflow','openproject','jira','asana'].includes(entry.format)&&entry.name.endsWith('.json'))||(entry.format==='vikunja'&&entry.name.endsWith('.zip'))||(entry.format==='notion'&&entry.name.endsWith('.csv'))))throw new Error('Invalid board export');
       if(entry.name.endsWith('.zip')){
         if(entry.format!=='vikunja'||typeof entry.content!=='string')throw new Error('Invalid board export');
         let descriptor;try{descriptor=JSON.parse(entry.content);}catch{throw new Error('Invalid board export');}
@@ -46,7 +46,7 @@
       if(entry.format!==undefined){
         if(typeof content!=='string')throw new Error('Invalid board export');
         let descriptor;try{descriptor=JSON.parse(content);}catch{throw new Error('Invalid board export');}
-        content=entry.format==='notion'?notionCsv(descriptor):JSON.stringify(entry.format==='jira'?jiraData(descriptor):entry.format==='openproject'?openprojectData(descriptor):entry.format==='wrikeworkflow'?wrikeWorkflowData(descriptor):taigaData(descriptor))+'\n';
+        content=entry.format==='notion'?notionCsv(descriptor):JSON.stringify(entry.format==='asana'?asanaData(descriptor):entry.format==='jira'?jiraData(descriptor):entry.format==='openproject'?openprojectData(descriptor):entry.format==='wrikeworkflow'?wrikeWorkflowData(descriptor):taigaData(descriptor))+'\n';
       }
       if(typeof content!=='string')throw new Error('Invalid board export');
       normalized.push({name:entry.name,content});
@@ -334,15 +334,15 @@ function formatBusinessmapSheets({ board, items }) {
     const dateText=value=>typeof value==='string'&&(!value||/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(value)&&Number.isFinite(Date.parse(value))&&new Date(value).toISOString()===value);
     const canonical=value=>typeof value==='string'&&/^[1-9][0-9]*$/.test(value);
     return function(data,format){
-      if(!['taiga','vikunja','wrike','teamwork','notion','openproject','jira'].includes(format))throw new Error('Invalid board export');
-      if(!exact(data,'board,format,items,lists,now,swimlanes')||data.format!==format||!dateText(data.now)||!data.now||!exact(data.board,'description,title')||typeof data.board.title!=='string'||typeof data.board.description!=='string'||!Array.isArray(data.items)||data.items.length>(['notion','openproject','jira'].includes(format)?Infinity:['vikunja','teamwork'].includes(format)?20000:format==='wrike'?65000:50000)||!Array.isArray(data.lists)||!Array.isArray(data.swimlanes))throw new Error('Invalid board export');
+      if(!['taiga','vikunja','wrike','teamwork','notion','openproject','jira','asana'].includes(format))throw new Error('Invalid board export');
+      if(!exact(data,'board,format,items,lists,now,swimlanes')||data.format!==format||!dateText(data.now)||!data.now||!exact(data.board,'description,title')||typeof data.board.title!=='string'||typeof data.board.description!=='string'||!Array.isArray(data.items)||data.items.length>(['notion','openproject','jira','asana'].includes(format)?Infinity:['vikunja','teamwork'].includes(format)?20000:format==='wrike'?65000:50000)||!Array.isArray(data.lists)||!Array.isArray(data.swimlanes))throw new Error('Invalid board export');
       const listIds=new Set(),cardIds=new Set();
       for(const item of data.lists){
         if(!exact(item,'_id,color,title,wipLimit')||!canonical(item._id)||listIds.has(item._id)||typeof item.color!=='string'||typeof item.title!=='string'||!exact(item.wipLimit,'enabled,value')||typeof item.wipLimit.enabled!=='boolean'||typeof item.wipLimit.value!=='number'||!Number.isFinite(item.wipLimit.value)||item.wipLimit.value<0)throw new Error('Invalid board export');listIds.add(item._id);
       }
       for(const lane of data.swimlanes)if(!exact(lane,'title')||typeof lane.title!=='string')throw new Error('Invalid board export');
       const items=data.items.map(item=>{
-        if(!exact(item,format==='jira'?'assignees,cardId,checklists,color,comments,creator,customFields,description,dueAt,endAt,labels,listId,listTitle,owner,parentCardId,spentMinutes,swimlaneTitle,title':(['vikunja','wrike','teamwork','notion','openproject'].includes(format)?'assignees,cardId,checklists,color,comments,creator,customFields,description,dueAt,endAt,labels,listId,listTitle,owner,parentCardId,startAt,swimlaneTitle,title':'assignees,cardId,checklists,color,comments,creator,customFields,description,dueAt,endAt,labels,listId,listTitle,owner,parentCardId,swimlaneTitle,title'))||!['cardId','title','description','listId','listTitle','swimlaneTitle','color','creator','owner','parentCardId'].every(key=>typeof item[key]==='string')||!canonical(item.cardId)||cardIds.has(item.cardId)||item.listId&&!canonical(item.listId)||item.parentCardId&&!canonical(item.parentCardId)||!dateText(item.dueAt)||!dateText(item.endAt)||['vikunja','wrike','teamwork','notion','openproject'].includes(format)&&!dateText(item.startAt)||!textArray(item.assignees)||!textArray(item.labels)||!Array.isArray(item.comments)||!Array.isArray(item.checklists)||!item.customFields||typeof item.customFields!=='object'||Array.isArray(item.customFields))throw new Error('Invalid board export');cardIds.add(item.cardId);
+        if(!exact(item,format==='jira'?'assignees,cardId,checklists,color,comments,creator,customFields,description,dueAt,endAt,labels,listId,listTitle,owner,parentCardId,spentMinutes,swimlaneTitle,title':(['vikunja','wrike','teamwork','notion','openproject','asana'].includes(format)?'assignees,cardId,checklists,color,comments,creator,customFields,description,dueAt,endAt,labels,listId,listTitle,owner,parentCardId,startAt,swimlaneTitle,title':'assignees,cardId,checklists,color,comments,creator,customFields,description,dueAt,endAt,labels,listId,listTitle,owner,parentCardId,swimlaneTitle,title'))||!['cardId','title','description','listId','listTitle','swimlaneTitle','color','creator','owner','parentCardId'].every(key=>typeof item[key]==='string')||!canonical(item.cardId)||cardIds.has(item.cardId)||item.listId&&!canonical(item.listId)||item.parentCardId&&!canonical(item.parentCardId)||!dateText(item.dueAt)||!dateText(item.endAt)||['vikunja','wrike','teamwork','notion','openproject','asana'].includes(format)&&!dateText(item.startAt)||!textArray(item.assignees)||!textArray(item.labels)||!Array.isArray(item.comments)||!Array.isArray(item.checklists)||!item.customFields||typeof item.customFields!=='object'||Array.isArray(item.customFields))throw new Error('Invalid board export');cardIds.add(item.cardId);
         if(format==='jira'&&(!textArray(item.spentMinutes)||item.spentMinutes.some(value=>!value.trim()||!Number.isFinite(Number(value)))))throw new Error('Invalid board export');
         for(const comment of item.comments)if(!exact(comment,'author,date,text')||typeof comment.author!=='string'||typeof comment.text!=='string'||!dateText(comment.date))throw new Error('Invalid board export');
         for(const checklist of item.checklists)if(!exact(checklist,'items,title')||typeof checklist.title!=='string'||!Array.isArray(checklist.items)||!checklist.items.every(entry=>exact(entry,'done,title')&&typeof entry.title==='string'&&typeof entry.done==='boolean'))throw new Error('Invalid board export');
@@ -1469,6 +1469,41 @@ function formatTeamworkSheet({ board, items }) {
 
 
 
+
+  const asanaData=(()=>{
+function isClosed(listTitle) {
+  return /done|closed|complete|archiv|finished/i.test(listTitle || '');
+}
+
+const has = value => value !== undefined && value !== null && value !== '';
+const list = value => (Array.isArray(value) ? value : []);
+const checklistItems = item => list(item.checklists).flatMap(c => list(c.items));
+
+
+const formatAsana=({ items }) => ({
+    data: items.map(i => ({
+      gid: i.cardId,
+      name: i.title,
+      notes: i.description,
+      completed: isClosed(i.listTitle),
+      ...(isClosed(i.listTitle) && has(i.endAt) ? { completed_at: i.endAt } : {}),
+      due_on: i.dueAt,
+      ...(has(i.startAt) ? { start_on: i.startAt } : {}),
+      ...(has(i.createdAt) ? { created_at: i.createdAt } : {}),
+      ...(has(i.owner) ? { assignee: { name: i.owner } } : {}),
+      ...(has(i.parentCardId) ? { parent: { gid: i.parentCardId } } : {}),
+      memberships: [{ section: { name: i.listTitle } }],
+      tags: i.labels.map(name => ({ name })),
+      ...(Object.keys(i.customFields || {}).length ? { custom_fields: Object.entries(i.customFields).map(([name, value]) =>
+        (typeof value === 'number' ? { name, number_value: value } : { name, text_value: Array.isArray(value) ? value.join(', ') : String(value) })) } : {}),
+      ...(checklistItems(i).length ? { subtasks: checklistItems(i).map(x => ({ name: x.title, completed: Boolean(x.done) })) } : {}),
+      ...(list(i.comments).length ? { stories: i.comments.map(c => ({
+        resource_subtype: 'comment_added', text: c.text, created_by: { name: c.author }, created_at: c.date })) } : {}),
+    })),
+  });
+return data=>{const normalized=nativeSnapshot(data,'asana');for(const item of normalized.items){if(!item.dueAt)delete item.dueAt;}return formatAsana(normalized);};
+})();
+
   const jiraData=(()=>{
 const has = value => value !== undefined && value !== null && value !== '';
 const list = value => (Array.isArray(value) ? value : []);
@@ -1707,7 +1742,7 @@ function formatNotionCsv({ items } = {}) {
     return stored(files);
   }
   function downloadPayload(encoded,filename='wekan-boards-weba.zip'){
-    if(!/^wekan-boards-(weba|csv|scsv|tsv|kanboard|markdown|leo|opml|orgmode|todotxt|taskwarrior|focalboard|todoist|planner|meistertask|obsidian|linear|ticktick|clickup|nullboard|kanri|pivotal|redmine|tasksorg|monday|businessmap|superproductivity|taiga|vikunja|wrikeworkflow|wrike|teamwork|quire|notion|deck|openproject|github|gitea|forgejo|gitlab|trello|jira)\.zip$/.test(filename))throw new Error('Invalid board export');
+    if(!/^wekan-boards-(weba|csv|scsv|tsv|kanboard|markdown|leo|opml|orgmode|todotxt|taskwarrior|focalboard|todoist|planner|meistertask|obsidian|linear|ticktick|clickup|nullboard|kanri|pivotal|redmine|tasksorg|monday|businessmap|superproductivity|taiga|vikunja|wrikeworkflow|wrike|teamwork|quire|notion|deck|openproject|github|gitea|forgejo|gitlab|trello|jira|asana)\.zip$/.test(filename))throw new Error('Invalid board export');
     const url=URL.createObjectURL(new Blob([archive(payload(encoded))],{type:'application/zip'})),link=document.createElement('a');
     link.href=url;link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
@@ -1715,5 +1750,5 @@ function formatNotionCsv({ items } = {}) {
     const url=URL.createObjectURL(new Blob([workbook(payload(encoded))],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})),link=document.createElement('a');
     link.href=url;link.download='wekan-boards.xlsx';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
-  window.webaBatchExport={archive,workbook,plannerWorkbook,mondayWorkbook,mondayData,businessmapWorkbook,businessmapData,taigaData,vikunjaData,vikunjaFiles,vikunjaArchive,wrikeWorkflowData,wrikeData,wrikeWorkbook,teamworkData,teamworkWorkbook,notionCsv,openprojectData,jiraData,uniqueSheetNames,downloadPayload,downloadWorkbook};
+  window.webaBatchExport={archive,workbook,plannerWorkbook,mondayWorkbook,mondayData,businessmapWorkbook,businessmapData,taigaData,vikunjaData,vikunjaFiles,vikunjaArchive,wrikeWorkflowData,wrikeData,wrikeWorkbook,teamworkData,teamworkWorkbook,notionCsv,openprojectData,jiraData,asanaData,uniqueSheetNames,downloadPayload,downloadWorkbook};
 })();

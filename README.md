@@ -3326,3 +3326,9 @@ subtasks, comments and source-rounded finished time in seconds. Running entries
 are excluded; malformed numeric/time entries keep the board pending for repair.
 Native estimate mappings, Scrum/reporter/creation models and complete original
 UI/API/security parity remain pending.
+
+Selected boards also export **Asana task JSON** in `wekan-boards-asana.zip`,
+with source completion/date behavior, typed custom fields, tags, section
+memberships, parent references, checklist subtasks and comment stories. Unused
+corrupt time data does not block export. Native creation metadata and complete
+original UI/API/security parity remain pending.

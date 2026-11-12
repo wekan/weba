@@ -1,4 +1,9 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Asana selected export: Add scoped source task JSON ZIP with completion/date
+  logic, typed fields, parent references, checklist subtasks and comment
+  stories. Verify 27 native/source cases and strict renderer boundaries;
+  native creation metadata and complete original parity remain pending.
+
 - Jira selected export: Add source-shaped issues JSON ZIP with sequential
   keys, typed custom names/fields, parent/checklist/comment links and native
   finished-time seconds. Verify numeric/time repair and strict source/renderer

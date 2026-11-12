@@ -5312,3 +5312,7 @@ End
 Public Sub ExportSelectedJira_Click()
   RunSelectedExport("jira")
 End
+
+Public Sub ExportSelectedAsana_Click()
+  RunSelectedExport("asana")
+End

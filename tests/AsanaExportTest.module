@@ -1,0 +1,185 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim archived As Integer
+  Dim childId As Integer
+  Dim child As New Collection
+  Dim childFields As New Collection
+  Dim entryId As Integer
+  Dim comment As New Collection
+  Dim comments As New Variant[]
+  Dim data As New Collection
+  Dim board As New Collection
+  Dim item As New Collection
+  Dim items As New Variant[]
+  Dim fields As New Collection
+  Dim dates As New Collection
+  Dim selection As Collection
+  Dim batch As Collection
+  Dim retryBatch As Collection
+  Dim badField As Integer
+  Dim denied As Boolean
+  Dim lists As New Variant[]
+  Dim lanes As New Variant[]
+  Dim layout As Collection
+  Dim rows As Result
+  WebDatabase.Register("asana-owner", "x")
+  WebDatabase.Register("asana-other", "x")
+  Session["username"] = "asana-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("asana-owner")
+  boardId = KanbanStore.AddBoard("İ/BOARD Ω")
+  WorkspaceStore.SetSetting(boardId, "board", boardId, "description", " Asana board <literal> Ω ")
+  KanbanStore.AddLane(boardId, "Sprint Ω")
+  cardId = KanbanStore.SaveCard(boardId, 0, String.Chr(160) & "=SUM(1,2)" & String.Chr(160), "Literal <safe> & " & Chr(34) & "quoted" & Chr(34) & Chr(10) & "Ω", "Sprint Ω", "Todo", "", "urgent, Ω", "")
+  WorkspaceStore.SetSetting(boardId, "card", cardId, "color", "#0079bf")
+  BoardAccess.SetMember(boardId, "asana-other", "normal")
+  BoardAccess.SetAssignees(boardId, cardId, ["asana-owner", "asana-other"])
+  BoardAccess.RestoreCardMembers(boardId, cardId, ["asana-owner"])
+  CardContent.Save(boardId, cardId, 0, "custom", "Done", "", 0, True, 0, "checkbox")
+  CardContent.Save(boardId, cardId, 0, "custom", "Percent Done", "150", 0, False, 0, "number")
+  CardContent.Save(boardId, cardId, 0, "custom", "Priority", "high", 0, False, 0, "text")
+  CardContent.Save(boardId, cardId, 0, "custom", "Complete", "", 0, True, 0, "checkbox")
+  CardContent.Save(boardId, cardId, 0, "custom", "Estimated time (hours)", "1.005", 0, False, 0, "number")
+  CardContent.Save(boardId, cardId, 0, "custom", "Card ID", "123", 0, False, 0, "text")
+  CardContent.Save(boardId, cardId, 0, "custom", "Size", "2.675", 0, False, 0, "number")
+  CardContent.Save(boardId, cardId, 0, "custom", "Type", "Bug", 0, False, 0, "text")
+  CardContent.Save(boardId, cardId, 0, "custom", "Amount", "2.675", 0, False, 0, "number")
+  CardContent.Save(boardId, cardId, 0, "custom", "Enabled", "", 0, False, 0, "checkbox")
+  CardContent.Save(boardId, cardId, 0, "custom", "Date field", "2026-11-13", 0, False, 0, "date")
+  CardContent.Save(boardId, cardId, 0, "custom", "Formula text", "=1+1", 0, False, 0, "text")
+  CardContent.Save(boardId, cardId, 0, "custom", "priority", "lowercase extra", 0, False, 0, "text")
+  CardContent.Save(boardId, cardId, 0, "custom", String.Chr(160) & "Person" & String.Chr(160), "alias must not become a column", 0, False, 0, "text")
+  dates["startAt"] = CardDates.Parse("2026-11-01T01:02:03.004Z")
+  dates["endAt"] = CardDates.Parse("2026-11-14T00:00:00.000Z")
+  dates["dueAt"] = CardDates.Parse("2026-11-13T23:59:59.999Z")
+  CardDates.Apply(boardId, cardId, dates)
+  archived = KanbanStore.SaveCard(boardId, 0, "Asana archived canary", "HIDDEN_MONDAY_BODY", "Default", "Todo", "", "", "")
+  KanbanStore.ArchiveCard(boardId, archived, True)
+  board["title"] = "İ/BOARD Ω"
+  board["description"] = " Asana board <literal> Ω "
+  item["cardId"] = CStr(cardId)
+  item["listId"] = CStr(KanbanStore.CardListId(boardId, cardId))
+  item["title"] = String.Chr(160) & "=SUM(1,2)" & String.Chr(160)
+  item["color"] = "#0079bf"
+  item["description"] = "Literal <safe> & " & Chr(34) & "quoted" & Chr(34) & Chr(10) & "Ω"
+  item["swimlaneTitle"] = "Sprint Ω"
+  item["listTitle"] = "Todo"
+  item["owner"] = "asana-owner"
+  item["assignees"] = ["asana-other", "asana-owner"]
+  item["labels"] = ["urgent", "Ω"]
+  item["startAt"] = "2026-11-01T01:02:03.004Z"
+  item["endAt"] = "2026-11-14T00:00:00.000Z"
+  item["dueAt"] = "2026-11-13T23:59:59.999Z"
+  fields["Done"] = True
+  fields["Percent Done"] = 150
+  fields["Priority"] = "high"
+  fields["Complete"] = True
+  fields["Estimated time (hours)"] = 1.005
+  fields["Card ID"] = "123"
+  fields["Size"] = 2.675
+  fields["Type"] = "Bug"
+  fields["Amount"] = 2.675
+  fields["Enabled"] = False
+  fields["Date field"] = "2026-11-13"
+  fields["Formula text"] = "=1+1"
+  fields["priority"] = "lowercase extra"
+  fields[String.Chr(160) & "Person" & String.Chr(160)] = "alias must not become a column"
+  entryId = CardContent.Save(boardId, cardId, 0, "comment", "", " First Ω comment ", 0, False, 0, "")
+  comment["text"] = " First Ω comment "
+  comment["author"] = "asana-owner"
+  rows = WebDatabase.OpenConnection().Find("kb_entries", "id=&1", entryId)
+  comment["date"] = CardDates.Iso(ItemChanges.Epoch(rows!created_at))
+  comments.Add(comment)
+  entryId = CardContent.Save(boardId, cardId, 0, "comment", "", "=literal second", 0, False, 0, "")
+  comment = New Collection
+  comment["text"] = "=literal second"
+  comment["author"] = "asana-owner"
+  rows = WebDatabase.OpenConnection().Find("kb_entries", "id=&1", entryId)
+  comment["date"] = CardDates.Iso(ItemChanges.Epoch(rows!created_at))
+  comments.Add(comment)
+  item["comments"] = comments
+  item["customFields"] = fields
+  items.Add(item)
+  childId = KanbanStore.SaveCard(boardId, 0, "Child", "Second", "Default", "Todo", "", "space tag", "")
+  CardContent.Save(boardId, cardId, 0, "subtask", "Child", "", 0, False, childId, "")
+  child["cardId"] = CStr(childId)
+  child["listId"] = CStr(KanbanStore.CardListId(boardId, childId))
+  child["title"] = "Child"
+  child["description"] = "Second"
+  child["swimlaneTitle"] = "Default"
+  child["listTitle"] = "Todo"
+  child["parentCardId"] = CStr(cardId)
+  child["labels"] = ["space tag"]
+  childFields["Priority"] = "urgent"
+  childFields["Card ID"] = "456"
+  CardContent.Save(boardId, childId, 0, "custom", "Priority", "urgent", 0, False, 0, "text")
+  CardContent.Save(boardId, childId, 0, "custom", "Card ID", "456", 0, False, 0, "text")
+  child["customFields"] = childFields
+  items.Add(child)
+  rows = WebDatabase.OpenConnection().Find("kb_lists", "board_id=&1 ORDER BY lane,sort_order,id", boardId)
+  For Each rows
+    layout = New Collection
+    layout["_id"] = CStr(rows!id)
+    layout["title"] = CStr(rows!title)
+    lists.Add(layout)
+  Next
+  rows = WebDatabase.OpenConnection().Find("kb_lanes", "board_id=&1 ORDER BY id", boardId)
+  For Each rows
+    layout = New Collection
+    layout["title"] = CStr(rows!title)
+    lanes.Add(layout)
+  Next
+  data["lists"] = lists
+  data["swimlanes"] = lanes
+  data["board"] = board
+  data["items"] = items
+  CardContent.Save(boardId, cardId, 0, "custom", "Amount", "", 0, False, 0, "text")
+  CardContent.Save(boardId, cardId, 0, "custom", "__proto__", "IGNORED_PROTO_CANARY", 0, False, 0, "text")
+  entryId = CardContent.Save(boardId, cardId, 0, "checklist", "Steps", "", 0, False, 0)
+  CardContent.Save(boardId, cardId, 0, "checkitem", "First", "", entryId, False, 0)
+  CardContent.Save(boardId, cardId, 0, "checkitem", "Second", "", entryId, True, 0)
+  item["checklists"] = JSON.Decode("[{\"title\":\"Steps\",\"items\":[{\"title\":\"First\",\"done\":false},{\"title\":\"Second\",\"done\":true}]}]")
+  entryId = CardContent.Save(boardId, cardId, 0, "comment", "", "Legacy space", 0, False, 0)
+  WebDatabase.OpenConnection().Exec("UPDATE kb_entries SET body=&1 WHERE id=&2", " ", entryId)
+  rows = WebDatabase.OpenConnection().Find("kb_entries", "id=&1", entryId)
+  comment = New Collection
+  comment.Add(" ", "text")
+  comment.Add("asana-owner", "author")
+  comment.Add(CardDates.Iso(ItemChanges.Epoch(rows!created_at)), "date")
+  comments.Add(comment)
+  selection = BoardSelection.NewState()
+  BoardSelection.SetActive(selection, True)
+  BoardSelection.AddVisible(selection, [boardId])
+  batch = BoardBatchExport.NewBatch(selection, "asana")
+  BoardBatchExport.Run(batch, selection)
+  If BoardBatchExport.Files(batch)[0]["name"] <> "board-" & CStr(boardId) & ".json" Then Error.Raise("Asana file extension drifted")
+  data["actual"] = BoardBatchExport.Files(batch)[0]["content"]
+  If InStr(data["actual"], "Asana archived canary") Or InStr(data["actual"], "HIDDEN_MONDAY_BODY") Then Error.Raise("Asana exported archived content")
+  badField = CardContent.Save(boardId, cardId, 0, "custom", "Invalid numeric", "1", 0, False, 0, "number")
+  WebDatabase.OpenConnection().Exec("UPDATE kb_entries SET body=&1 WHERE id=&2", "not numeric", badField)
+  retryBatch = BoardBatchExport.NewBatch(selection, "asana")
+  Try BoardBatchExport.Run(retryBatch, selection)
+  denied = Error
+  If Not denied Then Error.Raise("Asana accepted malformed numeric field")
+  If BoardBatchExport.Completed(retryBatch) Or BoardBatchExport.Remaining(retryBatch) <> 1 Then Error.Raise("Asana numeric failure consumed pending work")
+  WebDatabase.OpenConnection().Exec("UPDATE kb_entries SET body=&1 WHERE id=&2", "2.675", badField)
+  BoardBatchExport.Run(retryBatch, selection)
+  If BoardBatchExport.Completed(retryBatch) <> 1 Then Error.Raise("Asana consumed invalid numeric snapshot")
+  badField = CardContent.Save(boardId, cardId, 0, "time", "Unused corrupt time", "", 0, True, 1)
+  WebDatabase.OpenConnection().Exec("UPDATE kb_entries SET amount=&1 WHERE id=&2", "bad time", badField)
+  retryBatch = BoardBatchExport.NewBatch(selection, "asana")
+  BoardBatchExport.Run(retryBatch, selection)
+  If BoardBatchExport.Completed(retryBatch) <> 1 Then Error.Raise("Asana read unrelated time")
+  ImportExportPolicy.Save(False, True)
+  Try BoardTransfer.ExportActiveBoardAsana(boardId)
+  denied = Error
+  If Not denied Then Error.Raise("Asana ignored disabled export")
+  ImportExportPolicy.Save(False, False)
+  BoardAccess.SetMember(boardId, "asana-other", "normal-assigned-only")
+  Session["username"] = "asana-other"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("asana-other")
+  Try BoardTransfer.ExportActiveBoardAsana(boardId)
+  denied = Error
+  If Not denied Then Error.Raise("Asana allowed assigned-only full export")
+  Print JSON.Encode(data)
+End

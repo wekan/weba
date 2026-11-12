@@ -2078,3 +2078,26 @@ prototype/custom-field cases, parent cycles/missing targets, time overflow,
 malformed types/paths/format binding, actual JSON ZIP, unchanged unmarked JSON
 and 50,001 cards. Both browsers compare ordered Jira downloads to source output.
 Complete original UI/API/security parity remains pending.
+
+Asana selected export uses `BoardAsanaExport` through existing locked full-read/
+policy/session transfer and private cached-publication checks. Its explicitly
+marked JSON entries pass the strict snapshot validator and an isolated unchanged
+Asana formatter. It preserves gid/name/notes, source terminal-name completion,
+conditional completion and optional start/due dates, assignee, parent gid, section
+membership, repeated tags, typed numeric vs string custom fields, checklist
+subtasks and stories. Boolean fields become source String(value) text. Missing
+and cyclic parent references follow source behavior, without pruning or flattening.
+Whitespace comments are retained. Native creator/card-creation models stay pending.
+
+Native empty duplicate custom values/prototype entries follow the source collector
+adapter, and unused layout/color/time metadata is not read. No unrelated row cap
+is added. `AsanaExportTest`, `AsanaCasesTest` and `AsanaStatesTest` compare 27 actual
+native snapshots through rendering with unchanged `formatters.asana`, covering
+rich typed/checklist/story/parent data, empty/legacy/missing-list cases, terminal
+states/Unicode nonmatches/conditional dates, whitespace comments, irrelevant
+corrupt-time/WIP independence, numeric pending repair and policy/assigned-only
+denial. Renderer tests cover numeric/prototype types, parent cycles/missing
+references, completion/subtasks/stories, malformed descriptors/markers/paths,
+actual JSON ZIP, unchanged unmarked JSON and 50,001 cards. Source/packaged browser
+downloads compare ordered per-board Asana JSON to source; owner/read-only archive
+coverage includes Asana. Full original UI/API/security parity remains pending.

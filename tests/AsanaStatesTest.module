@@ -1,0 +1,45 @@
+Public Sub Main()
+  Dim result As New Variant[]
+  Dim sample As Collection
+  Dim item As Collection
+  Dim items As Variant[]
+  Dim labels As String[]
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim fieldId As Integer
+  Dim title As String
+  Dim dates As Collection
+  WebDatabase.Register("asana-states", "x")
+  Session["username"] = "asana-states"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("asana-states")
+  For Each title In ["Todo", "Doing", "Done", "DONE", "undone", "Closed", "enclosed", "COMPLETE", "incomplete", "archived", "Archive Ω", "FINISHED", "unfinished", "finish", "close", "completed", "FİNİSHED", "fınıshed", "finiſhed", "доне", "Ω", "", "pre" & Chr(10) & "Done"]
+    boardId = KanbanStore.AddBoard("State " & CStr(result.Count))
+    cardId = KanbanStore.SaveCard(boardId, 0, "=literal Ω", "<script>literal</script>" & Chr(10) & Chr(34) & "quoted" & Chr(34), "Default", "Todo", "", "", "")
+    WebDatabase.OpenConnection().Exec("UPDATE kb_lists SET title=&1 WHERE board_id=&2 AND title=&3", title, boardId, "Todo")
+    WebDatabase.OpenConnection().Exec("UPDATE kb_cards SET labels=&1 WHERE board_id=&2 AND id=&3", String.Chr(160) & "one" & String.Chr(160) & ",one, Ω,,", boardId, cardId)
+    WorkspaceStore.SetSetting(boardId, "list", KanbanStore.CardListId(boardId, cardId), "wip", "3")
+    WebDatabase.OpenConnection().Exec("UPDATE kb_meta SET value=&1 WHERE board_id=&2 AND kind=&3 AND item_id=&4 AND setting=&5", "bad wip", boardId, "list", KanbanStore.CardListId(boardId, cardId), "wip")
+    item = New Collection
+    item.Add(CStr(cardId), "cardId")
+    item.Add("=literal Ω", "title")
+    item.Add("<script>literal</script>" & Chr(10) & Chr(34) & "quoted" & Chr(34), "description")
+    item.Add(title, "listTitle")
+    labels = ["one", "one", "Ω"]
+    item.Add(labels, "labels")
+    If result.Count Mod 2 = 0 Then
+      dates = New Collection
+      dates.Add(CardDates.Parse("1969-12-31T23:59:59.999Z"), "dueAt")
+      dates.Add(CardDates.Parse("2026-11-13T01:02:03.004Z"), "endAt")
+      item.Add("2026-11-13T01:02:03.004Z", "endAt")
+      CardDates.Apply(boardId, cardId, dates)
+      item.Add("1969-12-31T23:59:59.999Z", "dueAt")
+    Endif
+    items = New Variant[]
+    items.Add(item)
+    sample = New Collection
+    sample.Add(items, "items")
+    sample.Add(BoardTransfer.ExportActiveBoardAsana(boardId), "actual")
+    result.Add(sample)
+  Next
+  Print JSON.Encode(result)
+End
