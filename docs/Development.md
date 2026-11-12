@@ -1341,6 +1341,19 @@ locked active-board export transaction. Browser tests compare empty-board
 snapshots with the actual parent `formatKanri`, using only explicit numeric-ID/
 list-ID/export-clock adapters; rich native tests cover card fields/tasks/tags.
 
+The `pivotal` format writes `wekan-boards-pivotal.zip` with strict ordered
+`board-ID.csv` entries. `BoardPivotalExport` follows the parent import header,
+per-board dynamic repeated owner/comment/task widths, owner deduplication/five
+limit, type/state selection, Story points/Estimate and valid Priority fields,
+UTC accepted/release deadlines, author/date comment tails, and flattened task
+completion. Prefix leading equals signs, selectively quote CSV and use CRLF.
+Explicit branches pad absent values without eagerly indexing beyond short
+arrays. Native creation/requester/source Scrum/link data is absent; do not
+invent it. Tests include a persisted archived-card canary and compare real
+source/packaged empty-board downloads to actual `formatPivotalCsv`; rich native
+fixtures cover owners/comments/tasks/dates/escaping and per-board widths.
+The exporter runs inside the same locked active-board policy/scope transaction.
+
 The final file snapshot crosses the native command boundary as base64 JSON.
 `batch-export.js` bounds and validates the JSON/table/Excel envelope, writes
 stored UTF-8 ZIP or OOXML entries with CRC-32 and a central directory, and never
@@ -1349,7 +1362,7 @@ bytes, no-write failure,
 immutable snapshots, retry/replay/reentrancy, stale/foreign/archive/policy denial
 and ZIP structure. `python3 tests/run-http.py --selected-export` (add `--archive`)
 checks the real controls, live and forged global gate, selection retention and
-all twenty-two download contents. The original caption is among 271 source keys in all
+all twenty-three download contents. The original caption is among 271 source keys in all
 237 catalogs. Remaining external-tool formats and the original HTTP route stay
 open.
 

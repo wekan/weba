@@ -2337,6 +2337,16 @@ timestamps, so both dates use the source formatter's export-time fallback;
 `isDueDateCompleted` stays false because the native model has no dueComplete flag.
 Archived cards and target-unsupported people/comments/attachments are omitted.
 
+Pivotal Tracker produces `wekan-boards-pivotal.zip` with one strict
+`board-ID.csv` per selected board. Match the source import columns, at least one
+`Owned By` column (up to five), and as many repeated comments/task pairs as each
+board needs. Map state/type labels, native assignees, Story points/Estimate and
+Priority fields, UTC accepted/release-deadline dates, authored comments and
+flattened checklist completion. Preserve CRLF and selective quoting, prefixing
+leading equals signs for spreadsheet safety. Omit archived cards. Native cards
+lack creation/requester fields; those columns remain blank. Source Scrum,
+iteration, blocker/link and other model-only metadata is not invented.
+
 The ordered ID list, revision and completed/pending queue remain private to the
 form. The queue is bound to the current account session and unchanged selection.
 Every board independently takes the existing locked whole-board export path and
@@ -2363,7 +2373,7 @@ comma-CSV, semicolon-CSV and TSV ZIPs, and the single two-sheet Excel workbook.
 They also verify the Kanboard container/task JSON, exact Markdown task-list,
 Leo XML, OPML outline, Org mode outline, todo.txt task, Taskwarrior JSON,
 Focalboard JSONL, Todoist CSV, Planner XLSX, MeisterTask CSV, Obsidian Kanban,
-Linear CSV, TickTick CSV, ClickUp CSV, Nullboard NBX and Kanri JSON ZIPs. Remaining external-tool formats and the original HTTP route
+Linear CSV, TickTick CSV, ClickUp CSV, Nullboard NBX, Kanri JSON and Pivotal Tracker CSV ZIPs. Remaining external-tool formats and the original HTTP route
 remain pending.
 
 

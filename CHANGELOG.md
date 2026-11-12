@@ -2,6 +2,19 @@
 
 This work adds the following features and fixes:
 
+- Add Pivotal Tracker as the eighteenth selected-board external-tool export.
+  Download `wekan-boards-pivotal.zip` with ordered strict `board-ID.csv` files.
+  Match the source import columns and per-board repeated owner/comment/task
+  widths. Map native text, types/states, story points/priorities, accepted and
+  release-deadline days, assignees, authored comments and checklist completion.
+  Preserve selective CSV quoting, CRLF and leading-equals formula safety; omit
+  archived cards and leave unsupported creation/requester fields blank. Reuse
+  the private retry queue and locked active/full-read/export-policy checks.
+  Complete host tests pass (69 Python tests plus native/HTTP/JavaScript checks).
+  Focused source and packaged browser runs validate all 23 exact downloads;
+  rich native mapping/archived-canary checks and seven parent contracts pass.
+  Remaining formats and complete original suites stay pending. Thanks to xet7.
+
 - Add Kanri as the seventeenth selected-board external-tool export. Download
   `wekan-boards-kanri.zip` with ordered strict `board-ID.json` entries matching
   the parent single-board shape. Preserve stable IDs, empty/duplicate columns,

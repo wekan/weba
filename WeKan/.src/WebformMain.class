@@ -4021,6 +4021,10 @@ Public Sub ExportSelectedKanri_Click()
   RunSelectedExport("kanri")
 End
 
+Public Sub ExportSelectedPivotal_Click()
+  RunSelectedExport("pivotal")
+End
+
 Public Sub CancelSelectedExport_Click()
   ClearSelectedExport()
 End

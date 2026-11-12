@@ -1,0 +1,215 @@
+' Native counterpart of the parent Pivotal Tracker import CSV formatter.
+Export
+Private $db As Connection
+Private $boardId As Integer
+
+Public Function Headers() As String[]
+  Return ["Title", "Labels", "Type", "Estimate", "Priority", "Current State", "Created at", "Accepted at", "Deadline", "Requested By", "Description"]
+End
+
+Private Function TextValue(value As Variant) As String
+  If IsNull(value) Then Return ""
+  Return CStr(value)
+End
+
+Private Function Whitespace(character As String) As Boolean
+  Dim code As Integer
+  If Not character Then Return True
+  code = String.Code(character)
+  Return (code >= 9 And code <= 13) Or code = 32 Or code = 160 Or code = 5760 Or (code >= 8192 And code <= 8202) Or code = 8232 Or code = 8233 Or code = 8239 Or code = 8287 Or code = 12288 Or code = 65279
+End
+
+Private Function Row(values As String[]) As String
+  Dim cells As New String[]
+  Dim text As String
+  For Each text In values
+    If Left(text, 1) = "=" Then text = "'" & text
+    If InStr(text, ",") Or InStr(text, Chr(34)) Or InStr(text, Chr(13)) Or InStr(text, Chr(10)) Then text = Chr(34) & Replace(text, Chr(34), Chr(34) & Chr(34)) & Chr(34)
+    cells.Add(text)
+  Next
+  Return cells.Join(",")
+End
+
+Private Function DateText(dates As Collection, key As String) As String
+  Dim iso As String
+  Dim months As String[] = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+  If Not dates.Exist(key) Then Return ""
+  ' The parent treats epoch zero as absent before conversion.
+  If dates[key] = 0 Then Return ""
+  iso = CardDates.Iso(dates[key])
+  Return months[CInt(Mid(iso, 6, 2)) - 1] & " " & CStr(CInt(Mid(iso, 9, 2))) & ", " & Left(iso, 4)
+End
+
+Private Function CustomFields(cardId As Integer) As Collection
+  Dim result As New Collection
+  Dim fields As Result
+  Dim name As String
+  fields = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "custom")
+  For Each fields
+    name = TextValue(fields!title)
+    If name Then result[name] = TextValue(fields!body)
+  Next
+  Return result
+End
+
+Private Function Estimate(fields As Collection) As String
+  Dim value As String
+  Dim number As Float
+  If fields.Exist("Story points") Then
+    value = TextValue(fields["Story points"])
+  Else If fields.Exist("Estimate") Then
+    value = TextValue(fields["Estimate"])
+  Else
+    Return ""
+  Endif
+  If Not Trim(value) Then Return "0"
+  If Not IsNumber(value) Then Return ""
+  Try number = CFloat(value)
+  If Error Then Return ""
+  Return Replace(CStr(number), ",", ".")
+End
+
+Private Function TaskCells(cardId As Integer) As String[]
+  Dim result As New String[]
+  Dim checklists As Result
+  Dim items As Result
+  Dim title As String
+  checklists = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "checklist")
+  For Each checklists
+    items = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", $boardId, cardId, "checkitem", checklists!id)
+    For Each items
+      title = Trim(TextValue(items!title))
+      If Not title Then Continue
+      result.Add(title)
+      result.Add(If(CBool(items!done), "completed", "not completed"))
+    Next
+  Next
+  Return result
+End
+
+Private Function CommentCells(cardId As Integer) As String[]
+  Dim result As New String[]
+  Dim comments As Result
+  Dim dates As Collection
+  Dim text As String
+  Dim author As String
+  Dim day As String
+  comments = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 ORDER BY id", $boardId, cardId, "comment")
+  For Each comments
+    text = TextValue(comments!body)
+    If Not Trim(text) Then Continue
+    author = CardContent.AuthorName($boardId, cardId, "entry", CInt(comments!id))
+    dates = New Collection
+    If Not IsNull(comments!created_at) Then dates.Add(ItemChanges.Epoch(comments!created_at), "date")
+    day = DateText(dates, "date")
+    If author And day Then text &= " (" & author & " - " & day & ")"
+    result.Add(text)
+  Next
+  Return result
+End
+
+Public Function Build(boardId As Integer, db As Connection) As String
+  Dim cards As Result
+  Dim data As New Variant[]
+  Dim card As Collection
+  Dim dates As Collection
+  Dim fields As Collection
+  Dim people As String[]
+  Dim comments As String[]
+  Dim tasks As String[]
+  Dim labels As String[]
+  Dim values As String[]
+  Dim header As String[] = Headers()
+  Dim lines As New String[]
+  Dim label As String
+  Dim typeLabel As String
+  Dim storyType As String
+  Dim state As String
+  Dim title As String
+  Dim priority As String
+  Dim index As Integer
+  Dim ownersCount As Integer = 1
+  Dim commentsCount As Integer
+  Dim tasksCount As Integer
+  $db = db
+  $boardId = boardId
+  BoardAccess.RequireContainer(boardId, "board", boardId)
+  cards = db.Exec("SELECT c.*,l.title AS list_title FROM kb_cards c LEFT JOIN kb_card_lists cl ON cl.board_id=c.board_id AND cl.card_id=c.id LEFT JOIN kb_lists l ON l.board_id=c.board_id AND l.id=cl.list_id LEFT JOIN kb_order o ON o.board_id=c.board_id AND o.kind=&2 AND o.item=CAST(c.id AS TEXT) WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&3 ORDER BY COALESCE(o.sort_order,c.id),c.id", boardId, "card", False)
+  For Each cards
+    dates = CardDates.ReadDates(boardId, cards!id)
+    fields = CustomFields(cards!id)
+    labels = New String[]
+    typeLabel = ""
+    For Each label In Split(TextValue(cards!labels), ",")
+      label = Trim(label)
+      If Not label Then Continue
+      labels.Add(label)
+      If Not typeLabel And ["feature", "bug", "chore", "epic", "release"].Find(LCase(label)) >= 0 Then typeLabel = label
+    Next
+    storyType = If(typeLabel, LCase(typeLabel), "feature")
+    If typeLabel Then
+      For index = labels.Count - 1 DownTo 0
+        If labels[index] = typeLabel Then labels.Remove(index)
+      Next
+    Endif
+    state = LCase(Trim(TextValue(cards!list_title)))
+    If ["unscheduled", "unstarted", "planned", "started", "finished", "delivered", "accepted", "rejected"].Find(state) < 0 Then state = If(dates.Exist("endAt") And If(dates.Exist("endAt"), dates["endAt"], 0) <> 0, "accepted", "unstarted")
+    title = Trim(TextValue(cards!title))
+    priority = If(fields.Exist("Priority"), TextValue(fields["Priority"]), "")
+    If Len(priority) < 6 Or Left(LCase(priority), 1) <> "p" Or InStr("0123", Mid(priority, 2, 1)) = 0 Or Mid(priority, 3, 3) <> " - " Or Whitespace(String.Mid(priority, 6, 1)) Then priority = ""
+    values = [If(title, title, "Untitled"), labels.Join(", "), storyType, Estimate(fields), priority, state, "", If(state = "accepted", DateText(dates, "endAt"), ""), If(storyType = "release", DateText(dates, "dueAt"), ""), "", TextValue(cards!description)]
+    people = BoardAccess.Assignees(boardId, cards!id)
+    If people.Count > 5 Then people = people.Copy(0, 5)
+    comments = CommentCells(cards!id)
+    tasks = TaskCells(cards!id)
+    ownersCount = Max(ownersCount, people.Count)
+    commentsCount = Max(commentsCount, comments.Count)
+    tasksCount = Max(tasksCount, tasks.Count)
+    card = New Collection
+    card.Add(values, "values")
+    card.Add(people, "people")
+    card.Add(comments, "comments")
+    card.Add(tasks, "tasks")
+    data.Add(card)
+  Next
+  For index = 1 To ownersCount
+    header.Add("Owned By")
+  Next
+  For index = 1 To commentsCount
+    header.Add("Comment")
+  Next
+  For index = 1 To tasksCount / 2
+    header.Add("Task")
+    header.Add("Task Status")
+  Next
+  lines.Add(Row(header))
+  For Each card In data
+    values = card["values"]
+    people = card["people"]
+    comments = card["comments"]
+    tasks = card["tasks"]
+    For index = 0 To ownersCount - 1
+      If index < people.Count Then
+        values.Add(people[index])
+      Else
+        values.Add("")
+      Endif
+    Next
+    For index = 0 To commentsCount - 1
+      If index < comments.Count Then
+        values.Add(comments[index])
+      Else
+        values.Add("")
+      Endif
+    Next
+    For index = 0 To tasksCount - 1
+      If index < tasks.Count Then
+        values.Add(tasks[index])
+      Else
+        values.Add("")
+      Endif
+    Next
+    lines.Add(Row(values))
+  Next
+  Return lines.Join(Chr(13) & Chr(10)) & Chr(13) & Chr(10)
+End

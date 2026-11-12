@@ -1,4 +1,10 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Pivotal selected export: Add source-shaped dynamic owner/comment/task CSV
+  ZIPs with dates/type/state/points/priority, formula safety, quoting and CRLF.
+  Guard short-row padding, omit archived canaries and reuse locked private
+  batch authorization/policy checks.
+  Full host and source/packaged 23-download checks pass.
+
 - Kanri selected export: Add strict single-board JSON ZIPs with stable IDs,
   ordered columns, card colors/due dates, flattened tasks and shared used tags.
   Preserve explicit JSON nulls and source export-time date fallback; reuse

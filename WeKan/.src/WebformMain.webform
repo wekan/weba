@@ -1518,6 +1518,9 @@
             { ExportSelectedKanri WebButton
               Text = "Kanri"
             }
+            { ExportSelectedPivotal WebButton
+              Text = "Pivotal Tracker"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton

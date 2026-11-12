@@ -131,6 +131,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   title/description/checklist notes and exact raw flags is recorded there;
   selected Kanri JSON ZIP with stable native IDs, columns, colors/due dates,
   flattened tasks and used tags is recorded there;
+  selected Pivotal Tracker CSV ZIP with dynamic owner/comment/task columns,
+  state/type/points/priority/dates and formula-safe CRLF is recorded there;
   original remaining formats/API route, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded
