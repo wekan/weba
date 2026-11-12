@@ -1,9 +1,15 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Wrike XLSX selected export: Add source-matching Tasks workbooks with folders,
+  keys/parent references, typed fields, shared workflow/status names and real
+  date cells/styles. Verify rich actual workbook readback, dates/empty styles,
+  row/folder preflight with pending repair, irrelevant WIP independence and
+  source/packaged browser downloads. Native automation rules remain pending.
+
 - Wrike workflow selected export: Add metadata-only JSON ZIPs matching source
   workflow/status names, inferred groups, required Active/Completed fallbacks,
   duplicate/truncated names and colors. Verify no card content reads, native
   scope/policy/archive denial, source equality and renderer/ZIP boundaries.
-  Wrike XLSX and native automation-rule mapping remain pending.
+  Wrike XLSX is recorded above; native automation-rule mapping remains pending.
 
 - Vikunja selected export: Add real nested export ZIPs with fixed data/filters/
   VERSION files and source project/view/bucket/task mappings, HTML/checklists,

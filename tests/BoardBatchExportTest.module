@@ -26,6 +26,8 @@ Public Sub Main()
   Dim linearBatch As Collection
   Dim tickTickBatch As Collection
   Dim clickUpBatch As Collection
+  Dim wrikeBatch As Collection
+  Dim wrikeData As Collection
   Dim workflowBatch As Collection
   Dim workflowData As Collection
   Dim vikunjaBatch As Collection
@@ -577,6 +579,15 @@ Public Sub Main()
   If InStr(files[0]["content"], "Ignored archived card") Or InStr(files[0]["content"], "Planner archived canary") Or InStr(files[0]["content"], "Alpha card") Then Error.Raise("Wrike workflow included card content")
   workflowData = JSON.Decode(files[1]["content"])
   If workflowData["board"]["title"] <> "Export Bravo" Or workflowData["lists"].Count <> 3 Then Error.Raise("Wrike workflow board isolation drifted")
+  wrikeBatch = BoardBatchExport.NewBatch(selection, "wrike")
+  BoardBatchExport.Run(wrikeBatch, selection)
+  files = BoardBatchExport.Files(wrikeBatch)
+  If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".xlsx" Or BoardBatchExport.Format(wrikeBatch) <> "wrike" Then Error.Raise("Wrike workbook format or batch order drifted")
+  wrikeData = JSON.Decode(files[0]["content"])
+  If wrikeData["format"] <> "wrike" Or wrikeData["board"]["title"] <> "Export Alpha" Then Error.Raise("Wrike workbook snapshot metadata drifted")
+  If InStr(files[0]["content"], "Ignored archived card") Or InStr(files[0]["content"], "Planner archived canary") Then Error.Raise("Wrike workbook exported archived content")
+  wrikeData = JSON.Decode(files[1]["content"])
+  If wrikeData["board"]["title"] <> "Export Bravo" Or wrikeData["items"].Count <> 1 Or wrikeData["items"][0]["title"] <> "Bravo card" Then Error.Raise("Wrike workbook board isolation drifted")
   batch = BoardBatchExport.NewBatch(selection)
   batch["busy"] = True
   Try BoardBatchExport.Run(batch, selection)

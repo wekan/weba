@@ -2,6 +2,22 @@
 
 This work adds the following features and fixes:
 
+- Add Wrike XLSX as the twenty-seventh selected-board tool export. Download
+  `wekan-boards-wrike.zip` with real Tasks workbooks matching source fixed/extra
+  typed columns, lane folders/default ordering, keys/parent links, people,
+  priorities/duration and the shared workflow/custom-status mapping. Preserve
+  actual Excel date cells, yyyy-mm-dd styles on headers/empty date columns,
+  literal formula text and source date/year behavior. Preflight the 65,000-row
+  limit including folders before consuming pending work; repair/retry is tested
+  against oversized real SQLite fixtures. Ignore unused WIP metadata, retain
+  active/full-read/policy/session gates and keep native rules pending.
+  Rich native/source workbook readback, strict date/style/type boundaries,
+  six original contracts and all 32 source/packaged browser downloads pass.
+  Complete host tests pass, including 69 Python tests and 54 archive/scope
+  snapshots. Oversized-board row counts stay behind full-board authorization.
+  Remaining formats and complete original UI/API/security parity stay pending.
+  Thanks to xet7.
+
 - Add Wrike workflow JSON as the twenty-sixth selected-board tool export.
   Download `wekan-boards-wrikeworkflow.zip` with source-shaped workflow/status
   documents, required Active/Completed groups, list-name group inference,
@@ -11,7 +27,7 @@ This work adds the following features and fixes:
   immutable private queues. Native/source and strict renderer/ZIP comparisons,
   10 original contracts and all 31 source/packaged browser downloads pass.
   Complete host tests pass, including 69 Python tests and 52 archive/scope
-  snapshots. The matching Wrike XLSX export is next; native automation-rule models and complete original
+  snapshots. The matching Wrike XLSX export is recorded above; native automation-rule models and complete original
   UI/API/security parity remain pending. Thanks to xet7.
 
 - Add Vikunja as the twenty-fifth selected-board tool export. Download

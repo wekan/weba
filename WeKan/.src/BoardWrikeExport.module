@@ -1,0 +1,6 @@
+' Scoped native snapshot for the Wrike import workbook renderer.
+Export
+
+Public Function Build(boardId As Integer, db As Connection) As String
+  Return BoardExternalSnapshot.Build(boardId, db, "wrike")
+End

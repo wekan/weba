@@ -1545,6 +1545,9 @@
             { ExportSelectedWrikeWorkflow WebButton
               Text = "Wrike workflow"
             }
+            { ExportSelectedWrike WebButton
+              Text = "Wrike XLSX"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton

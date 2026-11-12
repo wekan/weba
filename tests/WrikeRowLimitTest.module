@@ -1,0 +1,41 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim selection As Collection
+  Dim batch As Collection
+  Dim denied As Boolean
+  Dim folders As Boolean
+  Dim count As Integer
+  Dim message As String
+  WebDatabase.Register("wrike-bound-owner", "x")
+  WebDatabase.Register("wrike-bound-assigned", "x")
+  Session["username"] = "wrike-bound-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("wrike-bound-owner")
+  For Each folders In [False, True]
+    boardId = KanbanStore.AddBoard("Wrike row bound")
+    count = If(folders, 32500, 65000)
+    WebDatabase.OpenConnection().Exec("WITH RECURSIVE n(x) AS (SELECT 1 UNION ALL SELECT x+1 FROM n WHERE x<&2) INSERT INTO kb_cards(board_id,title,lane,status,archived) SELECT &1,'Bound card',CASE WHEN &3 THEN 'Folder '||x ELSE 'Default' END,'Todo',0 FROM n", boardId, count, folders)
+    BoardAccess.SetMember(boardId, "wrike-bound-assigned", "normal-assigned-only")
+    Session["username"] = "wrike-bound-assigned"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("wrike-bound-assigned")
+    Try BoardTransfer.ExportActiveBoardWrike(boardId)
+    denied = Error
+    message = Error.Text
+    If Not denied Or InStr(message, "65000") Then Error.Raise("Wrike row count leaked before full-board authorization")
+    Session["username"] = "wrike-bound-owner"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("wrike-bound-owner")
+    selection = BoardSelection.NewState()
+    BoardSelection.SetActive(selection, True)
+    BoardSelection.AddVisible(selection, [boardId])
+    batch = BoardBatchExport.NewBatch(selection, "wrike")
+    Try BoardBatchExport.Run(batch, selection)
+    denied = Error
+    message = Error.Text
+    If Not denied Or InStr(message, "65000 rows") = 0 Or BoardBatchExport.Completed(batch) Or BoardBatchExport.Remaining(batch) <> 1 Then Error.Raise("Wrike oversized row/folder preflight failed or consumed pending work")
+    WebDatabase.OpenConnection().Exec("DELETE FROM kb_cards WHERE board_id=&1", boardId)
+    KanbanStore.Lanes(boardId)
+    KanbanStore.SaveCard(boardId, 0, "Repaired board", "", "Default", "Todo", "", "", "")
+    BoardBatchExport.Run(batch, selection)
+    If BoardBatchExport.Completed(batch) <> 1 Or BoardBatchExport.Remaining(batch) Then Error.Raise("Wrike row-bound repair could not resume")
+  Next
+  Print "Wrike preflight row/folder bounds and repair passed"
+End

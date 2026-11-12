@@ -1,4 +1,4 @@
-' Scoped native snapshot shared by the Taiga and Vikunja renderers.
+' Scoped native snapshot shared by Taiga, Vikunja and Wrike renderers.
 Export
 Private $db As Connection
 Private $boardId As Integer
@@ -99,12 +99,18 @@ Public Function Build(boardId As Integer, db As Connection, format As String) As
   Dim label As String
   Dim wip As String
   Dim limit As Float
-  If format <> "taiga" And format <> "vikunja" Then Error.Raise("Unknown snapshot export format")
+  Dim folderNames As New Collection
+  Dim laneName As String
+  If format <> "taiga" And format <> "vikunja" And format <> "wrike" Then Error.Raise("Unknown snapshot export format")
   $db = db
   $boardId = boardId
   BoardAccess.RequireContainer(boardId, "board", boardId)
   board = db.Find("kb_boards", "id=&1", boardId)
   If Not board.Available Then Error.Raise("Board not found")
+  If format = "wrike" Then
+    entries = db.Exec("SELECT COUNT(*) AS total,COUNT(DISTINCT CASE WHEN c.lane IS NOT NULL AND c.lane<>&2 AND c.lane<>&3 THEN c.lane END) AS folders FROM kb_cards c WHERE " & ListDeletion.LiveSql("card", "c") & " AND c.board_id=&1 AND c.archived=&4", boardId, "", "Default", False)
+    If CLong(entries!total) + CLong(entries!folders) + 1 > 65000 Then Error.Raise("Wrike export exceeds 65000 rows")
+  Endif
   metadata.Add(TextValue(board!title), "title")
   metadata.Add(WorkspaceStore.Setting(boardId, "board", boardId, "description"), "description")
   rows = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY lane,sort_order,id", boardId)
@@ -113,9 +119,12 @@ Public Function Build(boardId As Integer, db As Connection, format As String) As
     item.Add(CStr(rows!id), "_id")
     item.Add(TextValue(rows!title), "title")
     item.Add(WorkspaceStore.Setting(boardId, "list", rows!id, "color"), "color")
-    wip = WorkspaceStore.Setting(boardId, "list", rows!id, "wip", "0")
-    If Not ExportNumber.ParseFinite(wip, ByRef limit) Then Error.Raise("Invalid list WIP export value")
-    If limit < 0 Then Error.Raise("Invalid list WIP export value")
+    limit = 0
+    If format <> "wrike" Then
+      wip = WorkspaceStore.Setting(boardId, "list", rows!id, "wip", "0")
+      If Not ExportNumber.ParseFinite(wip, ByRef limit) Then Error.Raise("Invalid list WIP export value")
+      If limit < 0 Then Error.Raise("Invalid list WIP export value")
+    Endif
     comment = New Collection
     comment.Add(limit > 0, "enabled")
     comment.Add(limit, "value")
@@ -166,7 +175,7 @@ Public Function Build(boardId As Integer, db As Connection, format As String) As
         item.Add("", key)
       Endif
     Next
-    If format = "vikunja" Then
+    If format = "vikunja" Or format = "wrike" Then
       If dates.Exist("startAt") Then
         item.Add(CardDates.Iso(dates["startAt"]), "startAt")
       Else
@@ -196,8 +205,13 @@ Public Function Build(boardId As Integer, db As Connection, format As String) As
       item.Add("", "parentCardId")
     Endif
     items.Add(item)
+    If format = "wrike" Then
+      laneName = TextValue(rows!lane)
+      If laneName And laneName <> "Default" Then folderNames[laneName] = True
+    Endif
   Next
-  If items.Count > If(format = "vikunja", 20000, 50000) Then Error.Raise("Too many cards for this export")
+  If format = "wrike" And items.Count + folderNames.Count + 1 > 65000 Then Error.Raise("Wrike export exceeds 65000 rows")
+  If items.Count > If(format = "vikunja", 20000, If(format = "wrike", 65000, 50000)) Then Error.Raise("Too many cards for this export")
   output.Add(format, "format")
   output.Add(CardDates.Iso(ItemChanges.UtcNow()), "now")
   output.Add(metadata, "board")

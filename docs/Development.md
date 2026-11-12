@@ -1773,7 +1773,7 @@ board/list metadata, so unrelated card text and malformed card fields are absent
 The source full-board, active-board and policy gates still apply. Strict format
 binding renders only the known descriptor and preserves other JSON exports.
 Wrike applies a workbook's Workflow/Custom Status cells only when the matching
-workflow exists in Wrike. The matching XLSX exporter is the next step. Native
+workflow exists in Wrike. The matching XLSX exporter uses the same mapping. Native
 automation-rule models remain TODO; their move/complete overrides are not
 invented, and this export currently uses the source no-rule fallback.
 
@@ -1788,5 +1788,36 @@ fallback matrices and actual generated JSON ZIP bytes. Shared archive coverage
 asserts metadata-only shape for this format while preserving active-card
 presence and archive exclusion for every card-bearing format. Source/packaged
 selected-export browser checks compare actual workflow documents with the
-source helper. Matching Wrike XLSX, native rules and full original Meteor
+source helper. Matching Wrike XLSX is recorded below; native rules and full original Meteor
 UI/API/security parity remain pending.
+
+Wrike selected workbook export
+
+Wrike XLSX produces `wekan-boards-wrike.zip` with one actual `board-ID.xlsx`
+per selected board, on a Tasks sheet. Match source fixed and extra columns,
+Default-first lane order, folder rows, sequential keys, parent-key references,
+people, priorities/duration and the workflow/status mapper used by workflow JSON.
+Numbers and checkboxes retain their cell types; formula-looking text stays text.
+Start/End/Constraint date columns use actual date cells and yyyy-mm-dd styles,
+including bold headers and empty cells. Preserve the source Date.UTC year/epoch
+behavior. Native SQL preflight checks the 65,000-row bound including header and
+folder rows before collecting content or completing pending work. Oversized
+boards can be repaired and retried. The source formatter ignores list WIP, so
+this path does not read it; Taiga/Vikunja retain their own WIP validation. Native
+rules are still absent, so workflow groups use the source no-rule fallback.
+Remaining native model and original transport work remains TODO.
+
+`WrikeExportTest`/`WrikeCasesTest` compare actual native snapshots after rendering
+with unchanged `formatWrikeRows`, then compare real XLSX readback with the source
+writer. Cover folders, ordering/keys/parents, workflow/status names, typed fields,
+dates, empty/legacy/multi-lane/cycle states and archive/scope refusal. Native
+`WrikeRowLimitTest` bulk-seeds 65,000 Default cards and 32,500 distinct-folder
+cards; both exceed the row bound by one, retain pending work and resume after
+repair. Assigned-only users cannot observe these counts before full-board
+authorization. The focused native cases also prove irrelevant malformed/negative WIP
+cannot block Wrike. `wrike-workbook.test.cjs` covers real dates and date formats
+on columns/header/empty cells, source year/epoch conversion, 40 extra typed
+columns, literal formulas, strict malformed inputs and actual ZIP-contained XLSX.
+Monday/Businessmap/workflow tests verify shared-writer/mapper compatibility.
+Source/packaged Chromium compare actual ordered two-board workbook downloads
+with the parent writer. Complete original Meteor UI/API/security parity is open.

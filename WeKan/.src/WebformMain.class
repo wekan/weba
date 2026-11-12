@@ -5264,3 +5264,7 @@ End
 Public Sub ExportSelectedWrikeWorkflow_Click()
   RunSelectedExport("wrikeworkflow")
 End
+
+Public Sub ExportSelectedWrike_Click()
+  RunSelectedExport("wrike")
+End

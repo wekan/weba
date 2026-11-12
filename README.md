@@ -2443,9 +2443,23 @@ board/list metadata, so unrelated card text and malformed card fields are absent
 The source full-board, active-board and policy gates still apply. Strict format
 binding renders only the known descriptor and preserves other JSON exports.
 Wrike applies a workbook's Workflow/Custom Status cells only when the matching
-workflow exists in Wrike. The matching XLSX exporter is the next step. Native
+workflow exists in Wrike. The matching XLSX exporter uses the same mapping. Native
 automation-rule models remain TODO; their move/complete overrides are not
 invented, and this export currently uses the source no-rule fallback.
+
+Wrike XLSX produces `wekan-boards-wrike.zip` with one actual `board-ID.xlsx`
+per selected board, on a Tasks sheet. Match source fixed and extra columns,
+Default-first lane order, folder rows, sequential keys, parent-key references,
+people, priorities/duration and the workflow/status mapper used by workflow JSON.
+Numbers and checkboxes retain their cell types; formula-looking text stays text.
+Start/End/Constraint date columns use actual date cells and yyyy-mm-dd styles,
+including bold headers and empty cells. Preserve the source Date.UTC year/epoch
+behavior. Native SQL preflight checks the 65,000-row bound including header and
+folder rows before collecting content or completing pending work. Oversized
+boards can be repaired and retried. The source formatter ignores list WIP, so
+this path does not read it; Taiga/Vikunja retain their own WIP validation. Native
+rules are still absent, so workflow groups use the source no-rule fallback.
+Remaining native model and original transport work remains TODO.
 
 Card-bearing external-tool exports contain active cards; workflow JSON contains
 only board/list metadata. The native `weba-2` backup and
@@ -2480,7 +2494,7 @@ comma-CSV, semicolon-CSV and TSV ZIPs, and the single two-sheet Excel workbook.
 They also verify the Kanboard container/task JSON, exact Markdown task-list,
 Leo XML, OPML outline, Org mode outline, todo.txt task, Taskwarrior JSON,
 Focalboard JSONL, Todoist CSV, Planner XLSX, MeisterTask CSV, Obsidian Kanban,
-Linear CSV, TickTick CSV, ClickUp CSV, Nullboard NBX, Kanri JSON, Pivotal Tracker CSV, Redmine CSV, Tasks.org backup JSON, monday.com XLSX, Businessmap XLSX, Super Productivity backup JSON, Taiga project JSON, nested Vikunja export and Wrike workflow JSON ZIPs. Remaining external-tool formats and the original HTTP route
+Linear CSV, TickTick CSV, ClickUp CSV, Nullboard NBX, Kanri JSON, Pivotal Tracker CSV, Redmine CSV, Tasks.org backup JSON, monday.com XLSX, Businessmap XLSX, Super Productivity backup JSON, Taiga project JSON, nested Vikunja export, Wrike workflow JSON and Wrike XLSX ZIPs. Remaining external-tool formats and the original HTTP route
 remain pending.
 
 
