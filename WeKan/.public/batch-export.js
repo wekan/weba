@@ -34,7 +34,7 @@
       if(entry.name.endsWith('.xlsx')){
         if(typeof entry.content!=='string')throw new Error('Invalid board export');
         let descriptor;try{descriptor=JSON.parse(entry.content);}catch{throw new Error('Invalid board export');}
-        normalized.push({name:entry.name,bytes:descriptor&&descriptor.format==='monday'?mondayWorkbook(descriptor):plannerWorkbook(descriptor)});continue;
+        normalized.push({name:entry.name,bytes:descriptor&&descriptor.format==='businessmap'?businessmapWorkbook(descriptor):descriptor&&descriptor.format==='monday'?mondayWorkbook(descriptor):plannerWorkbook(descriptor)});continue;
       }
       const content=entry.content==null&&entry.name.endsWith('.txt')?'':entry.content;
       if(typeof content!=='string')throw new Error('Invalid board export');
@@ -108,8 +108,8 @@
     if(name.startsWith("'")||name.endsWith("'"))throw new Error('Invalid board export');
     return {name,rows};
   }
-  function mondayWorkbook(data){
-    const {name,rows}=mondayData(data);
+  function mondayWorkbook(data){return typedWorkbook(mondayData(data));}
+  function typedWorkbook({name,rows}){
     const mondayXml=value=>xml(String(value).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g,''));
     const shared=[],indices=new Map();let stringCount=0;
     const stringIndex=value=>{stringCount++;if(!indices.has(value)){indices.set(value,shared.length);shared.push(value);}return indices.get(value);};
@@ -130,6 +130,184 @@
     files.push({name:'xl/sharedStrings.xml',content:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="${stringCount}" uniqueCount="${shared.length}">${shared.map(value=>`<si><t xml:space="preserve">${mondayXml(value)}</t></si>`).join('')}</sst>`});
     return stored(files);
   }
+const ROLES = [
+  ['title', /^title$/i],
+  ['description', /^description$/i],
+  ['cardId', /^card id$/i],
+  ['customId', /^custom card id$/i],
+  ['priority', /^priority$/i],
+  ['owner', /^owner$/i],
+  ['coOwners', /^co-?owners?$/i],
+  ['color', /^colou?r$/i],
+  ['size', /^size$/i],
+  ['tags', /^tags?$/i],
+  ['deadline', /^deadline$/i],
+  ['template', /^template$/i],
+  ['type', /^type( name)?$/i],
+  ['column', /^column( name)?$/i],
+  ['lane', /^lane( name)?$/i],
+  ['workflow', /^workflow name$/i],
+  ['boardName', /^board name$/i],
+  ['boardId', /^board id$/i],
+  ['comment', /^comments?( \d+)?$/i],
+  ['links', /^links$/i],
+  ['parent', /^parent( card id)?$/i],
+  ['created', /^(created at|creation date)$/i],
+  ['archived', /^(archived at|archivation date)$/i],
+  ['start', /^start date$/i],
+  ['end', /^end date$/i],
+  ['plannedStart', /^planned start$/i],
+  ['plannedEnd', /^planned end$/i],
+  ['track', /^track$/i],
+];
+// The roles whose column also names a WeKan custom field.
+const FIELD_OF_ROLE = {
+  cardId: 'Card ID', customId: 'Custom Card ID', priority: 'Priority', size: 'Size', type: 'Type',
+  workflow: 'Workflow name', plannedStart: 'Planned Start', plannedEnd: 'Planned End', track: 'Track',
+};
+const businessmapRole = title => (ROLES.find(([, re]) => re.test(String(title || '').trim())) || [])[0];
+
+const NAMED_COLOR_HEX = {
+  white: '#ffffff',
+  green: '#3cb500',
+  yellow: '#fad900',
+  orange: '#ff9f19',
+  red: '#eb4646',
+  purple: '#a632db',
+  blue: '#0079bf',
+  sky: '#00c2e0',
+  lime: '#51e898',
+  pink: '#ff78cb',
+  black: '#4d4d4d',
+  silver: '#c0c0c0',
+  peachpuff: '#ffdab9',
+  crimson: '#dc143c',
+  plum: '#dda0dd',
+  darkgreen: '#006400',
+  slateblue: '#6a5acd',
+  magenta: '#ff00ff',
+  gold: '#ffd700',
+  navy: '#000080',
+  gray: '#808080',
+  saddlebrown: '#8b4513',
+  paleturquoise: '#afeeee',
+  mistyrose: '#ffe4e1',
+  indigo: '#4b0082',
+};
+
+const day = value => {
+  if (!value) return '';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '' : date.toISOString().slice(0, 10);
+};
+const PRIORITY_SYNONYMS = {
+  low: 'low', lowest: 'low', minor: 'low',
+  average: 'average', medium: 'average', normal: 'average',
+  high: 'high', major: 'high',
+  critical: 'critical', urgent: 'critical', highest: 'critical', blocker: 'critical',
+};
+// A custom field value as one spreadsheet cell.
+const cellValue = value => {
+  if (value === undefined || value === null) return '';
+  if (typeof value === 'number' || typeof value === 'boolean' || typeof value === 'string') return value;
+  if (value instanceof Date) return day(value);
+  if (Array.isArray(value)) return value.map(cellValue).filter(v => v !== '').join(', ');
+  return '';
+};
+const ROLE_FIELDS = new Set(Object.values(FIELD_OF_ROLE));
+
+// The documented import columns on the first sheet, header in row 1: what
+// Businessmap's import reads (at most 100 cards per run, so a larger board is
+// imported there in parts). Card ID and Parent are written only from the
+// Card ID custom field an import from Businessmap keeps, because a Card ID
+// updates that existing Businessmap card; WeKan's own ids are not Businessmap
+// ids. Columns no card has a value for are left out, other custom fields
+// follow by name, and comments go to repeated Comment columns.
+function formatBusinessmapSheets({ board, items }) {
+  const list = Array.isArray(items) ? items : [];
+  const cardIdOf = new Map(list.map(item => [item.cardId, (item.customFields || {})['Card ID']]));
+  const rows = list.map(item => {
+    const fields = item.customFields || {};
+    const color = typeof item.color === 'string'
+      ? (/^#[0-9a-fA-F]{6}$/.test(item.color) ? item.color.toUpperCase() : (NAMED_COLOR_HEX[item.color] || '').toUpperCase()) : '';
+    const labels = (Array.isArray(item.labels) ? item.labels : []).map(tag => String(tag).replace(/,/g, ' ').trim()).filter(Boolean);
+    const size = Number(fields.Size);
+    const parentId = item.parentCardId ? cardIdOf.get(item.parentCardId) : undefined;
+    return {
+      'Card ID': fields['Card ID'] ?? '',
+      'Custom Card ID': fields['Custom Card ID'] ?? '',
+      Title: String(item.title || '').trim() || 'Untitled',
+      Description: item.description || '',
+      Column: item.listTitle || '',
+      Lane: item.swimlaneTitle && item.swimlaneTitle !== 'Default' ? item.swimlaneTitle : '',
+      'Workflow name': fields['Workflow name'] ?? '',
+      Owner: item.owner || '',
+      'Co-Owners': (Array.isArray(item.assignees) ? item.assignees : []).filter(Boolean).join(', '),
+      Priority: PRIORITY_SYNONYMS[String(fields.Priority ?? '').trim().toLowerCase()] || '',
+      Color: color,
+      Size: fields.Size !== undefined && fields.Size !== '' && Number.isFinite(size) && size >= 0 ? size : '',
+      // A lone tag with a space keeps a trailing comma, so it is not split.
+      Tags: labels.length === 1 && /\s/.test(labels[0]) ? `${labels[0]},` : labels.join(', '),
+      Deadline: day(item.dueAt),
+      'Start Date': day(item.startAt),
+      'End Date': day(item.endAt),
+      Type: fields.Type ?? '',
+      'Planned Start': fields['Planned Start'] ?? '',
+      'Planned End': fields['Planned End'] ?? '',
+      Track: fields.Track ?? '',
+      Parent: parentId ?? '',
+      comments: (Array.isArray(item.comments) ? item.comments : [])
+        .map(c => String((c && c.text) || '').trim() && (c.author ? `${c.author}: ${String(c.text).trim()}` : String(c.text).trim()))
+        .filter(Boolean),
+      extra: Object.fromEntries(Object.entries(fields)
+        .filter(([name]) => !ROLE_FIELDS.has(name) && !businessmapRole(name))
+        .map(([name, value]) => [name, cellValue(value)])),
+    };
+  });
+  const always = ['Title', 'Description', 'Column', 'Lane', 'Owner', 'Co-Owners', 'Tags', 'Deadline', 'Color'];
+  const optional = ['Card ID', 'Custom Card ID', 'Workflow name', 'Priority', 'Size', 'Type', 'Start Date', 'End Date', 'Planned Start', 'Planned End', 'Track', 'Parent'];
+  const order = ['Card ID', 'Custom Card ID', 'Title', 'Description', 'Workflow name', 'Column', 'Lane', 'Owner', 'Co-Owners',
+    'Priority', 'Color', 'Size', 'Tags', 'Deadline', 'Start Date', 'End Date', 'Type', 'Planned Start', 'Planned End', 'Track', 'Parent'];
+  const named = order.filter(name => always.includes(name) || (optional.includes(name) && rows.some(row => row[name] !== '')));
+  const extra = [];
+  rows.forEach(row => Object.keys(row.extra).forEach(name => { if (!extra.includes(name)) extra.push(name); }));
+  const commentColumns = Math.max(0, ...rows.map(row => row.comments.length));
+  const header = [...named, ...Array(commentColumns).fill('Comment'), ...extra];
+  const out = [header];
+  for (const row of rows) {
+    out.push([
+      ...named.map(name => row[name]),
+      ...Array.from({ length: commentColumns }, (_, i) => row.comments[i] || ''),
+      ...extra.map(name => (row.extra[name] === undefined ? '' : row.extra[name])),
+    ]);
+  }
+  return { sheets: [{ name: String((board && board.title) || 'Cards').slice(0, 31), rows: out }] };
+}
+
+  function businessmapData(data){
+    if(!data||Object.keys(data).sort().join(',')!=='format,items,title'||data.format!=='businessmap'||typeof data.title!=='string'||!Array.isArray(data.items)||data.items.length>1048575)throw new Error('Invalid board export');
+    const keys='assignees,cardId,color,comments,customFields,description,dueAt,endAt,labels,listTitle,owner,parentCardId,startAt,swimlaneTitle,title',ids=new Set();
+    const items=data.items.map(item=>{
+      if(!item||Object.keys(item).sort().join(',')!==keys||!['cardId','title','description','swimlaneTitle','listTitle','color','owner','parentCardId','dueAt','startAt','endAt'].every(key=>typeof item[key]==='string')||!/^[1-9][0-9]*$/.test(item.cardId)||ids.has(item.cardId)||item.parentCardId&&!/^[1-9][0-9]*$/.test(item.parentCardId))throw new Error('Invalid board export');ids.add(item.cardId);
+      for(const key of ['assignees','labels'])if(!Array.isArray(item[key])||!item[key].every(value=>typeof value==='string'))throw new Error('Invalid board export');
+      if(!Array.isArray(item.comments)||!item.comments.every(comment=>comment&&Object.keys(comment).sort().join(',')==='author,text'&&typeof comment.author==='string'&&typeof comment.text==='string')||!item.customFields||Array.isArray(item.customFields)||typeof item.customFields!=='object')throw new Error('Invalid board export');
+      const customFields=Object.create(null);
+      for(let [name,value] of Object.entries(item.customFields)){
+        if(value&&typeof value==='object'){
+          if(Array.isArray(value)||Object.keys(value).join(',')!=='number'||typeof value.number!=='string'||!value.number.trim()||!Number.isFinite(Number(value.number)))throw new Error('Invalid board export');value=Number(value.number);
+        }
+        if(!['string','boolean','number'].includes(typeof value)||typeof value==='number'&&!Number.isFinite(value))throw new Error('Invalid board export');customFields[name]=value;
+      }
+      for(const key of ['dueAt','startAt','endAt'])if(item[key]&&(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(item[key])||!Number.isFinite(Date.parse(item[key]))))throw new Error('Invalid board export');
+      return {...item,customFields};
+    });
+    const sheet=formatBusinessmapSheets({board:{title:data.title},items}).sheets[0];
+    let name=String(sheet.name||'sheet1').replace(/[\\/?*\[\]:]/g,' ').slice(0,31)||'sheet1';
+    if(name==='History'||name.startsWith("'")||name.endsWith("'")||sheet.rows[0].length>16384)throw new Error('Invalid board export');
+    return {name,rows:sheet.rows};
+  }
+  function businessmapWorkbook(data){return typedWorkbook(businessmapData(data));}
+
   function workbook(entries){
     if(!Array.isArray(entries)||!entries.length||entries.length>1000)throw new Error('Invalid board export');
     const descriptors=entries.map(entry=>{
@@ -155,7 +333,7 @@
     return stored(files);
   }
   function downloadPayload(encoded,filename='wekan-boards-weba.zip'){
-    if(!/^wekan-boards-(weba|csv|scsv|tsv|kanboard|markdown|leo|opml|orgmode|todotxt|taskwarrior|focalboard|todoist|planner|meistertask|obsidian|linear|ticktick|clickup|nullboard|kanri|pivotal|redmine|tasksorg|monday)\.zip$/.test(filename))throw new Error('Invalid board export');
+    if(!/^wekan-boards-(weba|csv|scsv|tsv|kanboard|markdown|leo|opml|orgmode|todotxt|taskwarrior|focalboard|todoist|planner|meistertask|obsidian|linear|ticktick|clickup|nullboard|kanri|pivotal|redmine|tasksorg|monday|businessmap)\.zip$/.test(filename))throw new Error('Invalid board export');
     const url=URL.createObjectURL(new Blob([archive(payload(encoded))],{type:'application/zip'})),link=document.createElement('a');
     link.href=url;link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
@@ -163,5 +341,5 @@
     const url=URL.createObjectURL(new Blob([workbook(payload(encoded))],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})),link=document.createElement('a');
     link.href=url;link.download='wekan-boards.xlsx';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
-  window.webaBatchExport={archive,workbook,plannerWorkbook,mondayWorkbook,mondayData,uniqueSheetNames,downloadPayload,downloadWorkbook};
+  window.webaBatchExport={archive,workbook,plannerWorkbook,mondayWorkbook,mondayData,businessmapWorkbook,businessmapData,uniqueSheetNames,downloadPayload,downloadWorkbook};
 })();

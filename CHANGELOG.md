@@ -2,6 +2,19 @@
 
 This work adds the following features and fixes:
 
+- Add Businessmap (Kanbanize) as the twenty-second selected-board tool export.
+  Download real XLSX workbooks in `wekan-boards-businessmap.zip`. Match source
+  optional columns, ordered people, ISO dates, palette/hex colors, priorities,
+  typed custom fields, repeated comments and parent Businessmap Card IDs.
+  Preserve literal formula text, shared empty strings, bold headers and source
+  case/UTF-16 worksheet naming. Validate native snapshots and client descriptors;
+  retain active/full-board/policy/session checks and pending-only repair/retry.
+  Native/source workbook conformance, malformed-input boundaries and all 27
+  selected-export downloads in source and packaged browsers pass. Complete host
+  tests pass, including 69 Python tests and 44 archive-scope snapshots. Five
+  original Businessmap contracts pass. Other formats and complete original
+  UI/API/security suites remain pending. Thanks to xet7.
+
 - Recheck cached selected-export snapshots before access, retry and publication.
   Require the original actor/session generation, current full-board read access,
   active boards and current export policy under deterministic metadata locks.

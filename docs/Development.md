@@ -1641,3 +1641,30 @@ icon click without following its hash, and check safe-index deletion before
 explicitly checking removed assignments in Remaining. Run `--workspace-urls` or
 full source/package live suites. Home/Templates, other-page navigation and
 original Meteor route/DDP/profile transport remain TODO.
+
+Businessmap selected workbook export
+
+Businessmap (formerly Kanbanize) produces `wekan-boards-businessmap.zip` with
+one actual `board-ID.xlsx` workbook per selected board. Native snapshots contain
+only active cards, native typed custom fields, people, dates, labels, comments
+and same-board parent references. A strict local renderer matches the source
+optional columns, repeated Comment columns, custom columns, priority synonyms,
+palette/hex colors and Businessmap Card ID parent lookup. Native IDs are never
+invented as Businessmap Card IDs. Preserve numeric/Boolean cells, literal formula
+strings, shared empty cells and bold headers. Sheet names preserve case and follow
+the source UTF-16 truncation/sanitization rules, including protected `History`
+and apostrophe refusal. Native snapshots bound cards and possible column counts
+before queue completion; malformed numbers/names retain pending-only retry.
+Source board-defined field models and unsupported original transport remain TODO.
+
+`BusinessmapExportTest` constructs rich native SQL content and compares rows and
+actual XLSX readback with unchanged `businessmapFormat.js` and
+`businessmapWorkbook.js`. Cover repeated comments, parent Card IDs, ordered
+assignee/member adapters, native hex color, dates, typed fields, archive omission,
+malformed-number repair and assigned-only denial. `businessmap-workbook.test.cjs`
+checks all palette colors, names/XML/UTF-16, optional and 40 extra columns, literal
+formulas, duplicate IDs and malformed descriptor/cell/date boundaries. The shared
+archive test includes every accepted external-tool format. Real source and
+packaged selected-export browser runs now cover 27 formats/download paths and
+cached scope revocation/API-403/regrant. These focused checks do not establish
+complete original Meteor UI/API/security parity.

@@ -2377,6 +2377,19 @@ is bold. Preserve empty cells through shared strings. Archived cards are exclude
 Comments/checklists/source board-defined field models remain outside the current
 source Monday table; native field types are adapted explicitly.
 
+Businessmap (formerly Kanbanize) produces `wekan-boards-businessmap.zip` with
+one actual `board-ID.xlsx` workbook per selected board. Native snapshots contain
+only active cards, native typed custom fields, people, dates, labels, comments
+and same-board parent references. A strict local renderer matches the source
+optional columns, repeated Comment columns, custom columns, priority synonyms,
+palette/hex colors and Businessmap Card ID parent lookup. Native IDs are never
+invented as Businessmap Card IDs. Preserve numeric/Boolean cells, literal formula
+strings, shared empty cells and bold headers. Sheet names preserve case and follow
+the source UTF-16 truncation/sanitization rules, including protected `History`
+and apostrophe refusal. Native snapshots bound cards and possible column counts
+before queue completion; malformed numbers/names retain pending-only retry.
+Source board-defined field models and unsupported original transport remain TODO.
+
 External-tool exports contain active cards. The native `weba-2` backup and
 generic CSV/TSV/Excel exports also retain archived cards.
 
@@ -2386,7 +2399,10 @@ Every board independently takes the existing locked whole-board export path and
 rechecks the global export gate, readable full-board scope, assigned-only rule
 and active state before returning data. If a later board fails, no ZIP is
 downloaded; already completed JSON stays only in private form memory and the
-next click retries the pending board. A completed replay does not reserialize
+next click retries the pending board. Cached access, retry and publication also
+recheck the original actor/session, current active/full-board scopes and export
+policy under sorted metadata locks. Revocation prevents a cached private
+download; regrant permits the retained immutable snapshot. A completed replay does not reserialize
 boards. Changing selection, leaving the active overview, signing out or disabling
 export invalidates the queue. Forged hidden actions still pass all server checks.
 
@@ -2406,7 +2422,7 @@ comma-CSV, semicolon-CSV and TSV ZIPs, and the single two-sheet Excel workbook.
 They also verify the Kanboard container/task JSON, exact Markdown task-list,
 Leo XML, OPML outline, Org mode outline, todo.txt task, Taskwarrior JSON,
 Focalboard JSONL, Todoist CSV, Planner XLSX, MeisterTask CSV, Obsidian Kanban,
-Linear CSV, TickTick CSV, ClickUp CSV, Nullboard NBX, Kanri JSON, Pivotal Tracker CSV, Redmine CSV, Tasks.org backup JSON and monday.com XLSX ZIPs. Remaining external-tool formats and the original HTTP route
+Linear CSV, TickTick CSV, ClickUp CSV, Nullboard NBX, Kanri JSON, Pivotal Tracker CSV, Redmine CSV, Tasks.org backup JSON, monday.com XLSX and Businessmap XLSX ZIPs. Remaining external-tool formats and the original HTTP route
 remain pending.
 
 

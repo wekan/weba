@@ -145,6 +145,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   selected monday.com actual XLSX ZIP with fixed/extra typed columns, source
   worksheet naming, literal formulas and actual workbook readback is recorded
   there;
+  selected Businessmap actual XLSX ZIP with optional/typed columns, comments,
+  parent Card IDs and unchanged source workbook readback is recorded there;
   Cached selected-export publication now rechecks current actor/session, full
   board access and policy; revocation/regrant browser coverage is recorded in
   CHANGELOG.md. Complete original security parity remains pending.

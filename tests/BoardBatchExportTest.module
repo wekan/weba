@@ -26,6 +26,8 @@ Public Sub Main()
   Dim linearBatch As Collection
   Dim tickTickBatch As Collection
   Dim clickUpBatch As Collection
+  Dim businessmapBatch As Collection
+  Dim businessmapData As Collection
   Dim mondayBatch As Collection
   Dim mondayData As Collection
   Dim tasksOrgBatch As Collection
@@ -522,6 +524,15 @@ Public Sub Main()
   If InStr(files[0]["content"], "Ignored archived card") Or InStr(files[0]["content"], "Planner archived canary") Then Error.Raise("Monday exported archived content")
   mondayData = JSON.Decode(files[1]["content"])
   If mondayData["title"] <> "Export Bravo" Or mondayData["rows"].Count <> 2 Or mondayData["rows"][1][0] <> "Bravo card" Then Error.Raise("Monday board isolation drifted")
+  businessmapBatch = BoardBatchExport.NewBatch(selection, "businessmap")
+  BoardBatchExport.Run(businessmapBatch, selection)
+  files = BoardBatchExport.Files(businessmapBatch)
+  If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".xlsx" Or BoardBatchExport.Format(businessmapBatch) <> "businessmap" Then Error.Raise("Businessmap format or batch order drifted")
+  businessmapData = JSON.Decode(files[0]["content"])
+  If businessmapData["format"] <> "businessmap" Or businessmapData["title"] <> "Export Alpha" Then Error.Raise("Businessmap descriptor drifted")
+  If InStr(files[0]["content"], "Ignored archived card") Or InStr(files[0]["content"], "Planner archived canary") Then Error.Raise("Businessmap exported archived content")
+  businessmapData = JSON.Decode(files[1]["content"])
+  If businessmapData["title"] <> "Export Bravo" Or businessmapData["items"].Count <> 1 Or businessmapData["items"][0]["title"] <> "Bravo card" Then Error.Raise("Businessmap board isolation drifted")
   batch = BoardBatchExport.NewBatch(selection)
   batch["busy"] = True
   Try BoardBatchExport.Run(batch, selection)

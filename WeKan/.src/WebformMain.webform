@@ -1530,6 +1530,9 @@
             { ExportSelectedMonday WebButton
               Text = "monday.com"
             }
+            { ExportSelectedBusinessmap WebButton
+              Text = "Businessmap"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton

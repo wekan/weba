@@ -115,6 +115,10 @@ Public Function ExportActiveBoardTasksOrg(boardId As Integer) As String
   Return ExportChecked(boardId, "board", boardId, True, "tasksorg")
 End
 
+Public Function ExportActiveBoardBusinessmap(boardId As Integer) As String
+  Return ExportChecked(boardId, "board", boardId, True, "businessmap")
+End
+
 Public Function ExportActiveBoardMonday(boardId As Integer) As String
   Return ExportChecked(boardId, "board", boardId, True, "monday")
 End
@@ -195,6 +199,8 @@ Private Function ExportChecked(boardId As Integer, kind As String, itemId As Int
     text = BoardRedmineExport.Build(boardId, $db)
   Else If format = "tasksorg" And kind = "board" Then
     text = BoardTasksOrgExport.Build(boardId, $db)
+  Else If format = "businessmap" And kind = "board" Then
+    text = BoardBusinessmapExport.Build(boardId, $db)
   Else If format = "monday" And kind = "board" Then
     text = BoardMondayExport.Build(boardId, $db)
   Else

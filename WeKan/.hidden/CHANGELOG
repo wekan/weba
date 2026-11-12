@@ -1,4 +1,9 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Businessmap selected export: Add actual XLSX ZIPs with optional and typed
+  columns, repeated comments, source colors/dates and parent Card IDs. Verify
+  unchanged source workbook readback, descriptor/name boundaries, native
+  repair/retry, archive scope and source/packaged browser downloads.
+
 - Cached export scope: Revalidate actor/session, full-board access, active
   boards and export policy under sorted locks before cached snapshot publication.
   Verify revocation, rollback, immutable retry and source/packaged browser denial.
