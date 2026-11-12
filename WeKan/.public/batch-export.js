@@ -31,7 +31,7 @@
     const normalized=[];
     for(const entry of entries){
       if(!entry||typeof entry.name!=='string'||!/^board-[1-9][0-9]*\.(json|jsonl|csv|tsv|md|leo|opml|org|txt|xlsx|nbx|zip)$/.test(entry.name))throw new Error('Invalid board export');
-      if(entry.format!==undefined&&!((['taiga','wrikeworkflow'].includes(entry.format)&&entry.name.endsWith('.json'))||(entry.format==='vikunja'&&entry.name.endsWith('.zip'))))throw new Error('Invalid board export');
+      if(entry.format!==undefined&&!((['taiga','wrikeworkflow'].includes(entry.format)&&entry.name.endsWith('.json'))||(entry.format==='vikunja'&&entry.name.endsWith('.zip'))||(entry.format==='notion'&&entry.name.endsWith('.csv'))))throw new Error('Invalid board export');
       if(entry.name.endsWith('.zip')){
         if(entry.format!=='vikunja'||typeof entry.content!=='string')throw new Error('Invalid board export');
         let descriptor;try{descriptor=JSON.parse(entry.content);}catch{throw new Error('Invalid board export');}
@@ -44,9 +44,9 @@
       }
       let content=entry.content==null&&entry.name.endsWith('.txt')?'':entry.content;
       if(entry.format!==undefined){
-        if(!['taiga','wrikeworkflow'].includes(entry.format)||!entry.name.endsWith('.json')||typeof content!=='string')throw new Error('Invalid board export');
+        if(typeof content!=='string')throw new Error('Invalid board export');
         let descriptor;try{descriptor=JSON.parse(content);}catch{throw new Error('Invalid board export');}
-        content=JSON.stringify(entry.format==='wrikeworkflow'?wrikeWorkflowData(descriptor):taigaData(descriptor))+'\n';
+        content=entry.format==='notion'?notionCsv(descriptor):JSON.stringify(entry.format==='wrikeworkflow'?wrikeWorkflowData(descriptor):taigaData(descriptor))+'\n';
       }
       if(typeof content!=='string')throw new Error('Invalid board export');
       normalized.push({name:entry.name,content});
@@ -334,15 +334,15 @@ function formatBusinessmapSheets({ board, items }) {
     const dateText=value=>typeof value==='string'&&(!value||/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(value)&&Number.isFinite(Date.parse(value))&&new Date(value).toISOString()===value);
     const canonical=value=>typeof value==='string'&&/^[1-9][0-9]*$/.test(value);
     return function(data,format){
-      if(!['taiga','vikunja','wrike','teamwork'].includes(format))throw new Error('Invalid board export');
-      if(!exact(data,'board,format,items,lists,now,swimlanes')||data.format!==format||!dateText(data.now)||!data.now||!exact(data.board,'description,title')||typeof data.board.title!=='string'||typeof data.board.description!=='string'||!Array.isArray(data.items)||data.items.length>(['vikunja','teamwork'].includes(format)?20000:format==='wrike'?65000:50000)||!Array.isArray(data.lists)||!Array.isArray(data.swimlanes))throw new Error('Invalid board export');
+      if(!['taiga','vikunja','wrike','teamwork','notion'].includes(format))throw new Error('Invalid board export');
+      if(!exact(data,'board,format,items,lists,now,swimlanes')||data.format!==format||!dateText(data.now)||!data.now||!exact(data.board,'description,title')||typeof data.board.title!=='string'||typeof data.board.description!=='string'||!Array.isArray(data.items)||data.items.length>(format==='notion'?Infinity:['vikunja','teamwork'].includes(format)?20000:format==='wrike'?65000:50000)||!Array.isArray(data.lists)||!Array.isArray(data.swimlanes))throw new Error('Invalid board export');
       const listIds=new Set(),cardIds=new Set();
       for(const item of data.lists){
         if(!exact(item,'_id,color,title,wipLimit')||!canonical(item._id)||listIds.has(item._id)||typeof item.color!=='string'||typeof item.title!=='string'||!exact(item.wipLimit,'enabled,value')||typeof item.wipLimit.enabled!=='boolean'||typeof item.wipLimit.value!=='number'||!Number.isFinite(item.wipLimit.value)||item.wipLimit.value<0)throw new Error('Invalid board export');listIds.add(item._id);
       }
       for(const lane of data.swimlanes)if(!exact(lane,'title')||typeof lane.title!=='string')throw new Error('Invalid board export');
       const items=data.items.map(item=>{
-        if(!exact(item,(['vikunja','wrike','teamwork'].includes(format)?'assignees,cardId,checklists,color,comments,creator,customFields,description,dueAt,endAt,labels,listId,listTitle,owner,parentCardId,startAt,swimlaneTitle,title':'assignees,cardId,checklists,color,comments,creator,customFields,description,dueAt,endAt,labels,listId,listTitle,owner,parentCardId,swimlaneTitle,title'))||!['cardId','title','description','listId','listTitle','swimlaneTitle','color','creator','owner','parentCardId'].every(key=>typeof item[key]==='string')||!canonical(item.cardId)||cardIds.has(item.cardId)||item.listId&&!canonical(item.listId)||item.parentCardId&&!canonical(item.parentCardId)||!dateText(item.dueAt)||!dateText(item.endAt)||['vikunja','wrike','teamwork'].includes(format)&&!dateText(item.startAt)||!textArray(item.assignees)||!textArray(item.labels)||!Array.isArray(item.comments)||!Array.isArray(item.checklists)||!item.customFields||typeof item.customFields!=='object'||Array.isArray(item.customFields))throw new Error('Invalid board export');cardIds.add(item.cardId);
+        if(!exact(item,(['vikunja','wrike','teamwork','notion'].includes(format)?'assignees,cardId,checklists,color,comments,creator,customFields,description,dueAt,endAt,labels,listId,listTitle,owner,parentCardId,startAt,swimlaneTitle,title':'assignees,cardId,checklists,color,comments,creator,customFields,description,dueAt,endAt,labels,listId,listTitle,owner,parentCardId,swimlaneTitle,title'))||!['cardId','title','description','listId','listTitle','swimlaneTitle','color','creator','owner','parentCardId'].every(key=>typeof item[key]==='string')||!canonical(item.cardId)||cardIds.has(item.cardId)||item.listId&&!canonical(item.listId)||item.parentCardId&&!canonical(item.parentCardId)||!dateText(item.dueAt)||!dateText(item.endAt)||['vikunja','wrike','teamwork','notion'].includes(format)&&!dateText(item.startAt)||!textArray(item.assignees)||!textArray(item.labels)||!Array.isArray(item.comments)||!Array.isArray(item.checklists)||!item.customFields||typeof item.customFields!=='object'||Array.isArray(item.customFields))throw new Error('Invalid board export');cardIds.add(item.cardId);
         for(const comment of item.comments)if(!exact(comment,'author,date,text')||typeof comment.author!=='string'||typeof comment.text!=='string'||!dateText(comment.date))throw new Error('Invalid board export');
         for(const checklist of item.checklists)if(!exact(checklist,'items,title')||typeof checklist.title!=='string'||!Array.isArray(checklist.items)||!checklist.items.every(entry=>exact(entry,'done,title')&&typeof entry.title==='string'&&typeof entry.done==='boolean'))throw new Error('Invalid board export');
         const customFields=Object.create(null);
@@ -1465,6 +1465,70 @@ function formatTeamworkSheet({ board, items }) {
     return typedWorkbook({name,rows:result.rows,dateColumns:[4,5]});
   }
 
+
+  const notionCsv=(()=>{
+    const NOTION_EXPORT_COLUMNS=['Name','Status','Assignee','Tags','Start','Due','Description'];
+    const UNSAFE_NAMES=new Set(['__proto__','constructor','prototype']);
+    const str=value=>value===undefined||value===null?'':String(value);
+    const lower=value=>str(value).trim().toLowerCase();
+// One CSV field, RFC 4180 quoting.
+const field = value => {
+  const text = str(value);
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+};
+// MM/DD/YYYY, the date format Notion's CSV import reads; a day in UTC.
+const usDate = value => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const pad = n => String(n).padStart(2, '0');
+  return `${pad(date.getUTCMonth() + 1)}/${pad(date.getUTCDate())}/${date.getUTCFullYear()}`;
+};
+
+// The CSV Notion's CSV import reads: the title first, one column per
+// property, UTF-8. A Swimlane column is written when the board has more than
+// one swimlane; custom fields follow in the order they first appear.
+function formatNotionCsv({ items } = {}) {
+  const list = Array.isArray(items) ? items : [];
+  const lanes = new Set(list.map(item => str(item.swimlaneTitle) || 'Default'));
+  const withLanes = lanes.size > 1;
+  const customNames = [];
+  for (const item of list) {
+    for (const name of Object.keys(item.customFields || {})) {
+      if (!customNames.includes(name) && !UNSAFE_NAMES.has(name) && !NOTION_EXPORT_COLUMNS.some(c => lower(c) === lower(name)) && lower(name) !== 'swimlane') {
+        customNames.push(name);
+      }
+    }
+  }
+  const columns = [...NOTION_EXPORT_COLUMNS, ...(withLanes ? ['Swimlane'] : []), ...customNames];
+  const rows = [columns];
+  for (const item of list) {
+    const people = [item.owner, ...(Array.isArray(item.assignees) ? item.assignees : [])]
+      .map(person => str(person).replace(/,/g, ' ').trim()).filter(Boolean);
+    const values = {
+      Name: str(item.title).trim() || 'Untitled',
+      Status: str(item.listTitle),
+      Assignee: [...new Set(people)].join(', '),
+      Tags: (Array.isArray(item.labels) ? item.labels : []).map(label => str(label).replace(/,/g, ' ').trim()).filter(Boolean).join(', '),
+      Start: usDate(item.startAt),
+      Due: usDate(item.dueAt),
+      Description: str(item.description),
+      Swimlane: str(item.swimlaneTitle) || 'Default',
+    };
+    const fields = item.customFields || {};
+    for (const name of customNames) {
+      const value = fields[name];
+      values[name] = typeof value === 'boolean' ? (value ? 'Yes' : 'No')
+        : value === undefined || value === null ? '' : str(value);
+    }
+    rows.push(columns.map(name => values[name] || ''));
+  }
+  return `${rows.map(cells => cells.map(field).join(',')).join('\r\n')}\r\n`;
+}
+
+    return data=>formatNotionCsv(nativeSnapshot(data,'notion'));
+  })();
+
   function workbook(entries){
     if(!Array.isArray(entries)||!entries.length||entries.length>1000)throw new Error('Invalid board export');
     const descriptors=entries.map(entry=>{
@@ -1490,7 +1554,7 @@ function formatTeamworkSheet({ board, items }) {
     return stored(files);
   }
   function downloadPayload(encoded,filename='wekan-boards-weba.zip'){
-    if(!/^wekan-boards-(weba|csv|scsv|tsv|kanboard|markdown|leo|opml|orgmode|todotxt|taskwarrior|focalboard|todoist|planner|meistertask|obsidian|linear|ticktick|clickup|nullboard|kanri|pivotal|redmine|tasksorg|monday|businessmap|superproductivity|taiga|vikunja|wrikeworkflow|wrike|teamwork|quire)\.zip$/.test(filename))throw new Error('Invalid board export');
+    if(!/^wekan-boards-(weba|csv|scsv|tsv|kanboard|markdown|leo|opml|orgmode|todotxt|taskwarrior|focalboard|todoist|planner|meistertask|obsidian|linear|ticktick|clickup|nullboard|kanri|pivotal|redmine|tasksorg|monday|businessmap|superproductivity|taiga|vikunja|wrikeworkflow|wrike|teamwork|quire|notion)\.zip$/.test(filename))throw new Error('Invalid board export');
     const url=URL.createObjectURL(new Blob([archive(payload(encoded))],{type:'application/zip'})),link=document.createElement('a');
     link.href=url;link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
@@ -1498,5 +1562,5 @@ function formatTeamworkSheet({ board, items }) {
     const url=URL.createObjectURL(new Blob([workbook(payload(encoded))],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})),link=document.createElement('a');
     link.href=url;link.download='wekan-boards.xlsx';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
-  window.webaBatchExport={archive,workbook,plannerWorkbook,mondayWorkbook,mondayData,businessmapWorkbook,businessmapData,taigaData,vikunjaData,vikunjaFiles,vikunjaArchive,wrikeWorkflowData,wrikeData,wrikeWorkbook,teamworkData,teamworkWorkbook,uniqueSheetNames,downloadPayload,downloadWorkbook};
+  window.webaBatchExport={archive,workbook,plannerWorkbook,mondayWorkbook,mondayData,businessmapWorkbook,businessmapData,taigaData,vikunjaData,vikunjaFiles,vikunjaArchive,wrikeWorkflowData,wrikeData,wrikeWorkbook,teamworkData,teamworkWorkbook,notionCsv,uniqueSheetNames,downloadPayload,downloadWorkbook};
 })();

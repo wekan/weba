@@ -26,6 +26,8 @@ Public Sub Main()
   Dim linearBatch As Collection
   Dim tickTickBatch As Collection
   Dim clickUpBatch As Collection
+  Dim notionBatch As Collection
+  Dim notionData As Collection
   Dim quireBatch As Collection
   Dim teamworkBatch As Collection
   Dim teamworkData As Collection
@@ -607,6 +609,15 @@ Public Sub Main()
   If Left(files[0]["content"], 8) <> "ID,Paren" Or InStr(files[0]["content"], "Alpha card") = 0 Then Error.Raise("Quire CSV header/content drifted")
   If InStr(files[0]["content"], "Ignored archived card") Or InStr(files[0]["content"], "Planner archived canary") Then Error.Raise("Quire exported archived content")
   If InStr(files[1]["content"], "Bravo card") = 0 Or InStr(files[1]["content"], "Alpha card") Then Error.Raise("Quire board isolation drifted")
+  notionBatch = BoardBatchExport.NewBatch(selection, "notion")
+  BoardBatchExport.Run(notionBatch, selection)
+  files = BoardBatchExport.Files(notionBatch)
+  If files.Count <> 2 Or files[0]["name"] <> "board-" & CStr(a) & ".csv" Or files[0]["format"] <> "notion" Or BoardBatchExport.Format(notionBatch) <> "notion" Then Error.Raise("Notion format or batch order drifted")
+  notionData = JSON.Decode(files[0]["content"])
+  If notionData["format"] <> "notion" Or notionData["board"]["title"] <> "Export Alpha" Then Error.Raise("Notion snapshot metadata drifted")
+  If InStr(files[0]["content"], "Ignored archived card") Or InStr(files[0]["content"], "Planner archived canary") Then Error.Raise("Notion exported archived content")
+  notionData = JSON.Decode(files[1]["content"])
+  If notionData["board"]["title"] <> "Export Bravo" Or notionData["items"].Count <> 1 Or notionData["items"][0]["title"] <> "Bravo card" Then Error.Raise("Notion board isolation drifted")
   batch = BoardBatchExport.NewBatch(selection)
   batch["busy"] = True
   Try BoardBatchExport.Run(batch, selection)

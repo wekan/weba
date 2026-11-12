@@ -1,4 +1,10 @@
 * Thu Nov 12 2026 Lauri Ojansivu <x@xet7.org> 1.0.0 (unreleased)
+- Notion selected export: Add explicitly bound CSV ZIP rendering from scoped
+  native snapshots with dynamic typed fields, conditional used-lane columns,
+  reserved-name filtering and exact source values/quoting. Verify native/source
+  bytes, numeric/prototype/date/lane/CSV boundaries and 50,001-card output;
+  remaining formats and full original UI/API/security parity stay pending.
+
 - Quire selected export: Add native CSV ZIPs with dynamic deduplicated people/
   tag columns, sequential ID/parent refs, source statuses/priorities, English
   UTC dates and exact CRLF/quoting/formula guards. Verify rich/legacy/matrix

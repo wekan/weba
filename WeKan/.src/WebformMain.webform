@@ -1554,6 +1554,9 @@
             { ExportSelectedQuire WebButton
               Text = "Quire CSV"
             }
+            { ExportSelectedNotion WebButton
+              Text = "Notion CSV"
+            }
             { SelectedExportProgress WebLabel
             }
             { CancelSelectedExport WebButton

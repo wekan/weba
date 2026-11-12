@@ -2,6 +2,21 @@
 
 This work adds the following features and fixes:
 
+- Add Notion CSV as the thirtieth selected-board tool export. Download
+  `wekan-boards-notion.zip` with source-exact CSV columns, used-lane Swimlane
+  detection, ordered typed custom fields, Boolean Yes/No, precise numeric text,
+  reserved/prototype-name filtering, people/labels, UTC dates and literal
+  RFC 4180/CRLF values. Use scoped native snapshots and explicit CSV format
+  binding; generic CSV stays unchanged. Omit unused comments/checklists/parent
+  and layout metadata, preserve empty/overwritten custom-field columns and
+  normalize legacy empty numeric storage to zero.
+  Do not inherit unrelated 50,000-card
+  or import-only character limits. Native/source and renderer edge comparisons,
+  including 50,001 cards, nine original contracts and all 35 source/packaged
+  browser downloads pass. Complete host tests pass, including 69 Python tests
+  and 60 archive/scope snapshots. Ten earlier tool formats, native model adapters and
+  complete original UI/API/security parity remain pending. Thanks to xet7.
+
 - Add Quire CSV as the twenty-ninth selected-board tool export. Download
   `wekan-boards-quire.zip` with byte-exact source headers, dynamic deduplicated
   Assignee/Tag columns, sequential #IDs/parent refs, list statuses, Priority

@@ -1,0 +1,205 @@
+Public Sub Main()
+  Dim cases As New Variant[]
+  Dim sample As Collection
+  Dim boardId As Integer
+  Dim epic As Integer
+  Dim story As Integer
+  Dim task As Integer
+  Dim child As Integer
+  Dim issue As Integer
+  Dim other As Integer
+  Dim archived As Integer
+  Dim listId As Integer
+  Dim items As Variant[]
+  Dim fields As Collection
+  Dim item As Collection
+  Dim checklist As Collection
+  Dim checklistId As Integer
+  Dim checkItem As Integer
+  Dim entries As Variant[]
+  Dim dates As Collection
+  Dim rows As Result
+  Dim mode As String
+  Dim denied As Boolean
+  Dim selection As Collection
+  Dim batch As Collection
+  WebDatabase.Register("notion-case-owner", "x")
+  Session["username"] = "notion-case-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("notion-case-owner")
+  For Each mode In ["empty", "legacy-empty", "kinds", "legacy-cycle"]
+    boardId = KanbanStore.AddBoard(" Notion " & mode & " Ω ")
+    KanbanStore.Lanes(boardId)
+    items = New Variant[]
+    If mode = "legacy-empty" Then
+      WebDatabase.OpenConnection().Exec("DELETE FROM kb_lists WHERE board_id=&1", boardId)
+      WebDatabase.OpenConnection().Exec("DELETE FROM kb_lanes WHERE board_id=&1", boardId)
+    Endif
+    If mode = "kinds" Then
+      KanbanStore.AddLane(boardId, "Epics")
+      KanbanStore.AddLane(boardId, "Issues")
+      KanbanStore.AddLane(boardId, "Development")
+      epic = Card(boardId, "Epic Ω", "Epics", "Complete", items, "visible")
+      story = Card(boardId, "Story Ω", "Development", "Done", items, "visible, visible")
+      task = Card(boardId, "Task Ω", "Development", "Doing", items, "task")
+      child = Card(boardId, "Grandchild", "Development", "Doing", items, "")
+      issue = Card(boardId, "Issue", "Issues", "Rejected", items, "type:Risk, priority:Urgent, severity:Fatal, visible")
+      other = Card(boardId, "Other story", "Development", "Review", items, "")
+      Link(boardId, epic, story, items)
+      Link(boardId, story, task, items)
+      Link(boardId, task, child, items)
+      fields = New Collection
+      fields["Story points"] = 3.5
+      fields["Blocked"] = "Needs approval"
+      fields["Client requirement"] = True
+      fields["Team requirement"] = "yes"
+      fields["Due date reason"] = "Release Ω"
+      fields["Amount"] = 2.675
+      FieldsFor(boardId, story, fields, items)
+      fields = New Collection
+      fields["Task status"] = "Closed"
+      fields["Iocaine"] = "1"
+      fields["Blocked"] = False
+      FieldsFor(boardId, task, fields, items)
+      fields = New Collection
+      fields["Amount"] = "text type conflict"
+      FieldsFor(boardId, other, fields, items)
+      dates = New Collection
+      dates["endAt"] = CardDates.Parse("2026-11-12T13:14:15.678Z")
+      dates["dueAt"] = CardDates.Parse("2026-11-13T00:00:00.000Z")
+      CardDates.Apply(boardId, story, dates)
+      items[1]["endAt"] = "2026-11-12T13:14:15.678Z"
+      items[1]["dueAt"] = "2026-11-13T00:00:00.000Z"
+      checklistId = CardContent.Save(boardId, story, 0, "checklist", "Story steps", "", 0, False, 0)
+      checkItem = CardContent.Save(boardId, story, 0, "checkitem", " Open task ", "", checklistId, False, 0)
+      CardContent.Save(boardId, story, 0, "checkitem", "Done task", "", checklistId, True, 0)
+      entries = New Variant[]
+      item = New Collection
+      item["title"] = "Open task"
+      item["done"] = False
+      entries.Add(item)
+      item = New Collection
+      item["title"] = "Done task"
+      item["done"] = True
+      entries.Add(item)
+      checklist = New Collection
+      checklist["title"] = "Story steps"
+      checklist["items"] = entries
+      items[1]["checklists"] = [checklist]
+      listId = KanbanStore.CardListId(boardId, story)
+      WorkspaceStore.SetSetting(boardId, "list", listId, "color", "#ff0000")
+      WorkspaceStore.SetSetting(boardId, "list", listId, "wip", "3")
+      WorkspaceStore.SetSetting(boardId, "card", epic, "color", "#0a1b2c")
+      items[0]["color"] = "#0a1b2c"
+      archived = Card(boardId, "Hidden Notion parent", "Default", "Todo", items, "")
+      items.Remove(items.Count - 1)
+      KanbanStore.ArchiveCard(boardId, archived, True)
+      other = Card(boardId, "Orphan", "Default", "Todo", items, "")
+      Link(boardId, archived, other, items)
+      WebDatabase.OpenConnection().Exec("DELETE FROM kb_card_lists WHERE board_id=&1 AND card_id=&2", boardId, other)
+      items[items.Count - 1].Remove("listId")
+      items[items.Count - 1].Remove("listTitle")
+    Endif
+    If mode = "legacy-cycle" Then
+      story = Card(boardId, "Cycle A", "Default", "Todo", items, "")
+      task = Card(boardId, "Cycle B", "Default", "Todo", items, "")
+      other = Card(boardId, "Cycle temporary", "Default", "Todo", items, "")
+      Link(boardId, story, task, items)
+      Link(boardId, task, other, items)
+      WebDatabase.OpenConnection().Exec("UPDATE kb_entries SET amount=&1 WHERE board_id=&2 AND card_id=&3 AND kind=&4", story, boardId, task, "subtask")
+      items[0]["parentCardId"] = CStr(task)
+      items[2].Remove("parentCardId")
+    Endif
+    sample = New Collection
+    sample["mode"] = mode
+    sample["board"] = New Collection
+    sample["board"]["title"] = "Notion " & mode & " Ω"
+    sample["items"] = items
+    sample["lists"] = Layout(boardId, "kb_lists", "lane,sort_order,id", listId)
+    sample["swimlanes"] = Layout(boardId, "kb_lanes", "id")
+    sample["actual"] = BoardTransfer.ExportActiveBoardNotion(boardId)
+    cases.Add(sample)
+    listId = 0
+  Next
+  rows = WebDatabase.OpenConnection().Find("kb_lists", "board_id=&1 ORDER BY id", boardId)
+  listId = rows!id
+  For Each mode In ["invalid", "-1"]
+    WorkspaceStore.SetSetting(boardId, "list", listId, "wip", "3")
+    WebDatabase.OpenConnection().Exec("UPDATE kb_meta SET value=&1 WHERE board_id=&2 AND kind=&3 AND item_id=&4 AND setting=&5", mode, boardId, "list", listId, "wip")
+    selection = BoardSelection.NewState()
+    BoardSelection.SetActive(selection, True)
+    BoardSelection.AddVisible(selection, [boardId])
+    batch = BoardBatchExport.NewBatch(selection, "notion")
+    BoardBatchExport.Run(batch, selection)
+    If BoardBatchExport.Completed(batch) <> 1 Then Error.Raise("Notion read irrelevant WIP metadata")
+    WorkspaceStore.SetSetting(boardId, "list", listId, "wip", "3")
+  Next
+  Print JSON.Encode(cases)
+End
+
+Private Function Card(boardId As Integer, title As String, lane As String, list As String, items As Variant[], labels As String) As Integer
+  Dim rows As Result
+  KanbanStore.Lanes(boardId)
+  rows = WebDatabase.OpenConnection().Find("kb_lists", "board_id=&1 AND lane=&2 AND title=&3", boardId, lane, list)
+  Dim item As New Collection
+  Dim id As Integer
+  If Not rows.Available Then KanbanStore.AddList(boardId, lane, list, "")
+  id = KanbanStore.SaveCard(boardId, 0, title, "", lane, list, "", labels, "")
+  item["cardId"] = CStr(id)
+  item["title"] = title
+  item["swimlaneTitle"] = lane
+  item["listTitle"] = list
+  item["listId"] = CStr(KanbanStore.CardListId(boardId, id))
+  If labels Then item["labels"] = Split(Replace(labels, ", ", ","), ",")
+  items.Add(item)
+  Return id
+End
+
+Private Sub Link(boardId As Integer, parent As Integer, child As Integer, items As Variant[])
+  Dim item As Collection
+  CardContent.Save(boardId, parent, 0, "subtask", "", "", 0, False, child)
+  For Each item In items
+    If item["cardId"] = CStr(child) Then item["parentCardId"] = CStr(parent)
+  Next
+End
+
+Private Sub FieldsFor(boardId As Integer, cardId As Integer, fields As Collection, items As Variant[])
+  Dim item As Collection
+  Dim name As String
+  Dim value As Variant
+  For Each name In fields.Keys
+    value = fields[name]
+    If TypeOf(value) = gb.Boolean Then
+      CardContent.Save(boardId, cardId, 0, "custom", name, "", 0, value, 0, "checkbox")
+    Else If TypeOf(value) = gb.Float Then
+      CardContent.Save(boardId, cardId, 0, "custom", name, CStr(value), 0, False, 0, "number")
+    Else
+      CardContent.Save(boardId, cardId, 0, "custom", name, CStr(value), 0, False, 0, "text")
+    Endif
+  Next
+  For Each item In items
+    If item["cardId"] = CStr(cardId) Then item["customFields"] = fields
+  Next
+End
+
+Private Function Layout(boardId As Integer, table As String, order As String, Optional styled As Integer) As Variant[]
+  Dim result As New Variant[]
+  Dim rows As Result = WebDatabase.OpenConnection().Exec("SELECT * FROM " & table & " WHERE board_id=&1 ORDER BY " & order, boardId)
+  Dim item As Collection
+  Dim wip As Collection
+  For Each rows
+    item = New Collection
+    item["title"] = CStr(rows!title)
+    If table = "kb_lists" Then
+      item["_id"] = CStr(rows!id)
+      If rows!id = styled Then
+        item["color"] = "#ff0000"
+        wip = New Collection
+        wip["enabled"] = True
+        wip["value"] = 3
+        item["wipLimit"] = wip
+      Endif
+    Endif
+    result.Add(item)
+  Next
+  Return result
+End

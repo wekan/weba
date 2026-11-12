@@ -1879,3 +1879,45 @@ suite is `tests/quireCsv.test.cjs`. Shared batch/archive tests retain ordering,
 isolation and active-card scope. Real source/packaged Chromium compare actual
 ordered two-board CSV ZIPs with the parent formatter. Complete original Meteor
 UI/API/security parity remains unproven in TODO.
+
+Notion selected CSV export
+
+Notion produces `wekan-boards-notion.zip` with one `board-ID.csv` per selected
+board. Scoped native snapshots are normalized before source-matching local CSV
+rendering. Keep fixed columns first, followed by Swimlane only when active cards
+use multiple lanes, then custom fields in source order. Exclude reserved/base/
+prototype names, write checkbox values as Yes/No, preserve exact JavaScript
+numeric text, deduplicate assignees and retain source tag repetition. Dates use
+UTC MM/DD/YYYY; values and RFC 4180/CRLF quoting remain source-exact. An explicit
+private CSV marker binds conversion, while unmarked generic CSV stays unchanged.
+This export does not inherit unrelated formats' card limits or Notion-import-only
+character limits; common download-envelope/ZIP bounds still apply. Native typed
+field models, comma-separated labels and absent creation/identity metadata remain
+adapters. Other tool formats and original transport/content work remain TODO.
+
+`NotionExportTest`/`NotionCasesTest` compare actual rendered native CSV bytes with
+unchanged `formatNotionCsv`, covering numeric/Boolean/text fields, reserved-name
+canaries, empty/overwritten columns, dynamic lanes, metadata/model adapters, archive/scope guards, malformed
+numeric pending repair and irrelevant WIP independence. `notion-renderer.test.cjs`
+checks negative zero/subnormal/max/hex/exponent numeric strings, reserved/prototype
+collisions, used versus unused lanes, dates/people/tags/literal values, strict
+shapes/markers/paths, actual CSV ZIP contents and unchanged generic CSV. A
+50,001-card comparison proves no unrelated inherited row limit. Source/packaged
+Chromium compare ordered two-board downloads with source bytes. Source audit
+finds 40 formats: 30 native implementations including Notion; deck, openproject,
+github, gitea, forgejo, gitlab, trello, jira, asana and zenkit remain. Full original
+Meteor UI/API/security parity remains unproven and open in TODO.
+
+Final native collection omits Notion-unused comments, checklists, parent links,
+colors/layout and completion metadata while keeping the strict common descriptor
+shape. Reserved fields are filtered before value parsing. Native collection Add
+preserves empty text and the first column position when a duplicate field
+replaces a value, matching JavaScript property order; direct assignment had
+removed empty columns. Native regressions assert both CSV bytes and omission
+of unused/private descriptor values. Full verification is repeated after this
+collector fix, with Taiga/Vikunja native compatibility checked separately.
+
+Notion legacy numeric storage containing only whitespace is normalized to zero
+before descriptor handoff, matching the native finite-number parser and JavaScript
+number conversion. The regression fixture inserts this legacy state directly; the
+normal card-content save path rejects empty numeric input.

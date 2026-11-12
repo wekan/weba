@@ -5276,3 +5276,7 @@ End
 Public Sub ExportSelectedQuire_Click()
   RunSelectedExport("quire")
 End
+
+Public Sub ExportSelectedNotion_Click()
+  RunSelectedExport("notion")
+End

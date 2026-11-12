@@ -164,10 +164,14 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   there;
   selected Quire CSV ZIP with dynamic people/tags, sequential parent refs,
   source dates/priorities and exact formula-safe CRLF quoting is recorded there;
+  selected Notion CSV ZIP with typed dynamic fields, conditional used-lane
+  column, reserved-name filtering and source-exact numeric/literal CSV values
+  is recorded there;
   Cached selected-export publication now rechecks current actor/session, full
   board access and policy; revocation/regrant browser coverage is recorded in
   CHANGELOG.md. Complete original security parity remains pending.
-  original remaining formats/API route, avatar exclusions,
+  Remaining source tool formats: deck, openproject, github, gitea, forgejo,
+  gitlab, trello, jira, asana and zenkit. Original API route, avatar exclusions,
   identity anonymization and security event reporting remain pending. The private
   single-attachment export API and scoped query-token transport are also recorded
   in CHANGELOG.md. Its native selected-file action, session/API separation and
