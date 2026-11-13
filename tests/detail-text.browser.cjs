@@ -56,7 +56,16 @@ with sqlite3.connect(sys.argv[1]) as d:
   await click('DetailDelete');expect(read().entries.some(e=>e.kind==='custom')).toBe(false);
   await expect(page.locator(input('DetailTitle'))).toHaveValue('');await expect(page.locator(input('DetailBody'))).toHaveValue('');
   await expect(page.locator(c('DetailTree')+' tr[id]').filter({hasText:shown(local)})).toHaveCount(0);
+  await kind('Time tracking');
+  for(const [control,action] of [['DetailStart','start'],['DetailStop','stop']]){
+   const beforeTimer=sql();sql('CREATE TRIGGER detail_timer_final AFTER INSERT ON kb_history BEGIN UPDATE kb_cards SET archived=1 WHERE id='+seed.items[0].card+'; END');
+   try{await click(control);await expect(page.locator(c('Notice'))).toContainText('Card archive state changed');expect(sql()).toBe(beforeTimer);}
+   finally{sql('DROP TRIGGER detail_timer_final');}
+   await click(control);
+   const timers=read().entries.filter(e=>e.kind==='time');expect(timers).toHaveLength(1);expect(Boolean(timers[0].done)).toBe(action==='stop');
+   await expect(page.locator(c('DetailTree'))).toContainText(action==='start'?'Running timer':'Tracked time');
+  }
   expect(errors).toEqual([]);
-  console.log('Detail complete-text browser: native custom/comment/checklist/file text, exact encoded editor values, external suffix heartbeat, dirty local title with independent external body save, post-history archive refusal keeps all board data and exact dirty draft, retry, New clears stale values, literal markup/reload and delete rollback with exact dirty/provenance retention and retry passed');
+  console.log('Detail complete-text browser: native custom/comment/checklist/file text, exact encoded editor values, external suffix heartbeat, dirty local title with independent external body save, post-history archive refusal keeps all board data and exact dirty draft, retry, New clears stale values, literal markup/reload and delete rollback with exact dirty/provenance retention and retry, timer start/stop post-history rollback and retry passed');
  }finally{if(context)await context.close();if(browser)await browser.close();}
 })().catch(e=>{let message=e.stack||String(e);if(process.env.WEBA_TEST_PASSWORD)message=message.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(message);process.exitCode=1;});

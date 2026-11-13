@@ -107,7 +107,7 @@ Public Sub Main()
     Next
     result["metadata"] = WorkspaceStore.Setting(boardId, "card", cardId, "description")
     conn = WebDatabase.OpenConnection()
-    For Each kind In ["checklist", "checkitem", "comment", "custom"]
+    For Each kind In ["checklist", "checkitem", "comment", "custom", "time"]
       row = CardContent.Entries(boardId, cardId, kind, True)
       For Each row
         item = New Collection

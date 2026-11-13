@@ -1,0 +1,148 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim mode As String
+  Dim stage As String
+  Dim effect As String
+  Dim actor As String
+  Dim before As String
+  Dim timerId As Integer
+  Dim secondId As Integer
+  Dim denied As Boolean
+  Dim conn As Connection
+  Dim row As Result
+  For Each actor In ["timer-global", "timer-owner", "timer-writer", "timer-reader", "timer-outsider"]
+    WebDatabase.Register(actor, "x")
+  Next
+  SignIn("timer-owner")
+  boardId = KanbanStore.AddBoard("Timer final scope")
+  BoardAccess.SetMember(boardId, "timer-writer", "normal")
+  BoardAccess.SetMember(boardId, "timer-reader", "read-only")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Card", "", "Default", "Todo", "", "", "")
+  CardContent.OpenStore()
+  conn = WebDatabase.OpenConnection()
+  SignIn("timer-writer")
+  For Each mode In ["start", "stop"]
+    If mode = "stop" Then CardContent.StartTimer(boardId, cardId)
+    For Each stage In [If(mode = "start", "AFTER INSERT ON kb_entries WHEN NEW.kind='time'", "AFTER UPDATE OF done ON kb_entries WHEN NEW.kind='time'"), "AFTER INSERT ON kb_history", "AFTER UPDATE ON kb_item_changes WHEN NEW.kind='card' AND NEW.item_id=" & CStr(cardId)]
+      For Each effect In ["UPDATE kb_members SET role='read-only' WHERE board_id=" & CStr(boardId) & " AND username='timer-writer'", "DELETE FROM kb_members WHERE board_id=" & CStr(boardId) & " AND username='timer-writer'", "UPDATE account_sessions SET generation=generation+1 WHERE username='timer-writer'", "INSERT INTO kb_member_flags (board_id,username,flag) VALUES (" & CStr(boardId) & ",'timer-writer','isReadAssignedOnly')", "UPDATE kb_cards SET archived=1 WHERE id=" & CStr(cardId), "UPDATE kb_boards SET archived=1 WHERE id=" & CStr(boardId), "UPDATE kb_card_lists SET list_id=2147483647 WHERE card_id=" & CStr(cardId), "UPDATE kb_entries SET author='timer-owner' WHERE board_id=" & CStr(boardId) & " AND card_id=" & CStr(cardId) & " AND kind='time'", "UPDATE kb_entries SET kind='custom' WHERE board_id=" & CStr(boardId) & " AND card_id=" & CStr(cardId) & " AND kind='time'", "UPDATE kb_entries SET amount=amount+1 WHERE board_id=" & CStr(boardId) & " AND card_id=" & CStr(cardId) & " AND kind='time'", "UPDATE kb_entries SET done=NOT done WHERE board_id=" & CStr(boardId) & " AND card_id=" & CStr(cardId) & " AND kind='time'", "UPDATE kb_entries SET created_at='2000-01-01' WHERE board_id=" & CStr(boardId) & " AND card_id=" & CStr(cardId) & " AND kind='time'", "SELECT RAISE(ABORT,'timer-private-canary')"]
+        before = Frame()
+        conn.Exec("CREATE TRIGGER inject_timer_scope " & stage & " BEGIN " & effect & "; END")
+        If mode = "start" Then
+          Try CardContent.StartTimer(boardId, cardId)
+          denied = Error
+        Else
+          Try CardContent.StopTimer(boardId, cardId)
+          denied = Error
+        Endif
+        conn.Exec("DROP TRIGGER inject_timer_scope")
+        If Not denied Or Frame() <> before Then Error.Raise("Timer scope failed: " & mode & ": " & stage & ": " & effect)
+      Next
+    Next
+    If mode = "start" Then
+      CardContent.StartTimer(boardId, cardId)
+      before = Frame()
+      Try CardContent.StartTimer(boardId, cardId)
+      denied = Error
+      If Not denied Or Frame() <> before Then Error.Raise("Duplicate timer changed state")
+      CardContent.StopTimer(boardId, cardId)
+    Else
+      CardContent.StopTimer(boardId, cardId)
+      before = Frame()
+      Try CardContent.StopTimer(boardId, cardId)
+      denied = Error
+      If Not denied Or Frame() <> before Then Error.Raise("Missing timer changed state")
+    Endif
+  Next
+  SignIn("timer-writer")
+  CardContent.StartTimer(boardId, cardId)
+  timerId = conn.Exec("SELECT id FROM kb_entries WHERE board_id=&1 AND card_id=&2 AND kind='time' AND done=0", boardId, cardId)!id
+  row = conn.Edit("kb_entries", "id=&1", timerId)
+  row!body = "Body" & Chr(0) & "Ω😀"
+  row!parent_id = 73
+  row!value_type = "Type" & Chr(0) & "Ω"
+  DatabaseText.Save(conn, row, "kb_entries", ["body", "parent_id", "value_type"], False)
+  For Each effect In ["UPDATE kb_entries SET body='changed' WHERE id=" & CStr(timerId), "UPDATE kb_entries SET author='timer-owner' WHERE id=" & CStr(timerId), "UPDATE kb_entries SET created_at=NULL WHERE id=" & CStr(timerId)]
+    before = Frame()
+    conn.Exec("CREATE TRIGGER inject_timer_lock AFTER UPDATE OF title ON kb_entries WHEN NEW.id=" & CStr(timerId) & " AND NEW.title=OLD.title BEGIN " & effect & "; END")
+    Try CardContent.StopTimer(boardId, cardId)
+    denied = Error
+    conn.Exec("DROP TRIGGER inject_timer_lock")
+    If Not denied Or Frame() <> before Then Error.Raise("Timer lock changed scope: " & effect)
+  Next
+  conn.Exec("INSERT INTO kb_entries (board_id,card_id,kind,title,body,parent_id,value_type,author,created_at,amount,done) SELECT board_id,card_id,kind,title,body,parent_id,value_type,author,created_at,amount,done FROM kb_entries WHERE id=&1", timerId)
+  secondId = conn.LastInsertId
+  CardContent.StopTimer(boardId, cardId)
+  row = conn.Exec(ExportText.SelectRows(conn, "kb_entries") & " WHERE id=&1", timerId)
+  If Not row!done Or ExportText.ReadValue(row, "body") <> "Body" & Chr(0) & "Ω😀" Or row!parent_id <> 73 Or ExportText.ReadValue(row, "value_type") <> "Type" & Chr(0) & "Ω" Then Error.Raise("Stop lost exact timer fields")
+  If conn.Exec("SELECT done FROM kb_entries WHERE id=&1", secondId)!done Then Error.Raise("Stop completed another running timer")
+  CardContent.StopTimer(boardId, cardId)
+  If Not conn.Exec("SELECT done FROM kb_entries WHERE id=&1", secondId)!done Then Error.Raise("Legacy duplicate timer could not stop")
+  For Each actor In ["timer-reader", "timer-outsider", "timer-global"]
+    SignIn(actor)
+    before = Frame()
+    Try CardContent.StartTimer(boardId, cardId)
+    denied = Error
+    If Not denied Or Frame() <> before Then Error.Raise("Unauthorized timer start changed state")
+  Next
+  Print "Timers: start/stop data/history/clock identity/role/raw/archive/placement/owner/kind/amount/state/time/SQL rollback, retry, duplicate/missing and unauthorized refusal passed"
+End
+
+Private Sub SignIn(actor As String)
+  Session["username"] = actor
+  Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+End
+
+Private Function Frame() As String
+  Dim conn As Connection = WebDatabase.OpenConnection()
+  Dim table As Table
+  Dim tables As New String[]
+  Dim tableName As String
+  Dim order As String[]
+  Dim key As String
+  Dim rows As Result
+  Dim field As ResultField
+  Dim values As Collection
+  Dim data As Variant[]
+  Dim result As New Collection
+  For Each table In conn.Tables
+    If Left(table.Name, 7) <> "sqlite_" Then tables.Add(table.Name)
+  Next
+  tables.Sort()
+  For Each tableName In tables
+    order = New String[]
+    For Each key In conn.Tables[tableName].PrimaryKey
+      order.Add(conn.Quote(key))
+    Next
+    rows = conn.Exec(ExportText.SelectRows(conn, tableName) & If(order.Count, " ORDER BY " & order.Join(","), ""))
+    data = New Variant[]
+    For Each rows
+      values = New Collection
+      For Each field In rows.Fields
+        If Left(field.Name, 7) = "__weba_" Then Continue
+        If field.Type = DB.String Then
+          If rows.Fields.Exist("__weba_null_" & field.Name) Then
+            If rows["__weba_null_" & field.Name] Then
+              values[field.Name] = JSON.Null
+            Else
+              values[field.Name] = ExportText.ReadValue(rows, field.Name)
+            Endif
+          Else
+            values[field.Name] = rows[field.Name]
+          Endif
+        Else If field.Type = DB.Blob Then
+          If IsNull(rows[field.Name]) Then
+            values[field.Name] = JSON.Null
+          Else
+            values[field.Name] = Base64(rows[field.Name].Data)
+          Endif
+        Else
+          values[field.Name] = rows[field.Name]
+        Endif
+      Next
+      data.Add(values)
+    Next
+    result[tableName] = data
+  Next
+  Return JsonText.Encode(result)
+End

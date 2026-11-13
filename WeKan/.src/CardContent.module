@@ -433,7 +433,7 @@ Catch
   Error.Raise(failure)
 End
 
-Private Function DeletionStamp(row As Result) As String
+Private Function EntryState(row As Result) As Collection
   Dim data As New Collection
   Dim field As ResultField
   Dim value As Variant
@@ -459,7 +459,11 @@ Private Function DeletionStamp(row As Result) As String
       data.Add(If(IsNull(value), JSON.Null, value), field.Name)
     Endif
   Next
-  Return JsonText.Encode(data)
+  Return data
+End
+
+Private Function DeletionStamp(row As Result) As String
+  Return JsonText.Encode(EntryState(row))
 End
 
 Private Sub RequireEntryDeletion(boardId As Integer, cardId As Integer, entryId As Integer, scope As Collection, ids As Integer[], stamps As Collection, removed As Integer[], cleaned As Boolean, Optional effectId As Integer)
@@ -517,27 +521,78 @@ Catch
   Error.Raise(failure)
 End
 
+Private Function RunningTimers(boardId As Integer, cardId As Integer, actor As String) As Integer[]
+  Dim ids As New Integer[]
+  Dim row As Result = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND author=&4 AND done=&5 ORDER BY id", boardId, cardId, "time", actor, False)
+  For Each row
+    ids.Add(row!id)
+  Next
+  Return ids
+End
+
+Private Sub RequireTimer(boardId As Integer, cardId As Integer, scope As Collection)
+  Dim row As Result
+  Dim state As Collection
+  Dim expected As Collection = scope["timerState"]
+  Dim key As String
+  Dim id As Integer
+  RequireDetailScope(boardId, cardId, scope)
+  row = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, scope["timerId"])
+  If Not row.Available Then Error.Raise("Timer not accessible")
+  state = EntryState(row)
+  If state.Count <> expected.Count Then Error.Raise("Timer changed during write")
+  For Each key In expected.Keys
+    If Not state.Exist(key) Then Error.Raise("Timer changed during write")
+    If JsonText.Encode(state[key]) <> JsonText.Encode(expected[key]) Then Error.Raise("Timer changed during write")
+  Next
+  If JsonText.Encode(RunningTimers(boardId, cardId, scope["actor"])) <> JsonText.Encode(scope["running"]) Then Error.Raise("Running timer set changed")
+  For Each key In scope["others"].Keys
+    id = CInt(key)
+    row = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, id)
+    If Not row.Available Then Error.Raise("Running timer set changed")
+    If DeletionStamp(row) <> scope["others"][key] Then Error.Raise("Other running timer changed")
+  Next
+End
+
 Public Sub StartTimer(boardId As Integer, cardId As Integer)
   Dim transaction As Boolean
   Dim failure As String
   Dim r As Result
+  Dim id As Integer
+  Dim actor As String = WebIdentity.Username
+  Dim stamp As Date
+  Dim others As New Collection
+  Dim scope As New Collection
   RequireCard(boardId, cardId)
   BoardAccess.Require(boardId, "write")
-  BeginChange(boardId, cardId, "write")
+  BeginChange(boardId, cardId, "write", actor)
   transaction = True
-  r = $db.Find("kb_entries", "board_id = &1 AND card_id = &2 AND kind = &3 AND author = &4 AND done = &5", boardId, cardId, "time", WebIdentity.Username, False)
-  If r.Available Then Error.Raise("Timer already running")
+  scope.Add(actor, "actor")
+  scope.Add("write", "capability")
+  CaptureDetailScope(boardId, cardId, scope)
+  If RunningTimers(boardId, cardId, actor).Count Then Error.Raise("Timer already running")
+  stamp = Now
   r = $db.Create("kb_entries")
   r["board_id"] = boardId
   r["card_id"] = cardId
   r["kind"] = "time"
   r["title"] = "Running timer"
-  r["author"] = WebIdentity.Username
-  r["created_at"] = Now
-  r["amount"] = 0
+  r["author"] = actor
+  r["created_at"] = stamp
+  r["amount"] = 0.0
   r["done"] = False
-  r.Update()
+  DatabaseText.Save($db, r, "kb_entries", ["board_id", "card_id", "kind", "title", "author", "created_at", "amount", "done"], True)
+  id = $db.LastInsertId
+  RequireDetailScope(boardId, cardId, scope)
+  If Not $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND id=&3 AND kind=&4 AND author=&5 AND title=&6 AND amount=0 AND done=&7 AND created_at=&8 AND parent_id IS NULL AND body IS NULL AND value_type IS NULL", boardId, cardId, id, "time", actor, "Running timer", False, stamp).Available Then Error.Raise("Timer changed during start")
+  r = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, id)
+  scope.Add(id, "timerId")
+  scope.Add(EntryState(r), "timerState")
+  scope.Add([id], "running")
+  scope.Add(others, "others")
+  RequireTimer(boardId, cardId, scope)
   KanbanStore.Activity(boardId, "Started card timer", "card", cardId)
+  RequireTimer(boardId, cardId, scope)
   DatabaseTransactions.Commit($db)
   transaction = False
 Catch
@@ -550,17 +605,62 @@ Public Sub StopTimer(boardId As Integer, cardId As Integer)
   Dim transaction As Boolean
   Dim failure As String
   Dim r As Result
+  Dim actor As String = WebIdentity.Username
+  Dim scope As New Collection
+  Dim ids As Integer[]
+  Dim remaining As New Integer[]
+  Dim others As New Collection
+  Dim locked As New Collection
+  Dim expected As Collection
+  Dim id As Integer
+  Dim timerId As Integer
+  Dim minutes As Float
   RequireCard(boardId, cardId)
   BoardAccess.Require(boardId, "write")
-  BeginChange(boardId, cardId, "write")
+  BeginChange(boardId, cardId, "write", actor)
   transaction = True
-  r = $db.Edit("kb_entries", "board_id = &1 AND card_id = &2 AND kind = &3 AND author = &4 AND done = &5", boardId, cardId, "time", WebIdentity.Username, False)
-  If Not r.Available Then Error.Raise("No running timer")
-  r["amount"] = Max(0, DateDiff(r!created_at, Now, gb.Second)) / 60
+  scope.Add(actor, "actor")
+  scope.Add("write", "capability")
+  CaptureDetailScope(boardId, cardId, scope)
+  ids = RunningTimers(boardId, cardId, actor)
+  If Not ids.Count Then Error.Raise("No running timer")
+  For Each id In ids
+    r = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, id)
+    locked.Add(DeletionStamp(r), CStr(id))
+  Next
+  For Each id In ids
+    $db.Exec("UPDATE kb_entries SET title=title WHERE board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, id)
+  Next
+  RequireDetailScope(boardId, cardId, scope)
+  If JsonText.Encode(RunningTimers(boardId, cardId, actor)) <> JsonText.Encode(ids) Then Error.Raise("Running timer set changed")
+  timerId = ids[0]
+  For Each id In ids
+    r = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, id)
+    If DeletionStamp(r) <> locked[CStr(id)] Then Error.Raise("Timer changed during lock")
+    If id = timerId Then
+      If IsNull(r!created_at) Then Error.Raise("Timer start time unavailable")
+      minutes = Max(0, DateDiff(r!created_at, Now, gb.Second)) / 60
+      expected = EntryState(r)
+      expected["amount"] = minutes
+      expected["done"] = True
+      expected["title"] = "Tracked time"
+    Else
+      remaining.Add(id)
+      others.Add(DeletionStamp(r), CStr(id))
+    Endif
+  Next
+  r = $db.Edit("kb_entries", "board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, timerId)
+  r["amount"] = minutes
   r["done"] = True
   r["title"] = "Tracked time"
-  r.Update()
+  DatabaseText.Save($db, r, "kb_entries", ["amount", "done", "title"], False)
+  scope.Add(timerId, "timerId")
+  scope.Add(expected, "timerState")
+  scope.Add(remaining, "running")
+  scope.Add(others, "others")
+  RequireTimer(boardId, cardId, scope)
   KanbanStore.Activity(boardId, "Stopped card timer", "card", cardId)
+  RequireTimer(boardId, cardId, scope)
   DatabaseTransactions.Commit($db)
   transaction = False
 Catch

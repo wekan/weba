@@ -2,6 +2,23 @@
 
 This work adds the following features and fixes:
 
+- Guard native timer start/stop immediately after storage and after history/clocks.
+  Capture and lock the current actor, retain card placement/container/archive
+  scope, and reject permission/session/raw-policy or timer ownership/state changes.
+  Snapshot running timers before sorted row locks, reject lock-time changes and
+  verify exact resulting records and the remaining running set before commit.
+  Stop writes only title, done and exact elapsed amount, preserving untouched
+  NUL/Unicode text, nullable fields and provenance; legacy duplicate timers stop
+  one at a time in ID order. Missing start times refuse without writes.
+  Native tests cover data/history/clock failures, all-table rollback, SQL errors,
+  duplicate/missing/unauthorized refusal, lock races, exact fields and retry.
+  Source/packaged detail and live UI pass; timer controls reject late archive
+  changes with unchanged board data and succeed on retry. The full pinned
+  host/native/API/security/session gate, 70 Python tests and JavaScript checks
+  pass.
+  File/other mutations, numeric editor/model readers and full original parity
+  remain open. Thanks to xet7.
+
 - Guard native detail deletion across all seven entry kinds. Reject a kind change
   during locking before using comment-only authority, and recheck current actor,
   permission, comment ownership/admin scope and related-card access throughout.
