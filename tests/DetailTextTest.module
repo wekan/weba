@@ -1,0 +1,178 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim targetId As Integer
+  Dim hiddenId As Integer
+  Dim entryId As Integer
+  Dim checklistId As Integer
+  Dim fileId As Integer
+  Dim kind As String
+  Dim actor As String
+  Dim suffix As String = Chr(0) & "Ω😀'<tag>tail"
+  Dim data As Collection
+  Dim draft As Collection
+  Dim row As Collection
+  Dim before As String
+  Dim state As String
+  Dim denied As Boolean
+  Dim r As Result
+  Dim conn As Connection
+  For Each actor In ["detail-text-global", "detail-text-owner", "detail-text-writer", "detail-text-reader", "detail-text-assigned", "detail-text-outsider"]
+    WebDatabase.Register(actor, "x")
+  Next
+  SignIn("detail-text-owner")
+  boardId = KanbanStore.AddBoard("Details")
+  BoardAccess.SetMember(boardId, "detail-text-writer", "normal")
+  BoardAccess.SetMember(boardId, "detail-text-reader", "read-only")
+  BoardAccess.SetMember(boardId, "detail-text-assigned", "read-assigned-only")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Card" & suffix, "", "Default", "Todo", "detail-text-assigned", "", "")
+  targetId = KanbanStore.SaveCard(boardId, 0, "Target" & suffix, "", "Default", "Todo", "detail-text-assigned", "", "")
+  hiddenId = KanbanStore.SaveCard(boardId, 0, "HIDDEN-DETAIL-CANARY" & suffix, "", "Default", "Todo", "", "", "")
+  checklistId = CardContent.Save(boardId, cardId, 0, "checklist", "Parent" & suffix, "", 0, False, 0)
+  For Each kind In ["comment", "checkitem", "custom", "time", "subtask", "dependency"]
+    entryId = CardContent.Save(boardId, cardId, 0, kind, "Title" & suffix, "Body" & suffix, If(kind = "checkitem", checklistId, 0), False, If(kind = "subtask" Or kind = "dependency", targetId, 2))
+    draft = EntryDraft.Read(boardId, cardId, entryId)
+    If draft["body"] <> "Body" & suffix Then Error.Raise("Draft body truncated: " & kind)
+    If draft["title"] <> If(kind = "subtask" Or kind = "dependency", "Target", "Title") & suffix Then Error.Raise("Draft title truncated: " & kind)
+    data = DetailLive.Read(boardId, cardId, kind)
+    If data["title"] <> "Card" & suffix Or data["entries"][0]["body"] <> "Body" & suffix Then Error.Raise("Detail snapshot truncated: " & kind)
+    If kind = "checkitem" Then
+      If data["checklists"][0]["title"] <> "Parent" & suffix Then Error.Raise("Parent checklist truncated")
+    Endif
+    If kind = "custom" Then
+      CardContent.Save(boardId, cardId, entryId, kind, "External" & suffix, "External body" & suffix, 0, False, 2)
+      CardContent.Save(boardId, cardId, entryId, kind, "Local" & suffix, draft["body"], 0, False, 2, "text", draft)
+      draft = EntryDraft.Read(boardId, cardId, entryId)
+      If draft["title"] <> "Local" & suffix Or draft["body"] <> "External body" & suffix Then Error.Raise("Stale draft lost independent complete text")
+    Endif
+    If kind = "comment" Then
+      CardContent.RetainAuthorName(boardId, cardId, "entry", entryId, "Retired" & suffix)
+      data = DetailLive.Read(boardId, cardId, kind)
+      If data["entries"][0]["authorName"] <> "Retired" & suffix Then Error.Raise("Retained display author truncated")
+    Endif
+  Next
+  fileId = CardContent.UploadFile(boardId, cardId, "File" & suffix, "BINARY-CANARY" & Chr(0) & Chr(255))
+  AttachmentLifecycle.Delete(boardId, cardId, fileId)
+  AttachmentLifecycle.Restore(boardId, cardId, fileId)
+  conn = WebDatabase.OpenConnection()
+  r = CardContent.DownloadFile(boardId, cardId, fileId, True)
+  If ExportText.ReadValue(r, "filename") <> "File" & suffix Or r!content.Data <> "BINARY-CANARY" & Chr(0) & Chr(255) Then Error.Raise("Complete download lost filename/bytes")
+  before = Frame()
+  conn.Exec("CREATE TRIGGER fail_detail_history BEFORE INSERT ON kb_attachment_history BEGIN SELECT RAISE(ABORT,'history fixture'); END")
+  Try AttachmentLifecycle.Delete(boardId, cardId, fileId)
+  denied = Error
+  conn.Exec("DROP TRIGGER fail_detail_history")
+  If Not denied Or Frame() <> before Then Error.Raise("History SQL failure did not roll back")
+  AttachmentLifecycle.Delete(boardId, cardId, fileId)
+  AttachmentLifecycle.Restore(boardId, cardId, fileId)
+  For Each actor In ["detail-text-owner", "detail-text-writer", "detail-text-reader", "detail-text-assigned"]
+    SignIn(actor)
+    For Each kind In ["comment", "checklist", "checkitem", "custom", "time", "subtask", "dependency", "file"]
+      DetailLive.Read(boardId, cardId, kind)
+    Next
+    before = Frame()
+    For Each kind In ["comment", "checklist", "checkitem", "custom", "time", "subtask", "dependency", "file"]
+      state = JsonText.Encode(DetailLive.Read(boardId, cardId, kind))
+      If state <> JsonText.Encode(DetailLive.Read(boardId, cardId, kind)) Then Error.Raise("Snapshot unstable")
+      If InStr(state, "BINARY-CANARY") Or InStr(state, "HIDDEN-DETAIL-CANARY") Then Error.Raise("Detail privacy leak")
+    Next
+    data = DetailLive.Read(boardId, cardId, "file")
+    If data["files"][0]["filename"] <> "File" & suffix Then Error.Raise("Filename truncated")
+    data = DetailLive.Read(boardId, cardId, "file", True)
+    If data["attachmentHistory"][0]["filename"] <> "File" & suffix Then Error.Raise("History filename truncated")
+    If Frame() <> before Then Error.Raise("Detail reads wrote state")
+  Next
+  SignIn("detail-text-owner")
+  entryId = CardContent.Save(boardId, cardId, 0, "dependency", "", "", 0, False, hiddenId)
+  SignIn("detail-text-assigned")
+  before = Frame()
+  Try EntryDraft.Read(boardId, cardId, entryId)
+  denied = Error
+  If Not denied Then Error.Raise("Hidden relation draft accessible")
+  If InStr(JsonText.Encode(DetailLive.Read(boardId, cardId, "dependency")), "HIDDEN-") Then Error.Raise("Hidden relation snapshot accessible")
+  If Frame() <> before Then Error.Raise("Hidden relation reads wrote state")
+  For Each actor In ["detail-text-global", "detail-text-outsider"]
+    SignIn(actor)
+    Try DetailLive.Read(boardId, cardId, "comment")
+    denied = Error
+    If Not denied Then Error.Raise("Nonmember detail accessible")
+  Next
+  SignIn("detail-text-owner")
+  entryId = CardContent.Save(boardId, cardId, 0, "custom", "Typed" & suffix, "Text" & suffix, 0, False, 0)
+  conn = WebDatabase.OpenConnection()
+  conn.Exec("UPDATE kb_entries SET value_type=CAST(" & conn.FormatBlob("text" & suffix) & " AS TEXT) WHERE id=&1", entryId)
+  draft = EntryDraft.Read(boardId, cardId, entryId)
+  If draft["value_type"] <> "text" & suffix Then Error.Raise("Field type suffix truncated")
+  before = Frame()
+  Try CardContent.Save(boardId, cardId, entryId, "custom", "Changed", draft["body"], 0, False, 0, draft["value_type"], draft)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Malformed complete field type accepted or wrote state")
+  entryId = CardContent.Save(boardId, cardId, 0, "comment", "", "Private comment" & suffix, 0, False, 0)
+  conn.Exec("UPDATE kb_entries SET author=CAST(" & conn.FormatBlob("detail-text-writer" & suffix) & " AS TEXT) WHERE id=&1", entryId)
+  SignIn("detail-text-writer")
+  draft = EntryDraft.Read(boardId, cardId, entryId)
+  before = Frame()
+  Try CardContent.Save(boardId, cardId, entryId, "comment", "", "FORGED", 0, False, 0, "text", draft)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Same-prefix author bypassed scope")
+  Print "Detail complete text: all entry kinds, parents/derived labels, independent stale merges, binary-free file/history metadata, retained authors, owner/writer/reader/assigned scope, hidden/global refusal, no-write reads and full-type/author rollback passed"
+End
+
+Private Sub SignIn(actor As String)
+  Session["username"] = actor
+  Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+End
+
+Private Function Frame() As String
+  Dim conn As Connection = WebDatabase.OpenConnection()
+  Dim table As Table
+  Dim tables As New String[]
+  Dim tableName As String
+  Dim order As String[]
+  Dim key As String
+  Dim rows As Result
+  Dim field As ResultField
+  Dim values As Collection
+  Dim data As Variant[]
+  Dim result As New Collection
+  For Each table In conn.Tables
+    If Left(table.Name, 7) <> "sqlite_" Then tables.Add(table.Name)
+  Next
+  tables.Sort()
+  For Each tableName In tables
+    order = New String[]
+    For Each key In conn.Tables[tableName].PrimaryKey
+      order.Add(conn.Quote(key))
+    Next
+    rows = conn.Exec(ExportText.SelectRows(conn, tableName) & If(order.Count, " ORDER BY " & order.Join(","), ""))
+    data = New Variant[]
+    For Each rows
+      values = New Collection
+      For Each field In rows.Fields
+        If Left(field.Name, 7) = "__weba_" Then Continue
+        If field.Type = DB.String Then
+          If rows.Fields.Exist("__weba_null_" & field.Name) Then
+            If rows["__weba_null_" & field.Name] Then
+              values[field.Name] = JSON.Null
+            Else
+              values[field.Name] = ExportText.ReadValue(rows, field.Name)
+            Endif
+          Else
+            values[field.Name] = rows[field.Name]
+          Endif
+        Else If field.Type = DB.Blob Then
+          If IsNull(rows[field.Name]) Then
+            values[field.Name] = JSON.Null
+          Else
+            values[field.Name] = Base64(rows[field.Name].Data)
+          Endif
+        Else
+          values[field.Name] = rows[field.Name]
+        Endif
+      Next
+      data.Add(values)
+    Next
+    result[tableName] = data
+  Next
+  Return JsonText.Encode(result)
+End

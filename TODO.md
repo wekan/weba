@@ -127,8 +127,12 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   route titles and board/card/destination/archive/recovery/context captions.
   Native scope/no-write/NULL-empty tests, 87 source-exact catalog pages and
   source/packaged actual heartbeat UI results are recorded in CHANGELOG.md.
-- Next reader focus: native detail and profile readers/writers. Complete native
-  copy text and its locked/final guards are recorded in CHANGELOG.md.
+- Completed native complete-text detail snapshots/drafts, independent stale
+  merges, scoped labels/authors and binary-free file/history metadata; native
+  download/history filenames and encoded dirty input restoration are recorded
+  in CHANGELOG.md. Remaining detail mutation final guards stay open.
+- Next reader focus: native profile readers/writers. Complete native copy text
+  and its locked/final guards are recorded in CHANGELOG.md.
 - Next data follow-up: audit nullable/legacy field-model consistency (including
   copy semantics) and remaining native
   text readers/writers outside the backup path. Other request decoder boundaries,

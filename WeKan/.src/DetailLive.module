@@ -13,7 +13,7 @@ Public Function Read(boardId As Integer, cardId As Integer, kind As String, Opti
   BoardAccess.RequireCard(boardId, cardId)
   If ["comment", "checklist", "checkitem", "subtask", "dependency", "custom", "time", "file"].Find(kind) < 0 Then Error.Raise("Unknown card detail type")
   r = WorkspaceStore.Record(boardId, "card", cardId)
-  data["title"] = r!title
+  data["title"] = ExportText.ReadValue(r, "title")
   data["kind"] = kind
   data["uploadsBlocked"] = TransferPolicy.Blocked("attachmentsUpload") Or WorkspaceStore.Setting(boardId, "board", boardId, "allowsAttachments", "1") <> "1"
   data["downloadsBlocked"] = TransferPolicy.Blocked("attachmentsDownload")
@@ -21,34 +21,34 @@ Public Function Read(boardId As Integer, cardId As Integer, kind As String, Opti
     data[capability] = BoardAccess.Can(boardId, capability)
   Next
   If kind = "checklist" Or kind = "checkitem" Then
-    r = CardContent.Entries(boardId, cardId, "checklist")
+    r = CardContent.Entries(boardId, cardId, "checklist", True)
     For Each r
       checklists.Add(EntryDraft.Record(r))
     Next
   Endif
   If kind = "file" And attachmentHistory Then
-    r = AttachmentLifecycle.History(boardId, cardId)
+    r = AttachmentLifecycle.History(boardId, cardId, True)
     For Each r
       row = New Collection
       row["id"] = r!id
-      row["filename"] = r!filename
-      row["actor"] = r!actor
-      row["action"] = r!action
+      row["filename"] = ExportText.ReadValue(r, "filename")
+      row["actor"] = ExportText.ReadValue(r, "actor")
+      row["action"] = ExportText.ReadValue(r, "action")
       row["deleted"] = CBool(r!deleted)
       history.Add(row)
     Next
   Else If kind = "file" Then
-    r = CardContent.FileSummaries(boardId, cardId)
+    r = CardContent.FileSummaries(boardId, cardId, True)
     For Each r
       row = New Collection
       row["id"] = r!id
-      row["filename"] = r!filename
-      row.Add(CStr(r!author), "author")
+      row["filename"] = ExportText.ReadValue(r, "filename")
+      row.Add(ExportText.ReadValue(r, "author"), "author")
       row["createdAt"] = r!created_at
       files.Add(row)
     Next
   Else If kind <> "checklist" Then
-    r = CardContent.Entries(boardId, cardId, kind)
+    r = CardContent.Entries(boardId, cardId, kind, True)
     For Each r
       If kind = "subtask" Or kind = "dependency" Then
         row = EntryDraft.Read(boardId, cardId, r!id)

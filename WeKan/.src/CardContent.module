@@ -58,41 +58,45 @@ Public Function Entries(boardId As Integer, cardId As Integer, kind As String, O
   Return $db.Exec(projection & " WHERE " & "board_id = &1 AND card_id = &2 AND kind = &3 ORDER BY id", boardId, cardId, kind)
 End
 
-Public Function Entry(boardId As Integer, cardId As Integer, entryId As Integer) As Result
+Public Function Entry(boardId As Integer, cardId As Integer, entryId As Integer, Optional completeText As Boolean) As Result
   Dim r As Result
   RequireCard(boardId, cardId)
-  r = $db.Find("kb_entries", "board_id = &1 AND card_id = &2 AND id = &3", boardId, cardId, entryId)
+  If completeText Then
+    r = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, entryId)
+  Else
+    r = $db.Find("kb_entries", "board_id = &1 AND card_id = &2 AND id = &3", boardId, cardId, entryId)
+  Endif
   If Not r.Available Then Error.Raise("Card entry not accessible")
-  If r!kind = "subtask" Or r!kind = "dependency" Then BoardAccess.RequireCard(boardId, CInt(r!amount))
+  If ExportText.ReadValue(r, "kind") = "subtask" Or ExportText.ReadValue(r, "kind") = "dependency" Then BoardAccess.RequireCard(boardId, CInt(r!amount))
   Return r
 End
 
 Public Function AuthorName(boardId As Integer, cardId As Integer, kind As String, itemId As Integer) As String
   Dim r As Result
   If kind = "entry" Then
-    r = Entry(boardId, cardId, itemId)
+    r = Entry(boardId, cardId, itemId, True)
   Else If kind = "file" Then
-    r = FileRecord(boardId, cardId, itemId)
+    r = FileRecord(boardId, cardId, itemId, True)
   Else
     Error.Raise("Unknown author record")
   Endif
-  Return RetiredAuthors.DisplayName(kind, itemId, r!author)
+  Return RetiredAuthors.DisplayName(kind, itemId, ExportText.ReadValue(r, "author"))
 End
 
 Public Sub RetainAuthorName(boardId As Integer, cardId As Integer, kind As String, itemId As Integer, authorName As String)
   Dim r As Result
   Dim tableName As String
   If kind = "entry" Then
-    r = Entry(boardId, cardId, itemId)
+    r = Entry(boardId, cardId, itemId, True)
     tableName = "kb_entries"
   Else If kind = "file" Then
-    r = FileRecord(boardId, cardId, itemId)
+    r = FileRecord(boardId, cardId, itemId, True)
     tableName = "kb_files"
   Else
     Error.Raise("Unknown author record")
   Endif
   BoardAccess.Require(boardId, "write")
-  If r!author <> WebIdentity.Username Then Error.Raise("Author provenance requires a newly created record")
+  If ExportText.ReadValue(r, "author") <> WebIdentity.Username Then Error.Raise("Author provenance requires a newly created record")
   If ExportText.Length(authorName) > 255 Then Error.Raise("Author name is too long")
   ' Imported names are display text, never a claim to a local account.
   $db.Exec("UPDATE " & tableName & " SET author = NULL WHERE id = &1 AND board_id = &2 AND card_id = &3", itemId, boardId, cardId)
@@ -163,9 +167,9 @@ Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Int
   BeginChange(boardId, cardId, If(kind = "comment" And Not isCopy, "comment", "write"))
   transaction = True
   If entryId Then
-    r = Entry(boardId, cardId, entryId)
-    If kind = "comment" And r!author <> WebIdentity.Username And Not BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Comment not editable")
-    If r!kind <> kind Then Error.Raise("Entry type cannot be changed")
+    r = Entry(boardId, cardId, entryId, True)
+    If kind = "comment" And ExportText.ReadValue(r, "author") <> WebIdentity.Username And Not BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Comment not editable")
+    If ExportText.ReadValue(r, "kind") <> kind Then Error.Raise("Entry type cannot be changed")
     If baseline Then
       merged = EntryDraft.Merge(boardId, cardId, entryId, r, EntryDraft.Values(title, body, parentId, done, amount, valueType), baseline)
       title = merged["title"]
@@ -194,8 +198,8 @@ Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Int
   End Select
   If ExportText.Length(title) > 255 Then Error.Raise("Title is too long")
   If kind = "checkitem" Then
-    r = Entry(boardId, cardId, parentId)
-    If r!kind <> "checklist" Then Error.Raise("Choose a checklist")
+    r = Entry(boardId, cardId, parentId, True)
+    If ExportText.ReadValue(r, "kind") <> "checklist" Then Error.Raise("Choose a checklist")
   Endif
   If kind = "custom" Then
     Select valueType
@@ -247,13 +251,13 @@ End
 Public Sub DeleteEntry(boardId As Integer, cardId As Integer, entryId As Integer)
   Dim transaction As Boolean
   Dim failure As String
-  Dim r As Result = Entry(boardId, cardId, entryId)
-  BoardAccess.Require(boardId, If(r!kind = "comment", "comment", "write"))
-  BeginChange(boardId, cardId, If(r!kind = "comment", "comment", "write"))
+  Dim r As Result = Entry(boardId, cardId, entryId, True)
+  BoardAccess.Require(boardId, If(ExportText.ReadValue(r, "kind") = "comment", "comment", "write"))
+  BeginChange(boardId, cardId, If(ExportText.ReadValue(r, "kind") = "comment", "comment", "write"))
   transaction = True
-  r = Entry(boardId, cardId, entryId)
-  If r!kind = "comment" And r!author <> WebIdentity.Username And Not BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Comment not editable")
-  If r!kind = "checklist" Then $db.Exec("DELETE FROM kb_entries WHERE board_id = &1 AND card_id = &2 AND parent_id = &3", boardId, cardId, entryId)
+  r = Entry(boardId, cardId, entryId, True)
+  If ExportText.ReadValue(r, "kind") = "comment" And ExportText.ReadValue(r, "author") <> WebIdentity.Username And Not BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Comment not editable")
+  If ExportText.ReadValue(r, "kind") = "checklist" Then $db.Exec("DELETE FROM kb_entries WHERE board_id = &1 AND card_id = &2 AND parent_id = &3", boardId, cardId, entryId)
   $db.Exec("DELETE FROM kb_entries WHERE board_id = &1 AND card_id = &2 AND id = &3", boardId, cardId, entryId)
   RetiredAuthors.Prune(boardId)
   KanbanStore.Activity(boardId, "Deleted card detail", "card", cardId)
@@ -341,8 +345,9 @@ Public Function Files(boardId As Integer, cardId As Integer, Optional completeTe
   Return $db.Find("kb_files", AttachmentLifecycle.LiveSql("kb_files") & " AND board_id = &1 AND card_id = &2 ORDER BY id", boardId, cardId)
 End
 
-Public Function FileSummaries(boardId As Integer, cardId As Integer) As Result
+Public Function FileSummaries(boardId As Integer, cardId As Integer, Optional completeText As Boolean) As Result
   RequireCard(boardId, cardId)
+  If completeText Then Return $db.Exec(ExportText.Preserve($db, "SELECT id,board_id,card_id,filename,author,created_at FROM kb_files WHERE " & AttachmentLifecycle.LiveSql("kb_files") & " AND board_id=&1 AND card_id=&2 ORDER BY id"), boardId, cardId)
   Return $db.Exec("SELECT id,board_id,card_id,filename,author,created_at FROM kb_files WHERE " & AttachmentLifecycle.LiveSql("kb_files") & " AND board_id=&1 AND card_id=&2 ORDER BY id", boardId, cardId)
 End
 
@@ -384,10 +389,14 @@ Catch
   Error.Raise(failure)
 End
 
-Public Function FileRecord(boardId As Integer, cardId As Integer, fileId As Integer) As Result
+Public Function FileRecord(boardId As Integer, cardId As Integer, fileId As Integer, Optional completeText As Boolean) As Result
   Dim r As Result
   RequireCard(boardId, cardId)
-  r = $db.Find("kb_files", AttachmentLifecycle.LiveSql("kb_files") & " AND board_id = &1 AND card_id = &2 AND id = &3", boardId, cardId, fileId)
+  If completeText Then
+    r = $db.Exec(ExportText.SelectRows($db, "kb_files") & " WHERE " & AttachmentLifecycle.LiveSql("kb_files") & " AND board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, fileId)
+  Else
+    r = $db.Find("kb_files", AttachmentLifecycle.LiveSql("kb_files") & " AND board_id = &1 AND card_id = &2 AND id = &3", boardId, cardId, fileId)
+  Endif
   If Not r.Available Then Error.Raise("Attachment not accessible")
   Return r
 End
@@ -469,14 +478,14 @@ Catch
   Error.Raise(failure)
 End
 
-Public Function DownloadFile(boardId As Integer, cardId As Integer, fileId As Integer) As Result
+Public Function DownloadFile(boardId As Integer, cardId As Integer, fileId As Integer, Optional completeText As Boolean) As Result
   Dim r As Result
   RequireCard(boardId, cardId)
   TransferPolicy.RequireTransfer("attachmentsDownload", 0)
   r = $db.Exec("SELECT COALESCE(LENGTH(content),0) AS size FROM kb_files WHERE " & AttachmentLifecycle.LiveSql("kb_files") & " AND board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, fileId)
   If Not r.Available Then Error.Raise("Attachment not accessible")
   TransferPolicy.RequireTransfer("attachmentsDownload", r!size)
-  r = FileRecord(boardId, cardId, fileId)
+  r = FileRecord(boardId, cardId, fileId, completeText)
   TransferPolicy.RequireTransfer("attachmentsDownload", Len(r!content.Data))
   RequireCard(boardId, cardId)
   Return r

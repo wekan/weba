@@ -42,7 +42,7 @@ Public Function LiveSql(tableAlias As String) As String
 End
 
 Private Function RawFile(boardId As Integer, cardId As Integer, fileId As Integer) As Result
-  Dim r As Result = $db.Find("kb_files", "board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, fileId)
+  Dim r As Result = $db.Exec(ExportText.SelectRows($db, "kb_files") & " WHERE board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, fileId)
   If Not r.Available Then Error.Raise("Attachment not accessible")
   Return r
 End
@@ -96,7 +96,7 @@ Private Sub AddHistory(boardId As Integer, cardId As Integer, fileId As Integer,
   r["changed_at"] = at
   r["batch_id"] = batchId
   r["previous_at"] = previousAt
-  r.Update()
+  DatabaseText.Save($db, r, "kb_attachment_history", ["board_id", "card_id", "file_id", "actor", "filename", "action", "changed_at", "batch_id", "previous_at"], True)
 End
 
 Public Function Delete(boardId As Integer, cardId As Integer, fileId As Integer) As String
@@ -127,8 +127,8 @@ Public Function Delete(boardId As Integer, cardId As Integer, fileId As Integer)
     r["deleted_at"] = at
     r["batch_id"] = batchId
     r.Update()
-    AddHistory(boardId, cardId, fileId, actor, file!filename, "removed", at, batchId, 0)
-    KanbanStore.Activity(boardId, "Deleted attachment: " & file!filename, "card", cardId)
+    AddHistory(boardId, cardId, fileId, actor, ExportText.ReadValue(file, "filename"), "removed", at, batchId, 0)
+    KanbanStore.Activity(boardId, "Deleted attachment: " & ExportText.ReadValue(file, "filename"), "card", cardId)
   Endif
   CheckWriter(boardId, cardId, actor)
   RawFile(boardId, cardId, fileId)
@@ -163,8 +163,8 @@ Public Function Restore(boardId As Integer, cardId As Integer, fileId As Integer
     batchId = r!batch_id
     at = r!deleted_at
     $db.Delete("kb_attachment_deletions", "board_id=&1 AND card_id=&2 AND file_id=&3 AND batch_id=&4", boardId, cardId, fileId, batchId)
-    AddHistory(boardId, cardId, fileId, actor, file!filename, "added", ItemChanges.UtcNow(), batchId, at)
-    KanbanStore.Activity(boardId, "Restored attachment: " & file!filename, "card", cardId)
+    AddHistory(boardId, cardId, fileId, actor, ExportText.ReadValue(file, "filename"), "added", ItemChanges.UtcNow(), batchId, at)
+    KanbanStore.Activity(boardId, "Restored attachment: " & ExportText.ReadValue(file, "filename"), "card", cardId)
   Endif
   CheckWriter(boardId, cardId, actor)
   RawFile(boardId, cardId, fileId)
@@ -226,10 +226,11 @@ Catch
   Error.Raise(failure)
 End
 
-Public Function History(boardId As Integer, cardId As Integer) As Result
+Public Function History(boardId As Integer, cardId As Integer, Optional completeText As Boolean) As Result
   CardContent.OpenStore()
   OpenStore()
   BoardAccess.RequireCard(boardId, cardId)
+  If completeText Then Return $db.Exec(ExportText.Preserve($db, "SELECT h.*,CASE WHEN d.file_id IS NULL THEN 0 ELSE 1 END AS deleted FROM kb_attachment_history h INNER JOIN kb_files f ON f.id=h.file_id AND f.board_id=h.board_id AND f.card_id=h.card_id LEFT JOIN kb_attachment_deletions d ON d.file_id=f.id AND d.board_id=f.board_id AND d.card_id=f.card_id WHERE h.board_id=&1 AND h.card_id=&2 ORDER BY h.id DESC"), boardId, cardId)
   Return $db.Exec("SELECT h.*,CASE WHEN d.file_id IS NULL THEN 0 ELSE 1 END AS deleted FROM kb_attachment_history h INNER JOIN kb_files f ON f.id=h.file_id AND f.board_id=h.board_id AND f.card_id=h.card_id LEFT JOIN kb_attachment_deletions d ON d.file_id=f.id AND d.board_id=f.board_id AND d.card_id=f.card_id WHERE h.board_id=&1 AND h.card_id=&2 ORDER BY h.id DESC", boardId, cardId)
 End
 

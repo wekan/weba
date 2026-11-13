@@ -2,6 +2,27 @@
 
 This work adds the following features and fixes:
 
+- Preserve complete native detail-panel and entry-draft text: card/entry/
+  checklist/derived relationship titles, bodies, field types, authors and
+  attachment filename/history metadata. Use opt-in projected result columns
+  for native readers while retaining default public result shapes and scoped
+  relationship checks. Merge stale editors with complete current fields and
+  compare complete kind/author values in entry guards. Preserve filenames when
+  writing delete/restore audit rows and when preparing native downloads.
+  Strict private snapshots and encoded detail input restoration keep suffix-only
+  heartbeat changes and dirty local fields; New clears stale encoded values.
+  Native regressions cover every entry kind, independent merges, no-write and
+  binary-free reads, owner/writer/reader/assigned scope, hidden/global refusal,
+  malformed complete type/author values, exact download bytes/names and all-table
+  history failure rollback/retry. Source/packaged actual detail forms verify
+  exact custom/comment/checklist/file text, heartbeat updates, dirty independent
+  field saves, New clearing, literal markup and reload; both existing two-user
+  live-detail suites and full-text move/rename/copy plus ordinary layout/editor/
+  admin/mobile browser regressions pass. Full pinned host/native/API/security/
+  session tests and 70 Python tests pass. Native profile text, remaining mutation
+  final guards, nullable/legacy semantics and full original parity remain open.
+  Thanks to xet7.
+
 - Preserve complete native live snapshots, catalog searches, route titles and
   board/card/container captions after embedded NUL. Keep private snapshots
   sensitive to suffix-only changes while retaining navigation-only overview

@@ -17,6 +17,15 @@ Public Sub Main()
   If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
   Session["username"] = "rest-other"
   Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+  If Env["WEBA_NATIVE_MODE"] = "detail-update" Then
+    boardId = CInt(Env["WEBA_NATIVE_BOARD"])
+    cardId = CInt(Env["WEBA_NATIVE_CARD"])
+    row = CardContent.Entries(boardId, cardId, "custom", True)
+    If Not row.Available Then Error.Raise("Missing custom fixture")
+    CardContent.Save(boardId, cardId, row!id, "custom", ExportText.ReadValue(row, "title"), "Browser value" & suffixText & Env["WEBA_NATIVE_SUFFIX"], 0, False, 0, "text")
+    Print "{}"
+    Return
+  Endif
   If Env["WEBA_NATIVE_MODE"] = "live" Then
     boardId = CInt(Env["WEBA_NATIVE_BOARD"])
     cardId = CInt(Env["WEBA_NATIVE_CARD"])

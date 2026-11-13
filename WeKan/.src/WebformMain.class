@@ -907,6 +907,11 @@ Private Sub RenderEditorText()
     Next
   Endif
   If ActionPanel.Visible And ActionText.Visible Then RenderCompleteField(ActionText)
+  If DetailsPanel.Visible Then
+    For Each field In [DetailTitle, DetailBody]
+      If field.Visible Then RenderCompleteField(field)
+    Next
+  Endif
 End
 
 Private Sub RenderCompleteField(field As Object)
@@ -2127,7 +2132,7 @@ Private Sub RefreshLiveDetails()
     Return
   Endif
   data = DetailLive.Read($detailsBoard, $detailsCard, DetailCode(), $attachmentHistory)
-  If JSON.Encode(data) <> $detailState Then LoadDetails(True, data)
+  If JsonText.Encode(data) <> $detailState Then LoadDetails(True, data)
 Catch
   Notice.Text = "Card details refresh failed"
 End
@@ -2191,6 +2196,7 @@ Private Sub ClearDetailEditor()
   DetailNumber.Text = "0"
   DetailDone.Value = False
   $detailFormBase = DetailFormValues()
+  Visual.Refresh()
 End
 
 Private Function DetailRecord(data As Collection, id As Integer) As Collection
@@ -2211,6 +2217,7 @@ Private Sub ShowEntry(data As Collection)
   Next
   $entryBaseline = data
   $detailFormBase = DetailFormValues()
+  Visual.Refresh()
 End
 
 Private Sub LoadDetails(Optional preserve As Boolean, Optional data As Collection)
@@ -2228,7 +2235,7 @@ Private Sub LoadDetails(Optional preserve As Boolean, Optional data As Collectio
   If Not data Then data = DetailLive.Read($detailsBoard, $detailsCard, kind, $attachmentHistory)
   If preserve Then draft = DetailFormValues()
   $loadingDetails = True
-  state = JSON.Encode(data)
+  state = JsonText.Encode(data)
   DetailsTitle.Text = data["title"]
   DetailTree.Clear()
   For Each row In data["checklists"]
@@ -2298,6 +2305,7 @@ Private Sub LoadDetails(Optional preserve As Boolean, Optional data As Collectio
     ClearDetailEditor()
   Endif
   UpdateDetailControls()
+  Visual.Refresh()
   $detailState = state
   $loadingDetails = False
 Catch
@@ -2379,8 +2387,8 @@ Public Sub DetailTree_Select()
   $entryId = CInt(Mid(DetailTree.Key, 2))
   $fileId = 0
   $loadingDetails = True
-  r = CardContent.Entry($detailsBoard, $detailsCard, $entryId)
-  DetailKind.Index = ["comment", "checklist", "checkitem", "subtask", "dependency", "custom", "time"].Find(r!kind)
+  r = CardContent.Entry($detailsBoard, $detailsCard, $entryId, True)
+  DetailKind.Index = ["comment", "checklist", "checkitem", "subtask", "dependency", "custom", "time"].Find(ExportText.ReadValue(r, "kind"))
   ShowEntry(EntryDraft.Read($detailsBoard, $detailsCard, $entryId))
   UpdateDetailControls()
   $loadingDetails = False
@@ -2487,9 +2495,9 @@ Private Sub UpdateAttachmentExportControl()
 End
 
 Public Sub DetailDownload_Click()
-  Dim r As Result = CardContent.DownloadFile($detailsBoard, $detailsCard, $fileId)
+  Dim r As Result = CardContent.DownloadFile($detailsBoard, $detailsCard, $fileId, True)
   Dim data As String = Base64(r!content.Data)
-  WebForm.Exec("(function(){const bytes=Uint8Array.from(atob(" & JS(data) & "),c=>c.charCodeAt(0));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([bytes],{type:'application/octet-stream'}));a.download=" & JS(r!filename) & ";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);})();")
+  WebForm.Exec("(function(){const bytes=Uint8Array.from(atob(" & JS(data) & "),c=>c.charCodeAt(0));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([bytes],{type:'application/octet-stream'}));a.download=" & JS(ExportText.ReadValue(r, "filename")) & ";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);})();")
 Catch
   Notice.Text = Error.Text
 End

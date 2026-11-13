@@ -20,24 +20,24 @@ Public Function Record(r As Result) As Collection
   If Not IsNull(r!parent_id) Then parentId = CInt(r!parent_id)
   If Not IsNull(r!done) Then done = CBool(r!done)
   If Not IsNull(r!amount) Then amount = CFloat(r!amount)
-  data = Values(CStr(r!title), CStr(r!body), parentId, done, amount, CStr(r!value_type))
+  data = Values(ExportText.ReadValue(r, "title"), ExportText.ReadValue(r, "body"), parentId, done, amount, ExportText.ReadValue(r, "value_type"))
   data["boardId"] = r!board_id
   data["cardId"] = r!card_id
   data["entryId"] = r!id
-  data["kind"] = r!kind
-  data.Add(CStr(r!author), "author")
+  data["kind"] = ExportText.ReadValue(r, "kind")
+  data.Add(ExportText.ReadValue(r, "author"), "author")
   Return data
 End
 
 Public Function Read(boardId As Integer, cardId As Integer, entryId As Integer) As Collection
-  Dim r As Result = CardContent.Entry(boardId, cardId, entryId)
+  Dim r As Result = CardContent.Entry(boardId, cardId, entryId, True)
   Dim data As Collection = Record(r)
   Dim target As Result
-  If r!kind = "subtask" Or r!kind = "dependency" Then
+  If ExportText.ReadValue(r, "kind") = "subtask" Or ExportText.ReadValue(r, "kind") = "dependency" Then
     ' Labels are derived from the current authorized target, not the cached
     ' title saved when the relationship was created. Reads never rewrite it.
     target = WorkspaceStore.Record(boardId, "card", CInt(r!amount))
-    SetValue(data, "title", CStr(target!title))
+    SetValue(data, "title", ExportText.ReadValue(target, "title"))
   Endif
   Return data
 End
