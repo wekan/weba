@@ -1,3 +1,15 @@
+Native card saves sort actor/selected-assignee locks, capture actor and recheck
+identity/write/card scope,
+archive state, exact text, live full lane/list identity, hidden/deleted targets,
+final link and new-assignee roster after storage and history/clocks. Entering
+list WIP is rechecked excluding saved card; same-list and inactive-assignee
+retention remains. All-table native refusal/rollback/new-card/retry and existing
+draft/store/assignee tests pass. Source/packaged UI final archive refusal keeps
+board tables and dirty text, then retries. Full pinned host/native/API/security/
+session and70 Python tests pass; ordinary UI passes both sorted-lock builds.
+Reopened NUL lane/list submission,
+other final guards, remaining models and full original parity remain open.
+
 Strict nested board-view JSON in REST/form and native drag commands preserves
 NUL/control/lone-unit keys for refusal rather than aliasing valid views. CSV
 matches JavaScript ASCII/Unicode whitespace without discarding other controls.

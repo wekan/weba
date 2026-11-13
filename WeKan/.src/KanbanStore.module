@@ -194,20 +194,35 @@ Public Function SaveCard(boardId As Integer, cardId As Integer, title As String,
   Dim merged As Collection
   Dim transaction As Boolean
   Dim failure As String
+  Dim actor As String = WebIdentity.Username
+  Dim scope As Collection
+  Dim cardArchived As Boolean
+  Dim boardArchived As Boolean
+  Dim lockNames As New String[]
+  Dim lockName As String
   BoardAccess.Require(boardId, "write")
   If cardId Then BoardAccess.RequireCard(boardId, cardId)
   WorkspaceStore.OpenStore()
   DatabaseTransactions.Begin($db)
   transaction = True
-  If assignee Then $db.Exec("UPDATE users SET username = username WHERE username = &1", assignee)
+  lockNames.Add(actor)
+  If assignee And assignee <> actor Then lockNames.Add(assignee)
+  lockNames.Sort()
+  For Each lockName In lockNames
+    $db.Exec("UPDATE users SET username=username WHERE username=&1", lockName)
+  Next
+  If Not actor Or WebIdentity.Username <> actor Then Error.Raise("Sign in required")
   $db.Exec("UPDATE kb_boards SET title = title WHERE id = &1", boardId)
   If cardId Then $db.Exec("UPDATE kb_cards SET title = title WHERE board_id = &1 AND id = &2", boardId, cardId)
   BoardAccess.Require(boardId, "write")
+  r = $db.Find("kb_boards", "id=&1", boardId)
+  boardArchived = r!archived
   If cardId Then
     BoardAccess.RequireCard(boardId, cardId)
     r = $db.Exec(ExportText.SelectRows($db, "kb_cards") & " WHERE " & ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND id = &2", boardId, cardId)
-    previousAssignee = r!assignee
-    previousDueDay = r!due_day
+    cardArchived = r!archived
+    previousAssignee = ExportText.ReadValue(r, "assignee")
+    previousDueDay = ExportText.ReadValue(r, "due_day")
     If baseline Then
       merged = CardDraft.Merge(boardId, cardId, r, CardDraft.Values(title, description, lane, status, assignee, labels, dueDay), baseline, listId)
       title = merged["title"]
@@ -243,6 +258,14 @@ Public Function SaveCard(boardId As Integer, cardId As Integer, title As String,
   listId = list!id
   If WorkspaceStore.ListHidden(boardId, listId) Then Error.Raise("Restore the list or swimlane first")
   WorkspaceStore.RequireCapacity(boardId, listId, cardId)
+  scope = CardDraft.Values(Trim(title), description, lane, status, assignee, labels, dueDay)
+  scope.Add(actor, "actor")
+  scope.Add(listId, "listId")
+  scope.Add(cardArchived, "archived")
+  scope.Add(boardArchived, "boardArchived")
+  scope.Add(assignee <> previousAssignee, "checkAssignee")
+  scope.Add(True, "enteredList")
+  If cardId Then scope["enteredList"] = ReadCardListId(boardId, cardId) <> listId
   If cardId Then
     r = $db.Edit("kb_cards", "id = &1 AND board_id = &2", cardId, boardId)
     If Not r.Available Then Error.Raise("Card not accessible")
@@ -264,12 +287,14 @@ Public Function SaveCard(boardId As Integer, cardId As Integer, title As String,
     DatabaseText.Save($db, r, "kb_cards", ["board_id", "archived", "title", "description", "lane", "status", "assignee", "labels", "due_day"], True)
   Endif
   If Not cardId Then cardId = $db.LastInsertId
+  RequireSavedCard(boardId, cardId, scope, False)
   If previousDueDay <> dueDay Then $db.Delete("kb_card_dates", "board_id = &1 AND card_id = &2 AND field = &3", boardId, cardId, "dueAt")
   If previousAssignee <> assignee Then $db.Delete("kb_card_assignees", "board_id = &1 AND card_id = &2", boardId, cardId)
   If previousAssignee <> assignee Then $db.Delete("kb_card_people_order", "board_id = &1 AND card_id = &2 AND field = &3", boardId, cardId, "assignees")
   If previousAssignee <> assignee Then $db.Delete("kb_card_people_sequence", "board_id = &1 AND card_id = &2 AND field = &3", boardId, cardId, "assignees")
   PutCardList(boardId, cardId, listId)
   Activity(boardId, "Saved card: " & title, "card", cardId)
+  RequireSavedCard(boardId, cardId, scope, True)
   DatabaseTransactions.Commit($db)
   transaction = False
   Return cardId
@@ -277,6 +302,44 @@ Catch
   failure = Error.Text
   If transaction Then Try DatabaseTransactions.Rollback($db)
   Error.Raise(failure)
+End
+
+' Recheck both the saved values and the authorization after every write phase.
+Private Sub RequireSavedCard(boardId As Integer, cardId As Integer, scope As Collection, linked As Boolean)
+  Dim row As Result
+  Dim field As String
+  Dim lane As String = scope["lane"]
+  Dim status As String = scope["status"]
+  Dim listId As Integer = scope["listId"]
+  Dim limit As Integer
+  If WebIdentity.Username <> scope["actor"] Then Error.Raise("Sign in required")
+  BoardAccess.Require(boardId, "write")
+  BoardAccess.RequireCard(boardId, cardId)
+  row = $db.Find("kb_boards", "id=&1", boardId)
+  If Not row.Available Then Error.Raise("Board not accessible")
+  If row!archived <> scope["boardArchived"] Then Error.Raise("Board archive state changed")
+  row = $db.Exec(ExportText.SelectRows($db, "kb_cards") & " WHERE board_id=&1 AND id=&2 AND " & ListDeletion.LiveSql("card", "kb_cards"), boardId, cardId)
+  If Not row.Available Then Error.Raise("Card not accessible")
+  If row!archived <> scope["archived"] Then Error.Raise("Card archive state changed")
+  For Each field In ["title", "description", "lane", "status", "assignee", "labels", "due_day"]
+    If ExportText.ReadValue(row, field) <> scope[field] Then Error.Raise("Card changed during save")
+  Next
+  row = $db.Exec("SELECT id FROM kb_lists WHERE board_id=&1 AND id=&2 AND " & ListDeletion.LiveSql("list", "kb_lists") & " AND " & ExportText.MatchText($db, "lane", 3, lane) & " AND " & ExportText.MatchText($db, "title", 4, status), boardId, listId, ExportText.BindText($db, lane), ExportText.BindText($db, status))
+  If Not row.Available Then Error.Raise("Destination list changed")
+  row = $db.Exec("SELECT id FROM kb_lanes WHERE board_id=&1 AND " & ExportText.MatchText($db, "title", 2, lane), boardId, ExportText.BindText($db, lane))
+  If Not row.Available Then Error.Raise("Destination swimlane changed")
+  If WorkspaceStore.ListHidden(boardId, listId) Then Error.Raise("Destination is archived")
+  If linked And If ReadCardListId(boardId, cardId) <> listId Then Error.Raise("Card destination changed")
+  If scope["checkAssignee"] And CStr(scope["assignee"]) Then BoardAccess.RequireActiveMember(boardId, scope["assignee"])
+  ' A newly entered list must still have room; exclude the just-saved card.
+  ' Existing cards may remain in an already over-limit list, as before.
+  If scope["enteredList"] And If WorkspaceStore.Setting(boardId, "list", listId, "wip_strict", "0") = "1" Then
+    limit = CInt(WorkspaceStore.Setting(boardId, "list", listId, "wip", "0"))
+    If limit > 0 Then
+      row = $db.Exec("SELECT COUNT(*) AS total FROM kb_cards c INNER JOIN kb_card_lists link ON link.card_id=c.id AND link.board_id=c.board_id WHERE c.board_id=&1 AND link.list_id=&2 AND c.archived=&3 AND c.id<>&4", boardId, listId, False, cardId)
+      If row!total >= limit Then Error.Raise("List WIP limit reached")
+    Endif
+  Endif
 End
 
 Public Sub ArchiveCard(boardId As Integer, cardId As Integer, archived As Boolean)

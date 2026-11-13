@@ -2,6 +2,24 @@
 
 This work adds the following features and fixes:
 
+- Guard native card saves immediately after storage and after history/change
+  clocks. Lock actor/selected-assignee accounts in sorted order and retain
+  the actor; recheck current identity, write/card scope,
+  preserved board/card archive state, exact intended text, live complete lane/
+  list identities, hidden/deleted destinations, final list link and new assignee
+  membership. Recheck room for newly entered lists without counting the saved
+  card twice; retain same-list over-limit edits and unchanged inactive assignees.
+  Native all-table snapshots verify SQL/role/raw/session/rebound/archive/text/
+  tombstone/destination/link/assignee/WIP refusals, atomic new-card rollback and
+  retry. Existing stale independent draft merges, full text and assignee/store
+  tests pass. Source/packaged actual editor checks exercise post-history archive
+  refusal with unchanged board tables, retained dirty text and successful retry.
+  Full pinned host/native/API/security/session and 70 Python tests pass; ordinary
+  source/packaged editor/admin/mobile browser checks pass on the sorted-lock build.
+  Reopened-editor NUL lane/list submission, other detail/mutation final guards,
+  remaining readers/writers, legacy models and full original parity stay open.
+  Thanks to xet7.
+
 - Preserve complete nested board-view JSON values with the strict decoder in
   REST JSON/form bodies and native drag commands. Invalid NUL/control/lone-unit
   view keys no longer alias valid views or change drafts. Match JavaScript CSV

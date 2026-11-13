@@ -87,6 +87,26 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   await description.evaluate((input,value)=>{input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));},body);
   await page.evaluate(()=>webaRender());await expect(description).toHaveValue(body);
   await click('SaveCard');await expect(page.locator(c('Notice'))).toHaveText('Card saved');await expect(description).toHaveValue(body);
+  // Exercise the final saved-state guard through the actual editor transport.
+  const database=path.join(process.env.WEBA_DB_HOST,process.env.WEBA_DB_NAME);
+  const sql=statement=>execFileSync('python3',['-c',`import sqlite3,sys
+with sqlite3.connect(sys.argv[1]) as d:
+ if len(sys.argv)>2:d.executescript(sys.argv[2])
+ else:
+  names=[r[0] for r in d.execute("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'kb_%' ORDER BY name")]
+  print(repr({n:sorted(d.execute('SELECT * FROM "'+n+'"').fetchall(),key=repr) for n in names}))
+`,database,...(statement?[statement]:[])],{encoding:'utf8'});
+  await expect(description).toHaveValue(body);
+  const refusedBody=body+' refused final archive';
+  await description.evaluate((input,value)=>{input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));},refusedBody);
+  await settle();const beforeLateSave=sql();
+  sql('CREATE TRIGGER native_save_final AFTER INSERT ON kb_history BEGIN UPDATE kb_cards SET archived=1 WHERE board_id=NEW.board_id; END');
+  try{
+   await click('SaveCard');await expect(page.locator(c('Notice'))).toContainText('Card archive state changed');
+   await expect(description).toHaveValue(refusedBody);expect(sql()).toBe(beforeLateSave);
+  }finally{sql('DROP TRIGGER native_save_final');}
+  await description.evaluate((input,value)=>{input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));},body);
+  await click('SaveCard');await expect(page.locator(c('Notice'))).toHaveText('Card saved');
   await click('CloseEditor');await expect(page.locator('.weba-report .weba-column[data-list-id="'+seed.items[1].list+'"]')).toContainText('Created in complete B');
   const createdId=Number(await page.locator('.weba-report .weba-card-link').filter({hasText:'Created in complete B'}).getAttribute('data-card-id'));
   expect(fixture('read',createdId)).toMatchObject({description:body,lane:seed.items[1].lane,status:seed.items[1].title,list:seed.items[1].list});
@@ -173,6 +193,6 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   await page.evaluate(()=>gw.raise(document.querySelector('[id$=".SaveCard"]').id,'click',[],false));await settle();
   expect(fixture('read',createdId)).toEqual(before);
   expect(errors).toEqual([]);
-  console.log('Native complete text browser: shared-prefix NUL/Unicode/markup lane/list identities retain exact columns/card placement across views/reload/Finnish/mobile; readonly/assigned scope, native exact card/list/lane mouse and card dialog moves with editor refresh/reload, exact lane/list creation and board/card/list/lane native renames with SQL/dirty/reload checks, rich card/list/lane/board native copies with exact SQL/entries/files/numbered title/reload and stale-copy refusal, create/edit/NUL dirty refresh/reload and late-revocation refusal passed');
+  console.log('Native complete text browser: shared-prefix NUL/Unicode/markup lane/list identities retain exact columns/card placement across views/reload/Finnish/mobile; readonly/assigned scope, native exact card/list/lane mouse and card dialog moves with editor refresh/reload, exact lane/list creation and board/card/list/lane native renames with SQL/dirty/reload checks, rich card/list/lane/board native copies with exact SQL/entries/files/numbered title/reload and stale-copy refusal, create/edit/NUL dirty refresh/reload, post-history archive refusal with full board-state rollback/dirty retention/retry and late-revocation refusal passed');
  }finally{try{if(context)await context.close();}finally{if(browser)await browser.close();}}
 })().catch(e=>{let s=e.stack||String(e);if(process.env.WEBA_TEST_PASSWORD)s=s.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(s);process.exitCode=1;});

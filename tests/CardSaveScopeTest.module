@@ -1,0 +1,154 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim otherId As Integer
+  Dim listId As Integer
+  Dim laneId As Integer
+  Dim otherList As Integer
+  Dim conn As Connection
+  Dim row As Result
+  Dim sql As String
+  Dim stage As String
+  Dim before As String
+  Dim denied As Boolean
+  Dim actor As String
+  Dim created As Integer
+  Dim suffix As String = Chr(0) & "Ω😀'tail"
+  For Each actor In ["save-global", "save-owner", "save-writer", "save-reader", "save-outsider"]
+    WebDatabase.Register(actor, "x")
+  Next
+  SignIn("save-owner")
+  boardId = KanbanStore.AddBoard("Save scope")
+  BoardAccess.SetMember(boardId, "save-writer", "normal")
+  BoardAccess.SetMember(boardId, "save-reader", "read-only")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Card" & suffix, "Before" & suffix, "Default", "Todo", "", "", "")
+  otherId = KanbanStore.SaveCard(boardId, 0, "Other", "", "Default", "Doing", "", "", "")
+  listId = KanbanStore.CardListId(boardId, cardId)
+  otherList = KanbanStore.CardListId(boardId, otherId)
+  conn = WebDatabase.OpenConnection()
+  row = conn.Find("kb_lanes", "board_id=&1 AND title='Default'", boardId)
+  laneId = row!id
+  SignIn("save-writer")
+  For Each stage In ["AFTER UPDATE OF description ON kb_cards", "AFTER INSERT ON kb_history", "AFTER UPDATE ON kb_item_changes"]
+    For Each sql In ["UPDATE kb_members SET role='read-only' WHERE board_id=" & CStr(boardId) & " AND username='save-writer'", "DELETE FROM kb_members WHERE board_id=" & CStr(boardId) & " AND username='save-writer'", "UPDATE account_sessions SET generation=generation+1 WHERE username='save-writer'", "UPDATE kb_cards SET board_id=2147483647 WHERE id=" & CStr(cardId), "UPDATE kb_cards SET archived=1 WHERE id=" & CStr(cardId), "UPDATE kb_boards SET archived=1 WHERE id=" & CStr(boardId), "UPDATE kb_lists SET lane='Other' WHERE id=" & CStr(listId), "UPDATE kb_cards SET description='Changed after save' WHERE id=" & CStr(cardId), "SELECT RAISE(ABORT,'save-scope-private-canary')", "INSERT INTO kb_member_flags (board_id,username,flag) VALUES (" & CStr(boardId) & ",'save-writer','isReadAssignedOnly')", "INSERT INTO kb_deleted_items (board_id,kind,item_id,batch_id,actor,deleted_at) VALUES (" & CStr(boardId) & ",'card'," & CStr(cardId) & ",1,'save-owner',0)", "INSERT INTO kb_deleted_items (board_id,kind,item_id,batch_id,actor,deleted_at) VALUES (" & CStr(boardId) & ",'list'," & CStr(listId) & ",1,'save-owner',0)", "INSERT OR REPLACE INTO kb_meta (board_id,kind,item_id,setting,value) VALUES (" & CStr(boardId) & ",'list'," & CStr(listId) & ",'archived','1')", "INSERT OR REPLACE INTO kb_meta (board_id,kind,item_id,setting,value) VALUES (" & CStr(boardId) & ",'lane'," & CStr(laneId) & ",'archived','1')", "DELETE FROM kb_lanes WHERE id=" & CStr(laneId)]
+      before = Frame()
+      conn.Exec("CREATE TRIGGER inject_save_scope " & stage & " BEGIN " & sql & "; END")
+      Try KanbanStore.SaveCard(boardId, cardId, "Edited" & suffix, "After" & suffix, "Default", "Todo", "", "", "")
+      denied = Error
+      conn.Exec("DROP TRIGGER inject_save_scope")
+      If Not denied Or Frame() <> before Then Error.Raise("Save scope failed: " & stage & ": " & sql)
+    Next
+  Next
+  before = Frame()
+  conn.Exec("CREATE TRIGGER inject_save_scope AFTER INSERT ON kb_history BEGIN UPDATE kb_card_lists SET list_id=2147483647 WHERE card_id=" & CStr(cardId) & "; END")
+  Try KanbanStore.SaveCard(boardId, cardId, "Edited" & suffix, "After" & suffix, "Default", "Todo", "", "", "")
+  denied = Error
+  conn.Exec("DROP TRIGGER inject_save_scope")
+  If Not denied Or Frame() <> before Then Error.Raise("Final list rebound did not roll back")
+  before = Frame()
+  conn.Exec("CREATE TRIGGER inject_save_scope AFTER INSERT ON kb_history BEGIN DELETE FROM kb_members WHERE board_id=NEW.board_id AND username='save-reader'; END")
+  Try KanbanStore.SaveCard(boardId, cardId, "Edited" & suffix, "After" & suffix, "Default", "Todo", "save-reader", "", "")
+  denied = Error
+  conn.Exec("DROP TRIGGER inject_save_scope")
+  If Not denied Or Frame() <> before Then Error.Raise("Final new assignee removal did not roll back")
+  KanbanStore.SaveCard(boardId, cardId, "Edited" & suffix, "After" & suffix, "Default", "Todo", "", "", "")
+  row = conn.Exec(ExportText.SelectRows(conn, "kb_cards") & " WHERE id=&1", cardId)
+  If ExportText.ReadValue(row, "description") <> "After" & suffix Then Error.Raise("Retry lost complete text")
+  For Each actor In ["save-reader", "save-outsider", "save-global"]
+    SignIn(actor)
+    before = Frame()
+    Try KanbanStore.SaveCard(boardId, cardId, "Denied", "", "Default", "Todo", "", "", "")
+    denied = Error
+    If Not denied Or Frame() <> before Then Error.Raise("Unauthorized native save changed state")
+  Next
+  SignIn("save-writer")
+  before = Frame()
+  conn.Exec("CREATE TRIGGER inject_save_scope AFTER INSERT ON kb_history BEGIN UPDATE kb_members SET role='read-only' WHERE board_id=NEW.board_id AND username='save-writer'; END")
+  Try created = KanbanStore.SaveCard(boardId, 0, "New" & suffix, "New body" & suffix, "Default", "Todo", "", "", "")
+  denied = Error
+  conn.Exec("DROP TRIGGER inject_save_scope")
+  If Not denied Or Frame() <> before Then Error.Raise("New card late role did not roll back")
+  before = Frame()
+  conn.Exec("CREATE TRIGGER inject_save_scope AFTER INSERT ON kb_history BEGIN INSERT OR REPLACE INTO kb_meta (board_id,kind,item_id,setting,value) VALUES (" & CStr(boardId) & ",'list'," & CStr(otherList) & ",'wip_strict','1'); INSERT OR REPLACE INTO kb_meta (board_id,kind,item_id,setting,value) VALUES (" & CStr(boardId) & ",'list'," & CStr(otherList) & ",'wip','1'); END")
+  Try KanbanStore.SaveCard(boardId, cardId, "Move", "Body", "Default", "Doing", "", "", "", otherList)
+  denied = Error
+  conn.Exec("DROP TRIGGER inject_save_scope")
+  If Not denied Or Frame() <> before Then Error.Raise("Final destination WIP change did not roll back")
+  created = KanbanStore.SaveCard(boardId, 0, "New" & suffix, "New body" & suffix, "Default", "Todo", "", "", "")
+  If created <= 0 Then Error.Raise("New card retry failed")
+  conn.Exec("INSERT OR REPLACE INTO kb_meta (board_id,kind,item_id,setting,value) VALUES (&1,'list',&2,'wip_strict','1')", boardId, listId)
+  conn.Exec("INSERT OR REPLACE INTO kb_meta (board_id,kind,item_id,setting,value) VALUES (&1,'list',&2,'wip','1')", boardId, listId)
+  KanbanStore.SaveCard(boardId, cardId, "Existing over limit", "Allowed body", "Default", "Todo", "", "", "", listId)
+  before = Frame()
+  Try created = KanbanStore.SaveCard(boardId, 0, "Over limit new", "", "Default", "Todo", "", "", "", listId)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Over-limit new card changed state")
+  conn.Exec("CREATE TABLE save_lock_order (position INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT)")
+  conn.Exec("CREATE TRIGGER capture_save_locks AFTER UPDATE OF username ON users BEGIN INSERT INTO save_lock_order(username) VALUES (NEW.username); END")
+  KanbanStore.SaveCard(boardId, cardId, "Sorted locks", "Body", "Default", "Todo", "save-reader", "", "", listId)
+  conn.Exec("DROP TRIGGER capture_save_locks")
+  row = conn.Exec("SELECT username FROM save_lock_order ORDER BY position")
+  If row.Count <> 2 Or row!username <> "save-reader" Then Error.Raise("Save user lock order is not sorted")
+  row.MoveNext()
+  If row!username <> "save-writer" Then Error.Raise("Save actor lock missing")
+  Print "Native card save: exact text/retry, readonly/foreign/global denial, immediate/history/clock role/raw/session/rebound/archive/tombstone/list/lane/text/SQL rollback new-card final scope and late destination WIP and same-list over-limit retention and sorted account locks passed"
+End
+
+Private Sub SignIn(actor As String)
+  Session["username"] = actor
+  Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+End
+
+Private Function Frame() As String
+  Dim conn As Connection = WebDatabase.OpenConnection()
+  Dim table As Table
+  Dim tables As New String[]
+  Dim tableName As String
+  Dim order As String[]
+  Dim key As String
+  Dim rows As Result
+  Dim field As ResultField
+  Dim values As Collection
+  Dim data As Variant[]
+  Dim result As New Collection
+  For Each table In conn.Tables
+    If Left(table.Name, 7) <> "sqlite_" Then tables.Add(table.Name)
+  Next
+  tables.Sort()
+  For Each tableName In tables
+    order = New String[]
+    For Each key In conn.Tables[tableName].PrimaryKey
+      order.Add(conn.Quote(key))
+    Next
+    rows = conn.Exec(ExportText.SelectRows(conn, tableName) & If(order.Count, " ORDER BY " & order.Join(","), ""))
+    data = New Variant[]
+    For Each rows
+      values = New Collection
+      For Each field In rows.Fields
+        If Left(field.Name, 7) = "__weba_" Then Continue
+        If field.Type = DB.String Then
+          If rows.Fields.Exist("__weba_null_" & field.Name) Then
+            If rows["__weba_null_" & field.Name] Then
+              values[field.Name] = JSON.Null
+            Else
+              values[field.Name] = ExportText.ReadValue(rows, field.Name)
+            Endif
+          Else
+            values[field.Name] = rows[field.Name]
+          Endif
+        Else If field.Type = DB.Blob Then
+          If IsNull(rows[field.Name]) Then
+            values[field.Name] = JSON.Null
+          Else
+            values[field.Name] = Base64(rows[field.Name].Data)
+          Endif
+        Else
+          values[field.Name] = rows[field.Name]
+        Endif
+      Next
+      data.Add(values)
+    Next
+    result[tableName] = data
+  Next
+  Return JsonText.Encode(result)
+End
