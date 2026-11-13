@@ -1,3 +1,10 @@
+Native lane/list creation preserves complete NUL/Unicode names with atomic
+defaults/order/legacy links/activity and fresh locked/final actor/write guards.
+Initializer own-partial-insert errors propagate for outer rollback. Exact SQL,
+length/duplicate/role refusals, activity/default/nested-card rollback/retry and
+source/packaged native creation form/reload checks covered. Rename/copy and full
+parity remain open.
+
 Native list/lane moves preserve complete NUL/Unicode names and composite order
 keys. Lists retain duplicate-title IDs, active/archived card state and unrelated
 text. Native no-op/denial/full-state rollback/retry and real source/packaged mouse

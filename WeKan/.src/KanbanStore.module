@@ -311,6 +311,7 @@ Private Sub EnsureLane(boardId As Integer, title As String)
   Dim name As String
   Dim index As Integer
   Dim failure As String
+  Dim inserted As Boolean
   r = $db.Exec("SELECT * FROM kb_lanes WHERE board_id = &1 AND " & ExportText.MatchText($db, "title", 2, title), boardId, ExportText.BindText($db, title))
   If r.Available Then Return
   DatabaseTransactions.Begin($db)
@@ -318,6 +319,7 @@ Private Sub EnsureLane(boardId As Integer, title As String)
   r["board_id"] = boardId
   r["title"] = title
   DatabaseText.Save($db, r, "kb_lanes", ["board_id", "title"], True)
+  inserted = True
   For Each name In ["Todo", "Doing", "Done"]
     r = $db.Create("kb_lists")
     r["board_id"] = boardId
@@ -332,6 +334,9 @@ Private Sub EnsureLane(boardId As Integer, title As String)
 Catch
   failure = Error.Text
   Try DatabaseTransactions.Rollback($db)
+  ' A nested rollback can still see our own partial insert. Only a failure
+  ' before insertion can represent a different caller creating the lane.
+  If inserted Then Error.Raise(failure)
   r = $db.Exec("SELECT * FROM kb_lanes WHERE board_id = &1 AND " & ExportText.MatchText($db, "title", 2, title), boardId, ExportText.BindText($db, title))
   If Not r.Available Then Error.Raise(failure)
 End
@@ -355,37 +360,57 @@ End
 
 Public Sub AddLane(boardId As Integer, title As String)
   Dim r As Result
+  Dim actor As String = WebIdentity.Username
+  Dim transaction As Boolean
+  Dim failure As String
   BoardAccess.Require(boardId, "write")
   title = Trim(title)
   If Not title Or String.Len(title) > 255 Then Error.Raise("Enter a swimlane title (1-255 characters)")
-  r = $db.Find("kb_lanes", "board_id = &1 AND title = &2", boardId, title)
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+  If WebIdentity.Username <> actor Then Error.Raise("Sign in required")
+  BoardAccess.Require(boardId, "write")
+  r = $db.Exec("SELECT * FROM kb_lanes WHERE board_id = &1 AND " & ExportText.MatchText($db, "title", 2, title), boardId, ExportText.BindText($db, title))
   If r.Available Then Error.Raise("Swimlane already exists")
   EnsureLane(boardId, title)
   Activity(boardId, "Added swimlane: " & title)
+  If WebIdentity.Username <> actor Then Error.Raise("Sign in required")
+  BoardAccess.Require(boardId, "write")
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
 End
 
 Public Sub AddList(boardId As Integer, lane As String, title As String, afterTitle As String)
   Dim r As Result
+  Dim actor As String = WebIdentity.Username
   Dim position As Integer
+  Dim transaction As Boolean
   Dim failure As String
   BoardAccess.Require(boardId, "write")
-  EnsureCardLinks(boardId)
   title = Trim(title)
   If Not title Or String.Len(title) > 32 Then Error.Raise("Enter a list title (1-32 characters)")
-  r = $db.Find("kb_lanes", "board_id = &1 AND title = &2", boardId, lane)
+  DatabaseTransactions.Begin($db)
+  transaction = True
+  $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+  If WebIdentity.Username <> actor Then Error.Raise("Sign in required")
+  BoardAccess.Require(boardId, "write")
+  EnsureCardLinks(boardId)
+  r = $db.Exec("SELECT * FROM kb_lanes WHERE board_id = &1 AND " & ExportText.MatchText($db, "title", 2, lane), boardId, ExportText.BindText($db, lane))
   If Not r.Available Then Error.Raise("Swimlane not accessible")
   If afterTitle Then
     r = GetList(boardId, afterTitle, lane)
     position = r!sort_order + 1
   Else
-    r = $db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND lane = &2 ORDER BY sort_order DESC", boardId, lane)
+    r = $db.Exec("SELECT * FROM kb_lists WHERE " & ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND " & ExportText.MatchText($db, "lane", 2, lane) & " ORDER BY sort_order DESC", boardId, ExportText.BindText($db, lane))
     position = 0
     If r.Available Then position = r!sort_order + 1
   Endif
-  DatabaseTransactions.Begin($db)
-  $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
-  BoardAccess.Require(boardId, "write")
-  r = $db.Edit("kb_lists", "board_id = &1 AND lane = &2 AND sort_order >= &3", boardId, lane, position)
+  r = $db.Edit("kb_lists", "board_id = &1 AND " & ExportText.MatchText($db, "lane", 2, lane) & " AND sort_order >= &3", boardId, ExportText.BindText($db, lane), position)
   For Each r
     r["sort_order"] = r!sort_order + 1
     r.Update()
@@ -396,12 +421,15 @@ Public Sub AddList(boardId As Integer, lane As String, title As String, afterTit
   r["lane"] = lane
   r["title"] = title
   r["sort_order"] = position
-  r.Update()
+  DatabaseText.Save($db, r, "kb_lists", ["board_id", "lane", "title", "sort_order"], True)
   Activity(boardId, "Added list: " & title, "list", $db.LastInsertId)
+  If WebIdentity.Username <> actor Then Error.Raise("Sign in required")
+  BoardAccess.Require(boardId, "write")
   DatabaseTransactions.Commit($db)
+  transaction = False
 Catch
   failure = Error.Text
-  If $db Then Try DatabaseTransactions.Rollback($db)
+  If transaction Then Try DatabaseTransactions.Rollback($db)
   Error.Raise(failure)
 End
 

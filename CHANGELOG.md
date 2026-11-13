@@ -2,6 +2,21 @@
 
 This work adds the following features and fixes:
 
+- Create native swimlanes/lists with complete NUL/Unicode names and atomic
+  defaults, ordering, legacy links and activity. Match full lane/title values,
+  save complete list text, and recheck the actor/write role under the board lock
+  and before commit. Keep Add Lane's initializer and activity in one transaction;
+  propagate initializer errors after its own insert rather than mistaking a
+  nested partial insert for a concurrent creator's success. Prime legacy card
+  links inside Add List's transaction. Native tests cover exact defaults/text,
+  duplicate lists, unchanged length limits, prefix/role denials, SQL/activity
+  and nested-card rollback/retry, plus lock-time/final role loss. Source/packaged
+  native forms verify actual created SQL values, literal rendering and reload.
+  Full host tests pass, including 70 Python tests and source/packaged API/session
+  checks; every native/store suite also passes after the final link fix.
+  Rename/copy readers/writers, remaining forms and full original parity stay
+  open. Thanks to xet7.
+
 - Preserve complete native list and swimlane moves. Resolve complete lane names
   and ordering keys; safely match/write NUL-bearing composite item keys. Move
   lists and linked active/archived cards with text-safe lane updates, retaining

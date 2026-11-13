@@ -104,12 +104,28 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
     await expect(reader.locator('.weba-add-card-top,.weba-drag-handle')).toHaveCount(0);
    }finally{await readerContext.close();}
   }
+  await page.setViewportSize({width:1440,height:1000});await page.evaluate(()=>webaI18n.setLanguage('en'));
+  await click('ViewMenu');await click('Swimlanes');
+  const newLane="Created lane\0Ω😀'<literal>",newList="Created list\0Ω😀'new";
+  await page.locator('.weba-report .weba-add-lane').first().click();await settle();
+  await page.locator('[id$=".ActionText:entry"]').evaluate((input,value)=>{input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));},newLane);
+  await click('ActionConfirm');
+  await expect.poll(()=>fixture('containers').lanes.map(row=>row.title)).toContain(newLane);
+  const newLaneRow=page.locator('.weba-report>.weba-swimlane').filter({has:page.locator('h3').filter({hasText:"Created lane"})});
+  await expect(newLaneRow).toHaveCount(1);expect(await newLaneRow.getAttribute('data-lane')).toBe(newLane);
+  expect(await newLaneRow.locator('h3').textContent()).toBe(newLane);await expect(newLaneRow.locator('literal')).toHaveCount(0);
+  await newLaneRow.locator('.weba-add-list').first().click();await settle();
+  await page.locator('[id$=".ActionText:entry"]').evaluate((input,value)=>{input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));},newList);
+  await click('ActionConfirm');
+  await expect.poll(()=>fixture('containers').lists.filter(row=>row.lane===newLane).map(row=>row.title)).toContain(newList);
+  await page.reload();expect(await newLaneRow.getAttribute('data-lane')).toBe(newLane);
+  await expect(newLaneRow.locator('.weba-column')).toHaveCount(4);
   await page.goto(process.env.WEBA_TEST_URL+'/b/'+seed.board+'/board/'+createdId);
   await expect(page.locator('[id$=".Lane:entry"]')).toHaveValue(seed.items[1].lane);await expect(page.locator('[id$=".Status:entry"]')).toHaveValue(seed.items[1].title);await expect(description).toHaveValue(body);
   await description.fill('Unsaved after revocation');fixture('revoke');const before=fixture('read',createdId);
   await page.evaluate(()=>gw.raise(document.querySelector('[id$=".SaveCard"]').id,'click',[],false));await settle();
   expect(fixture('read',createdId)).toEqual(before);
   expect(errors).toEqual([]);
-  console.log('Native complete text browser: shared-prefix NUL/Unicode/markup lane/list identities retain exact columns/card placement across views/reload/Finnish/mobile; readonly/assigned scope, native exact card/list/lane mouse and card dialog moves with editor refresh/reload, create/edit/NUL dirty refresh/reload and late-revocation refusal passed');
+  console.log('Native complete text browser: shared-prefix NUL/Unicode/markup lane/list identities retain exact columns/card placement across views/reload/Finnish/mobile; readonly/assigned scope, native exact card/list/lane mouse and card dialog moves with editor refresh/reload, exact lane/list creation SQL/reload, create/edit/NUL dirty refresh/reload and late-revocation refusal passed');
  }finally{try{if(context)await context.close();}finally{if(browser)await browser.close();}}
 })().catch(e=>{let s=e.stack||String(e);if(process.env.WEBA_TEST_PASSWORD)s=s.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(s);process.exitCode=1;});

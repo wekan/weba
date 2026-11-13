@@ -12,6 +12,30 @@ Public Sub Main()
   If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
   Session["username"] = "rest-other"
   Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+  If Env["WEBA_NATIVE_MODE"] = "containers" Then
+    conn = WebDatabase.OpenConnection()
+    boardId = CInt(Env["WEBA_NATIVE_BOARD"])
+    row = conn.Exec(ExportText.SelectRows(conn, "kb_lanes") & " WHERE board_id=&1 ORDER BY id", boardId)
+    For Each row
+      item = New Collection
+      item["id"] = row!id
+      item["title"] = ExportText.ReadValue(row, "title")
+      items.Add(item)
+    Next
+    result["lanes"] = items
+    items = New Variant[]
+    row = conn.Exec(ExportText.SelectRows(conn, "kb_lists") & " WHERE board_id=&1 ORDER BY id", boardId)
+    For Each row
+      item = New Collection
+      item["id"] = row!id
+      item["lane"] = ExportText.ReadValue(row, "lane")
+      item["title"] = ExportText.ReadValue(row, "title")
+      items.Add(item)
+    Next
+    result["lists"] = items
+    Print JsonText.Encode(result)
+    Return
+  Endif
   If Env["WEBA_NATIVE_MODE"] = "read" Then
     conn = WebDatabase.OpenConnection()
     boardId = CInt(Env["WEBA_NATIVE_BOARD"])

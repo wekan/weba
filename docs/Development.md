@@ -2730,3 +2730,26 @@ and reload both states. Creation/rename and other form readers remain TODO.
 Container-move validation: complete `build.sh test` passes (including 70 Python
 tests and source/packaged API/security/session checks), as do source/packaged
 native-text and ordinary trusted-touch/mouse/keyboard drag browser runs.
+
+Native lane/list creation uses complete predicates and list writes. AddLane owns
+a board-locked transaction spanning default containers and activity; AddList
+validates positions and primes legacy card links within its board-locked creation
+transaction. Both capture/recheck the current actor and write permission before
+effects and final commit. String.Len already counts after NUL and its limits
+remain unchanged. EnsureLane tracks whether its own lane insert succeeded: a
+post-insert failure must propagate even if a nested rollback leaves the partial
+row visible, while the pre-insert concurrent-creator fallback remains.
+ContainerCreateTextTest covers exact lane/default/list text, duplicate list IDs,
+limits, prefix/role denial, default-list/activity faults, nested SaveCard failure,
+legacy-link rollback/retry and lock/final role loss with exact state snapshots.
+Native-text browsers enter exact NUL/Unicode/literal-markup names through native
+forms, inspect independent SQL records and reload the created layout. Broader
+rename/copy, context value forms and full original suites remain TODO.
+
+Creation verification: complete `build.sh test` passes (70 Python tests and
+source/packaged API/security/session checks). Every native/store conformance
+suite was rerun after the final legacy-link transaction change and passed. Final
+source/packaged native-text browser runs verify literal heading text without
+markup nodes, complete SQL creation values, layout reload and prior card/list/
+lane movement/editor/privacy cases. The focused native regression also verifies
+the successful retry persists the legacy card's exact stable list ID.

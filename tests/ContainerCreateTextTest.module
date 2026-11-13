@@ -1,0 +1,153 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim listId As Integer
+  Dim legacyCard As Integer
+  Dim conn As Connection
+  Dim row As Result
+  Dim lane As String = "Lane" & Chr(0) & "Ω😀'A"
+  Dim other As String = "Lane" & Chr(0) & "Ω😀'B"
+  Dim title As String = "List" & Chr(0) & "Ω😀'A"
+  Dim actor As String
+  Dim before As String
+  Dim denied As Boolean
+  Dim count As Integer
+  For Each actor In ["create-text-owner", "create-text-reader", "create-text-outsider", "create-text-writer"]
+    WebDatabase.Register(actor, "x")
+  Next
+  SignIn("create-text-owner")
+  boardId = KanbanStore.AddBoard("Complete container creation")
+  conn = WebDatabase.OpenConnection()
+  KanbanStore.AddLane(boardId, lane)
+  row = KanbanStore.Lanes(boardId)
+  If row.Count <> 1 Or ExportText.ReadValue(row, "title") <> lane Then Error.Raise("Lane creation lost complete text")
+  If KanbanStore.Lists(boardId, lane).Count <> 3 Then Error.Raise("Complete lane did not get default lists")
+  KanbanStore.AddLane(boardId, other)
+  KanbanStore.AddList(boardId, lane, title, "")
+  row = KanbanStore.GetList(boardId, title, lane)
+  listId = row!id
+  If ExportText.ReadValue(row, "title") <> title Or ExportText.ReadValue(row, "lane") <> lane Then Error.Raise("List creation lost complete text")
+  KanbanStore.AddList(boardId, lane, title, "#" & CStr(listId))
+  row = KanbanStore.Lists(boardId, lane)
+  For Each row
+    If ExportText.ReadValue(row, "title") = title Then Inc count
+  Next
+  If count <> 2 Then Error.Raise("Complete duplicate list titles merged")
+  before = Snapshot(boardId)
+  Try KanbanStore.AddLane(boardId, lane)
+  denied = Error
+  If Not denied Or Snapshot(boardId) <> before Then Error.Raise("Duplicate lane creation changed state")
+  Try KanbanStore.AddList(boardId, "Lane", title, "")
+  denied = Error
+  If Not denied Or Snapshot(boardId) <> before Then Error.Raise("Truncated lane accepted creation")
+  Try KanbanStore.AddLane(boardId, "L" & Chr(0) & String(254, "x"))
+  denied = Error
+  If Not denied Or Snapshot(boardId) <> before Then Error.Raise("Overlong complete lane created")
+  Try KanbanStore.AddList(boardId, lane, "T" & Chr(0) & String(31, "x"), "")
+  denied = Error
+  If Not denied Or Snapshot(boardId) <> before Then Error.Raise("Overlong complete list created")
+  KanbanStore.AddLane(boardId, "L" & Chr(0) & String(253, "x"))
+  KanbanStore.AddList(boardId, lane, "T" & Chr(0) & String(30, "x"), "")
+  before = Snapshot(boardId)
+  conn.Exec("CREATE TRIGGER refuse_create_defaults BEFORE INSERT ON kb_lists WHEN NEW.title='Doing' BEGIN SELECT RAISE(ABORT,'refuse default'); END")
+  Try KanbanStore.AddLane(boardId, "Atomic" & Chr(0) & "defaults")
+  denied = Error
+  If Not denied Or Snapshot(boardId) <> before Then Error.Raise("Failed default-list creation retained partial containers")
+  Try KanbanStore.SaveCard(boardId, 0, "Refused nested card", "", "Atomic" & Chr(0) & "card", "Todo", "", "", "")
+  denied = Error
+  If Not denied Or Snapshot(boardId) <> before Then Error.Raise("Nested card initializer retained partial containers")
+  conn.Exec("DROP TRIGGER refuse_create_defaults")
+  legacyCard = KanbanStore.SaveCard(boardId, 0, "Unlinked legacy card", "", lane, "Todo", "", "", "")
+  conn.Exec("DELETE FROM kb_card_lists WHERE board_id=&1 AND card_id=&2", boardId, legacyCard)
+  before = Snapshot(boardId)
+  conn.Exec("CREATE TRIGGER refuse_create_activity BEFORE INSERT ON kb_activity BEGIN SELECT RAISE(ABORT,'refuse activity'); END")
+  Try KanbanStore.AddLane(boardId, "Atomic" & Chr(0) & "activity")
+  denied = Error
+  If Not denied Or Snapshot(boardId) <> before Then Error.Raise("Failed lane activity retained containers")
+  Try KanbanStore.AddList(boardId, lane, "Atomic" & Chr(0) & "list", "#" & CStr(listId))
+  denied = Error
+  conn.Exec("DROP TRIGGER refuse_create_activity")
+  If Not denied Or Snapshot(boardId) <> before Then Error.Raise("Failed list activity retained rank/text/history writes")
+  KanbanStore.AddLane(boardId, "Atomic" & Chr(0) & "activity")
+  KanbanStore.AddList(boardId, lane, "Atomic" & Chr(0) & "list", "#" & CStr(listId))
+  row = conn.Find("kb_card_lists", "board_id=&1 AND card_id=&2", boardId, legacyCard)
+  If Not row.Available Then Error.Raise("Successful retry did not persist the legacy link")
+  If row!list_id <> KanbanStore.GetList(boardId, "Todo", lane)!id Then Error.Raise("Legacy retry linked the wrong list")
+  BoardAccess.SetMember(boardId, "create-text-reader", "read-only")
+  BoardAccess.SetMember(boardId, "create-text-writer", "normal")
+  For Each actor In ["create-text-reader", "create-text-outsider"]
+    before = Snapshot(boardId)
+    SignIn(actor)
+    Try KanbanStore.AddLane(boardId, "Denied" & Chr(0) & "lane")
+    denied = Error
+    If Not denied Or Snapshot(boardId) <> before Then Error.Raise("Reader/foreign lane creation wrote data")
+    Try KanbanStore.AddList(boardId, lane, "Denied" & Chr(0) & "list", "")
+    denied = Error
+    If Not denied Or Snapshot(boardId) <> before Then Error.Raise("Reader/foreign list creation wrote data")
+  Next
+  SignIn("create-text-writer")
+  For Each actor In ["lock", "activity"]
+    before = Snapshot(boardId)
+    If actor = "lock" Then
+      conn.Exec("CREATE TRIGGER revoke_create_role AFTER UPDATE OF title ON kb_boards WHEN NEW.id=" & CStr(boardId) & " BEGIN UPDATE kb_members SET role='read-only' WHERE board_id=NEW.id AND username='create-text-writer'; END")
+    Else
+      conn.Exec("CREATE TRIGGER revoke_create_role AFTER INSERT ON kb_activity WHEN NEW.board_id=" & CStr(boardId) & " BEGIN UPDATE kb_members SET role='read-only' WHERE board_id=NEW.board_id AND username='create-text-writer'; END")
+    Endif
+    Try KanbanStore.AddLane(boardId, "Late" & Chr(0) & actor)
+    denied = Error
+    If Not denied Or Snapshot(boardId) <> before Then Error.Raise("Late role loss retained lane creation")
+    Try KanbanStore.AddList(boardId, lane, "Late" & Chr(0) & actor, "#" & CStr(listId))
+    denied = Error
+    conn.Exec("DROP TRIGGER revoke_create_role")
+    If Not denied Or Snapshot(boardId) <> before Then Error.Raise("Late role loss retained list creation")
+  Next
+  KanbanStore.AddLane(boardId, "Writer" & Chr(0) & "retry")
+  KanbanStore.AddList(boardId, lane, "Writer" & Chr(0) & "retry", "")
+  Print "Complete container creation: exact NUL/Unicode lanes/lists/defaults, duplicate list IDs, length limits, prefix/role denial, full SQL/activity rollback/retry and lock-time/final role guards passed"
+End
+
+Private Sub SignIn(actor As String)
+  Session["username"] = actor
+  Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+End
+
+Private Function Snapshot(boardId As Integer) As String
+  Dim conn As Connection = WebDatabase.OpenConnection()
+  Dim tableName As String
+  Dim fields As String[]
+  Dim field As String
+  Dim rows As Result
+  Dim result As New Collection
+  Dim data As Variant[]
+  Dim values As String[]
+  For Each tableName In ["kb_lanes", "kb_lists", "kb_cards", "kb_order", "kb_card_lists", "kb_item_changes", "kb_members"]
+    Select tableName
+      Case "kb_lanes"
+        fields = ["id", "title"]
+      Case "kb_members"
+        fields = ["username", "role"]
+      Case "kb_lists"
+        fields = ["id", "lane", "title", "sort_order"]
+      Case "kb_cards"
+        fields = ["id", "lane", "status", "title", "description", "archived"]
+      Case "kb_order"
+        fields = ["kind", "item", "sort_order"]
+      Case "kb_card_lists"
+        fields = ["card_id", "list_id"]
+      Case "kb_item_changes"
+        fields = ["kind", "item_id", "modified_ms"]
+    End Select
+    rows = conn.Exec(ExportText.SelectRows(conn, tableName) & " WHERE board_id=&1 ORDER BY " & fields[0] & If(fields[0] = "kind", "," & fields[1], ""), boardId)
+    data = New Variant[]
+    For Each rows
+      values = New String[]
+      For Each field In fields
+        values.Add(ExportText.ReadValue(rows, field))
+      Next
+      data.Add(values)
+    Next
+    result[tableName] = data
+  Next
+  result["history"] = conn.Exec("SELECT COUNT(*) AS total FROM kb_history WHERE board_id=&1", boardId)!total
+  result["activity"] = conn.Exec("SELECT COUNT(*) AS total FROM kb_activity WHERE board_id=&1", boardId)!total
+  Return JsonText.Encode(result)
+End
