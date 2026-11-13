@@ -1,0 +1,192 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim visible As Integer
+  Dim hidden As Integer
+  Dim purgeBoard As Integer
+  Dim listBoard As Integer
+  Dim listId As Integer
+  Dim batchId As Integer
+  Dim actor As String
+  Dim suffix As String = Chr(0) & "Ω😀'<tag>tail"
+  Dim detail As String = "Detail" & suffix & JsonText.Decode(Chr(34) & "\\ud800" & Chr(34))
+  Dim before As String
+  Dim state As String
+  Dim rows As Result
+  Dim conn As Connection
+  Dim payload As New Collection
+  Dim boards As Variant[]
+  Dim decoded As Variant
+  Dim denied As Boolean
+  Dim events As Integer
+  For Each actor In ["audit-text-global", "audit-text-owner", "audit-text-reader", "audit-text-assigned", "audit-text-outsider"]
+    WebDatabase.Register(actor, "x")
+  Next
+  SignIn("audit-text-owner")
+  boardId = KanbanStore.AddBoard("Audit" & suffix)
+  BoardAccess.SetMember(boardId, "audit-text-reader", "read-only")
+  BoardAccess.SetMember(boardId, "audit-text-assigned", "read-assigned-only")
+  visible = KanbanStore.SaveCard(boardId, 0, "Visible", "", "Default", "Todo", "audit-text-assigned", "", "")
+  hidden = KanbanStore.SaveCard(boardId, 0, "Hidden", "", "Default", "Todo", "", "", "")
+  KanbanStore.Activity(boardId, "VISIBLE" & suffix, "card", visible)
+  KanbanStore.Activity(boardId, "HIDDEN-CANARY" & suffix, "card", hidden)
+  KanbanStore.Activity(boardId, "BOARD-CANARY" & suffix)
+  RecoveryStore.OpenStore()
+  conn = WebDatabase.OpenConnection()
+  For Each actor In ["audit-text-owner", "audit-text-reader", "audit-text-assigned"]
+    SignIn(actor)
+    before = Frame()
+    state = Messages(KanbanStore.Activities(boardId, True))
+    If InStr(state, "VISIBLE") = 0 Or InStr(state, "tail") = 0 Then Error.Raise("Full activity message missing")
+    If actor = "audit-text-assigned" And If InStr(state, "HIDDEN-CANARY") Or InStr(state, "BOARD-CANARY") Then Error.Raise("Assigned activity scope changed")
+    rows = WorkspaceStore.History(boardId, "card", visible, True)
+    If ExportText.ReadValue(rows, "message") <> "VISIBLE" & suffix Then Error.Raise("History message truncated")
+    If Messages(KanbanStore.Activities(boardId, True)) <> state Or Frame() <> before Then Error.Raise("Audit reads unstable/wrote state")
+    rows = KanbanStore.Activities(boardId)
+    If rows.Fields.Exist("__weba_text_message") Then Error.Raise("Default activity columns changed")
+    rows = WorkspaceStore.History(boardId, "card", visible)
+    If rows.Fields.Exist("__weba_text_message") Then Error.Raise("Default history columns changed")
+  Next
+  SignIn("audit-text-assigned")
+  state = Messages(KanbanStore.Activities(boardId, True))
+  SignIn("audit-text-owner")
+  KanbanStore.Activity(boardId, "HIDDEN-NEW-CANARY" & suffix, "card", hidden)
+  SignIn("audit-text-assigned")
+  If Messages(KanbanStore.Activities(boardId, True)) <> state Then Error.Raise("Hidden history changed assigned results")
+  before = Frame()
+  Try WorkspaceStore.History(boardId, "card", hidden, True)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Hidden history readable/wrote state")
+  For Each actor In ["audit-text-global", "audit-text-outsider"]
+    SignIn(actor)
+    before = Frame()
+    Try KanbanStore.Activities(boardId, True)
+    denied = Error
+    If Not denied Or Frame() <> before Then Error.Raise("Nonmember activity readable/wrote state")
+  Next
+  SignIn("audit-text-global")
+  payload.Add("Board" & suffix, "title")
+  payload["number"] = 0.1
+  boards = [payload]
+  RecoveryStore.Record("Event" & suffix, "Actor" & suffix, True, False, detail, boards)
+  rows = RecoveryStore.Events(True)
+  If ExportText.ReadValue(rows, "event") <> "Event" & suffix Or ExportText.ReadValue(rows, "actor") <> "Actor" & suffix Or ExportText.ReadValue(rows, "detail") <> detail Or Not rows!done Or rows!deleted_data Then Error.Raise("Recovery full text/flags lost")
+  decoded = JsonText.Decode(ExportText.ReadValue(rows, "boards_json"))
+  If decoded[0]["title"] <> "Board" & suffix Or decoded[0]["number"] <> 0.1 Then Error.Raise("Recovery strict board payload lost")
+  before = Frame()
+  RecoveryStore.Events(True)
+  rows = RecoveryStore.Events()
+  If rows.Fields.Exist("__weba_text_detail") Or Frame() <> before Then Error.Raise("Recovery default columns/read state changed")
+  conn.Exec("CREATE TRIGGER audit_fail BEFORE INSERT ON recovery_events BEGIN SELECT RAISE(ABORT,'audit fixture'); END")
+  Try RecoveryStore.Record("Failure", "Actor", False, False, detail)
+  denied = Error
+  conn.Exec("DROP TRIGGER audit_fail")
+  If Not denied Or Frame() <> before Then Error.Raise("Failed recovery insert wrote partial state")
+  DatabaseTransactions.Begin(conn)
+  RecoveryStore.Record("Caller rollback", "Actor", True, True, detail, boards)
+  DatabaseTransactions.Rollback(conn)
+  If Frame() <> before Then Error.Raise("Recovery record escaped caller rollback")
+  before = Frame(True)
+  events = conn.Find("recovery_events").Count
+  BoardPurge.RecordRejected([boardId], detail)
+  rows = RecoveryStore.Events(True)
+  If rows!done Or rows!deleted_data Or ExportText.ReadValue(rows, "detail") <> "Permanent board deletion rejected: " & detail Then Error.Raise("Durable refusal audit lost text/flags")
+  If conn.Find("recovery_events").Count <> events + 1 Or Frame(True) <> before Then Error.Raise("Durable refusal changed business state")
+  RecoveryStore.SetEnabled(True)
+  purgeBoard = KanbanStore.AddBoard("Purge" & suffix)
+  KanbanStore.ArchiveBoard(purgeBoard, True)
+  BoardPurge.DeleteBoards([purgeBoard])
+  rows = RecoveryStore.Events(True)
+  decoded = JsonText.Decode(ExportText.ReadValue(rows, "boards_json"))
+  If decoded[0]["title"] <> "Purge" & suffix Or Not rows!done Or Not rows!deleted_data Then Error.Raise("Purged full title not retained in audit")
+  If InStr(ExportText.ReadValue(rows, "detail"), JsonText.Encode("Purge" & suffix)) = 0 Then Error.Raise("Purge detail title truncated")
+  listBoard = KanbanStore.AddBoard("List purge")
+  visible = KanbanStore.SaveCard(listBoard, 0, "List card", "", "Default", "Todo", "", "", "")
+  listId = KanbanStore.CardListId(listBoard, visible)
+  WorkspaceStore.Rename(listBoard, "list", listId, "List" & suffix)
+  batchId = ListDeletion.SoftRemove(listBoard, listId)
+  rows = KanbanStore.Activities(listBoard, True)
+  If ExportText.ReadValue(rows, "message") <> "Deleted list: List" & suffix Then Error.Raise("Delete history producer truncated title")
+  ListDeletion.Restore(listBoard, listId)
+  rows = KanbanStore.Activities(listBoard, True)
+  If ExportText.ReadValue(rows, "message") <> "Restored list: List" & suffix Then Error.Raise("Restore history producer truncated title")
+  batchId = ListDeletion.SoftRemove(listBoard, listId)
+  WorkspaceActions.PurgeList(listBoard, listId, batchId)
+  rows = RecoveryStore.Events(True)
+  If InStr(ExportText.ReadValue(rows, "detail"), JsonText.Encode("List" & suffix)) = 0 Or Not rows!done Then Error.Raise("List purge audit title truncated")
+  For Each actor In ["audit-text-owner", "audit-text-reader", "audit-text-assigned", "audit-text-outsider", ""]
+    SignIn(actor)
+    before = Frame()
+    Try RecoveryStore.Events(True)
+    denied = Error
+    If Not denied Or Frame() <> before Then Error.Raise("Nonadmin recovery readable/wrote state")
+  Next
+  Print "Audit complete text: scoped full activity/history, stable no-write/default columns, assigned hidden isolation, recovery event/actor/detail/strict payload, SQL/caller rollback, durable refusal and full board/list purge/delete/restore audit producers passed"
+End
+
+Private Function Messages(rows As Result) As String
+  Dim data As New String[]
+  For Each rows
+    data.Add(ExportText.ReadValue(rows, "message"))
+  Next
+  Return JsonText.Encode(data)
+End
+
+Private Sub SignIn(actor As String)
+  Session["username"] = actor
+  Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+End
+
+Private Function Frame(Optional omitRecovery As Boolean) As String
+  Dim conn As Connection = WebDatabase.OpenConnection()
+  Dim table As Table
+  Dim tables As New String[]
+  Dim tableName As String
+  Dim order As String[]
+  Dim key As String
+  Dim rows As Result
+  Dim field As ResultField
+  Dim values As Collection
+  Dim data As Variant[]
+  Dim result As New Collection
+  For Each table In conn.Tables
+    If Left(table.Name, 7) <> "sqlite_" Then tables.Add(table.Name)
+  Next
+  tables.Sort()
+  For Each tableName In tables
+    If omitRecovery And tableName = "recovery_events" Then Continue
+    order = New String[]
+    For Each key In conn.Tables[tableName].PrimaryKey
+      order.Add(conn.Quote(key))
+    Next
+    rows = conn.Exec(ExportText.SelectRows(conn, tableName) & If(order.Count, " ORDER BY " & order.Join(","), ""))
+    data = New Variant[]
+    For Each rows
+      values = New Collection
+      For Each field In rows.Fields
+        If Left(field.Name, 7) = "__weba_" Then Continue
+        If field.Type = DB.String Then
+          If rows.Fields.Exist("__weba_null_" & field.Name) Then
+            If rows["__weba_null_" & field.Name] Then
+              values[field.Name] = JSON.Null
+            Else
+              values[field.Name] = ExportText.ReadValue(rows, field.Name)
+            Endif
+          Else
+            values[field.Name] = rows[field.Name]
+          Endif
+        Else If field.Type = DB.Blob Then
+          If IsNull(rows[field.Name]) Then
+            values[field.Name] = JSON.Null
+          Else
+            values[field.Name] = Base64(rows[field.Name].Data)
+          Endif
+        Else
+          values[field.Name] = rows[field.Name]
+        Endif
+      Next
+      data.Add(values)
+    Next
+    result[tableName] = data
+  Next
+  Return JsonText.Encode(result)
+End

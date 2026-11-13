@@ -828,9 +828,9 @@ Public Sub Visual_Render()
     Next
     Print "</table>"
   Else If $view = "Activities" And $board Then
-    a = KanbanStore.Activities($board)
+    a = KanbanStore.Activities($board, True)
     For Each a
-      Print "<p>" & Html(Str(a!created_at)) & " · " & Html(a!actor) & " · " & Html(a!message) & "</p>"
+      Print "<p>" & Html(Str(a!created_at)) & " · " & Html(ExportText.ReadValue(a, "actor")) & " · " & Html(ExportText.ReadValue(a, "message")) & "</p>"
     Next
   Else
     If IsOverview() Then
@@ -2017,9 +2017,9 @@ Public Sub ContextHistory_Click()
   $browsingArchive = False
   BrowserTitle.Text = "History: " & ContextTitle.Text
   BrowserTree.Clear()
-  r = WorkspaceStore.History($contextBoard, $contextKind, $contextId)
+  r = WorkspaceStore.History($contextBoard, $contextKind, $contextId, True)
   For Each r
-    BrowserTree.Add("event:" & CStr(r!id), Str(r!created_at) & " · " & r!actor & " · " & r!message)
+    BrowserTree.Add("event:" & CStr(r!id), Str(r!created_at) & " · " & ExportText.ReadValue(r, "actor") & " · " & ExportText.ReadValue(r, "message"))
   Next
   ContextMenu.Hide()
   ItemBrowser.Show()
@@ -3498,7 +3498,7 @@ Catch
 End
 
 Public Sub RecoveryEvents_Click()
-  Dim r As Result = RecoveryStore.Events()
+  Dim r As Result = RecoveryStore.Events(True)
   ContentRow.Hide()
   PasswordPolicyPanel.Hide()
   BoardCreationPanel.Hide()
@@ -3509,7 +3509,7 @@ Public Sub RecoveryEvents_Click()
   PermanentDeletePanel.Hide()
   RecoveryTree.Clear()
   For Each r
-    RecoveryTree.Add("recovery:" & Str(r!id), Str(r!created_at) & " · " & r!actor & " · " & If(r!done, "✓ ", "× ") & r!detail)
+    RecoveryTree.Add("recovery:" & Str(r!id), Str(r!created_at) & " · " & ExportText.ReadValue(r, "actor") & " · " & If(r!done, "✓ ", "× ") & ExportText.ReadValue(r, "detail"))
   Next
   RecoveryPanel.Show()
   PaneTitle.Text = "Recovery"

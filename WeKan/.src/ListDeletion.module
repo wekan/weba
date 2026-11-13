@@ -65,7 +65,7 @@ Public Function IsDeleted(boardId As Integer, kind As String, itemId As Integer)
 End
 
 Private Function ListRow(boardId As Integer, listId As Integer) As Result
-  Dim r As Result = $db.Find("kb_lists", "board_id=&1 AND id=&2", boardId, listId)
+  Dim r As Result = $db.Exec(ExportText.SelectRows($db, "kb_lists") & " WHERE board_id=&1 AND id=&2", boardId, listId)
   If Not r.Available Then Error.Raise("List not accessible")
   Return r
 End
@@ -175,7 +175,7 @@ Public Function SoftRemove(boardId As Integer, listId As Integer) As Integer
     If Batch(boardId, listId) <> 0 Then Error.Raise("List deletion changed")
     Mark(boardId, "list", listId, batchId, actor, at)
     r = ListRow(boardId, listId)
-    KanbanStore.Activity(boardId, "Deleted list: " & r!title, "list", listId)
+    KanbanStore.Activity(boardId, "Deleted list: " & ExportText.ReadValue(r, "title"), "list", listId)
     If Candidates(boardId, listId).Count > 0 Then Error.Raise("List deletion changed")
     If JSON.Encode(ids) <> JSON.Encode(BatchCards(boardId, batchId)) Then Error.Raise("List deletion changed")
   Endif
@@ -222,7 +222,7 @@ Public Sub Restore(boardId As Integer, listId As Integer)
   CheckActor(boardId, actor)
   If Batch(boardId, listId) <> 0 Then Error.Raise("List deletion changed")
   r = ListRow(boardId, listId)
-  KanbanStore.Activity(boardId, "Restored list: " & r!title, "list", listId)
+  KanbanStore.Activity(boardId, "Restored list: " & ExportText.ReadValue(r, "title"), "list", listId)
   CheckActor(boardId, actor)
   If Batch(boardId, listId) <> 0 Then Error.Raise("List deletion changed")
   DatabaseTransactions.Commit($db)

@@ -1,3 +1,14 @@
+Native activity/history/recovery views preserve complete NUL/Unicode text.
+Opt-in projections retain default columns and assigned-history filters. Safe
+recovery writes and strict payloads respect caller rollback and durable refused
+attempts. Full board/list purge and list lifecycle activity titles retained.
+Native exact/scope/no-write/default/SQL/caller rollback/durable audit tests pass;
+source/packaged history/Activities/recovery literal text, forged normal-member
+refusal/reload, existing purge UI security and ordinary layout/editor/admin/mobile
+tests pass, plus full pinned host/native/API/security/session and 70 Python
+tests. Shared/API readers,
+mutation guards, nullable/legacy models and full original parity remain open.
+
 Public discovery/anonymous guest projections preserve complete titles/bodies,
 placement/order, child/derived labels, retained authors and binary-free file
 metadata. Exact lane matches fix archived NUL-prefix filtering; complete color/

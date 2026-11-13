@@ -2,6 +2,25 @@
 
 This work adds the following features and fixes:
 
+- Preserve complete native activity/history and recovery-event text, including
+  NUL/Unicode messages, actors/details and strict recovery board payloads.
+  Native readers opt into complete columns without changing default result
+  shapes or assigned-only history filters. Recovery writes use the shared safe
+  text writer and remain inside the caller's success transaction; refused
+  attempts remain durable after rollback. Preserve board/list purge titles and
+  list delete/restore/move activity titles before writing them. Native tests
+  verify full values/flags, no-write reads, hidden/foreign/nonadmin refusals,
+  unchanged order/default columns, SQL/caller rollback, durable refusal without
+  business changes and actual full-title board/list purge producers.
+  Actual source/packaged history, Activities and Recovery Events views verify
+  literal full messages/actors/details, normal-member forged recovery refusal
+  and reload;
+  existing purge UI security and ordinary layout/editor/admin/mobile tests pass
+  on both builds. Full pinned host/native/API/security/session tests and
+  70 Python tests pass. Shared/API text reads, mutation final
+  guards, nullable/legacy models and full original parity remain open.
+  Thanks to xet7.
+
 - Preserve complete public discovery and anonymous guest text: titles,
   descriptions, placement/order keys, selected-card children/derived labels,
   retained authors and binary-free attachment metadata. Use exact full lane

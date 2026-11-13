@@ -17,6 +17,17 @@ Public Sub Main()
   If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
   Session["username"] = "rest-other"
   Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+  If Env["WEBA_NATIVE_MODE"] = "audit-seed" Then
+    boardId = CInt(Env["WEBA_NATIVE_BOARD"])
+    cardId = CInt(Env["WEBA_NATIVE_CARD"])
+    result.Add("Activity" & suffixText, "message")
+    result.Add("Audit actor" & suffixText, "actor")
+    result.Add("Recovery detail" & suffixText, "detail")
+    KanbanStore.Activity(boardId, result["message"], "card", cardId)
+    RecoveryStore.Record("Browser audit", result["actor"], True, False, result["detail"])
+    Print JsonText.Encode(result)
+    Return
+  Endif
   If ["guest-public", "guest-private", "guest-hide-lane", "guest-show-lane"].Find(Env["WEBA_NATIVE_MODE"]) >= 0 Then
     boardId = CInt(Env["WEBA_NATIVE_BOARD"])
     Select Env["WEBA_NATIVE_MODE"]

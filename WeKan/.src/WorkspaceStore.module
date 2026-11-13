@@ -46,9 +46,10 @@ Public Sub Log(boardId As Integer, kind As String, itemId As Integer, message As
   DatabaseText.Save($db, r, "kb_history", ["board_id", "kind", "item_id", "actor", "message", "created_at"], True)
 End
 
-Public Function History(boardId As Integer, kind As String, itemId As Integer) As Result
+Public Function History(boardId As Integer, kind As String, itemId As Integer, Optional completeText As Boolean) As Result
   Record(boardId, kind, itemId)
-  If kind = "board" Then Return KanbanStore.Activities(boardId)
+  If kind = "board" Then Return KanbanStore.Activities(boardId, completeText)
+  If completeText Then Return $db.Exec(ExportText.SelectRows($db, "kb_history") & " WHERE board_id=&1 AND kind=&2 AND item_id=&3 ORDER BY id DESC", boardId, kind, itemId)
   Return $db.Find("kb_history", "board_id = &1 AND kind = &2 AND item_id = &3 ORDER BY id DESC", boardId, kind, itemId)
 End
 

@@ -153,8 +153,8 @@ Public Sub Move(boardId As Integer, kind As String, itemId As Integer, targetBoa
     TransferMeta(boardId, targetBoard, "lane", itemId)
     $db.Delete("kb_order", "board_id = &1 AND kind = &2 AND item = &3", boardId, "lane", source!title)
   Endif
-  KanbanStore.Activity(boardId, "Moved " & kind & " to another board: " & source!title)
-  KanbanStore.Activity(targetBoard, "Received " & kind & ": " & source!title, kind, itemId)
+  KanbanStore.Activity(boardId, "Moved " & kind & " to another board: " & ExportText.ReadValue(source, "title"))
+  KanbanStore.Activity(targetBoard, "Received " & kind & ": " & ExportText.ReadValue(source, "title"), kind, itemId)
   DatabaseTransactions.Commit($db)
 Catch
   failure = Error.Text
@@ -222,7 +222,7 @@ Public Sub DeleteArchived(boardId As Integer, kind As String, itemId As Integer,
     $db.Delete("kb_order", "board_id = &1 AND kind = &2 AND item = &3", boardId, "lane", source!title)
   Endif
   RetiredAuthors.Prune(boardId)
-  KanbanStore.Activity(boardId, "Permanently deleted " & kind & ": " & source!title)
+  KanbanStore.Activity(boardId, "Permanently deleted " & kind & ": " & ExportText.ReadValue(source, "title"))
   CheckPurgeActor(actor)
   DatabaseTransactions.Commit($db)
   transaction = False
@@ -309,9 +309,9 @@ Public Sub PurgeList(boardId As Integer, listId As Integer, Optional expectedBat
   $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
   $db.Exec("UPDATE kb_lists SET title=title WHERE board_id=&1 AND id=&2", boardId, listId)
   CheckPurgeActor(actor)
-  r = $db.Find("kb_lists", "board_id=&1 AND id=&2", boardId, listId)
+  r = $db.Exec(ExportText.SelectRows($db, "kb_lists") & " WHERE board_id=&1 AND id=&2", boardId, listId)
   If Not r.Available Then Error.Raise("List not found")
-  title = r!title
+  title = ExportText.ReadValue(r, "title")
   batchId = DeletedBatch(boardId, listId)
   If expectedBatch > 0 And If expectedBatch <> batchId Then Error.Raise("List deletion changed")
   r = PurgeCards(boardId, batchId)
@@ -341,7 +341,7 @@ Public Sub PurgeList(boardId As Integer, listId As Integer, Optional expectedBat
   board["id"] = boardId
   board.Add("", "title")
   boards.Add(board)
-  RecoveryStore.Record("list-permanently-deleted", actor, True, True, "Permanently deleted list " & Str(listId) & " titled " & JSON.Encode(title), boards)
+  RecoveryStore.Record("list-permanently-deleted", actor, True, True, "Permanently deleted list " & Str(listId) & " titled " & JsonText.Encode(title), boards)
   CheckPurgeActor(actor)
   DatabaseTransactions.Commit($db)
   transaction = False

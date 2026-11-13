@@ -66,8 +66,8 @@ Public Sub Record(event As String, actor As String, done As Boolean, deletedData
   r["done"] = done
   r["deleted_data"] = deletedData
   r["detail"] = detail
-  If boards Then r["boards_json"] = JSON.Encode(boards)
-  r.Update()
+  If boards Then r["boards_json"] = JsonText.Encode(boards)
+  DatabaseText.Save($db, r, "recovery_events", ["event", "actor", "created_at", "done", "deleted_data", "detail", "boards_json"], True)
 End
 
 Public Sub SetEnabled(value As Boolean)
@@ -105,8 +105,9 @@ Catch
   Error.Raise(failure)
 End
 
-Public Function Events() As Result
+Public Function Events(Optional completeText As Boolean) As Result
   RequireAdmin()
   OpenStore()
+  If completeText Then Return $db.Exec(ExportText.SelectRows($db, "recovery_events") & " WHERE id>0 ORDER BY id DESC")
   Return $db.Find("recovery_events", "id>0 ORDER BY id DESC")
 End
