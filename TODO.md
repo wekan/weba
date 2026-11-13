@@ -124,7 +124,7 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   Shared-prefix placement/view/reload/literal/Finnish/mobile regression details
   are recorded in CHANGELOG.md.
 - Next reader focus: native context title/value forms, destination board captions
-  and remaining model readers/writers, especially lane/list mutation paths.
+  and remaining model readers/writers, especially lane/list creation/rename paths.
 - Next data follow-up: audit legacy field-model consistency and remaining native
   text readers/writers outside the backup path. Other request decoder boundaries,
   DB drivers, remaining field models/security reporting and full original suites

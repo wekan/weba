@@ -54,6 +54,27 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   await destinationLane.selectOption({index:0});await settle();await click('ActionConfirm');
   expect(fixture('read',seed.items[0].card)).toMatchObject({lane:seed.items[0].lane,status:seed.items[0].title,list:seed.items[0].list});
   await columns();await click('CloseEditor');
+  async function containerGesture(source,destination){
+   await settle();await source.scrollIntoViewIfNeeded();await destination.scrollIntoViewIfNeeded();
+   const from=await source.boundingBox(),to=await destination.boundingBox();
+   await page.mouse.move(from.x+from.width/2,from.y+from.height/2);await page.mouse.down();
+   await page.mouse.move(to.x+8,to.y+8,{steps:12});await page.mouse.up();await settle();
+   await page.waitForFunction(()=>!webaDrag.clickSuppressed);
+  }
+  const movedList=()=>page.locator('.weba-report .weba-column[data-list-id="'+seed.items[0].list+'"]');
+  await containerGesture(movedList().locator('.weba-list-header h4'),page.locator('.weba-report .weba-column[data-list-id="'+seed.items[1].list+'"]'));
+  await expect.poll(()=>fixture('read',seed.items[0].card)).toMatchObject({lane:seed.items[1].lane,status:seed.items[0].title,list:seed.items[0].list});
+  await page.reload();expect(await movedList().getAttribute('data-lane')).toBe(seed.items[1].lane);
+  await containerGesture(movedList().locator('.weba-list-header h4'),page.locator('.weba-report .weba-column[data-list="Doing"]').first());
+  await expect.poll(()=>fixture('read',seed.items[0].card)).toMatchObject({lane:seed.items[0].lane,status:seed.items[0].title,list:seed.items[0].list});
+  await columns();
+  const lanes=page.locator('.weba-report>.weba-swimlane');
+  await containerGesture(lanes.nth(1).locator('.weba-swimlane-header h3'),lanes.first().locator('.weba-swimlane-header'));
+  await expect.poll(()=>lanes.evaluateAll(nodes=>nodes.map(node=>node.dataset.lane))).toEqual([seed.items[1].lane,seed.items[0].lane]);
+  await page.reload();expect(await lanes.evaluateAll(nodes=>nodes.map(node=>node.dataset.lane))).toEqual([seed.items[1].lane,seed.items[0].lane]);
+  await containerGesture(lanes.nth(1).locator('.weba-swimlane-header h3'),lanes.first().locator('.weba-swimlane-header'));
+  await expect.poll(()=>lanes.evaluateAll(nodes=>nodes.map(node=>node.dataset.lane))).toEqual([seed.items[0].lane,seed.items[1].lane]);
+  await columns();
   await page.locator('.weba-report .weba-column[data-list-id="'+seed.items[1].list+'"] .weba-add-card-top').click();await settle();
   await expect(page.locator('[id$=".Lane:entry"]')).toHaveValue(seed.items[1].lane);
   await expect(page.locator('[id$=".Status:entry"]')).toHaveValue(seed.items[1].title);
@@ -89,6 +110,6 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   await page.evaluate(()=>gw.raise(document.querySelector('[id$=".SaveCard"]').id,'click',[],false));await settle();
   expect(fixture('read',createdId)).toEqual(before);
   expect(errors).toEqual([]);
-  console.log('Native complete text browser: shared-prefix NUL/Unicode/markup lane/list identities retain exact columns/card placement across views/reload/Finnish/mobile; readonly/assigned scope, native exact destination mouse/dialog moves with editor refresh/reload, create/edit/NUL dirty refresh/reload and late-revocation refusal passed');
+  console.log('Native complete text browser: shared-prefix NUL/Unicode/markup lane/list identities retain exact columns/card placement across views/reload/Finnish/mobile; readonly/assigned scope, native exact card/list/lane mouse and card dialog moves with editor refresh/reload, create/edit/NUL dirty refresh/reload and late-revocation refusal passed');
  }finally{try{if(context)await context.close();}finally{if(browser)await browser.close();}}
 })().catch(e=>{let s=e.stack||String(e);if(process.env.WEBA_TEST_PASSWORD)s=s.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(s);process.exitCode=1;});

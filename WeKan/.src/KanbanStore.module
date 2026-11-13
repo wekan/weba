@@ -415,15 +415,19 @@ End
 
 Private Sub PutOrder(boardId As Integer, kind As String, item As String, rank As Integer)
   Dim r As Result
-  r = $db.Edit("kb_order", "board_id = &1 AND kind = &2 AND item = &3", boardId, kind, item)
+  Dim isNew As Boolean
+  r = $db.Edit("kb_order", "board_id = &1 AND kind = &2 AND " & ExportText.MatchText($db, "item", 3, item), boardId, kind, ExportText.BindText($db, item))
+  isNew = Not r.Available
   If Not r.Available Then
     r = $db.Create("kb_order")
     r["board_id"] = boardId
     r["kind"] = kind
     r["item"] = item
   Endif
+  ' Restore the complete primary-key value before the text-safe update.
+  r["item"] = item
   r["sort_order"] = rank
-  r.Update()
+  DatabaseText.Save($db, r, "kb_order", ["board_id", "kind", "item", "sort_order"], isNew)
   If kind = "card" Then ItemChanges.Mark(boardId, kind, CInt(item))
 End
 
@@ -510,12 +514,12 @@ Public Sub MoveLane(boardId As Integer, laneTitle As String, beforeTitle As Stri
   RequireActiveBoard(boardId)
   r = Lanes(boardId)
   For Each r
-    sorted.Add(Format(ItemOrder(boardId, "lane", r!title, r!id), "0000000000") & ":" & CStr(r!id))
+    sorted.Add(Format(ItemOrder(boardId, "lane", ExportText.ReadValue(r, "title"), r!id), "0000000000") & ":" & CStr(r!id))
   Next
   sorted.Sort()
   For Each value In sorted
-    r = $db.Find("kb_lanes", "id = &1 AND board_id = &2", CInt(Split(value, ":")[1]), boardId)
-    names.Add(r!title)
+    r = $db.Exec(ExportText.SelectRows($db, "kb_lanes") & " WHERE id = &1 AND board_id = &2", CInt(Split(value, ":")[1]), boardId)
+    names.Add(ExportText.ReadValue(r, "title"))
   Next
   index = names.Find(laneTitle)
   If index < 0 Then Error.Raise("Swimlane not accessible")
@@ -551,8 +555,8 @@ Public Sub MoveList(boardId As Integer, sourceLane As String, listTitle As Strin
   EnsureCardLinks(boardId)
   r = GetList(boardId, listTitle, sourceLane)
   listId = r!id
-  listTitle = r!title
-  r = $db.Find("kb_lanes", "board_id = &1 AND title = &2", boardId, targetLane)
+  listTitle = ExportText.ReadValue(r, "title")
+  r = $db.Exec("SELECT * FROM kb_lanes WHERE board_id = &1 AND " & ExportText.MatchText($db, "title", 2, targetLane), boardId, ExportText.BindText($db, targetLane))
   If Not r.Available Then Error.Raise("Destination swimlane not accessible")
   If beforeTitle Then
     r = GetList(boardId, beforeTitle, targetLane)
@@ -572,14 +576,14 @@ Public Sub MoveList(boardId As Integer, sourceLane As String, listTitle As Strin
   DatabaseTransactions.Begin($db)
   r = $db.Edit("kb_lists", "id = &1 AND board_id = &2", listId, boardId)
   r["lane"] = targetLane
-  r.Update()
+  DatabaseText.Save($db, r, "kb_lists", ["lane"], False)
   If sourceLane <> targetLane Then
     links = $db.Find("kb_card_lists", "board_id = &1 AND list_id = &2", boardId, listId)
     For Each links
       r = $db.Edit("kb_cards", "board_id = &1 AND id = &2", boardId, links!card_id)
       If Not r.Available Then Continue
       r["lane"] = targetLane
-      r.Update()
+      DatabaseText.Save($db, r, "kb_cards", ["lane"], False)
       ItemChanges.Mark(boardId, "card", r!id)
     Next
   Endif

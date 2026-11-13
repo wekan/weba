@@ -2,6 +2,19 @@
 
 This work adds the following features and fixes:
 
+- Preserve complete native list and swimlane moves. Resolve complete lane names
+  and ordering keys; safely match/write NUL-bearing composite item keys. Move
+  lists and linked active/archived cards with text-safe lane updates, retaining
+  duplicate-title list identities, unrelated card text and archive state.
+  Reproduce both former SQL/inaccessible-lane failures. Native regressions cover
+  exact placement/order, no-op writes, prefix/role refusals and full-state SQL
+  rollback/retry. Real source/packaged mouse gestures cover cross-lane lists,
+  lane ordering, exact SQL/DOM values, reload and return moves. Full host tests
+  pass, including 70 Python tests and source/packaged API/security/session
+  checks; ordinary trusted-touch/keyboard/mouse drag browsers pass in both modes.
+  Creation/rename paths, remaining forms and full original parity stay open.
+  Thanks to xet7.
+
 - Repair the ordinary transfer browser fixture for the current permanent-delete
   policy. Assert the fresh policy is disabled, then enable it through the native
   administrator UI before expecting Delete in the disposable instance. Retain

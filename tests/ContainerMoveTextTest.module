@@ -1,0 +1,141 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim archivedId As Integer
+  Dim targetCard As Integer
+  Dim sourceList As Integer
+  Dim targetList As Integer
+  Dim conn As Connection
+  Dim row As Result
+  Dim laneA As String = "Lane" & Chr(0) & "Ω😀'A"
+  Dim laneB As String = "Lane" & Chr(0) & "Ω😀'B"
+  Dim title As String = "List" & Chr(0) & "Ω😀'A"
+  Dim before As String
+  Dim actor As String
+  Dim denied As Boolean
+  WebDatabase.Register("container-owner", "x")
+  WebDatabase.Register("container-reader", "x")
+  WebDatabase.Register("container-outsider", "x")
+  SignIn("container-owner")
+  boardId = KanbanStore.AddBoard("Container moves")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Source", "Body" & Chr(0) & "retained", laneA, "Todo", "", "", "")
+  archivedId = KanbanStore.SaveCard(boardId, 0, "Archived", "", laneA, "Todo", "", "", "")
+  KanbanStore.ArchiveCard(boardId, archivedId, True)
+  targetCard = KanbanStore.SaveCard(boardId, 0, "Target", "", laneB, "Todo", "", "", "")
+  sourceList = KanbanStore.CardListId(boardId, cardId)
+  targetList = KanbanStore.CardListId(boardId, targetCard)
+  conn = WebDatabase.OpenConnection()
+  row = conn.Edit("kb_lists", "id=&1", sourceList)
+  row["title"] = title
+  DatabaseText.Save(conn, row, "kb_lists", ["title"], False)
+  row = conn.Edit("kb_lists", "id=&1", targetList)
+  row["title"] = title
+  DatabaseText.Save(conn, row, "kb_lists", ["title"], False)
+  conn.Exec("UPDATE kb_cards SET status=CAST(" & conn.FormatBlob(title) & " AS TEXT) WHERE id IN (&1,&2,&3)", cardId, archivedId, targetCard)
+  BoardAccess.SetMember(boardId, "container-reader", "read-only")
+  If Env["WEBA_CONTAINER_KIND"] <> "list" Then
+    KanbanStore.MoveLane(boardId, laneB, laneA)
+    If KanbanStore.ItemOrder(boardId, "lane", laneB, 999) >= KanbanStore.ItemOrder(boardId, "lane", laneA, 999) Then Error.Raise("Complete lane order lost")
+    KanbanStore.MoveLane(boardId, laneA, laneB)
+    If KanbanStore.ItemOrder(boardId, "lane", laneA, 999) >= KanbanStore.ItemOrder(boardId, "lane", laneB, 999) Then Error.Raise("Complete lane return order lost")
+  Endif
+  If Env["WEBA_CONTAINER_KIND"] <> "lane" Then
+    KanbanStore.MoveList(boardId, laneA, "#" & CStr(sourceList), laneB, "#" & CStr(targetList))
+    For Each row In [WorkspaceStore.Record(boardId, "card", cardId), WorkspaceStore.Record(boardId, "card", archivedId)]
+      If ExportText.ReadValue(row, "lane") <> laneB Or ExportText.ReadValue(row, "status") <> title Then Error.Raise("List move lost complete active/archived placement")
+      If row!id = archivedId And Not row!archived Then Error.Raise("List move restored archived card")
+    Next
+    row = WorkspaceStore.Record(boardId, "list", sourceList)
+    If ExportText.ReadValue(row, "lane") <> laneB Or ExportText.ReadValue(row, "title") <> title Then Error.Raise("List move lost complete list text")
+    If KanbanStore.CardListId(boardId, cardId) <> sourceList Or KanbanStore.CardListId(boardId, archivedId) <> sourceList Then Error.Raise("List move changed stable links")
+    If KanbanStore.CardListId(boardId, targetCard) <> targetList Then Error.Raise("Duplicate-title lists merged during move")
+    row = WorkspaceStore.Record(boardId, "card", cardId)
+    If ExportText.ReadValue(row, "description") <> "Body" & Chr(0) & "retained" Then Error.Raise("List move changed unrelated complete body")
+    KanbanStore.MoveList(boardId, laneB, "#" & CStr(sourceList), laneA, "")
+  Endif
+  before = Snapshot(boardId)
+  KanbanStore.MoveLane(boardId, laneA, laneA)
+  KanbanStore.MoveList(boardId, laneA, "#" & CStr(sourceList), laneA, "#" & CStr(sourceList))
+  If Snapshot(boardId) <> before Then Error.Raise("No-op container move wrote data/history")
+  Try KanbanStore.MoveList(boardId, "Lane", "#" & CStr(sourceList), laneB, "")
+  denied = Error
+  If Not denied Or Snapshot(boardId) <> before Then Error.Raise("Wrong source lane changed container state")
+  Try KanbanStore.MoveList(boardId, laneA, "#" & CStr(sourceList), "Lane", "")
+  denied = Error
+  If Not denied Or Snapshot(boardId) <> before Then Error.Raise("Truncated destination lane changed state")
+  Try KanbanStore.MoveLane(boardId, "Lane", laneB)
+  denied = Error
+  If Not denied Or Snapshot(boardId) <> before Then Error.Raise("Truncated lane reordered complete lanes")
+  conn.Exec("CREATE TRIGGER refuse_container_card BEFORE UPDATE OF lane ON kb_cards WHEN OLD.id=" & CStr(cardId) & " BEGIN SELECT RAISE(ABORT,'refuse card lane'); END")
+  Try KanbanStore.MoveList(boardId, laneA, "#" & CStr(sourceList), laneB, "")
+  denied = Error
+  conn.Exec("DROP TRIGGER refuse_container_card")
+  If Not denied Or Snapshot(boardId) <> before Then Error.Raise("List move did not roll back exact cards/lists/order/history")
+  KanbanStore.MoveList(boardId, laneA, "#" & CStr(sourceList), laneB, "")
+  KanbanStore.MoveList(boardId, laneB, "#" & CStr(sourceList), laneA, "")
+  KanbanStore.MoveLane(boardId, laneA, laneB)
+  before = Snapshot(boardId)
+  conn.Exec("CREATE TRIGGER refuse_container_order BEFORE UPDATE ON kb_order WHEN OLD.kind='lane' AND OLD.item=CAST(" & conn.FormatBlob(laneA) & " AS TEXT) BEGIN SELECT RAISE(ABORT,'refuse lane order'); END")
+  Try KanbanStore.MoveLane(boardId, laneB, laneA)
+  denied = Error
+  conn.Exec("DROP TRIGGER refuse_container_order")
+  If Not denied Or Snapshot(boardId) <> before Then Error.Raise("Lane move did not roll back exact full-key order/history")
+  KanbanStore.MoveLane(boardId, laneB, laneA)
+  KanbanStore.MoveLane(boardId, laneA, laneB)
+  If conn.Exec("SELECT COUNT(*) AS total FROM kb_order WHERE board_id=&1 AND kind='lane'", boardId)!total <> 2 Then Error.Raise("Complete lane keys duplicated or truncated")
+  For Each actor In ["container-reader", "container-outsider"]
+    before = Snapshot(boardId)
+    SignIn(actor)
+    Try KanbanStore.MoveList(boardId, laneA, "#" & CStr(sourceList), laneB, "")
+    denied = Error
+    If Not denied Or Snapshot(boardId) <> before Then Error.Raise("Foreign/read-only list move changed state")
+    Try KanbanStore.MoveLane(boardId, laneA, laneB)
+    denied = Error
+    If Not denied Or Snapshot(boardId) <> before Then Error.Raise("Foreign/read-only lane move changed state")
+    SignIn("container-owner")
+  Next
+  Print "Complete container moves: full NUL/Unicode list/card/lane/order keys, retained active+archived card content, stable IDs, prefix/role denial and exact SQL rollback/retry passed"
+End
+
+Private Sub SignIn(actor As String)
+  Session["username"] = actor
+  Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+End
+
+Private Function Snapshot(boardId As Integer) As String
+  Dim conn As Connection = WebDatabase.OpenConnection()
+  Dim tableName As String
+  Dim fields As String[]
+  Dim field As String
+  Dim rows As Result
+  Dim result As New Collection
+  Dim data As Variant[]
+  Dim values As String[]
+  For Each tableName In ["kb_lists", "kb_cards", "kb_order", "kb_card_lists", "kb_item_changes"]
+    Select tableName
+      Case "kb_lists"
+        fields = ["id", "lane", "title", "sort_order"]
+      Case "kb_cards"
+        fields = ["id", "lane", "status", "title", "description", "archived"]
+      Case "kb_order"
+        fields = ["kind", "item", "sort_order"]
+      Case "kb_card_lists"
+        fields = ["card_id", "list_id"]
+      Case "kb_item_changes"
+        fields = ["kind", "item_id", "modified_ms"]
+    End Select
+    rows = conn.Exec(ExportText.SelectRows(conn, tableName) & " WHERE board_id=&1 ORDER BY " & fields[0] & If(fields[0] = "kind", "," & fields[1], ""), boardId)
+    data = New Variant[]
+    For Each rows
+      values = New String[]
+      For Each field In fields
+        values.Add(ExportText.ReadValue(rows, field))
+      Next
+      data.Add(values)
+    Next
+    result[tableName] = data
+  Next
+  result["history"] = conn.Exec("SELECT COUNT(*) AS total FROM kb_history WHERE board_id=&1", boardId)!total
+  result["activity"] = conn.Exec("SELECT COUNT(*) AS total FROM kb_activity WHERE board_id=&1", boardId)!total
+  Return JsonText.Encode(result)
+End

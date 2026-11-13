@@ -2713,3 +2713,20 @@ Problems/Delete before running its existing movement and wrong/exact-title
 deletion assertions. The fixture uses a disposable database and does not change
 production defaults. Committed-source reproduction timed out at hidden
 ContextDelete; source/packaged runs pass with this setup.
+
+Native `MoveList` now matches the complete target lane and writes only lane on
+the list and all linked active/archived cards through DatabaseText.Save.
+`MoveLane` consumes complete names. PutOrder matches complete item keys and
+restores the complete primary-key value in the editable result before saving;
+otherwise the driver reads the composite key back truncated even when the WHERE
+lookup was safe. Existing transactions and scope/archive checks remain.
+ContainerMoveTextTest checks shared-prefix NUL/Unicode/apostrophe names, complete
+card content, duplicate-title list identities, retained archive state, no-op
+writes, invalid-prefix/reader/foreign denial and injected rollback/retry. Exact
+snapshots cover lists/cards/order/links/change stamps/history/activity. Real
+native-text browser gestures move lists across lanes and back, reorder lanes
+and reload both states. Creation/rename and other form readers remain TODO.
+
+Container-move validation: complete `build.sh test` passes (including 70 Python
+tests and source/packaged API/security/session checks), as do source/packaged
+native-text and ordinary trusted-touch/mouse/keyboard drag browser runs.

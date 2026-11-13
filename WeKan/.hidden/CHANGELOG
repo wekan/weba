@@ -1,3 +1,9 @@
+Native list/lane moves preserve complete NUL/Unicode names and composite order
+keys. Lists retain duplicate-title IDs, active/archived card state and unrelated
+text. Native no-op/denial/full-state rollback/retry and real source/packaged mouse
+placement/order/reload/return checks covered. Creation/rename and full parity
+remain open.
+
 Ordinary transfer browser fixture explicitly checks the default-disabled
 permanent-delete policy and enables it via admin UI before deletion assertions.
 Source/packaged movement and wrong/exact-title deletion checks pass.
