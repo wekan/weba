@@ -1,0 +1,76 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim targetCard As Integer
+  Dim listId As Integer
+  Dim row As Result
+  Dim conn As Connection
+  Dim lane As String = "Lane" & Chr(0) & "Ω😀'B"
+  Dim before As String
+  Dim denied As Boolean
+  Dim reader As String
+  Dim order As String[]
+  Dim title As String = "List" & Chr(0) & "Ω😀'B"
+  WebDatabase.Register("move-text-owner", "x")
+  Session["username"] = "move-text-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("move-text-owner")
+  boardId = KanbanStore.AddBoard("Complete card move text")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Source" & Chr(0) & "Ω😀", "Retained body" & Chr(0) & "tail", "Default", "Todo", "move-text-owner", "Retained labels" & Chr(0) & "tail", "2026-11-13")
+  targetCard = KanbanStore.SaveCard(boardId, 0, "Target", "", lane, "Todo", "", "", "")
+  listId = KanbanStore.CardListId(boardId, targetCard)
+  conn = WebDatabase.OpenConnection()
+  row = conn.Edit("kb_lists", "id=&1", listId)
+  row["title"] = title
+  DatabaseText.Save(conn, row, "kb_lists", ["title"], False)
+  KanbanStore.MoveCard(boardId, cardId, lane, "#" & CStr(listId), 0)
+  row = WorkspaceStore.Record(boardId, "card", cardId)
+  If ExportText.ReadValue(row, "lane") <> lane Or ExportText.ReadValue(row, "status") <> title Then Error.Raise("Move lost complete destination lane/status")
+  If ExportText.ReadValue(row, "description") <> "Retained body" & Chr(0) & "tail" Then Error.Raise("Move changed body")
+  If KanbanStore.CardListId(boardId, cardId) <> listId Then Error.Raise("Move changed list identity")
+  If ExportText.ReadValue(row, "title") <> "Source" & Chr(0) & "Ω😀" Or ExportText.ReadValue(row, "labels") <> "Retained labels" & Chr(0) & "tail" Or ExportText.ReadValue(row, "due_day") <> "2026-11-13" Then Error.Raise("Move changed unrelated complete source text")
+  KanbanStore.MoveCard(boardId, cardId, lane, "#" & CStr(listId), targetCard)
+  order = KanbanStore.CardOrder(boardId, lane, "#" & CStr(listId))
+  If order.Count <> 2 Or order[0] <> CStr(cardId) Then Error.Raise("Full-text destination ordering failed")
+  before = Snapshot(boardId, cardId)
+  Try KanbanStore.MoveCard(boardId, cardId, "Lane", "#" & CStr(listId), 0)
+  denied = Error
+  If Not denied Or Snapshot(boardId, cardId) <> before Then Error.Raise("Wrong-lane move changed data")
+  Try KanbanStore.MoveCard(boardId, cardId, lane, "#" & CStr(listId), targetCard + 9999)
+  denied = Error
+  If Not denied Or Snapshot(boardId, cardId) <> before Then Error.Raise("Invalid before-card move changed data")
+  conn.Exec("CREATE TRIGGER refuse_text_move BEFORE UPDATE ON kb_card_lists BEGIN SELECT RAISE(ABORT,'refuse move'); END")
+  Try KanbanStore.MoveCard(boardId, cardId, "Default", "Todo", 0)
+  denied = Error
+  conn.Exec("DROP TRIGGER refuse_text_move")
+  If Not denied Or Snapshot(boardId, cardId) <> before Then Error.Raise("Failed move did not roll back exact text and history")
+  KanbanStore.MoveCard(boardId, cardId, "Default", "Todo", 0)
+  KanbanStore.MoveCard(boardId, cardId, lane, "#" & CStr(listId), 0)
+  For Each reader In ["move-text-reader", "move-text-outsider"]
+    WebDatabase.Register(reader, "x")
+    Session["username"] = "move-text-owner"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("move-text-owner")
+    If reader = "move-text-reader" Then BoardAccess.SetMember(boardId, reader, "read-only")
+    before = Snapshot(boardId, cardId)
+    Session["username"] = reader
+    Session["auth_generation"] = WebDatabase.SessionGeneration(reader)
+    Try KanbanStore.MoveCard(boardId, cardId, lane, "#" & CStr(listId), 0)
+    denied = Error
+    Session["username"] = "move-text-owner"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("move-text-owner")
+    If Not denied Or Snapshot(boardId, cardId) <> before Then Error.Raise("Read-only/foreign move changed data")
+  Next
+  Print "Complete card move: exact NUL/Unicode destination and source content, wrong lane/before/role denial, atomic SQL rollback and retry passed"
+End
+
+Private Function Snapshot(boardId As Integer, cardId As Integer) As String
+  Dim row As Result = WorkspaceStore.Record(boardId, "card", cardId)
+  Dim data As New Collection
+  Dim field As String
+  For Each field In ["title", "description", "lane", "status", "labels", "due_day", "assignee"]
+    data[field] = ExportText.ReadValue(row, field)
+  Next
+  data["list"] = KanbanStore.CardListId(boardId, cardId)
+  data["history"] = WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_history WHERE board_id=&1", boardId)!total
+  data["activity"] = WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_activity WHERE board_id=&1", boardId)!total
+  Return JsonText.Encode(data)
+End

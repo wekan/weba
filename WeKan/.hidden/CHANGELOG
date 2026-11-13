@@ -1,3 +1,9 @@
+Native card moves preserve complete NUL/Unicode destination lane/status through
+projected reads and text-safe transactional writes, retaining other card fields.
+Exact order/identity, negative permissions/targets, SQL rollback/retry and real
+source/packaged mouse/reload checks covered. Destination forms and full parity
+remain open.
+
 Native card create/edit drafts preserve full NUL/Unicode text, independent stale
 changes and locked current reads. Complete-text updates use private command files
 and strict JSON; dirty controls are retained across encoded field restoration.

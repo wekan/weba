@@ -2686,3 +2686,14 @@ change. Destination/action form consumers and other mutation paths remain TODO.
 Editor verification: complete `build.sh test` passes, including 70 Python tests,
 source/packaged API conformance and sessions. Both `--native-text` and
 `--native-text --archive` browser rechecks pass with exact persisted bytes.
+
+`KanbanStore.MoveCard` reads complete destination list text and saves only lane/
+status with DatabaseText.Save inside its existing transaction. This preserves
+other complete card fields and native list IDs. MoveCardTextTest reproduces the
+old SQLite parse failure and checks exact NUL/Unicode/apostrophe text, before-card
+ordering, wrong lane/before/role refusal and SQL rollback/retry. Eight focused
+native move/draft/access/archive/deletion suites pass. Real native-text source
+and packaged browsers drag between shared-prefix destinations, verify SQL values,
+reload and move back. They wait for the exposed native clickSuppressed state
+before unrelated clicks. Destination/context forms and lane/list mutations remain
+separate TODO work.

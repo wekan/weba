@@ -2,6 +2,16 @@
 
 This work adds the following features and fixes:
 
+- Preserve complete native card-move destination text. Read the destination list
+  title from the complete projection and write only lane/status through the
+  existing SQLite text-safe writer inside the move transaction. Retain list IDs,
+  unrelated NUL/Unicode card fields, before-card order and permission/archive
+  guards. Reproduce the old SQL parse failure; native tests cover exact values,
+  wrong-lane/before/role refusals and injected SQL rollback/retry. Real source/
+  packaged mouse moves verify exact SQL destinations, return moves and reload.
+  Destination forms, lane/list mutations and full original parity remain open.
+  Thanks to xet7.
+
 - Preserve complete native card editor text through create/read/stale merge and
   refresh after Save. Project authorized context and locked current rows, use
   complete lane/list names in new-card actions, and restore NUL-bearing native

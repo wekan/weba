@@ -21,6 +21,22 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
    const card=column.locator('[data-card-id="'+item.card+'"]');await expect(card).toHaveCount(1);expect(await card.getAttribute('data-lane')).toBe(item.lane);expect(await card.getAttribute('data-status')).toBe(item.title);
   }await expect(page.locator('.weba-report tag')).toHaveCount(0);}
   await columns();
+  async function moveCompleteCard(target){
+   await settle();
+   const source=page.locator('.weba-report .weba-card[data-card-id="'+seed.items[0].card+'"]');
+   const destination=page.locator('.weba-report .weba-column[data-list-id="'+target.list+'"] .weba-list-body');
+   await source.scrollIntoViewIfNeeded();await destination.scrollIntoViewIfNeeded();
+   const from=await source.boundingBox(),to=await destination.boundingBox();
+   await page.mouse.move(from.x+12,from.y+12);await page.mouse.down();
+   await page.mouse.move(to.x+to.width/2,to.y+to.height-8,{steps:12});await page.mouse.up();await settle();
+   await expect.poll(()=>fixture('read',seed.items[0].card)).toMatchObject({lane:target.lane,status:target.title,list:target.list});
+   await expect(destination.locator('[data-card-id="'+seed.items[0].card+'"]')).toHaveCount(1);
+   // The native gesture intentionally suppresses the trailing click.
+   await page.waitForFunction(()=>!webaDrag.clickSuppressed);
+  }
+  await moveCompleteCard(seed.items[1]);await page.reload();
+  expect(fixture('read',seed.items[0].card)).toMatchObject({lane:seed.items[1].lane,status:seed.items[1].title,list:seed.items[1].list});
+  await moveCompleteCard(seed.items[0]);await columns();
   await page.locator('.weba-report .weba-column[data-list-id="'+seed.items[1].list+'"] .weba-add-card-top').click();await settle();
   await expect(page.locator('[id$=".Lane:entry"]')).toHaveValue(seed.items[1].lane);
   await expect(page.locator('[id$=".Status:entry"]')).toHaveValue(seed.items[1].title);
@@ -56,6 +72,6 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   await page.evaluate(()=>gw.raise(document.querySelector('[id$=".SaveCard"]').id,'click',[],false));await settle();
   expect(fixture('read',createdId)).toEqual(before);
   expect(errors).toEqual([]);
-  console.log('Native complete text browser: shared-prefix NUL/Unicode/markup lane/list identities retain exact columns/card placement across views/reload/Finnish/mobile; readonly/assigned scope, native create/edit/NUL dirty refresh/reload and late-revocation refusal passed');
+  console.log('Native complete text browser: shared-prefix NUL/Unicode/markup lane/list identities retain exact columns/card placement across views/reload/Finnish/mobile; readonly/assigned scope, native exact destination mouse moves/reload, create/edit/NUL dirty refresh/reload and late-revocation refusal passed');
  }finally{try{if(context)await context.close();}finally{if(browser)await browser.close();}}
 })().catch(e=>{let s=e.stack||String(e);if(process.env.WEBA_TEST_PASSWORD)s=s.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(s);process.exitCode=1;});

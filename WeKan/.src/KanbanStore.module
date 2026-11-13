@@ -470,7 +470,7 @@ Public Sub MoveCard(boardId As Integer, cardId As Integer, laneTitle As String, 
   If Not r.Available Then Error.Raise("Card not accessible")
   r = GetList(boardId, listTitle, laneTitle)
   listId = r!id
-  listTitle = r!title
+  listTitle = ExportText.ReadValue(r, "title")
   If WorkspaceStore.ListHidden(boardId, listId) Then Error.Raise("Destination is archived")
   WorkspaceStore.RequireCapacity(boardId, listId, cardId)
   If beforeId = cardId Then Return
@@ -487,7 +487,7 @@ Public Sub MoveCard(boardId As Integer, cardId As Integer, laneTitle As String, 
   r = $db.Edit("kb_cards", "id = &1 AND board_id = &2", cardId, boardId)
   r["lane"] = laneTitle
   r["status"] = listTitle
-  r.Update()
+  DatabaseText.Save($db, r, "kb_cards", ["lane", "status"], False)
   PutCardList(boardId, cardId, listId)
   For index = 0 To ids.Max
     PutOrder(boardId, "card", ids[index], index)
