@@ -8,6 +8,18 @@ This work adds the following features and fixes:
   complete source and packaged layout/card-editor/admin/mobile runs.
   Thanks to xet7.
 
+- Preserve complete native board lane/list/status identities through rendering.
+  Read projected card text under existing live/archive/assignment predicates and
+  use complete lane/list names for layout lookup/order. Carry strict JSON in
+  Base64 beside HTML-safe fallback attributes; decode identities before browser
+  grouping/actions so NUL parsing cannot merge shared prefixes. Real browser
+  regression covers exact column/card placement, Lists/Swimlanes/Table, reload,
+  literal markup and Finnish/mobile, with readonly and assigned-only privacy.
+  Full host tests (including 70 Python tests) and source/packaged complete-text
+  and ordinary layout/card-editor/admin/mobile browser suites pass. Native
+  edit/destination form consumers and
+  remaining model/UI/API/security parity stay open. Thanks to xet7.
+
 - Read native lists by complete stored lane/title values, including NUL,
   Unicode and apostrophe suffixes. Use shared safe comparisons and complete
   projections for list enumeration, title lookup and ID lookup. Preserve live

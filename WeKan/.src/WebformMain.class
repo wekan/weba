@@ -781,6 +781,8 @@ Public Sub Visual_Render()
   Dim text As String
   Dim lane As Result
   Dim list As Result
+  Dim laneTitle As String
+  Dim listTitle As String
   Dim tiles As New Collection
   Dim overviewId As Integer
   Dim overviewData As Collection
@@ -837,12 +839,14 @@ Public Sub Visual_Render()
       Print "<div class=\"weba-layout\" hidden>"
       lane = KanbanStore.Lanes($board)
       For Each lane
+        laneTitle = ExportText.ReadValue(lane, "title")
         If WorkspaceStore.Archived($board, "lane", lane!id) Then Continue
-        Print "<section data-color=\"" & Html(WorkspaceStore.Setting($board, "lane", lane!id, "color")) & "\" data-lane-id=\"" & Str(lane!id) & "\" data-order=\"" & Str(KanbanStore.ItemOrder($board, "lane", lane!title, lane!id)) & "\" data-lane=\"" & Html(lane!title) & "\">"
-        list = KanbanStore.Lists($board, lane!title)
+        Print "<section data-color=\"" & Html(WorkspaceStore.Setting($board, "lane", lane!id, "color")) & "\" data-lane-id=\"" & Str(lane!id) & "\" data-order=\"" & Str(KanbanStore.ItemOrder($board, "lane", laneTitle, lane!id)) & "\"" & TextData("lane", laneTitle) & ">"
+        list = KanbanStore.Lists($board, laneTitle)
         For Each list
+          listTitle = ExportText.ReadValue(list, "title")
           If WorkspaceStore.Archived($board, "list", list!id) Then Continue
-          Print "<span data-count=\"" & Str(WorkspaceStore.ListCount($board, list!id)) & "\" data-wip=\"" & Html(WorkspaceStore.Setting($board, "list", list!id, "wip", "0")) & "\" data-color=\"" & Html(WorkspaceStore.Setting($board, "list", list!id, "color")) & "\" data-star=\"" & WorkspaceStore.Setting($board, "list", list!id, "star", "0") & "\" data-list-id=\"" & Str(list!id) & "\" data-list=\"" & Html(list!title) & "\"></span>"
+          Print "<span data-count=\"" & Str(WorkspaceStore.ListCount($board, list!id)) & "\" data-wip=\"" & Html(WorkspaceStore.Setting($board, "list", list!id, "wip", "0")) & "\" data-color=\"" & Html(WorkspaceStore.Setting($board, "list", list!id, "color")) & "\" data-star=\"" & WorkspaceStore.Setting($board, "list", list!id, "star", "0") & "\" data-list-id=\"" & Str(list!id) & "\"" & TextData("list", listTitle) & "></span>"
         Next
         Print "</section>"
       Next
@@ -877,7 +881,7 @@ Public Sub Visual_Render()
         Endif
         text = c!title & " " & c!description & " " & c!labels & " " & c!assignee
         If Filter.Text And InStr(LCase(text), LCase(Filter.Text)) = 0 Then Continue
-        Print "<article data-color=\"" & Html(WorkspaceStore.Setting(b!id, "card", c!id, "color")) & "\" data-list-id=\"" & Str(KanbanStore.CardListId(b!id, c!id)) & "\" data-order=\"" & Str(KanbanStore.ItemOrder(b!id, "card", CStr(c!id), c!id)) & "\" data-card-id=\"" & Str(c!id) & "\" class=\"weba-card\" data-card-key=\"c" & Str(c!id) & ":" & Str(b!id) & "\" data-status=\"" & Html(c!status) & "\" data-lane=\"" & Html(c!lane) & "\" data-due=\"" & Html(c!due_day) & "\">"
+        Print "<article data-color=\"" & Html(WorkspaceStore.Setting(b!id, "card", c!id, "color")) & "\" data-list-id=\"" & Str(KanbanStore.CardListId(b!id, c!id)) & "\" data-order=\"" & Str(KanbanStore.ItemOrder(b!id, "card", CStr(c!id), c!id)) & "\" data-card-id=\"" & Str(c!id) & "\" class=\"weba-card\" data-card-key=\"c" & Str(c!id) & ":" & Str(b!id) & "\"" & TextData("status", ExportText.ReadValue(c, "status")) & TextData("lane", ExportText.ReadValue(c, "lane")) & " data-due=\"" & Html(c!due_day) & "\">"
         Print "<strong>" & Html(c!title) & "</strong><p>" & Html(c!description) & "</p><small>" & Html(c!status) & " · " & Html(c!assignee) & " · " & Html(c!labels) & " · " & Html(c!due_day) & "</small></article>"
       Next
     Next
@@ -892,6 +896,10 @@ Public Sub Visual_Render()
   WebForm.Exec("window.webaRender && window.webaRender();gw.onFocus();window.webaAlignFocus && window.webaAlignFocus();")
 Catch
   Print "<p role=\"alert\">" & Html(Error.Text) & "</p>"
+End
+
+Private Function TextData(name As String, value As String) As String
+  Return " data-" & name & "=\"" & Html(Replace(value, Chr(0), "�")) & "\" data-" & name & "-text=\"" & Base64(JsonText.Encode(value)) & "\""
 End
 
 Private Function Html(value As String) As String

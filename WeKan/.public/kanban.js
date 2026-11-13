@@ -10,6 +10,13 @@
       if(section.dataset.boardColor)document.documentElement.style.setProperty('--weba-board-color',section.dataset.boardColor);
       const data = section.querySelector('.weba-data'), report = section.querySelector('.weba-report');
       if (!data || !report) return;
+      // HTML parsing replaces NUL; decode complete identities before grouping or actions.
+      section.querySelectorAll('[data-lane-text],[data-list-text],[data-status-text]').forEach(element=>{
+        for(const name of ['lane','list','status']){
+          const encoded=element.getAttribute('data-'+name+'-text');
+          if(encoded!==null)element.dataset[name]=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(encoded),character=>character.charCodeAt(0))));
+        }
+      });
       report.replaceChildren(); data.hidden = false;
       if(section.dataset.guestViewOrder){
         const controls=document.querySelector('[id$=".GuestViews"]');

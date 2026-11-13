@@ -2642,3 +2642,23 @@ identity handling; this change does not claim those consumers are complete.
 List-reader validation passes the complete host suite, including 70 Python
 tests and source/packaged API/security comparisons, followed by source/packaged
 list-deletion and all-format selected-export/cached-revocation browser runs.
+
+Native board layout reads complete lane/list projections, and BoardAccess.CardRows
+returns complete projections with its existing live/archive/assignment predicates.
+Raw HTML cannot carry NUL in attributes: parsers replace it. WebformMain.TextData
+therefore emits an HTML-safe display fallback plus Base64 of JsonText.Encode for
+lane/list/status identities. kanban.js decodes these before grouping, focus or
+board actions. Strict JSON also preserves control characters and escaped lone
+UTF-16 units without embedding executable markup. Ordinary datasets remain the
+browser action interface. NativeTextFixture is copied only to disposable test
+projects; native-text.browser.cjs reproduces the old prefix truncation and checks
+exact columns/card placement in Lists/Swimlanes/Table, reload and Finnish/mobile.
+Readonly and assigned-only users exercise the original card filter boundary.
+This does not complete native edit/destination form text readers or other field
+models. The new browser regression also runs at the end of the broad live suite.
+
+Renderer validation: complete build.sh test passes, including 70 Python tests,
+source/packaged HTTP API/security and native rollback tests. Source and packaged
+complete-text/privacy browser regressions and full ordinary layout/card-editor/
+admin/mobile browser runs pass. The separate stale menu-order assertion was
+reproduced on committed code and corrected in its own commit.

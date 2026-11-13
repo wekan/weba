@@ -569,11 +569,11 @@ End
 Public Function CardRows(boardId As Integer, Optional byArchive As Boolean, Optional archived As Boolean) As Result
   RequireRead(boardId)
   If Not Can(boardId, "seesAllCards") Then
-    If byArchive Then Return $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND archived = &2 AND (assignee = &3 OR id IN (SELECT card_id FROM kb_card_assignees WHERE board_id = &1 AND username = &3)) ORDER BY id", boardId, archived, WebIdentity.Username)
-    Return $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND (assignee = &2 OR id IN (SELECT card_id FROM kb_card_assignees WHERE board_id = &1 AND username = &2)) ORDER BY id", boardId, WebIdentity.Username)
+    If byArchive Then Return $db.Exec(ExportText.SelectRows($db, "kb_cards") & " WHERE " & ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND archived = &2 AND (assignee = &3 OR id IN (SELECT card_id FROM kb_card_assignees WHERE board_id = &1 AND username = &3)) ORDER BY id", boardId, archived, WebIdentity.Username)
+    Return $db.Exec(ExportText.SelectRows($db, "kb_cards") & " WHERE " & ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND (assignee = &2 OR id IN (SELECT card_id FROM kb_card_assignees WHERE board_id = &1 AND username = &2)) ORDER BY id", boardId, WebIdentity.Username)
   Endif
-  If byArchive Then Return $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND archived = &2 ORDER BY id", boardId, archived)
-  Return $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 ORDER BY id", boardId)
+  If byArchive Then Return $db.Exec(ExportText.SelectRows($db, "kb_cards") & " WHERE " & ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND archived = &2 ORDER BY id", boardId, archived)
+  Return $db.Exec(ExportText.SelectRows($db, "kb_cards") & " WHERE " & ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 ORDER BY id", boardId)
 End
 
 Public Sub RequireCard(boardId As Integer, cardId As Integer)

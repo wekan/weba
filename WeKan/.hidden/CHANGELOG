@@ -1,3 +1,8 @@
+Native layout/card lane/list/status identities survive HTML NUL parsing through
+complete SQL projections and encoded strict JSON decoded before grouping/actions.
+Shared-prefix exact column/card placement, views/reload/literal/Finnish/mobile
+regression added. Native edit/destination forms and broader parity remain open.
+
 Native list enumeration/title/ID lookups use complete NUL/Unicode text and safe
 comparisons, preserving live/board/lane scope and duplicate/blank semantics.
 Owner/readonly, deleted/foreign/wrong-lane and no-history regression cases pass.

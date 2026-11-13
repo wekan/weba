@@ -1,0 +1,40 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim conn As Connection
+  Dim row As Result
+  Dim lane As String
+  Dim title As String
+  Dim suffix As String
+  Dim result As New Collection
+  Dim items As New Variant[]
+  Dim item As Collection
+  If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
+  Session["username"] = "rest-other"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+  WebDatabase.Register("rest-native-reader", Env["WEBA_TEST_PASSWORD"])
+  WebDatabase.Register("rest-native-assigned", Env["WEBA_TEST_PASSWORD"])
+  boardId = KanbanStore.AddBoard("Complete native lane/list text")
+  BoardAccess.SetMember(boardId, "rest-native-reader", "read-only")
+  BoardAccess.SetMember(boardId, "rest-native-assigned", "read-assigned-only")
+  conn = WebDatabase.OpenConnection()
+  For Each suffix In ["A", "B"]
+    lane = "Lane" & Chr(0) & "Ω😀'<tag>" & suffix
+    title = "List" & Chr(0) & "Ω😀'<tag>" & suffix
+    cardId = KanbanStore.SaveCard(boardId, 0, "Card " & suffix, "", lane, "Todo", "", "", "")
+    row = conn.Edit("kb_lists", "board_id=&1 AND id=&2", boardId, KanbanStore.CardListId(boardId, cardId))
+    row["title"] = title
+    DatabaseText.Save(conn, row, "kb_lists", ["title"], False)
+    cardId = KanbanStore.SaveCard(boardId, cardId, "Card " & suffix, "", lane, title, "", "", "")
+    item = New Collection
+    item["lane"] = lane
+    item["title"] = title
+    item["card"] = cardId
+    item["list"] = KanbanStore.CardListId(boardId, cardId)
+    If suffix = "A" Then BoardAccess.SetAssignees(boardId, cardId, ["rest-native-assigned"])
+    items.Add(item)
+  Next
+  result["board"] = boardId
+  result["items"] = items
+  Print JsonText.Encode(result)
+End
