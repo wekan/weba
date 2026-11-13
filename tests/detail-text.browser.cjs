@@ -65,7 +65,20 @@ with sqlite3.connect(sys.argv[1]) as d:
    const timers=read().entries.filter(e=>e.kind==='time');expect(timers).toHaveLength(1);expect(Boolean(timers[0].done)).toBe(action==='stop');
    await expect(page.locator(c('DetailTree'))).toContainText(action==='start'?'Running timer':'Tracked time');
   }
+  await kind('Attachments');await row(initial.files[0].filename);
+  const uploadBytes=Buffer.from([0,1,255,10,32,39,194,169]);
+  async function upload(name){const chooser=page.waitForEvent('filechooser');await click('DetailUpload');await(await chooser).setFiles({name,mimeType:'application/octet-stream',buffer:uploadBytes});}
+  for(const [stage,table,error] of [['AFTER INSERT ON kb_files','kb_boards','Board archive state changed'],['AFTER INSERT ON kb_history','kb_cards','Card archive state changed']]){
+   await row(initial.files[0].filename);await expect(page.locator(c('DetailDownload'))).toBeEnabled();
+   const name=table+' native <literal> Ω.bin',beforeUpload=sql();
+   sql('CREATE TRIGGER detail_upload_final '+stage+' BEGIN UPDATE '+table+' SET archived=1 WHERE id='+(table==='kb_boards'?seed.board:seed.items[0].card)+'; END');
+   try{await upload(name);await expect(page.locator(c('Notice'))).toContainText(error);expect(sql()).toBe(beforeUpload);expect(read().files.some(f=>f.filename===name)).toBe(false);await expect(page.locator(c('DetailDownload'))).toBeEnabled();}
+   finally{sql('DROP TRIGGER detail_upload_final');}
+   await upload(name);await expect(page.locator(c('DetailTree'))).toContainText(name);
+   expect(read().files.find(f=>f.filename===name)).toMatchObject({data:uploadBytes.toString('base64')});
+   await expect(page.locator(c('DetailsPanel')+' literal')).toHaveCount(0);
+  }
   expect(errors).toEqual([]);
-  console.log('Detail complete-text browser: native custom/comment/checklist/file text, exact encoded editor values, external suffix heartbeat, dirty local title with independent external body save, post-history archive refusal keeps all board data and exact dirty draft, retry, New clears stale values, literal markup/reload and delete rollback with exact dirty/provenance retention and retry, timer start/stop post-history rollback and retry passed');
+  console.log('Detail complete-text browser: native custom/comment/checklist/file text, exact encoded editor values, external suffix heartbeat, dirty local title with independent external body save, post-history archive refusal keeps all board data and exact dirty draft, retry, New clears stale values, literal markup/reload and delete rollback with exact dirty/provenance retention and retry, timer start/stop post-history rollback and retry, file chooser upload data/history archive rollback, retained selection and exact-byte retry passed');
  }finally{if(context)await context.close();if(browser)await browser.close();}
 })().catch(e=>{let message=e.stack||String(e);if(process.env.WEBA_TEST_PASSWORD)message=message.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(message);process.exitCode=1;});

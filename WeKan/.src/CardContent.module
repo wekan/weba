@@ -682,14 +682,67 @@ Public Function FileSummaries(boardId As Integer, cardId As Integer, Optional co
 End
 
 Public Function AddFile(boardId As Integer, cardId As Integer, filename As String, data As String, Optional mime As String = "application/octet-stream", Optional maxBytes As Integer = 10485760) As Integer
+  Return CreateFile(boardId, cardId, filename, data, mime, maxBytes, False)
+End
+
+Private Sub RequireFileCreation(boardId As Integer, cardId As Integer, fileId As Integer, scope As Collection, metadata As Boolean)
+  Dim r As Result
+  Dim contentNull As Boolean
+  RequireDetailScope(boardId, cardId, scope)
+  If scope["upload"] Then
+    If WorkspaceStore.Setting(boardId, "board", boardId, "allowsAttachments", "1") <> "1" Then Error.Raise("Attachments are not allowed on this board")
+    TransferPolicy.RequireTransfer("attachmentsUpload", scope["size"])
+  Endif
+  r = $db.Exec(ExportText.SelectRows($db, "kb_files") & " WHERE board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, fileId)
+  If Not r.Available Then Error.Raise("Attachment changed during creation")
+  If TextIsNull(r, "filename") Or TextIsNull(r, "author") Then Error.Raise("Attachment value became null")
+  If ExportText.ReadValue(r, "filename") <> scope["filename"] Or ExportText.ReadValue(r, "author") <> scope["actor"] Then Error.Raise("Attachment changed during creation")
+  If r!content.Data <> scope["bytes"] Then Error.Raise("Attachment bytes changed during creation")
+  If Not $db.Exec("SELECT id FROM kb_files WHERE board_id=&1 AND card_id=&2 AND id=&3 AND created_at=&4", boardId, cardId, fileId, scope["created"]).Available Then Error.Raise("Attachment creation time changed")
+  contentNull = $db.Exec("SELECT id FROM kb_files WHERE id=&1 AND content IS NULL", fileId).Available
+  If scope.Exist("contentNull") Then
+    If contentNull <> scope["contentNull"] Then Error.Raise("Attachment bytes became null")
+  Else
+    scope.Add(contentNull, "contentNull")
+  Endif
+  If $db.Find("kb_attachment_deletions", "file_id=&1", fileId).Available Or $db.Find("kb_attachment_history", "file_id=&1", fileId).Available Then Error.Raise("Attachment lifecycle changed during creation")
+  If $db.Find("kb_retired_authors", "kind='file' AND item_id=&1", fileId).Available Then Error.Raise("Attachment author provenance changed")
+  r = $db.Exec(ExportText.SelectRows($db, "kb_attachment_data") & " WHERE file_id=&1", fileId)
+  If Not metadata Then
+    If r.Available Then Error.Raise("Attachment metadata appeared during creation")
+    Return
+  Endif
+  If Not r.Available Then Error.Raise("Attachment metadata missing")
+  If r!board_id <> boardId Or r!card_id <> cardId Or TextIsNull(r, "mime") Or ExportText.ReadValue(r, "mime") <> scope["mime"] Then Error.Raise("Attachment metadata changed")
+  If IsNull(r!uploaded_ms) Or r!uploaded_ms <> scope["uploaded"] Then Error.Raise("Attachment upload time changed")
+  If scope.Exist("metadataState") Then
+    If DeletionStamp(r) <> scope["metadataState"] Then Error.Raise("Attachment metadata changed")
+  Else
+    scope.Add(DeletionStamp(r), "metadataState")
+  Endif
+End
+
+Private Function CreateFile(boardId As Integer, cardId As Integer, filename As String, data As String, mime As String, maxBytes As Integer, upload As Boolean) As Integer
   Dim transaction As Boolean
   Dim failure As String
   Dim r As Result
   Dim id As Integer
+  Dim actor As String = WebIdentity.Username
+  Dim stamp As Date
+  Dim scope As New Collection
   RequireCard(boardId, cardId)
   BoardAccess.Require(boardId, "write")
-  BeginChange(boardId, cardId, "write")
+  BeginChange(boardId, cardId, "write", actor)
   transaction = True
+  scope.Add(actor, "actor")
+  scope.Add("write", "capability")
+  scope.Add(upload, "upload")
+  scope.Add(Len(data), "size")
+  CaptureDetailScope(boardId, cardId, scope)
+  If upload Then
+    If WorkspaceStore.Setting(boardId, "board", boardId, "allowsAttachments", "1") <> "1" Then Error.Raise("Attachments are not allowed on this board")
+    TransferPolicy.RequireTransfer("attachmentsUpload", Len(data))
+  Endif
   filename = Replace(filename, "\\", "/")
   If InStr(filename, Chr(0)) Then
     filename = Mid(filename, RInStr(filename, "/") + 1)
@@ -697,19 +750,27 @@ Public Function AddFile(boardId As Integer, cardId As Integer, filename As Strin
     filename = File.Name(filename)
   Endif
   If Not filename Or ExportText.Length(filename) > 255 Or maxBytes < 0 Or maxBytes > 67108864 Or Len(data) > maxBytes Then Error.Raise("Choose a file within the size limit with a valid name")
+  If Not mime Then mime = "application/octet-stream"
+  scope.Add(filename, "filename")
+  scope.Add(data, "bytes")
+  scope.Add(mime, "mime")
+  stamp = Now
+  scope.Add(stamp, "created")
   r = $db.Create("kb_files")
   r["board_id"] = boardId
   r["card_id"] = cardId
   r["filename"] = filename
   r["content"] = data
-  r["author"] = WebIdentity.Username
-  r["created_at"] = Now
+  r["author"] = actor
+  r["created_at"] = stamp
   DatabaseText.Save($db, r, "kb_files", ["board_id", "card_id", "filename", "content", "author", "created_at"], True)
   id = $db.LastInsertId
-  AttachmentData.Record(boardId, cardId, id, mime)
+  RequireFileCreation(boardId, cardId, id, scope, False)
+  scope.Add(ItemChanges.UtcNow(), "uploaded")
+  AttachmentData.Record(boardId, cardId, id, mime, scope["uploaded"])
+  RequireFileCreation(boardId, cardId, id, scope, True)
   KanbanStore.Activity(boardId, "Attached file: " & filename, "card", cardId)
-  RequireCard(boardId, cardId)
-  BoardAccess.Require(boardId, "write")
+  RequireFileCreation(boardId, cardId, id, scope, True)
   DatabaseTransactions.Commit($db)
   transaction = False
   Return id
@@ -793,7 +854,7 @@ Public Function UploadFile(boardId As Integer, cardId As Integer, filename As St
   BoardAccess.Require(boardId, "write")
   If WorkspaceStore.Setting(boardId, "board", boardId, "allowsAttachments", "1") <> "1" Then Error.Raise("Attachments are not allowed on this board")
   TransferPolicy.RequireTransfer("attachmentsUpload", Len(bytes))
-  id = AddFile(boardId, cardId, filename, bytes, mime, CInt(Floor(TransferPolicy.Limit("attachmentsUpload"))))
+  id = CreateFile(boardId, cardId, filename, bytes, mime, CInt(Floor(TransferPolicy.Limit("attachmentsUpload"))), True)
   If WebIdentity.Username <> actor Then Error.Raise("Sign in required")
   RequireCard(boardId, cardId)
   BoardAccess.Require(boardId, "write")

@@ -22,7 +22,7 @@ Catch
 End
 
 ' Internal hook within the caller's authorized file transaction.
-Public Sub Record(boardId As Integer, cardId As Integer, fileId As Integer, mime As String)
+Public Sub Record(boardId As Integer, cardId As Integer, fileId As Integer, mime As String, Optional uploadedAt As Long)
   Dim r As Result
   OpenStore()
   If Not mime Then mime = "application/octet-stream"
@@ -32,7 +32,8 @@ Public Sub Record(boardId As Integer, cardId As Integer, fileId As Integer, mime
   r["board_id"] = boardId
   r["card_id"] = cardId
   r["mime"] = mime
-  r["uploaded_ms"] = ItemChanges.UtcNow()
+  If Not uploadedAt Then uploadedAt = ItemChanges.UtcNow()
+  r["uploaded_ms"] = uploadedAt
   r.Update()
 End
 

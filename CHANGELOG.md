@@ -2,6 +2,24 @@
 
 This work adds the following features and fixes:
 
+- Guard attachment creation and native upload after file insertion, metadata and
+  history/clocks. Capture the actor and card/container/archive scope; verify exact
+  normalized filename, bytes, author, creation time, MIME, upload timestamp and
+  metadata scope, refusing missing/rebound metadata or injected lifecycle/retired
+  author records. Preserve observed NULL/empty-BLOB state through later writes.
+  Native uploads recheck board allowance and transfer block/size policy at each
+  boundary; storage-level AddFile keeps internal-copy policy semantics.
+  Tests require exact all-table rollback for data/metadata/history/clock changes,
+  transient role loss, SQL failure and policy narrowing; full binary/NUL/Unicode
+  and empty-file retries and unauthorized refusals pass. Guards compare raw bytes
+  without retaining duplicate Base64 payloads; a disposable 64 MiB native upload
+  and exact readback pass. Source/packaged file chooser UI verifies data/history
+  archive refusals, retained attachment selection, literal filenames and exact-byte
+  retry; detail/live compatibility checks pass. The full pinned host/native/API/
+  security/session gate, 70 Python tests and JavaScript checks pass.
+  Attachment lifecycle/other mutations, numeric editor/model readers, nullable
+  consistency and full original parity remain open. Thanks to xet7.
+
 - Guard native timer start/stop immediately after storage and after history/clocks.
   Capture and lock the current actor, retain card placement/container/archive
   scope, and reject permission/session/raw-policy or timer ownership/state changes.

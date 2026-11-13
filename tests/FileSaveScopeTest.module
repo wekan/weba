@@ -1,0 +1,159 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim id As Integer
+  Dim mode As String
+  Dim stage As String
+  Dim effect As String
+  Dim actor As String
+  Dim before As String
+  Dim denied As Boolean
+  Dim conn As Connection
+  Dim row As Result
+  Dim payload As String = "Bytes" & Chr(0) & Chr(255) & "Ω😀"
+  Dim filename As String = "File" & Chr(0) & "Ω😀'_.bin"
+  For Each actor In ["file-global", "file-owner", "file-writer", "file-reader", "file-outsider"]
+    WebDatabase.Register(actor, "x")
+  Next
+  SignIn("file-owner")
+  boardId = KanbanStore.AddBoard("File final scope")
+  BoardAccess.SetMember(boardId, "file-writer", "normal")
+  BoardAccess.SetMember(boardId, "file-reader", "read-only")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Card", "", "Default", "Todo", "", "", "")
+  WorkspaceStore.SetSetting(boardId, "board", boardId, "allowsAttachments", "1")
+  CardContent.OpenStore()
+  conn = WebDatabase.OpenConnection()
+  SignIn("file-writer")
+  For Each mode In ["add", "upload"]
+    For Each stage In ["AFTER INSERT ON kb_files", "AFTER INSERT ON kb_attachment_data", "AFTER INSERT ON kb_history", "AFTER UPDATE ON kb_item_changes WHEN NEW.kind='card' AND NEW.item_id=" & CStr(cardId)]
+      For Each effect In ["UPDATE kb_members SET role='read-only' WHERE board_id=" & CStr(boardId) & " AND username='file-writer'", "DELETE FROM kb_members WHERE board_id=" & CStr(boardId) & " AND username='file-writer'", "UPDATE account_sessions SET generation=generation+1 WHERE username='file-writer'", "INSERT INTO kb_member_flags (board_id,username,flag) VALUES (" & CStr(boardId) & ",'file-writer','isReadAssignedOnly')", "UPDATE kb_cards SET archived=1 WHERE id=" & CStr(cardId), "UPDATE kb_boards SET archived=1 WHERE id=" & CStr(boardId), "UPDATE kb_card_lists SET list_id=2147483647 WHERE card_id=" & CStr(cardId), "UPDATE kb_files SET author='file-owner'", "UPDATE kb_files SET filename='changed'", "UPDATE kb_files SET content=X'00FF'", "UPDATE kb_files SET content=NULL", "UPDATE kb_files SET created_at='2000-01-01'", "DELETE FROM kb_files", "INSERT INTO kb_retired_authors (kind,item_id,board_id,card_id,display_name) SELECT 'file',id,board_id,card_id,'other' FROM kb_files WHERE id=(SELECT MAX(id) FROM kb_files)", "INSERT INTO kb_attachment_history (file_id,board_id,card_id,action) SELECT id,board_id,card_id,'delete' FROM kb_files WHERE id=(SELECT MAX(id) FROM kb_files)", "INSERT INTO kb_attachment_deletions (file_id,board_id,card_id) SELECT id,-1,-1 FROM kb_files WHERE id=(SELECT MAX(id) FROM kb_files)", "SELECT RAISE(ABORT,'file-private-canary')"]
+        before = Frame()
+        conn.Exec("CREATE TRIGGER inject_file_scope " & stage & " BEGIN " & effect & "; END")
+        Try CreateFile(mode, boardId, cardId, filename, payload)
+        denied = Error
+        conn.Exec("DROP TRIGGER inject_file_scope")
+        If Not denied Or Frame() <> before Then Error.Raise("File scope failed: " & mode & ": " & stage & ": " & effect)
+      Next
+      If mode = "upload" Then
+        For Each effect In ["UPDATE attachment_transfer_settings SET attachmentsUploadBlocked=1 WHERE id=1", "UPDATE attachment_transfer_settings SET attachmentsUploadMaxBytes=1 WHERE id=1", "UPDATE kb_meta SET value='0' WHERE setting='allowsAttachments' AND board_id=" & CStr(boardId)]
+          before = Frame()
+          conn.Exec("CREATE TRIGGER inject_file_scope " & stage & " BEGIN " & effect & "; END")
+          Try CreateFile(mode, boardId, cardId, filename, payload)
+          denied = Error
+          conn.Exec("DROP TRIGGER inject_file_scope")
+          If Not denied Or Frame() <> before Then Error.Raise("Upload policy scope failed: " & stage & ": " & effect)
+        Next
+      Endif
+      If stage <> "AFTER INSERT ON kb_files" Then
+        For Each effect In ["DELETE FROM kb_attachment_data", "UPDATE kb_attachment_data SET mime='text/plain'", "UPDATE kb_attachment_data SET uploaded_ms=0", "UPDATE kb_attachment_data SET board_id=2147483647", "UPDATE kb_attachment_data SET card_id=2147483647", "UPDATE kb_attachment_data SET mime=NULL", "INSERT INTO kb_attachment_deletions (file_id,board_id,card_id) SELECT id,board_id,card_id FROM kb_files"]
+          before = Frame()
+          conn.Exec("CREATE TRIGGER inject_file_scope " & stage & " BEGIN " & effect & "; END")
+          Try CreateFile(mode, boardId, cardId, filename, payload)
+          denied = Error
+          conn.Exec("DROP TRIGGER inject_file_scope")
+          If Not denied Or Frame() <> before Then Error.Raise("File metadata scope failed: " & mode & ": " & stage & ": " & effect)
+        Next
+      Endif
+    Next
+    id = CreateFile(mode, boardId, cardId, filename, payload)
+    row = CardContent.FileRecord(boardId, cardId, id, True)
+    If ExportText.ReadValue(row, "filename") <> filename Or row!content.Data <> payload Or ExportText.ReadValue(row, "author") <> "file-writer" Or AttachmentData.Mime(boardId, cardId, id) <> "application/octet-stream" Then Error.Raise("File retry lost exact fields")
+    id = CreateFile(mode, boardId, cardId, "empty.bin", "")
+    row = CardContent.FileRecord(boardId, cardId, id, True)
+    If Len(row!content.Data) Then Error.Raise("Empty file acquired bytes")
+    before = Frame()
+    conn.Exec("CREATE TRIGGER empty_blob_change AFTER INSERT ON kb_attachment_data BEGIN UPDATE kb_files SET content=X'' WHERE id=NEW.file_id; END")
+    Try CreateFile(mode, boardId, cardId, "empty.bin", "")
+    denied = Error
+    conn.Exec("DROP TRIGGER empty_blob_change")
+    If Not denied Or Frame() <> before Then Error.Raise("Empty file NULL/blob state changed")
+  Next
+  SignIn("file-writer")
+  before = Frame()
+  conn.Exec("CREATE TRIGGER lose_file_role AFTER INSERT ON kb_files BEGIN UPDATE kb_members SET role='read-only' WHERE username='file-writer'; END")
+  conn.Exec("CREATE TRIGGER restore_file_role AFTER INSERT ON kb_attachment_data BEGIN UPDATE kb_members SET role='normal' WHERE username='file-writer'; END")
+  Try CardContent.UploadFile(boardId, cardId, filename, payload)
+  denied = Error
+  conn.Exec("DROP TRIGGER restore_file_role")
+  conn.Exec("DROP TRIGGER lose_file_role")
+  If Not denied Or Frame() <> before Then Error.Raise("Temporary data-stage role loss escaped")
+  conn.Exec("UPDATE attachment_transfer_settings SET attachmentsUploadBlocked=1 WHERE id=1")
+  conn.Exec("UPDATE kb_meta SET value='0' WHERE setting='allowsAttachments' AND board_id=&1", boardId)
+  id = CardContent.AddFile(boardId, cardId, "internal-copy.bin", payload)
+  If CardContent.FileRecord(boardId, cardId, id)!content.Data <> payload Then Error.Raise("Internal copy acquired upload policy")
+  For Each actor In ["file-reader", "file-outsider", "file-global"]
+    SignIn(actor)
+    before = Frame()
+    Try CardContent.AddFile(boardId, cardId, "denied.bin", payload)
+    denied = Error
+    If Not denied Or Frame() <> before Then Error.Raise("Unauthorized file add changed state")
+    Try CardContent.UploadFile(boardId, cardId, "denied.bin", payload)
+    denied = Error
+    If Not denied Or Frame() <> before Then Error.Raise("Unauthorized upload changed state")
+  Next
+  Print "Files: add/upload data/metadata/history/clock scope/identity/role/raw/archive/placement/author/name/bytes/time/metadata/live/SQL rollback, exact binary/text retry, empty files and unauthorized refusal passed"
+End
+
+Private Function CreateFile(mode As String, boardId As Integer, cardId As Integer, filename As String, bytes As String) As Integer
+  If mode = "upload" Then Return CardContent.UploadFile(boardId, cardId, filename, bytes, "")
+  Return CardContent.AddFile(boardId, cardId, filename, bytes, "")
+End
+
+Private Sub SignIn(actor As String)
+  Session["username"] = actor
+  Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+End
+
+Private Function Frame() As String
+  Dim conn As Connection = WebDatabase.OpenConnection()
+  Dim table As Table
+  Dim tables As New String[]
+  Dim tableName As String
+  Dim order As String[]
+  Dim key As String
+  Dim rows As Result
+  Dim field As ResultField
+  Dim values As Collection
+  Dim data As Variant[]
+  Dim result As New Collection
+  For Each table In conn.Tables
+    If Left(table.Name, 7) <> "sqlite_" Then tables.Add(table.Name)
+  Next
+  tables.Sort()
+  For Each tableName In tables
+    order = New String[]
+    For Each key In conn.Tables[tableName].PrimaryKey
+      order.Add(conn.Quote(key))
+    Next
+    rows = conn.Exec(ExportText.SelectRows(conn, tableName) & If(order.Count, " ORDER BY " & order.Join(","), ""))
+    data = New Variant[]
+    For Each rows
+      values = New Collection
+      For Each field In rows.Fields
+        If Left(field.Name, 7) = "__weba_" Then Continue
+        If field.Type = DB.String Then
+          If rows.Fields.Exist("__weba_null_" & field.Name) Then
+            If rows["__weba_null_" & field.Name] Then
+              values[field.Name] = JSON.Null
+            Else
+              values[field.Name] = ExportText.ReadValue(rows, field.Name)
+            Endif
+          Else
+            values[field.Name] = rows[field.Name]
+          Endif
+        Else If field.Type = DB.Blob Then
+          If IsNull(rows[field.Name]) Then
+            values[field.Name] = JSON.Null
+          Else
+            values[field.Name] = Base64(rows[field.Name].Data)
+          Endif
+        Else
+          values[field.Name] = rows[field.Name]
+        Endif
+      Next
+      data.Add(values)
+    Next
+    result[tableName] = data
+  Next
+  Return JsonText.Encode(result)
+End
