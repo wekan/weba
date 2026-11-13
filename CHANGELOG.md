@@ -2,6 +2,24 @@
 
 This work adds the following features and fixes:
 
+- Preserve complete checked REST board/list/lane/card/checklist/item and
+  own-user board titles/descriptions. Match full lane names when resolving
+  swimlane IDs and keep projected SQL aliases out of explicit DTOs. Ordinary
+  and export JSON replies use the strict encoder for valid lone-unit escapes.
+  Keep existing board/container raw-null and card-string normalization policies.
+  Real source/packaged HTTP tests verify NUL/Unicode/lone-unit/empty/SQL-literal
+  values,
+  exact lane IDs, owner/reader/global access and assigned/nonmember denials,
+  all-table no-write GETs, archive distinctions, opaque SQL failure/retry and
+  revocation. Both actual single-card routes match unchanged WeKan serialization
+  on independent full-text SQL inputs. Add source/packaged API fidelity checks
+  to the normal host gate. Ordinary source/packaged layout/editor/admin/mobile
+  browser checks pass. Full pinned host/native/API/security/session tests and
+  70 Python tests pass, including both new API gates. Request decoder/writer text
+  paths, remaining shared reads,
+  mutation final guards, nullable/legacy models and full original parity remain
+  open. Thanks to xet7.
+
 - Preserve complete native activity/history and recovery-event text, including
   NUL/Unicode messages, actors/details and strict recovery board payloads.
   Native readers opt into complete columns without changing default result

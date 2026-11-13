@@ -355,7 +355,7 @@ Public Sub Main()
       For Each r
         item = New Collection
         item["_id"] = CStr(r!id)
-        item["title"] = r!title
+        item["title"] = ExportText.ReadValue(r, "title")
         rows.Add(item)
       Next
       Reply(200, rows)
@@ -470,7 +470,7 @@ Private Function ErrorData(message As String) As Collection
 End
 
 Private Sub Reply(status As Integer, data As Variant)
-  Dim text As String = JSON.Encode(data)
+  Dim text As String = JsonText.Encode(data)
   Print "Status: " & CStr(status)
   Print "Content-Type: application/json; charset=utf-8"
   Print "Cache-Control: no-store"
@@ -751,7 +751,7 @@ Private Sub ReplyPlain(status As Integer, message As String)
 End
 
 Private Sub ReplyExport(status As Integer, data As Variant)
-  Dim text As String = JSON.Encode(data)
+  Dim text As String = JsonText.Encode(data)
   Print "Status: " & CStr(status)
   Print "Content-Type: application/json; charset=utf-8"
   Print "Cache-Control: no-store"

@@ -137,8 +137,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Completed complete native people-pane titles and strict private snapshots;
   scope/no-write/duplicate/order and actual heartbeat/pending-control results
   are recorded in CHANGELOG.md.
-- Next reader focus: remaining shared/API text reads. Complete native audit
-  reads/writes/producers and copy guards are recorded in CHANGELOG.md.
+- Next text focus: REST request decoder and mutation write paths, then
+  remaining shared readers. Completed checked REST DTO/response text and native
+  audit/copy guards are recorded in CHANGELOG.md.
 - Next data follow-up: audit nullable/legacy field-model consistency (including
   copy semantics) and remaining native
   text readers/writers outside the backup path. Other request decoder boundaries,

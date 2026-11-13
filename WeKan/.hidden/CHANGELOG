@@ -1,3 +1,12 @@
+Checked API board/list/lane/card/checklist/item and own-board text stays complete;
+full lane matching retains swimlane IDs and strict JSON replies escape lone units.
+Existing NULL/string policies and scope remain. Source/packaged real HTTP text/IDs/
+no-write/role/archive/failure-retry/revocation checks and unchanged single-card
+serializer comparison pass. Add source/packaged API fidelity to normal host gate;
+ordinary UI checks pass both builds. Full pinned host/native/API/security/session
+and 70 Python tests pass. Request decode/write text, shared readers,
+mutation guards, nullable/legacy models and full original parity remain open.
+
 Native activity/history/recovery views preserve complete NUL/Unicode text.
 Opt-in projections retain default columns and assigned-history filters. Safe
 recovery writes and strict payloads respect caller rollback and durable refused

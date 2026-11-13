@@ -13,17 +13,17 @@ Public Function Read(boardId As Integer, kind As String, Optional listId As Inte
   Dim times As Collection
   If Env["WEBA_API_REQUEST"] <> "1" Then Error.Raise("API context required")
   BoardAccess.RequireRead(boardId)
-  r = db.Find("kb_boards", "id = &1", boardId)
+  r = db.Exec(ExportText.SelectRows(db, "kb_boards") & " WHERE id=&1", boardId)
   If kind = "board" Then
     data = New Collection
     data["_id"] = CStr(r!id)
-    data["title"] = r!title
+    data["title"] = TextValue(r, "title")
     data["archived"] = r!archived
     data["members"] = BoardAccess.ApiMembers(boardId)
   Else If kind = "lists" Or kind = "swimlanes" Then
     If kind = "lists" Then
       changes = ItemChanges.Lists(boardId)
-      r = db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 ORDER BY sort_order, id", boardId)
+      r = db.Exec(ExportText.SelectRows(db, "kb_lists") & " WHERE " & ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY sort_order,id", boardId)
     Else
       r = KanbanStore.Lanes(boardId)
     Endif
@@ -31,7 +31,7 @@ Public Function Read(boardId As Integer, kind As String, Optional listId As Inte
       If WorkspaceStore.Archived(boardId, If(kind = "lists", "list", "lane"), r!id) Then Continue
       item = JSON.Decode("{}", True)
       item["_id"] = CStr(r!id)
-      item["title"] = r!title
+      item["title"] = TextValue(r, "title")
       If kind = "lists" Then
         times = changes[CStr(r!id)]
         item["modifiedAt"] = times["modifiedAt"]
@@ -45,7 +45,7 @@ Public Function Read(boardId As Integer, kind As String, Optional listId As Inte
     data["board_cards_count"] = r.Count
   Else If kind = "cards" Or kind = "list_cards_count" Then
     KanbanStore.PrimeCardLinks(boardId)
-    r = db.Exec("SELECT c.* FROM kb_cards c INNER JOIN kb_card_lists l ON l.board_id = c.board_id AND l.card_id = c.id WHERE c.board_id = &1 AND l.list_id = &2 AND c.archived = &3 AND " & ListDeletion.LiveSql("card", "c") & " ORDER BY c.id", boardId, listId, False)
+    r = db.Exec(ExportText.Preserve(db, "SELECT c.* FROM kb_cards c INNER JOIN kb_card_lists l ON l.board_id = c.board_id AND l.card_id = c.id WHERE c.board_id = &1 AND l.list_id = &2 AND c.archived = &3 AND " & ListDeletion.LiveSql("card", "c") & " ORDER BY c.id"), boardId, listId, False)
     If kind = "list_cards_count" Then
       data = New Collection
       data["list_cards_count"] = r.Count
@@ -73,10 +73,12 @@ Private Function CardFields(boardId As Integer, record As Result) As Collection
   Dim lane As Result
   Dim values As Collection
   Dim field As String
+  Dim laneName As String
   item["_id"] = CStr(record!id)
-  item.Add(CStr(record!title), "title")
-  item.Add(CStr(record!description), "description")
-  lane = db.Find("kb_lanes", "board_id=&1 AND title=&2", boardId, record!lane)
+  item.Add(ExportText.ReadValue(record, "title"), "title")
+  item.Add(ExportText.ReadValue(record, "description"), "description")
+  laneName = ExportText.ReadValue(record, "lane")
+  lane = db.Exec("SELECT id FROM kb_lanes WHERE board_id=&1 AND " & ExportText.MatchText(db, "title", 2, laneName), boardId, ExportText.BindText(db, laneName))
   If lane.Available Then item["swimlaneId"] = CStr(lane!id)
   item["assignees"] = BoardAccess.Assignees(boardId, record!id)
   item["sort"] = KanbanStore.ItemOrder(boardId, "card", CStr(record!id), record!id)
@@ -102,7 +104,7 @@ Public Function Card(boardId As Integer, cardId As Integer) As Collection
   BoardAccess.RequireCard(boardId, cardId)
   If Not BoardAccess.Can(boardId, "seesAllCards") Then Error.Raise("Whole-board permission required")
   KanbanStore.PrimeCardLinks(boardId)
-  r = db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id=&1 AND id=&2", boardId, cardId)
+  r = db.Exec(ExportText.SelectRows(db, "kb_cards") & " WHERE " & ListDeletion.LiveSql("card", "kb_cards") & " AND board_id=&1 AND id=&2", boardId, cardId)
   If Not r.Available Then Error.Raise("Card not found")
   item = CardFields(boardId, r)
   item["boardId"] = CStr(boardId)
@@ -114,22 +116,22 @@ Public Function Card(boardId As Integer, cardId As Integer) As Collection
   row = db.Find("kb_item_changes", "board_id=&1 AND kind=&2 AND item_id=&3", boardId, "card", cardId)
   If row.Available Then item["modifiedAt"] = CardDates.Iso(row!modified_ms)
   CardContent.OpenStore()
-  row = CardContent.Entries(boardId, cardId, "checklist")
+  row = CardContent.Entries(boardId, cardId, "checklist", True)
   For Each row
     checklist = New Collection
     checklist["_id"] = CStr(row!id)
     checklist["boardId"] = CStr(boardId)
     checklist["cardId"] = CStr(cardId)
-    checklist.Add(CStr(row!title), "title")
+    checklist.Add(ExportText.ReadValue(row, "title"), "title")
     checklist["sort"] = row!id
     checklist["dueAt"] = JSON.Null
     If TypeOf(row!created_at) = gb.Date And Not IsNull(row!created_at) Then checklist["createdAt"] = CardDates.Iso(ItemChanges.Epoch(row!created_at))
     entries = New Variant[]
-    subrow = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", boardId, cardId, "checkitem", row!id)
+    subrow = db.Exec(ExportText.SelectRows(db, "kb_entries") & " WHERE board_id=&1 AND card_id=&2 AND kind=&3 AND parent_id=&4 ORDER BY id", boardId, cardId, "checkitem", row!id)
     For Each subrow
       entry = New Collection
       entry["_id"] = CStr(subrow!id)
-      entry.Add(CStr(subrow!title), "title")
+      entry.Add(ExportText.ReadValue(subrow, "title"), "title")
       entry["isFinished"] = subrow!done
       entry["dueAt"] = JSON.Null
       entries.Add(entry)
@@ -139,4 +141,12 @@ Public Function Card(boardId As Integer, cardId As Integer) As Collection
   Next
   item["checklists"] = checklists
   Return item
+End
+
+' Retain the existing raw NULL/empty policy for board/container titles.
+Private Function TextValue(row As Result, field As String) As Variant
+  If row.Fields.Exist("__weba_null_" & field) Then
+    If CBool(row["__weba_null_" & field]) Then Return row[field]
+  Endif
+  Return ExportText.ReadValue(row, field)
 End
