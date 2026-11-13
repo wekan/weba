@@ -2,6 +2,16 @@
 
 This work adds the following features and fixes:
 
+- Read native lists by complete stored lane/title values, including NUL,
+  Unicode and apostrophe suffixes. Use shared safe comparisons and complete
+  projections for list enumeration, title lookup and ID lookup. Preserve live
+  filtering, board/lane scope, blank legacy titles and duplicate sort ordering.
+  Owner/readonly regression cases cover wrong-lane, deleted and foreign refusal
+  without history writes. Full host tests (including 70 Python tests), source/
+  packaged list-deletion and all-format selected/cached-export browsers pass.
+  Rendering and remaining model/UI/API/security parity
+  work remain open. Thanks to xet7.
+
 - Isolate selected-export browser fixtures by explicit board IDs and a dedicated
   container array, so duplicate titles and unrelated workspace rows from earlier
   live tests cannot alter assertions or initialize other boards. Cover browser

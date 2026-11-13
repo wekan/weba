@@ -2628,3 +2628,17 @@ card filtering remain in place; broader reader/rendering consistency is TODO.
 Lane complete-text verification: `build.sh test` passes, including the focused
 native regression and 70 Python tests. Both complete `tests/run-http.py --live`
 and `--live --archive` runs pass, through selected exports and list deletion.
+
+`KanbanStore.Lists` and `GetList` now use ExportText.SelectRows, MatchText and
+BindText for complete lane/title comparisons and explicit complete-text readers.
+The SQLite driver cannot safely interpolate an embedded NUL into its ordinary
+text predicate; the baseline ListTextReadTest reproduces the SQL parse failure.
+The regression checks NUL/Unicode/apostrophe names, list order and first duplicate
+selection, blank legacy titles, ID lookup, wrong-lane/deleted/foreign refusal,
+owner and readonly access and unchanged history. Existing authorization and live
+list predicates remain. Form rendering still needs explicit projection reads and
+identity handling; this change does not claim those consumers are complete.
+
+List-reader validation passes the complete host suite, including 70 Python
+tests and source/packaged API/security comparisons, followed by source/packaged
+list-deletion and all-format selected-export/cached-revocation browser runs.

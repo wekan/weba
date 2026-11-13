@@ -1,3 +1,8 @@
+Native list enumeration/title/ID lookups use complete NUL/Unicode text and safe
+comparisons, preserving live/board/lane scope and duplicate/blank semantics.
+Owner/readonly, deleted/foreign/wrong-lane and no-history regression cases pass.
+Board-form consumers and remaining model/UI/API/security parity remain open.
+
 Lane initialization now uses full stored NUL/Unicode card lane names, avoiding
 truncated duplicate lanes/default lists on reopen. Owner/readonly active/archived
 repeats, foreign denial and actual legacy initialization/idempotence pass.

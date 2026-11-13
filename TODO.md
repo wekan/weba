@@ -116,8 +116,11 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   duplicate lanes/lists. Owner/readonly repeats, foreign denial and real legacy
   initialization/idempotence are recorded in CHANGELOG.md. Remaining native
   rendering and other reader paths still require audit.
-- Next reader focus: NUL-safe Lists/GetList lookups and board-form consumers of
-  complete lane/list title projections; the remaining lookup failure is reproduced.
+- Completed NUL-safe Lists/GetList enumeration and title/ID lookups with full
+  text projections, live/board/lane scope and retained duplicate/blank semantics.
+  Regression details are in CHANGELOG.md.
+- Next reader focus: board-form consumers of complete lane/list title projections
+  and remaining native model readers/writers.
 - Next data follow-up: audit legacy field-model consistency and remaining native
   text readers/writers outside the backup path. Other request decoder boundaries,
   DB drivers, remaining field models/security reporting and full original suites

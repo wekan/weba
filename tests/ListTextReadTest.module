@@ -1,0 +1,76 @@
+Public Sub Main()
+  Dim conn As Connection
+  Dim boardId As Integer
+  Dim foreignBoard As Integer
+  Dim cardId As Integer
+  Dim deletedId As Integer
+  Dim preferredId As Integer
+  Dim rows As Result
+  Dim actor As String
+  Dim name As String = "Lane" & Chr(0) & "Ω😀suffix"
+  Dim title As String = "List" & Chr(0) & "Ω😀'suffix"
+  Dim before As Integer
+  Dim denied As Boolean
+  WebDatabase.Register("list-text-owner", "x")
+  WebDatabase.Register("list-text-reader", "x")
+  WebDatabase.Register("list-text-outsider", "x")
+  SignIn("list-text-owner")
+  boardId = KanbanStore.AddBoard("List text reads")
+  foreignBoard = KanbanStore.AddBoard("Other board")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Card", "", name, "Todo", "", "", "")
+  conn = WebDatabase.OpenConnection()
+  deletedId = AddList(conn, boardId, name, "Deleted" & Chr(0) & "suffix", 3)
+  preferredId = AddList(conn, boardId, name, title, 2)
+  AddList(conn, boardId, name, title, 5)
+  AddList(conn, boardId, name, "", 6)
+  ListDeletion.SoftRemove(boardId, deletedId)
+  BoardAccess.SetMember(boardId, "list-text-reader", "read-only")
+  before = conn.Exec("SELECT COUNT(*) AS total FROM kb_history")!total
+  For Each actor In ["list-text-owner", "list-text-reader"]
+    SignIn(actor)
+    rows = KanbanStore.Lists(boardId, name)
+    If rows.Count <> 6 Then Error.Raise("Live full-name list enumeration changed")
+    rows = KanbanStore.Lists(boardId, "Lane")
+    If rows.Count Then Error.Raise("Truncated lane prefix matched full name")
+    rows = KanbanStore.GetList(boardId, title, name)
+    If rows!id <> preferredId Then Error.Raise("Duplicate title lookup lost sort-order selection")
+    If ExportText.ReadValue(rows, "title") <> title Or ExportText.ReadValue(rows, "lane") <> name Then Error.Raise("Full list projection changed")
+    rows = KanbanStore.GetList(boardId, "#" & CStr(preferredId), name)
+    If rows!id <> preferredId Then Error.Raise("ID lookup in full lane failed")
+    Try rows = KanbanStore.GetList(boardId, "#" & CStr(preferredId), "Lane")
+    denied = Error
+    If Not denied Then Error.Raise("List ID matched a different lane")
+    rows = KanbanStore.GetList(boardId, "", name)
+    If ExportText.ReadValue(rows, "title") <> "" Then Error.Raise("Blank legacy title lost")
+    Try rows = KanbanStore.GetList(boardId, "#" & CStr(deletedId), name)
+    denied = Error
+    If Not denied Then Error.Raise("Deleted list ID remained readable")
+    Try rows = KanbanStore.GetList(boardId, "Deleted" & Chr(0) & "suffix", name)
+    denied = Error
+    If Not denied Then Error.Raise("Deleted list title remained readable")
+    Try rows = KanbanStore.GetList(foreignBoard, "#" & CStr(preferredId), name)
+    denied = Error
+    If Not denied Then Error.Raise("Foreign list ID matched another board")
+  Next
+  SignIn("list-text-outsider")
+  Try rows = KanbanStore.Lists(boardId, name)
+  denied = Error
+  If Not denied Then Error.Raise("Unreadable board lists leaked")
+  If conn.Exec("SELECT COUNT(*) AS total FROM kb_history")!total <> before Then Error.Raise("List reads wrote history")
+  Print "List readers: complete NUL/Unicode lane/title, duplicate ordering, blank title, live/deleted/foreign scope, owner/readonly and no history writes passed"
+End
+
+Private Function AddList(conn As Connection, boardId As Integer, lane As String, title As String, position As Integer) As Integer
+  Dim row As Result = conn.Create("kb_lists")
+  row["board_id"] = boardId
+  row["lane"] = lane
+  row["title"] = title
+  row["sort_order"] = position
+  DatabaseText.Save(conn, row, "kb_lists", ["board_id", "lane", "title", "sort_order"], True)
+  Return conn.LastInsertId
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

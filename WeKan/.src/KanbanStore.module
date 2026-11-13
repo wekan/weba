@@ -350,7 +350,7 @@ End
 
 Public Function Lists(boardId As Integer, lane As String) As Result
   RequireBoard(boardId)
-  Return $db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND lane = &2 ORDER BY sort_order, id", boardId, lane)
+  Return $db.Exec(ExportText.SelectRows($db, "kb_lists") & " WHERE " & ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND " & ExportText.MatchText($db, "lane", 2, lane) & " ORDER BY sort_order, id", boardId, ExportText.BindText($db, lane))
 End
 
 Public Sub AddLane(boardId As Integer, title As String)
@@ -603,9 +603,9 @@ Public Function GetList(boardId As Integer, reference As String, laneTitle As St
   Dim r As Result
   RequireBoard(boardId)
   If Left(reference, 1) = "#" Then
-    r = $db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND id = &2 AND lane = &3", boardId, CInt(Mid(reference, 2)), laneTitle)
+    r = $db.Exec(ExportText.SelectRows($db, "kb_lists") & " WHERE " & ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND id = &2 AND " & ExportText.MatchText($db, "lane", 3, laneTitle), boardId, CInt(Mid(reference, 2)), ExportText.BindText($db, laneTitle))
   Else
-    r = $db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND title = &2 AND lane = &3 ORDER BY sort_order, id", boardId, reference, laneTitle)
+    r = $db.Exec(ExportText.SelectRows($db, "kb_lists") & " WHERE " & ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND " & ExportText.MatchText($db, "title", 2, reference) & " AND " & ExportText.MatchText($db, "lane", 3, laneTitle) & " ORDER BY sort_order, id", boardId, ExportText.BindText($db, reference), ExportText.BindText($db, laneTitle))
   Endif
   If Not r.Available Then Error.Raise("List not accessible")
   Return r
