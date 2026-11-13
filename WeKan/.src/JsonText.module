@@ -1,7 +1,7 @@
 Export
 
-Public Function Decode(text As String) As Variant
-  Dim reader As New JsonReader(text)
+Public Function Decode(text As String, Optional maxBytes As Integer = 20971520) As Variant
+  Dim reader As New JsonReader(text, maxBytes)
   Return reader.Parse()
 End
 

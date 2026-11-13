@@ -509,7 +509,7 @@ Private Sub UploadAttachment()
   Endif
   If LCase(Split(Request.ContentType, ";")[0]) = "application/json" Then
     body = Read Request.ContentLength
-    Try value = JSON.Decode(body)
+    Try value = JsonText.Decode(body, 100663296)
     If Error Then
       Reply(400, AttachmentError("Invalid JSON body"))
       Return
@@ -520,6 +520,10 @@ Private Sub UploadAttachment()
     Endif
     data = value
     If Not data.Exist("fileData") Then
+      Reply(400, AttachmentError("Missing required parameters"))
+      Return
+    Endif
+    If TypeOf(data["fileData"]) <> gb.String And If IsNull(data["fileData"]) Then
       Reply(400, AttachmentError("Missing required parameters"))
       Return
     Endif
@@ -583,7 +587,7 @@ Private Sub UploadAttachment()
     Return
   Endif
   mime = "application/octet-stream"
-  If data.Exist("fileType") Then
+  If data.Exist("fileType") And If Not IsNull(data["fileType"]) Then
     If TypeOf(data["fileType"]) <> gb.String Then
       Reply(400, AttachmentError("Invalid attachment type"))
       Return

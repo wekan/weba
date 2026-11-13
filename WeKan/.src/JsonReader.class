@@ -2,8 +2,9 @@ Private $text As String
 Private $at As Integer = 1
 Private $length As Integer
 
-Public Sub _new(text As String)
-  If Len(text) > 20 * 1024 * 1024 Then Error.Raise("JSON exceeds 20 MiB")
+Public Sub _new(text As String, Optional maxBytes As Integer = 20971520)
+  If maxBytes < 1 Then Error.Raise("Invalid JSON byte limit")
+  If Len(text) > maxBytes Then Error.Raise(If(maxBytes = 20971520, "JSON exceeds 20 MiB", "JSON exceeds byte limit"))
   $text = text
   $length = Len(text)
 End

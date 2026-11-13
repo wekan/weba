@@ -2,6 +2,22 @@
 
 This work adds the following features and fixes:
 
+- Preserve upload JSON text before validating filenames, MIME types and
+  canonical target IDs. NUL-bearing invalid values are rejected consistently
+  with raw uploads. Match complete stored lane names and explicit lane IDs so
+  valid NUL-bearing lanes work and shared-prefix neighbor lanes are refused.
+  Retain optional null MIME defaults and missing-null fileData behavior.
+  Give the strict decoder an optional byte budget: backup defaults stay 20 MiB,
+  while uploads retain their 96 MiB request envelope. A valid envelope above
+  20 MiB with a one-byte file verifies the larger path. Source/packaged HTTP tests
+  cover raw/JSON exact bytes and Unicode names, NUL filename/MIME/all-ID denials,
+  reader/nonmember/assigned/global scope and SQL/late-lane rollback/retry.
+  Source/packaged native upload and ordinary layout/editor/admin/mobile UI
+  checks pass, together with the full pinned host/native/API/security/session
+  suite and 70 Python tests. Nested-form decoding, remaining model writers/readers, mutation
+  final guards, nullable/legacy models and full original parity remain open.
+  Thanks to xet7.
+
 - Preserve strict REST JSON request text and safe card-description storage.
   NUL/lone UTF-16 units no longer disappear before a successful PUT; retain
   explicit null/empty clears, duplicate-key last values and direct UTF-8.

@@ -1354,12 +1354,14 @@ End
 
 Private Function ApiUploadTarget(boardId As Integer, laneId As Integer, listId As Integer, cardId As Integer) As Collection
   Dim r As Result
+  Dim lane As String
   If TransferPolicy.Blocked("apiUpload") Then Return ApiFailure(403, "API uploads are disabled by administrator")
-  r = $db.Find("kb_cards", "id=&1 AND " & ListDeletion.LiveSql("card", "kb_cards"), cardId)
+  r = $db.Exec(ExportText.SelectRows($db, "kb_cards") & " WHERE id=&1 AND " & ListDeletion.LiveSql("card", "kb_cards"), cardId)
   If Not r.Available Then Return ApiFailure(404, "Card not found")
   If Not $db.Find("kb_boards", "id=&1", boardId).Available Then Return ApiFailure(404, "Board not found")
   If r!board_id <> boardId Then Return ApiFailure(400, "Card does not belong to the specified board")
-  If Not $db.Find("kb_lanes", "board_id=&1 AND title=&2 AND id=&3", boardId, r!lane, laneId).Available Then Return ApiFailure(400, "Swimlane ID does not match the card's swimlane")
+  lane = ExportText.ReadValue(r, "lane")
+  If Not $db.Exec("SELECT id FROM kb_lanes WHERE board_id=&1 AND " & ExportText.MatchText($db, "title", 2, lane) & " AND id=&3", boardId, ExportText.BindText($db, lane), laneId).Available Then Return ApiFailure(400, "Swimlane ID does not match the card's swimlane")
   If Not $db.Find("kb_card_lists", "board_id=&1 AND card_id=&2 AND list_id=&3", boardId, cardId, listId).Available Then Return ApiFailure(400, "List ID does not match the card's list")
   If Not MayWriteApiAttachment(boardId, cardId) Then Return ApiFailure(403, "You do not have permission to modify this card")
   r = $db.Find("kb_meta", "board_id=&1 AND kind='board' AND item_id=&1 AND setting='allowsAttachments' AND value='0'", boardId)

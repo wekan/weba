@@ -1,3 +1,12 @@
+Strict upload JSON preserves units for filename/MIME/ID rejection and exact lane
+matching supports NUL lanes without accepting shared-prefix neighbors. Preserve
+null MIME defaults and null fileData errors. Decoder byte budgets retain backup
+20MiB default and upload96MiB envelope; >20MiB valid request tested. Source/packaged raw/
+JSON binary/Unicode/scope/control/ID/SQL/late-lane rollback tests pass, plus native
+upload and ordinary UI on source/packaged builds. Full pinned host/native/API/
+security/session suite and 70 Python tests pass. Nested-form decoder, remaining
+writers/readers/final guards, nullable/legacy/full original parity remain open.
+
 Strict REST JSON decoding and safe description writes preserve NUL/lone/empty/
 null text and reject malformed input/full unknown keys. Credential/NUL people
 aliases refused. Locked/final actor/token/role/flags/card/list/archive/text checks
