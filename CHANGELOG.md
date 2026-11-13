@@ -2,6 +2,14 @@
 
 This work adds the following features and fixes:
 
+- Isolate selected-export browser fixtures by explicit board IDs and a dedicated
+  container array, so duplicate titles and unrelated workspace rows from earlier
+  live tests cannot alter assertions or initialize other boards. Cover browser
+  context creation/setup assertions with unconditional context/connection cleanup.
+  Source and packaged collision-mode 45-download/cached-retry checks pass; an
+  intentional early setup failure exits promptly within its bounded refusal test.
+  Thanks to xet7.
+
 - Preserve native backup SQLite storage round trips through existing authorized
   model methods. Write NUL text with driver-formatted binary literals cast to
   TEXT, keep empty strings distinct from NULL, retain BLOB/date types and finite
