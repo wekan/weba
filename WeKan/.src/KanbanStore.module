@@ -159,7 +159,7 @@ Public Function AddBoard(title As String) As Integer
   r["owner"] = actor
   r["title"] = Trim(title)
   r["archived"] = False
-  r.Update()
+  DatabaseText.Save($db, r, "kb_boards", ["owner", "title", "archived"], True)
   id = $db.LastInsertId
   If WebIdentity.Username <> actor Then Error.Raise("Sign in required")
   BoardCreation.Require()
@@ -224,7 +224,7 @@ Public Function SaveCard(boardId As Integer, cardId As Integer, title As String,
   If Not Trim(lane) Then lane = "Default"
   If Not Trim(title) Then Error.Raise("Enter a card title")
   If status <> "Todo" And status <> "Doing" And status <> "Done" Then
-    list = $db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND lane = &2 AND title = &3", boardId, lane, status)
+    list = $db.Exec("SELECT * FROM kb_lists WHERE " & ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND " & ExportText.MatchText($db, "lane", 2, lane) & " AND " & ExportText.MatchText($db, "title", 3, status), boardId, ExportText.BindText($db, lane), ExportText.BindText($db, status))
     If Not list.Available Then Error.Raise("Invalid status")
   Endif
   If dueDay Then
@@ -235,10 +235,10 @@ Public Function SaveCard(boardId As Integer, cardId As Integer, title As String,
   EnsureLane(boardId, lane)
   If listId > 0 And If ListDeletion.IsDeleted(boardId, "list", listId) Then Error.Raise("Restore the list first")
   If listId Then
-    list = $db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND id = &2 AND lane = &3 AND title = &4", boardId, listId, lane, status)
+    list = $db.Exec("SELECT * FROM kb_lists WHERE " & ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND id = &2 AND " & ExportText.MatchText($db, "lane", 3, lane) & " AND " & ExportText.MatchText($db, "title", 4, status), boardId, listId, ExportText.BindText($db, lane), ExportText.BindText($db, status))
     If Not list.Available Then listId = 0
   Endif
-  If Not listId Then list = $db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND lane = &2 AND title = &3 ORDER BY sort_order, id", boardId, lane, status)
+  If Not listId Then list = $db.Exec("SELECT * FROM kb_lists WHERE " & ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND " & ExportText.MatchText($db, "lane", 2, lane) & " AND " & ExportText.MatchText($db, "title", 3, status) & " ORDER BY sort_order, id", boardId, ExportText.BindText($db, lane), ExportText.BindText($db, status))
   If Not list.Available Then Error.Raise("Invalid status")
   listId = list!id
   If WorkspaceStore.ListHidden(boardId, listId) Then Error.Raise("Restore the list or swimlane first")
@@ -258,7 +258,11 @@ Public Function SaveCard(boardId As Integer, cardId As Integer, title As String,
   r["assignee"] = assignee
   r["labels"] = labels
   r["due_day"] = dueDay
-  r.Update()
+  If cardId Then
+    DatabaseText.Save($db, r, "kb_cards", ["title", "description", "lane", "status", "assignee", "labels", "due_day"], False)
+  Else
+    DatabaseText.Save($db, r, "kb_cards", ["board_id", "archived", "title", "description", "lane", "status", "assignee", "labels", "due_day"], True)
+  Endif
   If Not cardId Then cardId = $db.LastInsertId
   If previousDueDay <> dueDay Then $db.Delete("kb_card_dates", "board_id = &1 AND card_id = &2 AND field = &3", boardId, cardId, "dueAt")
   If previousAssignee <> assignee Then $db.Delete("kb_card_assignees", "board_id = &1 AND card_id = &2", boardId, cardId)
@@ -287,7 +291,7 @@ Public Sub Activity(boardId As Integer, message As String, Optional kind As Stri
   r["actor"] = WebIdentity.Username
   r["message"] = message
   r["created_at"] = Now
-  r.Update()
+  DatabaseText.Save($db, r, "kb_activity", ["board_id", "actor", "message", "created_at"], True)
   WorkspaceStore.Log(boardId, kind, itemId, message)
   If changed And (kind = "card" Or kind = "list") And itemId > 0 Then ItemChanges.Mark(boardId, kind, itemId)
 End
@@ -307,20 +311,20 @@ Private Sub EnsureLane(boardId As Integer, title As String)
   Dim name As String
   Dim index As Integer
   Dim failure As String
-  r = $db.Find("kb_lanes", "board_id = &1 AND title = &2", boardId, title)
+  r = $db.Exec("SELECT * FROM kb_lanes WHERE board_id = &1 AND " & ExportText.MatchText($db, "title", 2, title), boardId, ExportText.BindText($db, title))
   If r.Available Then Return
   DatabaseTransactions.Begin($db)
   r = $db.Create("kb_lanes")
   r["board_id"] = boardId
   r["title"] = title
-  r.Update()
+  DatabaseText.Save($db, r, "kb_lanes", ["board_id", "title"], True)
   For Each name In ["Todo", "Doing", "Done"]
     r = $db.Create("kb_lists")
     r["board_id"] = boardId
     r["lane"] = title
     r["title"] = name
     r["sort_order"] = index * 10
-    r.Update()
+    DatabaseText.Save($db, r, "kb_lists", ["board_id", "lane", "title", "sort_order"], True)
     ItemChanges.Mark(boardId, "list", $db.LastInsertId)
     Inc index
   Next
@@ -328,7 +332,7 @@ Private Sub EnsureLane(boardId As Integer, title As String)
 Catch
   failure = Error.Text
   Try DatabaseTransactions.Rollback($db)
-  r = $db.Find("kb_lanes", "board_id = &1 AND title = &2", boardId, title)
+  r = $db.Exec("SELECT * FROM kb_lanes WHERE board_id = &1 AND " & ExportText.MatchText($db, "title", 2, title), boardId, ExportText.BindText($db, title))
   If Not r.Available Then Error.Raise(failure)
 End
 

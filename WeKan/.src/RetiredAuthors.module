@@ -23,12 +23,14 @@ End
 
 Public Sub Remember(kind As String, itemId As Integer, boardId As Integer, cardId As Integer, displayName As String)
   Dim r As Result
+  Dim isNew As Boolean
   OpenStore()
   If kind <> "entry" And kind <> "file" Then Error.Raise("Unknown author record")
   If Not displayName Then Return
-  If String.Len(displayName) > 255 Then Error.Raise("Author name is too long")
+  If ExportText.Length(displayName) > 255 Then Error.Raise("Author name is too long")
   r = $db.Edit("kb_retired_authors", "kind = &1 AND item_id = &2", kind, itemId)
-  If Not r.Available Then
+  isNew = Not r.Available
+  If isNew Then
     r = $db.Create("kb_retired_authors")
     r["kind"] = kind
     r["item_id"] = itemId
@@ -36,7 +38,11 @@ Public Sub Remember(kind As String, itemId As Integer, boardId As Integer, cardI
   r["board_id"] = boardId
   r["card_id"] = cardId
   r["display_name"] = displayName
-  r.Update()
+  If isNew Then
+    DatabaseText.Save($db, r, "kb_retired_authors", ["kind", "item_id", "board_id", "card_id", "display_name"], True)
+  Else
+    DatabaseText.Save($db, r, "kb_retired_authors", ["board_id", "card_id", "display_name"], False)
+  Endif
 End
 
 Public Function DisplayName(kind As String, itemId As Integer, liveAuthor As String) As String

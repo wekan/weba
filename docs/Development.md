@@ -2508,8 +2508,8 @@ source list IDs and exact binary attachment bytes. Missing source links stay
 missing. Tests against the prior committed exporter reproduce truncated titles.
 This oracle deliberately avoids the installed Gambas `JSON.Decode`, which was
 independently observed removing escaped NUL while `JSON.Encode` preserves it.
-The backup boundary now uses the corrected codec described below. Complete import
-storage round trips and legacy field-model consistency remain explicit TODO
+The backup boundary now uses the corrected codec and storage path described below.
+Other native paths and legacy field-model consistency remain explicit TODO
 requirements, not implied by the wire export checks. Legacy MIME/metadata fixture bytes test stored-value export;
 existing import validation of those fields remains a separate requirement.
 
@@ -2517,16 +2517,16 @@ The isolated native decoder probe additionally verifies both default and
 `UseNull=True`: object properties containing empty strings or null are absent
 (`Exist=False`), escaped UTF-16 surrogate-pair emoji is dropped while direct UTF-8
 emoji survives, NUL escapes are removed from values and keys, and literal escaped
-backslash-u0000 text is retained. These cases are covered by the corrected native backup codec below; complete
-storage round trips still need separate import regressions. The wire exporter test uses standard JSON decoding so
+backslash-u0000 text is retained. These cases are covered by the corrected native backup codec below; separate
+SQLite storage regressions below also cover actual import round trips. The wire exporter test uses standard JSON decoding so
 these native defects cannot mask lost or altered exported bytes.
 
 The isolated SQLite storage probe separately verifies that both ordinary
 `Result.Create`/`Update` text writes and ordinary bound text arguments reject an
 embedded NUL. `CAST(Connection.FormatBlob(value) AS TEXT)` stores the complete
-NUL/Unicode byte sequence with SQLite type `text`. This gives a verified driver
-primitive for the pending import storage repair; it does not imply that native
-write paths or their validation/atomicity have already been changed.
+NUL/Unicode byte sequence with SQLite type `text`. The native backup write path
+below now uses that verified primitive while preserving its model validation and
+transaction boundaries; other native writers still require audit.
 
 Native backup `JsonText.Decode` uses a strict byte-based `JsonReader`, retaining
 all JSON string escapes, explicit empty/null fields and exact binary64 values.
@@ -2565,5 +2565,51 @@ infinities. It rejects 77 malformed grammar/UTF-8/depth/size/backup-shape cases.
 Warm base-collection calls exercise the inherited getter boundary; unchanged
 all-40-view policy transfer tests verify actual defaults/order/readonly import,
 no preferences or authority transfer, and transactional source/destination races.
-Other request decoders and complete SQLite text writes/storage round trips remain
-explicit next requirements.
+Native backup SQLite storage round trips are covered below. Other request
+decoders, remaining native writers/readers and model consistency remain explicit
+next requirements.
+
+Native backup SQLite writes use `DatabaseText.Save` inside the existing model's
+transaction and authorization flow. The helper requires an editable result,
+inspects only the caller's explicit modified fields, and uses native Update for
+ordinary unchanged-driver cases. SQLite empty/NUL strings or floating values use
+an explicit INSERT/primary-key UPDATE: empty strings remain text, NULL remains
+NULL, NUL strings use CAST(Connection.FormatBlob(value) AS TEXT), real values use
+exact finite decimal serialization, BLOB fields retain binary formatting, and
+other scalar/date values use the driver formatter. No transaction is committed
+by the helper, and an update that matches no row fails. New insert results are
+discarded and callers obtain their generated ID from LastInsertId. Untouched
+columns never pass through a lossy result read.
+
+The backup path integrates these writes in board/card/container, entry, file,
+display-author, metadata and activity/history operations. Existing model checks
+still run, including assignment/provenance, parent scope, hidden lanes, byte/MIME
+limits, identity/policy and final transaction guards. Native basenames containing
+NUL avoid File.Name's C-string truncation; ordinary basename behavior and REST
+control rejection are retained. Length checks include text after NUL. Explicit
+nullable source content is restored only after its model validation. Numeric
+custom fields and WIP controls reject malformed NUL values rather than relying
+on the old SQL failure to refuse them. Entry restoration preserves source order,
+with a deferred pass only for children whose checklist appears later.
+
+A driver probe proves SQLite stored 100000.00000000001 correctly while the stock
+result getter returned 100000. Guarded projections therefore add printf('%!.26g',
+expression) and a null flag for real fields; ReadNumber uses the exact converter.
+SQLite documents its alternate-form-2 precision in its
+[printf documentation](https://sqlite.org/printf.html). Original result columns
+remain available; native backup Row explicitly reads the precise projection.
+
+`DatabaseTextTest` verifies actual SQLite equality, precise projected reads,
+2.675/subnormal/small-normal/max-double boundaries, SQL text/NULL/BLOB types,
+quoted/NUL/Unicode text, exact payload bytes, untouched-column partial updates,
+caller rollback, readonly results and nonfinite refusal. `BackupStorageTest`
+compares 24 owner/readonly board/lane/list/card imports and re-exports, plus a
+successful retry, under a standard JSON oracle. Only fresh IDs and scoped import
+into a new board with its own default policy are adapted; all payload text,
+nullable fields, entry order/hierarchy, provenance, exact real, filenames and
+binary bytes remain compared. Source rows are snapshotted by type and complete
+hex bytes; empty tables initialized for a new target are not source row changes.
+Eleven malformed/length/header/numeric/SQL/late-owner cases compare every persisted
+application row before and after refusal. Other native reader/writer paths,
+request decoder adoption, legacy field-model consistency and full original
+UI/API/security parity remain explicit TODO work.

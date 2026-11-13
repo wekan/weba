@@ -1,0 +1,221 @@
+Public Sub Main()
+  Dim conn As Connection
+  Dim boardId As Integer
+  Dim laneId As Integer
+  Dim listId As Integer
+  Dim cardId As Integer
+  Dim archivedId As Integer
+  Dim checklistId As Integer
+  Dim customId As Integer
+  Dim timeId As Integer
+  Dim fileId As Integer
+  Dim target As Integer
+  Dim rows As Result
+  Dim data As Collection
+  Dim entry As Collection
+  Dim frame As New Collection
+  Dim snapshots As New Variant[]
+  Dim sample As Collection
+  Dim sourceWire As String
+  Dim actor As String
+  Dim variant As String
+  Dim kind As String
+  Dim itemId As Integer
+  Dim number As Float
+  Dim before As Integer
+  Dim sourceState As String
+  Dim fault As String
+  Dim proposedTitle As String
+  Dim validWire As String
+  Dim retry As New Collection
+  WebDatabase.Register("backup-store-owner", "x")
+  WebDatabase.Register("backup-store-reader", "x")
+  SignIn("backup-store-owner")
+  boardId = KanbanStore.AddBoard("Storage source")
+  rows = KanbanStore.Lanes(boardId)
+  laneId = rows!id
+  rows = KanbanStore.Lists(boardId, "Default")
+  listId = rows!id
+  cardId = KanbanStore.SaveCard(boardId, 0, "Card", "Body", "Default", "Todo", "", "", "", listId)
+  archivedId = KanbanStore.SaveCard(boardId, 0, "Archived", "Retained body", "Default", "Todo", "", "", "", listId)
+  KanbanStore.ArchiveCard(boardId, archivedId, True)
+  checklistId = CardContent.Save(boardId, cardId, 0, "checklist", "Checks", "", 0, False, 0)
+  CardContent.Save(boardId, cardId, 0, "checkitem", "Item", "", checklistId, True, 0)
+  CardContent.Save(boardId, cardId, 0, "comment", "", Value("comment"), 0, False, 0)
+  customId = CardContent.Save(boardId, cardId, 0, "custom", "Custom", Value("custom"), 0, False, 0, "text")
+  number = JsonText.Decode("100000.00000000001")
+  timeId = CardContent.Save(boardId, cardId, 0, "time", "Time", Value("time"), 0, True, number)
+  fileId = CardContent.AddFile(boardId, cardId, "file.bin", "B" & Chr(0) & Chr(255) & "Z")
+  CardContent.RetainAuthorName(boardId, cardId, "file", fileId, Value("author"))
+  CardContent.RetainAuthorName(boardId, cardId, "entry", customId, Value("author"))
+  WorkspaceStore.SetSetting(boardId, "board", boardId, "description", "initial")
+  WorkspaceStore.SetSetting(boardId, "board", boardId, "description", Value("metadata"))
+  BoardAccess.SetMember(boardId, "backup-store-reader", "read-only")
+  conn = WebDatabase.OpenConnection()
+  SetText(conn, "kb_boards", "title", "id", boardId, ContainerText("board"))
+  SetText(conn, "kb_lanes", "title", "id", laneId, ContainerText("lane"))
+  SetText(conn, "kb_lists", "lane", "board_id", boardId, ContainerText("lane"))
+  SetText(conn, "kb_lists", "title", "id", listId, ContainerText("list"))
+  SetText(conn, "kb_cards", "lane", "board_id", boardId, ContainerText("lane"))
+  SetText(conn, "kb_cards", "status", "board_id", boardId, ContainerText("list"))
+  SetText(conn, "kb_cards", "title", "id", cardId, Value("card"))
+  SetText(conn, "kb_cards", "description", "id", cardId, Value("description"))
+  SetText(conn, "kb_cards", "labels", "id", cardId, Value("labels"))
+  SetText(conn, "kb_entries", "title", "id", checklistId, Value("checklist"))
+  SetText(conn, "kb_entries", "title", "id", customId, Value("custom-title"))
+  SetText(conn, "kb_files", "filename", "id", fileId, ContainerText("file") & ".bin")
+  For Each variant In ["text", "empty", "null"]
+    If variant <> "text" Then
+      conn.Exec("UPDATE kb_cards SET description=" & If(variant = "empty", "''", "NULL") & ",labels=" & If(variant = "empty", "''", "NULL") & ",due_day=" & If(variant = "empty", "''", "NULL") & " WHERE id=&1", cardId)
+      conn.Exec("UPDATE kb_entries SET body=" & If(variant = "empty", "''", "NULL") & " WHERE id=&1", customId)
+      conn.Exec("UPDATE kb_meta SET value=" & If(variant = "empty", "''", "NULL") & " WHERE board_id=&1 AND setting='description'", boardId)
+    Endif
+    For Each actor In ["backup-store-owner", "backup-store-reader"]
+      SignIn(actor)
+      For Each kind In ["board", "lane", "list", "card"]
+        itemId = boardId
+        If kind = "lane" Then itemId = laneId
+        If kind = "list" Then itemId = listId
+        If kind = "card" Then itemId = cardId
+        sourceState = State(conn, boardId)
+        sourceWire = BoardTransfer.ExportData(boardId, kind, itemId)
+        data = BoardTransfer.ReadData(sourceWire)
+        before = conn.Exec("SELECT COUNT(*) AS total FROM kb_boards")!total
+        target = BoardTransfer.ImportData(sourceWire, data["title"])
+        If conn.Exec("SELECT COUNT(*) AS total FROM kb_boards")!total <> before + 1 Then Error.Raise("Import did not create one independent target")
+        sample = New Collection
+        sample.Add(kind, "kind")
+        sample.Add(actor, "actor")
+        sample.Add(variant, "variant")
+        sample.Add(boardId, "sourceBoard")
+        sample.Add(target, "targetBoard")
+        sample.Add(sourceWire, "source")
+        sample.Add(BoardTransfer.ExportData(target, "board", target), "target")
+        snapshots.Add(sample)
+        If State(conn, boardId) <> sourceState Then Error.Raise("Import/export changed source rows")
+      Next
+    Next
+  Next
+  SignIn("backup-store-reader")
+  validWire = BoardTransfer.ExportData(boardId, "board", boardId)
+  For Each fault In ["board-title", "lane-title", "list-title", "card-title", "author", "filename", "mime", "number", "wip"]
+    data = BoardTransfer.ReadData(validWire)
+    proposedTitle = data["title"]
+    Select fault
+      Case "board-title"
+        proposedTitle = "x" & Chr(0) & String(256, "a")
+      Case "lane-title"
+        data["lanes"][0]["title"] = "x" & Chr(0) & String(256, "a")
+      Case "list-title"
+        data["lists"][0]["title"] = "x" & Chr(0) & String(33, "a")
+      Case "card-title"
+        data["cards"][0]["title"] = "x" & Chr(0) & String(256, "a")
+      Case "author"
+        data["entries"][0]["author_name"] = "x" & Chr(0) & String(256, "a")
+      Case "filename"
+        data["files"][0]["filename"] = "x" & Chr(0) & String(256, "a")
+      Case "mime"
+        data["files"][0]["mime"] = "text/plain" & Chr(0) & "injected"
+      Case "number"
+        For Each entry In data["entries"]
+          If entry["kind"] = "custom" Then
+            entry["value_type"] = "number"
+            entry["body"] = "10" & Chr(0) & "invalid"
+          Endif
+        Next
+      Case "wip"
+        data["metadata"][0]["setting"] = "wip"
+        data["metadata"][0]["value"] = "10" & Chr(0) & "invalid"
+    End Select
+    Refuse(conn, JsonText.Encode(data), proposedTitle, fault)
+  Next
+  conn.Exec("CREATE TEMP TRIGGER backup_text_fail BEFORE INSERT ON kb_retired_authors WHEN NEW.board_id<>" & CStr(boardId) & " BEGIN SELECT RAISE(ABORT,'TEXT-FAIL'); END")
+  Refuse(conn, validWire, "SQL failure", "sql")
+  conn.Exec("DROP TRIGGER backup_text_fail")
+  conn.Exec("CREATE TEMP TRIGGER backup_text_owner AFTER INSERT ON kb_files WHEN NEW.board_id<>" & CStr(boardId) & " BEGIN UPDATE kb_boards SET owner='backup-store-owner' WHERE id=NEW.board_id; END")
+  Refuse(conn, validWire, "Owner race", "owner")
+  conn.Exec("DROP TRIGGER backup_text_owner")
+  data = BoardTransfer.ReadData(validWire)
+  target = BoardTransfer.ImportData(validWire, data["title"])
+  retry.Add("board", "kind")
+  retry.Add("backup-store-reader", "actor")
+  retry.Add("retry", "variant")
+  retry.Add(boardId, "sourceBoard")
+  retry.Add(target, "targetBoard")
+  retry.Add(validWire, "source")
+  retry.Add(BoardTransfer.ExportData(target, "board", target), "target")
+  frame.Add(retry, "retry")
+  frame.Add(11, "refusals")
+  frame.Add(snapshots, "snapshots")
+  Print JsonText.Encode(frame)
+End
+
+Private Function Value(name As String) As String
+  Return name & Chr(0) & " Ω😀'" & Chr(92) & Chr(8) & Chr(12) & Chr(10) & String.Chr(55296) & "SUFFIX"
+End
+
+Private Function ContainerText(value As String) As String
+  Return value & Chr(0) & "Ω😀'END"
+End
+
+Private Sub SetText(conn As Connection, tableName As String, field As String, key As String, id As Integer, value As String)
+  conn.Exec("UPDATE " & tableName & " SET " & field & "=CAST(" & conn.FormatBlob(value) & " AS TEXT) WHERE " & key & "=&1", id)
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End
+
+Private Sub Refuse(conn As Connection, wire As String, title As String, reason As String)
+  Dim before As String = State(conn)
+  Dim denied As Boolean
+  Dim id As Integer
+  Try id = BoardTransfer.ImportData(wire, title)
+  denied = Error
+  If Not denied Then Error.Raise("Invalid backup import accepted: " & reason)
+  If State(conn) <> before Then Error.Raise("Failed backup import changed persisted rows: " & reason)
+End
+
+Private Function State(conn As Connection, Optional boardId As Integer) As String
+  Dim table As Variant
+  Dim field As Variant
+  Dim columns As String[]
+  Dim sortFields As String[]
+  Dim row As Result
+  Dim data As New Collection
+  Dim rows As Variant[]
+  Dim values As Variant[]
+  Dim key As String
+  Dim expression As String
+  Dim sql As String
+  For Each table In conn.Tables
+    If table.System Then Continue
+    If boardId Then
+      If table.Name <> "kb_boards" And If Not table.Fields.Exist("board_id") Then Continue
+    Endif
+    columns = New String[]
+    sortFields = New String[]
+    For Each field In table.Fields
+      key = conn.Quote(field.Name)
+      expression = "CAST(" & key & " AS BLOB)"
+      If field.Type = DB.Float Then expression = "CAST(printf('%!.26g'," & key & ") AS BLOB)"
+      columns.Add("typeof(" & key & ")||':'||hex(" & expression & ") AS " & key)
+      sortFields.Add(key)
+    Next
+    sql = "SELECT " & columns.Join(",") & " FROM " & conn.Quote(table.Name)
+    If boardId Then sql &= " WHERE " & If(table.Name = "kb_boards", "id", "board_id") & "=" & CStr(boardId)
+    If sortFields.Count Then sql &= " ORDER BY " & sortFields.Join(",")
+    row = conn.Exec(sql)
+    rows = New Variant[]
+    For Each row
+      values = New Variant[]
+      For Each field In row.Fields
+        values.Add(row[field.Name])
+      Next
+      rows.Add(values)
+    Next
+    If boardId = 0 Or rows.Count > 0 Then data.Add(rows, table.Name)
+  Next
+  Return JsonText.Encode(data)
+End

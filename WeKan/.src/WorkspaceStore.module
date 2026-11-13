@@ -43,7 +43,7 @@ Public Sub Log(boardId As Integer, kind As String, itemId As Integer, message As
   r["actor"] = WebIdentity.Username
   r["message"] = message
   r["created_at"] = Now
-  r.Update()
+  DatabaseText.Save($db, r, "kb_history", ["board_id", "kind", "item_id", "actor", "message", "created_at"], True)
 End
 
 Public Function History(boardId As Integer, kind As String, itemId As Integer) As Result
@@ -101,6 +101,7 @@ Public Sub SetSetting(boardId As Integer, kind As String, itemId As Integer, nam
   Dim r As Result
   Dim index As Integer
   Dim tableName As String = "kb_meta"
+  Dim isNew As Boolean
   Dim transaction As Boolean
   Dim failure As String
   Record(boardId, kind, itemId)
@@ -127,6 +128,7 @@ Public Sub SetSetting(boardId As Integer, kind As String, itemId As Integer, nam
     Next
   Endif
   If name = "wip" Then
+    If InStr(value, Chr(0)) Then Error.Raise("Invalid WIP limit")
     If CFloat(value) <> CInt(value) Or CInt(value) < 0 Or CInt(value) > 100000 Then Error.Raise("Invalid WIP limit")
   Endif
   DatabaseTransactions.Begin($db)
@@ -143,7 +145,8 @@ Public Sub SetSetting(boardId As Integer, kind As String, itemId As Integer, nam
   Else
     r = $db.Edit(tableName, "board_id = &1 AND kind = &2 AND item_id = &3 AND setting = &4", boardId, kind, itemId, name)
   Endif
-  If Not r.Available Then
+  isNew = Not r.Available
+  If isNew Then
     r = $db.Create(tableName)
     If tableName = "kb_user_meta" Then r["username"] = WebIdentity.Username
     r["board_id"] = boardId
@@ -152,7 +155,15 @@ Public Sub SetSetting(boardId As Integer, kind As String, itemId As Integer, nam
     r["setting"] = name
   Endif
   r["value"] = value
-  r.Update()
+  If isNew Then
+    If tableName = "kb_user_meta" Then
+      DatabaseText.Save($db, r, tableName, ["username", "board_id", "kind", "item_id", "setting", "value"], True)
+    Else
+      DatabaseText.Save($db, r, tableName, ["board_id", "kind", "item_id", "setting", "value"], True)
+    Endif
+  Else
+    DatabaseText.Save($db, r, tableName, ["value"], False)
+  Endif
   If tableName <> "kb_user_meta" And (kind = "list" Or kind = "card") Then ItemChanges.Mark(boardId, kind, itemId)
   If name = "allowsAttachments" Then
     If WebIdentity.Username <> actor Then Error.Raise("Board setting identity changed")
@@ -201,9 +212,10 @@ Public Function ListHidden(boardId As Integer, listId As Integer) As Boolean
   Dim r As Result
   Dim lane As Result
   If Not listId Then Return False
-  r = Record(boardId, "list", listId)
+  Record(boardId, "list", listId)
+  r = $db.Exec(ExportText.SelectRows($db, "kb_lists") & " WHERE board_id=&1 AND id=&2", boardId, listId)
   If Archived(boardId, "list", listId) Then Return True
-  lane = $db.Find("kb_lanes", "board_id = &1 AND title = &2", boardId, r!lane)
+  lane = $db.Exec("SELECT * FROM kb_lanes WHERE board_id = &1 AND " & ExportText.MatchText($db, "title", 2, ExportText.ReadValue(r, "lane")), boardId, ExportText.BindText($db, ExportText.ReadValue(r, "lane")))
   If lane.Available Then Return Archived(boardId, "lane", lane!id)
   Return False
 End

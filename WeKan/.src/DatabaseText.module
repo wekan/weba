@@ -1,0 +1,79 @@
+Export
+
+Private Function SqlValue(conn As Connection, value As Variant, fieldType As Integer) As String
+  If fieldType = DB.Blob Then
+    If IsNull(value) Then Return "NULL"
+    If TypeOf(value) = gb.String Then Return conn.FormatBlob(value)
+    Return conn.FormatBlob(value.Data)
+  Endif
+  If TypeOf(value) = gb.String Then
+    If Len(value) = 0 Then Return "''"
+    If InStr(value, Chr(0)) Then Return "CAST(" & conn.FormatBlob(value) & " AS TEXT)"
+  Endif
+  If TypeOf(value) = gb.Float Or TypeOf(value) = gb.Single Then
+    If IsInf(value) Or IsNan(value) Then Error.Raise("Invalid numeric record value")
+    Return JsonText.Encode(value)
+  Endif
+  Return conn.Subst("&1", value)
+End
+
+' The caller authorizes and owns the transaction. Only explicitly modified
+' fields are written; untouched columns never pass through lossy text reads.
+' A raw-insert result is discarded afterwards; callers use LastInsertId.
+Public Sub Save(conn As Connection, row As Result, tableName As String, fields As String[], isNew As Boolean)
+  Dim field As String
+  Dim value As Variant
+  Dim special As Boolean
+  Dim columns As New String[]
+  Dim values As New String[]
+  Dim assignments As New String[]
+  Dim predicates As New String[]
+  Dim expression As String
+  If Not row.Editable Then Error.Raise("Editable record required")
+  If conn.Type <> "sqlite3" Then
+    row.Update()
+    Return
+  Endif
+  For Each field In fields
+    value = row[field]
+    If TypeOf(value) = gb.Float Or TypeOf(value) = gb.Single Then special = True
+    If row.Fields[field].Type <> DB.String Then Continue
+    If TypeOf(value) = gb.String Then
+      If Len(value) = 0 Or InStr(value, Chr(0)) Then special = True
+    Endif
+  Next
+  If Not special Then
+    row.Update()
+    Return
+  Endif
+  For Each field In fields
+    expression = SqlValue(conn, row[field], row.Fields[field].Type)
+    columns.Add(conn.Quote(field))
+    values.Add(expression)
+    assignments.Add(conn.Quote(field) & "=" & expression)
+  Next
+  If isNew Then
+    conn.Exec("INSERT INTO " & conn.Quote(tableName) & " (" & columns.Join(",") & ") VALUES (" & values.Join(",") & ")")
+  Else
+    For Each field In conn.Tables[tableName].PrimaryKey
+      predicates.Add(conn.Quote(field) & "=" & SqlValue(conn, row[field], row.Fields[field].Type))
+    Next
+    If Not predicates.Count Then Error.Raise("Record primary key required")
+    conn.Exec("UPDATE " & conn.Quote(tableName) & " SET " & assignments.Join(",") & " WHERE " & predicates.Join(" AND "))
+    If conn.Exec("SELECT changes() AS total")!total <> 1 Then Error.Raise("Record changed during write")
+  Endif
+End
+
+' String-typed model arguments intentionally normalize NULL to empty. After
+' successful model validation, restore only explicitly nullable source fields.
+Public Sub RestoreNulls(conn As Connection, tableName As String, boardId As Integer, itemId As Integer, source As Collection, fields As String[])
+  Dim field As String
+  Dim assignments As New String[]
+  If conn.Type <> "sqlite3" Then Return
+  For Each field In fields
+    If Not source.Exist(field) Then Continue
+    If TypeOf(source[field]) = gb.String Then Continue
+    If IsNull(source[field]) Then assignments.Add(conn.Quote(field) & "=NULL")
+  Next
+  If assignments.Count Then conn.Exec("UPDATE " & conn.Quote(tableName) & " SET " & assignments.Join(",") & " WHERE board_id=&1 AND id=&2", boardId, itemId)
+End

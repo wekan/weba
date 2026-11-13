@@ -107,10 +107,14 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   lone UTF-16 units, empty/null values and empty/NUL keys, exact binary64 values
   and object ordering. Standard-parser/IEEE-bit and strict negative-input tests
   are recorded in CHANGELOG.md; existing policy-transfer guards remain intact.
-- Next data follow-up: implement safe complete-text SQLite import writes and
-  verify full storage round trips, then audit legacy field-model consistency.
-  Other request decoder boundaries, DB drivers, remaining field models/security
-  reporting and full original suites stay open.
+- Completed the native backup SQLite text/scalar write path and tested storage
+  round trips: 24 owner/readonly scoped payloads plus retry preserve full text,
+  NULL/empty values, exact reals, entry sequence, provenance and binary files;
+  11 refusal cases verify exact-state rollback. Details are in CHANGELOG.md.
+- Next data follow-up: audit legacy field-model consistency and remaining native
+  text readers/writers outside the backup path. Other request decoder boundaries,
+  DB drivers, remaining field models/security reporting and full original suites
+  stay open.
 
 - Next: remaining copy-option models/controls, selected-export API/model/
   security parity, Home/group targets and original

@@ -1088,7 +1088,7 @@ Private Sub WriteAssignees(boardId As Integer, cardId As Integer, names As Strin
   r = $db.Edit("kb_cards", "board_id = &1 AND id = &2", boardId, cardId)
   r["assignee"] = ""
   If unique.Count Then r["assignee"] = unique[0]
-  r.Update()
+  DatabaseText.Save($db, r, "kb_cards", ["assignee"], False)
   DatabaseTransactions.Commit($db)
   transaction = False
 Catch

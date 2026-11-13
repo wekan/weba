@@ -3460,9 +3460,10 @@ NULL versus empty values across context, cards, containers, metadata, custom
 fields, attachment names and display-only authors. A standard JSON decoder
 verifies 32 owner/readonly scoped wire snapshots. The backup boundary now uses a
 strict codec that preserves decoded strings, empty/null fields, object keys and
-binary64 values. Full native import/storage round trips still require safe
-complete-text SQLite writes and remain pending with other model/UI/API/security
-requirements.
+binary64 values. Native backup SQLite storage now has complete-text writes and
+24 scoped full import/re-export comparisons plus retry and 11 rollback refusals.
+Other native reader/writer paths and model/UI/API/security requirements remain
+pending.
 
 Native backup JSON decoding has 218 standard JSON.parse/IEEE-bit comparisons and
 77 negative-input cases, including Unicode surrogate pairs/lone units, empty/NUL
@@ -3470,3 +3471,10 @@ keys, duplicate ordering, large key sets and exact numbers. Input is bounded to
 20 MiB and 128 nesting levels, and invalid backup shapes are rejected before
 writes. This codec is currently used by native backup import/export; other
 request decoder boundaries remain separate work.
+
+SQLite native backup imports preserve embedded NUL, complete Unicode/lone units,
+NULL versus empty text, exact finite reals, provenance, attachment names/BLOBs and
+entry sequence through the existing authorized model methods. Full row snapshots
+verify refusal/rollback for invalid text lengths, typed/header controls, SQL
+failure and late ownership loss. Other native readers/writers and legacy model
+consistency still need audit; this does not claim full application parity.

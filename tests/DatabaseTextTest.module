@@ -1,0 +1,74 @@
+Public Sub Main()
+  Dim conn As Connection
+  Dim t As Table
+  Dim row As Result
+  Dim id As Long
+  Dim number As Float
+  Dim value As String = "before" & Chr(0) & "after Ω😀'"
+  Dim payload As String = "B" & Chr(0) & "Z"
+  Dim denied As Boolean
+  Dim token As String
+  WebDatabase.Register("database-text", "x")
+  conn = WebDatabase.OpenConnection()
+  t = conn.Tables.Add("text_write_probe")
+  t.Fields.Add("id", DB.Serial)
+  t.Fields.Add("body", DB.String)
+  t.Fields.Add("empty_value", DB.String)
+  t.Fields.Add("null_value", DB.String)
+  t.Fields.Add("payload", DB.Blob)
+  t.Fields.Add("amount", DB.Float)
+  t.Fields.Add("created_at", DB.Date)
+  t.PrimaryKey = ["id"]
+  t.Update()
+  number = JsonText.Decode("100000.00000000001")
+  row = conn.Create("text_write_probe")
+  row["body"] = value
+  row["empty_value"] = ""
+  row["null_value"] = Null
+  row["payload"] = payload
+  row["amount"] = number
+  row["created_at"] = Now
+  DatabaseText.Save(conn, row, "text_write_probe", ["body", "empty_value", "null_value", "payload", "amount", "created_at"], True)
+  id = conn.LastInsertId
+  Check(conn, id, value, payload, number)
+  row = conn.Edit("text_write_probe", "id=&1", id)
+  row["body"] = "changed" & value
+  DatabaseText.Save(conn, row, "text_write_probe", ["body"], False)
+  Check(conn, id, "changed" & value, payload, number)
+  For Each token In ["2.675", "5e-324", "1e-300", "2.2250738585072014e-308", "1.7976931348623157e308"]
+    number = JsonText.Decode(token)
+    row = conn.Edit("text_write_probe", "id=&1", id)
+    row["amount"] = number
+    DatabaseText.Save(conn, row, "text_write_probe", ["amount"], False)
+    Check(conn, id, "changed" & value, payload, number)
+  Next
+  DatabaseTransactions.Begin(conn)
+  row = conn.Create("text_write_probe")
+  row["body"] = value
+  DatabaseText.Save(conn, row, "text_write_probe", ["body"], True)
+  DatabaseTransactions.Rollback(conn)
+  If conn.Exec("SELECT COUNT(*) AS total FROM text_write_probe")!total <> 1 Then Error.Raise("Text writer committed its caller transaction")
+  row = conn.Find("text_write_probe", "id=&1", id)
+  Try DatabaseText.Save(conn, row, "text_write_probe", ["body"], False)
+  denied = Error
+  If Not denied Then Error.Raise("Text writer accepted a read-only result")
+  row = conn.Edit("text_write_probe", "id=&1", id)
+  number = 2 ^ 1023
+  number *= 2
+  row["amount"] = number
+  Try DatabaseText.Save(conn, row, "text_write_probe", ["amount"], False)
+  denied = Error
+  If Not denied Then Error.Raise("Text writer accepted nonfinite numeric storage")
+  Print "SQLite record writes: full NUL/Unicode/quoted text, NULL versus empty, exact floats and BLOB bytes/types, primary-key partial updates, caller rollback, readonly and nonfinite guards passed"
+End
+
+Private Sub Check(conn As Connection, id As Long, text As String, payload As String, number As Float)
+  Dim row As Result = conn.Exec(ExportText.SelectRows(conn, "text_write_probe") & " WHERE id=&1", id)
+  Dim shape As Result = conn.Exec("SELECT typeof(body) AS body_type,typeof(empty_value) AS empty_type,typeof(null_value) AS null_type,typeof(payload) AS blob_type,typeof(amount) AS number_type FROM text_write_probe WHERE id=&1", id)
+  If Len(ExportText.ReadValue(row, "body")) <> Len(text) Or ExportText.ReadValue(row, "body") <> text Then Error.Raise("Complete text storage changed")
+  If shape!body_type <> "text" Or shape!empty_type <> "text" Or shape!null_type <> "null" Then Error.Raise("Empty/null text storage types changed")
+  If shape!blob_type <> "blob" Or row!payload.Data <> payload Then Error.Raise("Binary storage changed")
+  If shape!number_type <> "real" Or ExportText.ReadNumber(row, "amount") <> number Then Error.Raise("Numeric storage precision changed")
+  If Not conn.Exec("SELECT amount=" & JsonText.Encode(number) & " AS exact_value FROM text_write_probe WHERE id=&1", id)!exact_value Then Error.Raise("SQLite numeric value changed")
+  If IsNull(row!created_at) Then Error.Raise("Date storage changed")
+End

@@ -38,6 +38,13 @@ Private Sub AddColumn(extra As String[], seen As Collection, expression As Strin
   extra.Add("(" & expression & ") IS NULL AS " & Identifier("__weba_null_" & name))
 End
 
+Private Sub AddNumber(extra As String[], seen As Collection, expression As String, name As String)
+  If seen.Exist(name) Then Return
+  seen[name] = True
+  extra.Add("printf('%!.26g'," & expression & ") AS " & Identifier("__weba_number_" & name))
+  extra.Add("(" & expression & ") IS NULL AS " & Identifier("__weba_number_null_" & name))
+End
+
 Public Function Preserve(conn As Connection, sql As String) As String
   Dim fromAt As Integer = InStr(sql, " FROM ")
   Dim tokens As String[]
@@ -51,6 +58,7 @@ Public Function Preserve(conn As Connection, sql As String) As String
   Dim name As String
   Dim at As Integer
   Dim textField As Boolean
+  Dim numberField As Boolean
   Dim extra As New String[]
   Dim seen As New Collection
   Dim i As Integer
@@ -73,6 +81,7 @@ Public Function Preserve(conn As Connection, sql As String) As String
       If Not aliases.Exist(alias) Then Continue
       For Each column In conn.Tables[aliases[alias]].Fields
         If column.Type = DB.String Then AddColumn(extra, seen, alias & "." & Identifier(column.Name), column.Name)
+        If column.Type = DB.Float Then AddNumber(extra, seen, alias & "." & Identifier(column.Name), column.Name)
       Next
       Continue
     Endif
@@ -82,13 +91,17 @@ Public Function Preserve(conn As Connection, sql As String) As String
     If Not at And InStr(name, ".") Then name = Mid(name, InStr(name, ".") + 1)
     If InStr(name, "(") Or InStr(name, ")") Then Continue
     textField = False
+    numberField = False
     For Each alias In aliases.Keys
       For Each column In conn.Tables[aliases[alias]].Fields
-        If column.Type <> DB.String Then Continue
-        If expression = column.Name Or InStr(expression, alias & "." & column.Name) Then textField = True
+        If expression = column.Name Or InStr(expression, alias & "." & column.Name) Then
+          If column.Type = DB.String Then textField = True
+          If column.Type = DB.Float Then numberField = True
+        Endif
       Next
     Next
     If textField Then AddColumn(extra, seen, expression, name)
+    If numberField Then AddNumber(extra, seen, expression, name)
   Next
   If Not extra.Count Then Return sql
   Return Left(sql, fromAt - 1) & "," & extra.Join(",") & Mid(sql, fromAt)
@@ -134,4 +147,13 @@ Public Function ReadValue(row As Result, field As String) As String
   value = row[field]
   If IsNull(value) Then Return ""
   Return CStr(value)
+End
+
+Public Function ReadNumber(row As Result, field As String) As Variant
+  Dim number As Float
+  Dim key As String = "__weba_number_" & field
+  If Not row.Fields.Exist(key) Then Return row[field]
+  If CBool(row["__weba_number_null_" & field]) Then Return Null
+  If Not ExportNumber.ParseFinite(CStr(row[key]), ByRef number) Then Error.Raise("Invalid numeric record value")
+  Return number
 End

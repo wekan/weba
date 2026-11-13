@@ -91,7 +91,7 @@ Public Sub RetainAuthorName(boardId As Integer, cardId As Integer, kind As Strin
   Endif
   BoardAccess.Require(boardId, "write")
   If r!author <> WebIdentity.Username Then Error.Raise("Author provenance requires a newly created record")
-  If String.Len(authorName) > 255 Then Error.Raise("Author name is too long")
+  If ExportText.Length(authorName) > 255 Then Error.Raise("Author name is too long")
   ' Imported names are display text, never a claim to a local account.
   $db.Exec("UPDATE " & tableName & " SET author = NULL WHERE id = &1 AND board_id = &2 AND card_id = &3", itemId, boardId, cardId)
   RetiredAuthors.Remember(kind, itemId, boardId, cardId, authorName)
@@ -155,6 +155,7 @@ Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Int
   Dim target As Result
   Dim id As Integer = entryId
   Dim merged As Collection
+  Dim number As Float
   RequireCard(boardId, cardId)
   BoardAccess.Require(boardId, If(kind = "comment" And Not isCopy, "comment", "write"))
   BeginChange(boardId, cardId, If(kind = "comment" And Not isCopy, "comment", "write"))
@@ -189,7 +190,7 @@ Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Int
     Case Else
       Error.Raise("Unknown card detail type")
   End Select
-  If String.Len(title) > 255 Then Error.Raise("Title is too long")
+  If ExportText.Length(title) > 255 Then Error.Raise("Title is too long")
   If kind = "checkitem" Then
     r = Entry(boardId, cardId, parentId)
     If r!kind <> "checklist" Then Error.Raise("Choose a checklist")
@@ -198,7 +199,8 @@ Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Int
     Select valueType
       Case "text"
       Case "number"
-        body = CStr(CFloat(body))
+        If Not ExportNumber.ParseFinite(body, ByRef number) Then Error.Raise("Invalid numeric field")
+        body = CStr(number)
       Case "date"
         If Len(body) <> 10 Or Mid(body, 5, 1) <> "-" Or Mid(body, 8, 1) <> "-" Then Error.Raise("Use YYYY-MM-DD")
         If Format(Date(CInt(Left(body, 4)), CInt(Mid(body, 6, 2)), CInt(Right(body, 2))), "yyyy-mm-dd") <> body Then Error.Raise("Invalid date")
@@ -224,7 +226,11 @@ Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Int
   r["done"] = done
   r["amount"] = amount
   r["value_type"] = valueType
-  r.Update()
+  If entryId Then
+    DatabaseText.Save($db, r, "kb_entries", ["kind", "title", "body", "parent_id", "done", "amount", "value_type"], False)
+  Else
+    DatabaseText.Save($db, r, "kb_entries", ["board_id", "card_id", "author", "created_at", "kind", "title", "body", "parent_id", "done", "amount", "value_type"], True)
+  Endif
   If Not entryId Then id = $db.LastInsertId
   KanbanStore.Activity(boardId, "Saved " & kind & " on card " & CStr(cardId), "card", cardId)
   DatabaseTransactions.Commit($db)
@@ -346,8 +352,13 @@ Public Function AddFile(boardId As Integer, cardId As Integer, filename As Strin
   BoardAccess.Require(boardId, "write")
   BeginChange(boardId, cardId, "write")
   transaction = True
-  filename = File.Name(Replace(filename, "\\", "/"))
-  If Not filename Or String.Len(filename) > 255 Or maxBytes < 0 Or maxBytes > 67108864 Or Len(data) > maxBytes Then Error.Raise("Choose a file within the size limit with a valid name")
+  filename = Replace(filename, "\\", "/")
+  If InStr(filename, Chr(0)) Then
+    filename = Mid(filename, RInStr(filename, "/") + 1)
+  Else
+    filename = File.Name(filename)
+  Endif
+  If Not filename Or ExportText.Length(filename) > 255 Or maxBytes < 0 Or maxBytes > 67108864 Or Len(data) > maxBytes Then Error.Raise("Choose a file within the size limit with a valid name")
   r = $db.Create("kb_files")
   r["board_id"] = boardId
   r["card_id"] = cardId
@@ -355,7 +366,7 @@ Public Function AddFile(boardId As Integer, cardId As Integer, filename As Strin
   r["content"] = data
   r["author"] = WebIdentity.Username
   r["created_at"] = Now
-  r.Update()
+  DatabaseText.Save($db, r, "kb_files", ["board_id", "card_id", "filename", "content", "author", "created_at"], True)
   id = $db.LastInsertId
   AttachmentData.Record(boardId, cardId, id, mime)
   KanbanStore.Activity(boardId, "Attached file: " & filename, "card", cardId)

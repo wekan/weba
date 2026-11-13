@@ -2,6 +2,23 @@
 
 This work adds the following features and fixes:
 
+- Preserve native backup SQLite storage round trips through existing authorized
+  model methods. Write NUL text with driver-formatted binary literals cast to
+  TEXT, keep empty strings distinct from NULL, retain BLOB/date types and finite
+  float precision, and update only explicit fields under the caller transaction.
+  Preserve nullable source content after validation. Use complete name lookups,
+  suffix-aware length checks, NUL-safe native basenames and exact real projections
+  for backup reads. Keep REST filename/MIME controls and authority checks intact.
+  Preserve entry sequence, deferring only child-before-checklist input. Compare
+  24 owner/readonly board/lane/list/card full import/re-export payloads plus a
+  successful retry; 11 malformed/overlong/numeric/header/SQL/late-owner cases
+  leave all application rows unchanged. Primitive tests cover partial-key edits,
+  exact real boundaries, BLOB bytes, rollback, readonly and nonfinite refusal.
+  Full host tests including 70 Python tests, both 706-response API builds and
+  both 45-download browser builds with cached revoke/regrant retry pass.
+  Legacy field-model consistency, other reader/writer/request boundaries and
+  full original UI/API/security parity remain open. Thanks to xet7.
+
 - Decode and encode native backups without losing NUL, Unicode surrogate pairs
   or lone UTF-16 units, empty/null values, empty/NUL property names or binary64
   precision. Preserve duplicate-key first position and JavaScript index-key

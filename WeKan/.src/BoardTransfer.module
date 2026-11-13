@@ -12,6 +12,8 @@ Private Function Row(r As Result, fields As String[]) As Collection
       Else
         item.Add(ExportText.ReadValue(r, field), field)
       Endif
+    Else If r.Fields.Exist("__weba_number_" & field) Then
+      item.Add(ExportText.ReadNumber(r, field), field)
     Else
       item.Add(r[field], field)
     Endif
@@ -546,6 +548,34 @@ Public Function ReadData(text As String) As Collection
   Return data
 End
 
+Private Sub RestoreEntry(boardId As Integer, item As Collection, cardMap As Collection, entryMap As Collection)
+  Dim kind As String = item["kind"]
+  Dim oldId As String
+  Dim parentId As Integer
+  Dim id As Integer
+  If ["checklist", "comment", "custom", "time", "checkitem", "subtask", "dependency"].Find(kind) < 0 Then Error.Raise("Unknown exported detail kind")
+  oldId = CStr(item["id"])
+  If entryMap.Exist(oldId) Or Not cardMap.Exist(CStr(item["card_id"])) Then Error.Raise("Invalid exported detail identity")
+  parentId = 0
+  If kind = "checkitem" Then
+    If Not entryMap.Exist(CStr(item["parent_id"])) Then Error.Raise("Exported checklist item has no checklist")
+    parentId = entryMap[CStr(item["parent_id"])]
+  Endif
+  id = CInt(item["amount"])
+  If kind = "dependency" Or kind = "subtask" Then
+    If Not cardMap.Exist(CStr(id)) Then Error.Raise("Exported relationship has no target")
+    id = cardMap[CStr(id)]
+    entryMap[oldId] = CardContent.Save(boardId, cardMap[CStr(item["card_id"])], 0, kind, "", "", 0, False, id)
+  Else
+    entryMap[oldId] = CardContent.Save(boardId, cardMap[CStr(item["card_id"])], 0, kind, item["title"], item["body"], parentId, item["done"], item["amount"], item["value_type"])
+  Endif
+  DatabaseText.RestoreNulls($db, "kb_entries", boardId, entryMap[oldId], item, ["title", "body", "value_type"])
+  If item.Exist("author_name") Then
+    If TypeOf(item["author_name"]) <> gb.String Then Error.Raise("Invalid author name")
+    CardContent.RetainAuthorName(boardId, cardMap[CStr(item["card_id"])], "entry", entryMap[oldId], item["author_name"])
+  Endif
+End
+
 Public Function ImportData(text As String, title As String) As Integer
   Dim data As Collection
   Dim viewPolicy As Collection
@@ -554,6 +584,7 @@ Public Function ImportData(text As String, title As String) As Integer
   Dim listMap As New Collection
   Dim cardMap As New Collection
   Dim entryMap As New Collection
+  Dim deferredEntries As New Variant[]
   Dim fileMap As New Collection
   Dim item As Collection
   Dim r As Result
@@ -578,7 +609,7 @@ Public Function ImportData(text As String, title As String) As Integer
     viewPolicy.Remove("keys")
     BoardViewPolicy.InitializeTransfer()
   Endif
-  If Not Trim(title) Or String.Len(title) > 255 Then Error.Raise("Enter a valid board title")
+  If Not Trim(title) Or ExportText.Length(title) > 255 Then Error.Raise("Enter a valid board title")
   CardContent.OpenStore()
   $db = WebDatabase.OpenConnection()
   DatabaseTransactions.Begin($db)
@@ -594,30 +625,30 @@ Public Function ImportData(text As String, title As String) As Integer
   For Each item In data["lanes"]
     oldId = CStr(item["id"])
     titleValue = item["title"]
-    If laneMap.Exist(oldId) Or Not Trim(titleValue) Or String.Len(titleValue) > 255 Then Error.Raise("Invalid exported swimlane")
+    If laneMap.Exist(oldId) Or Not Trim(titleValue) Or ExportText.Length(titleValue) > 255 Then Error.Raise("Invalid exported swimlane")
     r = $db.Create("kb_lanes")
     r["board_id"] = boardId
     r["title"] = titleValue
-    r.Update()
+    DatabaseText.Save($db, r, "kb_lanes", ["board_id", "title"], True)
     laneMap[oldId] = $db.LastInsertId
     r = $db.Create("kb_order")
     r["board_id"] = boardId
     r["kind"] = "lane"
     r["item"] = titleValue
     r["sort_order"] = CInt(item["sort_order"])
-    r.Update()
+    DatabaseText.Save($db, r, "kb_order", ["board_id", "kind", "item", "sort_order"], True)
   Next
   For Each item In data["lists"]
     oldId = CStr(item["id"])
-    If listMap.Exist(oldId) Or Not Trim(item["title"]) Or String.Len(item["title"]) > 32 Then Error.Raise("Invalid exported list")
-    r = $db.Find("kb_lanes", "board_id = &1 AND title = &2", boardId, item["lane"])
+    If listMap.Exist(oldId) Or Not Trim(item["title"]) Or ExportText.Length(item["title"]) > 32 Then Error.Raise("Invalid exported list")
+    r = $db.Exec("SELECT * FROM kb_lanes WHERE board_id = &1 AND " & ExportText.MatchText($db, "title", 2, item["lane"]), boardId, ExportText.BindText($db, item["lane"]))
     If Not r.Available Then Error.Raise("Exported list has no swimlane")
     r = $db.Create("kb_lists")
     r["board_id"] = boardId
     r["title"] = item["title"]
     r["lane"] = item["lane"]
     r["sort_order"] = CInt(item["sort_order"])
-    r.Update()
+    DatabaseText.Save($db, r, "kb_lists", ["board_id", "title", "lane", "sort_order"], True)
     id = $db.LastInsertId
     listMap[oldId] = id
     ItemChanges.Mark(boardId, "list", id)
@@ -625,9 +656,10 @@ Public Function ImportData(text As String, title As String) As Integer
   For Each item In data["cards"]
     oldId = CStr(item["id"])
     If cardMap.Exist(oldId) Or Not listMap.Exist(CStr(item["list_id"])) Then Error.Raise("Invalid exported card identity")
-    r = WorkspaceStore.Record(boardId, "list", listMap[CStr(item["list_id"])])
-    If r!lane <> item["lane"] Or r!title <> item["status"] Then Error.Raise("Exported card/list mismatch")
-    If String.Len(item["title"]) > 255 Then Error.Raise("Invalid exported card title")
+    WorkspaceStore.Record(boardId, "list", listMap[CStr(item["list_id"])])
+    r = $db.Exec(ExportText.SelectRows($db, "kb_lists") & " WHERE board_id=&1 AND id=&2", boardId, listMap[CStr(item["list_id"])])
+    If ExportText.ReadValue(r, "lane") <> item["lane"] Or ExportText.ReadValue(r, "title") <> item["status"] Then Error.Raise("Exported card/list mismatch")
+    If ExportText.Length(item["title"]) > 255 Then Error.Raise("Invalid exported card title")
     id = KanbanStore.SaveCard(boardId, 0, item["title"], item["description"], item["lane"], item["status"], "", item["labels"], item["due_day"], listMap[CStr(item["list_id"])])
     If item.Exist("assignees") Then
       BoardAccess.RestoreAssignees(boardId, id, item["assignees"])
@@ -635,6 +667,7 @@ Public Function ImportData(text As String, title As String) As Integer
       BoardAccess.RestoreAssignees(boardId, id, [CStr(item["assignee"])])
     Endif
     If item.Exist("members") Then BoardAccess.RestoreCardMembers(boardId, id, item["members"])
+    DatabaseText.RestoreNulls($db, "kb_cards", boardId, id, item, ["description", "labels", "due_day", "assignee"])
     If item.Exist("dates") Then CardDates.RestoreDates(boardId, id, item["dates"])
     cardMap[oldId] = id
     r = $db.Create("kb_order")
@@ -650,30 +683,17 @@ Public Function ImportData(text As String, title As String) As Integer
       CardArchive.RestoreStamp(boardId, id, Null)
     Endif
   Next
-  ' Checklists must exist before their children, regardless of JSON array order.
-  For Each kind In ["checklist", "comment", "custom", "time", "checkitem", "subtask", "dependency"]
-    For Each item In data["entries"]
-      If item["kind"] <> kind Then Continue
-      oldId = CStr(item["id"])
-      If entryMap.Exist(oldId) Or Not cardMap.Exist(CStr(item["card_id"])) Then Error.Raise("Invalid exported detail identity")
-      parentId = 0
-      If kind = "checkitem" Then
-        If Not entryMap.Exist(CStr(item["parent_id"])) Then Error.Raise("Exported checklist item has no checklist")
-        parentId = entryMap[CStr(item["parent_id"])]
-      Endif
-      id = CInt(item["amount"])
-      If kind = "dependency" Or kind = "subtask" Then
-        If Not cardMap.Exist(CStr(id)) Then Error.Raise("Exported relationship has no target")
-        id = cardMap[CStr(id)]
-        entryMap[oldId] = CardContent.Save(boardId, cardMap[CStr(item["card_id"])], 0, kind, "", "", 0, False, id)
-      Else
-        entryMap[oldId] = CardContent.Save(boardId, cardMap[CStr(item["card_id"])], 0, kind, item["title"], item["body"], parentId, item["done"], item["amount"], item["value_type"])
-      Endif
-      If item.Exist("author_name") Then
-        If TypeOf(item["author_name"]) <> gb.String Then Error.Raise("Invalid author name")
-        CardContent.RetainAuthorName(boardId, cardMap[CStr(item["card_id"])], "entry", entryMap[oldId], item["author_name"])
-      Endif
-    Next
+  ' Preserve source order whenever its checklist already exists. Only child-
+  ' before-parent input needs a deferred pass; unrelated kinds are not regrouped.
+  For Each item In data["entries"]
+    If item["kind"] = "checkitem" And If Not entryMap.Exist(CStr(item["parent_id"])) Then
+      deferredEntries.Add(item)
+    Else
+      RestoreEntry(boardId, item, cardMap, entryMap)
+    Endif
+  Next
+  For Each item In deferredEntries
+    RestoreEntry(boardId, item, cardMap, entryMap)
   Next
   If entryMap.Count <> data["entries"].Count Then Error.Raise("Unknown exported detail kind")
   For Each item In data["files"]
@@ -715,6 +735,9 @@ Public Function ImportData(text As String, title As String) As Integer
         Error.Raise("Unknown metadata kind")
     End Select
     WorkspaceStore.SetSetting(boardId, item["kind"], id, item["setting"], item["value"])
+    If TypeOf(item["value"]) <> gb.String And If IsNull(item["value"]) Then
+      $db.Exec("UPDATE kb_meta SET value=NULL WHERE board_id=&1 AND kind=&2 AND item_id=&3 AND setting=&4", boardId, item["kind"], id, item["setting"])
+    Endif
   Next
   KanbanStore.Activity(boardId, "Imported weba JSON")
   If data["files"].Count > 0 Then TransferPolicy.RequireTransfer("attachmentsUpload", maxFileBytes)
