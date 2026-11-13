@@ -182,23 +182,7 @@ Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Int
   scope.Add(kind, "kind")
   scope.Add(actor, "author")
   scope.Add(False, "authorNull")
-  r = WorkspaceStore.Record(boardId, "board", boardId)
-  scope.Add(CBool(r!archived), "boardArchived")
-  r = WorkspaceStore.Record(boardId, "card", cardId)
-  scope.Add(CBool(r!archived), "cardArchived")
-  scope.Add(ExportText.ReadValue(r, "lane"), "cardLane")
-  scope.Add(ExportText.ReadValue(r, "status"), "cardStatus")
-  scope.Add(KanbanStore.ReadCardListId(boardId, cardId), "listId")
-  If scope["listId"] > 0 Then
-    r = WorkspaceStore.Record(boardId, "list", scope["listId"])
-    scope.Add(ExportText.ReadValue(r, "lane"), "listLane")
-    scope.Add(ExportText.ReadValue(r, "title"), "listTitle")
-    scope.Add(WorkspaceStore.ListHidden(boardId, scope["listId"]), "listHidden")
-    scope.Add(WorkspaceStore.Archived(boardId, "list", scope["listId"]), "listArchived")
-    target = $db.Exec("SELECT id FROM kb_lanes WHERE board_id=&1 AND " & ExportText.MatchText($db, "title", 2, scope["listLane"]), boardId, ExportText.BindText($db, scope["listLane"]))
-    scope.Add(target.Available, "laneExists")
-    If target.Available Then scope.Add(WorkspaceStore.Archived(boardId, "lane", target!id), "laneArchived")
-  Endif
+  CaptureDetailScope(boardId, cardId, scope)
   If entryId Then
     $db.Exec("UPDATE kb_entries SET title=title WHERE board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, entryId)
     r = Entry(boardId, cardId, entryId, True)
@@ -295,17 +279,30 @@ Catch
   Error.Raise(failure)
 End
 
-Private Function TextIsNull(row As Result, field As String) As Boolean
-  If row.Fields.Exist("__weba_null_" & field) Then Return CBool(row["__weba_null_" & field])
-  Return TypeOf(row[field]) <> gb.String And IsNull(row[field])
+Private Sub CaptureDetailScope(boardId As Integer, cardId As Integer, scope As Collection)
+  Dim r As Result
+  Dim target As Result
+  r = WorkspaceStore.Record(boardId, "board", boardId)
+  scope.Add(CBool(r!archived), "boardArchived")
+  r = WorkspaceStore.Record(boardId, "card", cardId)
+  scope.Add(CBool(r!archived), "cardArchived")
+  scope.Add(ExportText.ReadValue(r, "lane"), "cardLane")
+  scope.Add(ExportText.ReadValue(r, "status"), "cardStatus")
+  scope.Add(KanbanStore.ReadCardListId(boardId, cardId), "listId")
+  If scope["listId"] > 0 Then
+    r = WorkspaceStore.Record(boardId, "list", scope["listId"])
+    scope.Add(ExportText.ReadValue(r, "lane"), "listLane")
+    scope.Add(ExportText.ReadValue(r, "title"), "listTitle")
+    scope.Add(WorkspaceStore.ListHidden(boardId, scope["listId"]), "listHidden")
+    scope.Add(WorkspaceStore.Archived(boardId, "list", scope["listId"]), "listArchived")
+    target = $db.Exec("SELECT id FROM kb_lanes WHERE board_id=&1 AND " & ExportText.MatchText($db, "title", 2, scope["listLane"]), boardId, ExportText.BindText($db, scope["listLane"]))
+    scope.Add(target.Available, "laneExists")
+    If target.Available Then scope.Add(WorkspaceStore.Archived(boardId, "lane", target!id), "laneArchived")
+  Endif
 End
 
-' The caller retains its transaction through data, history and change-clock writes.
-Private Sub RequireSavedEntry(boardId As Integer, cardId As Integer, entryId As Integer, scope As Collection)
+Private Sub RequireDetailScope(boardId As Integer, cardId As Integer, scope As Collection)
   Dim row As Result
-  Dim values As Collection
-  Dim field As String
-  Dim kind As String = scope["kind"]
   Dim listId As Integer = scope["listId"]
   If Not WebIdentity.Username Or WebIdentity.Username <> scope["actor"] Then Error.Raise("Sign in required")
   RequireCard(boardId, cardId)
@@ -327,6 +324,20 @@ Private Sub RequireSavedEntry(boardId As Integer, cardId As Integer, entryId As 
       If WorkspaceStore.Archived(boardId, "lane", row!id) <> scope["laneArchived"] Then Error.Raise("Card swimlane archive state changed")
     Endif
   Endif
+End
+
+Private Function TextIsNull(row As Result, field As String) As Boolean
+  If row.Fields.Exist("__weba_null_" & field) Then Return CBool(row["__weba_null_" & field])
+  Return TypeOf(row[field]) <> gb.String And IsNull(row[field])
+End
+
+' The caller retains its transaction through data, history and change-clock writes.
+Private Sub RequireSavedEntry(boardId As Integer, cardId As Integer, entryId As Integer, scope As Collection)
+  Dim row As Result
+  Dim values As Collection
+  Dim field As String
+  Dim kind As String = scope["kind"]
+  RequireDetailScope(boardId, cardId, scope)
   row = Entry(boardId, cardId, entryId, True)
   values = EntryDraft.Record(row)
   If Not $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND id=&3 AND title IS NOT NULL AND body IS NOT NULL AND parent_id IS NOT NULL AND done IS NOT NULL AND amount IS NOT NULL AND value_type IS NOT NULL", boardId, cardId, entryId).Available Then Error.Raise("Entry value became null")
@@ -354,22 +365,138 @@ End
 Public Sub DeleteEntry(boardId As Integer, cardId As Integer, entryId As Integer)
   Dim transaction As Boolean
   Dim failure As String
+  Dim actor As String = WebIdentity.Username
   Dim r As Result = Entry(boardId, cardId, entryId, True)
-  BoardAccess.Require(boardId, If(ExportText.ReadValue(r, "kind") = "comment", "comment", "write"))
-  BeginChange(boardId, cardId, If(ExportText.ReadValue(r, "kind") = "comment", "comment", "write"))
+  Dim kind As String = ExportText.ReadValue(r, "kind")
+  Dim capability As String = If(kind = "comment", "comment", "write")
+  Dim scope As New Collection
+  Dim ids As New Integer[]
+  Dim order As New Integer[]
+  Dim removed As New Integer[]
+  Dim stamps As New Collection
+  Dim id As Integer
+  BoardAccess.Require(boardId, capability)
+  If kind = "comment" And ExportText.ReadValue(r, "author") <> actor And Not BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Comment not editable")
+  BeginChange(boardId, cardId, capability, actor)
   transaction = True
+  scope.Add(actor, "actor")
+  scope.Add(capability, "capability")
+  scope.Add(kind, "kind")
+  CaptureDetailScope(boardId, cardId, scope)
+  ids.Add(entryId)
+  If kind = "checklist" Then
+    r = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND parent_id=&3", boardId, cardId, entryId)
+    For Each r
+      If ids.Find(r!id) < 0 Then ids.Add(r!id)
+    Next
+  Endif
+  ids.Sort()
+  For Each id In ids
+    $db.Exec("UPDATE kb_entries SET title=title WHERE board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, id)
+  Next
   r = Entry(boardId, cardId, entryId, True)
-  If ExportText.ReadValue(r, "kind") = "comment" And ExportText.ReadValue(r, "author") <> WebIdentity.Username And Not BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Comment not editable")
-  If ExportText.ReadValue(r, "kind") = "checklist" Then $db.Exec("DELETE FROM kb_entries WHERE board_id = &1 AND card_id = &2 AND parent_id = &3", boardId, cardId, entryId)
-  $db.Exec("DELETE FROM kb_entries WHERE board_id = &1 AND card_id = &2 AND id = &3", boardId, cardId, entryId)
+  If ExportText.ReadValue(r, "kind") <> kind Then Error.Raise("Entry type changed; reopen before deleting")
+  scope.Add(ExportText.ReadValue(r, "author"), "author")
+  If kind = "comment" And scope["author"] <> actor And Not BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Comment not editable")
+  If kind = "subtask" Or kind = "dependency" Then
+    scope.Add(CInt(r!amount), "relatedId")
+    r = WorkspaceStore.Record(boardId, "card", scope["relatedId"])
+    scope.Add(CBool(r!archived), "relatedArchived")
+  Endif
+  For Each id In ids
+    r = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, id)
+    If Not r.Available Then Error.Raise("Entry deletion set changed")
+    If kind = "checklist" And id <> entryId Then
+      If IsNull(r!parent_id) Or r!parent_id <> entryId Then Error.Raise("Checklist deletion set changed")
+    Endif
+    stamps.Add(DeletionStamp(r), CStr(id))
+    If id <> entryId Then order.Add(id)
+  Next
+  order.Add(entryId)
+  RequireEntryDeletion(boardId, cardId, entryId, scope, ids, stamps, removed, False)
+  For Each id In order
+    RequireEntryDeletion(boardId, cardId, entryId, scope, ids, stamps, removed, False, id)
+    $db.Exec("DELETE FROM kb_entries WHERE board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, id)
+    removed.Add(id)
+    RequireEntryDeletion(boardId, cardId, entryId, scope, ids, stamps, removed, False, id)
+  Next
+  RequireEntryDeletion(boardId, cardId, entryId, scope, ids, stamps, removed, False)
   RetiredAuthors.Prune(boardId)
+  RequireEntryDeletion(boardId, cardId, entryId, scope, ids, stamps, removed, True)
   KanbanStore.Activity(boardId, "Deleted card detail", "card", cardId)
+  RequireEntryDeletion(boardId, cardId, entryId, scope, ids, stamps, removed, True)
   DatabaseTransactions.Commit($db)
   transaction = False
 Catch
   failure = Error.Text
   If transaction Then Try DatabaseTransactions.Rollback($db)
   Error.Raise(failure)
+End
+
+Private Function DeletionStamp(row As Result) As String
+  Dim data As New Collection
+  Dim field As ResultField
+  Dim value As Variant
+  For Each field In row.Fields
+    If Left(field.Name, 7) = "__weba_" Then Continue
+    If field.Type = DB.String Then
+      If TextIsNull(row, field.Name) Then
+        data.Add(JSON.Null, field.Name)
+      Else
+        data.Add(ExportText.ReadValue(row, field.Name), field.Name)
+      Endif
+    Else If field.Type = DB.Float Then
+      value = ExportText.ReadNumber(row, field.Name)
+      data.Add(If(IsNull(value), JSON.Null, value), field.Name)
+    Else If field.Type = DB.Blob Then
+      If IsNull(row[field.Name]) Then
+        data.Add(JSON.Null, field.Name)
+      Else
+        data.Add(Base64(row[field.Name].Data), field.Name)
+      Endif
+    Else
+      value = row[field.Name]
+      data.Add(If(IsNull(value), JSON.Null, value), field.Name)
+    Endif
+  Next
+  Return JsonText.Encode(data)
+End
+
+Private Sub RequireEntryDeletion(boardId As Integer, cardId As Integer, entryId As Integer, scope As Collection, ids As Integer[], stamps As Collection, removed As Integer[], cleaned As Boolean, Optional effectId As Integer)
+  Dim id As Integer
+  Dim row As Result
+  Dim checking As Integer[]
+  RequireDetailScope(boardId, cardId, scope)
+  If scope["kind"] = "comment" And scope["author"] <> scope["actor"] And Not BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Comment not editable")
+  If scope.Exist("relatedId") Then
+    row = WorkspaceStore.Record(boardId, "card", scope["relatedId"])
+    If CBool(row!archived) <> scope["relatedArchived"] Then Error.Raise("Related card archive state changed")
+  Endif
+  If effectId > 0 Then
+    checking = New Integer[]
+    checking.Add(entryId)
+    If effectId <> entryId Then checking.Add(effectId)
+  Else
+    checking = ids
+  Endif
+  For Each id In checking
+    If removed.Find(id) >= 0 Then
+      If $db.Exec("SELECT id FROM kb_entries WHERE id=&1", id).Available Then Error.Raise("Deleted entry reappeared")
+      If cleaned And If $db.Tables.Exist("kb_retired_authors") Then
+        If $db.Exec("SELECT item_id FROM kb_retired_authors WHERE kind='entry' AND item_id=&1", id).Available Then Error.Raise("Deleted entry provenance remains")
+      Endif
+    Else
+      row = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, id)
+      If Not row.Available Then Error.Raise("Entry deletion set changed")
+      If DeletionStamp(row) <> stamps[CStr(id)] Then Error.Raise("Entry changed during deletion")
+    Endif
+  Next
+  If scope["kind"] = "checklist" And (effectId = 0 Or effectId = entryId) Then
+    row = $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND parent_id=&3 AND id<>&3", boardId, cardId, entryId)
+    For Each row
+      If ids.Find(row!id) < 0 Or removed.Find(row!id) >= 0 Then Error.Raise("Checklist deletion set changed")
+    Next
+  Endif
 End
 
 Public Function NewSubtask(boardId As Integer, cardId As Integer, title As String) As Integer

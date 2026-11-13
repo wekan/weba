@@ -12,7 +12,7 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
  try{
   browser=await chromium.connectOverCDP(process.env.WEBA_BROWSER_URL);context=await browser.newContext({viewport:{width:1440,height:1000}});const page=await context.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(e.message));const settle=()=>page.waitForFunction(()=>window.gw&&gw.commands.length===0),click=async n=>{await settle();await page.locator(c(n)).click();await settle();};
-  await page.goto(process.env.WEBA_TEST_URL);await page.locator(input('WebTextName')).fill('rest-other');await page.locator(input('WebTextPass')).fill(process.env.WEBA_TEST_PASSWORD);await click('WebButtonLogin');await page.goto(process.env.WEBA_TEST_URL+'/b/'+seed.board);
+  await page.goto(process.env.WEBA_TEST_URL);await page.locator(input('WebTextName')).fill('rest-other');await page.locator(input('WebTextPass')).fill(process.env.WEBA_TEST_PASSWORD);await click('WebButtonLogin');await expect(page.locator('.weba-content')).toBeVisible();await page.goto(process.env.WEBA_TEST_URL+'/b/'+seed.board);await expect(page.locator('.weba-content')).toHaveAttribute('data-board',String(seed.board));
   await page.locator(`.weba-card[data-card-id="${seed.items[0].card}"] .weba-card-menu`).click();await click('ContextComments');
   async function kind(label){await settle();await page.locator('[id$=".DetailKind:select"]').selectOption({label});await settle();}
   async function row(text){await page.locator(c('DetailTree')+' tr[id]').filter({hasText:shown(text)}).last().click();await settle();}
@@ -45,7 +45,18 @@ with sqlite3.connect(sys.argv[1]) as d:
   await kind('Comments');const comment=initial.entries.find(e=>e.kind==='comment');await row(comment.body);await expect(page.locator(input('DetailBody'))).toHaveValue(comment.body);await expect(page.locator(c('DetailTree'))).toContainText(shown(comment.author)+': '+shown(comment.body));
   await kind('Checklists');const checklist=initial.entries.find(e=>e.kind==='checklist');await row(checklist.title);await expect(page.locator(input('DetailTitle'))).toHaveValue(checklist.title);
   await kind('Attachments');await expect(page.locator(c('DetailTree'))).toContainText(shown(initial.files[0].filename));await expect(page.locator(c('DetailsPanel')+' tag')).toHaveCount(0);
-  await page.reload();await page.locator(`.weba-card[data-card-id="${seed.items[0].card}"] .weba-card-menu`).click();await click('ContextComments');await kind('Custom fields');await row(local);await expect(page.locator(input('DetailBody'))).toHaveValue(retryBody);expect(errors).toEqual([]);
-  console.log('Detail complete-text browser: native custom/comment/checklist/file text, exact encoded editor values, external suffix heartbeat, dirty local title with independent external body save, post-history archive refusal keeps all board data and exact dirty draft, retry, New clears stale values, literal markup and reload passed');
+  await page.reload();await page.locator(`.weba-card[data-card-id="${seed.items[0].card}"] .weba-card-menu`).click();await click('ContextComments');await kind('Custom fields');await row(local);await expect(page.locator(input('DetailBody'))).toHaveValue(retryBody);const deleteDraft=retryBody+' pending delete';
+  await page.locator(input('DetailBody')).evaluate((e,t)=>{e.value=t;e.dispatchEvent(new Event('input',{bubbles:true}));},deleteDraft);await settle();
+  const beforeDelete=sql();sql("CREATE TRIGGER detail_delete_final AFTER DELETE ON kb_entries WHEN OLD.board_id="+seed.board+" AND OLD.card_id="+seed.items[0].card+" AND OLD.kind='custom' BEGIN UPDATE kb_cards SET archived=1 WHERE id="+seed.items[0].card+"; END");
+  try{
+   await click('DetailDelete');await expect(page.locator(c('Notice'))).toContainText('Card archive state changed');
+   await expect(page.locator(input('DetailTitle'))).toHaveValue(local);await expect(page.locator(input('DetailBody'))).toHaveValue(deleteDraft);
+   expect(sql()).toBe(beforeDelete);expect(read().entries.find(e=>e.kind==='custom')).toMatchObject({title:local,body:retryBody});
+  }finally{sql('DROP TRIGGER detail_delete_final');}
+  await click('DetailDelete');expect(read().entries.some(e=>e.kind==='custom')).toBe(false);
+  await expect(page.locator(input('DetailTitle'))).toHaveValue('');await expect(page.locator(input('DetailBody'))).toHaveValue('');
+  await expect(page.locator(c('DetailTree')+' tr[id]').filter({hasText:shown(local)})).toHaveCount(0);
+  expect(errors).toEqual([]);
+  console.log('Detail complete-text browser: native custom/comment/checklist/file text, exact encoded editor values, external suffix heartbeat, dirty local title with independent external body save, post-history archive refusal keeps all board data and exact dirty draft, retry, New clears stale values, literal markup/reload and delete rollback with exact dirty/provenance retention and retry passed');
  }finally{if(context)await context.close();if(browser)await browser.close();}
 })().catch(e=>{let message=e.stack||String(e);if(process.env.WEBA_TEST_PASSWORD)message=message.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(message);process.exitCode=1;});

@@ -1,0 +1,225 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim targetId As Integer
+  Dim parentId As Integer
+  Dim entryId As Integer
+  Dim childId As Integer
+  Dim secondChild As Integer
+  Dim timeChild As Integer
+  Dim foreignChild As Integer
+  Dim legacyChild As Integer
+  Dim foreignBoard As Integer
+  Dim foreignCard As Integer
+  Dim actor As String
+  Dim kind As String
+  Dim stage As String
+  Dim effect As String
+  Dim before As String
+  Dim amount As Float
+  Dim denied As Boolean
+  Dim conn As Connection
+  Dim row As Result
+  Dim suffix As String = Chr(0) & "Ω😀'delete"
+  For Each actor In ["delete-global", "delete-owner", "delete-writer", "delete-commenter", "delete-reader", "delete-outsider"]
+    WebDatabase.Register(actor, "x")
+  Next
+  SignIn("delete-owner")
+  boardId = KanbanStore.AddBoard("Entry deletion final scope")
+  BoardAccess.SetMember(boardId, "delete-writer", "normal")
+  BoardAccess.SetMember(boardId, "delete-commenter", "comment-only")
+  BoardAccess.SetMember(boardId, "delete-reader", "read-only")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Card" & suffix, "", "Default", "Todo", "", "", "")
+  targetId = KanbanStore.SaveCard(boardId, 0, "Target" & suffix, "", "Default", "Todo", "", "", "")
+  conn = WebDatabase.OpenConnection()
+  SignIn("delete-writer")
+  entryId = CardContent.Save(boardId, cardId, 0, "comment", "", "Cold metadata", 0, False, 0)
+  If conn.Exec("SELECT COUNT(*) AS total FROM kb_retired_authors WHERE board_id=&1", boardId)!total <> 0 Then Error.Raise("Empty metadata fixture contains records")
+  before = Frame()
+  conn.Exec("CREATE TRIGGER inject_delete_scope AFTER INSERT ON kb_history BEGIN UPDATE kb_members SET role='read-only' WHERE board_id=NEW.board_id AND username='delete-writer'; END")
+  Try CardContent.DeleteEntry(boardId, cardId, entryId)
+  denied = Error
+  conn.Exec("DROP TRIGGER inject_delete_scope")
+  If Not denied Or Frame() <> before Then Error.Raise("Empty-metadata deletion failed exact rollback")
+  CardContent.DeleteEntry(boardId, cardId, entryId)
+  If conn.Exec("SELECT COUNT(*) AS total FROM kb_retired_authors WHERE board_id=&1", boardId)!total <> 0 Then Error.Raise("Deletion created author metadata")
+  parentId = CardContent.Save(boardId, cardId, 0, "checklist", "Parent", "", 0, False, 0)
+  For Each kind In ["comment", "checklist", "checkitem", "custom", "time", "subtask", "dependency"]
+    amount = 0
+    If kind = "subtask" Or kind = "dependency" Then amount = targetId
+    entryId = CardContent.Save(boardId, cardId, 0, kind, "Entry" & suffix, "Body" & suffix, If(kind = "checkitem", parentId, 0), False, amount)
+    RetiredAuthors.Remember("entry", entryId, boardId, cardId, "Retained" & suffix)
+    If kind = "checklist" Then
+      childId = CardContent.Save(boardId, cardId, 0, "checkitem", "Child" & suffix, "Body" & suffix, entryId, True, 0)
+      CardContent.RetainAuthorName(boardId, cardId, "entry", childId, "Child author" & suffix)
+    Endif
+    For Each stage In ["AFTER DELETE ON kb_entries WHEN OLD.id=" & CStr(entryId), "AFTER DELETE ON kb_retired_authors WHEN OLD.kind='entry' AND OLD.item_id=" & CStr(entryId), "AFTER INSERT ON kb_history", "AFTER UPDATE ON kb_item_changes WHEN NEW.kind='card' AND NEW.item_id=" & CStr(cardId)]
+      For Each effect In ["UPDATE kb_members SET role='read-only' WHERE board_id=" & CStr(boardId) & " AND username='delete-writer'", "DELETE FROM kb_members WHERE board_id=" & CStr(boardId) & " AND username='delete-writer'", "UPDATE account_sessions SET generation=generation+1 WHERE username='delete-writer'", "INSERT INTO kb_member_flags (board_id,username,flag) VALUES (" & CStr(boardId) & ",'delete-writer','isReadAssignedOnly')", "UPDATE kb_cards SET archived=1 WHERE id=" & CStr(cardId), "UPDATE kb_boards SET archived=1 WHERE id=" & CStr(boardId), "UPDATE kb_cards SET board_id=2147483647 WHERE id=" & CStr(cardId), "UPDATE kb_card_lists SET list_id=2147483647 WHERE card_id=" & CStr(cardId), "INSERT INTO kb_deleted_items (board_id,kind,item_id,batch_id,actor,deleted_at) VALUES (" & CStr(boardId) & ",'card'," & CStr(cardId) & ",1,'delete-owner',0)", "INSERT INTO kb_entries (id,board_id,card_id,kind,title,body,parent_id,done,amount,value_type,author) VALUES (" & CStr(entryId) & "," & CStr(boardId) & "," & CStr(cardId) & ",'custom','resurrected','',0,0,0,'text','delete-writer')", "SELECT RAISE(ABORT,'delete-scope-private-canary')"]
+        before = Frame()
+        conn.Exec("CREATE TRIGGER inject_delete_scope " & stage & " BEGIN " & effect & "; END")
+        Try CardContent.DeleteEntry(boardId, cardId, entryId)
+        denied = Error
+        conn.Exec("DROP TRIGGER inject_delete_scope")
+        If Not denied Or Frame() <> before Then Error.Raise("Deletion scope failed: " & kind & ": " & stage & ": " & effect)
+      Next
+    Next
+    If kind = "subtask" Or kind = "dependency" Then
+      For Each effect In ["UPDATE kb_cards SET board_id=2147483647 WHERE id=" & CStr(targetId), "UPDATE kb_cards SET archived=1 WHERE id=" & CStr(targetId), "DELETE FROM kb_cards WHERE id=" & CStr(targetId), "UPDATE kb_cards SET assignee='delete-writer' WHERE id=" & CStr(cardId) & "; INSERT INTO kb_member_flags (board_id,username,flag) VALUES (" & CStr(boardId) & ",'delete-writer','isReadAssignedOnly')"]
+        before = Frame()
+        conn.Exec("CREATE TRIGGER inject_delete_scope AFTER INSERT ON kb_history BEGIN " & effect & "; END")
+        Try CardContent.DeleteEntry(boardId, cardId, entryId)
+        denied = Error
+        conn.Exec("DROP TRIGGER inject_delete_scope")
+        If Not denied Or Frame() <> before Then Error.Raise("Deleted relationship lost target scope: " & kind)
+      Next
+    Endif
+    CardContent.DeleteEntry(boardId, cardId, entryId)
+    If conn.Find("kb_entries", "id=&1", entryId).Available Then Error.Raise("Deletion retry retained root")
+    If conn.Find("kb_retired_authors", "kind='entry' AND item_id=&1", entryId).Available Then Error.Raise("Deletion retained root provenance")
+    If kind = "checklist" Then
+      If conn.Find("kb_entries", "id=&1", childId).Available Or conn.Find("kb_retired_authors", "kind='entry' AND item_id=&1", childId).Available Then Error.Raise("Checklist retry retained child/provenance")
+    Endif
+  Next
+  SignIn("delete-commenter")
+  entryId = CardContent.Save(boardId, cardId, 0, "comment", "", "Own comment", 0, False, 0)
+  before = Frame()
+  conn.Exec("CREATE TRIGGER inject_delete_scope BEFORE UPDATE OF title ON kb_cards WHEN OLD.id=" & CStr(cardId) & " BEGIN UPDATE kb_entries SET kind='custom' WHERE id=" & CStr(entryId) & "; END")
+  Try CardContent.DeleteEntry(boardId, cardId, entryId)
+  denied = Error
+  conn.Exec("DROP TRIGGER inject_delete_scope")
+  If Not denied Or Frame() <> before Then Error.Raise("Comment-only locked kind race bypassed write restriction")
+  CardContent.DeleteEntry(boardId, cardId, entryId)
+  SignIn("delete-writer")
+  parentId = CardContent.Save(boardId, cardId, 0, "checklist", "Group" & suffix, "", 0, False, 0)
+  childId = CardContent.Save(boardId, cardId, 0, "checkitem", "First" & suffix, "Body" & suffix, parentId, False, 0)
+  secondChild = CardContent.Save(boardId, cardId, 0, "custom", "Second" & suffix, "Body" & suffix, parentId, False, 0)
+  timeChild = CardContent.Save(boardId, cardId, 0, "time", "Time", "Body" & suffix, parentId, True, JsonText.Decode("100000.00000000001"))
+  For Each entryId In [parentId, childId, secondChild, timeChild]
+    CardContent.RetainAuthorName(boardId, cardId, "entry", entryId, "Retired group" & suffix)
+  Next
+  SignIn("delete-owner")
+  legacyChild = CardContent.Save(boardId, cardId, 0, "comment", "", "Legacy mixed child" & suffix, parentId, False, 0)
+  CardContent.RetainAuthorName(boardId, cardId, "entry", legacyChild, "Legacy author" & suffix)
+  foreignBoard = KanbanStore.AddBoard("PRIVATE deletion canary")
+  foreignCard = KanbanStore.SaveCard(foreignBoard, 0, "Foreign", "", "Default", "Todo", "", "", "")
+  foreignChild = CardContent.Save(foreignBoard, foreignCard, 0, "custom", "Foreign" & suffix, "Foreign body" & suffix, parentId, False, 0)
+  CardContent.RetainAuthorName(foreignBoard, foreignCard, "entry", foreignChild, "Foreign author" & suffix)
+  SignIn("delete-writer")
+  before = Frame()
+  conn.Exec("CREATE TRIGGER inject_delete_scope BEFORE UPDATE OF title ON kb_entries WHEN OLD.id=" & CStr(childId) & " BEGIN UPDATE kb_entries SET parent_id=0 WHERE id=" & CStr(secondChild) & "; END")
+  Try CardContent.DeleteEntry(boardId, cardId, parentId)
+  denied = Error
+  conn.Exec("DROP TRIGGER inject_delete_scope")
+  If Not denied Or Frame() <> before Then Error.Raise("Lock-time reparented child was deleted outside checklist")
+  For Each effect In ["INSERT INTO kb_entries (board_id,card_id,kind,title,body,parent_id,done,amount,value_type,author) VALUES (" & CStr(boardId) & "," & CStr(cardId) & ",'checkitem','late child',''," & CStr(parentId) & ",0,0,'text','delete-owner')", "UPDATE kb_entries SET parent_id=0 WHERE id=" & CStr(secondChild), "UPDATE kb_entries SET card_id=" & CStr(targetId) & " WHERE id=" & CStr(secondChild), "UPDATE kb_entries SET kind='comment' WHERE id=" & CStr(secondChild), "UPDATE kb_entries SET author='' WHERE id=" & CStr(secondChild), "UPDATE kb_entries SET body=CAST(" & conn.FormatBlob("Body" & suffix & "changed") & " AS TEXT) WHERE id=" & CStr(secondChild), "UPDATE kb_entries SET amount=100000 WHERE id=" & CStr(timeChild), "DELETE FROM kb_entries WHERE id=" & CStr(secondChild), "INSERT INTO kb_entries (id,board_id,card_id,kind,title,body,parent_id,done,amount,value_type,author) VALUES (" & CStr(childId) & "," & CStr(boardId) & "," & CStr(cardId) & ",'checkitem','resurrected',''," & CStr(parentId) & ",0,0,'text','delete-owner')", "UPDATE kb_retired_authors SET board_id=2147483647 WHERE kind='entry' AND item_id=" & CStr(secondChild)]
+    before = Frame()
+    conn.Exec("CREATE TRIGGER inject_delete_scope AFTER DELETE ON kb_entries WHEN OLD.id=" & CStr(childId) & " BEGIN " & effect & "; END")
+    Try CardContent.DeleteEntry(boardId, cardId, parentId)
+    denied = Error
+    conn.Exec("DROP TRIGGER inject_delete_scope")
+    If Not denied Or Frame() <> before Then Error.Raise("Checklist remaining-set/full-value/provenance guard failed: " & effect)
+  Next
+  before = Frame()
+  conn.Exec("CREATE TRIGGER inject_delete_scope AFTER DELETE ON kb_entries WHEN OLD.id=" & CStr(childId) & " BEGIN UPDATE kb_members SET role='read-only' WHERE board_id=" & CStr(boardId) & " AND username='delete-writer'; END")
+  conn.Exec("CREATE TRIGGER restore_delete_scope AFTER DELETE ON kb_entries WHEN OLD.id=" & CStr(secondChild) & " BEGIN UPDATE kb_members SET role='normal' WHERE board_id=" & CStr(boardId) & " AND username='delete-writer'; END")
+  Try CardContent.DeleteEntry(boardId, cardId, parentId)
+  denied = Error
+  conn.Exec("DROP TRIGGER inject_delete_scope")
+  conn.Exec("DROP TRIGGER restore_delete_scope")
+  If Not denied Or Frame() <> before Then Error.Raise("Temporary cascade permission loss bypassed per-effect guard")
+  For Each actor In ["delete-reader", "delete-outsider", "delete-global"]
+    SignIn(actor)
+    before = Frame()
+    Try CardContent.DeleteEntry(boardId, cardId, parentId)
+    denied = Error
+    If Not denied Or Frame() <> before Then Error.Raise("Unauthorized cascade changed state")
+  Next
+  SignIn("delete-writer")
+  CardContent.DeleteEntry(boardId, cardId, parentId)
+  For Each entryId In [parentId, childId, secondChild, timeChild, legacyChild]
+    If conn.Find("kb_entries", "id=&1", entryId).Available Or conn.Find("kb_retired_authors", "kind='entry' AND item_id=&1", entryId).Available Then Error.Raise("Mixed checklist cascade retained rows/provenance")
+  Next
+  row = conn.Exec(ExportText.SelectRows(conn, "kb_entries") & " WHERE id=&1", foreignChild)
+  If Not row.Available Then Error.Raise("Cascade deleted foreign child")
+  If ExportText.ReadValue(row, "body") <> "Foreign body" & suffix Then Error.Raise("Cascade changed foreign content")
+  If RetiredAuthors.DisplayName("entry", foreignChild, "") <> "Foreign author" & suffix Then Error.Raise("Cascade changed foreign provenance")
+  SignIn("delete-owner")
+  entryId = CardContent.Save(boardId, cardId, 0, "comment", "", "Owner comment", 0, False, 0)
+  BoardAccess.SetMember(boardId, "delete-writer", "board-admin")
+  SignIn("delete-writer")
+  before = Frame()
+  conn.Exec("CREATE TRIGGER inject_delete_scope AFTER INSERT ON kb_history BEGIN UPDATE kb_members SET role='normal' WHERE board_id=NEW.board_id AND username='delete-writer'; END")
+  Try CardContent.DeleteEntry(boardId, cardId, entryId)
+  denied = Error
+  conn.Exec("DROP TRIGGER inject_delete_scope")
+  If Not denied Or Frame() <> before Then Error.Raise("Foreign-comment deletion lost admin scope")
+  CardContent.DeleteEntry(boardId, cardId, entryId)
+  SignIn("delete-owner")
+  BoardAccess.SetMember(boardId, "delete-writer", "normal")
+  SignIn("delete-writer")
+  entryId = CardContent.Save(boardId, cardId, 0, "comment", "", "Own role transition", 0, False, 0)
+  conn.Exec("CREATE TRIGGER inject_delete_scope AFTER INSERT ON kb_history BEGIN UPDATE kb_members SET role='comment-only' WHERE board_id=NEW.board_id AND username='delete-writer'; END")
+  CardContent.DeleteEntry(boardId, cardId, entryId)
+  conn.Exec("DROP TRIGGER inject_delete_scope")
+  If conn.Find("kb_entries", "id=&1", entryId).Available Then Error.Raise("Permitted own-comment deletion retained row")
+  Print "Entry deletion: all seven kinds, data/provenance/history/clock scope/identity/role/raw/archive/rebound/tombstone/SQL/resurrection rollback, checklist child/provenance retry, empty metadata, locked kind, remaining-set/near-ULP/cascade/temporary-role/foreign preservation and comment-role controls passed"
+End
+
+Private Sub SignIn(actor As String)
+  Session["username"] = actor
+  Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+End
+
+Private Function Frame() As String
+  Dim conn As Connection = WebDatabase.OpenConnection()
+  Dim table As Table
+  Dim tables As New String[]
+  Dim tableName As String
+  Dim order As String[]
+  Dim key As String
+  Dim rows As Result
+  Dim field As ResultField
+  Dim values As Collection
+  Dim data As Variant[]
+  Dim result As New Collection
+  For Each table In conn.Tables
+    If Left(table.Name, 7) <> "sqlite_" Then tables.Add(table.Name)
+  Next
+  tables.Sort()
+  For Each tableName In tables
+    order = New String[]
+    For Each key In conn.Tables[tableName].PrimaryKey
+      order.Add(conn.Quote(key))
+    Next
+    rows = conn.Exec(ExportText.SelectRows(conn, tableName) & If(order.Count, " ORDER BY " & order.Join(","), ""))
+    data = New Variant[]
+    For Each rows
+      values = New Collection
+      For Each field In rows.Fields
+        If Left(field.Name, 7) = "__weba_" Then Continue
+        If field.Type = DB.String Then
+          If rows.Fields.Exist("__weba_null_" & field.Name) Then
+            If rows["__weba_null_" & field.Name] Then
+              values[field.Name] = JSON.Null
+            Else
+              values[field.Name] = ExportText.ReadValue(rows, field.Name)
+            Endif
+          Else
+            values[field.Name] = rows[field.Name]
+          Endif
+        Else If field.Type = DB.Blob Then
+          If IsNull(rows[field.Name]) Then
+            values[field.Name] = JSON.Null
+          Else
+            values[field.Name] = Base64(rows[field.Name].Data)
+          Endif
+        Else
+          values[field.Name] = rows[field.Name]
+        Endif
+      Next
+      data.Add(values)
+    Next
+    result[tableName] = data
+  Next
+  Return JsonText.Encode(result)
+End

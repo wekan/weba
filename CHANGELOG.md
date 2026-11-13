@@ -2,6 +2,26 @@
 
 This work adds the following features and fixes:
 
+- Guard native detail deletion across all seven entry kinds. Reject a kind change
+  during locking before using comment-only authority, and recheck current actor,
+  permission, comment ownership/admin scope and related-card access throughout.
+  Lock and snapshot the same-board/card checklist set, rejecting lock-time or
+  later membership/reparent/value changes. Check the root/current record around
+  each delete and complete absence/provenance at transaction boundaries; keep
+  existing mixed-child cascade semantics without deleting foreign records.
+  Exact text/number/NULL snapshots retain near-ULP values and retired authors.
+  Resurrection, temporary role loss, metadata rebind, SQL and late history/clock
+  changes roll back rows, provenance and clocks; valid own-comment role changes
+  and retries still work. Boundary scans avoid repeated whole-set database reads;
+  a disposable 1,000-child deletion completed in about three seconds.
+  Native save/copy/backup compatibility and the full pinned host/API/security/
+  session gate with 70 Python tests pass. Source/packaged detail/live UI verifies
+  refusal retains dirty fields and board data, then retry deletes and clears the
+  editor; ordinary editor/admin/mobile checks pass. Browser setup now waits for
+  authenticated navigation and the mounted board before operating on controls.
+  Timer start/stop, file/other guards, numeric editor/model readers and full
+  original parity remain open. Thanks to xet7.
+
 - Recheck native saves for comments, checklists/items, custom fields, time,
   subtasks and dependencies immediately after storage and after history/clocks.
   Capture/lock the actor before board/card locks, lock existing entries and

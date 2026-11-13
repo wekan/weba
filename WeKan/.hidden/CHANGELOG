@@ -1,3 +1,13 @@
+Native entry deletion now rejects locked kind/capability races and rechecks
+actor/comment/related scope around effects and cleanup/history/clocks. Locked
+checklist membership and full text/number/NULL stamps guard each target/root;
+complete absence/provenance scans preserve mixed cascades and foreign content.
+Role/resurrection/reparent/metadata/SQL failures roll back, valid comment role
+changes/retry pass. Boundary scans keep1,000-child fixture deletion near3s.
+Full host/API/security/session and70 Python tests pass; source/packaged detail/
+live and ordinary UI retain refused dirty drafts, retry/delete and clear fields.
+Timer/file/other guards, numeric readers and full original parity remain open.
+
 All seven native detail-entry kinds now recheck actor/permission/card/container/
 archive scope, exact values/non-NULL writes, nullable author and creation-time
 provenance after storage and history/clocks. Lock actor before board/card, plus
