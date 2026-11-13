@@ -93,7 +93,34 @@ Public Sub Main()
   Try SaveDraft(boardId, cardId, first, "title", "Reader draft")
   denied = Error
   If Not denied Then Error.Raise("Reader used old draft to write")
+  CompleteText()
   Print "Card drafts: independent stale fields, explicit last-write/clears, move/people/date retention, locked read, invalid/archive/role denial passed"
+End
+
+Private Sub CompleteText()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim first As Collection
+  Dim current As Collection
+  Dim conn As Connection
+  Dim suffix As String = Chr(0) & "Ω😀'suffix"
+  SignIn("draft-owner")
+  boardId = KanbanStore.AddBoard("Complete draft text")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Original" & suffix, "Original body" & suffix, "Lane" & suffix, "Todo", "draft-owner", "Original labels" & suffix, "")
+  first = CardDraft.Read(boardId, cardId)
+  If first["title"] <> "Original" & suffix Or first["description"] <> "Original body" & suffix Or first["lane"] <> "Lane" & suffix Then Error.Raise("Draft initial text truncated")
+  KanbanStore.SaveCard(boardId, cardId, "Remote" & suffix, "Remote body" & suffix, "Lane" & suffix, "Todo", "draft-owner", "Remote labels" & suffix, "")
+  SaveDraft(boardId, cardId, first, "title", "Local" & suffix)
+  current = CardDraft.Read(boardId, cardId)
+  If current["title"] <> "Local" & suffix Or current["description"] <> "Remote body" & suffix Or current["labels"] <> "Remote labels" & suffix Or current["lane"] <> "Lane" & suffix Then Error.Raise("Stale draft lost complete independent fields")
+  conn = WebDatabase.OpenConnection()
+  first = CardDraft.Read(boardId, cardId)
+  conn.Exec("CREATE TRIGGER inject_text_draft BEFORE UPDATE OF title ON kb_cards WHEN OLD.id=" & CStr(cardId) & " BEGIN UPDATE kb_cards SET description=CAST(" & conn.FormatBlob("Locked body" & suffix) & " AS TEXT) WHERE id=" & CStr(cardId) & "; END")
+  SaveDraft(boardId, cardId, first, "labels", "Local labels" & suffix)
+  conn.Exec("DROP TRIGGER inject_text_draft")
+  current = CardDraft.Read(boardId, cardId)
+  If current["description"] <> "Locked body" & suffix Or current["labels"] <> "Local labels" & suffix Or current["title"] <> "Local" & suffix Then Error.Raise("Complete draft did not merge the locked current text")
+  Print "Card draft complete text: NUL/Unicode titles, body, lane and labels survive initial read, stale independent merge and lock-time SQL change"
 End
 
 Private Sub SaveDraft(boardId As Integer, cardId As Integer, baseline As Collection, field As String, value As String, Optional destination As Integer)

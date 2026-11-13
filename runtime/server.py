@@ -163,6 +163,19 @@ def canonical_board_view_policy(body, content_type):
     return body
 
 
+def complete_text_command(encoded):
+    """Native JSON decoding drops NUL and escaped UTF-16 text values."""
+    try:
+        command = json.loads(encoded)
+        return (isinstance(command, list) and len(command) == 5
+                and command[0] == 'update' and isinstance(command[1], str)
+                and command[2] == 'text' and isinstance(command[3], str)
+                and any(ord(char) == 0 or ord(char) >= 0xd800 and ord(char) <= 0xdfff
+                        or ord(char) > 0xffff for char in command[3]))
+    except (ValueError, TypeError, RecursionError):
+        return False
+
+
 def canonical_card_dates(body):
     """Preserve card date numbers and supplementary description characters.
 
@@ -747,7 +760,7 @@ def handler(application, runner, environment):
                         return
                     # Gambas 3.20 forwards CGI variables, not stdin, to its
                     # session process. Its query decoder requires percent-encoded
-                    # spaces. Large commands must avoid the OS env-string limit.
+                    # spaces. Large and complete-text commands use a private file.
                     command_text = urllib.parse.urlencode({'c': fields['c'][0]}, quote_via=urllib.parse.quote)
                     env.update(QUERY_STRING='', REQUEST_METHOD='GET', CONTENT_LENGTH='0', CONTENT_TYPE='')
                     body = b''
@@ -762,7 +775,7 @@ def handler(application, runner, environment):
                     body = b''
                 command = ([runner, '-s', 'PublicAttachmentDownload', str(application)] if public_attachment else
                            [runner, '-s', 'RestApi', str(application)] if api else [runner, str(application)])
-                if command_text is not None and len(command_text.encode()) > 32768:
+                if command_text is not None and (len(command_text.encode()) > 32768 or complete_text_command(fields['c'][0])):
                     # NamedTemporaryFile creates mode 0600 and deletes even on
                     # timeout/failure. Only its path crosses the exec boundary.
                     with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', prefix='weba-command.',

@@ -2,6 +2,20 @@
 
 This work adds the following features and fixes:
 
+- Preserve complete native card editor text through create/read/stale merge and
+  refresh after Save. Project authorized context and locked current rows, use
+  complete lane/list names in new-card actions, and restore NUL-bearing native
+  fields from encoded text while retaining dirty edits. Route complete text
+  updates through the existing private command-file bridge with strict JSON
+  decoding, preserving NUL and escaped UTF-16 under the same form/control guards.
+  Real browser/SQL checks cover exact body/placement, dirty refresh, direct reload
+  and late-role refusal; draft tests cover independent and lock-time changes.
+  Full host tests pass, including 70 Python tests and source/packaged API and
+  session checks; complete-text browser rechecks pass in both modes.
+  Command files remain private and are deleted on success/timeout. Destination
+  forms, remaining readers/writers and full model/UI/API/security parity remain
+  open. Thanks to xet7.
+
 - Align the ordinary layout browser's exact view-menu expectation with the
   current source-defined default order: Swimlanes, Lists, Table, Calendar,
   Charts and Gantt. Reproduce the stale assertion on committed code, then pass

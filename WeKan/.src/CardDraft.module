@@ -18,7 +18,7 @@ Public Function Read(boardId As Integer, cardId As Integer) As Collection
   Dim data As Collection
   BoardAccess.RequireCard(boardId, cardId)
   r = WorkspaceStore.Record(boardId, "card", cardId)
-  data = Values(CStr(r!title), CStr(r!description), CStr(r!lane), CStr(r!status), CStr(r!assignee), CStr(r!labels), CStr(r!due_day))
+  data = Values(ExportText.ReadValue(r, "title"), ExportText.ReadValue(r, "description"), ExportText.ReadValue(r, "lane"), ExportText.ReadValue(r, "status"), ExportText.ReadValue(r, "assignee"), ExportText.ReadValue(r, "labels"), ExportText.ReadValue(r, "due_day"))
   data["boardId"] = boardId
   data["cardId"] = cardId
   data["listId"] = KanbanStore.CardListId(boardId, cardId)
@@ -39,7 +39,7 @@ Public Function Merge(boardId As Integer, cardId As Integer, current As Result, 
     If submitted[field] <> baseline[field] Then
       merged.Add(CStr(submitted[field]), field)
     Else
-      merged.Add(CStr(current[field]), field)
+      merged.Add(ExportText.ReadValue(current, field), field)
     Endif
   Next
   placement = submitted["lane"] <> baseline["lane"] Or submitted["status"] <> baseline["status"] Or listId <> baseline["listId"]

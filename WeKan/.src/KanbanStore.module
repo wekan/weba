@@ -205,7 +205,7 @@ Public Function SaveCard(boardId As Integer, cardId As Integer, title As String,
   BoardAccess.Require(boardId, "write")
   If cardId Then
     BoardAccess.RequireCard(boardId, cardId)
-    r = $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND id = &2", boardId, cardId)
+    r = $db.Exec(ExportText.SelectRows($db, "kb_cards") & " WHERE " & ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND id = &2", boardId, cardId)
     previousAssignee = r!assignee
     previousDueDay = r!due_day
     If baseline Then

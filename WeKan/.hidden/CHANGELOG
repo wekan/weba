@@ -1,3 +1,9 @@
+Native card create/edit drafts preserve full NUL/Unicode text, independent stale
+changes and locked current reads. Complete-text updates use private command files
+and strict JSON; dirty controls are retained across encoded field restoration.
+Browser/SQL create/edit/reload/late-role refusal and file privacy/cleanup covered.
+Destination forms and remaining full parity remain open.
+
 Native layout/card lane/list/status identities survive HTML NUL parsing through
 complete SQL projections and encoded strict JSON decoded before grouping/actions.
 Shared-prefix exact column/card placement, views/reload/literal/Finnish/mobile

@@ -12,6 +12,30 @@ Public Sub Main()
   If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
   Session["username"] = "rest-other"
   Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+  If Env["WEBA_NATIVE_MODE"] = "read" Then
+    conn = WebDatabase.OpenConnection()
+    boardId = CInt(Env["WEBA_NATIVE_BOARD"])
+    cardId = CInt(Env["WEBA_NATIVE_CARD"])
+    row = conn.Exec(ExportText.SelectRows(conn, "kb_cards") & " WHERE board_id=&1 AND id=&2", boardId, cardId)
+    For Each suffix In ["title", "description", "lane", "status"]
+      result[suffix] = ExportText.ReadValue(row, suffix)
+    Next
+    result["list"] = conn.Exec("SELECT list_id FROM kb_card_lists WHERE board_id=&1 AND card_id=&2", boardId, cardId)!list_id
+    result["history"] = conn.Exec("SELECT COUNT(*) AS total FROM kb_history WHERE board_id=&1", boardId)!total
+    result["cards"] = conn.Exec("SELECT COUNT(*) AS total FROM kb_cards WHERE board_id=&1", boardId)!total
+    Print JsonText.Encode(result)
+    Return
+  Endif
+  If Env["WEBA_NATIVE_MODE"] = "revoke" Then
+    conn = WebDatabase.OpenConnection()
+    boardId = CInt(Env["WEBA_NATIVE_BOARD"])
+    conn.Exec("UPDATE kb_boards SET owner='rest-owner' WHERE id=&1", boardId)
+    Session["username"] = "rest-owner"
+    Session["auth_generation"] = WebDatabase.SessionGeneration("rest-owner")
+    BoardAccess.SetMember(boardId, "rest-other", "read-only")
+    Print "{}"
+    Return
+  Endif
   WebDatabase.Register("rest-native-reader", Env["WEBA_TEST_PASSWORD"])
   WebDatabase.Register("rest-native-assigned", Env["WEBA_TEST_PASSWORD"])
   boardId = KanbanStore.AddBoard("Complete native lane/list text")

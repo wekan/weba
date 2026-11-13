@@ -2662,3 +2662,27 @@ source/packaged HTTP API/security and native rollback tests. Source and packaged
 complete-text/privacy browser regressions and full ordinary layout/card-editor/
 admin/mobile browser runs pass. The separate stale menu-order assertion was
 reproduced on committed code and corrected in its own commit.
+
+Native card editor text follows complete WorkspaceStore.Record and locked
+SaveCard projections into CardDraft.Read/Merge, and new-card/board/context actions
+use complete lane/list names. When the native framework renders a NUL-bearing
+control into HTML, RenderEditorText emits encoded metadata only for the visible
+editor. kanban.js restores a given node/value once, skipping controls pending in
+gw.updates so a background render cannot overwrite dirty input. Native controls
+and events remain the editor interface.
+
+Gambas native JSON dispatch drops NUL and escaped UTF-16 text. The runtime routes
+such text updates, along with already-supported large updates, through its mode
+0600 command file; NativeCommands.ApplyLarge uses strict JsonText.Decode before
+its existing array/text/control/current-form checks. The file path is host-only,
+cleared before dispatch and removed on success or timeout. Ordinary native origin,
+page, authentication and request limits remain. Browser input tests distinguish
+ordinary dirty typing from an explicit DOM value/input event for exact NUL wire
+bytes; an independent fixture reads exact stored body/lane/status/list, and a late
+role change verifies Save leaves source/history unchanged. CardDraftTest checks
+full NUL/Unicode initial fields, independent stale edits and a lock-time SQL
+change. Destination/action form consumers and other mutation paths remain TODO.
+
+Editor verification: complete `build.sh test` passes, including 70 Python tests,
+source/packaged API conformance and sessions. Both `--native-text` and
+`--native-text --archive` browser rechecks pass with exact persisted bytes.

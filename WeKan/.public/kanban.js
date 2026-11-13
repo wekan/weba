@@ -2,6 +2,8 @@
 (function (root) {
   'use strict';
   const t = text => root.webaI18n ? root.webaI18n.t(text) : text;
+  const restoredFields=root.webaRestoredFields||(root.webaRestoredFields=new WeakMap());
+  const decodeText=encoded=>JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(encoded),character=>character.charCodeAt(0))));
   const collapsed = root.webaCollapsed || (root.webaCollapsed = new Set());
   const summary = cards => [...new Set(['Todo', 'Doing', 'Done', ...cards.map(c=>c.status)])].map(status => ({status, count: cards.filter(c => c.status === status).length}));
   const monthDays = (year, month) => new Date(year, month + 1, 0).getDate();
@@ -10,11 +12,16 @@
       if(section.dataset.boardColor)document.documentElement.style.setProperty('--weba-board-color',section.dataset.boardColor);
       const data = section.querySelector('.weba-data'), report = section.querySelector('.weba-report');
       if (!data || !report) return;
+      section.querySelectorAll('.weba-native-text').forEach(marker=>{
+        const id=marker.dataset.field,input=document.getElementById(id+':entry')||document.getElementById(id),encoded=marker.dataset.text;
+        if(!input||!['INPUT','TEXTAREA'].includes(input.tagName)||root.gw?.updates?.[id]||restoredFields.get(input)===encoded)return;
+        input.value=decodeText(encoded);restoredFields.set(input,encoded);
+      });
       // HTML parsing replaces NUL; decode complete identities before grouping or actions.
       section.querySelectorAll('[data-lane-text],[data-list-text],[data-status-text]').forEach(element=>{
         for(const name of ['lane','list','status']){
           const encoded=element.getAttribute('data-'+name+'-text');
-          if(encoded!==null)element.dataset[name]=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(encoded),character=>character.charCodeAt(0))));
+          if(encoded!==null)element.dataset[name]=decodeText(encoded);
         }
       });
       report.replaceChildren(); data.hidden = false;

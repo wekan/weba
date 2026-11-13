@@ -1,4 +1,4 @@
-' Large text updates bypass the native dispatcher's environment/pipe limits.
+' Complete/large text updates bypass native JSON loss and environment limits.
 Export
 
 Public Sub ApplyLarge(form As WebForm)
@@ -9,7 +9,7 @@ Public Sub ApplyLarge(form As WebForm)
   ' This CGI variable is supplied by the host, never by a query/header/body.
   ' Clear it before calling a native event handler so it cannot be re-applied.
   CGI["WEBA_COMMAND_FILE"] = ""
-  command = JSON.Decode(File.Load(path))
+  command = JsonText.Decode(File.Load(path))
   If Not (command Is Variant[]) Then Error.Raise("Invalid large update")
   If command.Count <> 5 Then Error.Raise("Invalid large update")
   If command[0] <> "update" Or command[2] <> "text" Then Error.Raise("Only text updates support large payloads")

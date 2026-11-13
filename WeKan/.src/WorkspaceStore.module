@@ -71,9 +71,9 @@ Public Function Record(boardId As Integer, kind As String, itemId As Integer) As
       Error.Raise("Unknown menu context")
   End Select
   If kind = "board" Then
-    r = $db.Find(tableName, "id = &1", itemId)
+    r = $db.Exec(ExportText.SelectRows($db, tableName) & " WHERE id = &1", itemId)
   Else
-    r = $db.Find(tableName, "id = &1 AND board_id = &2", itemId, boardId)
+    r = $db.Exec(ExportText.SelectRows($db, tableName) & " WHERE id = &1 AND board_id = &2", itemId, boardId)
   Endif
   If Not r.Available Then Error.Raise("Item not accessible")
   If kind = "list" And If ListDeletion.IsDeleted(boardId, kind, itemId) Then Error.Raise("List not accessible")

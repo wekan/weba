@@ -489,10 +489,10 @@ Public Sub NewCard_Click()
   Endif
   laneRows = KanbanStore.Lanes($board)
   For Each laneRows
-    listRows = KanbanStore.Lists($board, laneRows!title)
+    listRows = KanbanStore.Lists($board, ExportText.ReadValue(laneRows, "title"))
     If Not listRows.Available Then Continue
-    Lane.Text = laneRows!title
-    Status.Text = listRows!title
+    Lane.Text = ExportText.ReadValue(laneRows, "title")
+    Status.Text = ExportText.ReadValue(listRows, "title")
     $listId = listRows!id
     found = True
     Break
@@ -810,6 +810,7 @@ Public Sub Visual_Render()
   Print "<script>" & File.Load(".public/kanban.js") & "</script>"
   If $board Then boardColor = WorkspaceStore.Setting($board, "board", $board, "color", "#2980b9")
   Print "<section data-selection-ids=\"" & Html(JSON.Encode(BoardSelection.Ids(SelectionState()))) & "\" data-multi-active=\"" & If(IsOverview() And BoardSelection.Active(SelectionState()), "true", "false") & "\" data-selection-count=\"" & Str(BoardSelection.Count(SelectionState())) & "\" data-selection-revision=\"" & Str(BoardSelection.Revision(SelectionState())) & "\" data-selection-action=\"" & Html(BoardSelectionAction.Name) & "\" data-board-drop=\"" & If(IsOverview(), "true", "false") & "\" data-board-source=\"" & If($view = "Home", "home", If($archive, "archive", If($view = "Starred", "starred", If($spaceMenu > 0, "workspace", "remaining")))) & "\" data-workspace-reorder=\"" & If(IsOverview(), "true", "false") & "\" data-board-reorder=\"" & If(IsOverview() And $view <> "Home" And Not $archive And $catalogSort = "custom", "true", "false") & "\" data-board-color=\"" & Html(boardColor) & "\" data-context=\"" & Html(ContextAction.Name) & "\" data-drag=\"" & Html(DragAction.Name) & "\" data-board=\"" & Str($board) & "\" data-action=\"" & Html(BoardAction.Name) & "\" data-card-move=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "moveCard"), "true", "false") & "\" data-editable=\"" & If($board > 0 And Not $archive And BoardAccess.Can($board, "write"), "true", "false") & "\" class=\"weba-content\" data-tree=\"" & Html(Boards.Name) & "\" data-view=\"" & Html($view) & "\">"
+  RenderEditorText()
   If $view = "Profile" Then
     Print "<p>Signed in as " & Html(WebIdentity.Username) & "</p>"
   Else If $view = "Admin panel" Then
@@ -896,6 +897,15 @@ Public Sub Visual_Render()
   WebForm.Exec("window.webaRender && window.webaRender();gw.onFocus();window.webaAlignFocus && window.webaAlignFocus();")
 Catch
   Print "<p role=\"alert\">" & Html(Error.Text) & "</p>"
+End
+
+Private Sub RenderEditorText()
+  Dim field As Object
+  If Not Editor.Visible Then Return
+  For Each field In [CardTitle, Description, Lane, Status, Assignee, Labels, DueDay]
+    If Not InStr(field.Text, Chr(0)) Then Continue
+    Print "<span hidden class=\"weba-native-text\" data-field=\"" & Html(field.Name) & "\" data-text=\"" & Base64(JsonText.Encode(field.Text)) & "\"></span>"
+  Next
 End
 
 Private Function TextData(name As String, value As String) As String
@@ -1257,7 +1267,7 @@ Public Sub BoardAction_Change()
       NewCard_Click()
       Lane.Text = laneTitle
       listRow = KanbanStore.GetList($board, list, laneTitle)
-      Status.Text = listRow!title
+      Status.Text = ExportText.ReadValue(listRow, "title")
       $listId = listRow!id
       CardTitle.SetFocus()
     Case "lane"
@@ -2048,15 +2058,15 @@ Public Sub ContextAddCard_Click()
     r = WorkspaceStore.Record($contextBoard, "list", $contextId)
   Else If $contextKind = "lane" Then
     laneRows = WorkspaceStore.Record($contextBoard, "lane", $contextId)
-    r = KanbanStore.Lists($contextBoard, laneRows!title)
+    r = KanbanStore.Lists($contextBoard, ExportText.ReadValue(laneRows, "title"))
     If Not r.Available Then Error.Raise("Add a list first")
   Endif
   ContextMenu.Hide()
   RefreshTree()
   NewCard_Click()
   If r Then
-    Lane.Text = r!lane
-    Status.Text = r!title
+    Lane.Text = ExportText.ReadValue(r, "lane")
+    Status.Text = ExportText.ReadValue(r, "title")
     $listId = r!id
   Endif
 Catch
