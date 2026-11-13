@@ -399,6 +399,13 @@ const fs = require('node:fs');
       console.log('Browser native JSON export/download and file import into a new board passed');return;
     }
     if(process.env.WEBA_TRANSFER_ONLY) {
+      // Permanent deletion is disabled on fresh instances. Exercise the admin
+      // setting in this disposable fixture before expecting the Delete action.
+      await click('AccountToggle');await click('Admin');await click('PermanentDeleteSettings');
+      assert.equal(await page.$eval(selector('PermanentDeleteEnabled')+' input',input=>input.checked),false,'fresh deletion policy stays disabled');
+      await page.click(selector('PermanentDeleteEnabled')+' input');await settle();await click('SavePermanentDelete');
+      assert.equal(await page.$eval(selector('Notice'),node=>node.textContent.trim()),'Saved.');
+      await click('Home');await page.evaluate(()=>[...document.querySelectorAll('.weba-board-tile')].find(e=>e.textContent.includes('Layout board')).click());await settle();
       await page.click('.weba-add-card-top');await settle();await fill('CardTitle','Moved card');await click('SaveCard');await click('CloseEditor');
       await click('Home');await click('AddBoardTile');await fill('BoardTitle','Destination');await click('NewBoard');await click('CloseSidebar');
       const boardId=await page.$$eval('.weba-board-tile',els=>els.find(e=>e.textContent.includes('Destination')).dataset.boardId);

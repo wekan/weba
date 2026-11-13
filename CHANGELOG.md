@@ -2,6 +2,14 @@
 
 This work adds the following features and fixes:
 
+- Repair the ordinary transfer browser fixture for the current permanent-delete
+  policy. Assert the fresh policy is disabled, then enable it through the native
+  administrator UI before expecting Delete in the disposable instance. Retain
+  cross-board movement, wrong-title refusal and exact-title deletion assertions.
+  Reproduce the hidden-Delete timeout with committed source; source and packaged
+  corrected fixture runs pass. Production defaults remain disabled.
+  Thanks to xet7.
+
 - Populate native Move dialog lane/list choices with complete projected text.
   Find the current lane by its full identity, retain native indexed selections
   and refresh an open card editor with the complete destination status. Reproduce

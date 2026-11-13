@@ -2706,3 +2706,10 @@ former empty list selector and checks initial/changed lane indexes, exact SQL
 placement and open-editor status, then moves back. Both source/packaged runs pass;
 ordinary source/packaged layout/card-editor/admin/mobile runs also pass.
 Destination board captions and other context value forms remain TODO.
+
+The ordinary `WEBA_TRANSFER_ONLY=1` layout browser mode now asserts the fresh
+permanent-delete setting is disabled, then enables it through Account → Admin →
+Problems/Delete before running its existing movement and wrong/exact-title
+deletion assertions. The fixture uses a disposable database and does not change
+production defaults. Committed-source reproduction timed out at hidden
+ContextDelete; source/packaged runs pass with this setup.

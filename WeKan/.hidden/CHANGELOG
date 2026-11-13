@@ -1,3 +1,7 @@
+Ordinary transfer browser fixture explicitly checks the default-disabled
+permanent-delete policy and enables it via admin UI before deletion assertions.
+Source/packaged movement and wrong/exact-title deletion checks pass.
+
 Native Move dialog lane/list choices and current selection use complete text;
 open card editors receive complete destination status. Source/packaged browser
 SQL/selection/return-move/editor checks and ordinary transfer regression covered.
