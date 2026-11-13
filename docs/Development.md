@@ -2753,3 +2753,30 @@ source/packaged native-text browser runs verify literal heading text without
 markup nodes, complete SQL creation values, layout reload and prior card/list/
 lane movement/editor/privacy cases. The focused native regression also verifies
 the successful retry persists the legacy card's exact stable list ID.
+
+Native `WorkspaceStore.Rename` rereads the scoped record after locking the board,
+uses complete title/lane predicates and text-safe field writes, and keeps legacy
+link priming and linked card/list propagation within its owning transaction.
+It installs a complete new lane order key before deleting the old one, preserving
+rank and duplicate-key failure behavior. Actor, capability and current record
+scope are rechecked after activity; assigned-only card scope cannot disappear
+before commit. Default-prefixed NUL names do not take the actual Default lane's
+NULL/empty fallback branch. Native forms use complete existing titles and encoded
+NUL ActionText restoration before the renderer's report-only return. Dirty
+controls retain the existing WeakMap/pending-update protection.
+RenameTextTest covers all four kinds, stable IDs, active/archived propagation,
+Default-prefix/NULL isolation, ordering/no-op keys, duplicate/reader/foreign
+denials and SQL/legacy-link/lock-role/final-role/assignment-loss rollback/retry.
+Native-text browsers rename lanes/lists, rename and reopen a board from Remaining,
+retain dirty overview edits, update an open card editor and refuse stale native
+Rename plus Save after revocation. Other settings/copy readers and captions stay
+separate TODO work.
+
+Rename verification: complete build.sh test passes, including 70 Python tests,
+native/source/packaged API/security/session checks. Both source/packaged native-
+text and ordinary layout/card-editor/admin/mobile browsers pass. The final checks
+use the current Dockerfile-pinned Node release, installed under .tools after
+verification against its official SHA-256 checksum. Focused native tests also
+exercise loss of write/manage permission while comment/activity permission
+remains, plus assigned-only card scope loss, rather than depending on activity
+logging itself to reject the operation.

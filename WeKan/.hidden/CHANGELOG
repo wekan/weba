@@ -1,3 +1,10 @@
+Native board/card/list/lane renames preserve complete NUL/Unicode text and
+linked active/archived state, stable IDs and order keys under locked/final scope
+guards. Native title forms restore encoded existing values on board/overview
+pages while preserving dirty edits. Exact rollback/late-role/assignment tests
+and source/packaged native rename/SQL/editor/stale-form checks covered. Copy,
+settings/caption readers and full parity remain open.
+
 Native lane/list creation preserves complete NUL/Unicode names with atomic
 defaults/order/legacy links/activity and fresh locked/final actor/write guards.
 Initializer own-partial-insert errors propagate for outer rollback. Exact SQL,

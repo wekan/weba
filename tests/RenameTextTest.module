@@ -1,0 +1,175 @@
+Public Sub Main()
+  Dim actor As String
+  Dim kind As String
+  For Each actor In ["rename-text-owner", "rename-text-reader", "rename-text-writer", "rename-text-outsider"]
+    WebDatabase.Register(actor, "x")
+  Next
+  For Each kind In ["board", "card", "list", "lane"]
+    CheckKind(kind)
+  Next
+  Print "Complete native rename: board/card/list/lane text, stable IDs, active+archived propagation, Default-prefix/null isolation, full ordering keys, role/duplicate denial and exact SQL/legacy-link/late-role rollback/retry passed"
+End
+
+Private Sub CheckKind(kind As String)
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim archivedId As Integer
+  Dim siblingId As Integer
+  Dim legacyId As Integer
+  Dim itemId As Integer
+  Dim listId As Integer
+  Dim laneId As Integer
+  Dim rank As Integer
+  Dim conn As Connection
+  Dim row As Result
+  Dim name As String = "Renamed" & Chr(0) & "Ω😀'new"
+  Dim lane As String = "Default" & Chr(0) & "Ω😀'old"
+  Dim other As String = "Default" & Chr(0) & "Ω😀'other"
+  Dim before As String
+  Dim actor As String
+  Dim denied As Boolean
+  SignIn("rename-text-owner")
+  boardId = KanbanStore.AddBoard("Board" & Chr(0) & kind)
+  cardId = KanbanStore.SaveCard(boardId, 0, "Card" & Chr(0) & "old", "Body" & Chr(0) & "retained", lane, "Todo", "", "", "")
+  archivedId = KanbanStore.SaveCard(boardId, 0, "Archived" & Chr(0) & "old", "", lane, "Todo", "", "", "")
+  KanbanStore.ArchiveCard(boardId, archivedId, True)
+  siblingId = KanbanStore.SaveCard(boardId, 0, "Sibling", "", other, "Todo", "", "", "")
+  legacyId = KanbanStore.SaveCard(boardId, 0, "Legacy null lane", "", "Default", "Todo", "", "", "")
+  conn = WebDatabase.OpenConnection()
+  conn.Exec("UPDATE kb_cards SET lane=NULL WHERE id=&1", legacyId)
+  listId = KanbanStore.CardListId(boardId, cardId)
+  row = KanbanStore.Lanes(boardId)
+  laneId = row!id
+  KanbanStore.MoveLane(boardId, lane, other)
+  rank = KanbanStore.ItemOrder(boardId, "lane", lane, 999)
+  BoardAccess.SetMember(boardId, "rename-text-reader", "read-only")
+  BoardAccess.SetMember(boardId, "rename-text-writer", "board-admin")
+  Select kind
+    Case "board"
+      itemId = boardId
+    Case "card"
+      itemId = cardId
+    Case "list"
+      itemId = listId
+    Case "lane"
+      itemId = laneId
+      before = Snapshot(boardId)
+      Try WorkspaceStore.Rename(boardId, kind, itemId, other)
+      denied = Error
+      If Not denied Or Snapshot(boardId) <> before Then Error.Raise("Duplicate complete lane rename changed state")
+  End Select
+  WorkspaceStore.Rename(boardId, kind, itemId, name)
+  row = WorkspaceStore.Record(boardId, kind, itemId)
+  If ExportText.ReadValue(row, "title") <> name Then Error.Raise("Rename lost complete title")
+  If KanbanStore.CardListId(boardId, cardId) <> listId Or KanbanStore.CardListId(boardId, archivedId) <> listId Then Error.Raise("Rename changed stable card/list identity")
+  row = WorkspaceStore.Record(boardId, "card", cardId)
+  If ExportText.ReadValue(row, "description") <> "Body" & Chr(0) & "retained" Then Error.Raise("Rename changed unrelated full body")
+  If kind = "lane" Then
+    If ExportText.ReadValue(row, "lane") <> name Then Error.Raise("Lane rename left active card in old complete lane")
+    row = WorkspaceStore.Record(boardId, "card", archivedId)
+    If ExportText.ReadValue(row, "lane") <> name Or Not row!archived Then Error.Raise("Lane rename lost archived card lane/state")
+    row = WorkspaceStore.Record(boardId, "list", listId)
+    If ExportText.ReadValue(row, "lane") <> name Then Error.Raise("Lane rename left list in old complete lane")
+    If KanbanStore.ItemOrder(boardId, "lane", name, 999) <> rank Then Error.Raise("Renamed complete lane lost order")
+    If KanbanStore.ItemOrder(boardId, "lane", lane, 999) <> 999 Then Error.Raise("Old complete lane order key survived")
+    WorkspaceStore.Rename(boardId, kind, itemId, name)
+    If KanbanStore.ItemOrder(boardId, "lane", name, 999) <> rank Then Error.Raise("Same-title lane rename changed key/order")
+  Else If kind = "list" Then
+    If ExportText.ReadValue(row, "status") <> name Then Error.Raise("List rename left active card status truncated")
+    row = WorkspaceStore.Record(boardId, "card", archivedId)
+    If ExportText.ReadValue(row, "status") <> name Or Not row!archived Then Error.Raise("List rename lost archived status/state")
+  Endif
+  row = WorkspaceStore.Record(boardId, "card", siblingId)
+  If ExportText.ReadValue(row, "lane") <> other Or ExportText.ReadValue(row, "status") <> "Todo" Then Error.Raise("Rename changed sibling lane/list")
+  If Not conn.Exec("SELECT lane IS NULL AS absent FROM kb_cards WHERE id=&1", legacyId)!absent Then Error.Raise("Default-prefix rename changed unrelated NULL lane")
+  conn.Exec("DELETE FROM kb_card_lists WHERE board_id=&1 AND card_id=&2", boardId, cardId)
+  before = Snapshot(boardId)
+  conn.Exec("CREATE TRIGGER refuse_rename_activity BEFORE INSERT ON kb_activity BEGIN SELECT RAISE(ABORT,'refuse rename activity'); END")
+  Try WorkspaceStore.Rename(boardId, kind, itemId, "Failed" & Chr(0) & "rename")
+  denied = Error
+  conn.Exec("DROP TRIGGER refuse_rename_activity")
+  If Not denied Or Snapshot(boardId) <> before Then Error.Raise("Rename activity failure retained text/order/legacy links/history")
+  For Each actor In ["rename-text-reader", "rename-text-outsider"]
+    SignIn(actor)
+    Try WorkspaceStore.Rename(boardId, kind, itemId, "Denied" & Chr(0) & "rename")
+    denied = Error
+    If Not denied Or Snapshot(boardId) <> before Then Error.Raise("Reader/foreign rename changed state")
+  Next
+  SignIn("rename-text-writer")
+  For Each actor In ["lock", "activity"]
+    If actor = "lock" Then
+      conn.Exec("CREATE TRIGGER revoke_rename_role AFTER UPDATE OF title ON kb_boards WHEN NEW.id=" & CStr(boardId) & " BEGIN UPDATE kb_members SET role='read-only' WHERE board_id=NEW.id AND username='rename-text-writer'; END")
+    Else
+      conn.Exec("CREATE TRIGGER revoke_rename_role AFTER INSERT ON kb_activity WHEN NEW.board_id=" & CStr(boardId) & " BEGIN UPDATE kb_members SET role='comment-only' WHERE board_id=NEW.board_id AND username='rename-text-writer'; END")
+    Endif
+    Try WorkspaceStore.Rename(boardId, kind, itemId, "Late" & Chr(0) & actor)
+    denied = Error
+    conn.Exec("DROP TRIGGER revoke_rename_role")
+    If Not denied Or Snapshot(boardId) <> before Then Error.Raise("Late role loss retained rename writes")
+  Next
+  If kind = "card" Then
+    SignIn("rename-text-owner")
+    BoardAccess.SetMember(boardId, "rename-text-writer", "normal-assigned-only")
+    BoardAccess.SetAssignees(boardId, cardId, ["rename-text-writer"])
+    SignIn("rename-text-writer")
+    before = Snapshot(boardId)
+    conn.Exec("CREATE TRIGGER revoke_rename_assignment AFTER INSERT ON kb_activity WHEN NEW.board_id=" & CStr(boardId) & " BEGIN UPDATE kb_cards SET assignee='' WHERE id=" & CStr(cardId) & "; DELETE FROM kb_card_assignees WHERE board_id=NEW.board_id AND card_id=" & CStr(cardId) & "; END")
+    Try WorkspaceStore.Rename(boardId, kind, itemId, "Lost" & Chr(0) & "assignment")
+    denied = Error
+    conn.Exec("DROP TRIGGER revoke_rename_assignment")
+    If Not denied Or Snapshot(boardId) <> before Then Error.Raise("Final assignment loss retained card rename")
+  Endif
+  WorkspaceStore.Rename(boardId, kind, itemId, "Retry" & Chr(0) & "rename")
+  If ExportText.ReadValue(WorkspaceStore.Record(boardId, kind, itemId), "title") <> "Retry" & Chr(0) & "rename" Then Error.Raise("Rename retry failed")
+End
+
+Private Sub SignIn(actor As String)
+  Session["username"] = actor
+  Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+End
+
+Private Function Snapshot(boardId As Integer) As String
+  Dim conn As Connection = WebDatabase.OpenConnection()
+  Dim tableName As String
+  Dim fields As String[]
+  Dim field As String
+  Dim rows As Result
+  Dim result As New Collection
+  Dim data As Variant[]
+  Dim values As String[]
+  For Each tableName In ["kb_boards", "kb_lanes", "kb_lists", "kb_cards", "kb_order", "kb_card_lists", "kb_item_changes", "kb_members", "kb_card_assignees"]
+    Select tableName
+      Case "kb_boards"
+        fields = ["id", "title", "owner", "archived"]
+      Case "kb_lanes"
+        fields = ["id", "title"]
+      Case "kb_card_assignees"
+        fields = ["card_id", "username"]
+      Case "kb_members"
+        fields = ["username", "role"]
+      Case "kb_lists"
+        fields = ["id", "lane", "title", "sort_order"]
+      Case "kb_cards"
+        fields = ["id", "lane", "status", "title", "description", "archived", "assignee"]
+      Case "kb_order"
+        fields = ["kind", "item", "sort_order"]
+      Case "kb_card_lists"
+        fields = ["card_id", "list_id"]
+      Case "kb_item_changes"
+        fields = ["kind", "item_id", "modified_ms"]
+    End Select
+    rows = conn.Exec(ExportText.SelectRows(conn, tableName) & If(tableName = "kb_boards", " WHERE id=&1 ORDER BY ", " WHERE board_id=&1 ORDER BY ") & fields[0] & If(fields[0] = "kind", "," & fields[1], ""), boardId)
+    data = New Variant[]
+    For Each rows
+      values = New String[]
+      For Each field In fields
+        values.Add(ExportText.ReadValue(rows, field))
+      Next
+      data.Add(values)
+    Next
+    result[tableName] = data
+  Next
+  result["history"] = conn.Exec("SELECT COUNT(*) AS total FROM kb_history WHERE board_id=&1", boardId)!total
+  result["activity"] = conn.Exec("SELECT COUNT(*) AS total FROM kb_activity WHERE board_id=&1", boardId)!total
+  Return JsonText.Encode(result)
+End

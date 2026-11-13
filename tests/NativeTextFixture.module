@@ -33,6 +33,8 @@ Public Sub Main()
       items.Add(item)
     Next
     result["lists"] = items
+    row = conn.Exec(ExportText.SelectRows(conn, "kb_boards") & " WHERE id=&1", boardId)
+    result["boardTitle"] = ExportText.ReadValue(row, "title")
     Print JsonText.Encode(result)
     Return
   Endif

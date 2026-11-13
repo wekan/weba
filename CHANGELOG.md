@@ -2,6 +2,22 @@
 
 This work adds the following features and fixes:
 
+- Rename native boards/cards/lists/swimlanes with complete text and scoped
+  atomic propagation. Preserve linked active/archived card fields, stable IDs,
+  full lane order keys and Default-prefix/NULL isolation. Lock and reread the
+  source, prime legacy links within the transaction, and recheck actor, role
+  and current record scope before commit. Replace lane ordering keys by creating
+  the complete new key and deleting the complete old key atomically.
+  Native forms read complete existing titles and restore encoded NUL values
+  without replacing dirty input, including overview pages without reports.
+  Native tests cover exact values/order, duplicate/role denials and SQL/legacy-
+  link/late-role/assignment-loss rollback/retry. Source/packaged real forms cover
+  all four rename types, dirty fields, SQL values, editor updates and stale
+  Rename/Save refusal. Full host tests (70 Python tests plus native/API/session
+  checks), focused final-scope tests and both ordinary/complete-text browser
+  modes pass with the current Dockerfile-pinned Node release. Remaining copy/
+  settings readers, captions and full original parity stay open. Thanks to xet7.
+
 - Create native swimlanes/lists with complete NUL/Unicode names and atomic
   defaults, ordering, legacy links and activity. Match full lane/title values,
   save complete list text, and recheck the actor/write role under the board lock

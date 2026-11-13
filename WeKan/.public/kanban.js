@@ -11,12 +11,12 @@
     document.querySelectorAll('.weba-content').forEach(section => {
       if(section.dataset.boardColor)document.documentElement.style.setProperty('--weba-board-color',section.dataset.boardColor);
       const data = section.querySelector('.weba-data'), report = section.querySelector('.weba-report');
-      if (!data || !report) return;
       section.querySelectorAll('.weba-native-text').forEach(marker=>{
         const id=marker.dataset.field,input=document.getElementById(id+':entry')||document.getElementById(id),encoded=marker.dataset.text;
         if(!input||!['INPUT','TEXTAREA'].includes(input.tagName)||root.gw?.updates?.[id]||restoredFields.get(input)===encoded)return;
         input.value=decodeText(encoded);restoredFields.set(input,encoded);
       });
+      if (!data || !report) return;
       // HTML parsing replaces NUL; decode complete identities before grouping or actions.
       section.querySelectorAll('[data-lane-text],[data-list-text],[data-status-text]').forEach(element=>{
         for(const name of ['lane','list','status']){
