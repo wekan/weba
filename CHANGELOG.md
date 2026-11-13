@@ -2,6 +2,23 @@
 
 This work adds the following features and fixes:
 
+- Preserve complete native profile full names in storage, profile inputs and
+  the administrator's user list, including embedded NUL/Unicode and SQL-literal
+  text. Write only the full-name column in a transaction, lock and recheck the
+  actor's own/admin authority, and verify the final target text before commit.
+  Keep default user-list columns unchanged through opt-in native projections.
+  Bind profile saves to the view's captured actor/session generation and restore
+  encoded inputs without replacing dirty fields. Native regressions cover exact
+  empty/whitespace/lone-unit values, unchanged credentials/unrelated state,
+  own/admin reads/writes, missing/foreign/stale/anonymous refusal and all-table
+  SQL/lock-time role/final role/generation/target/suffix rollback. Actual source
+  and packaged forms verify save/reopen/reload, clearing/resave, dirty heartbeat
+  stability, complete literal administrator captions and hidden-form refusal.
+  Full pinned host/native/API/security/session tests and 70 Python tests pass,
+  plus ordinary source/packaged layout/editor/admin/mobile checks.
+  Remaining people/public/guest/activity readers, mutation final guards,
+  nullable/legacy semantics and full original parity stay open. Thanks to xet7.
+
 - Preserve complete native detail-panel and entry-draft text: card/entry/
   checklist/derived relationship titles, bodies, field types, authors and
   attachment filename/history metadata. Use opt-in projected result columns

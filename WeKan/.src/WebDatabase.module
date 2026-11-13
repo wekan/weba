@@ -262,9 +262,10 @@ Public Function GetIsAdmin(username As String) As Boolean
   Return r["admin"]
 End
 
-Public Function GetUsers() As Result
+Public Function GetUsers(Optional completeText As Boolean) As Result
   Init()
   AdminRequired()
+  If completeText Then Return $hConn.Exec(ExportText.Preserve($hConn, "SELECT username, fullname, admin FROM users ORDER BY username"))
   Return $hConn.Exec("SELECT username, fullname, admin FROM users ORDER BY username")
 End
 
@@ -425,15 +426,36 @@ Public Function GetFullname(username As String) As String
   Dim r As Result
   Init()
   AdminOrOwnRequired(username)
-  r = $hConn.Exec("SELECT fullname FROM users WHERE username = &1", username)
+  r = $hConn.Exec(ExportText.Preserve($hConn, "SELECT fullname FROM users WHERE username = &1"), username)
   If Not r.Available Then Error.Raise("Unknown user")
-  Return r["fullname"]
+  Return ExportText.ReadValue(r, "fullname")
 End
 
 Public Sub SetFullname(username As String, fullname As String)
+  Dim actor As String = WebIdentity.Username
+  Dim transaction As Boolean
+  Dim failure As String
+  Dim r As Result
   Init()
   AdminOrOwnRequired(username)
-  $hConn.Exec("UPDATE users SET fullname = &1 WHERE username = &2", fullname, username)
+  DatabaseTransactions.Begin($hConn)
+  transaction = True
+  $hConn.Exec("UPDATE users SET username=username WHERE username=&1", username)
+  If WebIdentity.Username <> actor Then Error.Raise("Sign in required")
+  AdminOrOwnRequired(username)
+  r = $hConn.Edit("users", "username=&1", username)
+  If Not r.Available Then Error.Raise("Unknown user")
+  r["fullname"] = fullname
+  DatabaseText.Save($hConn, r, "users", ["fullname"], False)
+  If WebIdentity.Username <> actor Then Error.Raise("Sign in required")
+  AdminOrOwnRequired(username)
+  If GetFullname(username) <> fullname Then Error.Raise("Profile changed during write")
+  DatabaseTransactions.Commit($hConn)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($hConn)
+  Error.Raise(failure)
 End
 
 Public Function SetPassword(username As String, oldpass As String, newpass As String) As Boolean

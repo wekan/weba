@@ -17,6 +17,12 @@ Public Sub Main()
   If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
   Session["username"] = "rest-other"
   Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+  If Env["WEBA_NATIVE_MODE"] = "profile-seed" Or Env["WEBA_NATIVE_MODE"] = "profile-read" Then
+    If Env["WEBA_NATIVE_MODE"] = "profile-seed" Then WebDatabase.SetFullname("rest-other", "Profile" & Chr(0) & "Ω😀'<tag>suffixA")
+    result.Add(WebDatabase.GetFullname("rest-other"), "fullname")
+    Print JsonText.Encode(result)
+    Return
+  Endif
   If Env["WEBA_NATIVE_MODE"] = "detail-update" Then
     boardId = CInt(Env["WEBA_NATIVE_BOARD"])
     cardId = CInt(Env["WEBA_NATIVE_CARD"])

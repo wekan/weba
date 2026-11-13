@@ -1,0 +1,149 @@
+Public Sub Main()
+  Dim conn As Connection
+  Dim r As Result
+  Dim value As String
+  Dim suffix As String = Chr(0) & "Ω😀'<tag>tail"
+  Dim before As String
+  Dim actor As String
+  Dim denied As Boolean
+  Dim generation As Long
+  Dim failure As String
+  WebDatabase.Register("profile-text-admin", "x")
+  WebDatabase.Register("profile-text-user", "x")
+  WebDatabase.Register("profile-text-other", "x")
+  conn = WebDatabase.OpenConnection()
+  SignIn("profile-text-user")
+  before = Frame()
+  For Each value In ["Name" & suffix, suffix, "", "Plain O'Name", "  whitespace  ", "'); DROP TABLE users; --" & suffix, "Lone" & JsonText.Decode(Chr(34) & "\\ud800" & Chr(34))]
+    WebDatabase.SetFullname("profile-text-user", value)
+    If WebDatabase.GetFullname("profile-text-user") <> value Then Error.Raise("Profile full text mismatch")
+    r = conn.Exec(ExportText.SelectRows(conn, "users") & " WHERE username=&1", "profile-text-user")
+    If ExportText.ReadValue(r, "fullname") <> value Then Error.Raise("Stored profile mismatch")
+    If Not WebDatabase.Login("profile-text-user", "x") Then Error.Raise("Profile changed credentials")
+    WebDatabase.SetFullname("profile-text-user", "")
+    If Frame() <> before Then Error.Raise("Profile wrote unrelated fields/state")
+  Next
+  WebDatabase.SetFullname("profile-text-user", "User" & suffix)
+  before = Frame()
+  If WebDatabase.GetFullname("profile-text-user") <> "User" & suffix Then Error.Raise("Own full name unreadable")
+  If Frame() <> before Then Error.Raise("Profile read wrote state")
+  Try WebDatabase.GetFullname("profile-text-other")
+  denied = Error
+  If Not denied Then Error.Raise("Other profile readable")
+  Try WebDatabase.SetFullname("profile-text-other", "FORGED" & suffix)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Other profile writable")
+  Try WebDatabase.GetUsers(True)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Nonadmin user list accessible")
+  SignIn("profile-text-admin")
+  WebDatabase.SetFullname("profile-text-user", "Admin saved" & suffix)
+  r = WebDatabase.GetUsers(True)
+  For Each r
+    If r!username = "profile-text-user" And If ExportText.ReadValue(r, "fullname") <> "Admin saved" & suffix Then Error.Raise("Admin list truncated")
+  Next
+  r = WebDatabase.GetUsers()
+  If r.Fields.Count <> 3 Or r.Fields.Exist("__weba_text_fullname") Then Error.Raise("Default user list result changed")
+  before = Frame()
+  Try WebDatabase.SetFullname("missing-profile-user", "Missing" & suffix)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Missing profile accepted/wrote state")
+  For Each failure In ["sql", "lock", "role", "generation", "target", "suffix"]
+    SignIn("profile-text-admin")
+    before = Frame()
+    Select failure
+      Case "sql"
+        conn.Exec("CREATE TRIGGER profile_fail AFTER UPDATE OF fullname ON users BEGIN SELECT RAISE(ABORT,'fixture'); END")
+      Case "lock"
+        conn.Exec("CREATE TRIGGER profile_fail AFTER UPDATE OF username ON users BEGIN UPDATE users SET admin=0 WHERE username='profile-text-admin'; END")
+      Case "role"
+        conn.Exec("CREATE TRIGGER profile_fail AFTER UPDATE OF fullname ON users BEGIN UPDATE users SET admin=0 WHERE username='profile-text-admin'; END")
+      Case "generation"
+        conn.Exec("CREATE TRIGGER profile_fail AFTER UPDATE OF fullname ON users BEGIN UPDATE account_sessions SET generation=generation+100 WHERE username='profile-text-admin'; END")
+      Case "target"
+        conn.Exec("CREATE TRIGGER profile_fail AFTER UPDATE OF fullname ON users BEGIN DELETE FROM users WHERE username=NEW.username; END")
+      Case "suffix"
+        conn.Exec("CREATE TRIGGER profile_fail AFTER UPDATE OF fullname ON users BEGIN UPDATE users SET fullname=CAST(" & conn.FormatBlob("Changed" & suffix & "B") & " AS TEXT) WHERE username=NEW.username; END")
+    End Select
+    Try WebDatabase.SetFullname("profile-text-user", "Changed" & suffix & "A")
+    denied = Error
+    conn.Exec("DROP TRIGGER profile_fail")
+    If Not denied Or Frame() <> before Then Error.Raise("Profile rollback failed: " & failure)
+    If Not WebDatabase.Login("profile-text-admin", "x") Then Error.Raise("Rollback changed admin credential")
+  Next
+  SignIn("profile-text-user")
+  generation = WebDatabase.SessionGeneration("profile-text-user")
+  conn.Exec("UPDATE account_sessions SET generation=generation+100 WHERE username=&1", "profile-text-user")
+  before = Frame()
+  Try WebDatabase.SetFullname("profile-text-user", "STALE")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Stale session saved profile")
+  Session["username"] = ""
+  before = Frame()
+  Try WebDatabase.GetFullname("profile-text-user")
+  denied = Error
+  If Not denied Then Error.Raise("Anonymous profile readable")
+  Try WebDatabase.SetFullname("profile-text-user", "ANONYMOUS")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Anonymous profile writable")
+  Print "Profile complete text: exact NUL/Unicode/lone-unit/empty/whitespace/SQL literal storage, credential/state preservation, own/admin scoped reads/writes, stable default result, missing/foreign/stale/anonymous refusal and SQL/lock/role/generation/target/suffix rollback passed"
+End
+
+Private Sub SignIn(actor As String)
+  Session["username"] = actor
+  Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+End
+
+Private Function Frame() As String
+  Dim conn As Connection = WebDatabase.OpenConnection()
+  Dim table As Table
+  Dim tables As New String[]
+  Dim tableName As String
+  Dim order As String[]
+  Dim key As String
+  Dim rows As Result
+  Dim field As ResultField
+  Dim values As Collection
+  Dim data As Variant[]
+  Dim result As New Collection
+  For Each table In conn.Tables
+    If Left(table.Name, 7) <> "sqlite_" Then tables.Add(table.Name)
+  Next
+  tables.Sort()
+  For Each tableName In tables
+    order = New String[]
+    For Each key In conn.Tables[tableName].PrimaryKey
+      order.Add(conn.Quote(key))
+    Next
+    rows = conn.Exec(ExportText.SelectRows(conn, tableName) & If(order.Count, " ORDER BY " & order.Join(","), ""))
+    data = New Variant[]
+    For Each rows
+      values = New Collection
+      For Each field In rows.Fields
+        If Left(field.Name, 7) = "__weba_" Then Continue
+        If field.Type = DB.String Then
+          If rows.Fields.Exist("__weba_null_" & field.Name) Then
+            If rows["__weba_null_" & field.Name] Then
+              values[field.Name] = JSON.Null
+            Else
+              values[field.Name] = ExportText.ReadValue(rows, field.Name)
+            Endif
+          Else
+            values[field.Name] = rows[field.Name]
+          Endif
+        Else If field.Type = DB.Blob Then
+          If IsNull(rows[field.Name]) Then
+            values[field.Name] = JSON.Null
+          Else
+            values[field.Name] = Base64(rows[field.Name].Data)
+          Endif
+        Else
+          values[field.Name] = rows[field.Name]
+        Endif
+      Next
+      data.Add(values)
+    Next
+    result[tableName] = data
+  Next
+  Return JsonText.Encode(result)
+End

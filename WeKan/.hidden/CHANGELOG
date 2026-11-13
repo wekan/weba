@@ -1,3 +1,14 @@
+Native profile names retain complete NUL/Unicode/empty/whitespace/lone-unit text
+through safe single-column writes, scoped profile reads and opt-in admin lists.
+Transactional locked/final actor/authority/target checks roll back SQL, role,
+generation, deletion and suffix-substitution failures. Profile forms bind actor/
+generation and restore encoded values while preserving dirty input. Source and
+packaged save/reopen/reload/clear, admin literal captions and stale hidden-form
+checks pass, plus full pinned host/native/API/security/session, 70 Python and
+ordinary source/packaged UI tests. Remaining people/public/guest/activity readers,
+mutation guards,
+nullable/legacy semantics and full original parity remain open.
+
 Native detail snapshots/drafts preserve complete titles/bodies/types/authors,
 checklist parents, authorized derived labels and binary-free file/history names.
 Stale merges retain independent full current text. Entry guards compare complete

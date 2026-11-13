@@ -2,6 +2,8 @@
 
 Export
 
+Private $profileActor As String
+Private $profileGeneration As Long
 Private $featureActor As String
 Private $featureGeneration As Long
 Private $featureBase As Collection
@@ -688,11 +690,15 @@ Private Sub ShowView(view As String)
   If key Then
     If Not SaveViewPreference(key) Then Return
   Endif
+  $profileActor = ""
+  $profileGeneration = 0
   $dragHandleActor = ""
   $dragHandleGeneration = 0
   Inc $dragHandleRevision
   DragHandleAction.Text = ""
   If view = "Profile" Then
+    $profileActor = WebIdentity.Username
+    $profileGeneration = WebDatabase.SessionGeneration($profileActor)
     $dragHandleActor = WebIdentity.Username
     $dragHandleGeneration = WebDatabase.SessionGeneration($dragHandleActor)
   Endif
@@ -815,10 +821,10 @@ Public Sub Visual_Render()
     Print "<p>Signed in as " & Html(WebIdentity.Username) & "</p>"
   Else If $view = "Admin panel" Then
     If Not WebDatabase.GetIsAdmin(WebIdentity.Username) Then Error.Raise("Administrator required")
-    a = WebDatabase.GetUsers()
+    a = WebDatabase.GetUsers(True)
     Print "<table><tr><th>Username</th><th>Full name</th><th>Administrator</th></tr>"
     For Each a
-      Print "<tr><td>" & Html(a!username) & "</td><td>" & Html(a!fullname) & "</td><td>" & Html(If(a!admin, "Admin", "Normal")) & "</td></tr>"
+      Print "<tr><td>" & Html(a!username) & "</td><td>" & Html(ExportText.ReadValue(a, "fullname")) & "</td><td>" & Html(If(a!admin, "Admin", "Normal")) & "</td></tr>"
     Next
     Print "</table>"
   Else If $view = "Activities" And $board Then
@@ -906,6 +912,7 @@ Private Sub RenderEditorText()
       RenderCompleteField(field)
     Next
   Endif
+  If $view = "Profile" Then RenderCompleteField(Fullname)
   If ActionPanel.Visible And ActionText.Visible Then RenderCompleteField(ActionText)
   If DetailsPanel.Visible Then
     For Each field In [DetailTitle, DetailBody]
@@ -976,7 +983,9 @@ Public Sub Admin_Click()
 End
 
 Public Sub SaveProfile_Click()
-  WebDatabase.SetFullname(WebIdentity.Username, Fullname.Text)
+  If $view <> "Profile" Or Not $profileActor Or WebIdentity.Username <> $profileActor Or WebDatabase.SessionGeneration($profileActor) <> $profileGeneration Then Error.Raise("Reopen your profile before saving")
+  WebDatabase.SetFullname($profileActor, Fullname.Text)
+  Visual.Refresh()
   Notice.Text = "Profile saved"
 Catch
   Notice.Text = Error.Text
