@@ -228,7 +228,7 @@ Public Sub WebForm_Open()
   Endif
   $dragHandleValue = DragHandleValue()
   $boardSelection = BoardSelection.NewState()
-  Status.Text = "Todo"
+  If $card <= 0 Then Status.Text = "Todo"
   $catalogSort = BoardCatalog.SortBy()
   UpdateCatalogSort()
   AccountToggle.Text = WebIdentity.Username

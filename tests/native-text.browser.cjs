@@ -110,6 +110,22 @@ with sqlite3.connect(sys.argv[1]) as d:
   await click('CloseEditor');await expect(page.locator('.weba-report .weba-column[data-list-id="'+seed.items[1].list+'"]')).toContainText('Created in complete B');
   const createdId=Number(await page.locator('.weba-report .weba-card-link').filter({hasText:'Created in complete B'}).getAttribute('data-card-id'));
   expect(fixture('read',createdId)).toMatchObject({description:body,lane:seed.items[1].lane,status:seed.items[1].title,list:seed.items[1].list});
+  // Startup must not replace an already-routed card's custom list with Todo.
+  await page.goto(process.env.WEBA_TEST_URL+'/b/'+seed.board+'/board/'+createdId);
+  await expect.poll(async()=>JSON.parse(await page.locator(c('OverviewRouteState')).textContent()||'{}').cardId).toBe(String(createdId));
+  await settle();await expect(description).toHaveValue(body);
+  const reopenedBody=body+' reopened ordinary edit';
+  await description.evaluate((input,value)=>{input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));},reopenedBody);
+  await settle();await expect(page.locator('[id$=".Lane:entry"]')).toHaveValue(seed.items[1].lane);
+  await expect(page.locator('[id$=".Status:entry"]')).toHaveValue(seed.items[1].title);
+  await click('SaveCard');await expect(page.locator(c('Notice'))).toHaveText('Card saved');
+  expect(fixture('read',createdId)).toMatchObject({description:reopenedBody,lane:seed.items[1].lane,status:seed.items[1].title,list:seed.items[1].list});
+  await page.reload();await expect.poll(async()=>JSON.parse(await page.locator(c('OverviewRouteState')).textContent()||'{}').cardId).toBe(String(createdId));
+  await settle();await expect(description).toHaveValue(reopenedBody);
+  await description.evaluate((input,value)=>{input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));},body);
+  await click('SaveCard');await expect(page.locator(c('Notice'))).toHaveText('Card saved');
+  expect(fixture('read',createdId)).toMatchObject({description:body,lane:seed.items[1].lane,status:seed.items[1].title,list:seed.items[1].list});
+  await click('CloseEditor');
   await click('ViewMenu');await click('Swimlanes');await columns();await expect(page.locator('.weba-report>.weba-swimlane')).toHaveCount(2);
   await page.reload();await columns();await page.setViewportSize({width:390,height:844});await page.evaluate(()=>webaI18n.setLanguage('fi'));await columns();
   await click('ViewMenu');await click('TableView');for(const item of seed.items){const cells=await page.locator('.weba-report tr').filter({has:page.locator('[data-card-id="'+item.card+'"]')}).locator('td').allTextContents();expect(cells).toContain(item.lane);expect(cells).toContain(item.title);}
@@ -193,6 +209,6 @@ with sqlite3.connect(sys.argv[1]) as d:
   await page.evaluate(()=>gw.raise(document.querySelector('[id$=".SaveCard"]').id,'click',[],false));await settle();
   expect(fixture('read',createdId)).toEqual(before);
   expect(errors).toEqual([]);
-  console.log('Native complete text browser: shared-prefix NUL/Unicode/markup lane/list identities retain exact columns/card placement across views/reload/Finnish/mobile; readonly/assigned scope, native exact card/list/lane mouse and card dialog moves with editor refresh/reload, exact lane/list creation and board/card/list/lane native renames with SQL/dirty/reload checks, rich card/list/lane/board native copies with exact SQL/entries/files/numbered title/reload and stale-copy refusal, create/edit/NUL dirty refresh/reload, post-history archive refusal with full board-state rollback/dirty retention/retry and late-revocation refusal passed');
+  console.log('Native complete text browser: shared-prefix NUL/Unicode/markup lane/list identities retain exact columns/card placement across views/reload/Finnish/mobile; readonly/assigned scope, native exact card/list/lane mouse and card dialog moves with editor refresh/reload, exact lane/list creation and board/card/list/lane native renames with SQL/dirty/reload checks, rich card/list/lane/board native copies with exact SQL/entries/files/numbered title/reload and stale-copy refusal, create/edit/NUL dirty refresh/reload and reopened full-status edit/save/reload, post-history archive refusal with full board-state rollback/dirty retention/retry and late-revocation refusal passed');
  }finally{try{if(context)await context.close();}finally{if(browser)await browser.close();}}
 })().catch(e=>{let s=e.stack||String(e);if(process.env.WEBA_TEST_PASSWORD)s=s.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(s);process.exitCode=1;});

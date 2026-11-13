@@ -1,3 +1,10 @@
+Initialize Todo only without an already-loaded card at native form open.
+Reopened custom-list cards retain exact status through ordinary edits. Source/
+packaged mounted editor edit/save/reload preserves full NUL/Unicode text and
+placement; existing complete-text/rollback/route/ordinary UI checks pass both.
+Pre-startup dirty input can still be overwritten by queued setters; this traced
+race, detail/content final guards and broader model/full parity remain open.
+
 Native card saves sort actor/selected-assignee locks, capture actor and recheck
 identity/write/card scope,
 archive state, exact text, live full lane/list identity, hidden/deleted targets,

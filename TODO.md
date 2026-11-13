@@ -137,11 +137,12 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Completed complete native people-pane titles and strict private snapshots;
   scope/no-write/duplicate/order and actual heartbeat/pending-control results
   are recorded in CHANGELOG.md.
-- Next text focus: reopened native card editor submission with NUL-bearing
-  lane/list names (source/packaged browser attempts fail with Invalid status),
-  then detail/content and other mutation final guards, remaining model writers
-  and shared readers. Native card-save immediate/final guards and prior decoder/
-  REST/text work are recorded in CHANGELOG.md.
+- Next text focus: protect dirty input arriving before native form startup
+  completes: queued textbox setters can replace a reopened edit (including NUL
+  with the HTML replacement character) before Save sees it. Mounted reopened
+  status preservation and native card-save final guards are in CHANGELOG.md.
+  Then address detail/content final guards (post-history role loss currently
+  commits a custom-field edit), other model writers and shared readers.
 - Next data follow-up: audit nullable/legacy field-model consistency (including
   copy semantics) and remaining native
   text readers/writers outside the backup path. Other request decoder boundaries,

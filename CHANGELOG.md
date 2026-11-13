@@ -2,6 +2,18 @@
 
 This work adds the following features and fixes:
 
+- Preserve an already-routed card's status when the native form opens; initialize
+  Todo only when no card is loaded. Reopened cards in custom lists no longer
+  reset their status on an unrelated edit. Source/packaged browser tests wait for
+  route acknowledgment and startup commands, edit/save exact NUL/Unicode text
+  and placement, reload, and repeat the save. Existing full-text workflows,
+  post-history rollback/dirty retention, direct login/card/archive/revocation
+  routes and ordinary editor/admin/mobile checks pass on both builds.
+  Input arriving before native startup completes can still be overwritten by
+  queued setters; that independently traced race remains open, together with
+  detail/content final guards and other model/full original parity work.
+  Thanks to xet7.
+
 - Guard native card saves immediately after storage and after history/change
   clocks. Lock actor/selected-assignee accounts in sorted order and retain
   the actor; recheck current identity, write/card scope,
