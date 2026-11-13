@@ -2508,17 +2508,17 @@ source list IDs and exact binary attachment bytes. Missing source links stay
 missing. Tests against the prior committed exporter reproduce truncated titles.
 This oracle deliberately avoids the installed Gambas `JSON.Decode`, which was
 independently observed removing escaped NUL while `JSON.Encode` preserves it.
-Native decoder correction, full import storage round trips and legacy field-model
-consistency therefore remain explicit TODO requirements, not implied by the wire
-export checks. Legacy MIME/metadata fixture bytes test stored-value export;
+The backup boundary now uses the corrected codec described below. Complete import
+storage round trips and legacy field-model consistency remain explicit TODO
+requirements, not implied by the wire export checks. Legacy MIME/metadata fixture bytes test stored-value export;
 existing import validation of those fields remains a separate requirement.
 
 The isolated native decoder probe additionally verifies both default and
 `UseNull=True`: object properties containing empty strings or null are absent
 (`Exist=False`), escaped UTF-16 surrogate-pair emoji is dropped while direct UTF-8
 emoji survives, NUL escapes are removed from values and keys, and literal escaped
-backslash-u0000 text is retained. These cases must be covered by the decoder repair
-and import regressions. The wire exporter test uses standard JSON decoding so
+backslash-u0000 text is retained. These cases are covered by the corrected native backup codec below; complete
+storage round trips still need separate import regressions. The wire exporter test uses standard JSON decoding so
 these native defects cannot mask lost or altered exported bytes.
 
 The isolated SQLite storage probe separately verifies that both ordinary
@@ -2527,3 +2527,43 @@ embedded NUL. `CAST(Connection.FormatBlob(value) AS TEXT)` stores the complete
 NUL/Unicode byte sequence with SQLite type `text`. This gives a verified driver
 primitive for the pending import storage repair; it does not imply that native
 write paths or their validation/atomicity have already been changed.
+
+Native backup `JsonText.Decode` uses a strict byte-based `JsonReader`, retaining
+all JSON string escapes, explicit empty/null fields and exact binary64 values.
+Valid surrogate pairs become UTF-8; lone UTF-16 units are held as WTF-8 internally
+and escaped on output, preserving their JSON meaning without emitting invalid
+UTF-8. Ordinary strings are validated as UTF-8, and control characters must be
+escaped. Arrays/literals/numbers follow strict JSON grammar. Decimal numbers use
+the existing correctly rounded `ExportNumber` conversion, preserve signed zero
+and subnormals, and produce binary64 infinities on overflow as JSON.parse does.
+Long decimal inputs retain a 4096-significant-digit prefix and a sticky tail;
+that exceeds the exact decimal length of any binary64 midpoint while bounding
+conversion work. `JsonText.Encode` serializes finite floats as exact decimal
+rationals, so the stock encoder's shortened precision cannot alter a value;
+nonfinite numbers encode as null, as JSON.stringify does.
+
+`JsonObject` keeps ordinary and NUL-containing keys in native Collection storage.
+Only the empty key needs a private slot. This matters because a mixed native/
+derived Collection getter call site can cache the base `_get` implementation;
+encoding every key internally broke policy normalization after a plain collection
+had warmed that call site. Existing ordinary-key consumers now remain compatible.
+The codec explicitly uses `JsonObject.Value` to access its empty-key slot. Keys
+retain duplicate first position, with JavaScript array-index keys sorted first;
+large index-key sets use native numeric sorting. Explicit Add preserves empty and
+null values, while copy/insert/remove/clear/count and readonly guards have native
+compatibility regressions. Use `JsonText.Encode` for these decoded objects to
+include the empty slot and preserve lone units/numeric precision.
+
+The native backup boundary alone adopts this codec in this step. `ReadData`
+requires a collection root with string format weba-2 and six actual arrays before
+any import effects. Input is limited to 20 MiB and nesting to 128, with generic
+byte-position failures that do not echo document contents. The standard-parser
+oracle compares 218 decoded trees and all numeric IEEE bits, including escaped
+and direct Unicode, lone units, NULL/empty values/keys, duplicate/index/prototype
+names, 10,000 reverse-order numeric keys, long decimal tails, subnormals and
+infinities. It rejects 77 malformed grammar/UTF-8/depth/size/backup-shape cases.
+Warm base-collection calls exercise the inherited getter boundary; unchanged
+all-40-view policy transfer tests verify actual defaults/order/readonly import,
+no preferences or authority transfer, and transactional source/destination races.
+Other request decoders and complete SQLite text writes/storage round trips remain
+explicit next requirements.

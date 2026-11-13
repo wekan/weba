@@ -1,0 +1,110 @@
+Public Sub Main()
+  Dim rows As New Variant[]
+  Dim row As Collection
+  Dim text As String
+  Dim value As Variant
+  Dim i As Integer
+  Dim plain As New Collection
+  plain.Add(1, "warm")
+  CheckObject()
+  JsonText.Encode(plain)
+  Bits(plain)
+  For i = 0 To CInt(Env["WEBA_JSON_COUNT"]) - 1
+    text = File.Load(Env["WEBA_JSON_INPUT_DIR"] & "/" & CStr(i) & ".json")
+    row = New Collection
+    Try value = ParseInput(text, i)
+    If Error Then
+      row.Add(False, "ok")
+      row.Add(Error.Text, "error")
+    Else
+      row.Add(True, "ok")
+      row.Add(JsonText.Encode(value), "content")
+      row.Add(Bits(value), "bits")
+      If TypeOf(value) = gb.Object And If value Is JsonObject Then
+        row.Add(value.Keys, "keys")
+        row.Add(JsonText.Encode(value.Copy()), "copy")
+      Endif
+    Endif
+    rows.Add(row)
+  Next
+  Print JsonText.Encode(rows)
+End
+
+Private Function ParseInput(text As String, index As Integer) As Variant
+  If Env["WEBA_JSON_LEGACY"] = "1" Then Return JSON.Decode(text)
+  If Exist(Env["WEBA_JSON_INPUT_DIR"] & "/" & CStr(index) & ".backup") Then Return BoardTransfer.ReadData(text)
+  Return JsonText.Decode(text)
+End
+
+Private Function Bits(value As Variant) As Variant[]
+  Dim rows As New Variant[]
+  CollectBits(value, "", rows)
+  Return rows
+End
+
+Private Sub CollectBits(value As Variant, path As String, rows As Variant[])
+  Dim map As Collection
+  Dim decoded As JsonObject
+  Dim key As String
+  Dim i As Integer
+  Dim number As Float
+  Dim pointer As Pointer
+  Dim bytes As String
+  Select TypeOf(value)
+    Case gb.Byte, gb.Short, gb.Integer, gb.Long, gb.Single, gb.Float
+      number = value
+      pointer = VarPtr(number)
+      For i = 0 To 7
+        bytes &= Hex$(Byte@(pointer + i), 2)
+      Next
+      rows.Add([path, bytes])
+    Case gb.Object
+      If value Is Collection Then
+        map = value
+        For Each key In map.Keys
+          If map Is JsonObject Then
+            decoded = map
+            CollectBits(decoded.Value(key), path & "/" & Replace(Replace(key, "~", "~0"), "/", "~1"), rows)
+          Else
+            CollectBits(map[key], path & "/" & Replace(Replace(key, "~", "~0"), "/", "~1"), rows)
+          Endif
+        Next
+      Else If Right(Object.Type(value), 2) = "[]" Then
+        For i = 0 To value.Count - 1
+          CollectBits(value[i], path & "/" & CStr(i), rows)
+        Next
+      Endif
+  End Select
+End
+
+Private Function TypedGet(map As Collection, key As String) As Variant
+  Return map[key]
+End
+
+Private Sub CheckObject()
+  Dim plain As New Collection
+  Dim decoded As New JsonObject
+  Dim clone As Collection
+  Dim denied As Boolean
+  plain.Add("first", "warm")
+  If TypedGet(plain, "warm") <> "first" Then Error.Raise("Collection warm-up failed")
+  decoded.Add("second", "warm")
+  decoded.Add("", "")
+  decoded.Add(Null, "nullable")
+  If TypedGet(decoded, "warm") <> "second" Then Error.Raise("Mixed Collection getters lost ordinary keys")
+  If Not decoded.Exist("") Or TypeOf(decoded.Value("")) <> gb.String Then Error.Raise("Empty-key value lost")
+  If decoded.Count <> 3 Or decoded.Length <> 3 Then Error.Raise("JSON object count changed")
+  decoded.ReadOnly = True
+  Try decoded.Add("forged", "new-key")
+  denied = Error
+  If Not denied Or decoded.Exist("new-key") Or decoded.Keys.Count <> 3 Then Error.Raise("Read-only JSON object changed")
+  clone = decoded.Copy()
+  decoded = New JsonObject
+  decoded.Insert(clone)
+  decoded.Clear()
+  If Not decoded.Empty Or decoded.Count Or decoded.Keys.Count Then Error.Raise("JSON object clear failed")
+  decoded.Insert(clone)
+  If decoded.Count <> 3 Or Not decoded.Exist("") Then Error.Raise("JSON object insert/copy lost empty key")
+  decoded.Remove("")
+  If decoded.Count <> 2 Or decoded.Exist("") Then Error.Raise("JSON object remove failed")
+End

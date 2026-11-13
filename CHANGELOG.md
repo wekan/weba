@@ -2,6 +2,22 @@
 
 This work adds the following features and fixes:
 
+- Decode and encode native backups without losing NUL, Unicode surrogate pairs
+  or lone UTF-16 units, empty/null values, empty/NUL property names or binary64
+  precision. Preserve duplicate-key first position and JavaScript index-key
+  ordering. Use exact number conversion/serialization, including signed zero,
+  subnormals and overflow, with bounded long-decimal processing. Keep ordinary
+  collection keys in native storage for mixed base/derived getter compatibility;
+  encode the empty-key slot explicitly. Require valid backup root/array shapes,
+  UTF-8/JSON grammar, 20 MiB input and 128 nesting bounds before import writes.
+  Compare 218 cases with JSON.parse and IEEE bits, including 10,000 reverse index
+  keys; refuse 77 malformed/UTF-8/depth/size/backup-shape cases. Existing all-40-view
+  policy transfer and rollback checks pass unchanged. Full host tests including
+  70 Python tests, both 706-response API builds and both 45-download browser
+  builds with cached revoke/regrant checks pass. Complete SQLite NUL writes,
+  import storage round trips, other request decoder boundaries and broader
+  original UI/API/security parity remain open. Thanks to xet7.
+
 - Preserve complete native backup wire text: authorized context/card/container,
   metadata/custom, filename and display-author/MIME values use shared guarded
   text readers; NULL stays distinct from empty text and numeric/Boolean values.

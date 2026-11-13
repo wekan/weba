@@ -1,0 +1,317 @@
+Private $text As String
+Private $at As Integer = 1
+Private $length As Integer
+
+Public Sub _new(text As String)
+  If Len(text) > 20 * 1024 * 1024 Then Error.Raise("JSON exceeds 20 MiB")
+  $text = text
+  $length = Len(text)
+End
+
+Private Sub Invalid()
+  Error.Raise("Invalid JSON at byte " & CStr($at))
+End
+
+Private Function CurrentByte() As String
+  Return Mid($text, $at, 1)
+End
+
+Private Sub SkipWhitespace()
+  While $at <= $length
+    If InStr(" " & Chr(9) & Chr(10) & Chr(13), CurrentByte()) = 0 Then Return
+    Inc $at
+  Wend
+End
+
+Public Function Parse() As Variant
+  Dim result As Variant = ReadValue(0)
+  SkipWhitespace()
+  If $at <= $length Then Invalid()
+  Return result
+End
+
+Private Function ReadValue(depth As Integer) As Variant
+  If depth > 128 Then Error.Raise("JSON nesting exceeds 128")
+  SkipWhitespace()
+  If $at > $length Then Invalid()
+  Select CurrentByte()
+    Case "{"
+      Return ReadObject(depth + 1)
+    Case "["
+      Return ReadArray(depth + 1)
+    Case Chr(34)
+      Return ReadString()
+    Case "t"
+      Literal("true")
+      Return True
+    Case "f"
+      Literal("false")
+      Return False
+    Case "n"
+      Literal("null")
+      Return Null
+    Case Else
+      Return ReadNumber()
+  End Select
+End
+
+Private Sub Literal(value As String)
+  If Mid($text, $at, Len(value)) <> value Then Invalid()
+  $at += Len(value)
+End
+
+Private Function ReadObject(depth As Integer) As Collection
+  Dim result As New JsonObject
+  Dim key As String
+  Inc $at
+  SkipWhitespace()
+  If CurrentByte() = "}" Then
+    Inc $at
+    Return result
+  Endif
+  Do
+    SkipWhitespace()
+    If CurrentByte() <> Chr(34) Then Invalid()
+    key = ReadString()
+    SkipWhitespace()
+    If CurrentByte() <> ":" Then Invalid()
+    Inc $at
+    result.Add(ReadValue(depth), key)
+    SkipWhitespace()
+    If CurrentByte() = "}" Then
+      Inc $at
+      Return result
+    Endif
+    If CurrentByte() <> "," Then Invalid()
+    Inc $at
+  Loop
+End
+
+Private Function ReadArray(depth As Integer) As Variant[]
+  Dim result As New Variant[]
+  Inc $at
+  SkipWhitespace()
+  If CurrentByte() = "]" Then
+    Inc $at
+    Return result
+  Endif
+  Do
+    result.Add(ReadValue(depth))
+    SkipWhitespace()
+    If CurrentByte() = "]" Then
+      Inc $at
+      Return result
+    Endif
+    If CurrentByte() <> "," Then Invalid()
+    Inc $at
+  Loop
+End
+
+Private Function HexAt(at As Integer) As Integer
+  Dim result As Integer
+  Dim digit As Integer
+  Dim character As String
+  Dim i As Integer
+  For i = 0 To 3
+    character = Mid($text, at + i, 1)
+    If Not character Then Invalid()
+    digit = InStr("0123456789abcdef", LCase(character)) - 1
+    If digit < 0 Then Invalid()
+    result = result * 16 + digit
+  Next
+  Return result
+End
+
+Private Sub Utf8()
+  Dim first As Integer = Asc(CurrentByte())
+  Dim nextByte As Integer
+  Dim size As Integer
+  Dim i As Integer
+  If first >= 194 And first <= 223 Then
+    size = 2
+  Else If first >= 224 And first <= 239 Then
+    size = 3
+  Else If first >= 240 And first <= 244 Then
+    size = 4
+  Else
+    Invalid()
+  Endif
+  If $at + size - 1 > $length Then Invalid()
+  For i = 1 To size - 1
+    nextByte = Asc(Mid($text, $at + i, 1))
+    If nextByte < 128 Or nextByte > 191 Then Invalid()
+    If i = 1 Then
+      If first = 224 And nextByte < 160 Then Invalid()
+      If first = 237 And nextByte >= 160 Then Invalid()
+      If first = 240 And nextByte < 144 Then Invalid()
+      If first = 244 And nextByte >= 144 Then Invalid()
+    Endif
+  Next
+  $at += size
+End
+
+Private Function ReadString() As String
+  Dim result As String
+  Dim start As Integer
+  Dim code As Integer
+  Dim low As Integer
+  Dim byte As Integer
+  Inc $at
+  start = $at
+  While $at <= $length
+    byte = Asc(CurrentByte())
+    If byte = 34 Then
+      result &= Mid($text, start, $at - start)
+      Inc $at
+      Return result
+    Endif
+    If byte < 32 Then Invalid()
+    If byte >= 128 Then
+      Utf8()
+      Continue
+    Endif
+    If byte <> 92 Then
+      Inc $at
+      Continue
+    Endif
+    result &= Mid($text, start, $at - start)
+    Inc $at
+    Select CurrentByte()
+      Case Chr(34), Chr(92), "/"
+        result &= CurrentByte()
+        Inc $at
+      Case "b", "f", "n", "r", "t"
+        Select CurrentByte()
+          Case "b"
+            result &= Chr(8)
+          Case "f"
+            result &= Chr(12)
+          Case "n"
+            result &= Chr(10)
+          Case "r"
+            result &= Chr(13)
+          Case "t"
+            result &= Chr(9)
+        End Select
+        Inc $at
+      Case "u"
+        Inc $at
+        code = HexAt($at)
+        $at += 4
+        If code >= 55296 And code <= 56319 And Mid($text, $at, 2) = Chr(92) & "u" Then
+          low = HexAt($at + 2)
+          If low >= 56320 And low <= 57343 Then
+            code = 65536 + (code - 55296) * 1024 + low - 56320
+            $at += 6
+          Endif
+        Endif
+        ' Lone UTF-16 units use WTF-8 internally and are escaped by JsonText.
+        result &= If(code = 0, Chr(0), String.Chr(code))
+      Case Else
+        Invalid()
+    End Select
+    start = $at
+  Wend
+  Invalid()
+End
+
+Private Function NumberDigit() As Boolean
+  Dim value As String = CurrentByte()
+  Return CBool(value) And InStr("0123456789", value) > 0
+End
+
+Private Function ShortNumber(token As String) As String
+  Dim negative As String
+  Dim digits As String
+  Dim mantissa As String
+  Dim exponentText As String
+  Dim exponent As Integer
+  Dim limit As Integer = Len(token) + 2048
+  Dim fraction As Integer
+  Dim first As Integer = 1
+  Dim at As Integer
+  Dim i As Integer
+  Dim removed As Integer
+  Dim sign As Integer = 1
+  If Len(token) <= 4096 Then Return token
+  If Left(token, 1) = "-" Then
+    negative = "-"
+    token = Mid(token, 2)
+  Endif
+  at = InStr(LCase(token), "e")
+  mantissa = If(at, Left(token, at - 1), token)
+  If at Then
+    exponentText = Mid(token, at + 1)
+    If Left(exponentText, 1) = "-" Then sign = -1
+    If Left(exponentText, 1) = "-" Or Left(exponentText, 1) = "+" Then exponentText = Mid(exponentText, 2)
+    For i = 1 To Len(exponentText)
+      If exponent > limit Div 10 Then
+        exponent = limit
+      Else
+        exponent = Min(limit, exponent * 10 + CInt(Mid(exponentText, i, 1)))
+      Endif
+    Next
+    exponent *= sign
+  Endif
+  at = InStr(mantissa, ".")
+  If at Then fraction = Len(mantissa) - at
+  digits = Replace(mantissa, ".", "")
+  While first <= Len(digits)
+    If Mid(digits, first, 1) <> "0" Then Break
+    Inc first
+  Wend
+  digits = Mid(digits, first)
+  If Not digits Then Return negative & "0"
+  exponent -= fraction
+  If Len(digits) > 4096 Then
+    removed = Len(digits) - 4096
+    ' Every binary64 midpoint has fewer than 4096 significant decimal digits.
+    ' Preserve which side of a midpoint a discarded nonzero tail lies on.
+    If Replace(Mid(digits, 4097), "0", "") Then
+      digits = Left(digits, 4096) & "1"
+      Dec removed
+    Else
+      digits = Left(digits, 4096)
+    Endif
+    exponent += removed
+  Endif
+  Return negative & digits & "e" & CStr(exponent)
+End
+
+Private Function ReadNumber() As Float
+  Dim start As Integer = $at
+  Dim token As String
+  Dim number As Float
+  If CurrentByte() = "-" Then Inc $at
+  If CurrentByte() = "0" Then
+    Inc $at
+  Else
+    If Not NumberDigit() Then Invalid()
+    While NumberDigit()
+      Inc $at
+    Wend
+  Endif
+  If CurrentByte() = "." Then
+    Inc $at
+    If Not NumberDigit() Then Invalid()
+    While NumberDigit()
+      Inc $at
+    Wend
+  Endif
+  If CurrentByte() = "e" Or CurrentByte() = "E" Then
+    Inc $at
+    If CurrentByte() = "+" Or CurrentByte() = "-" Then Inc $at
+    If Not NumberDigit() Then Invalid()
+    While NumberDigit()
+      Inc $at
+    Wend
+  Endif
+  token = Mid($text, start, $at - start)
+  If Not ExportNumber.ParseFinite(ShortNumber(token), ByRef number) Then
+    number = 2 ^ 1023
+    number *= 2
+    If Left(token, 1) = "-" Then number = -number
+  Endif
+  If number = 0 And Left(token, 1) = "-" Then number = -number
+  Return number
+End

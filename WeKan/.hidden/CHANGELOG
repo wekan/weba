@@ -1,3 +1,9 @@
+Native backup JSON: preserve complete strings/keys/nulls and exact numbers with
+a bounded strict codec, Unicode/lone-unit support and mixed collection getter
+compatibility.218standard-parser/IEEE cases and77negative cases pass with
+unchanged view-policy transfer tests. Complete SQLite NUL import writes and full
+original UI/API/security parity remain open.
+
 Native backup wire text: preserve complete control/NUL/Unicode field values and
 NULL versus empty, with safe legacy grouping/order and full display author/MIME
 reads.32owner/readonly scoped snapshots match standard JSON decoding. Native

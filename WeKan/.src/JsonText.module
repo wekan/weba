@@ -1,0 +1,117 @@
+Export
+
+Public Function Decode(text As String) As Variant
+  Dim reader As New JsonReader(text)
+  Return reader.Parse()
+End
+
+Private Function Quoted(value As String) As String
+  Dim wire As String = JSON.Encode(value)
+  Dim result As String
+  Dim start As Integer = 1
+  Dim at As Integer = 1
+  Dim second As Integer
+  Dim third As Integer
+  Dim code As Integer
+  While at + 2 <= Len(wire)
+    If Asc(Mid(wire, at, 1)) = 237 Then
+      second = Asc(Mid(wire, at + 1, 1))
+      third = Asc(Mid(wire, at + 2, 1))
+      If second >= 160 And second <= 191 And third >= 128 And third <= 191 Then
+        code = 53248 + (second - 128) * 64 + third - 128
+        result &= Mid(wire, start, at - start) & Chr(92) & "u" & LCase(Hex$(code, 4))
+        at += 3
+        start = at
+        Continue
+      Endif
+    Endif
+    Inc at
+  Wend
+  Return result & Mid(wire, start)
+End
+
+Private Function NumberText(number As Float) As String
+  Dim negative As Boolean = number < 0
+  Dim integer As String
+  Dim fraction As Float
+  Dim numerator As Float
+  Dim places As Integer
+  Dim digits As String
+  Dim nextDigits As String
+  Dim carry As Integer
+  Dim digit As Integer
+  Dim i As Integer
+  Dim index As Integer
+  If IsInf(number) Or IsNan(number) Then Return "null"
+  If number = 0 Then Return "0"
+  number = Abs(number)
+  integer = ExportNumber.IntegerText(Int(number))
+  fraction = number - Int(number)
+  If fraction = 0 Then Return If(negative, "-", "") & integer
+  ' Extract the exact binary rational. Multiplication by two and subtraction
+  ' of one introduce no rounding; the numerator has at most 53 significant bits.
+  While fraction <> 0
+    fraction *= 2
+    digit = If(fraction >= 1, 1, 0)
+    If digit Then fraction -= 1
+    numerator = numerator * 2 + digit
+    Inc places
+  Wend
+  digits = ExportNumber.IntegerText(numerator)
+  ' numerator / 2^places = numerator * 5^places / 10^places.
+  For i = 1 To places
+    carry = 0
+    nextDigits = ""
+    For index = Len(digits) DownTo 1
+      digit = CInt(Mid(digits, index, 1)) * 5 + carry
+      nextDigits = CStr(digit Mod 10) & nextDigits
+      carry = digit Div 10
+    Next
+    If carry Then nextDigits = CStr(carry) & nextDigits
+    digits = nextDigits
+  Next
+  digits = String(places - Len(digits), "0") & digits
+  While Right(digits, 1) = "0"
+    digits = Left(digits, -1)
+  Wend
+  Return If(negative, "-", "") & integer & "." & digits
+End
+
+Private Function EncodeValue(value As Variant, depth As Integer) As String
+  Dim entries As New String[]
+  Dim key As String
+  Dim item As Variant
+  Dim map As Collection
+  Dim decoded As JsonObject
+  If depth > 128 Then Error.Raise("JSON nesting exceeds 128")
+  If TypeOf(value) = gb.String Then Return Quoted(value)
+  If IsNull(value) Then Return "null"
+  If TypeOf(value) = gb.Float Or TypeOf(value) = gb.Single Then Return NumberText(value)
+  If TypeOf(value) = gb.Object Then
+    If value Is JsonObject Then
+      decoded = value
+      For Each key In decoded.Keys
+        entries.Add(Quoted(key) & ":" & EncodeValue(decoded.Value(key), depth + 1))
+      Next
+      Return "{" & entries.Join(",") & "}"
+    Endif
+    If value Is Collection Then
+      map = value
+      For Each key In map.Keys
+        entries.Add(Quoted(key) & ":" & EncodeValue(map[key], depth + 1))
+      Next
+      Return "{" & entries.Join(",") & "}"
+    Endif
+    If Right(Object.Type(value), 2) = "[]" Then
+      For Each item In value
+        entries.Add(EncodeValue(item, depth + 1))
+      Next
+      Return "[" & entries.Join(",") & "]"
+    Endif
+  Endif
+  Return JSON.Encode(value)
+End
+
+Public Function Encode(value As Variant) As String
+  Return EncodeValue(value, 0)
+End

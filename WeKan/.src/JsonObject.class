@@ -1,0 +1,146 @@
+Inherits Collection
+
+' Keep ordinary keys in native storage: Gambas caches Collection._get at
+' mixed base/derived call sites. Only the void key needs a separate slot.
+' JsonText uses Value() explicitly for that slot, independently of _get caching.
+Private $names As New String[]
+Private $hasEmpty As Boolean
+Private $empty As Variant
+Property Read Keys As String[]
+Property Read Count As Integer
+Property Read Length As Integer
+Property Read Empty As Boolean
+Property Read First As String
+Property Read Last As String
+
+Private Function IndexKey(key As String) As Boolean
+  Dim i As Integer
+  Dim code As Integer
+  If Not key Or Len(key) > 10 Or (Len(key) > 1 And Left(key, 1) = "0") Then Return False
+  For i = 1 To Len(key)
+    code = Asc(Mid(key, i, 1))
+    If code < 48 Or code > 57 Then Return False
+  Next
+  Return CLong(key) <= 4294967294
+End
+
+Private Function Keys_Read() As String[]
+  Dim result As New String[]
+  Dim ordinary As New String[]
+  Dim indices As New Long[]
+  Dim key As String
+  Dim number As Long
+  For Each key In $names
+    If IndexKey(key) Then
+      indices.Add(CLong(key))
+    Else
+      ordinary.Add(key)
+    Endif
+  Next
+  indices.Sort()
+  For Each number In indices
+    result.Add(CStr(number))
+  Next
+  For Each key In ordinary
+    result.Add(key)
+  Next
+  Return result
+End
+
+Private Function Count_Read() As Integer
+  Return Super.Count + If($hasEmpty, 1, 0)
+End
+
+Private Function Length_Read() As Integer
+  Return Count_Read()
+End
+
+Private Function Empty_Read() As Boolean
+  Return Count_Read() = 0
+End
+
+Private Function First_Read() As String
+  Dim keys As String[] = Keys_Read()
+  If keys.Count Then Return keys[0]
+  Return ""
+End
+
+Private Function Last_Read() As String
+  Dim keys As String[] = Keys_Read()
+  If keys.Count Then Return keys[keys.Max]
+  Return ""
+End
+
+Public Function Value(key As String) As Variant
+  If key = "" Then
+    If $hasEmpty Then Return $empty
+    Return Super.Default
+  Endif
+  Return Super[key]
+End
+
+Public Function _get(key As String) As Variant
+  Return Me.Value(key)
+End
+
+Public Sub _put(value As Variant, key As String)
+  Me.Add(value, key)
+End
+
+Public Sub Add(value As Variant, key As String)
+  If Super.ReadOnly Then Error.Raise("Read-only JSON object")
+  If key = "" Then
+    If Not $hasEmpty Then $names.Add(key)
+    $empty = value
+    $hasEmpty = True
+  Else
+    If Not Super.Exist(key) Then $names.Add(key)
+    Super.Add(value, key)
+  Endif
+End
+
+Public Function Exist(key As String) As Boolean
+  If key = "" Then Return $hasEmpty
+  Return Super.Exist(key)
+End
+
+Public Sub Remove(key As String)
+  Dim at As Integer = $names.Find(key)
+  If Super.ReadOnly Then Error.Raise("Read-only JSON object")
+  If key = "" Then
+    $hasEmpty = False
+    $empty = Null
+  Else
+    Super.Remove(key)
+  Endif
+  If at >= 0 Then $names.Remove(at)
+End
+
+Public Sub Clear()
+  Super.Clear()
+  $names.Clear()
+  $hasEmpty = False
+  $empty = Null
+End
+
+Public Function Copy() As Collection
+  Dim result As New JsonObject
+  Dim key As String
+  For Each key In $names
+    result.Add(Me.Value(key), key)
+  Next
+  Return result
+End
+
+Public Sub Insert(other As Collection)
+  Dim key As String
+  Dim decoded As JsonObject
+  If other Is JsonObject Then decoded = other
+  For Each key In other.Keys
+    If decoded Then
+      Me.Add(decoded.Value(key), key)
+    Else
+      Me.Add(other[key], key)
+    Endif
+  Next
+End

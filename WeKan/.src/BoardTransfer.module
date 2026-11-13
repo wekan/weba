@@ -524,15 +524,25 @@ Private Function BuildExport(boardId As Integer, kind As String, itemId As Integ
   data["metadata"] = metadata
   data["entries"] = entries
   data["files"] = files
-  Return JSON.Encode(data)
+  Return JsonText.Encode(data)
 End
 
 Public Function ReadData(text As String) As Collection
   Dim data As Collection
+  Dim decoded As Variant
+  Dim field As String
   If Len(text) > 20 * 1024 * 1024 Then Error.Raise("Import JSON exceeds 20 MiB")
-  data = JSON.Decode(text)
+  decoded = JsonText.Decode(text)
+  If TypeOf(decoded) <> gb.Object Then Error.Raise("Choose a weba-2 JSON export")
+  If Not (decoded Is Collection) Then Error.Raise("Choose a weba-2 JSON export")
+  data = decoded
+  If TypeOf(data["format"]) <> gb.String Then Error.Raise("Choose a weba-2 JSON export")
   If data["format"] <> "weba-2" Then Error.Raise("Choose a weba-2 JSON export")
-  If Not data.Exist("lanes") Or Not data.Exist("lists") Or Not data.Exist("cards") Or Not data.Exist("entries") Or Not data.Exist("files") Or Not data.Exist("metadata") Then Error.Raise("Incomplete weba export")
+  For Each field In ["lanes", "lists", "cards", "entries", "files", "metadata"]
+    If Not data.Exist(field) Then Error.Raise("Incomplete weba export")
+    If TypeOf(data[field]) <> gb.Object Then Error.Raise("Invalid weba JSON array")
+    If Object.Type(data[field]) <> "Variant[]" Then Error.Raise("Invalid weba JSON array")
+  Next
   Return data
 End
 

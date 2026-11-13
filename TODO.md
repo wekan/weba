@@ -103,11 +103,14 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   readers, NULL/empty distinction, NUL-aware grouping/order and display-author/
   MIME reads. Standard JSON parsing verifies 32 owner/readonly scoped snapshots;
   this does not claim native decoder/import round-trip completion.
-- Next data follow-up: fix native JSON decoding that drops escaped NUL, escaped
-  surrogate pairs and empty/null object values, then verify complete import
-  storage round trips and legacy field-model consistency.
-  Other DB driver conformance, remaining field models/security reporting and
-  full original suites stay open.
+- Completed the native backup JSON codec: preserve NUL, escaped surrogate pairs/
+  lone UTF-16 units, empty/null values and empty/NUL keys, exact binary64 values
+  and object ordering. Standard-parser/IEEE-bit and strict negative-input tests
+  are recorded in CHANGELOG.md; existing policy-transfer guards remain intact.
+- Next data follow-up: implement safe complete-text SQLite import writes and
+  verify full storage round trips, then audit legacy field-model consistency.
+  Other request decoder boundaries, DB drivers, remaining field models/security
+  reporting and full original suites stay open.
 
 - Next: remaining copy-option models/controls, selected-export API/model/
   security parity, Home/group targets and original
