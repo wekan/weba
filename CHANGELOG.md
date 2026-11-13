@@ -2,6 +2,20 @@
 
 This work adds the following features and fixes:
 
+- Preserve complete board/card titles in native roster, member and assignee
+  panes. Use complete title/owner reads and strict private snapshots so a rename
+  after embedded NUL refreshes open captions. Retain member/assignee order,
+  duplicates, capability flags, current assigned-card scope and roster fields.
+  Native tests cover exact text, suffix-only renames, stable all-table no-write
+  reads, hidden-change isolation and hidden/global/nonmember/revoked refusal.
+  Actual source/packaged UI verifies suffix heartbeat changes, preserved
+  pending invitation text and assignee choices, literal markup and reload;
+  existing multiuser live-people suites pass role/demotion/removal/revocation
+  checks, plus ordinary layout/editor/admin/mobile regressions on both builds.
+  Full pinned host/native/API/security/session tests and 70 Python tests pass.
+  Public/guest/activity projections, mutation final guards, nullable/legacy
+  models and full original UI/API/DDP/security parity remain open. Thanks to xet7.
+
 - Preserve complete native profile full names in storage, profile inputs and
   the administrator's user list, including embedded NUL/Unicode and SQL-literal
   text. Write only the full-name column in a transaction, lock and recheck the

@@ -1,3 +1,13 @@
+Native roster/member/assignee panes preserve complete board/card captions and
+strict private snapshots notice suffix-only NUL renames. Names/order/duplicates,
+capabilities and current assigned scope remain intact. Exact/no-write/hidden-
+change/global/nonmember/revocation checks pass. Source/packaged actual heartbeat/
+pending invite/assignee choice/literal/reload and existing multiuser people checks
+pass, plus ordinary layout/editor/admin/mobile regressions on both builds.
+Full pinned host/native/API/security/session and 70 Python tests pass.
+Public/guest/activity projections, mutation guards, nullable/legacy models and
+full original parity remain open.
+
 Native profile names retain complete NUL/Unicode/empty/whitespace/lone-unit text
 through safe single-column writes, scoped profile reads and opt-in admin lists.
 Transactional locked/final actor/authority/target checks roll back SQL, role,

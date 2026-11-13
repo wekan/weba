@@ -2706,7 +2706,7 @@ Private Sub RefreshLiveCardPeople()
     Return
   Endif
   data = PeopleLive.Card($peopleBoard, $peopleCard, $peopleAssignees)
-  If JSON.Encode(data) <> $peopleState Then RefreshCardPeople(True, data)
+  If JsonText.Encode(data) <> $peopleState Then RefreshCardPeople(True, data)
 Catch
   Notice.Text = "Card people refresh failed"
 End
@@ -2722,7 +2722,7 @@ Private Sub RefreshCardPeople(Optional preserve As Boolean, Optional data As Col
   Dim writable As Boolean
   Dim state As String
   If Not data Then data = PeopleLive.Card($peopleBoard, $peopleCard, $peopleAssignees)
-  state = JSON.Encode(data)
+  state = JsonText.Encode(data)
   writable = data["write"]
   names = data["names"]
   $loadingPeople = True
@@ -2834,7 +2834,7 @@ Private Sub RefreshLiveMembers()
     Return
   Endif
   data = PeopleLive.Roster($membersBoard)
-  If JSON.Encode(data) <> $membersState Then RefreshMembers(True, data)
+  If JsonText.Encode(data) <> $membersState Then RefreshMembers(True, data)
 Catch
   Notice.Text = "Board members refresh failed"
 End
@@ -2850,7 +2850,7 @@ Private Sub RefreshMembers(Optional preserve As Boolean, Optional data As Collec
   Dim pristine As Boolean = target = $memberFormUser And roleIndex = $memberFormRole
   Dim state As String
   If Not data Then data = PeopleLive.Roster($membersBoard)
-  state = JSON.Encode(data)
+  state = JsonText.Encode(data)
   $loadingMembers = True
   MemberBoardName.Text = data["title"]
   $memberOwner = data["owner"]

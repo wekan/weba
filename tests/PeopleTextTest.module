@@ -1,0 +1,149 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim hiddenId As Integer
+  Dim foreignBoard As Integer
+  Dim foreignCard As Integer
+  Dim actor As String
+  Dim mode As Boolean
+  Dim suffix As String = Chr(0) & "Ω😀'<tag>suffix"
+  Dim boardTitle As String = "Board" & suffix
+  Dim cardTitle As String = "Card" & suffix
+  Dim data As Collection
+  Dim row As Collection
+  Dim state As String
+  Dim roster As String
+  Dim before As String
+  Dim denied As Boolean
+  For Each actor In ["people-text-global", "people-text-owner", "people-text-writer", "people-text-reader", "people-text-assigned", "people-text-outsider"]
+    WebDatabase.Register(actor, "x")
+  Next
+  SignIn("people-text-outsider")
+  foreignBoard = KanbanStore.AddBoard("FOREIGN-PEOPLE-CANARY" & suffix)
+  foreignCard = KanbanStore.SaveCard(foreignBoard, 0, "FOREIGN-CARD-CANARY" & suffix, "", "Default", "Todo", "", "", "")
+  SignIn("people-text-owner")
+  boardId = KanbanStore.AddBoard(boardTitle)
+  BoardAccess.SetMember(boardId, "people-text-writer", "normal")
+  BoardAccess.SetMember(boardId, "people-text-reader", "read-only")
+  BoardAccess.SetMember(boardId, "people-text-assigned", "read-assigned-only")
+  cardId = KanbanStore.SaveCard(boardId, 0, cardTitle, "BODY-CANARY", "Default", "Todo", "people-text-assigned", "", "")
+  hiddenId = KanbanStore.SaveCard(boardId, 0, "HIDDEN-PEOPLE-CANARY" & suffix, "", "Default", "Todo", "", "", "")
+  BoardAccess.RestoreCardMembers(boardId, cardId, ["people-text-writer", "people-text-writer"])
+  BoardAccess.SetAssignees(boardId, cardId, ["people-text-assigned", "people-text-assigned"])
+  For Each actor In ["people-text-owner", "people-text-writer", "people-text-reader", "people-text-assigned"]
+    SignIn(actor)
+    before = Frame()
+    data = PeopleLive.Roster(boardId)
+    If data["title"] <> boardTitle Or data["owner"] <> "people-text-owner" Then Error.Raise("Roster complete title/owner missing")
+    If data["manager"] <> (actor = "people-text-owner") Then Error.Raise("Roster manager scope changed")
+    For Each row In data["rows"]
+      If row.Count <> 2 Or Not row.Exist("username") Or Not row.Exist("role") Then Error.Raise("Roster exposed extra identity fields")
+    Next
+    roster = JsonText.Encode(data)
+    If JsonText.Encode(PeopleLive.Roster(boardId)) <> roster Then Error.Raise("Roster snapshot unstable")
+    For Each mode In [False, True]
+      data = PeopleLive.Card(boardId, cardId, mode)
+      If data["title"] <> cardTitle Or data["roster"]["title"] <> boardTitle Then Error.Raise("People complete caption missing")
+      If data["names"].Count <> 2 Or data["names"][0] <> If(mode, "people-text-assigned", "people-text-writer") Then Error.Raise("People names/order/duplicates changed")
+      If data["write"] <> (actor = "people-text-owner" Or actor = "people-text-writer") Then Error.Raise("People write scope changed")
+      state = JsonText.Encode(data)
+      If JsonText.Encode(PeopleLive.Card(boardId, cardId, mode)) <> state Then Error.Raise("Card people snapshot unstable")
+      If InStr(state, "CANARY") Or InStr(state, "password") Then Error.Raise("People snapshot exposed non-people fields")
+    Next
+    If Frame() <> before Then Error.Raise("People reads wrote state")
+  Next
+  SignIn("people-text-assigned")
+  state = JsonText.Encode(PeopleLive.Card(boardId, cardId, True))
+  roster = JsonText.Encode(PeopleLive.Roster(boardId))
+  SignIn("people-text-owner")
+  WorkspaceStore.Rename(boardId, "card", hiddenId, "HIDDEN-PEOPLE-CANARY" & suffix & "B")
+  SignIn("people-text-assigned")
+  If JsonText.Encode(PeopleLive.Card(boardId, cardId, True)) <> state Or JsonText.Encode(PeopleLive.Roster(boardId)) <> roster Then Error.Raise("Hidden card invalidated people snapshots")
+  Try PeopleLive.Card(boardId, hiddenId, True)
+  denied = Error
+  If Not denied Then Error.Raise("Hidden people pane accessible")
+  SignIn("people-text-owner")
+  WorkspaceStore.Rename(boardId, "board", boardId, boardTitle & "B")
+  WorkspaceStore.Rename(boardId, "card", cardId, cardTitle & "B")
+  SignIn("people-text-reader")
+  If JsonText.Encode(PeopleLive.Roster(boardId)) = roster Then Error.Raise("Board suffix rename missed")
+  data = PeopleLive.Card(boardId, cardId, True)
+  If JsonText.Encode(data) = state Or data["title"] <> cardTitle & "B" Or data["roster"]["title"] <> boardTitle & "B" Then Error.Raise("People suffix rename missed")
+  For Each actor In ["people-text-global", "people-text-outsider"]
+    SignIn(actor)
+    before = Frame()
+    Try PeopleLive.Roster(boardId)
+    denied = Error
+    If Not denied Then Error.Raise("Nonmember roster accessible")
+    Try PeopleLive.Card(boardId, cardId, False)
+    denied = Error
+    If Not denied Or Frame() <> before Then Error.Raise("Nonmember people accessible/wrote state")
+  Next
+  SignIn("people-text-owner")
+  BoardAccess.RemoveMember(boardId, "people-text-reader")
+  SignIn("people-text-reader")
+  before = Frame()
+  Try PeopleLive.Card(boardId, cardId, False)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Revoked people pane accessible/wrote state")
+  Print "People complete text: exact board/card captions, suffix-only rename detection, member/assignee order and duplicates, owner/writer/reader/assigned capabilities, stable/no-write snapshots, hidden change isolation and hidden/global/nonmember/revoked refusal passed"
+End
+
+Private Sub SignIn(actor As String)
+  Session["username"] = actor
+  Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+End
+
+Private Function Frame() As String
+  Dim conn As Connection = WebDatabase.OpenConnection()
+  Dim table As Table
+  Dim tables As New String[]
+  Dim tableName As String
+  Dim order As String[]
+  Dim key As String
+  Dim rows As Result
+  Dim field As ResultField
+  Dim values As Collection
+  Dim data As Variant[]
+  Dim result As New Collection
+  For Each table In conn.Tables
+    If Left(table.Name, 7) <> "sqlite_" Then tables.Add(table.Name)
+  Next
+  tables.Sort()
+  For Each tableName In tables
+    order = New String[]
+    For Each key In conn.Tables[tableName].PrimaryKey
+      order.Add(conn.Quote(key))
+    Next
+    rows = conn.Exec(ExportText.SelectRows(conn, tableName) & If(order.Count, " ORDER BY " & order.Join(","), ""))
+    data = New Variant[]
+    For Each rows
+      values = New Collection
+      For Each field In rows.Fields
+        If Left(field.Name, 7) = "__weba_" Then Continue
+        If field.Type = DB.String Then
+          If rows.Fields.Exist("__weba_null_" & field.Name) Then
+            If rows["__weba_null_" & field.Name] Then
+              values[field.Name] = JSON.Null
+            Else
+              values[field.Name] = ExportText.ReadValue(rows, field.Name)
+            Endif
+          Else
+            values[field.Name] = rows[field.Name]
+          Endif
+        Else If field.Type = DB.Blob Then
+          If IsNull(rows[field.Name]) Then
+            values[field.Name] = JSON.Null
+          Else
+            values[field.Name] = Base64(rows[field.Name].Data)
+          Endif
+        Else
+          values[field.Name] = rows[field.Name]
+        Endif
+      Next
+      data.Add(values)
+    Next
+    result[tableName] = data
+  Next
+  Return JsonText.Encode(result)
+End

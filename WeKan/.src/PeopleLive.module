@@ -11,8 +11,8 @@ Public Function Roster(boardId As Integer) As Collection
   Dim username As String
   BoardAccess.RequireRead(boardId)
   r = WorkspaceStore.Record(boardId, "board", boardId)
-  data.Add(CStr(r!title), "title")
-  data.Add(CStr(r!owner), "owner")
+  data.Add(ExportText.ReadValue(r, "title"), "title")
+  data.Add(ExportText.ReadValue(r, "owner"), "owner")
   data["manager"] = BoardAccess.Can(boardId, "manageBoard")
   r = BoardAccess.Members(boardId)
   For Each r
@@ -37,7 +37,7 @@ Public Function Card(boardId As Integer, cardId As Integer, assignees As Boolean
   Dim r As Result
   BoardAccess.RequireCard(boardId, cardId)
   r = WorkspaceStore.Record(boardId, "card", cardId)
-  data.Add(CStr(r!title), "title")
+  data.Add(ExportText.ReadValue(r, "title"), "title")
   data["write"] = BoardAccess.Can(boardId, "write")
   If assignees Then
     data["names"] = BoardAccess.Assignees(boardId, cardId)

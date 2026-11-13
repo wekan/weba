@@ -134,8 +134,11 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Completed native complete-text profile storage/inputs/admin captions with
   transactional locked/final own/admin guards and captured form identity;
   exact/rollback and source/packaged UI details are recorded in CHANGELOG.md.
-- Next reader focus: native people panes and public/guest/activity projections.
-  Complete native copy text and its locked/final guards are in CHANGELOG.md.
+- Completed complete native people-pane titles and strict private snapshots;
+  scope/no-write/duplicate/order and actual heartbeat/pending-control results
+  are recorded in CHANGELOG.md.
+- Next reader focus: public/guest/activity projections. Complete native copy
+  text and its locked/final guards are in CHANGELOG.md.
 - Next data follow-up: audit nullable/legacy field-model consistency (including
   copy semantics) and remaining native
   text readers/writers outside the backup path. Other request decoder boundaries,
