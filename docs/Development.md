@@ -2445,7 +2445,7 @@ ZIP bytes match source, and unmarked JSONL is unchanged. Two complete native typ
 exports match original formatFocalboard under the same fixed clock, including NUL
 text, integer-like names, duplicate/prototype fields and exponent/subnormal values.
 NUL-invalid numeric fields fail without entry/history writes. Renderer tests also
-cover IEEE edge strings and malformed/forged references. Other DBs, backup migration,
+cover IEEE edge strings and malformed/forged references. Other DBs, backup text/model fidelity,
 remaining native field/anonymization/security models, 27 API renderers and complete
 original UI/API/security parity remain open.
 
@@ -2456,7 +2456,35 @@ migration behavior. `BackupLinkReadTest` first reproduces the prior source-link
 mutation, then guards the source board with an insert-refusing trigger during
 owner and readonly board/lane/list/card exports, including archived cards. Each
 export is imported into a separate target and checked for complete target links.
-Foreign card scope and revoked membership remain denied. This is a link migration
-fix: native backup still calls `Lanes`, whose missing-lane/default-list creation
-requires a separate read-boundary change; full native backup text preservation is
-also still pending.
+Foreign card scope and revoked membership remain denied. Container initialization
+is also excluded from the backup read boundary as described below; full native
+backup text/model fidelity is still pending.
+
+Native backup container snapshots now avoid `Lanes` entirely. Existing live list
+and lane records retain their source IDs and ordering. A legacy card whose list
+is missing receives a snapshot-only list matching its lane/status; a missing lane
+required by an included list is also reconstructed only inside the snapshot.
+These records use deterministic negative IDs, checked against IDs already in the
+respective snapshot, so matching orphan cards share one reconstructed list and
+import maps the local identity into a normal target database ID. Empty stored
+boards export no invented default containers. This reconstructs the container
+relationships required for a usable native backup without changing source rows;
+it does not persist a migration or revive tombstone records. Invalid legacy
+container names fail the export instead of producing a partially initialized
+source. Broader legacy field consistency and complete generic text fidelity
+remain TODO work.
+
+`BackupContainerReadTest` covers 20 owner/readonly board/card/list state cases for
+empty boards, missing lanes, missing lists, archived cards and shared orphans.
+Each export repeats identically, imports into an independent target with valid
+links, and preserves exact source snapshots while INSERT/UPDATE/DELETE triggers
+refuse writes to source content/container/history tables. After removing those
+guards, explicit lane initialization still persists normally. Existing scope,
+transaction recheck, attachment policy and cached-export guards remain in force.
+
+The selected-export browser fixture no longer relies on native backup initializing
+containers. It reads raw per-board counts before export, asserts that native JSON
+contains empty lane/list/card arrays, and checks the stored counts again after
+all generic exports. Only then does the disposable fixture explicitly initialize
+one lane/three lists for unchanged tool-format content comparisons. Both source
+and packaged browser runs cover this separation and cached revoke/regrant retry.

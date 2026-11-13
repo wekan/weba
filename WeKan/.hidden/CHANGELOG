@@ -1,3 +1,9 @@
+Native backup container reads: stop creating stored lanes/default lists; export
+empty boards unchanged and reconstruct required legacy containers only in the
+snapshot with stable local IDs.20owner/readonly scoped round trips, source
+mutation guards and explicit initialization pass. Full backup text/model parity
+remains open.
+
 Native backup link reads: resolve missing legacy card/list relationships without
 persisting source links; retain explicit migration and scoped authorization.
 Owner/readonly board/lane/list/card active/retained round trips pass under a

@@ -1,0 +1,128 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim listId As Integer
+  Dim target As Integer
+  Dim db As Connection
+  Dim rows As Result
+  Dim data As Collection
+  Dim item As Collection
+  Dim exportedList As Integer
+  Dim itemId As Integer
+  Dim expectedCards As Integer
+  Dim extra As Integer
+  Dim actor As String
+  Dim text As String
+  Dim state As String
+  Dim mode As String
+  Dim before As String
+  WebDatabase.Register("backup-container-owner", "x")
+  WebDatabase.Register("backup-container-reader", "x")
+  SignIn("backup-container-owner")
+  db = WebDatabase.OpenConnection()
+  For Each state In ["empty", "missing-lane", "missing-list", "retained-missing-list", "two-orphans"]
+    SignIn("backup-container-owner")
+    boardId = KanbanStore.AddBoard("Backup " & state)
+    If state <> "empty" Then
+      rows = KanbanStore.Lanes(boardId)
+      rows = KanbanStore.Lists(boardId, "Default")
+      listId = rows!id
+      cardId = KanbanStore.SaveCard(boardId, 0, "Legacy preserved card", "BODY", "Default", "Todo", "", "", "", listId)
+      If state = "two-orphans" Then extra = KanbanStore.SaveCard(boardId, 0, "Second orphan", "SECOND_BODY", "Default", "Todo", "", "", "", listId)
+      If state = "retained-missing-list" Then KanbanStore.ArchiveCard(boardId, cardId, True)
+      db.Exec("DELETE FROM kb_lanes WHERE board_id=&1", boardId)
+      If state <> "missing-lane" Then
+        db.Exec("DELETE FROM kb_lists WHERE board_id=&1", boardId)
+        db.Exec("DELETE FROM kb_card_lists WHERE board_id=&1", boardId)
+      Endif
+    Endif
+    BoardAccess.SetMember(boardId, "backup-container-reader", "read-only")
+    Guard(db, boardId, True)
+    For Each actor In ["backup-container-owner", "backup-container-reader"]
+      SignIn(actor)
+      For Each mode In ["board", "card", "list"]
+        If state = "empty" And mode <> "board" Then Continue
+        If mode = "list" And state <> "missing-lane" Then Continue
+        itemId = boardId
+        If mode = "card" Then itemId = cardId
+        If mode = "list" Then itemId = listId
+        before = Snapshot(db, boardId)
+        text = BoardTransfer.ExportData(boardId, mode, itemId)
+        If Snapshot(db, boardId) <> before Then Error.Raise("Backup read changed stored containers: " & state)
+        If BoardTransfer.ExportData(boardId, mode, itemId) <> text Then Error.Raise("Virtual backup identities are unstable")
+        data = BoardTransfer.ReadData(text)
+        expectedCards = If(state = "empty", 0, If(state = "two-orphans" And mode = "board", 2, 1))
+        If data["cards"].Count <> expectedCards Then Error.Raise("Backup lost scoped legacy cards")
+        If state = "empty" Then
+          If data["lanes"].Count Or data["lists"].Count Then Error.Raise("Empty backup invented containers")
+        Else
+          item = data["cards"][0]
+          If item["title"] <> "Legacy preserved card" Or item["archived"] <> (state = "retained-missing-list") Then Error.Raise("Backup altered legacy card")
+          If data["lanes"].Count <> 1 Or data["lists"].Count <> If(state = "missing-lane" And mode = "board", 3, 1) Then Error.Raise("Backup lost or invented legacy containers")
+          exportedList = item["list_id"]
+          For Each item In data["cards"]
+            If item["list_id"] <> exportedList Then Error.Raise("Shared orphan list identity drifted")
+          Next
+          If state <> "missing-lane" And exportedList >= 0 Then Error.Raise("Missing list did not receive an export-local identity")
+          If data["lanes"][0]["id"] >= 0 Then Error.Raise("Missing lane did not receive an export-local identity")
+        Endif
+        target = BoardTransfer.ImportData(text, "Container round trip")
+        rows = db.Find("kb_cards", "board_id=&1", target)
+        If rows.Count <> expectedCards Then Error.Raise("Backup round trip lost cards")
+        If state <> "empty" Then
+          rows = db.Find("kb_card_lists", "board_id=&1", target)
+          If rows.Count <> expectedCards Then Error.Raise("Backup round trip lost link")
+          rows = db.Find("kb_lists", "board_id=&1 AND id=&2", target, rows!list_id)
+          If Not rows.Available Then Error.Raise("Backup target link is dangling")
+        Endif
+        If Snapshot(db, boardId) <> before Then Error.Raise("Import changed source containers")
+      Next
+    Next
+    Guard(db, boardId, False)
+    SignIn("backup-container-owner")
+    rows = KanbanStore.Lanes(boardId)
+    If rows.Count <> 1 Then Error.Raise("Explicit lane initialization stopped working")
+    If Snapshot(db, boardId) = before Then Error.Raise("Explicit lane initialization did not persist containers")
+  Next
+  Print "Native backup containers: owner/readonly empty/missing-lane/missing-list/retained/shared-orphan board/card/list snapshots use stable local IDs, deny source writes, round trip and retain explicit initialization"
+End
+
+Private Sub Guard(db As Connection, boardId As Integer, install As Boolean)
+  Dim tableName As String
+  Dim action As String
+  Dim name As String
+  For Each tableName In ["kb_lanes", "kb_lists", "kb_cards", "kb_card_lists", "kb_order", "kb_meta", "kb_item_changes", "kb_activity", "kb_history", "kb_deleted_items"]
+    If Not db.Tables.Exist(tableName) Then Continue
+    For Each action In ["INSERT", "UPDATE", "DELETE"]
+      name = "backup_container_" & tableName & "_" & action
+      If install Then
+        db.Exec("CREATE TEMP TRIGGER " & name & " BEFORE " & action & " ON " & tableName & " WHEN " & If(action = "DELETE", "OLD", "NEW") & ".board_id=" & CStr(boardId) & " BEGIN SELECT RAISE(ABORT,'backup source mutation'); END")
+      Else
+        db.Exec("DROP TRIGGER " & name)
+      Endif
+    Next
+  Next
+End
+
+Private Function Snapshot(db As Connection, boardId As Integer) As String
+  Dim tableName As String
+  Dim rows As Result
+  Dim result As String
+  Dim field As Variant
+  For Each tableName In ["kb_lanes", "kb_lists", "kb_cards", "kb_card_lists", "kb_order", "kb_meta", "kb_item_changes", "kb_activity", "kb_history", "kb_deleted_items"]
+    If Not db.Tables.Exist(tableName) Then Continue
+    rows = db.Find(tableName, "board_id=&1", boardId)
+    result &= tableName & ":"
+    For Each rows
+      For Each field In rows.Fields
+        result &= field.Name & "=" & CStr(rows[field.Name]) & ";"
+      Next
+    Next
+  Next
+  Return result
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

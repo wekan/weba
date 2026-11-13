@@ -94,10 +94,14 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   source links. Owner/readonly board/lane/list/card exports include retained cards
   and import correctly under an insert-refusing source-link trigger. Explicit
   write-side migration and foreign/revoked denials remain tested.
-- Next data follow-up: separate native backup's legacy lane/default-list
-  initialization from reads; its remaining Lanes() call can still create missing
-  containers. Other DB driver conformance, generic-backup full text fidelity,
-  remaining field models/security reporting and full original suites stay open.
+- Completed native backup's lane/default-list read boundary: empty stored boards
+  stay empty, and required missing legacy containers are reconstructed only in
+  the exported snapshot with stable local IDs. Trigger-guarded owner/readonly
+  board/card/list round trips and explicit initialization are recorded in
+  CHANGELOG.md.
+- Next data follow-up: generic-backup full text fidelity and legacy field-model
+  consistency. Other DB driver conformance, remaining field models/security
+  reporting and full original suites stay open.
 
 - Next: remaining copy-option models/controls, selected-export API/model/
   security parity, Home/group targets and original

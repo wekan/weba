@@ -3,6 +3,7 @@ Public Sub Main()
   Dim data As New Collection
   Dim index As Integer
   Dim r As Result
+  Dim containers As Result
   Dim ids As New Integer[]
   Dim boardId As Integer
   Dim title As String
@@ -76,6 +77,21 @@ Public Sub Main()
       ids.Add(boardId)
     Next
     data["ids"] = ids
+  Endif
+  If Env["WEBA_CATALOG_MODE"] = "selection-containers" Or Env["WEBA_CATALOG_MODE"] = "initialize-selection-containers" Then
+    raw = New Variant[]
+    r = KanbanStore.Boards(False)
+    For Each r
+      If r!title <> "Selection Alpha" And r!title <> "Selection Bravo" Then Continue
+      boardId = r!id
+      If Env["WEBA_CATALOG_MODE"] = "initialize-selection-containers" Then containers = KanbanStore.Lanes(boardId)
+      row = New Collection
+      row["id"] = boardId
+      row["lanes"] = WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_lanes WHERE board_id=&1", boardId)!total
+      row["lists"] = WebDatabase.OpenConnection().Exec("SELECT COUNT(*) AS total FROM kb_lists WHERE board_id=&1", boardId)!total
+      raw.Add(row)
+    Next
+    data["selectionContainers"] = raw
   Endif
   If Env["WEBA_CATALOG_MODE"] = "seed-selection" Then
     For index = 1 To 30

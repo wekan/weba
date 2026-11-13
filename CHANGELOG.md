@@ -2,6 +2,20 @@
 
 This work adds the following features and fixes:
 
+- Stop native backup reads from initializing stored lanes and default lists.
+  Preserve empty stored boards as empty snapshots. Reconstruct only required
+  missing legacy containers in the snapshot, using stable export-local negative
+  IDs and sharing a missing list between matching orphan cards. Keep existing
+  container identities/order and explicit initialization behavior. Reproduce the
+  old empty-board mutation, then verify 20 owner/readonly board/card/list cases
+  covering missing lanes/lists, retained cards and shared orphans: repeated
+  exports are identical, source mutation triggers stay silent and each snapshot
+  imports with valid target links. Full native store/security/renderer tests and
+  both source/packaged 45-download browser plus cached revoke/regrant checks pass.
+  Browser raw counts prove empty exports remain empty before explicit later
+  fixture initialization. Full generic-backup text/model consistency,
+  other DB drivers and broader original parity remain open. Thanks to xet7.
+
 - Resolve native backup legacy card/list links in memory without saving missing
   source links. Keep explicit write-side migration behavior and source-scoped
   access checks. Reproduce the prior mutation, then verify owner/readonly

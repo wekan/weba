@@ -3448,5 +3448,9 @@ Focalboard now exports generic custom text, Boolean and numeric properties with
 source key ordering, duplicate-value and prototype rules. A strict private header
 normalizes numeric property strings at ZIP rendering so IEEE edge values match
 JavaScript exactly; unmarked JSONL stays unchanged. Native typed output is compared
-to the unchanged source formatter. Other-driver conformance, generic backup's
-legacy-link migration behavior and full model/UI/API/security parity stay open.
+to the unchanged source formatter. Native backup reads no longer persist legacy
+links or initialize containers: empty boards stay empty, and required missing
+legacy containers are reconstructed only inside the snapshot with stable local
+IDs. Guarded owner/readonly scoped round trips cover this behavior. Other-driver
+conformance, full generic-backup text/model fidelity and full model/UI/API/security
+parity stay open.
