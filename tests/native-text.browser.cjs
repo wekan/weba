@@ -112,16 +112,14 @@ with sqlite3.connect(sys.argv[1]) as d:
   expect(fixture('read',createdId)).toMatchObject({description:body,lane:seed.items[1].lane,status:seed.items[1].title,list:seed.items[1].list});
   // Startup must not replace an already-routed card's custom list with Todo.
   await page.goto(process.env.WEBA_TEST_URL+'/b/'+seed.board+'/board/'+createdId);
-  await expect.poll(async()=>JSON.parse(await page.locator(c('OverviewRouteState')).textContent()||'{}').cardId).toBe(String(createdId));
-  await settle();await expect(description).toHaveValue(body);
+  await expect(description).toHaveValue(body);
   const reopenedBody=body+' reopened ordinary edit';
   await description.evaluate((input,value)=>{input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));},reopenedBody);
   await settle();await expect(page.locator('[id$=".Lane:entry"]')).toHaveValue(seed.items[1].lane);
   await expect(page.locator('[id$=".Status:entry"]')).toHaveValue(seed.items[1].title);
   await click('SaveCard');await expect(page.locator(c('Notice'))).toHaveText('Card saved');
   expect(fixture('read',createdId)).toMatchObject({description:reopenedBody,lane:seed.items[1].lane,status:seed.items[1].title,list:seed.items[1].list});
-  await page.reload();await expect.poll(async()=>JSON.parse(await page.locator(c('OverviewRouteState')).textContent()||'{}').cardId).toBe(String(createdId));
-  await settle();await expect(description).toHaveValue(reopenedBody);
+  await page.reload();await expect(description).toHaveValue(reopenedBody);
   await description.evaluate((input,value)=>{input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));},body);
   await click('SaveCard');await expect(page.locator(c('Notice'))).toHaveText('Card saved');
   expect(fixture('read',createdId)).toMatchObject({description:body,lane:seed.items[1].lane,status:seed.items[1].title,list:seed.items[1].list});

@@ -2,6 +2,24 @@
 
 This work adds the following features and fixes:
 
+- Preserve editable card drafts typed before native form-open completes. During
+  initialization, native textbox/textarea HTML replacement retains full dirty
+  values and encoded baselines for the same board/card; carry pending updates
+  onto replacement nodes. Check explicit initial route targets before their
+  acknowledgment changes, and stop capturing when open and pending commands
+  drain. Readonly/disabled/hidden/detached and unrelated fields do not replay;
+  ordinary later server saves and navigation keep their own values.
+  A held-open source/packaged browser regression reproduces the old loss and
+  verifies exact NUL/Unicode preservation, unchanged persistence before Save,
+  and exact saved body/placement. Immediate reopen/reload edits now pass without
+  startup waits in both full native-text browser suites. Adapter boundary tests,
+  direct-card route/revocation/archive/mobile and ordinary editor/admin/mobile
+  checks pass on source and packaged builds. Simultaneous early title/body edits
+  retain successful server title normalization. Full pinned host/native/API/
+  security/session tests, the new startup gate and 70 Python tests pass.
+  Detail/content final guards, remaining models/readers and full original parity
+  remain open. Thanks to xet7.
+
 - Preserve an already-routed card's status when the native form opens; initialize
   Todo only when no card is loaded. Reopened cards in custom lists no longer
   reset their status on an unrelated edit. Source/packaged browser tests wait for

@@ -58,6 +58,7 @@ tests() {
   "${NODE:-node}" tests/popup.test.cjs
   "${NODE:-node}" tests/roles.test.cjs
   "${NODE:-node}" tests/transport.test.cjs
+  "${NODE:-node}" tests/native-editor-startup.test.cjs
   "${NODE:-node}" tests/drag.test.cjs
   "${NODE:-node}" tests/workspace-drag.test.cjs
   "${NODE:-node}" tests/board-drop.test.cjs

@@ -1,3 +1,14 @@
+Initial native card-field HTML replacement now preserves same-card editable dirty
+text and exact encoded baselines, retaining pending updates on new nodes. Explicit
+route target checks prevent cross-card replay before acknowledgment; capture ends
+when open/commands drain. Readonly/disabled/hidden/detached and later server saves
+keep normal behavior. Held-open source/packaged tests preserve full NUL/Unicode,
+no persistence before Save and exact body/placement afterward. Immediate natural
+reopen/reload, context unit, direct route and ordinary UI pass both builds.
+Title/body edits retain server normalization. Full pinned host/native/API/security/
+session, startup gate and70 Python tests pass.
+Detail/content final guards and broader models/full original parity remain open.
+
 Initialize Todo only without an already-loaded card at native form open.
 Reopened custom-list cards retain exact status through ordinary edits. Source/
 packaged mounted editor edit/save/reload preserves full NUL/Unicode text and
