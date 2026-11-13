@@ -2,6 +2,12 @@
 
 This work adds the following features and fixes:
 
+- Align the ordinary layout browser's exact view-menu expectation with the
+  current source-defined default order: Swimlanes, Lists, Table, Calendar,
+  Charts and Gantt. Reproduce the stale assertion on committed code, then pass
+  complete source and packaged layout/card-editor/admin/mobile runs.
+  Thanks to xet7.
+
 - Read native lists by complete stored lane/title values, including NUL,
   Unicode and apostrophe suffixes. Use shared safe comparisons and complete
   projections for list enumeration, title lookup and ID lookup. Preserve live

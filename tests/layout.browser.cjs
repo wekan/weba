@@ -694,7 +694,7 @@ const fs = require('node:fs');
     }
     await click('ViewMenu');
     const views = await page.$eval('[id$=".Views"]', e => [...e.querySelectorAll('button:not(.weba-popup-close)')].map(b=>b.textContent.trim()));
-    assert.deepEqual(views,['Swimlanes','Lists','Calendar','Gantt','Table','Charts']);
+    assert.deepEqual(views,['Swimlanes','Lists','Table','Calendar','Charts','Gantt']);
     await click('Calendar');
     await page.waitForSelector('.weba-calendar');
     await shot('weba-calendar');
