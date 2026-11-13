@@ -111,6 +111,13 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   round trips: 24 owner/readonly scoped payloads plus retry preserve full text,
   NULL/empty values, exact reals, entry sequence, provenance and binary files;
   11 refusal cases verify exact-state rollback. Details are in CHANGELOG.md.
+- Completed complete-text lane initialization: active/archived card names with
+  shared prefixes and distinct NUL/Unicode suffixes no longer create truncated
+  duplicate lanes/lists. Owner/readonly repeats, foreign denial and real legacy
+  initialization/idempotence are recorded in CHANGELOG.md. Remaining native
+  rendering and other reader paths still require audit.
+- Next reader focus: NUL-safe Lists/GetList lookups and board-form consumers of
+  complete lane/list title projections; the remaining lookup failure is reproduced.
 - Next data follow-up: audit legacy field-model consistency and remaining native
   text readers/writers outside the backup path. Other request decoder boundaries,
   DB drivers, remaining field models/security reporting and full original suites

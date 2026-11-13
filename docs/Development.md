@@ -2613,3 +2613,18 @@ Eleven malformed/length/header/numeric/SQL/late-owner cases compare every persis
 application row before and after refusal. Other native reader/writer paths,
 request decoder adoption, legacy field-model consistency and full original
 UI/API/security parity remain explicit TODO work.
+
+`KanbanStore.Lanes` now uses complete projected card lane text before calling the
+legacy initializer, including retained archived cards. A shared prefix before NUL
+cannot become a separate truncated lane with three default lists. Lane results
+also carry complete text projections for callers using ExportText.ReadValue;
+ordinary result columns remain available. This does not claim every renderer now
+reads those projections. `LaneTextReadTest` reproduces the prior duplicate and
+checks two shared-prefix NUL/Unicode names, owner/readonly repeated calls, stable
+container/link/change/history/activity counts, foreign denial and an actual
+missing legacy name initialized exactly once. Existing Default fallback and live
+card filtering remain in place; broader reader/rendering consistency is TODO.
+
+Lane complete-text verification: `build.sh test` passes, including the focused
+native regression and 70 Python tests. Both complete `tests/run-http.py --live`
+and `--live --archive` runs pass, through selected exports and list deletion.

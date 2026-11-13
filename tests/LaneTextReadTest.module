@@ -1,0 +1,79 @@
+Public Sub Main()
+  Dim conn As Connection
+  Dim boardId As Integer
+  Dim migration As Integer
+  Dim active As Integer
+  Dim archived As Integer
+  Dim rows As Result
+  Dim before As String
+  Dim actor As String
+  Dim denied As Boolean
+  Dim name As String
+  WebDatabase.Register("lane-text-owner", "x")
+  WebDatabase.Register("lane-text-reader", "x")
+  WebDatabase.Register("lane-text-outsider", "x")
+  SignIn("lane-text-owner")
+  boardId = KanbanStore.AddBoard("Lane text")
+  active = KanbanStore.SaveCard(boardId, 0, "Active", "", Value("A"), "Todo", "", "", "")
+  archived = KanbanStore.SaveCard(boardId, 0, "Archived", "", Value("B"), "Todo", "", "", "")
+  KanbanStore.ArchiveCard(boardId, archived, True)
+  BoardAccess.SetMember(boardId, "lane-text-reader", "read-only")
+  conn = WebDatabase.OpenConnection()
+  before = State(conn, boardId)
+  For Each actor In ["lane-text-owner", "lane-text-reader"]
+    SignIn(actor)
+    rows = KanbanStore.Lanes(boardId)
+    If rows.Count <> 2 Then Error.Raise("Lane read created a truncated duplicate")
+    For Each rows
+      name = ExportText.ReadValue(rows, "title")
+      If name <> Value("A") And name <> Value("B") Then Error.Raise("Lane result lost complete stored title")
+    Next
+    rows = KanbanStore.Lanes(boardId)
+    If State(conn, boardId) <> before Then Error.Raise("Repeated lane initialization changed existing source records")
+  Next
+  SignIn("lane-text-outsider")
+  Try rows = KanbanStore.Lanes(boardId)
+  denied = Error
+  If Not denied Or State(conn, boardId) <> before Then Error.Raise("Foreign lane read changed source records")
+  SignIn("lane-text-owner")
+  migration = KanbanStore.AddBoard("Explicit legacy lane")
+  active = KanbanStore.SaveCard(migration, 0, "Legacy", "", "Default", "Todo", "", "", "")
+  conn.Exec("UPDATE kb_cards SET lane=CAST(" & conn.FormatBlob(Value("migration")) & " AS TEXT) WHERE id=&1", active)
+  rows = KanbanStore.Lanes(migration)
+  If rows.Count <> 2 Then Error.Raise("Legacy missing lane was not initialized once")
+  If conn.Exec("SELECT COUNT(*) AS total FROM kb_lanes WHERE board_id=&1 AND hex(title)=&2", migration, HexText(Value("migration")))!total <> 1 Then Error.Raise("Legacy lane migration stored truncated title")
+  before = State(conn, migration)
+  rows = KanbanStore.Lanes(migration)
+  If State(conn, migration) <> before Then Error.Raise("Legacy lane migration was not idempotent")
+  Print "Lane initialization: owner/readonly active+archived shared-prefix NUL/Unicode names retain two exact lanes without writes; foreign denial, full missing-lane migration and repeat idempotence passed"
+End
+
+Private Function Value(suffix As String) As String
+  Return "Shared" & Chr(0) & "Ω😀'" & suffix
+End
+
+Private Function HexText(value As String) As String
+  Dim result As String
+  Dim i As Integer
+  For i = 1 To Len(value)
+    result &= Hex$(Asc(Mid(value, i, 1)), 2)
+  Next
+  Return result
+End
+
+Private Function State(conn As Connection, boardId As Integer) As String
+  Dim tables As String[] = ["kb_lanes", "kb_lists", "kb_card_lists", "kb_item_changes", "kb_history", "kb_activity"]
+  Dim tableName As String
+  Dim rows As Result
+  Dim result As New Collection
+  For Each tableName In tables
+    rows = conn.Exec("SELECT COUNT(*) AS total FROM " & conn.Quote(tableName) & " WHERE board_id=&1", boardId)
+    result.Add(rows!total, tableName)
+  Next
+  Return JsonText.Encode(result)
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End

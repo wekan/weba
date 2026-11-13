@@ -10,6 +10,17 @@ This work adds the following features and fixes:
   intentional early setup failure exits promptly within its bounded refusal test.
   Thanks to xet7.
 
+- Initialize lanes from complete stored card names. NUL/Unicode suffixes after
+  a shared prefix no longer produce truncated duplicate lanes/default lists
+  when reopening data. Return complete title projections for explicit text
+  readers. Reproduce the old duplicate, then verify owner/readonly active and
+  archived card cases, unchanged container/link/change/history/activity counts,
+  foreign denial and idempotent full-name legacy initialization. Keep existing
+  default fallback and live-card filtering. The complete host test suite (including
+  70 Python tests) and broad source/packaged live browser suites pass. Native
+  rendering and other reader/
+  model/UI/API/security parity work remain open. Thanks to xet7.
+
 - Preserve native backup SQLite storage round trips through existing authorized
   model methods. Write NUL text with driver-formatted binary literals cast to
   TEXT, keep empty strings distinct from NULL, retain BLOB/date types and finite

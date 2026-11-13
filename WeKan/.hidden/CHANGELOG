@@ -1,3 +1,8 @@
+Lane initialization now uses full stored NUL/Unicode card lane names, avoiding
+truncated duplicate lanes/default lists on reopen. Owner/readonly active/archived
+repeats, foreign denial and actual legacy initialization/idempotence pass.
+Other native rendering/read paths and full original parity remain open.
+
 Native backup SQLite storage: safe complete-text/empty/NULL/scalar writes through
 authorized models, exact real reads, full provenance/filenames/BLOBs and source
 entry order.24scoped full round trips plus retry and11exact-state rollback

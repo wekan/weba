@@ -341,11 +341,11 @@ Public Function Lanes(boardId As Integer) As Result
   RequireBoard(boardId)
   c = $db.Find("kb_lanes", "board_id = &1", boardId)
   If Not c.Available Then EnsureLane(boardId, "Default")
-  c = $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1", boardId)
+  c = $db.Exec(ExportText.SelectRows($db, "kb_cards") & " WHERE " & ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1", boardId)
   For Each c
-    EnsureLane(boardId, If(Trim(c!lane), c!lane, "Default"))
+    EnsureLane(boardId, If(Trim(ExportText.ReadValue(c, "lane")), ExportText.ReadValue(c, "lane"), "Default"))
   Next
-  Return $db.Find("kb_lanes", "board_id = &1 ORDER BY id", boardId)
+  Return $db.Exec(ExportText.SelectRows($db, "kb_lanes") & " WHERE board_id = &1 ORDER BY id", boardId)
 End
 
 Public Function Lists(boardId As Integer, lane As String) As Result
