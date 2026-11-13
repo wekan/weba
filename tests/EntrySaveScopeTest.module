@@ -1,0 +1,247 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim targetId As Integer
+  Dim parentId As Integer
+  Dim entryId As Integer
+  Dim freshId As Integer
+  Dim foreignComment As Integer
+  Dim listId As Integer
+  Dim laneId As Integer
+  Dim amount As Float
+  Dim kind As String
+  Dim actor As String
+  Dim stage As String
+  Dim effect As String
+  Dim numericText As String
+  Dim draft As Collection
+  Dim before As String
+  Dim denied As Boolean
+  Dim conn As Connection
+  Dim row As Result
+  Dim suffix As String = Chr(0) & "Ω😀'tail"
+  For Each actor In ["entry-global", "entry-owner", "entry-writer", "entry-commenter", "entry-reader", "entry-outsider"]
+    WebDatabase.Register(actor, "x")
+  Next
+  SignIn("entry-owner")
+  boardId = KanbanStore.AddBoard("Entry final scope")
+  BoardAccess.SetMember(boardId, "entry-writer", "normal")
+  BoardAccess.SetMember(boardId, "entry-commenter", "comment-only")
+  BoardAccess.SetMember(boardId, "entry-reader", "read-only")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Card" & suffix, "", "Default", "Todo", "", "", "")
+  targetId = KanbanStore.SaveCard(boardId, 0, "Target" & suffix, "", "Default", "Todo", "", "", "")
+  parentId = CardContent.Save(boardId, cardId, 0, "checklist", "Parent" & suffix, "", 0, False, 0)
+  listId = KanbanStore.CardListId(boardId, cardId)
+  conn = WebDatabase.OpenConnection()
+  row = conn.Find("kb_lanes", "board_id=&1 AND title='Default'", boardId)
+  laneId = row!id
+  SignIn("entry-writer")
+  For Each kind In ["comment", "checklist", "checkitem", "custom", "time", "subtask", "dependency"]
+    amount = 0
+    If kind = "subtask" Or kind = "dependency" Then amount = targetId
+    entryId = CardContent.Save(boardId, cardId, 0, kind, "Field" & suffix, "Before" & suffix, If(kind = "checkitem", parentId, 0), False, amount)
+    For Each stage In ["AFTER UPDATE OF body ON kb_entries WHEN NEW.id=" & CStr(entryId), "AFTER INSERT ON kb_history", "AFTER UPDATE ON kb_item_changes WHEN NEW.kind='card' AND NEW.item_id=" & CStr(cardId)]
+      For Each effect In ["UPDATE kb_members SET role='read-only' WHERE board_id=" & CStr(boardId) & " AND username='entry-writer'", "DELETE FROM kb_members WHERE board_id=" & CStr(boardId) & " AND username='entry-writer'", "UPDATE account_sessions SET generation=generation+1 WHERE username='entry-writer'", "INSERT INTO kb_member_flags (board_id,username,flag) VALUES (" & CStr(boardId) & ",'entry-writer','isReadAssignedOnly')", "UPDATE kb_cards SET archived=1 WHERE id=" & CStr(cardId), "UPDATE kb_boards SET archived=1 WHERE id=" & CStr(boardId), "INSERT INTO kb_deleted_items (board_id,kind,item_id,batch_id,actor,deleted_at) VALUES (" & CStr(boardId) & ",'card'," & CStr(cardId) & ",1,'entry-owner',0)", "UPDATE kb_entries SET board_id=2147483647 WHERE id=" & CStr(entryId), "UPDATE kb_entries SET card_id=" & CStr(targetId) & " WHERE id=" & CStr(entryId), "UPDATE kb_entries SET kind='foreign' WHERE id=" & CStr(entryId), "UPDATE kb_entries SET author='entry-owner' WHERE id=" & CStr(entryId), "UPDATE kb_entries SET body='changed suffix' WHERE id=" & CStr(entryId), "UPDATE kb_entries SET amount=amount+1 WHERE id=" & CStr(entryId), "UPDATE kb_entries SET parent_id=2147483647 WHERE id=" & CStr(entryId), "UPDATE kb_entries SET value_type='foreign' WHERE id=" & CStr(entryId), "UPDATE kb_entries SET done=NOT done WHERE id=" & CStr(entryId), "UPDATE kb_card_lists SET list_id=2147483647 WHERE card_id=" & CStr(cardId), "UPDATE kb_entries SET created_at='2000-01-01' WHERE id=" & CStr(entryId), "INSERT OR REPLACE INTO kb_meta (board_id,kind,item_id,setting,value) VALUES (" & CStr(boardId) & ",'list'," & CStr(listId) & ",'archived','1')", "INSERT OR REPLACE INTO kb_meta (board_id,kind,item_id,setting,value) VALUES (" & CStr(boardId) & ",'lane'," & CStr(laneId) & ",'archived','1')", "UPDATE kb_lists SET title='late list' WHERE id=" & CStr(listId), "INSERT INTO kb_deleted_items (board_id,kind,item_id,batch_id,actor,deleted_at) VALUES (" & CStr(boardId) & ",'list'," & CStr(listId) & ",1,'entry-owner',0)", "DELETE FROM kb_lanes WHERE id=" & CStr(laneId), "UPDATE kb_lanes SET title='late lane' WHERE id=" & CStr(laneId), "UPDATE kb_entries SET parent_id=NULL WHERE id=" & CStr(entryId), "UPDATE kb_entries SET done=NULL WHERE id=" & CStr(entryId), "UPDATE kb_entries SET amount=NULL WHERE id=" & CStr(entryId), "SELECT RAISE(ABORT,'entry-scope-private-canary')"]
+        before = Frame()
+        conn.Exec("CREATE TRIGGER inject_entry_scope " & stage & " BEGIN " & effect & "; END")
+        Try CardContent.Save(boardId, cardId, entryId, kind, "Field" & suffix, "After" & suffix, If(kind = "checkitem", parentId, 0), False, amount)
+        denied = Error
+        conn.Exec("DROP TRIGGER inject_entry_scope")
+        If Not denied Or Frame() <> before Then Error.Raise("Entry scope failed: " & kind & ": " & stage & ": " & effect)
+      Next
+    Next
+    before = Frame()
+    conn.Exec("CREATE TRIGGER inject_entry_scope AFTER INSERT ON kb_history BEGIN UPDATE kb_members SET role='read-only' WHERE board_id=NEW.board_id AND username='entry-writer'; END")
+    Try freshId = CardContent.Save(boardId, cardId, 0, kind, "New" & suffix, "New body" & suffix, If(kind = "checkitem", parentId, 0), False, amount)
+    denied = Error
+    conn.Exec("DROP TRIGGER inject_entry_scope")
+    If Not denied Or Frame() <> before Then Error.Raise("New entry final role did not roll back: " & kind)
+    For Each stage In ["AFTER INSERT ON kb_entries", "AFTER INSERT ON kb_history"]
+      For Each effect In ["UPDATE kb_entries SET created_at='2000-01-01' WHERE board_id=" & CStr(boardId) & " AND card_id=" & CStr(cardId) & " AND id=(SELECT MAX(id) FROM kb_entries WHERE board_id=" & CStr(boardId) & " AND card_id=" & CStr(cardId) & ")", "UPDATE kb_entries SET author=NULL WHERE board_id=" & CStr(boardId) & " AND card_id=" & CStr(cardId) & " AND id=(SELECT MAX(id) FROM kb_entries WHERE board_id=" & CStr(boardId) & " AND card_id=" & CStr(cardId) & ")"]
+        before = Frame()
+        conn.Exec("CREATE TRIGGER inject_entry_scope " & stage & " BEGIN " & effect & "; END")
+        Try freshId = CardContent.Save(boardId, cardId, 0, kind, "New" & suffix, "New body" & suffix, If(kind = "checkitem", parentId, 0), False, amount)
+        denied = Error
+        conn.Exec("DROP TRIGGER inject_entry_scope")
+        If Not denied Or Frame() <> before Then Error.Raise("New entry provenance did not roll back: " & kind & ": " & stage)
+      Next
+    Next
+    CardContent.Save(boardId, cardId, entryId, kind, "Field" & suffix, "After" & suffix, If(kind = "checkitem", parentId, 0), False, amount)
+    row = CardContent.Entry(boardId, cardId, entryId, True)
+    If ExportText.ReadValue(row, "body") <> "After" & suffix Then Error.Raise("Entry retry lost text")
+  Next
+  For Each effect In ["DELETE FROM kb_entries WHERE id=" & CStr(parentId), "UPDATE kb_entries SET kind='custom' WHERE id=" & CStr(parentId), "UPDATE kb_entries SET card_id=" & CStr(targetId) & " WHERE id=" & CStr(parentId)]
+    before = Frame()
+    conn.Exec("CREATE TRIGGER inject_entry_scope AFTER INSERT ON kb_history BEGIN " & effect & "; END")
+    Try freshId = CardContent.Save(boardId, cardId, 0, "checkitem", "Child" & suffix, "Body" & suffix, parentId, False, 0)
+    denied = Error
+    conn.Exec("DROP TRIGGER inject_entry_scope")
+    If Not denied Or Frame() <> before Then Error.Raise("Checklist parent late scope failed")
+  Next
+  For Each kind In ["subtask", "dependency"]
+    For Each effect In ["UPDATE kb_cards SET board_id=2147483647 WHERE id=" & CStr(targetId), "UPDATE kb_cards SET archived=1 WHERE id=" & CStr(targetId), "UPDATE kb_cards SET title=CAST(" & conn.FormatBlob("Target" & suffix & "changed") & " AS TEXT) WHERE id=" & CStr(targetId), "INSERT INTO kb_deleted_items (board_id,kind,item_id,batch_id,actor,deleted_at) VALUES (" & CStr(boardId) & ",'card'," & CStr(targetId) & ",1,'entry-owner',0)", "INSERT INTO kb_entries (board_id,card_id,kind,amount,title,body,parent_id,done,value_type,author) VALUES (" & CStr(boardId) & "," & CStr(targetId) & ",'" & kind & "'," & CStr(cardId) & ",'cycle','',0,0,'text','entry-owner')"]
+      before = Frame()
+      conn.Exec("CREATE TRIGGER inject_entry_scope AFTER INSERT ON kb_history BEGIN " & effect & "; END")
+      Try freshId = CardContent.Save(boardId, cardId, 0, kind, "", "Relationship" & suffix, 0, False, targetId)
+      denied = Error
+      conn.Exec("DROP TRIGGER inject_entry_scope")
+      If Not denied Or Frame() <> before Then Error.Raise("Relationship target/cycle late scope failed: " & kind)
+    Next
+  Next
+  conn.Exec("UPDATE kb_cards SET assignee='entry-writer' WHERE id=&1", cardId)
+  For Each kind In ["subtask", "dependency"]
+    before = Frame()
+    conn.Exec("CREATE TRIGGER inject_entry_scope AFTER INSERT ON kb_history BEGIN INSERT INTO kb_member_flags (board_id,username,flag) VALUES (" & CStr(boardId) & ",'entry-writer','isReadAssignedOnly'); END")
+    Try freshId = CardContent.Save(boardId, cardId, 0, kind, "", "Hidden target", 0, False, targetId)
+    denied = Error
+    conn.Exec("DROP TRIGGER inject_entry_scope")
+    If Not denied Or Frame() <> before Then Error.Raise("Assigned-only late target loss committed relationship")
+  Next
+  conn.Exec("UPDATE kb_cards SET assignee='' WHERE id=&1", cardId)
+  For Each actor In ["entry-reader", "entry-outsider", "entry-global"]
+    SignIn(actor)
+    before = Frame()
+    Try freshId = CardContent.Save(boardId, cardId, 0, "custom", "Denied", "Body", 0, False, 0)
+    denied = Error
+    If Not denied Or Frame() <> before Then Error.Raise("Unauthorized entry create changed state")
+  Next
+  SignIn("entry-commenter")
+  entryId = CardContent.Save(boardId, cardId, 0, "comment", "", "Comment" & suffix, 0, False, 0)
+  CardContent.Save(boardId, cardId, entryId, "comment", "", "Own edit" & suffix, 0, False, 0)
+  before = Frame()
+  Try freshId = CardContent.Save(boardId, cardId, 0, "custom", "Denied commenter", "Body", 0, False, 0)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Comment-only custom write accepted")
+  SignIn("entry-owner")
+  foreignComment = CardContent.Save(boardId, cardId, 0, "comment", "", "Owner comment" & suffix, 0, False, 0)
+  BoardAccess.SetMember(boardId, "entry-writer", "board-admin")
+  SignIn("entry-writer")
+  before = Frame()
+  conn.Exec("CREATE TRIGGER inject_entry_scope AFTER INSERT ON kb_history BEGIN UPDATE kb_members SET role='normal' WHERE board_id=NEW.board_id AND username='entry-writer'; END")
+  Try CardContent.Save(boardId, cardId, foreignComment, "comment", "", "Foreign edit" & suffix, 0, False, 0)
+  denied = Error
+  conn.Exec("DROP TRIGGER inject_entry_scope")
+  If Not denied Or Frame() <> before Then Error.Raise("Lost comment-admin scope committed foreign edit")
+  CardContent.Save(boardId, cardId, foreignComment, "comment", "", "Admin edit" & suffix, 0, False, 0)
+  SignIn("entry-owner")
+  BoardAccess.SetMember(boardId, "entry-writer", "normal")
+  SignIn("entry-writer")
+  entryId = CardContent.Save(boardId, cardId, 0, "comment", "", "Own normal comment", 0, False, 0)
+  conn.Exec("CREATE TRIGGER inject_entry_scope AFTER INSERT ON kb_history BEGIN UPDATE kb_members SET role='comment-only' WHERE board_id=NEW.board_id AND username='entry-writer'; END")
+  CardContent.Save(boardId, cardId, entryId, "comment", "", "Permitted role transition" & suffix, 0, False, 0)
+  conn.Exec("DROP TRIGGER inject_entry_scope")
+  row = CardContent.Entry(boardId, cardId, entryId, True)
+  If ExportText.ReadValue(row, "body") <> "Permitted role transition" & suffix Then Error.Raise("Allowed role transition lost comment")
+  SignIn("entry-owner")
+  BoardAccess.SetMember(boardId, "entry-writer", "normal")
+  entryId = CardContent.Save(boardId, cardId, 0, "custom", "Retired field", "Before", 0, False, 0)
+  CardContent.RetainAuthorName(boardId, cardId, "entry", entryId, "Retired" & suffix)
+  SignIn("entry-writer")
+  CardContent.Save(boardId, cardId, entryId, "custom", "Retired field", "After" & suffix, 0, False, 0)
+  before = Frame()
+  conn.Exec("CREATE TRIGGER inject_entry_scope AFTER INSERT ON kb_history BEGIN UPDATE kb_entries SET author='' WHERE id=" & CStr(entryId) & "; END")
+  Try CardContent.Save(boardId, cardId, entryId, "custom", "Retired field", "Refused", 0, False, 0)
+  denied = Error
+  conn.Exec("DROP TRIGGER inject_entry_scope")
+  If Not denied Or Frame() <> before Then Error.Raise("NULL/empty author provenance changed")
+  CardContent.Save(boardId, cardId, 0, "custom", "Number", "0001.5", 0, False, 0, "number")
+  CardContent.Save(boardId, cardId, 0, "custom", "Date", "2026-11-14", 0, False, 0, "date")
+  CardContent.Save(boardId, cardId, 0, "custom", "Checkbox", "ignored", 0, True, 0, "checkbox")
+  For Each numericText In ["0.1", "100000.00000000001", "524287.99999999994", "1e-20"]
+    amount = JsonText.Decode(numericText)
+    entryId = CardContent.Save(boardId, cardId, 0, "time", "Exact number", "Before", 0, True, amount)
+    draft = EntryDraft.Read(boardId, cardId, entryId)
+    If draft["amount"] <> amount Then Error.Raise("Entry draft rounded stored amount")
+    CardContent.Save(boardId, cardId, entryId, "time", "Exact number", "After", 0, True, amount, "text", draft)
+    draft = EntryDraft.Read(boardId, cardId, entryId)
+    If draft["amount"] <> amount Then Error.Raise("Entry guard/merge rounded stored amount")
+  Next
+  entryId = CardContent.Save(boardId, cardId, 0, "comment", "", "Comment", 0, False, 0)
+  before = Frame()
+  conn.Exec("CREATE TRIGGER inject_entry_scope AFTER INSERT ON kb_history BEGIN UPDATE kb_entries SET title=NULL WHERE id=" & CStr(entryId) & "; END")
+  Try CardContent.Save(boardId, cardId, entryId, "comment", "", "Comment after", 0, False, 0)
+  denied = Error
+  conn.Exec("DROP TRIGGER inject_entry_scope")
+  If Not denied Or Frame() <> before Then Error.Raise("Empty/NULL title changed during save")
+  entryId = CardContent.Save(boardId, cardId, 0, "custom", "Empty body", "", 0, False, 0)
+  before = Frame()
+  conn.Exec("CREATE TRIGGER inject_entry_scope AFTER INSERT ON kb_history BEGIN UPDATE kb_entries SET body=NULL WHERE id=" & CStr(entryId) & "; END")
+  Try CardContent.Save(boardId, cardId, entryId, "custom", "Empty body", "", 0, False, 0)
+  denied = Error
+  conn.Exec("DROP TRIGGER inject_entry_scope")
+  If Not denied Or Frame() <> before Then Error.Raise("Empty/NULL body changed during save")
+  conn.Exec("CREATE TABLE entry_lock_order (position INTEGER PRIMARY KEY AUTOINCREMENT, stage TEXT)")
+  conn.Exec("CREATE TRIGGER capture_entry_user AFTER UPDATE OF username ON users BEGIN INSERT INTO entry_lock_order(stage) VALUES ('actor'); END")
+  conn.Exec("CREATE TRIGGER capture_entry_board AFTER UPDATE OF title ON kb_boards BEGIN INSERT INTO entry_lock_order(stage) VALUES ('board'); END")
+  conn.Exec("CREATE TRIGGER capture_entry_card AFTER UPDATE OF title ON kb_cards BEGIN INSERT INTO entry_lock_order(stage) VALUES ('card'); END")
+  CardContent.Save(boardId, cardId, 0, "custom", "Lock order", "Body", 0, False, 0)
+  conn.Exec("DROP TRIGGER capture_entry_user")
+  conn.Exec("DROP TRIGGER capture_entry_board")
+  conn.Exec("DROP TRIGGER capture_entry_card")
+  row = conn.Exec("SELECT stage FROM entry_lock_order ORDER BY position")
+  If row.Count <> 3 Or row!stage <> "actor" Then Error.Raise("Detail actor was not locked first")
+  row.MoveNext()
+  If row!stage <> "board" Then Error.Raise("Detail board lock order changed")
+  row.MoveNext()
+  If row!stage <> "card" Then Error.Raise("Detail card lock order changed")
+  Print "Entry final scope: all seven kinds, immediate/history/clock identity/role/raw/archive/tombstone/rebound/type/author/scalar/list/SQL exact rollback, new-entry refusal full-text retry, parent/target/cycle guards, comment/admin role transitions and nullable provenance and exact stored real/draft merge and observed actor/board/card locks passed"
+End
+
+Private Sub SignIn(actor As String)
+  Session["username"] = actor
+  Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+End
+
+Private Function Frame() As String
+  Dim conn As Connection = WebDatabase.OpenConnection()
+  Dim table As Table
+  Dim tables As New String[]
+  Dim tableName As String
+  Dim order As String[]
+  Dim key As String
+  Dim rows As Result
+  Dim field As ResultField
+  Dim values As Collection
+  Dim data As Variant[]
+  Dim result As New Collection
+  For Each table In conn.Tables
+    If Left(table.Name, 7) <> "sqlite_" Then tables.Add(table.Name)
+  Next
+  tables.Sort()
+  For Each tableName In tables
+    order = New String[]
+    For Each key In conn.Tables[tableName].PrimaryKey
+      order.Add(conn.Quote(key))
+    Next
+    rows = conn.Exec(ExportText.SelectRows(conn, tableName) & If(order.Count, " ORDER BY " & order.Join(","), ""))
+    data = New Variant[]
+    For Each rows
+      values = New Collection
+      For Each field In rows.Fields
+        If Left(field.Name, 7) = "__weba_" Then Continue
+        If field.Type = DB.String Then
+          If rows.Fields.Exist("__weba_null_" & field.Name) Then
+            If rows["__weba_null_" & field.Name] Then
+              values[field.Name] = JSON.Null
+            Else
+              values[field.Name] = ExportText.ReadValue(rows, field.Name)
+            Endif
+          Else
+            values[field.Name] = rows[field.Name]
+          Endif
+        Else If field.Type = DB.Blob Then
+          If IsNull(rows[field.Name]) Then
+            values[field.Name] = JSON.Null
+          Else
+            values[field.Name] = Base64(rows[field.Name].Data)
+          Endif
+        Else
+          values[field.Name] = rows[field.Name]
+        Endif
+      Next
+      data.Add(values)
+    Next
+    result[tableName] = data
+  Next
+  Return JsonText.Encode(result)
+End

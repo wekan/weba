@@ -1,3 +1,15 @@
+All seven native detail-entry kinds now recheck actor/permission/card/container/
+archive scope, exact values/non-NULL writes, nullable author and creation-time
+provenance after storage and history/clocks. Lock actor before board/card, plus
+entry/parent/target rows. Parent/relationship visibility/label/cycle and comment
+admin scope rechecks preserve legitimate own-comment role transitions. Native
+exact rollback/new-row/retry and typed/null tests pass. Exact numeric draft reads
+retain near-ULP time and24 backup round trips/11 refusals. Source/packaged detail
+UI final archive refusal retains dirty text and board state then retries; live
+and ordinary UI pass. Full pinned host/native/API/security/session and70 Python
+tests pass; final NULL/provenance/container/number/lock-order/backup checks pass.
+Delete/timer/file/other guards and full parity remain open.
+
 Initial native card-field HTML replacement now preserves same-card editable dirty
 text and exact encoded baselines, retaining pending updates on new nodes. Explicit
 route target checks prevent cross-card replay before acknowledgment; capture ends

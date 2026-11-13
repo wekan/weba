@@ -16,10 +16,11 @@ Public Function Record(r As Result) As Collection
   Dim parentId As Integer
   Dim done As Boolean
   Dim amount As Float
+  Dim storedAmount As Variant = ExportText.ReadNumber(r, "amount")
   Dim data As Collection
   If Not IsNull(r!parent_id) Then parentId = CInt(r!parent_id)
   If Not IsNull(r!done) Then done = CBool(r!done)
-  If Not IsNull(r!amount) Then amount = CFloat(r!amount)
+  If Not IsNull(storedAmount) Then amount = CFloat(storedAmount)
   data = Values(ExportText.ReadValue(r, "title"), ExportText.ReadValue(r, "body"), parentId, done, amount, ExportText.ReadValue(r, "value_type"))
   data["boardId"] = r!board_id
   data["cardId"] = r!card_id

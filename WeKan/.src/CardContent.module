@@ -133,17 +133,23 @@ Private Function Reaches(boardId As Integer, startId As Integer, targetId As Int
   Return False
 End
 
-Private Sub BeginChange(boardId As Integer, cardId As Integer, capability As String)
+Private Sub BeginChange(boardId As Integer, cardId As Integer, capability As String, Optional actor As String)
   Dim transaction As Boolean
   Dim failure As String
+  If Not actor Then actor = WebIdentity.Username
   RequireCard(boardId, cardId)
   BoardAccess.Require(boardId, capability)
   DatabaseTransactions.Begin($db)
   transaction = True
+  If actor Then
+    $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
+    If WebIdentity.Username <> actor Then Error.Raise("Sign in required")
+  Endif
   $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
   $db.Exec("UPDATE kb_cards SET title=title WHERE board_id=&1 AND id=&2", boardId, cardId)
   RequireCard(boardId, cardId)
   BoardAccess.Require(boardId, capability)
+  If actor And WebIdentity.Username <> actor Then Error.Raise("Sign in required")
 Catch
   failure = Error.Text
   If transaction Then Try DatabaseTransactions.Rollback($db)
@@ -162,14 +168,45 @@ Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Int
   Dim id As Integer = entryId
   Dim merged As Collection
   Dim number As Float
+  Dim actor As String = WebIdentity.Username
+  Dim capability As String = If(kind = "comment" And Not isCopy, "comment", "write")
+  Dim scope As New Collection
+  Dim values As Collection
+  Dim field As String
   RequireCard(boardId, cardId)
   BoardAccess.Require(boardId, If(kind = "comment" And Not isCopy, "comment", "write"))
-  BeginChange(boardId, cardId, If(kind = "comment" And Not isCopy, "comment", "write"))
+  BeginChange(boardId, cardId, capability, actor)
   transaction = True
+  scope.Add(actor, "actor")
+  scope.Add(capability, "capability")
+  scope.Add(kind, "kind")
+  scope.Add(actor, "author")
+  scope.Add(False, "authorNull")
+  r = WorkspaceStore.Record(boardId, "board", boardId)
+  scope.Add(CBool(r!archived), "boardArchived")
+  r = WorkspaceStore.Record(boardId, "card", cardId)
+  scope.Add(CBool(r!archived), "cardArchived")
+  scope.Add(ExportText.ReadValue(r, "lane"), "cardLane")
+  scope.Add(ExportText.ReadValue(r, "status"), "cardStatus")
+  scope.Add(KanbanStore.ReadCardListId(boardId, cardId), "listId")
+  If scope["listId"] > 0 Then
+    r = WorkspaceStore.Record(boardId, "list", scope["listId"])
+    scope.Add(ExportText.ReadValue(r, "lane"), "listLane")
+    scope.Add(ExportText.ReadValue(r, "title"), "listTitle")
+    scope.Add(WorkspaceStore.ListHidden(boardId, scope["listId"]), "listHidden")
+    scope.Add(WorkspaceStore.Archived(boardId, "list", scope["listId"]), "listArchived")
+    target = $db.Exec("SELECT id FROM kb_lanes WHERE board_id=&1 AND " & ExportText.MatchText($db, "title", 2, scope["listLane"]), boardId, ExportText.BindText($db, scope["listLane"]))
+    scope.Add(target.Available, "laneExists")
+    If target.Available Then scope.Add(WorkspaceStore.Archived(boardId, "lane", target!id), "laneArchived")
+  Endif
   If entryId Then
+    $db.Exec("UPDATE kb_entries SET title=title WHERE board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, entryId)
     r = Entry(boardId, cardId, entryId, True)
     If kind = "comment" And ExportText.ReadValue(r, "author") <> WebIdentity.Username And Not BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Comment not editable")
     If ExportText.ReadValue(r, "kind") <> kind Then Error.Raise("Entry type cannot be changed")
+    scope["author"] = ExportText.ReadValue(r, "author")
+    scope["authorNull"] = TextIsNull(r, "author")
+    scope.Add(JSON.Encode(r["created_at"]), "createdAt")
     If baseline Then
       merged = EntryDraft.Merge(boardId, cardId, entryId, r, EntryDraft.Values(title, body, parentId, done, amount, valueType), baseline)
       title = merged["title"]
@@ -187,7 +224,9 @@ Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Int
       If Not Trim(title) Then Error.Raise("Enter a title")
     Case "subtask", "dependency"
       If amount <> CInt(amount) Then Error.Raise("Choose a whole card ID")
+      $db.Exec("UPDATE kb_cards SET title=title WHERE board_id=&1 AND id=&2", boardId, CInt(amount))
       target = WorkspaceStore.Record(boardId, "card", CInt(amount))
+      scope.Add(CBool(target!archived), "targetArchived")
       If Reaches(boardId, CInt(amount), cardId, kind, entryId) Then Error.Raise("Circular card relationship")
       title = ExportText.ReadValue(target, "title")
     Case "time"
@@ -198,6 +237,7 @@ Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Int
   End Select
   If ExportText.Length(title) > 255 Then Error.Raise("Title is too long")
   If kind = "checkitem" Then
+    $db.Exec("UPDATE kb_entries SET title=title WHERE board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, parentId)
     r = Entry(boardId, cardId, parentId, True)
     If ExportText.ReadValue(r, "kind") <> "checklist" Then Error.Raise("Choose a checklist")
   Endif
@@ -216,6 +256,10 @@ Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Int
         Error.Raise("Unknown field type")
     End Select
   Endif
+  values = EntryDraft.Values(Trim(title), body, parentId, done, amount, valueType)
+  For Each field In values.Keys
+    scope.Add(values[field], field)
+  Next
   If entryId Then
     r = $db.Edit("kb_entries", "id = &1 AND board_id = &2 AND card_id = &3", entryId, boardId, cardId)
   Else
@@ -223,7 +267,8 @@ Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Int
     r["board_id"] = boardId
     r["card_id"] = cardId
     r["author"] = WebIdentity.Username
-    r["created_at"] = Now
+    scope.Add(Now, "newCreatedAt")
+    r["created_at"] = scope["newCreatedAt"]
   Endif
   r["kind"] = kind
   r["title"] = Trim(title)
@@ -238,7 +283,9 @@ Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Int
     DatabaseText.Save($db, r, "kb_entries", ["board_id", "card_id", "author", "created_at", "kind", "title", "body", "parent_id", "done", "amount", "value_type"], True)
   Endif
   If Not entryId Then id = $db.LastInsertId
+  RequireSavedEntry(boardId, cardId, id, scope)
   KanbanStore.Activity(boardId, "Saved " & kind & " on card " & CStr(cardId), "card", cardId)
+  RequireSavedEntry(boardId, cardId, id, scope)
   DatabaseTransactions.Commit($db)
   transaction = False
   Return id
@@ -246,6 +293,62 @@ Catch
   failure = Error.Text
   If transaction Then Try DatabaseTransactions.Rollback($db)
   Error.Raise(failure)
+End
+
+Private Function TextIsNull(row As Result, field As String) As Boolean
+  If row.Fields.Exist("__weba_null_" & field) Then Return CBool(row["__weba_null_" & field])
+  Return TypeOf(row[field]) <> gb.String And IsNull(row[field])
+End
+
+' The caller retains its transaction through data, history and change-clock writes.
+Private Sub RequireSavedEntry(boardId As Integer, cardId As Integer, entryId As Integer, scope As Collection)
+  Dim row As Result
+  Dim values As Collection
+  Dim field As String
+  Dim kind As String = scope["kind"]
+  Dim listId As Integer = scope["listId"]
+  If Not WebIdentity.Username Or WebIdentity.Username <> scope["actor"] Then Error.Raise("Sign in required")
+  RequireCard(boardId, cardId)
+  BoardAccess.Require(boardId, scope["capability"])
+  row = WorkspaceStore.Record(boardId, "board", boardId)
+  If CBool(row!archived) <> scope["boardArchived"] Then Error.Raise("Board archive state changed")
+  row = WorkspaceStore.Record(boardId, "card", cardId)
+  If CBool(row!archived) <> scope["cardArchived"] Then Error.Raise("Card archive state changed")
+  If ExportText.ReadValue(row, "lane") <> scope["cardLane"] Or ExportText.ReadValue(row, "status") <> scope["cardStatus"] Then Error.Raise("Card placement changed")
+  If KanbanStore.ReadCardListId(boardId, cardId) <> listId Then Error.Raise("Card destination changed")
+  If listId > 0 Then
+    row = WorkspaceStore.Record(boardId, "list", listId)
+    If ExportText.ReadValue(row, "lane") <> scope["listLane"] Or ExportText.ReadValue(row, "title") <> scope["listTitle"] Then Error.Raise("Card list changed")
+    If WorkspaceStore.ListHidden(boardId, listId) <> scope["listHidden"] Then Error.Raise("Card container archive state changed")
+    If WorkspaceStore.Archived(boardId, "list", listId) <> scope["listArchived"] Then Error.Raise("Card list archive state changed")
+    row = $db.Exec("SELECT id FROM kb_lanes WHERE board_id=&1 AND " & ExportText.MatchText($db, "title", 2, scope["listLane"]), boardId, ExportText.BindText($db, scope["listLane"]))
+    If row.Available <> scope["laneExists"] Then Error.Raise("Card swimlane changed")
+    If row.Available Then
+      If WorkspaceStore.Archived(boardId, "lane", row!id) <> scope["laneArchived"] Then Error.Raise("Card swimlane archive state changed")
+    Endif
+  Endif
+  row = Entry(boardId, cardId, entryId, True)
+  values = EntryDraft.Record(row)
+  If Not $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND id=&3 AND title IS NOT NULL AND body IS NOT NULL AND parent_id IS NOT NULL AND done IS NOT NULL AND amount IS NOT NULL AND value_type IS NOT NULL", boardId, cardId, entryId).Available Then Error.Raise("Entry value became null")
+  If values["kind"] <> kind Then Error.Raise("Entry type changed")
+  For Each field In ["title", "body", "parent_id", "done", "amount", "value_type"]
+    If values[field] <> scope[field] Then Error.Raise("Entry changed during save")
+  Next
+  If values["author"] <> scope["author"] Or TextIsNull(row, "author") <> scope["authorNull"] Then Error.Raise("Entry author changed")
+  If scope.Exist("createdAt") And If JSON.Encode(row["created_at"]) <> scope["createdAt"] Then Error.Raise("Entry creation time changed")
+  If scope.Exist("newCreatedAt") Then
+    If Not $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND id=&3 AND created_at=&4", boardId, cardId, entryId, scope["newCreatedAt"]).Available Then Error.Raise("Entry creation time changed")
+  Endif
+  If kind = "comment" And scope["author"] <> scope["actor"] And Not BoardAccess.Can(boardId, "manageBoard") Then Error.Raise("Comment not editable")
+  If kind = "checkitem" Then
+    row = Entry(boardId, cardId, scope["parent_id"], True)
+    If ExportText.ReadValue(row, "kind") <> "checklist" Then Error.Raise("Checklist parent changed")
+  Endif
+  If kind = "subtask" Or kind = "dependency" Then
+    row = WorkspaceStore.Record(boardId, "card", CInt(scope["amount"]))
+    If CBool(row!archived) <> scope["targetArchived"] Or Trim(ExportText.ReadValue(row, "title")) <> scope["title"] Then Error.Raise("Related card changed")
+    If Reaches(boardId, CInt(scope["amount"]), cardId, kind, entryId) Then Error.Raise("Circular card relationship")
+  Endif
 End
 
 Public Sub DeleteEntry(boardId As Integer, cardId As Integer, entryId As Integer)

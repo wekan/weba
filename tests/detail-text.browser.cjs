@@ -22,11 +22,30 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   fixture({...base,WEBA_NATIVE_MODE:'detail-update',WEBA_NATIVE_SUFFIX:'C'});await expect(page.locator(input('DetailBody'))).toHaveValue(custom.body+'C',{timeout:15000});await expect(page.locator(input('DetailTitle'))).toHaveValue(local);
   await click('DetailSave');expect(read().entries.find(e=>e.kind==='custom')).toMatchObject({title:local,body:custom.body+'C'});
   await row(local);await expect(page.locator(input('DetailTitle'))).toHaveValue(local);await expect(page.locator(input('DetailBody'))).toHaveValue(custom.body+'C');
+  const database=path.join(process.env.WEBA_DB_HOST,process.env.WEBA_DB_NAME);
+  const sql=statement=>execFileSync('python3',['-c',`import sqlite3,sys
+with sqlite3.connect(sys.argv[1]) as d:
+ if len(sys.argv)>2:d.executescript(sys.argv[2])
+ else:
+  names=[r[0] for r in d.execute("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'kb_%' ORDER BY name")]
+  print(repr({n:sorted(d.execute('SELECT * FROM "'+n+'"').fetchall(),key=repr) for n in names}))
+`,database,...(statement?[statement]:[])],{encoding:'utf8'});
+  const pending=custom.body+'C pending final scope';
+  await page.locator(input('DetailBody')).evaluate((e,t)=>{e.value=t;e.dispatchEvent(new Event('input',{bubbles:true}));},pending);await settle();
+  const beforeFinalSave=sql();sql('CREATE TRIGGER detail_save_final AFTER INSERT ON kb_history BEGIN UPDATE kb_cards SET archived=1 WHERE id='+seed.items[0].card+'; END');
+  try{
+   await click('DetailSave');await expect(page.locator(c('Notice'))).toContainText('Card archive state changed');
+   await expect(page.locator(input('DetailTitle'))).toHaveValue(local);await expect(page.locator(input('DetailBody'))).toHaveValue(pending);
+   expect(sql()).toBe(beforeFinalSave);
+  }finally{sql('DROP TRIGGER detail_save_final');}
+  const retryBody=custom.body+'C RETRY';
+  await page.locator(input('DetailBody')).evaluate((e,t)=>{e.value=t;e.dispatchEvent(new Event('input',{bubbles:true}));},retryBody);
+  await click('DetailSave');expect(read().entries.find(e=>e.kind==='custom')).toMatchObject({title:local,body:retryBody});
   await click('DetailNew');await expect(page.locator(input('DetailTitle'))).toHaveValue('');await expect(page.locator(input('DetailBody'))).toHaveValue('');
   await kind('Comments');const comment=initial.entries.find(e=>e.kind==='comment');await row(comment.body);await expect(page.locator(input('DetailBody'))).toHaveValue(comment.body);await expect(page.locator(c('DetailTree'))).toContainText(shown(comment.author)+': '+shown(comment.body));
   await kind('Checklists');const checklist=initial.entries.find(e=>e.kind==='checklist');await row(checklist.title);await expect(page.locator(input('DetailTitle'))).toHaveValue(checklist.title);
   await kind('Attachments');await expect(page.locator(c('DetailTree'))).toContainText(shown(initial.files[0].filename));await expect(page.locator(c('DetailsPanel')+' tag')).toHaveCount(0);
-  await page.reload();await page.locator(`.weba-card[data-card-id="${seed.items[0].card}"] .weba-card-menu`).click();await click('ContextComments');await kind('Custom fields');await row(local);await expect(page.locator(input('DetailBody'))).toHaveValue(custom.body+'C');expect(errors).toEqual([]);
-  console.log('Detail complete-text browser: native custom/comment/checklist/file text, exact encoded editor values, external suffix heartbeat, dirty local title with independent external body save, New clears stale values, literal markup and reload passed');
+  await page.reload();await page.locator(`.weba-card[data-card-id="${seed.items[0].card}"] .weba-card-menu`).click();await click('ContextComments');await kind('Custom fields');await row(local);await expect(page.locator(input('DetailBody'))).toHaveValue(retryBody);expect(errors).toEqual([]);
+  console.log('Detail complete-text browser: native custom/comment/checklist/file text, exact encoded editor values, external suffix heartbeat, dirty local title with independent external body save, post-history archive refusal keeps all board data and exact dirty draft, retry, New clears stale values, literal markup and reload passed');
  }finally{if(context)await context.close();if(browser)await browser.close();}
 })().catch(e=>{let message=e.stack||String(e);if(process.env.WEBA_TEST_PASSWORD)message=message.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(message);process.exitCode=1;});

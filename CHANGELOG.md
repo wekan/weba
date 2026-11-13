@@ -2,6 +2,28 @@
 
 This work adds the following features and fixes:
 
+- Recheck native saves for comments, checklists/items, custom fields, time,
+  subtasks and dependencies immediately after storage and after history/clocks.
+  Capture/lock the actor before board/card locks, lock existing entries and
+  referenced parents/targets, and retain each kind's permission semantics.
+  Verify current identity/role/card scope, stable placement and container/archive
+  state, exact entry values, NULL/empty author provenance and creation times.
+  Explicitly written fields cannot become SQL NULL. Recheck checklist parents,
+  related-card visibility/full labels and cycles; foreign-comment admin loss
+  rolls back while a permitted own-comment role transition succeeds.
+  Native all-table snapshots cover data/history/clock failures, new-row rollback,
+  full-text retries, typed custom fields, nullable provenance and related scopes.
+  Entry drafts use the exact SQL number reader, retaining near-ULP time amounts
+  through guards and stale merges. The existing 24 backup round trips and
+  11 refusal snapshots remain exact for text, NULLs, numbers, provenance and bytes.
+  Source/packaged detail UI rejects post-history archive changes with unchanged
+  board tables, retained dirty fields and successful retry; live-detail and
+  ordinary editor/admin/mobile checks pass. The full pinned host/native/API/
+  security/session gate and 70 Python tests pass; final focused NULL/provenance/
+  container/number/lock-order and backup checks pass.
+  Entry deletion, timer/file/other mutation final guards, remaining field readers
+  and full original parity remain open. Thanks to xet7.
+
 - Preserve editable card drafts typed before native form-open completes. During
   initialization, native textbox/textarea HTML replacement retains full dirty
   values and encoded baselines for the same board/card; carry pending updates

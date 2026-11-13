@@ -137,11 +137,12 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Completed complete native people-pane titles and strict private snapshots;
   scope/no-write/duplicate/order and actual heartbeat/pending-control results
   are recorded in CHANGELOG.md.
-- Next text focus: detail/content final guards (post-history role loss currently
-  commits edits across all seven entry kinds), then other model writers and
-  shared readers.
-  Native startup dirty-field replacement, reopened status preservation and
-  card-save final guards are recorded in CHANGELOG.md.
+- Next detail/content focus: entry deletion final guards (post-history role loss
+  commits all seven kinds; a locked comment-to-custom change also bypasses a
+  comment-only member's write restriction), then timer/file/other
+  mutations, numeric editor rendering/parsing and remaining model readers/writers.
+  Entry-save and card-save final guards, exact numeric entry drafts, native
+  startup dirty fields and reopened status are recorded in CHANGELOG.md.
 - Next data follow-up: audit nullable/legacy field-model consistency (including
   copy semantics) and remaining native
   text readers/writers outside the backup path. Other request decoder boundaries,
