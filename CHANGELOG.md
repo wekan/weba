@@ -2,6 +2,25 @@
 
 This work adds the following features and fixes:
 
+- Preserve complete native copy text for cards, lists, lanes and boards:
+  titles, body/labels/placement, settings, checklist/comment/custom/time text,
+  filenames, retained authors and derived relationship labels. Preserve validated
+  numeric property text without rounding it again during internal copy. Keep
+  bytes, covers, active/archive rules and relationship remapping unchanged.
+  Recheck nonboard source/actor/write scope under the board lock and before
+  commit, and reject changed or rebound targets. Use complete board fingerprints
+  and complete single/batch source and collision titles. Forty SQL-backed title
+  cases match unchanged WeKan uniqueTitle, including NUL bases/suffixes; fixture
+  values are verified independently before the source comparison. Retain the six
+  original queue stages. All-table rollback tests cover SQL failure, lost write
+  permission with retained commenting, assigned-only scope loss, malformed full
+  type/number values and source/target substitution. Actual source/packaged copy
+  dialogs preserve normalized rich data/bytes and numbered board navigation.
+  Full pinned host tests (70 Python tests and native/API/security/session suites)
+  and ordinary source/packaged layout/editor/admin/mobile checks pass. Remaining
+  caption/live/detail readers, nullable/legacy field semantics and full original
+  model/UI/DDP/security parity stay open. Thanks to xet7.
+
 - Rename native boards/cards/lists/swimlanes with complete text and scoped
   atomic propagation. Preserve linked active/archived card fields, stable IDs,
   full lane order keys and Default-prefix/NULL isolation. Lock and reread the

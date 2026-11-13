@@ -9,9 +9,82 @@ Public Sub Main()
   Dim result As New Collection
   Dim items As New Variant[]
   Dim item As Collection
+  Dim kind As String
+  Dim entryId As Integer
+  Dim fileId As Integer
+  Dim parents As Result
+  Dim suffixText As String = Chr(0) & "Ω😀'copy"
   If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
   Session["username"] = "rest-other"
   Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+  If Env["WEBA_NATIVE_MODE"] = "boards" Then
+    conn = WebDatabase.OpenConnection()
+    row = conn.Exec(ExportText.SelectRows(conn, "kb_boards") & " WHERE owner=&1 ORDER BY id", "rest-other")
+    For Each row
+      item = New Collection
+      item["id"] = row!id
+      item["title"] = ExportText.ReadValue(row, "title")
+      items.Add(item)
+    Next
+    result["boards"] = items
+    Print JsonText.Encode(result)
+    Return
+  Endif
+  If Env["WEBA_NATIVE_MODE"] = "copy-seed" Then
+    boardId = CInt(Env["WEBA_NATIVE_BOARD"])
+    cardId = CInt(Env["WEBA_NATIVE_CARD"])
+    row = WorkspaceStore.Record(boardId, "card", cardId)
+    KanbanStore.SaveCard(boardId, cardId, ExportText.ReadValue(row, "title"), ExportText.ReadValue(row, "description"), ExportText.ReadValue(row, "lane"), ExportText.ReadValue(row, "status"), ExportText.ReadValue(row, "assignee"), "Labels" & suffixText, ExportText.ReadValue(row, "due_day"), KanbanStore.CardListId(boardId, cardId))
+    entryId = CardContent.Save(boardId, cardId, 0, "checklist", "Browser checks" & suffixText, "", 0, False, 0)
+    CardContent.Save(boardId, cardId, 0, "checkitem", "Browser item" & suffixText, "Item body" & suffixText, entryId, True, 0)
+    entryId = CardContent.Save(boardId, cardId, 0, "comment", "", "Browser comment" & suffixText, 0, False, 0)
+    CardContent.RetainAuthorName(boardId, cardId, "entry", entryId, "Browser retired author" & suffixText)
+    CardContent.Save(boardId, cardId, 0, "custom", "Browser field" & suffixText, "Browser value" & suffixText, 0, False, 0, "text")
+    fileId = CardContent.UploadFile(boardId, cardId, "browser" & suffixText & ".bin", "B" & Chr(0) & Chr(255) & "Z")
+    AttachmentLifecycle.SetCover(boardId, cardId, fileId)
+    WorkspaceStore.SetSetting(boardId, "card", cardId, "description", "Browser metadata" & suffixText)
+    Print "{}"
+    Return
+  Endif
+  If Env["WEBA_NATIVE_MODE"] = "copy-read" Then
+    boardId = CInt(Env["WEBA_NATIVE_BOARD"])
+    cardId = CInt(Env["WEBA_NATIVE_CARD"])
+    row = WorkspaceStore.Record(boardId, "card", cardId)
+    For Each kind In ["title", "description", "labels", "lane", "status", "due_day"]
+      result[kind] = ExportText.ReadValue(row, kind)
+    Next
+    result["metadata"] = WorkspaceStore.Setting(boardId, "card", cardId, "description")
+    conn = WebDatabase.OpenConnection()
+    For Each kind In ["checklist", "checkitem", "comment", "custom"]
+      row = CardContent.Entries(boardId, cardId, kind, True)
+      For Each row
+        item = New Collection
+        item["kind"] = kind
+        item["title"] = ExportText.ReadValue(row, "title")
+        item["body"] = ExportText.ReadValue(row, "body")
+        item["done"] = row!done
+        item["author"] = CardContent.AuthorName(boardId, cardId, "entry", row!id)
+        If kind = "checkitem" Then
+          parents = conn.Exec(ExportText.SelectRows(conn, "kb_entries") & " WHERE id=&1 AND board_id=&2 AND card_id=&3", row!parent_id, boardId, cardId)
+          item["parent"] = If(parents.Available, ExportText.ReadValue(parents, "title"), "missing")
+        Endif
+        items.Add(item)
+      Next
+    Next
+    result["entries"] = items
+    items = New Variant[]
+    row = CardContent.Files(boardId, cardId, True)
+    For Each row
+      item = New Collection
+      item["filename"] = ExportText.ReadValue(row, "filename")
+      item["data"] = Base64(row!content.Data)
+      item["cover"] = AttachmentLifecycle.CoverId(boardId, cardId) = row!id
+      items.Add(item)
+    Next
+    result["files"] = items
+    Print JsonText.Encode(result)
+    Return
+  Endif
   If Env["WEBA_NATIVE_MODE"] = "containers" Then
     conn = WebDatabase.OpenConnection()
     boardId = CInt(Env["WEBA_NATIVE_BOARD"])
@@ -33,6 +106,18 @@ Public Sub Main()
       items.Add(item)
     Next
     result["lists"] = items
+    items = New Variant[]
+    row = conn.Exec(ExportText.SelectRows(conn, "kb_cards") & " WHERE board_id=&1 AND archived=&2 ORDER BY id", boardId, False)
+    For Each row
+      item = New Collection
+      item["id"] = row!id
+      item["title"] = ExportText.ReadValue(row, "title")
+      item["lane"] = ExportText.ReadValue(row, "lane")
+      item["status"] = ExportText.ReadValue(row, "status")
+      item["list"] = KanbanStore.ReadCardListId(boardId, row!id)
+      items.Add(item)
+    Next
+    result["cards"] = items
     row = conn.Exec(ExportText.SelectRows(conn, "kb_boards") & " WHERE id=&1", boardId)
     result["boardTitle"] = ExportText.ReadValue(row, "title")
     Print JsonText.Encode(result)

@@ -2,7 +2,7 @@ Public Sub Main()
   Dim payload As New Collection
   Dim titles As New Variant[]
   Dim batches As New Variant[]
-  Dim test As Collection
+  Dim test As Variant
   Dim row As Collection
   Dim raw As New String[]
   Dim stage As Collection
@@ -26,19 +26,19 @@ Public Sub Main()
   Session["auth_generation"] = WebDatabase.SessionGeneration("copies-matrix")
   KanbanStore.OpenDatabase()
   db = WebDatabase.OpenConnection()
-  For Each test In JSON.Decode(File.Load(".public/copy-title-cases.json"))
+  For Each test In JsonText.Decode(File.Load(".public/copy-title-cases.json"))
     db.Delete("kb_boards")
     For Each title In test["existing"]
       r = db.Create("kb_boards")
       r["owner"] = "copies-matrix"
       r["title"] = title
       r["archived"] = False
-      r.Update()
+      DatabaseText.Save(db, r, "kb_boards", ["owner", "title", "archived"], True)
     Next
     raw = New String[]
-    r = db.Find("kb_boards", "TRUE ORDER BY id")
+    r = db.Exec(ExportText.SelectRows(db, "kb_boards") & " ORDER BY id")
     For Each r
-      raw.Add(CStr(r!title))
+      raw.Add(ExportText.ReadValue(r, "title"))
     Next
     row = New Collection
     row["input"] = test["input"]
@@ -66,9 +66,9 @@ Public Sub Main()
     row["ids"] = [a, b]
     row["names"] = ["Queue " & mode & " A", "Queue " & mode & " B"]
     raw = New String[]
-    r = db.Find("kb_boards", "TRUE ORDER BY id")
+    r = db.Exec(ExportText.SelectRows(db, "kb_boards") & " ORDER BY id")
     For Each r
-      raw.Add(CStr(r!title))
+      raw.Add(ExportText.ReadValue(r, "title"))
     Next
     row["existing"] = raw
     If mode <> "none" Then db.Exec("CREATE TRIGGER queue_fail BEFORE INSERT ON kb_files WHEN NEW.filename='" & If(mode = "first", "a-", "b-") & mode & "' BEGIN SELECT RAISE(ABORT,'queue fail'); END")
@@ -83,7 +83,7 @@ Public Sub Main()
       raw = New String[]
       For Each id In BoardCopies.Copies(batch)
         r = WorkspaceStore.Record(id, "board", id)
-        raw.Add(CStr(r!title))
+        raw.Add(ExportText.ReadValue(r, "title"))
       Next
       stage["titles"] = raw
       stage["busy"] = batch["busy"]
@@ -95,5 +95,5 @@ Public Sub Main()
   Next
   payload["titles"] = titles
   payload["batches"] = batches
-  Print JSON.Encode(payload)
+  Print JsonText.Encode(payload)
 End

@@ -86,13 +86,13 @@ Public Function Setting(boardId As Integer, kind As String, itemId As Integer, n
   Record(boardId, kind, itemId)
   If name = "star" Or name = "watch" Then
     BoardAccess.OpenStore()
-    r = $db.Find("kb_user_meta", "board_id = &1 AND kind = &2 AND item_id = &3 AND username = &4 AND setting = &5", boardId, kind, itemId, WebIdentity.Username, name)
-    If r.Available Then Return r["value"]
+    r = $db.Exec(ExportText.SelectRows($db, "kb_user_meta") & " WHERE board_id = &1 AND kind = &2 AND item_id = &3 AND username = &4 AND setting = &5", boardId, kind, itemId, WebIdentity.Username, name)
+    If r.Available Then Return ExportText.ReadValue(r, "value")
     r = $db.Find("kb_boards", "id = &1 AND owner = &2", boardId, WebIdentity.Username)
     If Not r.Available Then Return fallback
   Endif
-  r = $db.Find("kb_meta", "board_id = &1 AND kind = &2 AND item_id = &3 AND setting = &4", boardId, kind, itemId, name)
-  If r.Available Then Return r["value"]
+  r = $db.Exec(ExportText.SelectRows($db, "kb_meta") & " WHERE board_id = &1 AND kind = &2 AND item_id = &3 AND setting = &4", boardId, kind, itemId, name)
+  If r.Available Then Return ExportText.ReadValue(r, "value")
   Return fallback
 End
 
@@ -320,9 +320,9 @@ Private Function CloneCard(sourceBoard As Integer, cardId As Integer, targetBoar
   Dim assignee As String
   If Not options Then options = CopyOptions.Defaults()
   fields = CopyOptions.Normalize(options)
-  If fields["labels"] Then labels = r!labels
+  If fields["labels"] Then labels = ExportText.ReadValue(r, "labels")
   If Not BoardAccess.Can(targetBoard, "seesAllCards") Then assignee = WebIdentity.Username
-  id = KanbanStore.SaveCard(targetBoard, 0, title, r!description, lane, listTitle, assignee, labels, r!due_day, listId)
+  id = KanbanStore.SaveCard(targetBoard, 0, title, ExportText.ReadValue(r, "description"), lane, listTitle, assignee, labels, ExportText.ReadValue(r, "due_day"), listId)
   BoardAccess.CopyAssignees(sourceBoard, cardId, targetBoard, id)
   BoardAccess.CopyCardMembers(sourceBoard, cardId, targetBoard, id)
   CardDates.CopyDates(sourceBoard, cardId, targetBoard, id)
@@ -367,13 +367,15 @@ Public Function Copy(boardId As Integer, kind As String, itemId As Integer, titl
   If Not title Or String.Len(title) > If(kind = "list", 32, 255) Then Error.Raise("Enter a valid copy title")
   CardContent.OpenStore()
   $copyMap = New Collection
-  If kind = "list" Then
-    If Not targetLane Then targetLane = source!lane
-    r = $db.Find("kb_lanes", "board_id = &1 AND title = &2", boardId, targetLane)
-    If Not r.Available Then Error.Raise("Destination swimlane not accessible")
-  Endif
   DatabaseTransactions.Begin($db)
   transaction = True
+  If kind <> "board" Then
+    $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
+    If WebIdentity.Username <> actor Then Error.Raise("Copy identity changed")
+    BoardAccess.RequireContainer(boardId, kind, itemId)
+    BoardAccess.Require(boardId, "write")
+    source = Record(boardId, kind, itemId)
+  Endif
   If kind = "board" Then
     $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
     BoardCreation.Lock()
@@ -385,15 +387,20 @@ Public Function Copy(boardId As Integer, kind As String, itemId As Integer, titl
     BoardAccess.Require(boardId, "manageBoard")
     source = Record(boardId, kind, itemId)
     sourceArchived = source!archived
-    sourceTitle = source!title
-    sourceOwner = source!owner
+    sourceTitle = ExportText.ReadValue(source, "title")
+    sourceOwner = ExportText.ReadValue(source, "owner")
     viewPolicy = BoardViewPolicy.Transfer(boardId)
+  Endif
+  If kind = "list" Then
+    If Not targetLane Then targetLane = ExportText.ReadValue(source, "lane")
+    r = $db.Exec("SELECT * FROM kb_lanes WHERE board_id = &1 AND " & ExportText.MatchText($db, "title", 2, targetLane), boardId, ExportText.BindText($db, targetLane))
+    If Not r.Available Then Error.Raise("Destination swimlane not accessible")
   Endif
   If kind <> "board" Or fields["cards"] Then KanbanStore.PrimeCardLinks(boardId)
   Select kind
     Case "card"
       listId = KanbanStore.CardListId(boardId, itemId)
-      newId = CloneCard(boardId, itemId, boardId, listId, source!lane, source!status, title)
+      newId = CloneCard(boardId, itemId, boardId, listId, ExportText.ReadValue(source, "lane"), ExportText.ReadValue(source, "status"), title)
     Case "board"
       newId = KanbanStore.AddBoard(title)
       BoardViewPolicy.InstallTransfer(newId, viewPolicy)
@@ -401,7 +408,7 @@ Public Function Copy(boardId As Integer, kind As String, itemId As Integer, titl
         laneRows = KanbanStore.Lanes(boardId)
         For Each laneRows
           If Archived(boardId, "lane", laneRows!id) Then Continue
-          CloneLane(boardId, laneRows!id, newId, laneRows!title, fields)
+          CloneLane(boardId, laneRows!id, newId, ExportText.ReadValue(laneRows, "title"), fields)
         Next
       Endif
     Case "lane"
@@ -434,11 +441,19 @@ Public Function Copy(boardId As Integer, kind As String, itemId As Integer, titl
     BoardAccess.RequireContainer(sourceId, "board", sourceId)
     BoardAccess.Require(sourceId, "manageBoard")
     source = Record(sourceId, "board", sourceId)
-    If source!archived <> sourceArchived Or source!title <> sourceTitle Or source!owner <> sourceOwner Then Error.Raise("Source board changed during copy")
+    If source!archived <> sourceArchived Or ExportText.ReadValue(source, "title") <> sourceTitle Or ExportText.ReadValue(source, "owner") <> sourceOwner Then Error.Raise("Source board changed during copy")
     If JSON.Encode(BoardViewPolicy.Transfer(sourceId)) <> JSON.Encode(viewPolicy) Then Error.Raise("Source board policy changed during copy")
     If JSON.Encode(BoardViewPolicy.Transfer(newId)) <> JSON.Encode(viewPolicy) Then Error.Raise("Copied board policy changed")
     source = Record(newId, "board", newId)
-    If source!owner <> actor Or source!archived Or source!title <> title Then Error.Raise("Copied board changed")
+    If ExportText.ReadValue(source, "owner") <> actor Or source!archived Or ExportText.ReadValue(source, "title") <> title Then Error.Raise("Copied board changed")
+  Endif
+  If kind <> "board" Then
+    If WebIdentity.Username <> actor Then Error.Raise("Copy identity changed")
+    BoardAccess.RequireContainer(boardId, kind, itemId)
+    BoardAccess.Require(boardId, "write")
+    Record(boardId, kind, itemId)
+    r = Record(targetBoard, kind, newId)
+    If ExportText.ReadValue(r, "title") <> title Or Archived(targetBoard, kind, newId) Then Error.Raise("Copied item changed")
   Endif
   DatabaseTransactions.Commit($db)
   transaction = False
@@ -464,19 +479,19 @@ Private Function CloneLane(sourceBoard As Integer, laneId As Integer, targetBoar
   Dim r As Result
   Dim lists As Result
   Dim id As Integer
-  r = $db.Find("kb_lanes", "board_id = &1 AND title = &2", targetBoard, title)
+  r = $db.Exec("SELECT * FROM kb_lanes WHERE board_id = &1 AND " & ExportText.MatchText($db, "title", 2, title), targetBoard, ExportText.BindText($db, title))
   If r.Available Then Error.Raise("Swimlane already exists")
   r = $db.Create("kb_lanes")
   r["board_id"] = targetBoard
   r["title"] = title
-  r.Update()
+  DatabaseText.Save($db, r, "kb_lanes", ["board_id", "title"], True)
   id = $db.LastInsertId
   If Not options Then options = CopyOptions.Defaults()
   If options["lists"] Then
-    lists = KanbanStore.Lists(sourceBoard, source!title)
+    lists = KanbanStore.Lists(sourceBoard, ExportText.ReadValue(source, "title"))
     For Each lists
       If Archived(sourceBoard, "list", lists!id) Then Continue
-      CloneList(sourceBoard, lists!id, targetBoard, title, lists!title, options)
+      CloneList(sourceBoard, lists!id, targetBoard, title, ExportText.ReadValue(lists, "title"), options)
     Next
   Endif
   CopySettings(sourceBoard, "lane", laneId, targetBoard, id)
@@ -490,22 +505,22 @@ Private Function CloneList(sourceBoard As Integer, listId As Integer, targetBoar
   Dim id As Integer
   Dim rank As Integer
   If String.Len(title) > 32 Then Error.Raise("List titles have at most 32 characters")
-  r = $db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND lane = &2 ORDER BY sort_order DESC", targetBoard, lane)
+  r = $db.Exec("SELECT * FROM kb_lists WHERE " & ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND " & ExportText.MatchText($db, "lane", 2, lane) & " ORDER BY sort_order DESC", targetBoard, ExportText.BindText($db, lane))
   If r.Available Then rank = r!sort_order + 1
   r = $db.Create("kb_lists")
   r["board_id"] = targetBoard
   r["lane"] = lane
   r["title"] = title
   r["sort_order"] = rank
-  r.Update()
+  DatabaseText.Save($db, r, "kb_lists", ["board_id", "lane", "title", "sort_order"], True)
   id = $db.LastInsertId
   ItemChanges.Mark(targetBoard, "list", id)
   If Not options Then options = CopyOptions.Defaults()
   If options["cards"] Then
-    cards = $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND archived = &2", sourceBoard, False)
+    cards = $db.Exec(ExportText.SelectRows($db, "kb_cards") & " WHERE " & ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND archived = &2", sourceBoard, False)
     For Each cards
       If KanbanStore.CardListId(sourceBoard, cards!id) <> listId Then Continue
-      CloneCard(sourceBoard, cards!id, targetBoard, id, lane, title, cards!title, options)
+      CloneCard(sourceBoard, cards!id, targetBoard, id, lane, title, ExportText.ReadValue(cards, "title"), options)
     Next
   Endif
   CopySettings(sourceBoard, "list", listId, targetBoard, id)

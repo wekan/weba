@@ -1,3 +1,11 @@
+Native card/list/lane/board copies preserve complete NUL/Unicode core, setting,
+rich entry, numeric text, filename/author and relationship label values. Keep
+bytes/covers/remapped IDs and archive behavior; add locked/final nonboard source/
+write/target checks. Single/batch complete title collision checks match40source
+cases. All-table refusal rollback and actual source/packaged rich copy dialogs,
+numbered board navigation and stale refusal pass, plus full pinned host tests.
+Caption/live/detail and nullable/legacy/full original parity remain open.
+
 Native board/card/list/lane renames preserve complete NUL/Unicode text and
 linked active/archived state, stable IDs and order keys under locked/final scope
 guards. Native title forms restore encoded existing values on board/overview

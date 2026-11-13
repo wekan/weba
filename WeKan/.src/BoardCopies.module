@@ -87,7 +87,7 @@ Private Function CopyOne(boardId As Integer, options As Collection) As Integer
   BoardAccess.Require(boardId, "manageBoard")
   source = WorkspaceStore.Record(boardId, "board", boardId)
   If source!archived Then Error.Raise("Select active boards first")
-  title = UniqueTitle(source!title)
+  title = UniqueTitle(ExportText.ReadValue(source, "title"))
   id = WorkspaceStore.Copy(boardId, "board", boardId, title, "", options)
   If WebIdentity.Username <> actor Then Error.Raise("Copy identity changed")
   BoardAccess.Require(boardId, "manageBoard")
@@ -151,9 +151,9 @@ Public Function UniqueTitle(title As String) As String
   Dim anyMatch As Boolean
   Dim number As Float
   Dim failure As Boolean
-  r = WebDatabase.OpenConnection().Find("kb_boards")
+  r = WebDatabase.OpenConnection().Exec(ExportText.SelectRows(WebDatabase.OpenConnection(), "kb_boards"))
   For Each r
-    Try candidate = Parts(r!title)
+    Try candidate = Parts(ExportText.ReadValue(r, "title"))
     failure = Error
     If failure Then Continue
     If candidate["base"] <> source["base"] Then Continue

@@ -47,13 +47,15 @@ Private Sub RequireCard(boardId As Integer, cardId As Integer)
   WorkspaceStore.Record(boardId, "card", cardId)
 End
 
-Public Function Entries(boardId As Integer, cardId As Integer, kind As String) As Result
+Public Function Entries(boardId As Integer, cardId As Integer, kind As String, Optional completeText As Boolean) As Result
+  Dim projection As String
   RequireCard(boardId, cardId)
+  projection = If(completeText, ExportText.SelectRows($db, "kb_entries"), "SELECT * FROM kb_entries")
   If kind = "subtask" Or kind = "dependency" Then
-    If Not BoardAccess.Can(boardId, "seesAllCards") Then Return $db.Find("kb_entries", "board_id = &1 AND card_id = &2 AND kind = &3 AND amount IN (SELECT id FROM kb_cards WHERE " & ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND (assignee = &4 OR id IN (SELECT card_id FROM kb_card_assignees WHERE board_id = &1 AND username = &4))) ORDER BY id", boardId, cardId, kind, WebIdentity.Username)
-    Return $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind=&3 AND amount IN (SELECT id FROM kb_cards WHERE " & ListDeletion.LiveSql("card", "kb_cards") & " AND board_id=&1) ORDER BY id", boardId, cardId, kind)
+    If Not BoardAccess.Can(boardId, "seesAllCards") Then Return $db.Exec(projection & " WHERE " & "board_id = &1 AND card_id = &2 AND kind = &3 AND amount IN (SELECT id FROM kb_cards WHERE " & ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND (assignee = &4 OR id IN (SELECT card_id FROM kb_card_assignees WHERE board_id = &1 AND username = &4))) ORDER BY id", boardId, cardId, kind, WebIdentity.Username)
+    Return $db.Exec(projection & " WHERE " & "board_id=&1 AND card_id=&2 AND kind=&3 AND amount IN (SELECT id FROM kb_cards WHERE " & ListDeletion.LiveSql("card", "kb_cards") & " AND board_id=&1) ORDER BY id", boardId, cardId, kind)
   Endif
-  Return $db.Find("kb_entries", "board_id = &1 AND card_id = &2 AND kind = &3 ORDER BY id", boardId, cardId, kind)
+  Return $db.Exec(projection & " WHERE " & "board_id = &1 AND card_id = &2 AND kind = &3 ORDER BY id", boardId, cardId, kind)
 End
 
 Public Function Entry(boardId As Integer, cardId As Integer, entryId As Integer) As Result
@@ -183,7 +185,7 @@ Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Int
       If amount <> CInt(amount) Then Error.Raise("Choose a whole card ID")
       target = WorkspaceStore.Record(boardId, "card", CInt(amount))
       If Reaches(boardId, CInt(amount), cardId, kind, entryId) Then Error.Raise("Circular card relationship")
-      title = target!title
+      title = ExportText.ReadValue(target, "title")
     Case "time"
       If amount < 0 Or amount > 525600 Then Error.Raise("Enter minutes between 0 and 525600")
       done = True
@@ -200,7 +202,7 @@ Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Int
       Case "text"
       Case "number"
         If Not ExportNumber.ParseFinite(body, ByRef number) Then Error.Raise("Invalid numeric field")
-        body = CStr(number)
+        If Not isCopy Then body = CStr(number)
       Case "date"
         If Len(body) <> 10 Or Mid(body, 5, 1) <> "-" Or Mid(body, 8, 1) <> "-" Then Error.Raise("Use YYYY-MM-DD")
         If Format(Date(CInt(Left(body, 4)), CInt(Mid(body, 6, 2)), CInt(Right(body, 2))), "yyyy-mm-dd") <> body Then Error.Raise("Invalid date")
@@ -333,8 +335,9 @@ Catch
   Error.Raise(failure)
 End
 
-Public Function Files(boardId As Integer, cardId As Integer) As Result
+Public Function Files(boardId As Integer, cardId As Integer, Optional completeText As Boolean) As Result
   RequireCard(boardId, cardId)
+  If completeText Then Return $db.Exec(ExportText.SelectRows($db, "kb_files") & " WHERE " & AttachmentLifecycle.LiveSql("kb_files") & " AND board_id = &1 AND card_id = &2 ORDER BY id", boardId, cardId)
   Return $db.Find("kb_files", AttachmentLifecycle.LiveSql("kb_files") & " AND board_id = &1 AND card_id = &2 ORDER BY id", boardId, cardId)
 End
 
@@ -410,7 +413,7 @@ Public Sub CopyRecords(sourceBoard As Integer, sourceCard As Integer, targetBoar
     If (kind = "checklist" Or kind = "checkitem") And Not fields["checklists"] Then Continue
     If kind = "comment" And Not fields["comments"] Then Continue
     If kind = "custom" And Not fields["customFields"] Then Continue
-    r = Entries(sourceBoard, sourceCard, kind)
+    r = Entries(sourceBoard, sourceCard, kind, True)
     For Each r
       If kind = "time" And Not r!done Then Continue
       parentId = 0
@@ -418,18 +421,18 @@ Public Sub CopyRecords(sourceBoard As Integer, sourceCard As Integer, targetBoar
         If Not parents.Exist(CStr(r!parent_id)) Then Continue
         parentId = parents[CStr(r!parent_id)]
       Endif
-      id = SaveEntry(targetBoard, targetCard, 0, kind, r!title, r!body, parentId, r!done, r!amount, r!value_type, True)
-      CopyAuthor(targetBoard, targetCard, "entry", id, r!author, AuthorName(sourceBoard, sourceCard, "entry", r!id))
+      id = SaveEntry(targetBoard, targetCard, 0, kind, ExportText.ReadValue(r, "title"), ExportText.ReadValue(r, "body"), parentId, r!done, r!amount, ExportText.ReadValue(r, "value_type"), True)
+      CopyAuthor(targetBoard, targetCard, "entry", id, ExportText.ReadValue(r, "author"), AuthorName(sourceBoard, sourceCard, "entry", r!id))
       If kind = "checklist" Then parents[CStr(r!id)] = id
     Next
   Next
   If Not fields["attachments"] Then Return
   cover = AttachmentLifecycle.CoverId(sourceBoard, sourceCard)
-  r = Files(sourceBoard, sourceCard)
+  r = Files(sourceBoard, sourceCard, True)
   For Each r
-    id = AddFile(targetBoard, targetCard, r!filename, r!content.Data, AttachmentData.Mime(sourceBoard, sourceCard, r!id), 67108864)
+    id = AddFile(targetBoard, targetCard, ExportText.ReadValue(r, "filename"), r!content.Data, AttachmentData.Mime(sourceBoard, sourceCard, r!id), 67108864)
     If r!id = cover Then AttachmentLifecycle.SetCover(targetBoard, targetCard, id)
-    CopyAuthor(targetBoard, targetCard, "file", id, r!author, AuthorName(sourceBoard, sourceCard, "file", r!id))
+    CopyAuthor(targetBoard, targetCard, "file", id, ExportText.ReadValue(r, "author"), AuthorName(sourceBoard, sourceCard, "file", r!id))
   Next
 End
 

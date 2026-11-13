@@ -1,0 +1,328 @@
+Public Sub Main()
+  Dim actor As String
+  Dim kind As String
+  For Each actor In ["copy-text-owner", "copy-text-reader", "copy-text-writer", "copy-text-outsider"]
+    WebDatabase.Register(actor, "x")
+  Next
+  For Each kind In ["card", "list", "lane", "board"]
+    CheckKind(kind)
+  Next
+  Print "Native complete copy: four container kinds, complete core/settings/rich/file/retired-author text, numeric text and stopped time, stable/remapped IDs, bytes/covers, archived exclusion, role/assigned scope and exact SQL/late permission/target rollback/retry passed"
+End
+
+Private Sub CheckKind(kind As String)
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim archivedId As Integer
+  Dim siblingId As Integer
+  Dim listId As Integer
+  Dim laneId As Integer
+  Dim itemId As Integer
+  Dim copyId As Integer
+  Dim targetBoard As Integer
+  Dim targetCard As Integer
+  Dim fileId As Integer
+  Dim commentId As Integer
+  Dim checklistId As Integer
+  Dim numericId As Integer
+  Dim runningId As Integer
+  Dim foreignBoard As Integer
+  Dim tableName As String
+  Dim single As Collection
+  Dim selection As Collection
+  Dim batch As Collection
+  Dim batchIds As Integer[]
+  Dim row As Result
+  Dim conn As Connection
+  Dim suffix As String = Chr(0) & "Ω😀'tail"
+  Dim lane As String = "Lane" & suffix
+  Dim other As String = "Other" & suffix
+  Dim listTitle As String = "List" & suffix
+  Dim title As String = "Copied " & kind & suffix
+  Dim targetLane As String
+  Dim targetStatus As String
+  Dim actor As String
+  Dim before As String
+  Dim denied As Boolean
+  Dim found As Boolean
+  SignIn("copy-text-owner")
+  boardId = KanbanStore.AddBoard("Board" & suffix)
+  cardId = KanbanStore.SaveCard(boardId, 0, "Card" & suffix, "Body" & suffix, lane, "Todo", "", "Labels" & suffix, "2026-11-13")
+  archivedId = KanbanStore.SaveCard(boardId, 0, "Archived" & suffix, "Retained", lane, "Todo", "", "", "")
+  KanbanStore.ArchiveCard(boardId, archivedId, True)
+  siblingId = KanbanStore.SaveCard(boardId, 0, "Sibling" & suffix, "", other, "Todo", "", "", "")
+  listId = KanbanStore.CardListId(boardId, cardId)
+  CardContent.Save(boardId, cardId, 0, "dependency", "", "", 0, False, siblingId)
+  CardContent.Save(boardId, cardId, 0, "subtask", "", "", 0, False, siblingId)
+  WorkspaceStore.Rename(boardId, "list", listId, listTitle)
+  row = KanbanStore.Lanes(boardId)
+  laneId = row!id
+  WorkspaceStore.SetSetting(boardId, "board", boardId, "description", "Board description" & suffix)
+  WorkspaceStore.SetSetting(boardId, "lane", laneId, "description", "Lane description" & suffix)
+  WorkspaceStore.SetSetting(boardId, "list", listId, "description", "List description" & suffix)
+  WorkspaceStore.SetSetting(boardId, "card", cardId, "description", "Card description" & suffix)
+  WorkspaceStore.SetSetting(boardId, "card", cardId, "star", "1")
+  checklistId = CardContent.Save(boardId, cardId, 0, "checklist", "Checks" & suffix, "Checklist body" & suffix, 0, False, 0)
+  CardContent.Save(boardId, cardId, 0, "checkitem", "Item" & suffix, "Item body" & suffix, checklistId, True, 0)
+  commentId = CardContent.Save(boardId, cardId, 0, "comment", "", "Comment" & suffix, 0, False, 0)
+  CardContent.RetainAuthorName(boardId, cardId, "entry", commentId, "Retired commenter" & suffix)
+  CardContent.Save(boardId, cardId, 0, "custom", "Text field" & suffix, "Value" & suffix, 0, False, 0, "text")
+  numericId = CardContent.Save(boardId, cardId, 0, "custom", "Number field" & suffix, "100000", 0, False, 0, "number")
+  CardContent.Save(boardId, cardId, 0, "time", "Stopped" & suffix, "Stopped body" & suffix, 0, True, 0.125)
+  runningId = CardContent.Save(boardId, cardId, 0, "time", "Running" & suffix, "", 0, True, 1)
+  fileId = CardContent.UploadFile(boardId, cardId, "file" & suffix & ".bin", "B" & Chr(0) & Chr(255) & "Z")
+  CardContent.RetainAuthorName(boardId, cardId, "file", fileId, "Retired uploader" & suffix)
+  AttachmentLifecycle.SetCover(boardId, cardId, fileId)
+  BoardAccess.SetMember(boardId, "copy-text-reader", "read-only")
+  BoardAccess.SetMember(boardId, "copy-text-writer", "board-admin")
+  conn = WebDatabase.OpenConnection()
+  conn.Exec("UPDATE kb_entries SET body='100000.00000000001' WHERE id=&1", numericId)
+  conn.Exec("UPDATE kb_entries SET done=0 WHERE id=&1", runningId)
+  Select kind
+    Case "card"
+      itemId = cardId
+    Case "list"
+      itemId = listId
+    Case "lane"
+      itemId = laneId
+    Case "board"
+      itemId = boardId
+  End Select
+  copyId = WorkspaceStore.Copy(boardId, kind, itemId, title, If(kind = "list", other, ""))
+  targetBoard = If(kind = "board", copyId, boardId)
+  targetLane = If(kind = "lane", title, If(kind = "list", other, lane))
+  targetStatus = If(kind = "list", title, listTitle)
+  row = WorkspaceStore.Record(targetBoard, kind, copyId)
+  If ExportText.ReadValue(row, "title") <> title Then Error.Raise("Copy lost complete container title: " & kind)
+  If WorkspaceStore.Setting(targetBoard, kind, copyId, "description") <> UCase(Left(kind, 1)) & Mid(kind, 2) & " description" & suffix Then Error.Raise("Copy lost complete container setting: " & kind)
+  If kind = "card" Then
+    targetCard = copyId
+  Else
+    row = conn.Exec(ExportText.SelectRows(conn, "kb_cards") & " WHERE board_id=&1 AND archived=&2 ORDER BY id", targetBoard, False)
+    For Each row
+      If ExportText.ReadValue(row, "title") <> "Card" & suffix Then Continue
+      If ExportText.ReadValue(row, "lane") <> targetLane Or ExportText.ReadValue(row, "status") <> targetStatus Then Continue
+      If row!id = cardId Then Continue
+      targetCard = row!id
+      Break
+    Next
+  Endif
+  If Not targetCard Then Error.Raise("Container copy lost complete card title/placement: " & kind)
+  row = WorkspaceStore.Record(targetBoard, "card", targetCard)
+  If ExportText.ReadValue(row, "description") <> "Body" & suffix Or ExportText.ReadValue(row, "labels") <> "Labels" & suffix Or ExportText.ReadValue(row, "lane") <> targetLane Or ExportText.ReadValue(row, "status") <> targetStatus Or ExportText.ReadValue(row, "due_day") <> "2026-11-13" Or row!archived Then Error.Raise("Copied core fields changed: " & kind)
+  If WorkspaceStore.Setting(targetBoard, "card", targetCard, "description") <> "Card description" & suffix Then Error.Raise("Card copy lost complete setting")
+  If WorkspaceStore.Setting(targetBoard, "card", targetCard, "star", "0") <> "0" Then Error.Raise("Copy cloned private star")
+  CheckRich(targetBoard, targetCard, suffix)
+  CheckLinks(targetBoard, targetCard, boardId, siblingId, suffix, True)
+  If kind <> "card" Then
+    row = conn.Exec(ExportText.SelectRows(conn, "kb_cards") & " WHERE board_id=&1", targetBoard)
+    For Each row
+      If row!id = archivedId Then Continue
+      If ExportText.ReadValue(row, "title") = "Archived" & suffix Then Error.Raise("Container copy included archived card")
+    Next
+  Endif
+  If kind = "board" Then
+    single = SingleBoardCopy.NewState(boardId)
+    copyId = SingleBoardCopy.Copy(single, boardId, "Board" & suffix)
+    If ExportText.ReadValue(WorkspaceStore.Record(copyId, "board", copyId), "title") <> "Board" & suffix & " [1]" Then Error.Raise("Single copy lost complete source title numbering")
+    selection = BoardSelection.NewState()
+    BoardSelection.SetActive(selection, True)
+    BoardSelection.AddVisible(selection, [boardId])
+    batch = BoardCopies.NewBatch(selection)
+    BoardCopies.Run(batch, selection)
+    batchIds = BoardCopies.Copies(batch)
+    If batchIds.Count <> 1 Or BoardCopies.Remaining(batch) <> 0 Then Error.Raise("Complete title batch failed")
+    If ExportText.ReadValue(WorkspaceStore.Record(batchIds[0], "board", batchIds[0]), "title") <> "Board" & suffix & " [2]" Then Error.Raise("Batch copy lost complete source/collision suffix")
+  Endif
+  before = Frame()
+  conn.Exec("CREATE TRIGGER refuse_copy_bytes BEFORE INSERT ON kb_files BEGIN SELECT RAISE(ABORT,'refuse copy bytes'); END")
+  Try copyId = WorkspaceStore.Copy(boardId, kind, itemId, "Failed" & suffix, If(kind = "list", other, ""))
+  denied = Error
+  conn.Exec("DROP TRIGGER refuse_copy_bytes")
+  If Not denied Or Frame() <> before Then Error.Raise("SQL copy fault retained partial complete data: " & kind)
+  For Each actor In ["copy-text-reader", "copy-text-outsider"]
+    SignIn(actor)
+    Try copyId = WorkspaceStore.Copy(boardId, kind, itemId, "Denied" & suffix, If(kind = "list", other, ""))
+    denied = Error
+    If Not denied Or Frame() <> before Then Error.Raise("Read-only/foreign copy wrote data: " & kind)
+  Next
+  SignIn("copy-text-writer")
+  conn.Exec("CREATE TRIGGER revoke_copy_write AFTER INSERT ON kb_activity WHEN NEW.board_id=" & CStr(boardId) & " AND NEW.message LIKE 'Copied %' BEGIN UPDATE kb_members SET role='comment-only' WHERE board_id=NEW.board_id AND username='copy-text-writer'; END")
+  Try copyId = WorkspaceStore.Copy(boardId, kind, itemId, "Late" & suffix, If(kind = "list", other, ""))
+  denied = Error
+  conn.Exec("DROP TRIGGER revoke_copy_write")
+  If Not denied Or Frame() <> before Then Error.Raise("Copy retained data after write loss with comment permission: " & kind)
+  before = Frame()
+  tableName = If(kind = "board", "kb_boards", If(kind = "lane", "kb_lanes", If(kind = "list", "kb_lists", "kb_cards")))
+  conn.Exec("CREATE TRIGGER change_copy_target AFTER INSERT ON kb_activity WHEN NEW.board_id=" & CStr(boardId) & " AND NEW.message LIKE 'Copied %' BEGIN UPDATE " & tableName & " SET title='Changed target' WHERE title=CAST(" & conn.FormatBlob("Target " & kind & suffix) & " AS TEXT); END")
+  Try copyId = WorkspaceStore.Copy(boardId, kind, itemId, "Target " & kind & suffix, If(kind = "list", other, ""))
+  denied = Error
+  conn.Exec("DROP TRIGGER change_copy_target")
+  If Not denied Or Frame() <> before Then Error.Raise("Copy accepted changed complete target: " & kind)
+  If kind = "board" Then
+    conn.Exec("CREATE TRIGGER change_copy_source AFTER INSERT ON kb_boards WHEN NEW.title='Fingerprint destination' BEGIN UPDATE kb_boards SET title=CAST(" & conn.FormatBlob("Board" & Chr(0) & "different suffix") & " AS TEXT) WHERE id=" & CStr(boardId) & "; END")
+    Try copyId = WorkspaceStore.Copy(boardId, kind, itemId, "Fingerprint destination")
+    denied = Error
+    conn.Exec("DROP TRIGGER change_copy_source")
+    If Not denied Or Frame() <> before Then Error.Raise("Copy missed complete source title suffix change")
+  Endif
+  If kind = "card" Then
+    SignIn("copy-text-owner")
+    foreignBoard = KanbanStore.AddBoard("Unrelated destination")
+    before = Frame()
+    conn.Exec("CREATE TRIGGER rebind_copy_target AFTER INSERT ON kb_activity WHEN NEW.board_id=" & CStr(boardId) & " AND NEW.message LIKE 'Copied %' BEGIN UPDATE kb_cards SET board_id=" & CStr(foreignBoard) & " WHERE title='Rebound target'; END")
+    Try copyId = WorkspaceStore.Copy(boardId, kind, itemId, "Rebound target")
+    denied = Error
+    conn.Exec("DROP TRIGGER rebind_copy_target")
+    If Not denied Or Frame() <> before Then Error.Raise("Copy accepted foreign rebound card")
+    conn.Exec("UPDATE kb_entries SET value_type=CAST(" & conn.FormatBlob("number" & Chr(0) & "wrong") & " AS TEXT) WHERE id=&1", numericId)
+    before = Frame()
+    Try copyId = WorkspaceStore.Copy(boardId, kind, itemId, "Invalid type")
+    denied = Error
+    If Not denied Or Frame() <> before Then Error.Raise("Copy treated malformed full type as its valid prefix")
+    conn.Exec("UPDATE kb_entries SET value_type='number',body=CAST(" & conn.FormatBlob("100000" & Chr(0) & "wrong") & " AS TEXT) WHERE id=&1", numericId)
+    before = Frame()
+    Try copyId = WorkspaceStore.Copy(boardId, kind, itemId, "Invalid number")
+    denied = Error
+    If Not denied Or Frame() <> before Then Error.Raise("Copy treated malformed full number as its valid prefix")
+    conn.Exec("UPDATE kb_entries SET body='100000.00000000001' WHERE id=&1", numericId)
+    BoardAccess.SetMember(boardId, "copy-text-writer", "normal-assigned-only")
+    BoardAccess.SetAssignees(boardId, cardId, ["copy-text-writer"])
+    SignIn("copy-text-writer")
+    before = Frame()
+    Try copyId = WorkspaceStore.Copy(boardId, "card", siblingId, "Hidden source")
+    denied = Error
+    If Not denied Or Frame() <> before Then Error.Raise("Assigned-only copied hidden source")
+    Try copyId = WorkspaceStore.Copy(boardId, "list", listId, "Hidden container", other)
+    denied = Error
+    If Not denied Or Frame() <> before Then Error.Raise("Assigned-only copied full container")
+    copyId = WorkspaceStore.Copy(boardId, "card", cardId, "Assigned" & suffix)
+    If Not BoardAccess.IsAssigned(boardId, copyId, "copy-text-writer") Then Error.Raise("Assigned-only copy lost its new card scope")
+    CheckRich(boardId, copyId, suffix)
+    CheckLinks(boardId, copyId, boardId, siblingId, suffix, False)
+    before = Frame()
+    conn.Exec("CREATE TRIGGER revoke_copy_assignment AFTER INSERT ON kb_activity WHEN NEW.board_id=" & CStr(boardId) & " AND NEW.message LIKE 'Copied %' BEGIN UPDATE kb_cards SET assignee='' WHERE id=" & CStr(cardId) & "; DELETE FROM kb_card_assignees WHERE card_id=" & CStr(cardId) & "; END")
+    Try copyId = WorkspaceStore.Copy(boardId, "card", cardId, "Assignment lost")
+    denied = Error
+    conn.Exec("DROP TRIGGER revoke_copy_assignment")
+    If Not denied Or Frame() <> before Then Error.Raise("Copy accepted final source assignment loss")
+    conn.Exec("CREATE TRIGGER revoke_copy_lock AFTER UPDATE OF title ON kb_boards WHEN NEW.id=" & CStr(boardId) & " BEGIN UPDATE kb_members SET role='comment-only' WHERE board_id=NEW.id AND username='copy-text-writer'; END")
+    Try copyId = WorkspaceStore.Copy(boardId, "card", cardId, "Lock role lost")
+    denied = Error
+    conn.Exec("DROP TRIGGER revoke_copy_lock")
+    If Not denied Or Frame() <> before Then Error.Raise("Copy accepted lock-time write loss")
+    SignIn("copy-text-owner")
+    copyId = WorkspaceStore.Copy(boardId, "card", archivedId, "Archived clone" & suffix)
+    row = WorkspaceStore.Record(boardId, "card", copyId)
+    If row!archived Or ExportText.ReadValue(row, "lane") <> lane Or ExportText.ReadValue(row, "status") <> listTitle Then Error.Raise("Archived source copy lost active/full placement semantics")
+    SignIn("copy-text-writer")
+  Endif
+  copyId = WorkspaceStore.Copy(boardId, kind, itemId, "Retry" & suffix, If(kind = "list", other, ""))
+  If copyId <= 0 Then Error.Raise("Copy retry failed: " & kind)
+End
+
+Private Sub CheckRich(boardId As Integer, cardId As Integer, suffix As String)
+  Dim rows As Result
+  Dim checklistId As Integer
+  Dim entryId As Integer
+  rows = CardContent.Entries(boardId, cardId, "checklist", True)
+  If rows.Count <> 1 Or ExportText.ReadValue(rows, "title") <> "Checks" & suffix Or ExportText.ReadValue(rows, "body") <> "Checklist body" & suffix Then Error.Raise("Copied checklist text lost")
+  checklistId = rows!id
+  rows = CardContent.Entries(boardId, cardId, "checkitem", True)
+  If rows.Count <> 1 Or rows!parent_id <> checklistId Or Not rows!done Or ExportText.ReadValue(rows, "title") <> "Item" & suffix Or ExportText.ReadValue(rows, "body") <> "Item body" & suffix Then Error.Raise("Copied checkitem text/parent lost")
+  rows = CardContent.Entries(boardId, cardId, "comment", True)
+  If rows.Count <> 1 Or ExportText.ReadValue(rows, "body") <> "Comment" & suffix Then Error.Raise("Copied comment text lost")
+  If CardContent.AuthorName(boardId, cardId, "entry", rows!id) <> "Retired commenter" & suffix Then Error.Raise("Copied retired entry author lost")
+  rows = CardContent.Entries(boardId, cardId, "custom", True)
+  If rows.Count <> 2 Then Error.Raise("Custom copy count changed")
+  For Each rows
+    If ExportText.ReadValue(rows, "value_type") = "number" Then
+      If ExportText.ReadValue(rows, "title") <> "Number field" & suffix Or ExportText.ReadValue(rows, "body") <> "100000.00000000001" Then Error.Raise("Copied numeric property was rounded")
+    Else
+      If ExportText.ReadValue(rows, "title") <> "Text field" & suffix Or ExportText.ReadValue(rows, "body") <> "Value" & suffix Then Error.Raise("Copied text property lost")
+    Endif
+  Next
+  rows = CardContent.Entries(boardId, cardId, "time", True)
+  If rows.Count <> 1 Or ExportText.ReadValue(rows, "title") <> "Stopped" & suffix Or ExportText.ReadValue(rows, "body") <> "Stopped body" & suffix Or rows!amount <> 0.125 Then Error.Raise("Stopped/running copy changed")
+  rows = CardContent.Files(boardId, cardId, True)
+  If rows.Count <> 1 Or ExportText.ReadValue(rows, "filename") <> "file" & suffix & ".bin" Or rows!content.Data <> "B" & Chr(0) & Chr(255) & "Z" Then Error.Raise("Copied attachment text/bytes lost")
+  If AttachmentLifecycle.CoverId(boardId, cardId) <> rows!id Then Error.Raise("Copied cover ID not remapped")
+  If CardContent.AuthorName(boardId, cardId, "file", rows!id) <> "Retired uploader" & suffix Then Error.Raise("Copied retired file author lost")
+End
+
+Private Sub CheckLinks(boardId As Integer, cardId As Integer, sourceBoard As Integer, originalTarget As Integer, suffix As String, expected As Boolean)
+  Dim kind As String
+  Dim rows As Result
+  Dim target As Result
+  For Each kind In ["dependency", "subtask"]
+    rows = CardContent.Entries(boardId, cardId, kind, True)
+    If Not expected Then
+      If rows.Count Then Error.Raise("Assigned-only copy exposed hidden relationship")
+      Continue
+    Endif
+    If rows.Count <> 1 Or ExportText.ReadValue(rows, "title") <> "Sibling" & suffix Then Error.Raise("Copied relationship lost full derived label")
+    target = WorkspaceStore.Record(boardId, "card", CInt(rows!amount))
+    If ExportText.ReadValue(target, "title") <> "Sibling" & suffix Then Error.Raise("Copied relationship points to wrong target")
+    If boardId <> sourceBoard And CInt(rows!amount) = originalTarget Then Error.Raise("Whole-board copy retained source relationship ID")
+    If boardId = sourceBoard And CInt(rows!amount) <> originalTarget Then Error.Raise("Same-board copy changed an external relationship")
+  Next
+End
+
+Private Sub SignIn(actor As String)
+  Session["username"] = actor
+  Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+End
+
+Private Function Frame() As String
+  Dim conn As Connection = WebDatabase.OpenConnection()
+  Dim table As Table
+  Dim tables As New String[]
+  Dim tableName As String
+  Dim order As String[]
+  Dim key As String
+  Dim rows As Result
+  Dim field As ResultField
+  Dim values As Collection
+  Dim data As Variant[]
+  Dim result As New Collection
+  For Each table In conn.Tables
+    If Left(table.Name, 7) <> "sqlite_" Then tables.Add(table.Name)
+  Next
+  tables.Sort()
+  For Each tableName In tables
+    order = New String[]
+    For Each key In conn.Tables[tableName].PrimaryKey
+      order.Add(conn.Quote(key))
+    Next
+    rows = conn.Exec(ExportText.SelectRows(conn, tableName) & If(order.Count, " ORDER BY " & order.Join(","), ""))
+    data = New Variant[]
+    For Each rows
+      values = New Collection
+      For Each field In rows.Fields
+        If Left(field.Name, 7) = "__weba_" Then Continue
+        If field.Type = DB.String Then
+          If rows.Fields.Exist("__weba_null_" & field.Name) Then
+            If rows["__weba_null_" & field.Name] Then
+              values[field.Name] = JSON.Null
+            Else
+              values[field.Name] = ExportText.ReadValue(rows, field.Name)
+            Endif
+          Else
+            values[field.Name] = rows[field.Name]
+          Endif
+        Else If field.Type = DB.Blob Then
+          If IsNull(rows[field.Name]) Then
+            values[field.Name] = JSON.Null
+          Else
+            values[field.Name] = Base64(rows[field.Name].Data)
+          Endif
+        Else
+          values[field.Name] = rows[field.Name]
+        Endif
+      Next
+      data.Add(values)
+    Next
+    result[tableName] = data
+  Next
+  Return JsonText.Encode(result)
+End

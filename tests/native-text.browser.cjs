@@ -13,7 +13,7 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   await page.goto(process.env.WEBA_TEST_URL);await page.locator('[id$=".WebTextName:entry"]').fill('rest-other');await page.locator('[id$=".WebTextPass:entry"]').fill(process.env.WEBA_TEST_PASSWORD);await page.locator(c('WebButtonLogin')).click();
   await expect(page.locator('.weba-content')).toBeVisible();await page.goto(process.env.WEBA_TEST_URL+'/b/'+seed.board);
   const settle=()=>page.waitForFunction(()=>window.gw&&gw.commands.length===0);
-  const fixture=(mode,card=0)=>JSON.parse(execFileSync(process.env.GBX,['-s','NativeTextFixture',process.env.WEBA_TEST_PROJECT],{encoding:'utf8',env:{...process.env,WEBA_API_REQUEST:'0',WEBA_NATIVE_MODE:mode,WEBA_NATIVE_BOARD:String(seed.board),WEBA_NATIVE_CARD:String(card)}}));
+  const fixture=(mode,card=0,board=seed.board)=>JSON.parse(execFileSync(process.env.GBX,['-s','NativeTextFixture',process.env.WEBA_TEST_PROJECT],{encoding:'utf8',env:{...process.env,WEBA_API_REQUEST:'0',WEBA_NATIVE_MODE:mode,WEBA_NATIVE_BOARD:String(board),WEBA_NATIVE_CARD:String(card)}}));
   async function click(name){await settle();await page.locator(c(name)).click();await settle();}
   async function columns(){for(const item of seed.items){
    const column=page.locator('.weba-report .weba-column[data-list-id="'+item.list+'"]');
@@ -146,13 +146,33 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   await page.locator('.weba-report .weba-card[data-card-id="'+createdId+'"] .weba-card-menu').click();await settle();await click('ContextRename');
   const renamedCard="Renamed card\0Ω😀'new";await actionValue(renamedCard);await click('ActionConfirm');
   expect(fixture('read',createdId).title).toBe(renamedCard);await expect(page.locator('[id$=".CardTitle:entry"]')).toHaveValue(renamedCard);
+  fixture('copy-seed',createdId);const copySource=fixture('copy-read',createdId);
+  const copiedCardTitle="Copied browser card\0Ω😀",copiedListTitle="Copied browser list\0Ω😀",copiedLaneTitle="Copied browser lane\0Ω😀";
+  function checkCopied(id,expected,board=seed.board){expect(fixture('copy-read',id,board)).toEqual({...copySource,...expected});}
+  await page.locator('.weba-report .weba-card[data-card-id="'+createdId+'"] .weba-card-menu').click();await settle();await click('ContextCopy');
+  await expect(actionText).toHaveValue(renamedCard+' copy');await actionValue(copiedCardTitle);await click('ActionConfirm');
+  const copiedCard=fixture('containers').cards.find(row=>row.title===copiedCardTitle);expect(copiedCard).toBeTruthy();checkCopied(copiedCard.id,{title:copiedCardTitle});
+  await page.locator('.weba-report .weba-column[data-list-id="'+seed.items[1].list+'"] .weba-list-menu').click();await settle();await click('ContextCopy');
+  await expect(actionText).toHaveValue(seed.items[1].title+' copy');await actionValue(copiedListTitle);await destinationLane.selectOption({index:0});await settle();await click('ActionConfirm');
+  const copiedList=fixture('containers').lists.find(row=>row.title===copiedListTitle);expect(copiedList).toBeTruthy();
+  const listCard=fixture('containers').cards.find(row=>row.list===copiedList.id&&row.title===renamedCard);expect(listCard).toBeTruthy();checkCopied(listCard.id,{lane:seed.items[0].lane,status:copiedListTitle});
+  const sourceLaneRow=page.locator('.weba-report>.weba-swimlane').filter({has:page.locator('.weba-column[data-list-id="'+seed.items[1].list+'"]')});
+  await sourceLaneRow.locator('.weba-lane-menu').click();await settle();await click('ContextCopy');await expect(actionText).toHaveValue(seed.items[1].lane+' copy');await actionValue(copiedLaneTitle);await click('ActionConfirm');
+  const laneCard=fixture('containers').cards.find(row=>row.lane===copiedLaneTitle&&row.title===renamedCard);expect(laneCard).toBeTruthy();checkCopied(laneCard.id,{lane:copiedLaneTitle});
+  await page.goto(process.env.WEBA_TEST_URL+'/allboards/remaining');await boardMenu.click();await settle();await click('ContextCopy');await expect(actionText).toHaveValue(renamedBoard);await click('ActionConfirm');
+  const copiedBoard=fixture('boards').boards.find(row=>row.title===renamedBoard+' [1]');expect(copiedBoard).toBeTruthy();await expect(page.locator('.weba-content')).toHaveAttribute('data-board',String(copiedBoard.id));
+  const boardCard=fixture('containers',0,copiedBoard.id).cards.find(row=>row.title===renamedCard&&row.lane===seed.items[1].lane);expect(boardCard).toBeTruthy();checkCopied(boardCard.id,{},copiedBoard.id);
+  await page.reload();await expect(page.locator('.weba-report .weba-card[data-card-id="'+boardCard.id+'"]')).toHaveCount(1);checkCopied(boardCard.id,{},copiedBoard.id);
+  await page.goto(process.env.WEBA_TEST_URL+'/b/'+seed.board+'/board/'+createdId);await expect(description).toHaveValue(body);
   await description.fill('Unsaved after revocation');
   await page.locator('.weba-report .weba-card[data-card-id="'+createdId+'"] .weba-card-menu').click();await settle();await click('ContextRename');await expect(actionText).toHaveValue(renamedCard);await actionValue("Refused\0rename");
   fixture('revoke');const before=fixture('read',createdId);
   await page.evaluate(()=>gw.raise(document.querySelector('[id$=".ActionConfirm"]').id,'click',[],false));await settle();expect(fixture('read',createdId)).toEqual(before);
+  await page.evaluate(()=>gw.raise(document.querySelector('[id$=".ContextCopy"]').id,'click',[],false));await settle();
+  await page.evaluate(()=>gw.raise(document.querySelector('[id$=".ActionConfirm"]').id,'click',[],false));await settle();expect(fixture('read',createdId)).toEqual(before);
   await page.evaluate(()=>gw.raise(document.querySelector('[id$=".SaveCard"]').id,'click',[],false));await settle();
   expect(fixture('read',createdId)).toEqual(before);
   expect(errors).toEqual([]);
-  console.log('Native complete text browser: shared-prefix NUL/Unicode/markup lane/list identities retain exact columns/card placement across views/reload/Finnish/mobile; readonly/assigned scope, native exact card/list/lane mouse and card dialog moves with editor refresh/reload, exact lane/list creation and board/card/list/lane native renames with SQL/dirty/reload checks, create/edit/NUL dirty refresh/reload and late-revocation refusal passed');
+  console.log('Native complete text browser: shared-prefix NUL/Unicode/markup lane/list identities retain exact columns/card placement across views/reload/Finnish/mobile; readonly/assigned scope, native exact card/list/lane mouse and card dialog moves with editor refresh/reload, exact lane/list creation and board/card/list/lane native renames with SQL/dirty/reload checks, rich card/list/lane/board native copies with exact SQL/entries/files/numbered title/reload and stale-copy refusal, create/edit/NUL dirty refresh/reload and late-revocation refusal passed');
  }finally{try{if(context)await context.close();}finally{if(browser)await browser.close();}}
 })().catch(e=>{let s=e.stack||String(e);if(process.env.WEBA_TEST_PASSWORD)s=s.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(s);process.exitCode=1;});

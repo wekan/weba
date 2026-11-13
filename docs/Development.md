@@ -2780,3 +2780,36 @@ verification against its official SHA-256 checksum. Focused native tests also
 exercise loss of write/manage permission while comment/activity permission
 remains, plus assigned-only card scope loss, rather than depending on activity
 logging itself to reject the operation.
+
+Native copy text now follows complete projections through CloneCard, CloneList,
+CloneLane, whole-board fingerprints and BoardCopies source/collision naming.
+WorkspaceStore.Setting retains its current-record and private-user guards while
+reading full setting values. CardContent.Entries/Files accept an optional internal
+complete-text projection; ordinary consumers retain their existing result shape.
+CopyRecords reads full titles/bodies/types/authors/filenames, keeps existing
+parent/file-cover/relationship remapping and stopped-time/archive filters, and
+validates numeric properties while retaining their source text on internal copy.
+Public normal entry editing still follows its existing numeric normalization.
+Nonboard copy locks the source board and rereads the source before effects, then
+rechecks actor, container visibility and write capability after activity. This
+explicit check matters when write permission is removed but commenting still
+allows activity logging. Final target scope/title/archive checks reject rebound
+or changed copied items. Whole-board title/owner fingerprints use full values,
+so changing only a suffix after NUL cannot escape the existing source guard.
+CopyTextTest exercises all four kinds with full core/settings/checklist/comment/
+custom/stopped-time/file/provenance values, exact numeric text, cover/link remaps,
+archived-source/card filtering, assigned-only hidden links and actual single/batch
+numbering. Refusals compare every application table with full text, NULL/empty
+and BLOB snapshots: SQL failure, final comment-only write loss, assigned source
+loss, lock-time role loss, changed/rebound targets, same-prefix source-board
+changes and malformed full numeric/type values all roll back and retry.
+The unchanged-source title oracle has40cases and6queue stages. Its strict private
+fixture decoder, safe writes and projected reads are independently checked against
+the original case inputs so a lossy adapter cannot manufacture agreement.
+Actual native-text source/packaged browsers perform all four copy dialogs, check
+private normalized SQL rich data/file bytes, numbered board destination/reload
+and stale-copy refusal. Complete build.sh test (70 Python tests plus native/API/
+security/session checks), source title conformance and ordinary source/packaged
+layout/editor/admin/mobile browsers pass using Dockerfile-pinned Node. Nullable/
+legacy field-model semantics, remaining caption/live/detail readers and complete
+original UI/DDP/security callbacks remain TODO work.
