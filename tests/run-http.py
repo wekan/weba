@@ -7,7 +7,7 @@ root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(root / 'runtime'))
 from server import handler
 
-if any(mode in sys.argv for mode in ('--people-text', '--profile-text', '--detail-text', '--live-text', '--native-text', '--drag-handle-preference', '--board-view-order', '--board-view-transfer', '--instance-features', '--signed-board-views', '--view-preferences', '--board-views', '--view-policy-api', '--guest-boards', '--public-boards', '--board-visibility', '--card-routes', '--board-links', '--board-menu', '--board-routes', '--home-external', '--home-drops', '--home-presentation', '--home-login', '--home', '--workspace-urls', '--overview-entry', '--original-catalog', '--markdown-policy', '--live', '--overview-live', '--catalog', '--board-order', '--workspaces', '--workspace-order', '--board-drops', '--board-selection', '--selected-export', '--selection-archive', '--board-purge', '--list-delete-api', '--list-deletion', '--attachment-lifecycle', '--attachment-delete-api', '--attachment-upload-api', '--attachment-upload', '--attachment-reads-api', '--attachment-reads', '--transfer-policy-api', '--transfer-policy', '--board-allowance', '--board-copy', '--selected-copy', '--copy-options', '--board-creation', '--single-copy', '--import-export-policy', '--attachment-export-api', '--issue-export-api', '--attachment-export')) and '--members' not in sys.argv:
+if any(mode in sys.argv for mode in ('--public-guest-text', '--people-text', '--profile-text', '--detail-text', '--live-text', '--native-text', '--drag-handle-preference', '--board-view-order', '--board-view-transfer', '--instance-features', '--signed-board-views', '--view-preferences', '--board-views', '--view-policy-api', '--guest-boards', '--public-boards', '--board-visibility', '--card-routes', '--board-links', '--board-menu', '--board-routes', '--home-external', '--home-drops', '--home-presentation', '--home-login', '--home', '--workspace-urls', '--overview-entry', '--original-catalog', '--markdown-policy', '--live', '--overview-live', '--catalog', '--board-order', '--workspaces', '--workspace-order', '--board-drops', '--board-selection', '--selected-export', '--selection-archive', '--board-purge', '--list-delete-api', '--list-deletion', '--attachment-lifecycle', '--attachment-delete-api', '--attachment-upload-api', '--attachment-upload', '--attachment-reads-api', '--attachment-reads', '--transfer-policy-api', '--transfer-policy', '--board-allowance', '--board-copy', '--selected-copy', '--copy-options', '--board-creation', '--single-copy', '--import-export-policy', '--attachment-export-api', '--issue-export-api', '--attachment-export')) and '--members' not in sys.argv:
     sys.argv.append('--members')
 
 base_env = os.environ.copy()
@@ -91,7 +91,11 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
         env['WEBA_TEST_URL'] = 'http://127.0.0.1:' + str(server.server_port)
         env['WEBA_TEST_RUNNER'] = runner
         env['WEBA_TEST_APPLICATION'] = str(application)
-        if '--people-text' in sys.argv:
+        if '--public-guest-text' in sys.argv:
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/public-guest-text.browser.cjs')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/public-boards.browser.cjs')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/guest-boards.browser.cjs')], check=True, env=env)
+        elif '--people-text' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/people-text.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/people-live.browser.cjs')], check=True, env=env)
         elif '--profile-text' in sys.argv:
@@ -317,6 +321,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/detail-text.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/profile-text.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/people-text.browser.cjs')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/public-guest-text.browser.cjs')], check=True, env=env)
         elif '--members' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/dates-conformance.test.cjs')], check=True, env=env)
             subprocess.run([sys.executable, str(root / 'tests/api-members.test.py')], check=True, env=env)

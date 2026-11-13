@@ -36,6 +36,7 @@ Public Function Load(boardText As String, Optional cardText As String) As Collec
   Dim target As Result
   Dim archived As Boolean
   Dim key As String
+  Dim laneName As String
   RequireGuest()
   If cardText Then
     cardId = Id(cardText)
@@ -44,45 +45,46 @@ Public Function Load(boardText As String, Optional cardText As String) As Collec
     boardId = target!board_id
   Endif
   RequirePublic(boardId)
-  r = db.Find("kb_boards", "id=&1", boardId)
+  r = db.Exec(ExportText.SelectRows(db, "kb_boards") & " WHERE " & "id=&1", boardId)
   data["id"] = boardId
-  data["title"] = CStr(r!title)
+  data.Add(ExportText.ReadValue(r, "title"), "title")
   archived = CBool(r!archived)
   data["archived"] = archived
   data["color"] = Color(db, boardId, "board", boardId)
   data["viewPolicy"] = BoardViewPolicy.Guest(boardId)
   If db.Tables.Exist("kb_lanes") Then
-    r = db.Find("kb_lanes", "board_id=&1 ORDER BY id", boardId)
+    r = db.Exec(ExportText.SelectRows(db, "kb_lanes") & " WHERE " & "board_id=&1 ORDER BY id", boardId)
     For Each r
       If Hidden(db, boardId, "lane", r!id) Then Continue
       row = New Collection
       row["id"] = r!id
-      row["title"] = CStr(r!title)
-      row["order"] = Position(db, boardId, "lane", CStr(r!title), r!id)
+      row.Add(ExportText.ReadValue(r, "title"), "title")
+      row["order"] = Position(db, boardId, "lane", ExportText.ReadValue(r, "title"), r!id)
       lanes.Add(row)
     Next
   Endif
   data["lanes"] = lanes
   If db.Tables.Exist("kb_lists") Then
-    r = db.Find("kb_lists", "board_id=&1 AND " & Live(db, "list", "kb_lists") & " ORDER BY sort_order,id", boardId)
+    r = db.Exec(ExportText.SelectRows(db, "kb_lists") & " WHERE " & "board_id=&1 AND " & Live(db, "list", "kb_lists") & " ORDER BY sort_order,id", boardId)
     For Each r
       If Hidden(db, boardId, "list", r!id) Then Continue
       row = New Collection
-      row["order"] = Position(db, boardId, "list", CStr(r!title), r!id)
+      row["order"] = Position(db, boardId, "list", ExportText.ReadValue(r, "title"), r!id)
       For Each key In ["id", "title", "lane"]
-        row.Add(r[key], key)
+        row.Add(Value(r, key), key)
       Next
       lists.Add(row)
     Next
   Endif
-  r = db.Find("kb_cards", "board_id=&1 AND archived=&2 AND " & Live(db, "card", "kb_cards") & " ORDER BY id", boardId, archived)
+  r = db.Exec(ExportText.SelectRows(db, "kb_cards") & " WHERE " & "board_id=&1 AND archived=&2 AND " & Live(db, "card", "kb_cards") & " ORDER BY id", boardId, archived)
   For Each r
     row = Card(r)
     If Not archived And row["listId"] > 0 Then
       If Hidden(db, boardId, "list", row["listId"]) Then Continue
-      target = db.Find("kb_lists", "board_id=&1 AND id=&2", boardId, row["listId"])
+      target = db.Exec(ExportText.SelectRows(db, "kb_lists") & " WHERE " & "board_id=&1 AND id=&2", boardId, row["listId"])
       If target.Available Then
-        target = db.Find("kb_lanes", "board_id=&1 AND title=&2", boardId, target!lane)
+        laneName = ExportText.ReadValue(target, "lane")
+        target = db.Exec(ExportText.SelectRows(db, "kb_lanes") & " WHERE board_id=&1 AND " & ExportText.MatchText(db, "title", 2, laneName), boardId, ExportText.BindText(db, laneName))
         If target.Available Then
           If Hidden(db, boardId, "lane", target!id) Then Continue
         Endif
@@ -94,17 +96,17 @@ Public Function Load(boardText As String, Optional cardText As String) As Collec
   data["lists"] = lists
   data["cardId"] = cardId
   If cardId > 0 Then
-    r = db.Find("kb_cards", "id=&1 AND board_id=&2 AND " & Live(db, "card", "kb_cards"), cardId, boardId)
+    r = db.Exec(ExportText.SelectRows(db, "kb_cards") & " WHERE " & "id=&1 AND board_id=&2 AND " & Live(db, "card", "kb_cards"), cardId, boardId)
     If Not r.Available Then Error.Raise("Card not accessible")
     data["card"] = Card(r)
     data["children"] = Children(db, boardId, cardId)
     data["attachments"] = Attachments(db, boardId, cardId)
   Endif
   RequirePublic(boardId)
-  r = db.Find("kb_boards", "id=&1", boardId)
+  r = db.Exec(ExportText.SelectRows(db, "kb_boards") & " WHERE " & "id=&1", boardId)
   If CBool(r!archived) <> archived Then Error.Raise("Board access changed")
   If cardId > 0 Then
-    target = db.Find("kb_cards", "id=&1 AND board_id=&2 AND " & Live(db, "card", "kb_cards"), cardId, boardId)
+    target = db.Exec(ExportText.SelectRows(db, "kb_cards") & " WHERE " & "id=&1 AND board_id=&2 AND " & Live(db, "card", "kb_cards"), cardId, boardId)
     If Not target.Available Then Error.Raise("Card not accessible")
     If CBool(target!archived) <> data["card"]["archived"] Then Error.Raise("Card access changed")
   Endif
@@ -127,7 +129,7 @@ Private Function Card(r As Result) As Collection
   data["order"] = Position(db, r!board_id, "card", CStr(r!id), r!id)
   data["color"] = Color(db, r!board_id, "card", r!id)
   For Each key In ["id", "title", "description", "lane", "status", "assignee", "labels", "due_day", "archived"]
-    data.Add(r[key], key)
+    data.Add(Value(r, key), key)
   Next
   Return data
 End
@@ -140,7 +142,7 @@ End
 Private Function Position(db As Connection, boardId As Integer, kind As String, item As String, fallback As Integer) As Integer
   Dim r As Result
   If Not db.Tables.Exist("kb_order") Then Return fallback
-  r = db.Find("kb_order", "board_id=&1 AND kind=&2 AND item=&3", boardId, kind, item)
+  r = db.Exec("SELECT sort_order FROM kb_order WHERE board_id=&1 AND kind=&2 AND " & ExportText.MatchText(db, "item", 3, item), boardId, kind, ExportText.BindText(db, item))
   If r.Available Then Return r!sort_order
   Return fallback
 End
@@ -150,9 +152,9 @@ Private Function Color(db As Connection, boardId As Integer, kind As String, ite
   Dim value As String
   Dim i As Integer
   If Not db.Tables.Exist("kb_meta") Then Return ""
-  r = db.Find("kb_meta", "board_id=&1 AND kind=&2 AND item_id=&3 AND setting='color'", boardId, kind, itemId)
+  r = db.Exec(ExportText.SelectRows(db, "kb_meta") & " WHERE " & "board_id=&1 AND kind=&2 AND item_id=&3 AND setting='color'", boardId, kind, itemId)
   If Not r.Available Then Return ""
-  value = CStr(r!value)
+  value = ExportText.ReadValue(r, "value")
   If Len(value) <> 7 Or Left(value) <> "#" Then Return ""
   For i = 2 To 7
     If InStr("0123456789abcdef", LCase(Mid(value, i, 1))) = 0 Then Return ""
@@ -180,54 +182,54 @@ Private Function Children(db As Connection, boardId As Integer, cardId As Intege
   data["comments"] = comments
   data["checklists"] = checklists
   If Not db.Tables.Exist("kb_entries") Then Return data
-  r = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind='checklist' ORDER BY id", boardId, cardId)
+  r = db.Exec(ExportText.SelectRows(db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind='checklist' ORDER BY id", boardId, cardId)
   For Each r
     row = New Collection
     row["id"] = r!id
-    row["title"] = CStr(r!title)
+    row.Add(ExportText.ReadValue(r, "title"), "title")
     row["items"] = New Variant[]
     parents[CStr(r!id)] = row
     checklists.Add(row)
   Next
-  r = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind IN ('comment','checkitem') ORDER BY id", boardId, cardId)
+  r = db.Exec(ExportText.SelectRows(db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind IN ('comment','checkitem') ORDER BY id", boardId, cardId)
   For Each r
     row = New Collection
     row["id"] = r!id
-    row["body"] = CStr(r!body)
-    If r!kind = "comment" Then
-      row["author"] = Author(db, boardId, cardId, r!id, CStr(r!author))
+    row.Add(ExportText.ReadValue(r, "body"), "body")
+    If ExportText.ReadValue(r, "kind") = "comment" Then
+      row.Add(Author(db, boardId, cardId, r!id, ExportText.ReadValue(r, "author")), "author")
       row.Add(r!created_at, "createdAt")
       comments.Add(row)
     Else
       If Not parents.Exist(CStr(r!parent_id)) Then Continue
-      row["title"] = CStr(r!title)
+      row.Add(ExportText.ReadValue(r, "title"), "title")
       row["done"] = CBool(r!done)
       items = parents[CStr(r!parent_id)]["items"]
       items.Add(row)
     Endif
   Next
-  r = db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND kind IN ('custom','time','subtask','dependency') ORDER BY id", boardId, cardId)
+  r = db.Exec(ExportText.SelectRows(db, "kb_entries") & " WHERE " & "board_id=&1 AND card_id=&2 AND kind IN ('custom','time','subtask','dependency') ORDER BY id", boardId, cardId)
   For Each r
-    kind = CStr(r!kind)
+    kind = ExportText.ReadValue(r, "kind")
     row = New Collection
     row["id"] = r!id
     Select kind
       Case "custom"
-        fieldType = CStr(r!value_type)
+        fieldType = ExportText.ReadValue(r, "value_type")
         If Not fieldType Then fieldType = "text"
         If ["text", "number", "date", "checkbox"].Find(fieldType) < 0 Then Continue
-        row["title"] = CStr(r!title)
-        row["body"] = CStr(r!body)
+        row.Add(ExportText.ReadValue(r, "title"), "title")
+        row.Add(ExportText.ReadValue(r, "body"), "body")
         row["type"] = fieldType
         row["done"] = CBool(r!done)
       Case "time"
         If IsNull(r!amount) Then Continue
         If r!amount < 0 Or r!amount > 9007199254740991 Then Continue
         If r!amount <> r!amount Then Continue
-        row["title"] = CStr(r!title)
-        row["body"] = CStr(r!body)
+        row.Add(ExportText.ReadValue(r, "title"), "title")
+        row.Add(ExportText.ReadValue(r, "body"), "body")
         row["minutes"] = r!amount
-        row["author"] = Author(db, boardId, cardId, r!id, CStr(r!author))
+        row.Add(Author(db, boardId, cardId, r!id, ExportText.ReadValue(r, "author")), "author")
         row.Add(r!created_at, "createdAt")
         row["done"] = CBool(r!done)
       Case "subtask", "dependency"
@@ -235,10 +237,10 @@ Private Function Children(db As Connection, boardId As Integer, cardId As Intege
         If r!amount <= 0 Or r!amount > 2147483647 Then Continue
         If r!amount <> Int(r!amount) Then Continue
         targetId = CInt(r!amount)
-        target = db.Find("kb_cards", "board_id=&1 AND id=&2 AND " & Live(db, "card", "kb_cards"), boardId, targetId)
+        target = db.Exec(ExportText.SelectRows(db, "kb_cards") & " WHERE " & "board_id=&1 AND id=&2 AND " & Live(db, "card", "kb_cards"), boardId, targetId)
         If Not target.Available Then Continue
         row["targetId"] = targetId
-        row["title"] = CStr(target!title)
+        row.Add(ExportText.ReadValue(target, "title"), "title")
         row["archived"] = CBool(target!archived)
     End Select
     bucket = data[kind]
@@ -251,8 +253,8 @@ Private Function Author(db As Connection, boardId As Integer, cardId As Integer,
   Dim r As Result
   If liveAuthor Then Return liveAuthor
   If Not db.Tables.Exist("kb_retired_authors") Then Return ""
-  r = db.Find("kb_retired_authors", "kind=&1 AND item_id=&2 AND board_id=&3 AND card_id=&4", kind, itemId, boardId, cardId)
-  If r.Available Then Return CStr(r!display_name)
+  r = db.Exec(ExportText.SelectRows(db, "kb_retired_authors") & " WHERE " & "kind=&1 AND item_id=&2 AND board_id=&3 AND card_id=&4", kind, itemId, boardId, cardId)
+  If r.Available Then Return ExportText.ReadValue(r, "display_name")
   Return ""
 End
 
@@ -266,16 +268,26 @@ Private Function Attachments(db As Connection, boardId As Integer, cardId As Int
   Dim limit As Float = TransferPolicy.Limit("attachmentsDownload", True)
   If Not db.Tables.Exist("kb_files") Then Return rows
   If db.Tables.Exist("kb_attachment_deletions") Then liveFiles = AttachmentLifecycle.LiveSql("kb_files")
-  r = db.Exec("SELECT id,filename,author,created_at,COALESCE(LENGTH(content),0) AS size FROM kb_files WHERE board_id=&1 AND card_id=&2 AND " & liveFiles & " ORDER BY id", boardId, cardId)
+  r = db.Exec(ExportText.Preserve(db, "SELECT id,filename,author,created_at,COALESCE(LENGTH(content),0) AS size FROM kb_files WHERE board_id=&1 AND card_id=&2 AND " & liveFiles & " ORDER BY id"), boardId, cardId)
   For Each r
     row = New Collection
     row["id"] = r!id
-    row["filename"] = CStr(r!filename)
+    row.Add(ExportText.ReadValue(r, "filename"), "filename")
     row["size"] = r!size
     row["downloadAllowed"] = Not blocked And r!size >= 0 And r!size <= limit
-    row["author"] = Author(db, boardId, cardId, r!id, CStr(r!author), "file")
+    row.Add(Author(db, boardId, cardId, r!id, ExportText.ReadValue(r, "author"), "file"), "author")
     row.Add(r!created_at, "createdAt")
     rows.Add(row)
   Next
   Return rows
+End
+
+Private Function Value(r As Result, field As String) As Variant
+  If r.Fields[field].Type <> DB.String Then Return r[field]
+  If r.Fields.Exist("__weba_null_" & field) Then
+    If CBool(r["__weba_null_" & field]) Then Return JSON.Null
+  Else If TypeOf(r[field]) <> gb.String And If IsNull(r[field]) Then
+    Return JSON.Null
+  Endif
+  Return ExportText.ReadValue(r, field)
 End

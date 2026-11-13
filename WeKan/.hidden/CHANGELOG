@@ -1,3 +1,14 @@
+Public discovery/anonymous guest projections preserve complete titles/bodies,
+placement/order, child/derived labels, retained authors and binary-free file
+metadata. Exact lane matches fix archived NUL-prefix filtering; complete color/
+type checks, explicit empty keys, NULL/empty/lone-unit snapshots and encoded guest
+identities covered. 144 public pages/15 helper cases match unchanged source.
+Source/packaged rich-text/placement/search/live/archive/restore/reload/privacy UI,
+existing public/guest security suites and ordinary layout/editor/admin/mobile
+checks pass, plus full pinned host/native/API/security/session and 70 Python
+tests. Activity readers, mutation guards,
+nullable/legacy model gaps and full original parity remain open.
+
 Native roster/member/assignee panes preserve complete board/card captions and
 strict private snapshots notice suffix-only NUL renames. Names/order/duplicates,
 capabilities and current assigned scope remain intact. Exact/no-write/hidden-

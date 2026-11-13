@@ -30,24 +30,29 @@ Public Sub Main()
     If i = 23 Then KanbanStore.ArchiveBoard(id, True)
     If i = 22 Then db.Exec("UPDATE kb_boards SET title='^Subtasks^' WHERE id=&1", id)
     If i = 20 Then db.Exec("UPDATE kb_boards SET title=&1 WHERE id=&2", "Public [literal].* 船", id)
+    If i = 19 Then WorkspaceStore.Rename(id, "board", id, "Public" & Chr(0) & "ΩsuffixB")
+    If i = 18 Then WorkspaceStore.Rename(id, "board", id, "^Hidden^" & Chr(0) & "tail")
     WorkspaceStore.SetSetting(id, "board", id, "description", "Description <literal> " & CStr(i))
     WorkspaceStore.SetSetting(id, "board", id, "color", "#123abc")
+    If i = 16 Then WorkspaceStore.SetSetting(id, "board", id, "description", "Description" & Chr(0) & "Ωtail")
+    If i = 15 Then WorkspaceStore.SetSetting(id, "board", id, "description", "")
+    If i = 17 Then db.Exec("UPDATE kb_meta SET value=CAST(" & db.FormatBlob("#123abc" & Chr(0) & "tail") & " AS TEXT) WHERE board_id=&1 AND setting='color'", id)
     If i = 21 Then db.Exec("UPDATE kb_meta SET value=&1 WHERE board_id=&2 AND setting='color'", "red; background:url(https://invalid.example/canary)", id)
     KanbanStore.SaveCard(id, 0, "PRIVATE-CARD-CANARY", "PRIVATE-CARD-BODY", "Default", "Todo", "", "", "")
     row = New Collection
     row["id"] = id
-    row["title"] = CStr(db.Find("kb_boards", "id=&1", id)!title)
+    row["title"] = ExportText.ReadValue(db.Exec(ExportText.SelectRows(db, "kb_boards") & " WHERE id=&1", id), "title")
     row["archived"] = i = 23
     row["permission"] = permission
     row["type"] = "board"
-    row["description"] = "Description <literal> " & CStr(i)
-    row["color"] = If(i = 21, "#777777", "#123abc")
+    row.Add(If(i = 16, "Description" & Chr(0) & "Ωtail", If(i = 15, "", "Description <literal> " & CStr(i))), "description")
+    row["color"] = If(i = 21 Or i = 17, "#777777", "#123abc")
     docs.Add(row)
   Next
   before = Snapshot()
   For Each actor In ["", "public-visitor", "public-owner"]
     SignIn(actor)
-    For Each search In ["", "Discovery", "[literal].*", "船", "^", "no-match", "%", "' OR 1=1 --"]
+    For Each search In ["", "Discovery", "[literal].*", "船", "^", "no-match", "%", "' OR 1=1 --", "suffixB", Chr(0) & "Ω", Chr(0), "^Hidden^" & Chr(0) & "tail"]
       For pageNumber = 1 To 4
         params = New Collection
         params["search"] = search
@@ -80,16 +85,16 @@ Public Sub Main()
     If Not denied Then Error.Raise("Caller-controlled discovery scope accepted")
   Next
   If Snapshot() <> before Then Error.Raise("Discovery read wrote storage")
-  For Each search In ["", "^", "^^", "^Subtasks^", "^船^", "^a\n^", "^a^\n", "^a\r^", "^a^\r\n", "^a ^", "^a ^", "before ^a^", "^a^ after"]
+  For Each search In ["", "^", "^^", "^Subtasks^", "^船^", "^a\n^", "^a^\n", "^a\r^", "^a^\r\n", "^a ^", "^a ^", "before ^a^", "^a^ after", "^Hidden^" & Chr(0) & "tail", "^Inside" & Chr(0) & "^"]
     item = New Collection
-    item["title"] = search
+    item.Add(search, "title")
     item["helper"] = PublicBoardCatalog.IsHelperTitle(search)
     helpers.Add(item)
   Next
   data["helpers"] = helpers
   data["docs"] = docs
   data["cases"] = cases
-  Print JSON.Encode(data)
+  Print JsonText.Encode(data)
 End
 
 Private Sub SignIn(actor As String)

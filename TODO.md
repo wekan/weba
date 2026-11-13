@@ -137,8 +137,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Completed complete native people-pane titles and strict private snapshots;
   scope/no-write/duplicate/order and actual heartbeat/pending-control results
   are recorded in CHANGELOG.md.
-- Next reader focus: public/guest/activity projections. Complete native copy
-  text and its locked/final guards are in CHANGELOG.md.
+- Next reader focus: activity/recovery projections and remaining shared/API
+  text reads. Complete native copy guards are recorded in CHANGELOG.md.
 - Next data follow-up: audit nullable/legacy field-model consistency (including
   copy semantics) and remaining native
   text readers/writers outside the backup path. Other request decoder boundaries,

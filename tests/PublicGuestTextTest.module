@@ -1,0 +1,182 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim privateBoard As Integer
+  Dim instanceBoard As Integer
+  Dim cardA As Integer
+  Dim cardB As Integer
+  Dim listA As Integer
+  Dim laneA As Integer
+  Dim checklist As Integer
+  Dim entryId As Integer
+  Dim fileId As Integer
+  Dim suffix As String = Chr(0) & "Ω😀'<tag>tail"
+  Dim lane As String = "Lane" & suffix
+  Dim listTitle As String = "List" & suffix
+  Dim data As Collection
+  Dim row As Collection
+  Dim params As New Collection
+  Dim conn As Connection
+  Dim r As Result
+  Dim before As String
+  Dim snapshot As String
+  Dim denied As Boolean
+  Dim kind As String
+  WebDatabase.Register("public-text-owner", "x")
+  SignIn()
+  boardId = KanbanStore.AddBoard("Board" & suffix)
+  privateBoard = KanbanStore.AddBoard("PRIVATE-CANARY" & suffix)
+  instanceBoard = KanbanStore.AddBoard("INSTANCE-CANARY" & suffix)
+  BoardVisibility.SaveBoard(boardId, "public", False)
+  BoardVisibility.SaveBoard(instanceBoard, "instance", False)
+  WorkspaceStore.SetSetting(boardId, "board", boardId, "description", "Description" & suffix)
+  cardA = KanbanStore.SaveCard(boardId, 0, "Card A" & suffix, "Body" & suffix, lane & "A", "Todo", "", "Labels" & suffix, "")
+  cardB = KanbanStore.SaveCard(boardId, 0, "Card B" & suffix, "Other body", lane & "B", "Todo", "", "", "")
+  listA = KanbanStore.CardListId(boardId, cardA)
+  WorkspaceStore.Rename(boardId, "list", listA, listTitle)
+  r = KanbanStore.Lanes(boardId)
+  laneA = r!id
+  conn = WebDatabase.OpenConnection()
+  conn.Exec("INSERT INTO kb_order (board_id,kind,item,sort_order) VALUES (&1,'lane',CAST(" & conn.FormatBlob(lane & "A") & " AS TEXT),77)", boardId)
+  conn.Exec("INSERT INTO kb_order (board_id,kind,item,sort_order) VALUES (&1,'list',CAST(" & conn.FormatBlob(listTitle) & " AS TEXT),88)", boardId)
+  checklist = CardContent.Save(boardId, cardA, 0, "checklist", "Checks" & suffix, "", 0, False, 0)
+  CardContent.Save(boardId, cardA, 0, "checkitem", "Item" & suffix, "Item body" & suffix, checklist, True, 0)
+  entryId = CardContent.Save(boardId, cardA, 0, "comment", "", "Comment" & suffix, 0, False, 0)
+  CardContent.RetainAuthorName(boardId, cardA, "entry", entryId, "Retired" & suffix)
+  CardContent.Save(boardId, cardA, 0, "custom", "Field" & suffix, "Value" & suffix, 0, False, 0)
+  CardContent.Save(boardId, cardA, 0, "time", "Duration" & suffix, "Time body" & suffix, 0, True, 2)
+  CardContent.Save(boardId, cardA, 0, "dependency", "", "", 0, False, cardB)
+  fileId = CardContent.UploadFile(boardId, cardA, "File" & suffix, "BINARY-CANARY" & Chr(0) & Chr(255))
+  CardContent.RetainAuthorName(boardId, cardA, "file", fileId, "File author" & suffix)
+  Session["username"] = ""
+  before = Frame()
+  data = PublicBoardCatalog.Page(params)
+  If data["total"] <> 1 Or data["rows"][0]["title"] <> "Board" & suffix Or data["rows"][0]["description"] <> "Description" & suffix Then Error.Raise("Public catalog text/scope lost")
+  params["search"] = "tail"
+  If PublicBoardCatalog.Page(params)["total"] <> 1 Then Error.Raise("Public suffix search missed")
+  params["search"] = suffix
+  If PublicBoardCatalog.Page(params)["total"] <> 1 Then Error.Raise("Public complete search missed")
+  data = GuestBoardRead.Load(CStr(boardId), CStr(cardA))
+  If data["title"] <> "Board" & suffix Or data["card"]["title"] <> "Card A" & suffix Or data["card"]["description"] <> "Body" & suffix Or data["card"]["labels"] <> "Labels" & suffix Then Error.Raise("Guest core text lost")
+  If data["card"]["lane"] <> lane & "A" Or data["card"]["status"] <> listTitle Then Error.Raise("Guest complete placement lost")
+  If data["lanes"][0]["title"] <> lane & "A" Or data["lanes"][0]["order"] <> 77 Then Error.Raise("Guest complete lane order lost")
+  For Each row In data["lists"]
+    If row["id"] = listA Then
+      If row["title"] <> listTitle Or row["lane"] <> lane & "A" Or row["order"] <> 88 Then Error.Raise("Guest complete list/order lost")
+    Endif
+  Next
+  If data["children"]["checklists"][0]["title"] <> "Checks" & suffix Or data["children"]["checklists"][0]["items"][0]["title"] <> "Item" & suffix Or data["children"]["checklists"][0]["items"][0]["body"] <> "Item body" & suffix Then Error.Raise("Guest checklist text lost")
+  If data["children"]["comments"][0]["body"] <> "Comment" & suffix Or data["children"]["comments"][0]["author"] <> "Retired" & suffix Then Error.Raise("Guest comment/author lost")
+  If data["children"]["custom"][0]["title"] <> "Field" & suffix Or data["children"]["custom"][0]["body"] <> "Value" & suffix Then Error.Raise("Guest custom text lost")
+  If data["children"]["time"][0]["title"] <> "Duration" & suffix Or data["children"]["time"][0]["body"] <> "Time body" & suffix Then Error.Raise("Guest time text lost")
+  If data["children"]["dependency"][0]["title"] <> "Card B" & suffix Then Error.Raise("Guest derived title lost")
+  If data["attachments"][0]["filename"] <> "File" & suffix Or data["attachments"][0]["author"] <> "File author" & suffix Then Error.Raise("Guest attachment metadata lost")
+  snapshot = JsonText.Encode(data)
+  If InStr(snapshot, "BINARY-CANARY") Or InStr(snapshot, "PRIVATE-CANARY") Or InStr(snapshot, "INSTANCE-CANARY") Or InStr(snapshot, "__weba_") Then Error.Raise("Guest projection leaked storage/secret fields")
+  If JsonText.Encode(GuestBoardRead.Load(CStr(boardId), CStr(cardA))) <> snapshot Or Frame() <> before Then Error.Raise("Guest reads unstable/wrote state")
+  SignIn()
+  WorkspaceStore.SetArchived(boardId, "lane", laneA, True)
+  Session["username"] = ""
+  before = Frame()
+  data = GuestBoardRead.Load(CStr(boardId))
+  If data["cards"].Count <> 1 Or data["cards"][0]["id"] <> cardB Then Error.Raise("Archived complete lane failed exact overview isolation")
+  If Frame() <> before Then Error.Raise("Archived-lane read wrote state")
+  SignIn()
+  WorkspaceStore.SetArchived(boardId, "lane", laneA, False)
+  conn.Exec("UPDATE kb_cards SET description=NULL WHERE id=&1", cardA)
+  Session["username"] = ""
+  data = JsonText.Decode(JsonText.Encode(GuestBoardRead.Load(CStr(boardId), CStr(cardA))))
+  If TypeOf(data["card"]["description"]) = gb.String Or Not IsNull(data["card"]["description"]) Then Error.Raise("Guest SQL NULL normalized to text")
+  SignIn()
+  conn.Exec("UPDATE kb_cards SET description='' WHERE id=&1", cardA)
+  Session["username"] = ""
+  data = JsonText.Decode(JsonText.Encode(GuestBoardRead.Load(CStr(boardId), CStr(cardA))))
+  If TypeOf(data["card"]["description"]) <> gb.String Or data["card"]["description"] <> "" Then Error.Raise("Guest empty text normalized to NULL")
+  SignIn()
+  conn.Exec("UPDATE kb_cards SET description=CAST(" & conn.FormatBlob("Lone" & Chr(0) & JsonText.Decode(Chr(34) & "\\ud800" & Chr(34))) & " AS TEXT) WHERE id=&1", cardA)
+  Session["username"] = ""
+  data = JsonText.Decode(JsonText.Encode(GuestBoardRead.Load(CStr(boardId), CStr(cardA))))
+  If data["card"]["description"] <> "Lone" & Chr(0) & JsonText.Decode(Chr(34) & "\\ud800" & Chr(34)) Then Error.Raise("Guest strict snapshot lost lone UTF-16 unit")
+  SignIn()
+  conn.Exec("INSERT INTO kb_meta (board_id,kind,item_id,setting,value) VALUES (&1,'board',&1,'color',CAST(" & conn.FormatBlob("#123abc" & suffix) & " AS TEXT))", boardId)
+  entryId = CardContent.Save(boardId, cardA, 0, "custom", "MALFORMED-TYPE-CANARY", "secret", 0, False, 0)
+  conn.Exec("UPDATE kb_entries SET value_type=CAST(" & conn.FormatBlob("text" & suffix) & " AS TEXT) WHERE id=&1", entryId)
+  Session["username"] = ""
+  data = GuestBoardRead.Load(CStr(boardId), CStr(cardA))
+  If data["color"] = "#123abc" Or InStr(JsonText.Encode(data), "MALFORMED-TYPE-CANARY") Then Error.Raise("Guest accepted malformed full color/type")
+  params["search"] = ""
+  If PublicBoardCatalog.Page(params)["rows"][0]["color"] <> "#777777" Then Error.Raise("Discovery accepted malformed full color")
+  before = Frame()
+  For Each kind In [CStr(privateBoard), CStr(instanceBoard)]
+    Try GuestBoardRead.Load(kind)
+    denied = Error
+    If Not denied Then Error.Raise("Nonpublic guest read accepted")
+  Next
+  If Frame() <> before Then Error.Raise("Denied guest reads wrote state")
+  SignIn()
+  BoardVisibility.SaveBoard(boardId, "private", False)
+  Session["username"] = ""
+  before = Frame()
+  Try GuestBoardRead.Load(CStr(boardId), CStr(cardA))
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Revoked guest read accepted/wrote state")
+  Print "Public/guest complete text: discovery/core/placement/order/children/derived labels/retained authors/file metadata, literal suffix search, exact archived-lane isolation, stable binary-free/no-write projections, NULL-empty/lone-unit fidelity, malformed full color/type and nonpublic/revoked refusal passed"
+End
+
+Private Sub SignIn()
+  Session["username"] = "public-text-owner"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("public-text-owner")
+End
+
+Private Function Frame() As String
+  Dim conn As Connection = WebDatabase.OpenConnection()
+  Dim table As Table
+  Dim tables As New String[]
+  Dim tableName As String
+  Dim order As String[]
+  Dim key As String
+  Dim rows As Result
+  Dim field As ResultField
+  Dim values As Collection
+  Dim data As Variant[]
+  Dim result As New Collection
+  For Each table In conn.Tables
+    If Left(table.Name, 7) <> "sqlite_" Then tables.Add(table.Name)
+  Next
+  tables.Sort()
+  For Each tableName In tables
+    order = New String[]
+    For Each key In conn.Tables[tableName].PrimaryKey
+      order.Add(conn.Quote(key))
+    Next
+    rows = conn.Exec(ExportText.SelectRows(conn, tableName) & If(order.Count, " ORDER BY " & order.Join(","), ""))
+    data = New Variant[]
+    For Each rows
+      values = New Collection
+      For Each field In rows.Fields
+        If Left(field.Name, 7) = "__weba_" Then Continue
+        If field.Type = DB.String Then
+          If rows.Fields.Exist("__weba_null_" & field.Name) Then
+            If rows["__weba_null_" & field.Name] Then
+              values[field.Name] = JSON.Null
+            Else
+              values[field.Name] = ExportText.ReadValue(rows, field.Name)
+            Endif
+          Else
+            values[field.Name] = rows[field.Name]
+          Endif
+        Else If field.Type = DB.Blob Then
+          If IsNull(rows[field.Name]) Then
+            values[field.Name] = JSON.Null
+          Else
+            values[field.Name] = Base64(rows[field.Name].Data)
+          Endif
+        Else
+          values[field.Name] = rows[field.Name]
+        Endif
+      Next
+      data.Add(values)
+    Next
+    result[tableName] = data
+  Next
+  Return JsonText.Encode(result)
+End

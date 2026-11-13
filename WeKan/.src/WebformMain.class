@@ -4716,7 +4716,7 @@ Private Sub RefreshPublic(force As Boolean)
     params["page"] = $publicPage
     data = PublicBoardCatalog.Page(params)
   Endif
-  state = JSON.Encode(data)
+  state = JsonText.Encode(data)
   If Not force And state = $publicState Then Return
   $publicState = state
   $publicData = data

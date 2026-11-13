@@ -33,22 +33,25 @@ Public Function Page(params As Collection) As Collection
   If actor Then generation = WebDatabase.SessionGeneration(actor)
   offset = CLong(pageNumber - 1) * 10
   If db.Tables.Exist("kb_boards") And db.Tables.Exist("kb_board_visibility") Then
-    r = db.Exec("SELECT b.id,b.title FROM kb_boards b INNER JOIN kb_board_visibility v ON v.board_id=b.id WHERE b.archived=&1 AND (v.permission='public' OR (v.permission='instance' AND &2)) ORDER BY b.id", False, actor <> "")
+    r = db.Exec(ExportText.Preserve(db, "SELECT b.id,b.title FROM kb_boards b INNER JOIN kb_board_visibility v ON v.board_id=b.id WHERE b.archived=&1 AND (v.permission='public' OR (v.permission='instance' AND &2)) ORDER BY b.id"), False, actor <> "")
     For Each r
-      If IsHelperTitle(CStr(r!title)) Then Continue
-      If search And InStr(LCase(CStr(r!title)), LCase(search)) = 0 Then Continue
+      If IsHelperTitle(ExportText.ReadValue(r, "title")) Then Continue
+      If search And InStr(String.LCase(ExportText.ReadValue(r, "title")), String.LCase(search)) = 0 Then Continue
       Inc total
       If total <= offset Or rows.Count >= 10 Then Continue
       row = New Collection
       row["id"] = r!id
-      row["title"] = CStr(r!title)
-      row["description"] = ""
+      row.Add(ExportText.ReadValue(r, "title"), "title")
+      row.Add("", "description")
       row["color"] = "#777777"
       If db.Tables.Exist("kb_meta") Then
-        meta = db.Find("kb_meta", "board_id=&1 AND kind='board' AND item_id=&1 AND setting IN ('description','color')", r!id)
+        meta = db.Exec(ExportText.SelectRows(db, "kb_meta") & " WHERE " & "board_id=&1 AND kind='board' AND item_id=&1 AND setting IN ('description','color')", r!id)
         For Each meta
-          If meta!setting = "description" Then row["description"] = CStr(meta!value)
-          If meta!setting = "color" And SafeColor(CStr(meta!value)) Then row["color"] = CStr(meta!value)
+          If meta!setting = "description" Then
+            row.Remove("description")
+            row.Add(ExportText.ReadValue(meta, "value"), "description")
+          Endif
+          If meta!setting = "color" And SafeColor(ExportText.ReadValue(meta, "value")) Then row["color"] = ExportText.ReadValue(meta, "value")
         Next
       Endif
       rows.Add(row)
@@ -67,7 +70,7 @@ Public Function Page(params As Collection) As Collection
   data["total"] = total
   data["page"] = pageNumber
   data["pages"] = Max(1, (CLong(total) + 9) Div 10)
-  data["search"] = search
+  data.Add(search, "search")
   Return data
 End
 

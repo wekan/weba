@@ -2,6 +2,26 @@
 
 This work adds the following features and fixes:
 
+- Preserve complete public discovery and anonymous guest text: titles,
+  descriptions, placement/order keys, selected-card children/derived labels,
+  retained authors and binary-free attachment metadata. Use exact full lane
+  matches so archived lanes with shared NUL prefixes exclude the correct cards.
+  Validate complete colors/custom-field types, retain NULL versus empty card
+  fields and encode strict private snapshots and guest lane/list/status data.
+  Explicit empty text fields remain present in DTOs. The unchanged WeKan public
+  selector matches 144 native page/projection/count cases and 15 helper-title
+  cases, including NUL queries and independent full SQL/input checks.
+  Native tests verify exact text/order, archived-lane isolation, no-write and
+  binary-free projections, NULL/empty/lone-unit fidelity, malformed metadata,
+  public-only scope and revocation. Source/packaged actual guest/discovery UI
+  verifies rich literal text, exact shared-prefix placement and suffix search/
+  live updates,
+  archive/restore/reload and privacy loss; existing public and guest security
+  suites and ordinary layout/editor/admin/mobile checks pass on both builds.
+  Full pinned host/native/API/security/session tests and 70 Python tests pass.
+  Activity readers, mutation final guards, nullable/legacy model
+  gaps and full original UI/API/DDP/security parity remain open. Thanks to xet7.
+
 - Preserve complete board/card titles in native roster, member and assignee
   panes. Use complete title/owner reads and strict private snapshots so a rename
   after embedded NUL refreshes open captions. Retain member/assignee order,

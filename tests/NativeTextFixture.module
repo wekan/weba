@@ -17,6 +17,21 @@ Public Sub Main()
   If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
   Session["username"] = "rest-other"
   Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+  If ["guest-public", "guest-private", "guest-hide-lane", "guest-show-lane"].Find(Env["WEBA_NATIVE_MODE"]) >= 0 Then
+    boardId = CInt(Env["WEBA_NATIVE_BOARD"])
+    Select Env["WEBA_NATIVE_MODE"]
+      Case "guest-public"
+        BoardVisibility.SaveBoard(boardId, "public", False)
+        WorkspaceStore.SetSetting(boardId, "board", boardId, "description", "Discovery description" & suffixText)
+      Case "guest-private"
+        BoardVisibility.SaveBoard(boardId, "private", False)
+      Case Else
+        row = KanbanStore.Lanes(boardId)
+        WorkspaceStore.SetArchived(boardId, "lane", row!id, Env["WEBA_NATIVE_MODE"] = "guest-hide-lane")
+    End Select
+    Print "{}"
+    Return
+  Endif
   If Env["WEBA_NATIVE_MODE"] = "profile-seed" Or Env["WEBA_NATIVE_MODE"] = "profile-read" Then
     If Env["WEBA_NATIVE_MODE"] = "profile-seed" Then WebDatabase.SetFullname("rest-other", "Profile" & Chr(0) & "Ω😀'<tag>suffixA")
     result.Add(WebDatabase.GetFullname("rest-other"), "fullname")

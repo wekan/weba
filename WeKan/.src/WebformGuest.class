@@ -41,7 +41,7 @@ Public Sub OpenRoute(boardText As String, cardText As String, token As String)
   $token = token
   $data = data
   $view = data["viewPolicy"]["defaultView"]
-  $state = JSON.Encode(data)
+  $state = JsonText.Encode(data)
 End
 
 Public Sub WebForm_Open()
@@ -63,7 +63,7 @@ Private Sub Acknowledge()
     PageTitle.Text = ""
   Endif
   ack["tree"] = New Variant[]
-  OverviewRouteState.Text = Replace(JSON.Encode(ack), " ", "\\u0020")
+  OverviewRouteState.Text = Replace(JsonText.Encode(ack), " ", "\\u0020")
   CloseEditor.Visible = Not IsNull($data) And $cardText <> ""
   GuestRetry.Visible = IsNull($data)
   GuestViews.Visible = Not IsNull($data)
@@ -99,7 +99,7 @@ Private Sub RefreshGuest()
     Return
   Endif
   If data["viewPolicy"]["views"].Find($view) < 0 Then $view = data["viewPolicy"]["defaultView"]
-  state = JSON.Encode(data)
+  state = JsonText.Encode(data)
   If state = $state And $data Then
     Acknowledge()
     Return
@@ -214,16 +214,16 @@ Public Sub GuestSurface_Render()
   Endif
   Print "<div class='weba-layout' hidden>"
   For Each lane In $data["lanes"]
-    Print "<section data-lane='" & Html(lane["title"]) & "' data-lane-id='" & CStr(lane["id"]) & "' data-order='" & CStr(lane["order"]) & "'>"
+    Print "<section " & TextData("lane", lane["title"]) & " data-lane-id='" & CStr(lane["id"]) & "' data-order='" & CStr(lane["order"]) & "'>"
     For Each list In $data["lists"]
       If list["lane"] <> lane["title"] Then Continue
-      Print "<span data-list='" & Html(list["title"]) & "' data-list-id='" & CStr(list["id"]) & "' data-order='" & CStr(list["order"]) & "'></span>"
+      Print "<span " & TextData("list", list["title"]) & " data-list-id='" & CStr(list["id"]) & "' data-order='" & CStr(list["order"]) & "'></span>"
     Next
     Print "</section>"
   Next
   Print "</div><div class='weba-data'>"
   For Each card In $data["cards"]
-    Print "<article class='weba-card' data-card-key='c" & CStr(card["id"]) & ":" & CStr($data["id"]) & "' data-card-id='" & CStr(card["id"]) & "' data-lane='" & Html(card["lane"]) & "' data-status='" & Html(card["status"]) & "' data-due='" & Html(card["due_day"]) & "' data-list-id='" & CStr(card["listId"]) & "' data-order='" & CStr(card["order"]) & "' data-color='" & Html(card["color"]) & "'><strong>" & Html(card["title"]) & "</strong><p>" & Html(card["description"]) & "</p><small>" & Html(card["assignee"]) & " · " & Html(card["labels"]) & " · " & Html(card["due_day"]) & "</small></article>"
+    Print "<article class='weba-card' data-card-key='c" & CStr(card["id"]) & ":" & CStr($data["id"]) & "' data-card-id='" & CStr(card["id"]) & "' " & TextData("lane", card["lane"]) & TextData("status", card["status"]) & " data-due='" & Html(card["due_day"]) & "' data-list-id='" & CStr(card["listId"]) & "' data-order='" & CStr(card["order"]) & "' data-color='" & Html(card["color"]) & "'><strong>" & Html(card["title"]) & "</strong><p>" & Html(card["description"]) & "</p><small>" & Html(card["assignee"]) & " · " & Html(card["labels"]) & " · " & Html(card["due_day"]) & "</small></article>"
   Next
   Print "</div><div class='weba-report'></div></section>"
   WebForm.Exec("window.webaRender && window.webaRender();")
@@ -249,4 +249,8 @@ End
 
 Public Sub GuestCalendar_Click()
   ShowGuestView("Calendar")
+End
+
+Private Function TextData(name As String, value As String) As String
+  Return " data-" & name & "=\"" & Html(Replace(value, Chr(0), "�")) & "\" data-" & name & "-text=\"" & Base64(JsonText.Encode(value)) & "\""
 End
