@@ -5257,7 +5257,7 @@ Public Sub BoardViewOrderAction_Change()
   Select fields[0]
     Case "drag"
       If fields.Count <> 3 Then Error.Raise("Unknown board view")
-      values = JSON.Decode(UnBase64(fields[2]), True)
+      values = JsonText.Decode(UnBase64(fields[2]))
       afterOrder = BoardViewPolicy.ReorderVisible($viewPolicyDraft["boardViewOrder"], values, $viewPolicyAllowed)
       $viewPolicyDraft["boardViewOrder"] = afterOrder
     Case "move", "select"

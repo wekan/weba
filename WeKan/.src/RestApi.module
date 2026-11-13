@@ -765,7 +765,6 @@ Private Function BoardViewBody() As Collection
   Dim payload As Collection
   Dim field As String
   Dim value As Variant
-  Dim validated As Variant
   Dim text As String
   Dim pair As String
   Dim splitAt As Integer
@@ -810,19 +809,16 @@ Private Function BoardViewBody() As Collection
   For Each field In ["boardViewSettings", "boardViewOrder"]
     If TypeOf(payload[field]) <> gb.String Then Continue
     text = payload[field]
-    Try value = JSON.Decode(text, True)
+    Try value = JsonText.Decode(text)
     If Not Error Then
-      Try validated = JSON.Decode(text)
-      If Not Error Then
-        payload.Remove(field)
-        payload.Add(value, field)
-        Continue
-      Endif
+      payload.Remove(field)
+      payload.Add(value, field)
+      Continue
     Endif
     If field = "boardViewOrder" Then
       words = Split(text, ",")
       For i = 0 To words.Max
-        words[i] = Trim(words[i])
+        words[i] = BoardViewTrim(words[i])
       Next
       payload[field] = words
     Endif
@@ -831,4 +827,38 @@ Private Function BoardViewBody() As Collection
 Catch
   Reply(400, ErrorData("Invalid board view body"))
   Return Null
+End
+
+' String.prototype.trim whitespace: controls such as NUL are not whitespace.
+Private Function BoardViewTrim(text As String) As String
+  Dim spaces As String[] = [Chr(9), Chr(10), Chr(11), Chr(12), Chr(13), " "]
+  Dim code As Integer
+  Dim token As String
+  Dim startAt As Integer = 1
+  Dim endAt As Integer = Len(text)
+  Dim found As Boolean
+  For Each code In [160, 5760, 8192, 8193, 8194, 8195, 8196, 8197, 8198, 8199, 8200, 8201, 8202, 8232, 8233, 8239, 8287, 12288, 65279]
+    spaces.Add(String.Chr(code))
+  Next
+  Do
+    found = False
+    For Each token In spaces
+      If startAt + Len(token) - 1 > endAt Then Continue
+      If Mid(text, startAt, Len(token)) <> token Then Continue
+      startAt += Len(token)
+      found = True
+      Break
+    Next
+  Loop While found
+  Do
+    found = False
+    For Each token In spaces
+      If endAt - Len(token) + 1 < startAt Then Continue
+      If Mid(text, endAt - Len(token) + 1, Len(token)) <> token Then Continue
+      endAt -= Len(token)
+      found = True
+      Break
+    Next
+  Loop While found
+  Return Mid(text, startAt, endAt - startAt + 1)
 End

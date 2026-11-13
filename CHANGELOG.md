@@ -2,6 +2,20 @@
 
 This work adds the following features and fixes:
 
+- Preserve complete nested board-view JSON values with the strict decoder in
+  REST JSON/form bodies and native drag commands. Invalid NUL/control/lone-unit
+  view keys no longer alias valid views or change drafts. Match JavaScript CSV
+  whitespace, including Unicode spaces, while retaining non-whitespace controls
+  for validation. Keep valid nested/repeated form arrays and existing role,
+  no-init, no-op, default-hide, SQL rollback and late role/token guards.
+  Actual HTTP refusals verify unchanged table snapshots; 656 source comparisons
+  match unchanged WeKan GET/PUT routes and Authentication. Source/packaged native
+  browser checks cover unchanged draft/storage after forged suffixes, valid
+  mouse/keyboard/touch gestures, captured revisions, revocation and Finnish/mobile.
+  Full pinned host/native/API/security/session tests and 70 Python tests pass.
+  Remaining native writers/readers/final guards, nullable/legacy models and full
+  original integration remain open. Thanks to xet7.
+
 - Preserve upload JSON text before validating filenames, MIME types and
   canonical target IDs. NUL-bearing invalid values are rejected consistently
   with raw uploads. Match complete stored lane names and explicit lane IDs so

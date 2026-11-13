@@ -1,3 +1,12 @@
+Strict nested board-view JSON in REST/form and native drag commands preserves
+NUL/control/lone-unit keys for refusal rather than aliasing valid views. CSV
+matches JavaScript ASCII/Unicode whitespace without discarding other controls.
+Real HTTP exact no-write refusals and656 unchanged WeKan source outcomes pass;
+source/packaged browser draft/storage retention, gestures, revision/revocation,
+Finnish/mobile pass. Full pinned host/native/API/security/session and70 Python
+tests pass. Remaining writers/readers/final guards, legacy models and
+full original integration remain open.
+
 Strict upload JSON preserves units for filename/MIME/ID rejection and exact lane
 matching supports NUL lanes without accepting shared-prefix neighbors. Preserve
 null MIME defaults and null fileData errors. Decoder byte budgets retain backup

@@ -33,7 +33,13 @@ with sqlite3.connect(sys.argv[1]) as d:
   const flags=['isAdmin','isNoComments','isCommentOnly','isWorker','isNormalAssignedOnly','isCommentAssignedOnly','isReadAssignedOnly','isReadOnly'];for(let mask=0;mask<256;mask++)await compare(flags.filter((_,i)=>mask&(1<<i)));
   await compare([],true,false);await compare(['isAdmin'],false,true);await compare(['isReadAssignedOnly'],false,true,'rest-owner');
   for(const raw of [null,true,false,'TRUE',[true],[null,true],[['TRUE']],{},1])await compare(['isAdmin'],true,true,'rest-member',{boardViewSettings:{'board-view-cal':{showOnPublic:raw}}});
-  console.log(`Board view REST source conformance: ${count} actual HTTP outcomes match unchanged GET/PUT route and Authentication bodies across all 256 built-in raw flag sets, inactive/nonmember/site-admin cases and boolean/null/array coercion; SQL IDs/owner membership/bearer-to-user/cache and no-op logger adapters explicit, full custom-role/OAuth/DDP/eventlog integration remains pending`);
+  for(const suffix of ['\0','\x01','\x08','\x0e','\x1f','\ud800','\udfff','Ω']){
+   const order=['board-view-table'+suffix,'board-view-lists'],settings={['board-view-table'+suffix]:{showOnPublic:true}};
+   for(const [key,value] of [['boardViewOrder',order],['boardViewSettings',settings]])for(const raw of [value,JSON.stringify(value)])await compare(['isAdmin'],true,true,'rest-member',{[key]:raw});
+   await compare(['isAdmin'],true,true,'rest-member',{boardViewOrder:'board-view-table'+suffix+',board-view-lists'});
+  }
+  for(const whitespace of [' \t\r\n\v\f','\u00a0','\u1680',...Array.from({length:11},(_,i)=>String.fromCharCode(0x2000+i)),'\u2028','\u2029','\u202f','\u205f','\u3000','\ufeff'])await compare(['isAdmin'],true,true,'rest-member',{boardViewOrder:whitespace+'board-view-table'+whitespace+','+whitespace+'board-view-lists'+whitespace});
+  console.log(`Board view REST source conformance: ${count} actual HTTP outcomes match unchanged GET/PUT route and Authentication bodies across all 256 built-in raw flag sets, inactive/nonmember/site-admin cases boolean/null/array coercion, nested full text and ECMAScript CSV whitespace; SQL IDs/owner membership/bearer-to-user/cache and no-op logger adapters explicit, full custom-role/OAuth/DDP/eventlog integration remains pending`);
  }finally{execFileSync('python3',['-c',`import sqlite3,sys
 with sqlite3.connect(sys.argv[1]) as d:
  for (t,) in d.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall():

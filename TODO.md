@@ -137,10 +137,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Completed complete native people-pane titles and strict private snapshots;
   scope/no-write/duplicate/order and actual heartbeat/pending-control results
   are recorded in CHANGELOG.md.
-- Next text focus: nested-form decoding and remaining model write paths,
-  then shared readers. Completed strict main/upload REST JSON, exact upload
-  target lanes, card updates, DTO/response and native audit/copy guards are
-  recorded in CHANGELOG.md.
+- Next text focus: remaining model write paths and final mutation guards,
+  then shared readers. Completed nested REST/form and native drag decoding,
+  strict main/upload REST JSON, exact upload target lanes, card updates,
+  DTO/response and native audit/copy guards are recorded in CHANGELOG.md.
 - Next data follow-up: audit nullable/legacy field-model consistency (including
   copy semantics) and remaining native
   text readers/writers outside the backup path. Other request decoder boundaries,
