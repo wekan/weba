@@ -199,8 +199,8 @@ Public Sub Main()
     Print "{}"
     Return
   Endif
-  WebDatabase.Register("rest-native-reader", Env["WEBA_TEST_PASSWORD"])
-  WebDatabase.Register("rest-native-assigned", Env["WEBA_TEST_PASSWORD"])
+  If Not WebDatabase.UserExists("rest-native-reader") Then WebDatabase.Register("rest-native-reader", Env["WEBA_TEST_PASSWORD"])
+  If Not WebDatabase.UserExists("rest-native-assigned") Then WebDatabase.Register("rest-native-assigned", Env["WEBA_TEST_PASSWORD"])
   boardId = KanbanStore.AddBoard("Complete native lane/list text")
   BoardAccess.SetMember(boardId, "rest-native-reader", "read-only")
   BoardAccess.SetMember(boardId, "rest-native-assigned", "read-assigned-only")

@@ -1,3 +1,15 @@
+Strict REST JSON decoding and safe description writes preserve NUL/lone/empty/
+null text and reject malformed input/full unknown keys. Credential/NUL people
+aliases refused. Locked/final actor/token/role/flags/card/list/archive/text checks
+protect combined people/date/description updates and post-history commit scope.
+Source/packaged exact/negative/all-table SQL/late-scope rollback/retry tests pass;
+isolated old-router altered-credential issuance reproduced and corrected. Reusable
+test
+accounts support consecutive read/write gates. Ordinary UI passes both builds,
+plus full pinned host/native/API/security/session and 70 Python tests.
+Attachment/nested decoders, shared readers, other mutation guards, nullable/legacy
+models and full original parity remain open.
+
 Checked API board/list/lane/card/checklist/item and own-board text stays complete;
 full lane matching retains swimlane IDs and strict JSON replies escape lone units.
 Existing NULL/string policies and scope remain. Source/packaged real HTTP text/IDs/

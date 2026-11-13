@@ -2,6 +2,26 @@
 
 This work adds the following features and fixes:
 
+- Preserve strict REST JSON request text and safe card-description storage.
+  NUL/lone UTF-16 units no longer disappear before a successful PUT; retain
+  explicit null/empty clears, duplicate-key last values and direct UTF-8.
+  Reject malformed JSON/bytes and unknown full keys. Refuse NUL credentials
+  before account lookup and prevent NUL people names from aliasing accounts.
+  The old router's token issuance for altered credentials is reproduced in an
+  isolated fixture; the corrected source rejects those cases.
+  Lock the actor/token and recheck current credentials, write role, raw scope
+  flags, card/list/archive state and complete description immediately after
+  storage and before commit. Late SQL/flag/token/actor/rebound/archive/suffix
+  and post-history changes roll back text, people, dates, history and clocks.
+  Source/packaged real HTTP read/write tests cover exact values, retention of
+  unrelated card fields, combined updates, all denials, opaque failures and retry.
+  Fixture
+  account seeding now supports consecutive read/write suites. Ordinary source/
+  packaged layout/editor/admin/mobile checks pass, plus full pinned host/native/
+  API/security/session and 70 Python tests. Remaining attachment/nested
+  decoders, shared readers, mutation guards, nullable/legacy models and full
+  original parity remain open. Thanks to xet7.
+
 - Preserve complete checked REST board/list/lane/card/checklist/item and
   own-user board titles/descriptions. Match full lane names when resolving
   swimlane IDs and keep projected SQL aliases out of explicit DTOs. Ordinary

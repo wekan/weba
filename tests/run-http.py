@@ -93,6 +93,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
         env['WEBA_TEST_APPLICATION'] = str(application)
         if '--api-text' in sys.argv:
             subprocess.run([sys.executable, str(root / 'tests/api-text.test.py')], check=True, env=env)
+            subprocess.run([sys.executable, str(root / 'tests/api-write-text.test.py')], check=True, env=env)
         elif '--audit-text' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/audit-text.browser.cjs')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/board-purge.browser.cjs')], check=True, env=env)

@@ -40,6 +40,11 @@ Public Sub Main()
       Reply(400, ErrorData("Expected username and password strings"))
       Return
     Endif
+    ' Reject embedded NUL credentials before native account lookup.
+    If InStr(payload["username"], Chr(0)) Or InStr(payload["password"], Chr(0)) Then
+      Reply(401, ErrorData("Invalid credentials"))
+      Return
+    Endif
     username = payload["username"]
     item = ApiTokens.Login(username, payload["password"])
     If Not item Then
@@ -289,7 +294,7 @@ Public Sub Main()
         Reply(outcome["status"], outcome["data"])
         Return
       Endif
-      payload = JsonBody(True)
+      payload = JsonBody()
       If Not payload Then Return
       outcome = BoardAccess.UpdateApiCardPeople(ids[0], ids[1], ids[2], payload)
       Reply(outcome["status"], outcome["data"])
@@ -432,10 +437,9 @@ Private Function PositiveId(value As String) As Integer
   Return id
 End
 
-Private Function JsonBody(Optional preserveNull As Boolean = False) As Collection
+Private Function JsonBody() As Collection
   Dim text As String
   Dim data As Variant
-  Dim validated As Variant
   If LCase(Split(Request.ContentType, ";")[0]) <> "application/json" Then
     Reply(415, ErrorData("Expected application/json"))
     Return Null
@@ -445,14 +449,7 @@ Private Function JsonBody(Optional preserveNull As Boolean = False) As Collectio
     Return Null
   Endif
   text = Read Request.ContentLength
-  If preserveNull Then
-    ' Preserve first: a prior ordinary decode loses empty keys on Gambas 3.20.
-    ' Separate ordinary validation rejects UseNull's undefined-only syntax.
-    data = JSON.Decode(text, True)
-    validated = JSON.Decode(text)
-  Else
-    data = JSON.Decode(text)
-  Endif
+  data = JsonText.Decode(text)
   If Not (data Is Collection) Then
     Reply(400, ErrorData("Expected a JSON object"))
     Return Null
@@ -773,7 +770,7 @@ Private Function BoardViewBody() As Collection
   Dim words As String[]
   Dim i As Integer
   If LCase(Split(Request.ContentType, ";")[0]) = "application/json" Then
-    payload = JsonBody(True)
+    payload = JsonBody()
     If Not payload Then Return Null
   Else If LCase(Split(Request.ContentType, ";")[0]) = "application/x-www-form-urlencoded" Then
     If Request.ContentLength <= 0 Or Request.ContentLength > 1048576 Then
