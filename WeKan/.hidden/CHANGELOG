@@ -1,3 +1,8 @@
+Native Move dialog lane/list choices and current selection use complete text;
+open card editors receive complete destination status. Source/packaged browser
+SQL/selection/return-move/editor checks and ordinary transfer regression covered.
+Context title/value and destination board captions remain open.
+
 Native card moves preserve complete NUL/Unicode destination lane/status through
 projected reads and text-safe transactional writes, retaining other card fields.
 Exact order/identity, negative permissions/targets, SQL rollback/retry and real

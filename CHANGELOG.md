@@ -2,6 +2,16 @@
 
 This work adds the following features and fixes:
 
+- Populate native Move dialog lane/list choices with complete projected text.
+  Find the current lane by its full identity, retain native indexed selections
+  and refresh an open card editor with the complete destination status. Reproduce
+  the former zero-list dialog for a NUL-bearing lane. Source/packaged browser
+  checks cover current selection, changed destination, return moves, exact SQL
+  values and open-editor refresh alongside the existing privacy/role refusals.
+  Ordinary source/packaged layout/card-editor/admin/mobile checks pass.
+  Destination board captions, context title/value forms and lane/list mutation
+  storage remain separate work. Thanks to xet7.
+
 - Preserve complete native card-move destination text. Read the destination list
   title from the complete projection and write only lane/status through the
   existing SQLite text-safe writer inside the move transaction. Retain list IDs,

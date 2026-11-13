@@ -1581,9 +1581,9 @@ Private Sub BeginAction(action As String)
   DestinationListLabel.Visible = DestinationList.Visible
   LoadDestinationLanes()
   If $contextKind = "list" Or $contextKind = "card" Then
-    DestinationLane.Index = DestinationLane.List.Find(r!lane)
+    DestinationLane.Index = DestinationLane.List.Find(ExportText.ReadValue(r, "lane"))
   Else If $contextKind = "lane" Then
-    DestinationLane.Index = DestinationLane.List.Find(r!title)
+    DestinationLane.Index = DestinationLane.List.Find(ExportText.ReadValue(r, "title"))
   Endif
   LoadDestinationLists()
   $loadingDestinations = False
@@ -1699,7 +1699,7 @@ Private Sub LoadDestinationLanes()
   Dim values As New String[]
   r = KanbanStore.Lanes(TargetBoard())
   For Each r
-    values.Add(r!title)
+    values.Add(ExportText.ReadValue(r, "title"))
   Next
   DestinationLane.List = values
   If values.Count Then DestinationLane.Index = 0
@@ -1712,7 +1712,7 @@ Private Sub LoadDestinationLists()
   If DestinationLane.Text Then
     r = KanbanStore.Lists(TargetBoard(), DestinationLane.Text)
     For Each r
-      values.Add(CStr(r!id) & " | " & r!title)
+      values.Add(CStr(r!id) & " | " & ExportText.ReadValue(r, "title"))
     Next
   Endif
   DestinationList.List = values
@@ -1862,7 +1862,7 @@ Public Sub ActionConfirm_Click()
           If $card = $contextId Then
             r = KanbanStore.GetList($contextBoard, "#" & CStr(destination), DestinationLane.Text)
             Lane.Text = DestinationLane.Text
-            Status.Text = r!title
+            Status.Text = ExportText.ReadValue(r, "title")
             $listId = destination
             CardDraft.SetValue($draft, "lane", Lane.Text)
             CardDraft.SetValue($draft, "status", Status.Text)

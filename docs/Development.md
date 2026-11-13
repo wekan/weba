@@ -2697,3 +2697,12 @@ and packaged browsers drag between shared-prefix destinations, verify SQL values
 reload and move back. They wait for the exposed native clickSuppressed state
 before unrelated clicks. Destination/context forms and lane/list mutations remain
 separate TODO work.
+
+Native Move dialog lane/list choices use complete projections. The native
+WebComboBox index selects the server-side complete string; captions never become
+caller-supplied identities. Initial current-lane lookup and the open card editor
+status refresh also use complete text. The native-text browser reproduces the
+former empty list selector and checks initial/changed lane indexes, exact SQL
+placement and open-editor status, then moves back. Both source/packaged runs pass;
+ordinary source/packaged layout/card-editor/admin/mobile runs also pass.
+Destination board captions and other context value forms remain TODO.

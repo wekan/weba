@@ -37,6 +37,23 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   await moveCompleteCard(seed.items[1]);await page.reload();
   expect(fixture('read',seed.items[0].card)).toMatchObject({lane:seed.items[1].lane,status:seed.items[1].title,list:seed.items[1].list});
   await moveCompleteCard(seed.items[0]);await columns();
+  await page.locator('.weba-report .weba-card-link[data-card-id="'+seed.items[0].card+'"]').click();await settle();
+  // Native Move must initialize its current complete lane and list choices.
+  await page.locator('.weba-report .weba-card[data-card-id="'+seed.items[0].card+'"] .weba-card-menu').click();await settle();await click('ContextMove');
+  const destinationLane=page.locator('[id$=".DestinationLane:select"]'),destinationList=page.locator('[id$=".DestinationList:select"]');
+  await expect(destinationLane.locator('option')).toHaveCount(2);
+  await expect(destinationList.locator('option')).toHaveCount(3);
+  expect(await destinationLane.evaluate(select=>select.selectedIndex)).toBe(0);
+  await destinationLane.selectOption({index:1});await settle();
+  await expect(destinationList.locator('option').first()).toContainText(String(seed.items[1].list)+' | ');
+  await click('ActionConfirm');
+  expect(fixture('read',seed.items[0].card)).toMatchObject({lane:seed.items[1].lane,status:seed.items[1].title,list:seed.items[1].list});
+  await expect(page.locator('[id$=".Lane:entry"]')).toHaveValue(seed.items[1].lane);await expect(page.locator('[id$=".Status:entry"]')).toHaveValue(seed.items[1].title);
+  await page.locator('.weba-report .weba-card[data-card-id="'+seed.items[0].card+'"] .weba-card-menu').click();await settle();await click('ContextMove');
+  expect(await destinationLane.evaluate(select=>select.selectedIndex)).toBe(1);
+  await destinationLane.selectOption({index:0});await settle();await click('ActionConfirm');
+  expect(fixture('read',seed.items[0].card)).toMatchObject({lane:seed.items[0].lane,status:seed.items[0].title,list:seed.items[0].list});
+  await columns();await click('CloseEditor');
   await page.locator('.weba-report .weba-column[data-list-id="'+seed.items[1].list+'"] .weba-add-card-top').click();await settle();
   await expect(page.locator('[id$=".Lane:entry"]')).toHaveValue(seed.items[1].lane);
   await expect(page.locator('[id$=".Status:entry"]')).toHaveValue(seed.items[1].title);
@@ -72,6 +89,6 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   await page.evaluate(()=>gw.raise(document.querySelector('[id$=".SaveCard"]').id,'click',[],false));await settle();
   expect(fixture('read',createdId)).toEqual(before);
   expect(errors).toEqual([]);
-  console.log('Native complete text browser: shared-prefix NUL/Unicode/markup lane/list identities retain exact columns/card placement across views/reload/Finnish/mobile; readonly/assigned scope, native exact destination mouse moves/reload, create/edit/NUL dirty refresh/reload and late-revocation refusal passed');
+  console.log('Native complete text browser: shared-prefix NUL/Unicode/markup lane/list identities retain exact columns/card placement across views/reload/Finnish/mobile; readonly/assigned scope, native exact destination mouse/dialog moves with editor refresh/reload, create/edit/NUL dirty refresh/reload and late-revocation refusal passed');
  }finally{try{if(context)await context.close();}finally{if(browser)await browser.close();}}
 })().catch(e=>{let s=e.stack||String(e);if(process.env.WEBA_TEST_PASSWORD)s=s.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(s);process.exitCode=1;});
