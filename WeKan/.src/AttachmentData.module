@@ -43,8 +43,8 @@ Public Function Mime(boardId As Integer, cardId As Integer, fileId As Integer) A
   OpenStore()
   r = $db.Exec("SELECT id FROM kb_files WHERE board_id=&1 AND card_id=&2 AND id=&3 AND " & AttachmentLifecycle.LiveSql("kb_files"), boardId, cardId, fileId)
   If Not r.Available Then Error.Raise("Attachment not accessible")
-  r = $db.Find("kb_attachment_data", "board_id=&1 AND card_id=&2 AND file_id=&3", boardId, cardId, fileId)
-  If r.Available Then Return r!mime
+  r = $db.Exec(ExportText.SelectRows($db, "kb_attachment_data") & " WHERE board_id=&1 AND card_id=&2 AND file_id=&3", boardId, cardId, fileId)
+  If r.Available Then Return ExportText.ReadValue(r, "mime")
   Return "application/octet-stream"
 End
 

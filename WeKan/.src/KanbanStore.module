@@ -404,7 +404,7 @@ End
 Public Function ItemOrder(boardId As Integer, kind As String, item As String, fallback As Integer) As Integer
   Dim r As Result
   RequireBoard(boardId)
-  r = $db.Find("kb_order", "board_id = &1 AND kind = &2 AND item = &3", boardId, kind, item)
+  r = $db.Exec("SELECT * FROM kb_order WHERE board_id = &1 AND kind = &2 AND " & ExportText.MatchText($db, "item", 3, item), boardId, kind, ExportText.BindText($db, item))
   If r.Available Then Return r!sort_order
   Return fallback
 End
@@ -634,12 +634,12 @@ Private Function ResolveCardList(boardId As Integer, cardId As Integer, Optional
   Dim c As Result
   Dim laneTitle As String
   RequireBoard(boardId)
-  c = $db.Find("kb_cards", ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND id = &2", boardId, cardId)
+  c = $db.Exec(ExportText.SelectRows($db, "kb_cards") & " WHERE " & ListDeletion.LiveSql("card", "kb_cards") & " AND board_id = &1 AND id = &2", boardId, cardId)
   If Not c.Available Then Error.Raise("Card not accessible")
   r = $db.Find("kb_card_lists", "card_id = &1 AND board_id = &2", cardId, boardId)
   If r.Available Then Return r!list_id
-  laneTitle = If(Trim(c!lane), c!lane, "Default")
-  r = $db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND lane = &2 AND title = &3 ORDER BY sort_order, id", boardId, laneTitle, c!status)
+  laneTitle = If(Trim(ExportText.ReadValue(c, "lane")), ExportText.ReadValue(c, "lane"), "Default")
+  r = $db.Exec("SELECT * FROM kb_lists WHERE " & ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 AND " & ExportText.MatchText($db, "lane", 2, laneTitle) & " AND " & ExportText.MatchText($db, "title", 3, ExportText.ReadValue(c, "status")) & " ORDER BY sort_order, id", boardId, ExportText.BindText($db, laneTitle), ExportText.BindText($db, ExportText.ReadValue(c, "status")))
   If Not r.Available Then Return 0
   If persist Then PutCardList(boardId, cardId, r!id)
   Return r!id

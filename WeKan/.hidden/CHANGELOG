@@ -1,3 +1,8 @@
+Native backup wire text: preserve complete control/NUL/Unicode field values and
+NULL versus empty, with safe legacy grouping/order and full display author/MIME
+reads.32owner/readonly scoped snapshots match standard JSON decoding. Native
+decoder/import storage round trips and full original parity remain open.
+
 Native backup container reads: stop creating stored lanes/default lists; export
 empty boards unchanged and reconstruct required legacy containers only in the
 snapshot with stable local IDs.20owner/readonly scoped round trips, source

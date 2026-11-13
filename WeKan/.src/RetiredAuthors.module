@@ -43,8 +43,8 @@ Public Function DisplayName(kind As String, itemId As Integer, liveAuthor As Str
   Dim r As Result
   If liveAuthor Then Return liveAuthor
   OpenStore()
-  r = $db.Find("kb_retired_authors", "kind = &1 AND item_id = &2", kind, itemId)
-  If r.Available Then Return r!display_name
+  r = $db.Exec(ExportText.SelectRows($db, "kb_retired_authors") & " WHERE kind = &1 AND item_id = &2", kind, itemId)
+  If r.Available Then Return ExportText.ReadValue(r, "display_name")
   Return ""
 End
 

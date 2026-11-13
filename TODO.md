@@ -99,9 +99,15 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   the exported snapshot with stable local IDs. Trigger-guarded owner/readonly
   board/card/list round trips and explicit initialization are recorded in
   CHANGELOG.md.
-- Next data follow-up: generic-backup full text fidelity and legacy field-model
-  consistency. Other DB driver conformance, remaining field models/security
-  reporting and full original suites stay open.
+- Completed native backup wire-text preservation through complete SQL text
+  readers, NULL/empty distinction, NUL-aware grouping/order and display-author/
+  MIME reads. Standard JSON parsing verifies 32 owner/readonly scoped snapshots;
+  this does not claim native decoder/import round-trip completion.
+- Next data follow-up: fix native JSON decoding that drops escaped NUL, escaped
+  surrogate pairs and empty/null object values, then verify complete import
+  storage round trips and legacy field-model consistency.
+  Other DB driver conformance, remaining field models/security reporting and
+  full original suites stay open.
 
 - Next: remaining copy-option models/controls, selected-export API/model/
   security parity, Home/group targets and original

@@ -3454,3 +3454,10 @@ legacy containers are reconstructed only inside the snapshot with stable local
 IDs. Guarded owner/readonly scoped round trips cover this behavior. Other-driver
 conformance, full generic-backup text/model fidelity and full model/UI/API/security
 parity stay open.
+
+Native JSON backup exports now preserve complete control/NUL/Unicode text and
+NULL versus empty values across context, cards, containers, metadata, custom
+fields, attachment names and display-only authors. A standard JSON decoder
+verifies 32 owner/readonly scoped wire snapshots. The installed native decoder
+has a separate escaped-NUL defect, so full native import/storage round trips
+remain pending with the other model/UI/API/security requirements.

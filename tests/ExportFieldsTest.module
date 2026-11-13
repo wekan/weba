@@ -15,15 +15,15 @@ Public Sub Main()
   cardId = KanbanStore.SaveCard(boardId, 0, "Empty fields", "", "Default", "Todo", "", "", "", listId)
   CardContent.Save(boardId, cardId, 0, "checklist", "Checklist", "", 0, False, 0)
   db = WebDatabase.OpenConnection()
-  ' This Gambas driver exposes empty SQL strings as Null; retain their keys.
+  ' Preserve actual SQL empty strings separately from NULL despite driver reads.
   db.Exec("UPDATE kb_cards SET description='',assignee='',labels='',due_day='' WHERE id=&1", cardId)
   db.Exec("UPDATE kb_entries SET body='' WHERE board_id=&1", boardId)
   text = BoardTransfer.ExportData(boardId, "board", boardId)
-  Need(text, "description", "null")
-  Need(text, "assignee", "null")
-  Need(text, "labels", "null")
-  Need(text, "due_day", "null")
-  Need(text, "body", "null")
+  Need(text, "description", Chr(34) & Chr(34))
+  Need(text, "assignee", Chr(34) & Chr(34))
+  Need(text, "labels", Chr(34) & Chr(34))
+  Need(text, "due_day", Chr(34) & Chr(34))
+  Need(text, "body", Chr(34) & Chr(34))
   Need(text, "done", "false")
   Need(text, "amount", "0")
   Need(text, "archived", "false")
@@ -31,8 +31,8 @@ Public Sub Main()
   db.Exec("UPDATE kb_cards SET description=NULL WHERE id=&1", cardId)
   text = BoardTransfer.ExportData(boardId, "card", cardId)
   Need(text, "description", "null")
-  Need(text, "labels", "null")
-  Print "Export raw JSON: nullable text, false flags and zero values retain explicit keys"
+  Need(text, "labels", Chr(34) & Chr(34))
+  Print "Export raw JSON: SQL NULL and empty text remain distinct; false flags and zero values retain explicit keys"
 End
 
 Private Sub Need(text As String, key As String, value As String)

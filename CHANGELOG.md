@@ -2,6 +2,21 @@
 
 This work adds the following features and fixes:
 
+- Preserve complete native backup wire text: authorized context/card/container,
+  metadata/custom, filename and display-author/MIME values use shared guarded
+  text readers; NULL stays distinct from empty text and numeric/Boolean values.
+  NUL-containing legacy lane/status lookup and order keys use safe SQLite text
+  matching. Reproduce the prior truncated title against committed code, then
+  compare 32 owner/readonly board/lane/list/card snapshots with a standard JSON
+  decoder, covering control/NUL/Unicode text, linked/missing source relationships,
+  nullable/empty values, persisted NUL-key ordering and exact attachment bytes.
+  Full host tests (including 70 Python tests), both 706-response API builds and
+  both 45-download browser builds with cached revoke/regrant retry pass. The
+  native decoder separately loses escaped NUL/surrogates and empty/null object
+  values, and ordinary SQLite writes reject NUL text; decoder/import storage
+  repair, legacy field consistency and broader original parity remain open.
+  Thanks to xet7.
+
 - Stop native backup reads from initializing stored lanes and default lists.
   Preserve empty stored boards as empty snapshots. Reconstruct only required
   missing legacy containers in the snapshot, using stable export-local negative

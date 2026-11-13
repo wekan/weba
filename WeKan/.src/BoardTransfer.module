@@ -6,7 +6,15 @@ Private Function Row(r As Result, fields As String[]) As Collection
   Dim item As New Collection
   Dim field As String
   For Each field In fields
-    item.Add(r[field], field)
+    If r.Fields.Exist("__weba_text_" & field) Then
+      If CBool(r["__weba_null_" & field]) Then
+        item.Add(Null, field)
+      Else
+        item.Add(ExportText.ReadValue(r, field), field)
+      Endif
+    Else
+      item.Add(r[field], field)
+    Endif
   Next
   Return item
 End
@@ -392,6 +400,7 @@ Private Function BuildExport(boardId As Integer, kind As String, itemId As Integ
   Dim laneIds As New Integer[]
   Dim source As Result
   Dim r As Result
+  Dim scopedCards As Result
   Dim bytesRow As Result
   Dim item As Collection
   Dim listId As Integer
@@ -403,29 +412,41 @@ Private Function BuildExport(boardId As Integer, kind As String, itemId As Integ
   source = WorkspaceStore.Record(boardId, kind, itemId)
   CardContent.OpenStore()
   $db = WebDatabase.OpenConnection()
-  r = $db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 ORDER BY lane, sort_order, id", boardId)
+  Select kind
+    Case "board"
+      source = $db.Exec(ExportText.SelectRows($db, "kb_boards") & " WHERE id=&1", itemId)
+    Case "lane"
+      source = $db.Exec(ExportText.SelectRows($db, "kb_lanes") & " WHERE board_id=&1 AND id=&2", boardId, itemId)
+    Case "list"
+      source = $db.Exec(ExportText.SelectRows($db, "kb_lists") & " WHERE board_id=&1 AND id=&2", boardId, itemId)
+    Case "card"
+      source = $db.Exec(ExportText.SelectRows($db, "kb_cards") & " WHERE board_id=&1 AND id=&2", boardId, itemId)
+  End Select
+  r = $db.Exec(ExportText.SelectRows($db, "kb_lists") & " WHERE " & ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1 ORDER BY lane, sort_order, id", boardId)
   For Each r
     allLists.Add(Row(r, ["id", "lane", "title", "sort_order"]))
   Next
   data["format"] = "weba-2"
   data["kind"] = kind
-  data["title"] = source!title
+  data["title"] = ExportText.ReadValue(source, "title")
   If kind = "board" Then
     viewPolicy = BoardViewPolicy.Transfer(boardId)
     For Each policyKey In viewPolicy.Keys
       data[policyKey] = viewPolicy[policyKey]
     Next
   Endif
-  r = BoardAccess.CardRows(boardId)
-  For Each r
+  scopedCards = BoardAccess.CardRows(boardId)
+  For Each scopedCards
+    r = $db.Exec(ExportText.SelectRows($db, "kb_cards") & " WHERE board_id=&1 AND id=&2", boardId, scopedCards!id)
+    If Not r.Available Then Error.Raise("Card not accessible")
     listId = KanbanStore.ReadCardListId(boardId, r!id)
     If kind = "card" And r!id <> itemId Then Continue
     If kind = "list" And listId <> itemId Then Continue
-    If kind = "lane" And r!lane <> source!title And Not (source!title = "Default" And Not r!lane) Then Continue
+    If kind = "lane" And ExportText.ReadValue(r, "lane") <> ExportText.ReadValue(source, "title") And Not (ExportText.ReadValue(source, "title") = "Default" And Not ExportText.ReadValue(r, "lane")) Then Continue
     item = Row(r, ["id", "title", "description", "lane", "status", "assignee", "labels", "due_day", "archived"])
     If Not HasExportContainer(allLists, listId) Then
-      laneTitle = If(Trim(r!lane), r!lane, "Default")
-      listId = ExportList(allLists, laneTitle, r!status)
+      laneTitle = If(Trim(ExportText.ReadValue(r, "lane")), ExportText.ReadValue(r, "lane"), "Default")
+      listId = ExportList(allLists, laneTitle, ExportText.ReadValue(r, "status"))
       item["lane"] = laneTitle
     Endif
     item["assignees"] = BoardAccess.Assignees(boardId, r!id)
@@ -441,31 +462,31 @@ Private Function BuildExport(boardId As Integer, kind As String, itemId As Integ
     If listIds.Find(listId) < 0 Then listIds.Add(listId)
   Next
   For Each stored In allLists
-    include = kind = "board" Or (kind = "lane" And stored["lane"] = source!title) Or (kind = "list" And stored["id"] = itemId) Or listIds.Find(stored["id"]) >= 0
+    include = kind = "board" Or (kind = "lane" And stored["lane"] = ExportText.ReadValue(source, "title")) Or (kind = "list" And stored["id"] = itemId) Or listIds.Find(stored["id"]) >= 0
     If Not include Then Continue
     lists.Add(stored)
     If listIds.Find(stored["id"]) < 0 Then listIds.Add(stored["id"])
   Next
-  r = $db.Find("kb_lanes", "board_id = &1 ORDER BY id", boardId)
+  r = $db.Exec(ExportText.SelectRows($db, "kb_lanes") & " WHERE " & "board_id = &1 ORDER BY id", boardId)
   For Each r
     include = kind = "board" Or (kind = "lane" And r!id = itemId)
     For Each item In lists
-      If item["lane"] = r!title Then include = True
+      If item["lane"] = ExportText.ReadValue(r, "title") Then include = True
     Next
     If Not include Then Continue
     item = Row(r, ["id", "title"])
-    item["sort_order"] = KanbanStore.ItemOrder(boardId, "lane", r!title, r!id)
+    item["sort_order"] = KanbanStore.ItemOrder(boardId, "lane", ExportText.ReadValue(r, "title"), r!id)
     lanes.Add(item)
     laneIds.Add(r!id)
   Next
   For Each stored In lists
     ExportLane(lanes, stored["lane"])
   Next
-  r = $db.Find("kb_meta", "board_id = &1", boardId)
+  r = $db.Exec(ExportText.SelectRows($db, "kb_meta") & " WHERE " & "board_id = &1", boardId)
   For Each r
-    If r!setting = "star" Or r!setting = "watch" Or r!setting = "cover" Then Continue
+    If ExportText.ReadValue(r, "setting") = "star" Or ExportText.ReadValue(r, "setting") = "watch" Or ExportText.ReadValue(r, "setting") = "cover" Then Continue
     include = False
-    Select r!kind
+    Select ExportText.ReadValue(r, "kind")
       Case "board"
         include = kind = "board"
       Case "lane"
@@ -477,15 +498,15 @@ Private Function BuildExport(boardId As Integer, kind As String, itemId As Integ
     End Select
     If include Then metadata.Add(Row(r, ["kind", "item_id", "setting", "value"]))
   Next
-  r = $db.Find("kb_entries", "board_id = &1 ORDER BY id", boardId)
+  r = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE " & "board_id = &1 ORDER BY id", boardId)
   For Each r
     If cardIds.Find(r!card_id) < 0 Then Continue
-    If (r!kind = "subtask" Or r!kind = "dependency") And cardIds.Find(CInt(r!amount)) < 0 Then Continue
+    If (ExportText.ReadValue(r, "kind") = "subtask" Or ExportText.ReadValue(r, "kind") = "dependency") And cardIds.Find(CInt(r!amount)) < 0 Then Continue
     item = Row(r, ["id", "card_id", "kind", "parent_id", "title", "body", "value_type", "done", "amount"])
     item["author_name"] = CardContent.AuthorName(boardId, r!card_id, "entry", r!id)
     entries.Add(item)
   Next
-  r = $db.Exec("SELECT id,card_id,filename,COALESCE(LENGTH(content),0) AS file_size FROM kb_files WHERE " & AttachmentLifecycle.LiveSql("kb_files") & " AND board_id=&1 ORDER BY id", boardId)
+  r = $db.Exec(ExportText.Preserve($db, "SELECT id,card_id,filename,COALESCE(LENGTH(content),0) AS file_size FROM kb_files WHERE " & AttachmentLifecycle.LiveSql("kb_files") & " AND board_id=&1 ORDER BY id"), boardId)
   For Each r
     If cardIds.Find(r!card_id) < 0 Then Continue
     item = Row(r, ["id", "card_id", "filename"])

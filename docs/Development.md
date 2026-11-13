@@ -2488,3 +2488,42 @@ contains empty lane/list/card arrays, and checks the stored counts again after
 all generic exports. Only then does the disposable fixture explicitly initialize
 one lane/three lists for unchanged tool-format content comparisons. Both source
 and packaged browser runs cover this separation and cached revoke/regrant retry.
+
+Native backup wire text uses shared guarded projections for the already-authorized
+context and each scoped card, plus live lists/lanes, metadata, entries and file
+names. A card is re-read by board/ID after its ID is obtained from authorized
+`CardRows`; existing fresh card checks and final transaction guards still apply.
+`Row` uses explicit SQL null flags so NULL text stays null, empty text stays empty,
+and non-text values keep their original types. NUL lane/status fallback and lane
+order keys use hex matching only in SQLite when needed, retaining normal bound
+parameters otherwise. Retired-author display and attachment MIME reads also use
+the complete-text path; their authorization and write validators are unchanged.
+
+`BackupTextTest` seeds exact SQL text bytes, including NUL, astral Unicode, quotes,
+backslashes, backspace/form-feed/newline and visible suffixes. Its 32 snapshots
+cover owner/readonly board/lane/list/card contexts with linked/missing source
+relationships and NULL/empty values. `backup-text-conformance.test.cjs` parses the
+actual emitted JSON with a standard decoder and checks all seeded text fields,
+source list IDs and exact binary attachment bytes. Missing source links stay
+missing. Tests against the prior committed exporter reproduce truncated titles.
+This oracle deliberately avoids the installed Gambas `JSON.Decode`, which was
+independently observed removing escaped NUL while `JSON.Encode` preserves it.
+Native decoder correction, full import storage round trips and legacy field-model
+consistency therefore remain explicit TODO requirements, not implied by the wire
+export checks. Legacy MIME/metadata fixture bytes test stored-value export;
+existing import validation of those fields remains a separate requirement.
+
+The isolated native decoder probe additionally verifies both default and
+`UseNull=True`: object properties containing empty strings or null are absent
+(`Exist=False`), escaped UTF-16 surrogate-pair emoji is dropped while direct UTF-8
+emoji survives, NUL escapes are removed from values and keys, and literal escaped
+backslash-u0000 text is retained. These cases must be covered by the decoder repair
+and import regressions. The wire exporter test uses standard JSON decoding so
+these native defects cannot mask lost or altered exported bytes.
+
+The isolated SQLite storage probe separately verifies that both ordinary
+`Result.Create`/`Update` text writes and ordinary bound text arguments reject an
+embedded NUL. `CAST(Connection.FormatBlob(value) AS TEXT)` stores the complete
+NUL/Unicode byte sequence with SQLite type `text`. This gives a verified driver
+primitive for the pending import storage repair; it does not imply that native
+write paths or their validation/atomicity have already been changed.

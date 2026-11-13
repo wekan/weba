@@ -1,0 +1,99 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim laneId As Integer
+  Dim listId As Integer
+  Dim cardId As Integer
+  Dim entryId As Integer
+  Dim fileId As Integer
+  Dim data As New Collection
+  Dim snapshots As New Variant[]
+  Dim snapshot As Collection
+  Dim variant As String
+  Dim wire As String
+  Dim item As Collection
+  Dim db As Connection
+  Dim rows As Result
+  Dim actor As String
+  Dim mode As String
+  Dim itemId As Integer
+  Dim count As Integer
+  WebDatabase.Register("backup-text-owner", "x")
+  WebDatabase.Register("backup-text-reader", "x")
+  SignIn("backup-text-owner")
+  boardId = KanbanStore.AddBoard("Backup full text")
+  rows = KanbanStore.Lanes(boardId)
+  laneId = rows!id
+  rows = KanbanStore.Lists(boardId, "Default")
+  listId = rows!id
+  cardId = KanbanStore.SaveCard(boardId, 0, "Card", "Description", "Default", "Todo", "", "labels", "", listId)
+  entryId = CardContent.Save(boardId, cardId, 0, "custom", "Field", "Value", 0, False, 0, "text")
+  CardContent.RetainAuthorName(boardId, cardId, "entry", entryId, "Display")
+  fileId = CardContent.AddFile(boardId, cardId, "data.bin", "A" & Chr(0) & "B")
+  CardContent.RetainAuthorName(boardId, cardId, "file", fileId, "Display")
+  WorkspaceStore.SetSetting(boardId, "card", cardId, "color", "#aabbcc")
+  BoardAccess.SetMember(boardId, "backup-text-reader", "read-only")
+  db = WebDatabase.OpenConnection()
+  SetText(db, "kb_boards", "title", "id", boardId, Value("board"))
+  SetText(db, "kb_lanes", "title", "id", laneId, Value("lane"))
+  db.Exec("INSERT INTO kb_order(board_id,kind,item,sort_order) VALUES(&1,'lane','Default',41)", boardId)
+  SetText(db, "kb_order", "item", "board_id", boardId, Value("lane"))
+  SetText(db, "kb_lists", "lane", "board_id", boardId, Value("lane"))
+  SetText(db, "kb_lists", "title", "id", listId, Value("list"))
+  SetText(db, "kb_cards", "lane", "id", cardId, Value("lane"))
+  SetText(db, "kb_cards", "status", "id", cardId, Value("list"))
+  SetText(db, "kb_cards", "title", "id", cardId, Value("card"))
+  SetText(db, "kb_cards", "description", "id", cardId, Value("description"))
+  SetText(db, "kb_cards", "labels", "id", cardId, Value("labels"))
+  SetText(db, "kb_entries", "title", "id", entryId, Value("custom-title"))
+  SetText(db, "kb_entries", "body", "id", entryId, Value("custom-body"))
+  SetText(db, "kb_files", "filename", "id", fileId, Value("filename"))
+  SetText(db, "kb_attachment_data", "mime", "file_id", fileId, Value("mime"))
+  SetText(db, "kb_retired_authors", "display_name", "board_id", boardId, Value("author"))
+  SetText(db, "kb_meta", "value", "board_id", boardId, Value("metadata"))
+  For Each variant In ["linked", "missing-link", "empty", "null"]
+    If variant = "missing-link" Then db.Exec("DELETE FROM kb_card_lists WHERE board_id=&1", boardId)
+    If variant = "empty" Or variant = "null" Then
+      db.Exec("UPDATE kb_cards SET description=" & If(variant = "null", "NULL", "''") & " WHERE id=&1", cardId)
+      db.Exec("UPDATE kb_entries SET body=" & If(variant = "null", "NULL", "''") & " WHERE id=&1", entryId)
+    Endif
+    For Each actor In ["backup-text-owner", "backup-text-reader"]
+      SignIn(actor)
+      For Each mode In ["board", "lane", "list", "card"]
+        itemId = boardId
+        If mode = "lane" Then itemId = laneId
+        If mode = "list" Then itemId = listId
+        If mode = "card" Then itemId = cardId
+        wire = BoardTransfer.ExportData(boardId, mode, itemId)
+        snapshot = New Collection
+        snapshot["actor"] = actor
+        snapshot["mode"] = mode
+        snapshot["variant"] = variant
+        snapshot["content"] = wire
+        snapshots.Add(snapshot)
+        If variant <> "linked" And db.Find("kb_card_lists", "board_id=&1", boardId).Available Then Error.Raise("Text lookup persisted a missing source link")
+        Inc count
+      Next
+    Next
+  Next
+  data["snapshots"] = snapshots
+  data["listId"] = listId
+  Print JSON.Encode(data)
+End
+
+Private Function Value(name As String) As String
+  Return name & Chr(0) & " Ω😀'" & Chr(92) & Chr(8) & Chr(12) & Chr(10) & "SUFFIX"
+End
+
+Private Sub SetText(db As Connection, tableName As String, field As String, key As String, id As Integer, value As String)
+  Dim encoded As String
+  Dim i As Integer
+  For i = 1 To Len(value)
+    encoded &= Hex$(Asc(Mid(value, i, 1)), 2)
+  Next
+  db.Exec("UPDATE " & tableName & " SET " & field & "=CAST(X'" & encoded & "' AS TEXT) WHERE " & key & "=&1", id)
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End
