@@ -1,0 +1,224 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim foreignBoard As Integer
+  Dim visible As Integer
+  Dim hidden As Integer
+  Dim archived As Integer
+  Dim listId As Integer
+  Dim laneId As Integer
+  Dim conn As Connection
+  Dim r As Result
+  Dim actor As String
+  Dim field As String
+  Dim before As String
+  Dim overview As String
+  Dim history As String
+  Dim changed As String
+  Dim suffix As String = Chr(0) & "Ω😀'suffix"
+  Dim lane As String = "Lane" & suffix
+  Dim listTitle As String = "List" & suffix
+  Dim title As String = "Board" & suffix
+  Dim params As New Collection
+  Dim data As Collection
+  Dim parsed As Collection
+  Dim row As Variant
+  Dim names As Collection
+  Dim denied As Boolean
+  For Each actor In ["live-text-global", "live-text-owner", "live-text-reader", "live-text-assigned", "live-text-outsider"]
+    WebDatabase.Register(actor, "x")
+  Next
+  SignIn("live-text-owner")
+  boardId = KanbanStore.AddBoard(title)
+  BoardAccess.SetMember(boardId, "live-text-assigned", "read-assigned-only")
+  SignIn("live-text-outsider")
+  foreignBoard = KanbanStore.AddBoard("FOREIGN-BOARD-CANARY" & suffix)
+  SignIn("live-text-owner")
+  visible = KanbanStore.SaveCard(boardId, 0, "Visible" & suffix, "VISIBLE-BODY-CANARY" & suffix, lane, "Todo", "live-text-assigned", "Labels" & suffix, "2026-11-13")
+  hidden = KanbanStore.SaveCard(boardId, 0, "HIDDEN-TITLE-CANARY" & suffix, "HIDDEN-BODY-CANARY" & suffix, lane, "Todo", "", "", "")
+  archived = KanbanStore.SaveCard(boardId, 0, "Archived" & suffix, "Retained", lane, "Todo", "live-text-assigned", "", "")
+  KanbanStore.ArchiveCard(boardId, archived, True)
+  listId = KanbanStore.CardListId(boardId, visible)
+  WorkspaceStore.Rename(boardId, "list", listId, listTitle)
+  r = KanbanStore.Lanes(boardId)
+  laneId = r!id
+  WorkspaceStore.SetSetting(boardId, "board", boardId, "description", "Metadata" & suffix)
+  BoardAccess.SetMember(boardId, "live-text-reader", "read-only")
+  conn = WebDatabase.OpenConnection()
+  For Each actor In ["live-text-owner", "live-text-reader", "live-text-assigned"]
+    SignIn(actor)
+    before = BoardLive.State(boardId, False)
+    overview = BoardLive.Overview(False)
+    parsed = JsonText.Decode(before)
+    If parsed["title"] <> title Then Error.Raise("Live board title truncated")
+    If parsed["lanes"][0]["title"] <> lane Or parsed["lists"][0]["title"] <> listTitle Then Error.Raise("Live containers truncated")
+    If parsed["settings"][0]["value"] <> "Metadata" & suffix Then Error.Raise("Live setting truncated")
+    names = BoardLive.CardTitles(False)
+    If names[CStr(visible)] <> "Visible" & suffix Then Error.Raise("Navigation title truncated")
+    If InStr(overview, "BODY-CANARY") Or InStr(overview, "FOREIGN-BOARD") Then Error.Raise("Overview exposed non-navigation/foreign fields")
+    If BoardRoute.Resolve(CStr(boardId))["title"] <> title Then Error.Raise("Route title truncated")
+    params["search"] = "suffix"
+    data = BoardCatalog.Page(params)
+    If data["total"] <> 1 Then Error.Raise("Catalog missed suffix after NUL")
+    If actor = "live-text-assigned" Then
+      If InStr(before, "HIDDEN-") Or InStr(overview, "HIDDEN-") Or names.Exist(CStr(hidden)) Then Error.Raise("Assigned snapshot exposed hidden card")
+    Endif
+    history = Frame()
+    If BoardLive.State(boardId, False) <> before Or BoardLive.Overview(False) <> overview Then Error.Raise("Complete snapshot unstable")
+    BoardLive.CardTitles(False)
+    BoardCatalog.Page(params)
+    BoardRoute.Resolve(CStr(boardId))
+    If Frame() <> history Then Error.Raise("Live/catalog/route reads wrote database state")
+  Next
+  SignIn("live-text-assigned")
+  before = BoardLive.State(boardId, False)
+  overview = BoardLive.Overview(False)
+  SignIn("live-text-owner")
+  WriteText("kb_cards", "title", hidden, "HIDDEN-TITLE-CANARY" & suffix & "B")
+  WriteText("kb_cards", "description", hidden, "HIDDEN-BODY-CANARY" & suffix & "B")
+  WorkspaceStore.SetSetting(boardId, "board", boardId, "star", "1")
+  SignIn("live-text-assigned")
+  If BoardLive.State(boardId, False) <> before Or BoardLive.Overview(False) <> overview Then Error.Raise("Hidden/other-principal suffix edit invalidated snapshot")
+  SignIn("live-text-reader")
+  before = BoardLive.State(boardId, False)
+  overview = BoardLive.Overview(False)
+  SignIn("live-text-owner")
+  WorkspaceStore.Rename(boardId, "board", boardId, title & "B")
+  SignIn("live-text-reader")
+  If BoardLive.State(boardId, False) = before Or BoardLive.Overview(False) = overview Then Error.Raise("Board suffix rename missed")
+  params["search"] = "suffixB"
+  If BoardCatalog.Page(params)["total"] <> 1 Then Error.Raise("Catalog missed changed suffix")
+  For Each field In ["title", "description", "labels"]
+    before = BoardLive.State(boardId, False)
+    overview = BoardLive.Overview(False)
+    SignIn("live-text-owner")
+    WriteText("kb_cards", field, visible, field & suffix & "B")
+    SignIn("live-text-reader")
+    If BoardLive.State(boardId, False) = before Then Error.Raise("Card suffix edit missed: " & field)
+    If field = "title" Then
+      If BoardLive.Overview(False) = overview Then Error.Raise("Navigation suffix edit missed")
+    Else
+      If BoardLive.Overview(False) <> overview Then Error.Raise("Non-navigation suffix invalidated overview")
+    Endif
+  Next
+  before = BoardLive.State(boardId, False)
+  SignIn("live-text-owner")
+  WorkspaceStore.Rename(boardId, "lane", laneId, lane & "B")
+  WorkspaceStore.Rename(boardId, "list", listId, listTitle & "B")
+  WorkspaceStore.SetSetting(boardId, "board", boardId, "description", "Metadata" & suffix & "B")
+  SignIn("live-text-reader")
+  changed = BoardLive.State(boardId, False)
+  If changed = before Then Error.Raise("Container/setting suffix edit missed")
+  parsed = JsonText.Decode(changed)
+  If parsed["lanes"][0]["title"] <> lane & "B" Or parsed["lists"][0]["title"] <> listTitle & "B" Then Error.Raise("Container state lacks full renamed values")
+  conn.Exec("UPDATE kb_cards SET description=NULL WHERE id=&1", visible)
+  before = BoardLive.State(boardId, False)
+  parsed = JsonText.Decode(before)
+  For Each row In parsed["cards"]
+    If row["id"] = visible Then
+      If TypeOf(row["description"]) = gb.String Or Not IsNull(row["description"]) Then Error.Raise("SQL NULL became text")
+    Endif
+  Next
+  conn.Exec("UPDATE kb_cards SET description='' WHERE id=&1", visible)
+  changed = BoardLive.State(boardId, False)
+  If changed = before Then Error.Raise("Empty text merged with SQL NULL")
+  parsed = JsonText.Decode(changed)
+  For Each row In parsed["cards"]
+    If row["id"] = visible Then
+      If TypeOf(row["description"]) <> gb.String Or row["description"] <> "" Then Error.Raise("Empty text became NULL")
+    Endif
+  Next
+  WriteText("kb_cards", "description", visible, "Body" & Chr(0) & JsonText.Decode(Chr(34) & "\\ud800" & Chr(34)) & "tail")
+  parsed = JsonText.Decode(BoardLive.State(boardId, False))
+  For Each row In parsed["cards"]
+    If row["id"] = visible And If row["description"] <> "Body" & Chr(0) & JsonText.Decode(Chr(34) & "\\ud800" & Chr(34)) & "tail" Then Error.Raise("Private snapshot lost lone UTF-16 unit")
+  Next
+  history = Frame()
+  For Each actor In ["live-text-global", "live-text-outsider"]
+    SignIn(actor)
+    Try BoardLive.State(boardId, False)
+    denied = Error
+    If Not denied Then Error.Raise("Nonmember read board snapshot")
+    Try BoardRoute.Resolve(CStr(boardId))
+    denied = Error
+    If Not denied Then Error.Raise("Nonmember read full route title")
+    For Each row In JsonText.Decode(BoardLive.Overview(False))
+      If row["id"] = boardId Then Error.Raise("Nonmember overview leaked board")
+    Next
+  Next
+  If Frame() <> history Then Error.Raise("Denied snapshot reads wrote state")
+  SignIn("live-text-owner")
+  BoardAccess.RemoveMember(boardId, "live-text-reader")
+  SignIn("live-text-reader")
+  Try BoardLive.State(boardId, False)
+  denied = Error
+  If Not denied Or BoardLive.Overview(False) <> "[]" Then Error.Raise("Revoked snapshot remained readable")
+  Print "Live complete text: suffix changes in board/card/container/settings, navigation-only overview, NUL/Unicode/lone units/NULL-empty fidelity, literal suffix search/routes, owner/reader/assigned privacy, no-read writes and revocation passed"
+End
+
+Private Sub WriteText(tableName As String, field As String, id As Integer, value As Variant)
+  Dim conn As Connection = WebDatabase.OpenConnection()
+  If TypeOf(value) <> gb.String And If IsNull(value) Then
+    conn.Exec("UPDATE " & conn.Quote(tableName) & " SET " & conn.Quote(field) & "=NULL WHERE id=&1", id)
+  Else
+    conn.Exec("UPDATE " & conn.Quote(tableName) & " SET " & conn.Quote(field) & "=CAST(" & conn.FormatBlob(value) & " AS TEXT) WHERE id=&1", id)
+  Endif
+End
+
+Private Sub SignIn(actor As String)
+  Session["username"] = actor
+  Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+End
+
+Private Function Frame() As String
+  Dim conn As Connection = WebDatabase.OpenConnection()
+  Dim table As Table
+  Dim tables As New String[]
+  Dim tableName As String
+  Dim order As String[]
+  Dim key As String
+  Dim rows As Result
+  Dim field As ResultField
+  Dim values As Collection
+  Dim data As Variant[]
+  Dim result As New Collection
+  For Each table In conn.Tables
+    If Left(table.Name, 7) <> "sqlite_" Then tables.Add(table.Name)
+  Next
+  tables.Sort()
+  For Each tableName In tables
+    order = New String[]
+    For Each key In conn.Tables[tableName].PrimaryKey
+      order.Add(conn.Quote(key))
+    Next
+    rows = conn.Exec(ExportText.SelectRows(conn, tableName) & If(order.Count, " ORDER BY " & order.Join(","), ""))
+    data = New Variant[]
+    For Each rows
+      values = New Collection
+      For Each field In rows.Fields
+        If Left(field.Name, 7) = "__weba_" Then Continue
+        If field.Type = DB.String Then
+          If rows.Fields.Exist("__weba_null_" & field.Name) Then
+            If rows["__weba_null_" & field.Name] Then
+              values[field.Name] = JSON.Null
+            Else
+              values[field.Name] = ExportText.ReadValue(rows, field.Name)
+            Endif
+          Else
+            values[field.Name] = rows[field.Name]
+          Endif
+        Else If field.Type = DB.Blob Then
+          If IsNull(rows[field.Name]) Then
+            values[field.Name] = JSON.Null
+          Else
+            values[field.Name] = Base64(rows[field.Name].Data)
+          Endif
+        Else
+          values[field.Name] = rows[field.Name]
+        Endif
+      Next
+      data.Add(values)
+    Next
+    result[tableName] = data
+  Next
+  Return JsonText.Encode(result)
+End

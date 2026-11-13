@@ -19,6 +19,7 @@ const {execFileSync}=require('node:child_process');
    {menu:'native-root'},{menu:'native-child'},{menu:'native-other'},
    {menu:'native-root',search:'Board 0'},{menu:'native-child',search:'Secret User2 Board'},
    {menu:'native-other',sortBy:'title-desc',perPage:1},{menu:'native-root',page:2,perPage:1},
+   {search:'suffixB'},{search:'\0Ω'},{search:'Null\0ΩsuffixB'},{search:'suffixA',menu:'remaining'},
   ])cases.push({user,params});
   for(const name of ['.src','.public'])fs.cpSync(path.join(root,'WeKan',name),path.join(work,name),{recursive:true});
   fs.copyFileSync(path.join(root,'WeKan/.project'),path.join(work,'.project'));
@@ -26,6 +27,8 @@ const {execFileSync}=require('node:child_process');
   fs.writeFileSync(path.join(work,'.public/catalog-cases.json'),JSON.stringify(cases));
   execFileSync(process.env.GBC||'gbc3',['-j','1','-a',work],{stdio:'inherit'});
   const input=JSON.parse(execFileSync(process.env.GBX||'gbx3',['-s','BoardCatalogMatrix',work],{encoding:'utf8',env:{...process.env,WEBA_API_REQUEST:'0',WEBA_DB_TYPE:'sqlite3',WEBA_DB_HOST:work,WEBA_DB_NAME:'database.db',WEBA_DB_USER:'',WEBA_DB_PASSWORD:''}}));
+  assert.deepEqual(input.caseInputs,cases,'native case transport preserves complete source parameters');
+  for(const suffix of ['A','B'])assert.ok(input.boards.some(row=>row.title==='Null\0Ωsuffix'+suffix),'raw SQL fixture preserves complete NUL title '+suffix);
   const inactive=(id,user)=>input.removed.some(row=>row.board_id===id&&row.username===user);
   // Explicit identity adapter preserves native numeric tie order in string IDs.
   const boardKey=id=>'sql:'+String(id).padStart(10,'0');

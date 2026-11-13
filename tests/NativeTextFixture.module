@@ -17,6 +17,17 @@ Public Sub Main()
   If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
   Session["username"] = "rest-other"
   Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+  If Env["WEBA_NATIVE_MODE"] = "live" Then
+    boardId = CInt(Env["WEBA_NATIVE_BOARD"])
+    cardId = CInt(Env["WEBA_NATIVE_CARD"])
+    suffix = Chr(0) & "Ω😀'<tag>suffix" & Env["WEBA_NATIVE_SUFFIX"]
+    WorkspaceStore.Rename(boardId, "board", boardId, "Live board" & suffix)
+    WorkspaceStore.Rename(boardId, "card", cardId, "Live card" & suffix)
+    result["boardTitle"] = "Live board" & suffix
+    result["cardTitle"] = "Live card" & suffix
+    Print JsonText.Encode(result)
+    Return
+  Endif
   If Env["WEBA_NATIVE_MODE"] = "boards" Then
     conn = WebDatabase.OpenConnection()
     row = conn.Exec(ExportText.SelectRows(conn, "kb_boards") & " WHERE owner=&1 ORDER BY id", "rest-other")

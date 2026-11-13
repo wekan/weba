@@ -233,8 +233,9 @@ Catch
   Error.Raise(failure)
 End
 
-Public Function DeletedLists(boardId As Integer) As Result
+Public Function DeletedLists(boardId As Integer, Optional completeText As Boolean) As Result
   OpenStore()
   BoardAccess.Require(boardId, "write")
+  If completeText Then Return $db.Exec(ExportText.Preserve($db, "SELECT l.id,l.title,l.lane,d.deleted_at,d.actor,d.batch_id FROM kb_lists l INNER JOIN kb_deleted_items d ON d.board_id=l.board_id AND d.item_id=l.id AND d.kind=&2 WHERE l.board_id=&1 ORDER BY d.deleted_at DESC,l.id"), boardId, "list")
   Return $db.Exec("SELECT l.id,l.title,l.lane,d.deleted_at,d.actor,d.batch_id FROM kb_lists l INNER JOIN kb_deleted_items d ON d.board_id=l.board_id AND d.item_id=l.id AND d.kind=&2 WHERE l.board_id=&1 ORDER BY d.deleted_at DESC,l.id", boardId, "list")
 End

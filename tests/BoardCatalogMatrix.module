@@ -11,6 +11,7 @@ Public Sub Main()
   Dim item As Collection
   Dim testCase As Collection
   Dim results As New Variant[]
+  Dim caseInputs As New Variant[]
   Dim spaceIds As Collection
   WebDatabase.Register("catalog-matrix-owner", "x")
   WebDatabase.Register("catalog-matrix-other", "x")
@@ -26,6 +27,8 @@ Public Sub Main()
   BoardSpaces.Assign(firstBoard, childSpace)
   KanbanStore.AddBoard("Literal .*%_ board")
   KanbanStore.AddBoard("Ångström board")
+  KanbanStore.AddBoard("Null" & Chr(0) & "ΩsuffixA")
+  KanbanStore.AddBoard("Null" & Chr(0) & "ΩsuffixB")
   boardId = KanbanStore.AddBoard("Archived board")
   WorkspaceStore.SetArchived(boardId, "board", boardId, True)
   SignIn("catalog-matrix-other")
@@ -37,7 +40,7 @@ Public Sub Main()
   boardId = KanbanStore.AddBoard("Revoked board")
   BoardAccess.SetMember(boardId, "catalog-matrix-owner", "normal")
   BoardAccess.RemoveMember(boardId, "catalog-matrix-owner")
-  r = WebDatabase.OpenConnection().Find("kb_boards", "TRUE ORDER BY id")
+  r = WebDatabase.OpenConnection().Exec(ExportText.SelectRows(WebDatabase.OpenConnection(), "kb_boards") & " ORDER BY id")
   data["boards"] = RawRows(r, ["id", "title", "owner", "archived"])
   r = WebDatabase.OpenConnection().Find("kb_members")
   data["members"] = RawRows(r, ["board_id", "username", "role"])
@@ -53,7 +56,8 @@ Public Sub Main()
   item["native-other"] = CStr(otherSpace)
   data["spaceIds"] = item
   spaceIds = item
-  For Each testCase In JSON.Decode(File.Load(".public/catalog-cases.json"))
+  For Each testCase In JsonText.Decode(File.Load(".public/catalog-cases.json"))
+    caseInputs.Add(JsonText.Decode(JsonText.Encode(testCase)))
     If spaceIds.Exist(CStr(testCase["params"]["menu"])) Then testCase["params"]["menu"] = spaceIds[testCase["params"]["menu"]]
     SignIn(testCase["user"])
     item = New Collection
@@ -61,7 +65,8 @@ Public Sub Main()
     results.Add(item)
   Next
   data["actual"] = results
-  Print JSON.Encode(data)
+  data["caseInputs"] = caseInputs
+  Print JsonText.Encode(data)
 End
 
 Private Function RawRows(r As Result, fields As String[]) As Variant[]
@@ -71,7 +76,11 @@ Private Function RawRows(r As Result, fields As String[]) As Variant[]
   For Each r
     row = New Collection
     For Each field In fields
-      row.Add(r[field], field)
+      If r.Fields[field].Type = DB.String Then
+        row.Add(ExportText.ReadValue(r, field), field)
+      Else
+        row.Add(r[field], field)
+      Endif
     Next
     rows.Add(row)
   Next

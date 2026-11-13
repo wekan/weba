@@ -2,6 +2,23 @@
 
 This work adds the following features and fixes:
 
+- Preserve complete native live snapshots, catalog searches, route titles and
+  board/card/container captions after embedded NUL. Keep private snapshots
+  sensitive to suffix-only changes while retaining navigation-only overview
+  fields, assigned-only scope and principal-specific metadata. Distinguish SQL
+  NULL from empty text and preserve Unicode/lone UTF-16 units in snapshots.
+  Read complete destination, archive, recovery and confirmation captions and
+  complete source lane names for native context actions. Eighty-seven catalog
+  pages match unchanged WeKan source, with independent complete parameter/raw
+  SQL assertions. Native regressions verify exact text, no-write reads, hidden
+  changes, role isolation and revocation. Actual source/packaged heartbeat
+  tests verify external same-prefix board/card suffix updates in overview,
+  reports and navigation, literal markup, reload and full editor values.
+  Full pinned host/native/API/security/session tests, 70 Python tests and
+  ordinary source/packaged layout/editor/admin/mobile checks pass.
+  Detail/profile readers, nullable/legacy field semantics and full original
+  model/UI/DDP/security parity remain open. Thanks to xet7.
+
 - Preserve complete native copy text for cards, lists, lanes and boards:
   titles, body/labels/placement, settings, checklist/comment/custom/time text,
   filenames, retained authors and derived relationship labels. Preserve validated

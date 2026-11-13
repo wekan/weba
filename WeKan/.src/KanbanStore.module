@@ -116,7 +116,7 @@ Public Function Boards(Optional archived As Boolean = False, Optional descending
     related = "(" & related & " OR id IN (SELECT s.board_id FROM kb_user_meta s INNER JOIN kb_board_visibility v ON v.board_id=s.board_id WHERE s.username=&2 AND s.kind='board' AND s.setting='star' AND s.value='1' AND v.permission IN ('public','instance')))"
   Endif
   If selectedBoard > 0 Then BoardAccess.RequireRead(selectedBoard)
-  Return $db.Find("kb_boards", "archived=&1 AND ((NOT EXISTS (SELECT 1 FROM kb_removed_members d WHERE d.board_id=kb_boards.id AND d.username=&2) AND " & related & ") OR id=&3) ORDER BY title " & If(descending, "DESC", "ASC") & ", id ASC", archived, WebIdentity.Username, selectedBoard)
+  Return $db.Exec(ExportText.SelectRows($db, "kb_boards") & " WHERE archived=&1 AND ((NOT EXISTS (SELECT 1 FROM kb_removed_members d WHERE d.board_id=kb_boards.id AND d.username=&2) AND " & related & ") OR id=&3) ORDER BY title " & If(descending, "DESC", "ASC") & ", id ASC", archived, WebIdentity.Username, selectedBoard)
 End
 
 Public Function BoardRows(ids As Integer[], archived As Boolean) As Result
@@ -131,8 +131,8 @@ Public Function BoardRows(ids As Integer[], archived As Boolean) As Result
     keys.Add(CStr(id))
     seen[CStr(id)] = True
   Next
-  If Not keys.Count Then Return $db.Find("kb_boards", "id<0")
-  Return $db.Find("kb_boards", "archived=&1 AND id IN (" & keys.Join(",") & ") ORDER BY title,id", archived)
+  If Not keys.Count Then Return $db.Exec(ExportText.SelectRows($db, "kb_boards") & " WHERE id<0")
+  Return $db.Exec(ExportText.SelectRows($db, "kb_boards") & " WHERE archived=&1 AND id IN (" & keys.Join(",") & ") ORDER BY title,id", archived)
 End
 
 Public Sub RequireBoard(boardId As Integer)

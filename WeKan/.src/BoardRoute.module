@@ -13,10 +13,10 @@ Public Function Resolve(text As String) As Collection
   If id <= 0 Or CStr(id) <> text Then Error.Raise("Board not accessible")
   BoardAccess.RequireRead(id)
   db = WebDatabase.OpenConnection()
-  row = db.Find("kb_boards", "id=&1", id)
+  row = db.Exec(ExportText.SelectRows(db, "kb_boards") & " WHERE id=&1", id)
   If Not row.Available Then Error.Raise("Board not accessible")
   data["id"] = id
-  data["title"] = CStr(row!title)
+  data["title"] = ExportText.ReadValue(row, "title")
   data["archived"] = CBool(row!archived)
   If WebIdentity.Username <> actor Then Error.Raise("Sign in required")
   BoardAccess.RequireRead(id)

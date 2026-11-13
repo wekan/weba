@@ -11,22 +11,22 @@ Public Function State(boardId As Integer, archived As Boolean) As String
   Dim field As String
   BoardAccess.RequireRead(boardId)
   r = WorkspaceStore.Record(boardId, "board", boardId)
-  data["title"] = r!title
+  data["title"] = Value(r, "title")
   data["archived"] = r!archived
   data["role"] = BoardAccess.Role(boardId)
   For Each field In ["seesAllCards", "comment", "write", "manageBoard", "moveCard"]
     data[field] = BoardAccess.Can(boardId, field)
   Next
-  data["lanes"] = Rows(db.Find("kb_lanes", "board_id=&1 ORDER BY id", boardId), ["id", "title"])
-  data["lists"] = Rows(db.Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY id", boardId), ["id", "lane", "title", "sort_order"])
-  data["settings"] = Rows(db.Find("kb_meta", "board_id=&1 AND kind<>&2 ORDER BY kind,item_id,setting", boardId, "card"), ["kind", "item_id", "setting", "value"])
-  data["personal"] = Rows(db.Find("kb_user_meta", "board_id=&1 AND username=&2 AND kind<>&3 ORDER BY kind,item_id,setting", boardId, WebIdentity.Username, "card"), ["kind", "item_id", "setting", "value"])
-  data["order"] = Rows(db.Find("kb_order", "board_id=&1 AND kind<>&2 ORDER BY kind,item", boardId, "card"), ["kind", "item", "sort_order"])
+  data["lanes"] = Rows(db.Exec(ExportText.SelectRows(db, "kb_lanes") & " WHERE " & "board_id=&1 ORDER BY id", boardId), ["id", "title"])
+  data["lists"] = Rows(db.Exec(ExportText.SelectRows(db, "kb_lists") & " WHERE " & ListDeletion.LiveSql("list", "kb_lists") & " AND board_id=&1 ORDER BY id", boardId), ["id", "lane", "title", "sort_order"])
+  data["settings"] = Rows(db.Exec(ExportText.SelectRows(db, "kb_meta") & " WHERE " & "board_id=&1 AND kind<>&2 ORDER BY kind,item_id,setting", boardId, "card"), ["kind", "item_id", "setting", "value"])
+  data["personal"] = Rows(db.Exec(ExportText.SelectRows(db, "kb_user_meta") & " WHERE " & "board_id=&1 AND username=&2 AND kind<>&3 ORDER BY kind,item_id,setting", boardId, WebIdentity.Username, "card"), ["kind", "item_id", "setting", "value"])
+  data["order"] = Rows(db.Exec(ExportText.SelectRows(db, "kb_order") & " WHERE " & "board_id=&1 AND kind<>&2 ORDER BY kind,item", boardId, "card"), ["kind", "item", "sort_order"])
   r = BoardAccess.CardRows(boardId, True, archived)
   For Each r
     row = New Collection
     For Each field In ["id", "title", "description", "lane", "status", "assignee", "labels", "due_day", "archived"]
-      row.Add(r[field], field)
+      row.Add(Value(r, field), field)
     Next
     cardLink = db.Find("kb_card_lists", "board_id=&1 AND card_id=&2", boardId, r!id)
     If cardLink.Available Then row["listId"] = cardLink!list_id
@@ -36,7 +36,7 @@ Public Function State(boardId As Integer, archived As Boolean) As String
     cards.Add(row)
   Next
   data["cards"] = cards
-  Return JSON.Encode(data)
+  Return JsonText.Encode(data)
 End
 
 Public Function Overview(archived As Boolean) As String
@@ -47,7 +47,7 @@ Public Function Overview(archived As Boolean) As String
   For Each boards
     row = New Collection
     row.Add(boards!id, "id")
-    row.Add(CStr(boards!title), "title")
+    row.Add(Value(boards, "title"), "title")
     If positions.Exist(CStr(boards!id)) Then row["customOrder"] = positions[CStr(boards!id)]
     row.Add(WorkspaceStore.Setting(boards!id, "board", boards!id, "color", "#2980b9"), "color")
     row.Add(WorkspaceStore.Setting(boards!id, "board", boards!id, "star"), "star")
@@ -55,7 +55,7 @@ Public Function Overview(archived As Boolean) As String
     row["cards"] = Rows(KanbanStore.Cards(boards!id, archived), ["id", "title"])
     data.Add(row)
   Next
-  Return JSON.Encode(data)
+  Return JsonText.Encode(data)
 End
 
 Public Function Visible(boardId As Integer, cardId As Integer, archived As Boolean) As Boolean
@@ -67,6 +67,16 @@ Catch
   Return False
 End
 
+Private Function Value(r As Result, field As String) As Variant
+  If r.Fields[field].Type <> DB.String Then Return r[field]
+  If r.Fields.Exist("__weba_null_" & field) Then
+    If CBool(r["__weba_null_" & field]) Then Return JSON.Null
+  Else If TypeOf(r[field]) <> gb.String And If IsNull(r[field]) Then
+    Return JSON.Null
+  Endif
+  Return ExportText.ReadValue(r, field)
+End
+
 Private Function Rows(r As Result, fields As String[]) As Variant[]
   Dim resultRows As New Variant[]
   Dim row As Collection
@@ -74,7 +84,7 @@ Private Function Rows(r As Result, fields As String[]) As Variant[]
   For Each r
     row = New Collection
     For Each field In fields
-      row.Add(r[field], field)
+      row.Add(Value(r, field), field)
     Next
     resultRows.Add(row)
   Next
@@ -92,7 +102,7 @@ Public Function CardTitles(archived As Boolean) As Collection
   For Each boards
     cards = KanbanStore.Cards(boards!id, archived)
     For Each cards
-      data.Add(CStr(cards!title), CStr(cards!id))
+      data.Add(ExportText.ReadValue(cards, "title"), CStr(cards!id))
     Next
   Next
   If WebIdentity.Username <> actor Then Error.Raise("Session changed")

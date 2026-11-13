@@ -273,11 +273,11 @@ Private Sub RefreshTree()
   Boards.Clear()
   b = KanbanStore.Boards($archive, False, $board, True)
   For Each b
-    If b!id = $board Then $boardTitle = b!title
-    Boards.Add("b" & b!id, b!title, "Icons/16x16/folder.png")
+    If b!id = $board Then $boardTitle = ExportText.ReadValue(b, "title")
+    Boards.Add("b" & b!id, ExportText.ReadValue(b, "title"), "Icons/16x16/folder.png")
     c = KanbanStore.Cards(b!id, $archive)
     For Each c
-      Boards.Add("c" & c!id & ":" & b!id, c!title, "Icons/16x16/doc.png", "b" & b!id)
+      Boards.Add("c" & c!id & ":" & b!id, ExportText.ReadValue(c, "title"), "Icons/16x16/doc.png", "b" & b!id)
     Next
   Next
   UpdateHeader()
@@ -866,10 +866,10 @@ Public Sub Visual_Render()
         If WorkspaceStore.Setting(b!id, "board", b!id, "star") <> "1" Then Continue
       Endif
       If Not $board And ($view = "Boards" Or $view = "Archive" Or $view = "Starred" Or $view = "Home") Then
-        tiles[CStr(b!id)] = "<li data-selected=\"" & If(BoardSelection.IsSelected(SelectionState(), b!id), "true", "false") & "\" draggable=\"true\" class=\"weba-board-tile-group js-board\" data-board-id=\"" & Str(b!id) & "\">" & If(IsOverview(), "<button type=\"button\" class=\"weba-drag-handle weba-board-drag fa fa-arrows\" data-drag-kind=\"board\" aria-label=\"Sort boards\"></button>", "") & "<a href=\"/b/" & Str(b!id) & "\" draggable=\"false\" style=\"background-color:" & Html(WorkspaceStore.Setting(b!id, "board", b!id, "color", "#2980b9")) & "\" class=\"weba-board-tile\" data-board-key=\"b" & Str(b!id) & "\"><strong class=\"board-list-item-name\">" & Html(b!title) & "</strong>" & If(b!id = homeId, "<span class=\"board-home-badge\" role=\"img\" title=\"Home board (opened after login)\" aria-label=\"Home board (opened after login)\"><i class=\"fa fa-home\" aria-hidden=\"true\"></i></span>", "") & "</a><button type=\"button\" class=\"weba-board-context fa fa-bars\" data-context-kind=\"board\" data-context-id=\"" & Str(b!id) & "\" aria-label=\"Board menu\"></button></li>"
+        tiles[CStr(b!id)] = "<li data-selected=\"" & If(BoardSelection.IsSelected(SelectionState(), b!id), "true", "false") & "\" draggable=\"true\" class=\"weba-board-tile-group js-board\" data-board-id=\"" & Str(b!id) & "\">" & If(IsOverview(), "<button type=\"button\" class=\"weba-drag-handle weba-board-drag fa fa-arrows\" data-drag-kind=\"board\" aria-label=\"Sort boards\"></button>", "") & "<a href=\"/b/" & Str(b!id) & "\" draggable=\"false\" style=\"background-color:" & Html(WorkspaceStore.Setting(b!id, "board", b!id, "color", "#2980b9")) & "\" class=\"weba-board-tile\" data-board-key=\"b" & Str(b!id) & "\"><strong class=\"board-list-item-name\">" & Html(ExportText.ReadValue(b, "title")) & "</strong>" & If(b!id = homeId, "<span class=\"board-home-badge\" role=\"img\" title=\"Home board (opened after login)\" aria-label=\"Home board (opened after login)\"><i class=\"fa fa-home\" aria-hidden=\"true\"></i></span>", "") & "</a><button type=\"button\" class=\"weba-board-context fa fa-bars\" data-context-kind=\"board\" data-context-id=\"" & Str(b!id) & "\" aria-label=\"Board menu\"></button></li>"
         Continue
       Endif
-      Print "<h3>" & Html(b!title) & "</h3>"
+      Print "<h3>" & Html(ExportText.ReadValue(b, "title")) & "</h3>"
       c = KanbanStore.Cards(b!id, $archive)
       For Each c
         If Not $archive And WorkspaceStore.ListHidden(b!id, KanbanStore.CardListId(b!id, c!id)) Then Continue
@@ -877,13 +877,13 @@ Public Sub Visual_Render()
           If Not BoardAccess.IsAssigned(b!id, c!id, WebIdentity.Username) Then Continue
         Endif
         If $view = "Due cards" Then
-          If Not c!due_day Then Continue
-          If c!due_day > Format(Now, "yyyy-mm-dd") Then Continue
+          If Not ExportText.ReadValue(c, "due_day") Then Continue
+          If ExportText.ReadValue(c, "due_day") > Format(Now, "yyyy-mm-dd") Then Continue
         Endif
-        text = c!title & " " & c!description & " " & c!labels & " " & c!assignee
+        text = ExportText.ReadValue(c, "title") & " " & ExportText.ReadValue(c, "description") & " " & ExportText.ReadValue(c, "labels") & " " & ExportText.ReadValue(c, "assignee")
         If Filter.Text And InStr(LCase(text), LCase(Filter.Text)) = 0 Then Continue
-        Print "<article data-color=\"" & Html(WorkspaceStore.Setting(b!id, "card", c!id, "color")) & "\" data-list-id=\"" & Str(KanbanStore.CardListId(b!id, c!id)) & "\" data-order=\"" & Str(KanbanStore.ItemOrder(b!id, "card", CStr(c!id), c!id)) & "\" data-card-id=\"" & Str(c!id) & "\" class=\"weba-card\" data-card-key=\"c" & Str(c!id) & ":" & Str(b!id) & "\"" & TextData("status", ExportText.ReadValue(c, "status")) & TextData("lane", ExportText.ReadValue(c, "lane")) & " data-due=\"" & Html(c!due_day) & "\">"
-        Print "<strong>" & Html(c!title) & "</strong><p>" & Html(c!description) & "</p><small>" & Html(c!status) & " · " & Html(c!assignee) & " · " & Html(c!labels) & " · " & Html(c!due_day) & "</small></article>"
+        Print "<article data-color=\"" & Html(WorkspaceStore.Setting(b!id, "card", c!id, "color")) & "\" data-list-id=\"" & Str(KanbanStore.CardListId(b!id, c!id)) & "\" data-order=\"" & Str(KanbanStore.ItemOrder(b!id, "card", CStr(c!id), c!id)) & "\" data-card-id=\"" & Str(c!id) & "\" class=\"weba-card\" data-card-key=\"c" & Str(c!id) & ":" & Str(b!id) & "\"" & TextData("status", ExportText.ReadValue(c, "status")) & TextData("lane", ExportText.ReadValue(c, "lane")) & " data-due=\"" & Html(ExportText.ReadValue(c, "due_day")) & "\">"
+        Print "<strong>" & Html(ExportText.ReadValue(c, "title")) & "</strong><p>" & Html(ExportText.ReadValue(c, "description")) & "</p><small>" & Html(ExportText.ReadValue(c, "status")) & " · " & Html(ExportText.ReadValue(c, "assignee")) & " · " & Html(ExportText.ReadValue(c, "labels")) & " · " & Html(ExportText.ReadValue(c, "due_day")) & "</small></article>"
       Next
     Next
     If IsOverview() Then
@@ -1120,7 +1120,7 @@ Private Sub UpdateHeader()
   PageTitle.Text = If($view = "Boards", "All Boards", $view)
   If $board And $view <> "Profile" And $view <> "Admin panel" Then
     b = WorkspaceStore.Record($board, "board", $board)
-    PageTitle.Text = b!title
+    PageTitle.Text = ExportText.ReadValue(b, "title")
   Endif
   PageTitle.Class = If($view = "Public", "weba-public-heading", "")
   PageTitle.Tooltip = PageTitle.Text
@@ -1682,7 +1682,7 @@ Private Sub LoadDestinationBoards()
   r = KanbanStore.Boards(False)
   For Each r
     If r!id = $contextBoard Then current = values.Count
-    values.Add(CStr(r!id) & " | " & r!title)
+    values.Add(CStr(r!id) & " | " & ExportText.ReadValue(r, "title"))
   Next
   DestinationBoard.List = values
   If values.Count Then DestinationBoard.Index = current
@@ -1805,7 +1805,7 @@ Public Sub ActionConfirm_Click()
     Case "Add list"
       If $contextKind = "list" Then
         r = WorkspaceStore.Record($contextBoard, "list", $contextId)
-        If r!lane = DestinationLane.Text Then afterRef = "#" & CStr($contextId)
+        If ExportText.ReadValue(r, "lane") = DestinationLane.Text Then afterRef = "#" & CStr($contextId)
       Endif
       KanbanStore.AddList($contextBoard, DestinationLane.Text, ActionText.Text, afterRef)
     Case "Add swimlane"
@@ -1875,13 +1875,13 @@ Public Sub ActionConfirm_Click()
             If $draft Then $draft["listId"] = $listId
           Endif
         Case "list"
-          KanbanStore.MoveList($contextBoard, r!lane, "#" & CStr($contextId), DestinationLane.Text, "")
+          KanbanStore.MoveList($contextBoard, ExportText.ReadValue(r, "lane"), "#" & CStr($contextId), DestinationLane.Text, "")
           If $listId = $contextId Then
             Lane.Text = DestinationLane.Text
             CardDraft.SetValue($draft, "lane", Lane.Text)
           Endif
         Case "lane"
-          KanbanStore.MoveLane($contextBoard, r!title, DestinationLane.Text)
+          KanbanStore.MoveLane($contextBoard, ExportText.ReadValue(r, "title"), DestinationLane.Text)
       End Select
       Endif
     Case Else
@@ -1915,7 +1915,7 @@ Public Sub ContextArchive_Click()
     $boardArchiveContext = LandingContext()
     $boardArchiveHome = $board = $contextBoard And Not IsOverview()
     row = WorkspaceStore.Record($contextBoard, "board", $contextBoard)
-    BoardArchiveName.Text = row!title
+    BoardArchiveName.Text = ExportText.ReadValue(row, "title")
     ContextMenu.Hide()
     BoardArchivePanel.Show()
     Return
@@ -2028,15 +2028,15 @@ Public Sub ArchivedItems_Click()
   BrowserTree.Clear()
   r = KanbanStore.Lanes($board)
   For Each r
-    If WorkspaceStore.Archived($board, "lane", r!id) Then BrowserTree.Add("lane:" & CStr(r!id), "Swimlane: " & r!title)
+    If WorkspaceStore.Archived($board, "lane", r!id) Then BrowserTree.Add("lane:" & CStr(r!id), "Swimlane: " & ExportText.ReadValue(r, "title"))
   Next
-  r = WebDatabase.OpenConnection().Find("kb_lists", ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1", $board)
+  r = WebDatabase.OpenConnection().Exec(ExportText.SelectRows(WebDatabase.OpenConnection(), "kb_lists") & " WHERE " & ListDeletion.LiveSql("list", "kb_lists") & " AND board_id = &1", $board)
   For Each r
-    If WorkspaceStore.Archived($board, "list", r!id) Then BrowserTree.Add("list:" & CStr(r!id), "List: " & r!title)
+    If WorkspaceStore.Archived($board, "list", r!id) Then BrowserTree.Add("list:" & CStr(r!id), "List: " & ExportText.ReadValue(r, "title"))
   Next
   r = KanbanStore.Cards($board, True)
   For Each r
-    BrowserTree.Add("card:" & CStr(r!id), "Card: " & r!title)
+    BrowserTree.Add("card:" & CStr(r!id), "Card: " & ExportText.ReadValue(r, "title"))
   Next
   ItemBrowser.Show()
 Catch
@@ -2100,7 +2100,7 @@ Private Sub ShowDetails(index As Integer, boardId As Integer, cardId As Integer)
   $detailsBoard = boardId
   $detailsCard = cardId
   $attachmentHistory = False
-  DetailsTitle.Text = r!title
+  DetailsTitle.Text = ExportText.ReadValue(r, "title")
   DetailKind.List = ["Comments", "Checklists", "Checklist items", "Subtasks", "Dependencies", "Custom fields", "Time tracking", "Attachments"]
   DetailType.List = ["text", "number", "date", "checkbox"]
   DetailType.Index = 0
@@ -3251,7 +3251,7 @@ Public Sub ContextWorkspace_Click()
   If $contextKind <> "board" Then Error.Raise("Select a board first")
   BoardAccess.RequireRead($contextBoard)
   $workspaceBoard = $contextBoard
-  BoardWorkspaceName.Text = WorkspaceStore.Record($workspaceBoard, "board", $workspaceBoard)!title
+  BoardWorkspaceName.Text = ExportText.ReadValue(WorkspaceStore.Record($workspaceBoard, "board", $workspaceBoard), "title")
   WorkspaceDestination.Clear()
   WorkspaceDestination.Add("Remaining")
   $workspaceChoices.Clear()
@@ -3560,7 +3560,7 @@ Private Sub OpenDeleteList()
   BoardAccess.Require($contextBoard, "write")
   $deleteListBoard = $contextBoard
   $deleteListId = $contextId
-  DeleteListName.Text = r!title
+  DeleteListName.Text = ExportText.ReadValue(r, "title")
   DeleteListConfirmed.Value = False
   ContextMenu.Hide()
   DeleteListPanel.Show()
@@ -3636,11 +3636,11 @@ Private Sub RefreshDeletedListPanel()
   Dim selected As Boolean
   If Not DeletedListsPanel.Visible Then Return
   CheckDeletedListContext()
-  r = ListDeletion.DeletedLists($deletedListBoard)
+  r = ListDeletion.DeletedLists($deletedListBoard, True)
   For Each r
     row = New Collection
     row["id"] = r!id
-    row.Add(CStr(r!title), "title")
+    row.Add(CStr(ExportText.ReadValue(r, "title")), "title")
     row["batch"] = r!batch_id
     row["at"] = r!deleted_at
     rows.Add(row)
@@ -4610,7 +4610,7 @@ Public Sub ContextVisibility_Click()
   $visibilityActor = WebIdentity.Username
   $visibilityGeneration = WebDatabase.SessionGeneration($visibilityActor)
   $visibilityContext = LandingContext()
-  BoardVisibilityName.Text = WorkspaceStore.Record($visibilityBoard, "board", $visibilityBoard)!title
+  BoardVisibilityName.Text = ExportText.ReadValue(WorkspaceStore.Record($visibilityBoard, "board", $visibilityBoard), "title")
   BoardPermission.List = ["Private", "Signed-in users", "Public"]
   BoardPermission.Index = ["private", "instance", "public"].Find(data["permission"])
   $visibilityBase = BoardPermission.Index
@@ -4637,7 +4637,7 @@ Private Sub ValidateBoardVisibility()
   If Not BoardVisibilityPanel.Visible Then Return
   If LandingContext() <> $visibilityContext Or $visibilityBoard <= 0 Or WebIdentity.Username <> $visibilityActor Or WebDatabase.SessionGeneration($visibilityActor) <> $visibilityGeneration Then Error.Raise("Sign in required")
   data = BoardVisibility.BoardSettings($visibilityBoard)
-  BoardVisibilityName.Text = WorkspaceStore.Record($visibilityBoard, "board", $visibilityBoard)!title
+  BoardVisibilityName.Text = ExportText.ReadValue(WorkspaceStore.Record($visibilityBoard, "board", $visibilityBoard), "title")
   If BoardPermission.Index = $visibilityBase Then
     BoardPermission.Index = ["private", "instance", "public"].Find(data["permission"])
     $visibilityBase = BoardPermission.Index
@@ -4812,7 +4812,7 @@ Public Sub ContextBoardViews_Click()
   $viewPolicyBase = data
   $viewPolicyDraft = BoardViewPolicy.Snapshot(data)
   $viewPolicySelected = $viewPolicyDraft["boardViewOrder"][0]
-  BoardViewsName.Text = WorkspaceStore.Record(id, "board", id)!title
+  BoardViewsName.Text = ExportText.ReadValue(WorkspaceStore.Record(id, "board", id), "title")
   FillBoardViews()
   ContextMenu.Hide()
   BoardViewsPanel.Show()
@@ -4851,7 +4851,7 @@ Private Sub ValidateBoardViews()
   If Not BoardViewsPanel.Visible Then Return
   data = BoundBoardViews()
   If JSON.Encode(InstanceFeatures.AllowedViews(BoardViewPolicy.Keys())) <> JSON.Encode($viewPolicyAllowed) Then FillBoardViews()
-  BoardViewsName.Text = WorkspaceStore.Record($viewPolicyBoard, "board", $viewPolicyBoard)!title
+  BoardViewsName.Text = ExportText.ReadValue(WorkspaceStore.Record($viewPolicyBoard, "board", $viewPolicyBoard), "title")
   If BoardViewPolicy.Difference($viewPolicyBase, $viewPolicyDraft).Count = 0 Then
     If JSON.Encode(data) <> JSON.Encode($viewPolicyBase) Then
       $viewPolicyBase = data
