@@ -184,7 +184,7 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Finish content-aware upload policy integration: actual detector chain, filename
   correction in native/REST/import/copy handlers, SVG sanitization and full source
   response/storage semantics. Completed pre-cleaning, empty-file refusal, decoded
-  name rejection, private worker transport and source MIME helper/native bridge
+  name rejection, acknowledged private transport and source MIME helper/native bridge
   evidence has moved to CHANGELOG.md. Recheck policy/role/transaction boundaries
   and source/packaged UI/API/security cases when activating each remaining stage.
 - Next detail/content focus: remaining copy/model mutation audits, stored/uploaded

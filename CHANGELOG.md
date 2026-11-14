@@ -2,6 +2,23 @@
 
 This work adds the following features and fixes:
 
+- Frame private filename-worker requests in acknowledged 2048-byte chunks under
+  one three-second deadline. Cap complete requests at 96KiB, responses at 4096
+  bytes and acknowledgements at the current chunk phase. Refuse pre-sent ACKs
+  that could bypass chunk waits. Avoid a blocking bulk pipe
+  write before the timeout loop when adding detector-sized private payloads.
+  Actual project/archive probes preserve a 64KiB binary header/hash and NUL/
+  Unicode marker in an exact maximum-size frame with reduced pipe capacity.
+  Ready-only and mid-request stalled workers are bounded and reaped; refuse
+  one-byte oversized input before worker startup, malformed/truncated/trailing/
+  noncanonical frames and ACK floods. Existing filename/MIME source, privacy,
+  input-boundary, failure cleanup and retry checks pass. Full host/API/security/
+  session/text/native/source/Unicode/client checks, all 71 Python tests and
+  source/packaged real chooser regressions pass. The isolated old ACK guard
+  reproduces the blocked-write timeout under the new regression.
+  Detector/content-aware upload/REST/import/copy/SVG integration remains open.
+  Thanks to xet7.
+
 - Embed the exact source MIME lookup maps/licenses in native Gambas resources
   and expose a staged CorrectUploadName bridge. Keep private filenames and MIME
   values on bounded stdin; public script plus both data tables stay below the

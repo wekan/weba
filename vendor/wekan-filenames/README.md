@@ -41,9 +41,12 @@ hashes; native model and chooser tests also exercise the actual isolated bridge,
 failure rollback and exact bytes. Gambas uses an argument array and private
 stdin/stdout pipes ([EXEC documentation](https://gambaswiki.org/wiki/lang/exec)).
 Filename requests are Base64 inside JSON on stdin; only public script/table data
-appear in argv, within a 96KB budget. Requests are capped at 8192 bytes, responses
-at 4096 bytes and execution at three seconds. Worker stderr is discarded; errors
-are generic, and failed workers are killed/reaped. Real process probes verify
+appear in argv, within a 96KB budget. Requests use a decimal byte-length frame
+capped at 98304 bytes; the sender
+waits for worker readiness and each 2048-byte chunk acknowledgement. Responses
+are capped at 4096 bytes, ACKs at the current exchange phase, and the entire
+exchange at three seconds. Worker stderr is discarded; errors are generic, and
+failed workers are killed/reaped. Real process probes verify
 argument privacy, malformed/oversized/noisy/nonzero/stalled workers and retry.
 The model bounds raw filename input to 4096 bytes and verifies
 the source 30-code-point result cap. The interactive source hook runs before the
@@ -67,8 +70,18 @@ maps and MIT licenses are embedded under `.public/native-mime-*`; the manifest
 pins their compressed/Base64 hashes. Public script plus both data arguments stay
 within the same 96KB budget. The `correct` request sends filename and MIME as
 Base64 JSON fields on private stdin (4096 and 1024 input bytes respectively,
-within the 8192-byte request cap). It returns only the corrected name, leaving
+within the 98304-byte framed request cap). It returns only the corrected name, leaving
 stored MIME metadata independent. Actual project and `.gambas` archive probes
 compare correction results with unchanged source and verify private argument
 exclusion, boundary refusal before worker startup, cleanup and retry. Uploads
 are not wired to this entry point until content detection is implemented.
+
+Large private payloads must use the same framed exchange, never one bulk pipe
+write. Upstream Gambas process/stream source uses a blocking stdin write loop:
+[process stream](https://gitlab.com/gambas/gambas/-/blob/master/main/gbx/gbx_stream_process.c),
+[stream write](https://gitlab.com/gambas/gambas/-/blob/master/main/gbx/gbx_stream.c).
+The regression explicitly reduces pipe capacity and verifies complete 64KiB
+binary payloads in maximum-size frames, plus ready-only and mid-request stalled
+workers. Probe entry points and worker variants exist only in disposable test
+projects; production exposes only typed filename stages. No temporary header
+files or additional runtime dependencies are needed by this transport.

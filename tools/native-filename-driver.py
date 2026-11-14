@@ -9,9 +9,27 @@ _native_tables = ({int(cp): value for cp, value in _raw['nfkd'].items()},
 _tables = lambda: _native_tables
 _native_mime_tables = json.loads(gzip.decompress(base64.b64decode(sys.argv[2], validate=True)))
 _mime_tables = lambda: _native_mime_tables
-_input = sys.stdin.buffer.read(8193)
-if len(_input) > 8192:
+sys.stdout.write('\x1e')
+sys.stdout.flush()
+_length_line = sys.stdin.buffer.readline(16)
+if not re.fullmatch(rb'[1-9][0-9]{0,4}\n', _length_line):
+    raise ValueError('Invalid filename request frame')
+_remaining = int(_length_line)
+if _remaining > 98304:
     raise ValueError('Oversized filename request')
+_parts = []
+while _remaining:
+    _size = min(2048, _remaining)
+    _part = sys.stdin.buffer.read(_size)
+    if len(_part) != _size:
+        raise ValueError('Truncated filename request')
+    _parts.append(_part)
+    _remaining -= _size
+    sys.stdout.write('\x1e')
+    sys.stdout.flush()
+_input = b''.join(_parts)
+if sys.stdin.buffer.read(1):
+    raise ValueError('Trailing filename request data')
 _request = json.loads(_input)
 if not isinstance(_request, dict) or _request.get('mode') not in ('before', 'interactive', 'correct') or set(_request) != ({'filename', 'mode', 'mime'} if _request.get('mode') == 'correct' else {'filename', 'mode'}) or not isinstance(_request['filename'], str):
     raise ValueError('Invalid filename request')

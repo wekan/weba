@@ -1,26 +1,52 @@
-' Interactive filename stages; REST/import workflows have separate entry points.
+' Filename policy stages; upload workflows choose their entry points explicitly.
 Export
 
 Private Function RunPolicy(filename As String, mode As String, Optional mime As String) As Variant
-  Dim worker As Process
   Dim request As New Collection
-  Dim state As New Collection
-  Dim value As Variant
-  Dim deadline As Float
-  If Len(filename) > 4096 Then Error.Raise("Filename input exceeds policy limit")
+  If Len(filename) > 4096 Then Error.Raise("Filename normalization failed")
   request.Add(Base64(filename), "filename")
   request.Add(mode, "mode")
   If mode = "correct" Then
-    If Len(mime) > 1024 Then Error.Raise("MIME input exceeds policy limit")
+    If Len(mime) > 1024 Then Error.Raise("Filename normalization failed")
     request.Add(Base64(mime), "mime")
   Endif
+  Return Exchange(JsonText.Encode(request))
+End
+
+Private Sub RequireAck(worker As Process, state As Collection, expected As Integer, deadline As Float)
+  While state["acks"] < expected
+    If state["invalid"] Or worker.State <> Process.Running Or Timer >= deadline Then Error.Raise("Filename normalization failed")
+    worker.Wait(Max(0.001, deadline - Timer))
+  Wend
+  If state["invalid"] Then Error.Raise("Filename normalization failed")
+End
+
+Private Function Exchange(payload As String) As Variant
+  Dim worker As Process
+  Dim state As New Collection
+  Dim value As Variant
+  Dim deadline As Float
+  Dim offset As Integer
+  Dim expected As Integer = 2
+  Dim piece As String
+  If Not payload Or Len(payload) > 98304 Then Error.Raise("Filename normalization failed")
   state.Add("", "text")
   state.Add(False, "invalid")
+  state.Add(0, "acks")
+  state.Add(1, "ackLimit")
+  deadline = Timer + 3
   worker = Exec ["python3", "-I", "-S", "-c", File.Load(".public/native-filename-policy.py"), File.Load(".public/native-filename-data.b64"), File.Load(".public/native-mime-data.b64")] For Read Write As "PolicyWorker"
   worker.Tag = state
-  Print #worker, JsonText.Encode(request)
+  RequireAck(worker, state, 1, deadline)
+  Print #worker, Str(Len(payload))
+  For offset = 1 To Len(payload) Step 2048
+    piece = Mid(payload, offset, 2048)
+    state["ackLimit"] = expected
+    Write #worker, piece, Len(piece)
+    RequireAck(worker, state, expected, deadline)
+    Inc expected
+  Next
   worker.CloseInput()
-  deadline = Timer + 3
   While worker.State = Process.Running And Timer < deadline
     worker.Wait(Max(0.001, deadline - Timer))
   Wend
@@ -42,12 +68,15 @@ Public Sub PolicyWorker_Read()
   Dim worker As Process = Last
   Dim state As Collection = worker.Tag
   Dim chunk As String = Read #worker, -4096
+  Dim plain As String
   If Not state Then Return
-  If Len(state["text"]) + Len(chunk) > 4096 Then
+  plain = Replace(chunk, Chr(30), "")
+  state["acks"] = state["acks"] + Len(chunk) - Len(plain)
+  If state["acks"] > state["ackLimit"] Or Len(state["text"]) + Len(plain) > 4096 Then
     state["invalid"] = True
     Try worker.Kill()
   Else
-    state["text"] = state["text"] & chunk
+    state["text"] = state["text"] & plain
   Endif
 End
 
