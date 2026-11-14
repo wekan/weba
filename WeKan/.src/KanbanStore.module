@@ -186,7 +186,7 @@ Public Function Cards(boardId As Integer, Optional archived As Boolean = False) 
   Return BoardAccess.CardRows(boardId, True, archived)
 End
 
-Public Function SaveCard(boardId As Integer, cardId As Integer, title As String, description As String, lane As String, status As String, assignee As String, labels As String, dueDay As String, Optional listId As Integer, Optional baseline As Collection) As Integer
+Public Function SaveCard(boardId As Integer, cardId As Integer, title As String, description As String, lane As String, status As String, assignee As String, labels As String, dueDay As String, Optional listId As Integer, Optional baseline As Collection, Optional parent As Collection) As Integer
   Dim r As Result
   Dim list As Result
   Dim previousAssignee As String
@@ -287,14 +287,14 @@ Public Function SaveCard(boardId As Integer, cardId As Integer, title As String,
     DatabaseText.Save($db, r, "kb_cards", ["board_id", "archived", "title", "description", "lane", "status", "assignee", "labels", "due_day"], True)
   Endif
   If Not cardId Then cardId = $db.LastInsertId
-  RequireSavedCard(boardId, cardId, scope, False)
+  RequireSavedCard(boardId, cardId, scope, False, parent)
   If previousDueDay <> dueDay Then $db.Delete("kb_card_dates", "board_id = &1 AND card_id = &2 AND field = &3", boardId, cardId, "dueAt")
   If previousAssignee <> assignee Then $db.Delete("kb_card_assignees", "board_id = &1 AND card_id = &2", boardId, cardId)
   If previousAssignee <> assignee Then $db.Delete("kb_card_people_order", "board_id = &1 AND card_id = &2 AND field = &3", boardId, cardId, "assignees")
   If previousAssignee <> assignee Then $db.Delete("kb_card_people_sequence", "board_id = &1 AND card_id = &2 AND field = &3", boardId, cardId, "assignees")
   PutCardList(boardId, cardId, listId)
-  Activity(boardId, "Saved card: " & title, "card", cardId)
-  RequireSavedCard(boardId, cardId, scope, True)
+  Activity(boardId, "Saved card: " & title, "card", cardId, True, Null, Null, parent)
+  RequireSavedCard(boardId, cardId, scope, True, parent)
   DatabaseTransactions.Commit($db)
   transaction = False
   Return cardId
@@ -305,7 +305,7 @@ Catch
 End
 
 ' Recheck both the saved values and the authorization after every write phase.
-Private Sub RequireSavedCard(boardId As Integer, cardId As Integer, scope As Collection, linked As Boolean)
+Private Sub RequireSavedCard(boardId As Integer, cardId As Integer, scope As Collection, linked As Boolean, Optional parent As Collection)
   Dim row As Result
   Dim field As String
   Dim lane As String = scope["lane"]
@@ -313,6 +313,7 @@ Private Sub RequireSavedCard(boardId As Integer, cardId As Integer, scope As Col
   Dim listId As Integer = scope["listId"]
   Dim limit As Integer
   If WebIdentity.Username <> scope["actor"] Then Error.Raise("Sign in required")
+  If parent Then CardContent.RequireSubtaskParent(boardId, parent)
   BoardAccess.Require(boardId, "write")
   BoardAccess.RequireCard(boardId, cardId)
   row = $db.Find("kb_boards", "id=&1", boardId)
@@ -346,8 +347,9 @@ Public Sub ArchiveCard(boardId As Integer, cardId As Integer, archived As Boolea
   CardArchive.Change(boardId, cardId, archived)
 End
 
-Public Sub Activity(boardId As Integer, message As String, Optional kind As String = "board", Optional itemId As Integer, Optional changed As Boolean = True, Optional apiUpload As Collection)
+Public Sub Activity(boardId As Integer, message As String, Optional kind As String = "board", Optional itemId As Integer, Optional changed As Boolean = True, Optional apiUpload As Collection, Optional creation As Collection, Optional parent As Collection)
   Dim r As Result
+  If parent Then CardContent.RequireSubtaskParent(boardId, parent)
   BoardAccess.RequireActivity(boardId)
   r = $db.Create("kb_activity")
   r["board_id"] = boardId
@@ -356,10 +358,16 @@ Public Sub Activity(boardId As Integer, message As String, Optional kind As Stri
   r["created_at"] = Now
   DatabaseText.Save($db, r, "kb_activity", ["board_id", "actor", "message", "created_at"], True)
   If apiUpload Then BoardAccess.RequireApiUploadGuard(apiUpload)
+  If creation Then CardContent.RequireSubtaskCreation(boardId, itemId, creation)
+  If parent Then CardContent.RequireSubtaskParent(boardId, parent)
   WorkspaceStore.Log(boardId, kind, itemId, message)
   If apiUpload Then BoardAccess.RequireApiUploadGuard(apiUpload)
+  If creation Then CardContent.RequireSubtaskCreation(boardId, itemId, creation)
+  If parent Then CardContent.RequireSubtaskParent(boardId, parent)
   If changed And (kind = "card" Or kind = "list") And itemId > 0 Then ItemChanges.Mark(boardId, kind, itemId)
   If apiUpload Then BoardAccess.RequireApiUploadGuard(apiUpload)
+  If creation Then CardContent.RequireSubtaskCreation(boardId, itemId, creation)
+  If parent Then CardContent.RequireSubtaskParent(boardId, parent)
 End
 
 Public Function Activities(boardId As Integer, Optional completeText As Boolean) As Result

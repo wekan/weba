@@ -2,6 +2,28 @@
 
 This work adds the following features and fixes:
 
+- Keep new subtask creation atomic across child creation and parent linking.
+  Capture actor and original parent placement/container/archive scope, resolve
+  existing legacy list mappings within the owned transaction, and inherit complete
+  lane/list text rather than truncated driver values. Check the exact stored
+  parent mapping as well as its derived list ID, rejecting foreign-board rebinds.
+  Carry parent checks into child data/activity/history/clock writes; capture the
+  new child's records, people/dates/settings/order/history/clocks and related
+  content metadata before linking, then check them within link effects and before
+  commit. Later writes cannot mask earlier parent/child changes by restoring them.
+  Child metadata is checked by global child ID and rejects foreign-board records.
+  Roll back child and link together on scope, SQL or record-state failure; a
+  preflight refusal preserves caller-owned transactions. Tests cover complete
+  NUL/Unicode fields, legacy mapping resolution, exact all-table refusal snapshots,
+  role/session/raw/archive/placement changes, child field/reference mutations,
+  intermediate restoration attempts, unauthorized users and successful retry.
+  Source/packaged detail/live UI verifies parent archive refusal with unchanged
+  board data and exact dirty draft, then one complete-text child/link on retry.
+  The full pinned host/native/API/security/session gate, 70 Python tests and
+  JavaScript checks pass.
+  Imported author provenance/other detail mutations, numeric/nullable models and
+  full original parity remain open. Thanks to xet7.
+
 - Recheck API upload credentials, authorization, original target and transfer
   policy after file insertion, metadata, activity, history and change-clock writes.
   Carry the captured request actor/board/lane/list/card/byte count through storage

@@ -160,7 +160,7 @@ Public Function Save(boardId As Integer, cardId As Integer, entryId As Integer, 
   Return SaveEntry(boardId, cardId, entryId, kind, title, body, parentId, done, amount, valueType, False, baseline)
 End
 
-Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Integer, kind As String, title As String, body As String, parentId As Integer, done As Boolean, amount As Float, valueType As String, isCopy As Boolean, Optional baseline As Collection) As Integer
+Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Integer, kind As String, title As String, body As String, parentId As Integer, done As Boolean, amount As Float, valueType As String, isCopy As Boolean, Optional baseline As Collection, Optional creation As Collection) As Integer
   Dim transaction As Boolean
   Dim failure As String
   Dim r As Result
@@ -240,6 +240,7 @@ Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Int
         Error.Raise("Unknown field type")
     End Select
   Endif
+  If creation Then RequireSubtaskCreation(boardId, cardId, creation)
   values = EntryDraft.Values(Trim(title), body, parentId, done, amount, valueType)
   For Each field In values.Keys
     scope.Add(values[field], field)
@@ -267,9 +268,9 @@ Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Int
     DatabaseText.Save($db, r, "kb_entries", ["board_id", "card_id", "author", "created_at", "kind", "title", "body", "parent_id", "done", "amount", "value_type"], True)
   Endif
   If Not entryId Then id = $db.LastInsertId
-  RequireSavedEntry(boardId, cardId, id, scope)
-  KanbanStore.Activity(boardId, "Saved " & kind & " on card " & CStr(cardId), "card", cardId)
-  RequireSavedEntry(boardId, cardId, id, scope)
+  RequireSavedEntry(boardId, cardId, id, scope, creation)
+  KanbanStore.Activity(boardId, "Saved " & kind & " on card " & CStr(cardId), "card", cardId, True, Null, creation)
+  RequireSavedEntry(boardId, cardId, id, scope, creation)
   DatabaseTransactions.Commit($db)
   transaction = False
   Return id
@@ -346,11 +347,12 @@ Private Function TextIsNull(row As Result, field As String) As Boolean
 End
 
 ' The caller retains its transaction through data, history and change-clock writes.
-Private Sub RequireSavedEntry(boardId As Integer, cardId As Integer, entryId As Integer, scope As Collection)
+Private Sub RequireSavedEntry(boardId As Integer, cardId As Integer, entryId As Integer, scope As Collection, Optional creation As Collection)
   Dim row As Result
   Dim values As Collection
   Dim field As String
   Dim kind As String = scope["kind"]
+  If creation Then RequireSubtaskCreation(boardId, cardId, creation)
   RequireDetailScope(boardId, cardId, scope)
   row = Entry(boardId, cardId, entryId, True)
   values = EntryDraft.Record(row)
@@ -518,21 +520,85 @@ Private Sub RequireEntryDeletion(boardId As Integer, cardId As Integer, entryId 
   Endif
 End
 
+Private Function SubtaskChildState(boardId As Integer, cardId As Integer) As String
+  Dim state As New Collection
+  Dim tableName As String
+  Dim filter As String
+  Dim records As String[]
+  Dim row As Result
+  For Each tableName In ["kb_cards", "kb_card_lists", "kb_card_assignees", "kb_card_members", "kb_card_people_order", "kb_card_people_sequence", "kb_card_dates", "kb_card_archive", "kb_order", "kb_item_changes", "kb_meta", "kb_user_meta", "kb_history", "kb_entries", "kb_files", "kb_retired_authors", "kb_attachment_data", "kb_attachment_history", "kb_attachment_deletions"]
+    If Not $db.Tables.Exist(tableName) Then
+      state.Add(JSON.Null, tableName)
+      Continue
+    Endif
+    Select tableName
+      Case "kb_cards"
+        filter = "id=&2"
+      Case "kb_order"
+        filter = "kind='card' AND item=&3"
+      Case "kb_meta", "kb_user_meta", "kb_history", "kb_item_changes"
+        filter = "kind='card' AND item_id=&2"
+      Case Else
+        filter = "card_id=&2"
+    End Select
+    records = New String[]
+    row = $db.Exec(ExportText.SelectRows($db, tableName) & " WHERE " & filter, boardId, cardId, CStr(cardId))
+    For Each row
+      If IsNull(row!board_id) Or row!board_id <> boardId Then Error.Raise("New subtask data scope changed")
+      records.Add(JsonText.Encode(RecordState(row)))
+    Next
+    records.Sort()
+    state.Add(records, tableName)
+  Next
+  Return JsonText.Encode(state)
+End
+
+Private Function SubtaskPlacement(cardId As Integer) As String
+  Dim row As Result = $db.Exec(ExportText.SelectRows($db, "kb_card_lists") & " WHERE card_id=&1", cardId)
+  If Not row.Available Then Return "missing"
+  Return JsonText.Encode(RecordState(row))
+End
+
+Public Sub RequireSubtaskParent(boardId As Integer, scope As Collection)
+  RequireDetailScope(boardId, scope["newParent"], scope)
+  If SubtaskPlacement(scope["newParent"]) <> scope["newParentPlacement"] Then Error.Raise("Parent card placement changed")
+End
+
+Public Sub RequireSubtaskCreation(boardId As Integer, cardId As Integer, scope As Collection)
+  If cardId <> scope["newParent"] Then Error.Raise("Subtask parent changed")
+  RequireSubtaskParent(boardId, scope)
+  If SubtaskChildState(boardId, scope["newChild"]) <> scope["newChildState"] Then Error.Raise("New subtask changed during linking")
+End
+
 Public Function NewSubtask(boardId As Integer, cardId As Integer, title As String) As Integer
-  Dim parent As Result
+  Dim actor As String = WebIdentity.Username
+  Dim scope As Collection
   Dim child As Integer
+  Dim childState As String
+  Dim transaction As Boolean
   Dim failure As String
   RequireCard(boardId, cardId)
   BoardAccess.Require(boardId, "write")
-  parent = WorkspaceStore.Record(boardId, "card", cardId)
-  DatabaseTransactions.Begin($db)
-  child = KanbanStore.SaveCard(boardId, 0, title, "", parent!lane, parent!status, WebIdentity.Username, "", "", KanbanStore.CardListId(boardId, cardId))
-  Save(boardId, cardId, 0, "subtask", title, "", 0, False, child)
+  BeginChange(boardId, cardId, "write", actor)
+  transaction = True
+  ' Resolve legacy placement within this transaction before capturing its scope.
+  KanbanStore.CardListId(boardId, cardId)
+  scope = MutationScope(boardId, cardId, actor, "write")
+  scope.Add(cardId, "newParent")
+  scope.Add(SubtaskPlacement(cardId), "newParentPlacement")
+  child = KanbanStore.SaveCard(boardId, 0, title, "", scope["cardLane"], scope["cardStatus"], actor, "", "", scope["listId"], Null, scope)
+  RequireDetailScope(boardId, cardId, scope)
+  childState = SubtaskChildState(boardId, child)
+  scope.Add(child, "newChild")
+  scope.Add(childState, "newChildState")
+  SaveEntry(boardId, cardId, 0, "subtask", title, "", 0, False, child, "text", False, Null, scope)
+  RequireSubtaskCreation(boardId, cardId, scope)
   DatabaseTransactions.Commit($db)
+  transaction = False
   Return child
 Catch
   failure = Error.Text
-  Try DatabaseTransactions.Rollback($db)
+  If transaction Then Try DatabaseTransactions.Rollback($db)
   Error.Raise(failure)
 End
 

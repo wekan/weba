@@ -89,7 +89,21 @@ with sqlite3.connect(sys.argv[1]) as d:
   finally{sql('DROP TRIGGER detail_lifecycle_final');}
   await click('DetailRestoreAttachment');expect(read().files.find(f=>f.filename===initial.files[0].filename)).toMatchObject({data:initial.files[0].data});
   await click('DetailLiveAttachments');await expect(page.locator(c('DetailTree'))).toContainText(shown(initial.files[0].filename));
+  await kind('Subtasks');await click('DetailNew');
+  const childTitle="Child\0Ω😀'<literal> retry";
+  await page.locator(input('DetailTitle')).evaluate((e,t)=>{e.value=t;e.dispatchEvent(new Event('input',{bubbles:true}));},childTitle);await settle();
+  await expect(page.locator(input('DetailNumber'))).toHaveValue('0');
+  const beforeSubtask=sql();sql("CREATE TRIGGER detail_subtask_final AFTER INSERT ON kb_history WHEN NEW.board_id="+seed.board+" AND NEW.kind='card' AND NEW.item_id<>"+seed.items[0].card+" BEGIN UPDATE kb_cards SET archived=1 WHERE id="+seed.items[0].card+"; END");
+  async function saveSubtask(){const reply=page.waitForResponse(r=>new URL(r.url()).pathname==='/x'&&(new URLSearchParams(r.request().postData()||'').get('c')||'').includes('DetailSave'));await click('DetailSave');await(await reply).finished();await settle();}
+  try{await saveSubtask();await expect(page.locator(c('Notice'))).toContainText('Card archive state changed');expect(sql()).toBe(beforeSubtask);await expect(page.locator(input('DetailTitle'))).toHaveValue(childTitle);await expect(page.locator(input('DetailNumber'))).toHaveValue('0');}
+  finally{sql('DROP TRIGGER detail_subtask_final');}
+  await saveSubtask();await expect(page.locator(c('DetailTree'))).toContainText(shown(childTitle));
+  const children=JSON.parse(execFileSync('python3',['-c',`import sqlite3,json,sys
+with sqlite3.connect(sys.argv[1]) as d:
+ print(json.dumps(d.execute("SELECT c.title,c.lane,c.status,e.title FROM kb_entries e JOIN kb_cards c ON c.id=e.amount AND c.board_id=e.board_id WHERE e.board_id=? AND e.card_id=? AND e.kind='subtask' ORDER BY e.id",(int(sys.argv[2]),int(sys.argv[3]))).fetchall()))
+`,database,String(seed.board),String(seed.items[0].card)],{encoding:'utf8'}));
+  expect(children).toEqual([[childTitle,initial.lane,initial.status,childTitle]]);await expect(page.locator(c('DetailsPanel')+' literal')).toHaveCount(0);
   expect(errors).toEqual([]);
-  console.log('Detail complete-text browser: native custom/comment/checklist/file text, exact encoded editor values, external suffix heartbeat, dirty local title with independent external body save, post-history archive refusal keeps all board data and exact dirty draft, retry, New clears stale values, literal markup/reload and delete rollback with exact dirty/provenance retention and retry, timer start/stop post-history rollback and retry, file chooser upload data/history archive rollback, retained selection and exact-byte retry, attachment delete/restore post-history archive rollback with retained live/history selection and retry passed');
+  console.log('Detail complete-text browser: native custom/comment/checklist/file text, exact encoded editor values, external suffix heartbeat, dirty local title with independent external body save, post-history archive refusal keeps all board data and exact dirty draft, retry, New clears stale values, literal markup/reload and delete rollback with exact dirty/provenance retention and retry, timer start/stop post-history rollback and retry, file chooser upload data/history archive rollback, retained selection and exact-byte retry, attachment delete/restore post-history archive rollback with retained live/history selection and retry, subtask child-save parent archive rollback with retained exact draft and complete-field child/link retry passed');
  }finally{if(context)await context.close();if(browser)await browser.close();}
 })().catch(e=>{let message=e.stack||String(e);if(process.env.WEBA_TEST_PASSWORD)message=message.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(message);process.exitCode=1;});

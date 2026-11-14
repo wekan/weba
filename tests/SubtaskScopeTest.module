@@ -1,0 +1,157 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim parentId As Integer
+  Dim listId As Integer
+  Dim child As Integer
+  Dim stage As String
+  Dim effect As String
+  Dim actor As String
+  Dim before As String
+  Dim denied As Boolean
+  Dim conn As Connection
+  Dim row As Result
+  Dim latest As String
+  Dim lane As String = "Shared" & Chr(0) & "Ω😀 lane"
+  Dim status As String = "Todo" & Chr(0) & "Ω😀 list"
+  Dim title As String = "Child" & Chr(0) & "Ω😀'"
+  For Each actor In ["sub-global", "sub-owner", "sub-writer", "sub-reader", "sub-outsider"]
+    WebDatabase.Register(actor, "x")
+  Next
+  SignIn("sub-owner")
+  boardId = KanbanStore.AddBoard("Subtask final scope")
+  BoardAccess.SetMember(boardId, "sub-writer", "normal")
+  BoardAccess.SetMember(boardId, "sub-reader", "read-only")
+  parentId = KanbanStore.SaveCard(boardId, 0, "Parent", "", lane, "Todo", "", "", "")
+  listId = KanbanStore.ReadCardListId(boardId, parentId)
+  WorkspaceStore.Rename(boardId, "list", listId, status)
+  CardContent.OpenStore()
+  conn = WebDatabase.OpenConnection()
+  latest = "(SELECT MAX(id) FROM kb_cards WHERE board_id=" & CStr(boardId) & ")"
+  SignIn("sub-writer")
+  For Each stage In ["AFTER INSERT ON kb_cards WHEN NEW.id<>" & CStr(parentId), "AFTER INSERT ON kb_history WHEN NEW.kind='card' AND NEW.item_id<>" & CStr(parentId), "AFTER INSERT ON kb_item_changes WHEN NEW.kind='card' AND NEW.item_id<>" & CStr(parentId), "AFTER INSERT ON kb_entries WHEN NEW.kind='subtask'", "AFTER INSERT ON kb_history WHEN NEW.kind='card' AND NEW.item_id=" & CStr(parentId), "AFTER UPDATE ON kb_item_changes WHEN NEW.kind='card' AND NEW.item_id=" & CStr(parentId)]
+    For Each effect In ["UPDATE kb_members SET role='read-only' WHERE username='sub-writer' AND board_id=" & CStr(boardId), "DELETE FROM kb_members WHERE username='sub-writer' AND board_id=" & CStr(boardId), "UPDATE account_sessions SET generation=generation+1 WHERE username='sub-writer'", "INSERT INTO kb_member_flags (board_id,username,flag) VALUES (" & CStr(boardId) & ",'sub-writer','isReadAssignedOnly')", "UPDATE kb_cards SET archived=1 WHERE id=" & CStr(parentId), "UPDATE kb_boards SET archived=1 WHERE id=" & CStr(boardId), "UPDATE kb_cards SET lane='changed' WHERE id=" & CStr(parentId), "UPDATE kb_cards SET status='changed' WHERE id=" & CStr(parentId), "UPDATE kb_card_lists SET list_id=-1 WHERE card_id=" & CStr(parentId), "UPDATE kb_card_lists SET board_id=-1 WHERE card_id=" & CStr(parentId), "UPDATE kb_lists SET title='changed' WHERE id=" & CStr(listId), "DELETE FROM kb_cards WHERE id=" & CStr(parentId), "SELECT RAISE(ABORT,'subtask-private-canary')"]
+      before = Frame()
+      conn.Exec("CREATE TRIGGER inject_sub_scope " & stage & " BEGIN " & effect & "; END")
+      Try child = CardContent.NewSubtask(boardId, parentId, title)
+      denied = Error
+      conn.Exec("DROP TRIGGER inject_sub_scope")
+      If Not denied Or Frame() <> before Then Error.Raise("Subtask parent scope failed: " & stage & ": " & effect)
+    Next
+    If InStr(stage, "kb_entries") Or InStr(stage, "NEW.item_id=" & CStr(parentId)) Then
+      For Each effect In ["UPDATE kb_cards SET description='changed' WHERE id=" & latest, "UPDATE kb_cards SET assignee='sub-owner' WHERE id=" & latest, "UPDATE kb_cards SET title='changed' WHERE id=" & latest, "INSERT INTO kb_card_assignees (board_id,card_id,username) VALUES (" & CStr(boardId) & "," & latest & ",'sub-owner')", "INSERT INTO kb_card_members (board_id,card_id,username) VALUES (" & CStr(boardId) & "," & latest & ",'sub-owner')", "INSERT INTO kb_card_dates (board_id,card_id,field,epoch_ms) VALUES (" & CStr(boardId) & "," & latest & ",'dueAt',7)", "INSERT INTO kb_card_dates (board_id,card_id,field,epoch_ms) VALUES (-1," & latest & ",'dueAt',7)", "INSERT INTO kb_meta (board_id,kind,item_id,setting,value) VALUES (" & CStr(boardId) & ",'card'," & latest & ",'description','changed')", "INSERT OR REPLACE INTO kb_order (board_id,kind,item,sort_order) VALUES (" & CStr(boardId) & ",'card',CAST(" & latest & " AS TEXT),999)", "DELETE FROM kb_item_changes WHERE board_id=" & CStr(boardId) & " AND kind='card' AND item_id=" & latest, "UPDATE kb_history SET message='changed' WHERE board_id=" & CStr(boardId) & " AND kind='card' AND item_id=" & latest]
+        before = Frame()
+        conn.Exec("CREATE TRIGGER inject_sub_scope " & stage & " BEGIN " & effect & "; END")
+        Try child = CardContent.NewSubtask(boardId, parentId, title)
+        denied = Error
+        conn.Exec("DROP TRIGGER inject_sub_scope")
+        If Not denied Or Frame() <> before Then Error.Raise("Subtask child state failed: " & stage & ": " & effect)
+      Next
+    Endif
+  Next
+  before = Frame()
+  conn.Exec("CREATE TRIGGER lose_sub_parent_data AFTER INSERT ON kb_cards WHEN NEW.id<>" & CStr(parentId) & " BEGIN UPDATE kb_cards SET archived=1 WHERE id=" & CStr(parentId) & "; END")
+  conn.Exec("CREATE TRIGGER restore_sub_parent_data AFTER INSERT ON kb_history WHEN NEW.kind='card' AND NEW.item_id<>" & CStr(parentId) & " BEGIN UPDATE kb_cards SET archived=0 WHERE id=" & CStr(parentId) & "; END")
+  Try CardContent.NewSubtask(boardId, parentId, title)
+  denied = Error
+  conn.Exec("DROP TRIGGER restore_sub_parent_data")
+  conn.Exec("DROP TRIGGER lose_sub_parent_data")
+  If Not denied Or Frame() <> before Then Error.Raise("Temporary child-save parent scope loss escaped")
+  conn.Exec("CREATE TRIGGER lose_sub_parent AFTER INSERT ON kb_history WHEN NEW.kind='card' AND NEW.item_id<>" & CStr(parentId) & " BEGIN UPDATE kb_cards SET archived=1 WHERE id=" & CStr(parentId) & "; END")
+  conn.Exec("CREATE TRIGGER restore_sub_parent AFTER INSERT ON kb_entries WHEN NEW.kind='subtask' BEGIN UPDATE kb_cards SET archived=0 WHERE id=" & CStr(parentId) & "; END")
+  Try CardContent.NewSubtask(boardId, parentId, title)
+  denied = Error
+  conn.Exec("DROP TRIGGER restore_sub_parent")
+  conn.Exec("DROP TRIGGER lose_sub_parent")
+  If Not denied Or Frame() <> before Then Error.Raise("Temporary parent scope loss escaped")
+  conn.Exec("CREATE TRIGGER lose_sub_child AFTER INSERT ON kb_entries WHEN NEW.kind='subtask' BEGIN UPDATE kb_cards SET description='changed' WHERE id=NEW.amount; END")
+  conn.Exec("CREATE TRIGGER restore_sub_child AFTER INSERT ON kb_history WHEN NEW.kind='card' AND NEW.item_id=" & CStr(parentId) & " BEGIN UPDATE kb_cards SET description='' WHERE id=" & latest & "; END")
+  Try CardContent.NewSubtask(boardId, parentId, title)
+  denied = Error
+  conn.Exec("DROP TRIGGER restore_sub_child")
+  conn.Exec("DROP TRIGGER lose_sub_child")
+  If Not denied Or Frame() <> before Then Error.Raise("Temporary child state mutation escaped")
+  child = CardContent.NewSubtask(boardId, parentId, title)
+  row = WorkspaceStore.Record(boardId, "card", child)
+  If ExportText.ReadValue(row, "title") <> title Or ExportText.ReadValue(row, "lane") <> lane Or ExportText.ReadValue(row, "status") <> status Or ExportText.ReadValue(row, "assignee") <> "sub-writer" Or KanbanStore.ReadCardListId(boardId, child) <> listId Then Error.Raise("Subtask lost complete inherited fields")
+  row = CardContent.Entries(boardId, parentId, "subtask", True)
+  If row.Count <> 1 Or row!amount <> child Or ExportText.ReadValue(row, "title") <> title Then Error.Raise("Subtask retry did not create one correct link")
+  conn.Exec("DELETE FROM kb_card_lists WHERE card_id=&1", parentId)
+  child = CardContent.NewSubtask(boardId, parentId, title & " legacy mapping")
+  If KanbanStore.ReadCardListId(boardId, parentId) <> listId Or KanbanStore.ReadCardListId(boardId, child) <> listId Then Error.Raise("Legacy parent mapping lost inherited placement")
+  For Each actor In ["sub-reader", "sub-outsider", "sub-global"]
+    SignIn(actor)
+    before = Frame()
+    Try CardContent.NewSubtask(boardId, parentId, title)
+    denied = Error
+    If Not denied Or Frame() <> before Then Error.Raise("Unauthorized subtask changed state")
+  Next
+  SignIn("sub-reader")
+  before = Frame()
+  DatabaseTransactions.Begin(conn)
+  conn.Exec("UPDATE kb_cards SET description='caller-owned' WHERE id=&1", parentId)
+  Try CardContent.NewSubtask(boardId, parentId, title)
+  denied = Error
+  If Not denied Or conn.Exec("SELECT description FROM kb_cards WHERE id=&1", parentId)!description <> "caller-owned" Then Error.Raise("Preflight failure rolled back caller transaction")
+  DatabaseTransactions.Rollback(conn)
+  If Frame() <> before Then Error.Raise("Caller rollback changed state")
+  Print "Subtasks: parent child/link data/history/clock scope/identity/role/raw/archive/placement/SQL rollback, complete inherited NUL/Unicode fields, unchanged new-child fields/people/dates/meta/order/history/clocks, retry, unauthorized refusal and caller transaction ownership passed"
+End
+
+Private Sub SignIn(actor As String)
+  Session["username"] = actor
+  Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+End
+
+Private Function Frame() As String
+  Dim conn As Connection = WebDatabase.OpenConnection()
+  Dim table As Table
+  Dim tables As New String[]
+  Dim tableName As String
+  Dim order As String[]
+  Dim key As String
+  Dim rows As Result
+  Dim field As ResultField
+  Dim values As Collection
+  Dim data As Variant[]
+  Dim result As New Collection
+  For Each table In conn.Tables
+    If Left(table.Name, 7) <> "sqlite_" Then tables.Add(table.Name)
+  Next
+  tables.Sort()
+  For Each tableName In tables
+    order = New String[]
+    For Each key In conn.Tables[tableName].PrimaryKey
+      order.Add(conn.Quote(key))
+    Next
+    rows = conn.Exec(ExportText.SelectRows(conn, tableName) & If(order.Count, " ORDER BY " & order.Join(","), ""))
+    data = New Variant[]
+    For Each rows
+      values = New Collection
+      For Each field In rows.Fields
+        If Left(field.Name, 7) = "__weba_" Then Continue
+        If field.Type = DB.String Then
+          If rows.Fields.Exist("__weba_null_" & field.Name) Then
+            If rows["__weba_null_" & field.Name] Then
+              values[field.Name] = JSON.Null
+            Else
+              values[field.Name] = ExportText.ReadValue(rows, field.Name)
+            Endif
+          Else
+            values[field.Name] = rows[field.Name]
+          Endif
+        Else If field.Type = DB.Blob Then
+          If IsNull(rows[field.Name]) Then
+            values[field.Name] = JSON.Null
+          Else
+            values[field.Name] = Base64(rows[field.Name].Data)
+          Endif
+        Else
+          values[field.Name] = rows[field.Name]
+        Endif
+      Next
+      data.Add(values)
+    Next
+    result[tableName] = data
+  Next
+  Return JsonText.Encode(result)
+End
