@@ -1,0 +1,140 @@
+Public Sub Main()
+  Dim kind As String
+  WebDatabase.Register("copy-author-owner", "x")
+  WebDatabase.Register("copy-author-writer", "x")
+  For Each kind In ["comment", "custom", "checklist", "checkitem", "time", "file"]
+    CheckKind(kind)
+  Next
+  Print "Copied authors: six copied record kinds, record/metadata/bytes/provenance and role/session/archive/placement checks at lock and author replacement, full copy rollback and exact retry passed"
+End
+
+Private Sub CheckKind(kind As String)
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim parentId As Integer
+  Dim copyId As Integer
+  Dim conn As Connection
+  Dim before As String
+  Dim denied As Boolean
+  Dim tableName As String = If(kind = "file", "kb_files", "kb_entries")
+  Dim field As String = If(kind = "file", "filename", "body")
+  Dim stage As String
+  Dim effect As String
+  Dim condition As String
+  Dim effects As String[]
+  Dim row As Result
+  Dim suffix As String = Chr(0) & "Ω😀tail"
+  SignIn("copy-author-owner")
+  boardId = KanbanStore.AddBoard("Copy authors " & kind)
+  BoardAccess.SetMember(boardId, "copy-author-writer", "normal")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Source", "", "Default", "Todo", "", "", "")
+  If kind = "file" Then
+    CardContent.AddFile(boardId, cardId, "File" & suffix, "B" & Chr(0) & Chr(255), "application/custom")
+  Else
+    If kind = "checkitem" Then parentId = CardContent.Save(boardId, cardId, 0, "checklist", "Parent", "", 0, False, 0)
+    CardContent.Save(boardId, cardId, 0, kind, "Title" & suffix, "Body" & suffix, parentId, False, JsonText.Decode("0.10000000000000002"))
+  Endif
+  SignIn("copy-author-writer")
+  conn = WebDatabase.OpenConnection()
+  condition = "NEW.card_id<>" & CStr(cardId) & " AND NEW.board_id=" & CStr(boardId)
+  If kind <> "file" Then condition &= " AND NEW.kind='" & kind & "'"
+  effects = ["UPDATE " & tableName & " SET " & field & "='changed' WHERE id=NEW.id", "UPDATE " & tableName & " SET author=NULL WHERE id=NEW.id", "UPDATE " & tableName & " SET author='foreign' WHERE id=NEW.id", "UPDATE " & tableName & " SET created_at=NULL WHERE id=NEW.id", "UPDATE " & tableName & " SET board_id=-1 WHERE id=NEW.id", "UPDATE " & tableName & " SET card_id=-1 WHERE id=NEW.id", "DELETE FROM " & tableName & " WHERE id=NEW.id", "UPDATE kb_members SET role='read-only' WHERE board_id=NEW.board_id AND username='copy-author-writer'", "UPDATE account_sessions SET generation=generation+1 WHERE username='copy-author-writer'", "UPDATE kb_cards SET archived=1 WHERE id=NEW.card_id", "UPDATE kb_boards SET archived=1 WHERE id=NEW.board_id", "UPDATE kb_card_lists SET list_id=-1 WHERE card_id=NEW.card_id", "INSERT INTO kb_retired_authors (kind,item_id,board_id,card_id,display_name) VALUES ('" & If(kind = "file", "file", "entry") & "',NEW.id,NEW.board_id,NEW.card_id,'foreign')", "SELECT RAISE(ABORT,'copied-author-private-canary')"]
+  If kind = "file" Then
+    effects.Add("UPDATE kb_files SET content=X'00FF' WHERE id=NEW.id")
+    effects.Add("UPDATE kb_attachment_data SET mime='changed' WHERE file_id=NEW.id")
+    effects.Add("UPDATE kb_attachment_data SET uploaded_ms=NULL WHERE file_id=NEW.id")
+    effects.Add("DELETE FROM kb_attachment_data WHERE file_id=NEW.id")
+    effects.Add("INSERT INTO kb_attachment_deletions (file_id,board_id,card_id) VALUES (NEW.id,NEW.board_id,NEW.card_id)")
+  Else
+    effects.Add("UPDATE kb_entries SET amount=NULL WHERE id=NEW.id")
+    effects.Add("UPDATE kb_entries SET amount=0.10000000000000003 WHERE id=NEW.id")
+    effects.Add("UPDATE kb_entries SET parent_id=NULL WHERE id=NEW.id")
+    effects.Add("UPDATE kb_entries SET done=NULL WHERE id=NEW.id")
+  Endif
+  For Each stage In [" AND NEW.author='copy-author-writer'", " AND NEW.author='copy-author-owner'"]
+    For Each effect In effects
+      before = Frame()
+      conn.Exec("CREATE TRIGGER copy_author_guard AFTER UPDATE OF author ON " & tableName & " WHEN " & condition & stage & " BEGIN " & effect & "; END")
+      Try copyId = WorkspaceStore.Copy(boardId, "card", cardId, "Rejected copy")
+      denied = Error
+      conn.Exec("DROP TRIGGER copy_author_guard")
+      If Not denied Or Frame() <> before Then Error.Raise("Copied author guard failed: " & kind & ": " & stage & ": " & effect)
+    Next
+  Next
+  copyId = WorkspaceStore.Copy(boardId, "card", cardId, "Exact retry")
+  If kind = "file" Then
+    row = CardContent.Files(boardId, copyId, True)
+    If ExportText.ReadValue(row, "filename") <> "File" & suffix Or row!content.Data <> "B" & Chr(0) & Chr(255) Then Error.Raise("Copied file retry changed bytes/name")
+  Else
+    row = CardContent.Entries(boardId, copyId, kind, True)
+    If ExportText.ReadValue(row, "body") <> "Body" & suffix Then Error.Raise("Copied entry retry changed body")
+  Endif
+  If ExportText.ReadValue(row, "author") <> "copy-author-owner" Then Error.Raise("Copied author retry changed principal")
+  conn.Exec("UPDATE " & tableName & " SET author=CAST(" & conn.FormatBlob("Legacy" & suffix) & " AS TEXT) WHERE board_id=&1 AND card_id=&2", boardId, cardId)
+  copyId = WorkspaceStore.Copy(boardId, "card", cardId, "Complete author retry")
+  If kind = "file" Then
+    row = CardContent.Files(boardId, copyId, True)
+  Else
+    row = CardContent.Entries(boardId, copyId, kind, True)
+  Endif
+  If ExportText.ReadValue(row, "author") <> "Legacy" & suffix Then Error.Raise("Copied legacy author was truncated")
+End
+
+Private Sub SignIn(actor As String)
+  Session["username"] = actor
+  Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+End
+
+Private Function Frame() As String
+  Dim conn As Connection = WebDatabase.OpenConnection()
+  Dim table As Table
+  Dim tables As New String[]
+  Dim tableName As String
+  Dim order As String[]
+  Dim key As String
+  Dim rows As Result
+  Dim field As ResultField
+  Dim values As Collection
+  Dim data As Variant[]
+  Dim result As New Collection
+  For Each table In conn.Tables
+    If Left(table.Name, 7) <> "sqlite_" Then tables.Add(table.Name)
+  Next
+  tables.Sort()
+  For Each tableName In tables
+    order = New String[]
+    For Each key In conn.Tables[tableName].PrimaryKey
+      order.Add(conn.Quote(key))
+    Next
+    rows = conn.Exec(ExportText.SelectRows(conn, tableName) & If(order.Count, " ORDER BY " & order.Join(","), ""))
+    data = New Variant[]
+    For Each rows
+      values = New Collection
+      For Each field In rows.Fields
+        If Left(field.Name, 7) = "__weba_" Then Continue
+        If field.Type = DB.String Then
+          If rows.Fields.Exist("__weba_null_" & field.Name) Then
+            If rows["__weba_null_" & field.Name] Then
+              values[field.Name] = JSON.Null
+            Else
+              values[field.Name] = ExportText.ReadValue(rows, field.Name)
+            Endif
+          Else
+            values[field.Name] = rows[field.Name]
+          Endif
+        Else If field.Type = DB.Blob Then
+          If IsNull(rows[field.Name]) Then
+            values[field.Name] = JSON.Null
+          Else
+            values[field.Name] = Base64(rows[field.Name].Data)
+          Endif
+        Else
+          values[field.Name] = rows[field.Name]
+        Endif
+      Next
+      data.Add(values)
+    Next
+    result[tableName] = data
+  Next
+  Return JsonText.Encode(result)
+End

@@ -146,8 +146,11 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Completed locked unchanged-NULL preservation for existing entry drafts and
   exact NULL/value final guards; seven-kind semantic/rollback/stale cases and
   source/packaged detail UI results are recorded in CHANGELOG.md.
-- Next detail/content focus: remaining copy-author/model mutation audits, other
-  nullable/legacy fields and remaining model readers/writers.
+- Completed nonempty copied entry/file author restoration guards with exact
+  record/bytes/metadata retention, rollback and source/packaged rich-copy retry
+  evidence in CHANGELOG.md.
+- Next detail/content focus: remaining copy/model mutation audits, nullable copy
+  scalars, other nullable/legacy fields and remaining model readers/writers.
   Atomic imported display-name provenance for owned entries/files and shared
   stored-placement guards are in CHANGELOG.md.
   Atomic subtask creation and its captured parent/new-child checkpoints are in

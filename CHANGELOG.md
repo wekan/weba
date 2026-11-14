@@ -2,6 +2,22 @@
 
 This work adds the following features and fixes:
 
+- Guard restoration of nonempty authors on newly copied entries and files.
+  Capture the actor-owned target record, card/container scope, file bytes and
+  metadata before locks; recheck them after record/provenance locks and author
+  replacement in the caller's transaction. Require no existing target provenance,
+  preserve all fields except the intended author, and use complete-text storage
+  for legacy NUL-containing principals. Previously an author-update trigger could
+  alter copied comment content and the whole copy would still commit.
+  Six-kind model tests cover lock/replacement mutations, role/session/archive/
+  placement loss, record/scalar/provenance changes, file bytes/metadata changes,
+  SQL failure, full-copy rollback, exact retry and complete legacy author text.
+  Source/packaged rich-copy UI tests reject copied entry/file mutation, retain
+  the exact pending title, and complete the rich copy on retry. The full host
+  suite, including API/security/session checks and 70 Python tests, passes.
+  Nullable copy scalars and remaining source/model copy audits remain open.
+  Thanks to xet7.
+
 - Retain untouched nullable fields when merging existing native entry drafts.
   Capture NULL state after the locked read and retain it only when the submitted
   field and its validated value remain unchanged. Keep explicit edits and required

@@ -195,6 +195,11 @@ with sqlite3.connect(sys.argv[1]) as d:
    try{await click('ActionConfirm');await expect(page.locator(c('Notice'))).toContainText('Card archive state changed');expect(sql()).toBe(beforeProvenance);await expect(page.locator(c('ActionPanel'))).toBeVisible();await expect(actionText).toHaveValue(copiedCardTitle);}
    finally{sql('DROP TRIGGER native_provenance_final');}
   }
+  for(const [table,field] of [['kb_entries','body'],['kb_files','content']]){
+   const beforeAuthor=sql();sql('CREATE TRIGGER native_copy_author_final AFTER UPDATE OF author ON '+table+" WHEN NEW.author IS NOT NULL AND NEW.board_id="+seed.board+' AND NEW.card_id<>'+createdId+' BEGIN UPDATE '+table+' SET '+field+"=NULL WHERE id=NEW.id; END");
+   try{await click('ActionConfirm');await expect(page.locator(c('Notice'))).toContainText(table==='kb_files'?'Attachment bytes':'Author record changed');expect(sql()).toBe(beforeAuthor);await expect(page.locator(c('ActionPanel'))).toBeVisible();await expect(actionText).toHaveValue(copiedCardTitle);}
+   finally{sql('DROP TRIGGER native_copy_author_final');}
+  }
   await click('ActionConfirm');
   const copiedCard=fixture('containers').cards.find(row=>row.title===copiedCardTitle);expect(copiedCard).toBeTruthy();checkCopied(copiedCard.id,{title:copiedCardTitle});
   await page.locator('.weba-report .weba-column[data-list-id="'+seed.items[1].list+'"] .weba-list-menu').click();await settle();await click('ContextCopy');
@@ -218,6 +223,6 @@ with sqlite3.connect(sys.argv[1]) as d:
   await page.evaluate(()=>gw.raise(document.querySelector('[id$=".SaveCard"]').id,'click',[],false));await settle();
   expect(fixture('read',createdId)).toEqual(before);
   expect(errors).toEqual([]);
-  console.log('Native complete text browser: shared-prefix NUL/Unicode/markup lane/list identities retain exact columns/card placement across views/reload/Finnish/mobile; readonly/assigned scope, native exact card/list/lane mouse and card dialog moves with editor refresh/reload, exact lane/list creation and board/card/list/lane native renames with SQL/dirty/reload checks, rich card/list/lane/board native copies with exact SQL/entries/files/numbered title/reload and stale-copy refusal, retired entry/file author-conversion archive rollback with retained exact copy title and rich retry, create/edit/NUL dirty refresh/reload and reopened full-status edit/save/reload, post-history archive refusal with full board-state rollback/dirty retention/retry and late-revocation refusal passed');
+  console.log('Native complete text browser: shared-prefix NUL/Unicode/markup lane/list identities retain exact columns/card placement across views/reload/Finnish/mobile; readonly/assigned scope, native exact card/list/lane mouse and card dialog moves with editor refresh/reload, exact lane/list creation and board/card/list/lane native renames with SQL/dirty/reload checks, rich card/list/lane/board native copies with exact SQL/entries/files/numbered title/reload and stale-copy refusal, retired entry/file author-conversion archive and nonempty copied-author data/bytes rollback with retained exact copy title and rich retry, create/edit/NUL dirty refresh/reload and reopened full-status edit/save/reload, post-history archive refusal with full board-state rollback/dirty retention/retry and late-revocation refusal passed');
  }finally{try{if(context)await context.close();}finally{if(browser)await browser.close();}}
 })().catch(e=>{let s=e.stack||String(e);if(process.env.WEBA_TEST_PASSWORD)s=s.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(s);process.exitCode=1;});

@@ -203,11 +203,51 @@ End
 
 Private Sub CopyAuthor(boardId As Integer, cardId As Integer, kind As String, itemId As Integer, author As String, displayName As String)
   Dim tableName As String = If(kind = "entry", "kb_entries", "kb_files")
+  Dim actor As String = WebIdentity.Username
+  Dim scope As Collection
+  Dim expected As Collection
+  Dim row As Result
+  Dim transaction As Boolean
+  Dim failure As String
   If Not author Then
     RetainAuthorName(boardId, cardId, kind, itemId, displayName)
     Return
   Endif
-  $db.Exec("UPDATE " & tableName & " SET author = &1 WHERE id = &2 AND board_id = &3 AND card_id = &4", author, itemId, boardId, cardId)
+  scope = MutationScope(boardId, cardId, actor, "write")
+  If kind = "entry" Then
+    row = Entry(boardId, cardId, itemId, True)
+  Else If kind = "file" Then
+    row = FileRecord(boardId, cardId, itemId, True)
+    scope.Add(row!content.Data, "bytes")
+    scope.Add($db.Exec("SELECT id FROM kb_files WHERE id=&1 AND content IS NULL", itemId).Available, "contentNull")
+    scope.Add(ProvenanceFileState(itemId), "fileState")
+  Else
+    Error.Raise("Unknown author record")
+  Endif
+  If ExportText.ReadValue(row, "author") <> actor Then Error.Raise("Copied author requires a newly created record")
+  expected = RecordState(row, kind = "file")
+  scope.Add(expected, "record")
+  row = $db.Exec(ExportText.SelectRows($db, "kb_retired_authors") & " WHERE kind=&1 AND item_id=&2", kind, itemId)
+  If row.Available Then Error.Raise("Copied author provenance already exists")
+  scope.Add(False, "hasProvenance")
+  BeginChange(boardId, cardId, "write", actor)
+  transaction = True
+  RequireProvenance(boardId, cardId, kind, itemId, scope)
+  $db.Exec("UPDATE " & tableName & " SET author=author WHERE id=&1 AND board_id=&2 AND card_id=&3", itemId, boardId, cardId)
+  RequireProvenance(boardId, cardId, kind, itemId, scope)
+  $db.Exec("UPDATE kb_retired_authors SET item_id=item_id WHERE kind=&1 AND item_id=&2", kind, itemId)
+  RequireProvenance(boardId, cardId, kind, itemId, scope)
+  expected["author"] = author
+  row = $db.Edit(tableName, "id=&1 AND board_id=&2 AND card_id=&3", itemId, boardId, cardId)
+  row!author = author
+  DatabaseText.Save($db, row, tableName, ["author"], False)
+  RequireProvenance(boardId, cardId, kind, itemId, scope)
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
 End
 
 Private Function Reaches(boardId As Integer, startId As Integer, targetId As Integer, kind As String, skipId As Integer) As Boolean
