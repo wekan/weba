@@ -1,7 +1,7 @@
 ' Interactive filename stages; REST/import workflows have separate entry points.
 Export
 
-Private Function RunPolicy(filename As String, mode As String) As Variant
+Private Function RunPolicy(filename As String, mode As String, Optional mime As String) As Variant
   Dim worker As Process
   Dim request As New Collection
   Dim state As New Collection
@@ -10,9 +10,13 @@ Private Function RunPolicy(filename As String, mode As String) As Variant
   If Len(filename) > 4096 Then Error.Raise("Filename input exceeds policy limit")
   request.Add(Base64(filename), "filename")
   request.Add(mode, "mode")
+  If mode = "correct" Then
+    If Len(mime) > 1024 Then Error.Raise("MIME input exceeds policy limit")
+    request.Add(Base64(mime), "mime")
+  Endif
   state.Add("", "text")
   state.Add(False, "invalid")
-  worker = Exec ["python3", "-I", "-S", "-c", File.Load(".public/native-filename-policy.py"), File.Load(".public/native-filename-data.b64")] For Read Write As "PolicyWorker"
+  worker = Exec ["python3", "-I", "-S", "-c", File.Load(".public/native-filename-policy.py"), File.Load(".public/native-filename-data.b64"), File.Load(".public/native-mime-data.b64")] For Read Write As "PolicyWorker"
   worker.Tag = state
   Print #worker, JsonText.Encode(request)
   worker.CloseInput()
@@ -72,4 +76,8 @@ Public Function InteractiveName(filename As String) As String
   If Not verdict.Exist("exploit") Or TypeOf(verdict["exploit"]) <> gb.Boolean Or Not verdict.Exist("name") Then Error.Raise("Filename normalization failed")
   If verdict["exploit"] Then Error.Raise("Invalid attachment name")
   Return CheckedName(verdict["name"])
+End
+
+Public Function CorrectUploadName(filename As String, mime As String) As String
+  Return CheckedName(RunPolicy(filename, "correct", mime))
 End

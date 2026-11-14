@@ -61,3 +61,14 @@ the normalized name and Boolean rejection flag. The pre-hook oracle interface
 stays independent, and REST/import/content/extension/SVG/copy policies are separate
 pending audits. Native rejection occurs before storage writes; source library
 post-upload storage/response behavior is not claimed by this adapter.
+
+The compiled bridge also exposes the staged `CorrectUploadName` helper. Its MIME
+maps and MIT licenses are embedded under `.public/native-mime-*`; the manifest
+pins their compressed/Base64 hashes. Public script plus both data arguments stay
+within the same 96KB budget. The `correct` request sends filename and MIME as
+Base64 JSON fields on private stdin (4096 and 1024 input bytes respectively,
+within the 8192-byte request cap). It returns only the corrected name, leaving
+stored MIME metadata independent. Actual project and `.gambas` archive probes
+compare correction results with unchanged source and verify private argument
+exclusion, boundary refusal before worker startup, cleanup and retry. Uploads
+are not wired to this entry point until content detection is implemented.

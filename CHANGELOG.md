@@ -2,6 +2,21 @@
 
 This work adds the following features and fixes:
 
+- Embed the exact source MIME lookup maps/licenses in native Gambas resources
+  and expose a staged CorrectUploadName bridge. Keep private filenames and MIME
+  values on bounded stdin; public script plus both data tables stay below the
+  96KB argument budget. Return only the corrected name, retaining independent
+  declared MIME metadata. Refuse oversized fields before starting the worker.
+  Forty-one actual project and .gambas archive correction cases match unchanged
+  source, including input limits, paths, Unicode, JFIF, Gantt and generic types.
+  Privacy probes verify both private fields stay out of argv; existing worker
+  malformed/noisy/oversized/nonzero/timeout cleanup and retry checks pass.
+  Full host/API/security/session/text/native/source/Unicode/client checks,
+  71 Python tests and source/packaged real chooser regressions pass.
+  This completes bridge staging only; detector/upload/REST/import/copy/SVG
+  integration remains open.
+  Thanks to xet7.
+
 - Port source MIME-based upload filename correction as an offline helper,
   capturing the installed mime-types 2.1.35/mime-db 1.52.0 resolved maps with
   source/dependency/data hashes and MIT licenses. Preserve MIME-group defaults,

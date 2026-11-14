@@ -1,6 +1,6 @@
 # Work in progress
 
-Updated 2026-11-13. Target: the signed-in pages of the current `wekan/wekan`
+Updated 2026-11-14. Target: the signed-in pages of the current `wekan/wekan`
 checkout, implemented with Gambas Web UI, SQLite persistence and portable Gambas
 DB operations. This is an initial implementation, not complete WeKan parity.
 
@@ -181,27 +181,12 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   single-file export, with distinct missing-row defaults, safe raw headers and
   source/packaged API/UI/model evidence in CHANGELOG.md. Broader board export/
   copy/import MIME remains under audit.
-- Completed interactive chooser/model pre-upload filename cleaning with the
-  unchanged client hook, offline compiled bridge, exact stored bytes/text, failure
-  rollback and source/packaged UI/model evidence in CHANGELOG.md. Upload-start
-  validation, REST/import/server post-upload exploit/type/extension/SVG and copy
-  policies remain open.
-- Completed source interactive empty-file start refusal before filename hooks/
-  native transport, with early model denial, unchanged board data, valid retry
-  and retained internal/raw empty-BLOB behavior. Source/packaged evidence is in
-  CHANGELOG.md; remaining server/REST/content/copy/import policies stay open.
-- Completed interactive post-preclean filename exploit classification/refusal
-  with exact source verdicts, no-write model/UI checks and valid retry notice
-  clearing. REST/import/content/type/extension/SVG/copy stages remain open;
-  source/packaged detail/live and full check evidence is in CHANGELOG.md.
-- Completed bounded private native filename worker transport and failure cleanup;
-  request/argv privacy, exact source results, malformed/noisy/oversized/nonzero/
-  timeout refusal and retry evidence is in CHANGELOG.md. Content detection and
-  remaining REST/import/copy policy audits remain open.
-- Completed offline source MIME-map/name-correction helpers with exact resolved
-  dependency tables, licenses, Node path rules and packaged-host coverage; 13,110
-  source comparison results are in CHANGELOG.md. Actual detector and native/REST/
-  import/copy/SVG integration remain open.
+- Finish content-aware upload policy integration: actual detector chain, filename
+  correction in native/REST/import/copy handlers, SVG sanitization and full source
+  response/storage semantics. Completed pre-cleaning, empty-file refusal, decoded
+  name rejection, private worker transport and source MIME helper/native bridge
+  evidence has moved to CHANGELOG.md. Recheck policy/role/transaction boundaries
+  and source/packaged UI/API/security cases when activating each remaining stage.
 - Next detail/content focus: remaining copy/model mutation audits, stored/uploaded
   filename-policy parity and any other display surfaces, legacy
   file fidelity, nullable fields and model readers/writers.
