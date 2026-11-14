@@ -64,7 +64,7 @@ Private Function Build(boardId As Integer, reference As String, apiContext As Bo
   Dim fileId As Integer = ParseId(reference)
   Dim cardId As Integer
   Dim bytes As String
-  Dim mime As String = "application/octet-stream"
+  Dim mime As Variant = "application/octet-stream"
   Dim data As New Collection
   Dim outcome As New Collection
   Dim transaction As Boolean
@@ -96,9 +96,9 @@ Private Function Build(boardId As Integer, reference As String, apiContext As Bo
     data["_id"] = CStr(r!id)
     data["cardId"] = CStr(cardId)
     data.Add(ExportText.ReadNullableValue(r, "filename"), "name")
-    metadata = db.Find("kb_attachment_data", "board_id=&1 AND card_id=&2 AND file_id=&3", boardId, cardId, fileId)
+    metadata = db.Exec(ExportText.SelectRows(db, "kb_attachment_data") & " WHERE board_id=&1 AND card_id=&2 AND file_id=&3", boardId, cardId, fileId)
     If metadata.Available Then
-      If Not IsNull(metadata!mime) Then mime = metadata!mime
+      mime = ExportText.ReadNullableValue(metadata, "mime")
     Endif
     data.Add(mime, "type")
     r = db.Find("kb_files", "board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, fileId)

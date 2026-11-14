@@ -39,6 +39,13 @@ def main():
                 assert pair(url,token=token)==(200,{**expected,'name':nullable_name})
             assert snapshot()==frame
         db.execute('UPDATE kb_files SET filename=? WHERE id=?',(name,f['fileId']));db.commit()
+        for legacy_mime in (None,'','application/x-'+('m'*300),'application/x-legacy\0suffixΩ','text/plain\r\nX-Legacy-Injection: forbidden'):
+            db.execute('UPDATE kb_attachment_data SET mime=? WHERE file_id=?',(legacy_mime,f['fileId']));db.commit()
+            frame=snapshot()
+            for token in (owner,reader):
+                assert pair(url,token=token)==(200,{**expected,'type':legacy_mime})
+            assert snapshot()==frame
+        db.execute('UPDATE kb_attachment_data SET mime=? WHERE file_id=?',('text/html',f['fileId']));db.commit()
         before=snapshot()
         status,document,headers=call(url,token=owner)
         assert (status,document)==(200,expected)

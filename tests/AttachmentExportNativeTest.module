@@ -12,6 +12,8 @@ Public Sub Main()
   Dim r As Result
   Dim denied As Boolean
   Dim emptyName As Boolean
+  Dim mimeCases As New Variant[]
+  Dim mimeValue As Variant
   Dim filename As String = "literal" & Chr(0) & "suffixΩ <file>.bin"
   If Env["WEBA_TEST_EXPORT_API"] = "1" Then
     WebIdentity.AuthenticateApi("native-export-owner")
@@ -54,6 +56,22 @@ Public Sub Main()
   r = db.Edit("kb_files", "id=&1", fileId)
   r["filename"] = filename
   DatabaseText.Save(db, r, "kb_files", ["filename"], False)
+  before = Frame()
+  mimeCases.Add(Null)
+  mimeCases.Add("")
+  mimeCases.Add("application/x-legacy" & Chr(0) & "suffixΩ" & Chr(13) & Chr(10) & "X-Legacy-Injection: forbidden")
+  For Each mimeValue In mimeCases
+    r = db.Edit("kb_attachment_data", "file_id=&1", fileId)
+    r["mime"] = mimeValue
+    DatabaseText.Save(db, r, "kb_attachment_data", ["mime"], False)
+    before = Frame()
+    outcome = AttachmentExport.ReadNative(boardId, cardId, CStr(fileId))
+    If outcome["status"] <> 200 Or Frame() <> before Or Not outcome["data"].Exist("type") Then Error.Raise("Legacy native MIME export failed")
+    If JSON.Encode(outcome["data"]["type"]) <> JSON.Encode(mimeValue) Then Error.Raise("Legacy native MIME value changed")
+  Next
+  r = db.Edit("kb_attachment_data", "file_id=&1", fileId)
+  r["mime"] = "application/octet-stream"
+  DatabaseText.Save(db, r, "kb_attachment_data", ["mime"], False)
   before = Frame()
   outcome = AttachmentExport.ReadNative(boardId, cardId, CStr(emptyId))
   If outcome["status"] <> 200 Or Not outcome["data"].Exist("file") Or outcome["data"]["file"] <> "" Then Error.Raise("Native empty-file field lost")

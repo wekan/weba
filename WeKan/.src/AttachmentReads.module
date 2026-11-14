@@ -31,7 +31,7 @@ End
 
 Private Function Query(boardId As Integer, Optional fileId As Integer) As Result
   Dim sql As String
-  sql = "SELECT f.id,f.board_id,f.card_id,f.filename,f.created_at,COALESCE(LENGTH(f.content),0) AS file_size,d.mime,d.uploaded_ms,c.lane,cl.list_id,l.id AS lane_id FROM kb_files f LEFT JOIN kb_attachment_data d ON d.file_id=f.id AND d.board_id=f.board_id AND d.card_id=f.card_id LEFT JOIN kb_cards c ON c.id=f.card_id AND c.board_id=f.board_id LEFT JOIN kb_card_lists cl ON cl.card_id=c.id AND cl.board_id=c.board_id LEFT JOIN kb_lanes l ON l.board_id=c.board_id AND l.title=c.lane WHERE f.board_id=&1"
+  sql = "SELECT f.id,f.board_id,f.card_id,f.filename,f.created_at,COALESCE(LENGTH(f.content),0) AS file_size,d.file_id AS metadata_id,d.mime,d.uploaded_ms,c.lane,cl.list_id,l.id AS lane_id FROM kb_files f LEFT JOIN kb_attachment_data d ON d.file_id=f.id AND d.board_id=f.board_id AND d.card_id=f.card_id LEFT JOIN kb_cards c ON c.id=f.card_id AND c.board_id=f.board_id LEFT JOIN kb_card_lists cl ON cl.card_id=c.id AND cl.board_id=c.board_id LEFT JOIN kb_lanes l ON l.board_id=c.board_id AND l.title=c.lane WHERE f.board_id=&1"
   If fileId > 0 Then
     Return $db.Exec(ExportText.Preserve($db, sql & " AND f.id=&2"), boardId, fileId)
   Endif
@@ -40,8 +40,8 @@ End
 
 Private Function Metadata(r As Result) As Collection
   Dim data As New Collection
-  Dim mime As String = r!mime
-  If Not mime Then mime = "application/octet-stream"
+  Dim mime As Variant = "application/octet-stream"
+  If Not IsNull(r!metadata_id) Then mime = ExportText.ReadNullableValue(r, "mime")
   data.Add(CStr(r!id), "attachmentId")
   data.Add(ExportText.ReadNullableValue(r, "filename"), "fileName")
   data.Add(CLong(r!file_size), "fileSize")
@@ -57,7 +57,7 @@ Private Function Metadata(r As Result) As Collection
   Else If Not IsNull(r!created_at) Then
     data["createdAt"] = CardDates.Iso(ItemChanges.Epoch(r!created_at))
   Endif
-  data.Add(Left(LCase(mime), 6) = "image/", "isImage")
+  data.Add(Left(LCase(CStr(mime)), 6) = "image/", "isImage")
   Return data
 End
 

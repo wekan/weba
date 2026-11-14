@@ -9,6 +9,7 @@ Public Sub Main()
   Dim flags As Collection
   Dim r As Result
   Dim field As String
+  Dim mimeValue As Variant = "text/html"
   Dim name As String = "Export " & Chr(34) & "quoted" & Chr(34) & " + <img src=x onerror=window.webaAttachmentExportCanary=1> 🚀.html"
   If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
   Session["username"] = "rest-owner"
@@ -50,7 +51,22 @@ Public Sub Main()
     Else
       data.Add(name, "name")
     Endif
-    data["type"] = "text/html"
+    If Env["WEBA_NATIVE_EXPORT_MIME_STATE"] Then
+      Select Case Env["WEBA_NATIVE_EXPORT_MIME_STATE"]
+        Case "null"
+          mimeValue = Null
+        Case "empty"
+          mimeValue = ""
+        Case "rich"
+          mimeValue = "application/x-legacy" & Chr(0) & "suffixΩ" & Chr(13) & Chr(10) & "X-Legacy-Injection: forbidden"
+        Case Else
+          Error.Raise("Unknown MIME fixture state")
+      End Select
+      r = WebDatabase.OpenConnection().Edit("kb_attachment_data", "file_id=&1", fileId)
+      r["mime"] = mimeValue
+      DatabaseText.Save(WebDatabase.OpenConnection(), r, "kb_attachment_data", ["mime"], False)
+    Endif
+    data.Add(mimeValue, "type")
     r = WebDatabase.OpenConnection().Find("kb_files", "id=&1", fileId)
     data["bytes"] = Base64(r!content.Data)
   Endif
@@ -77,6 +93,7 @@ End
 Private Function Defaults() As Collection
   Dim data As New Collection
   Dim field As String
+  Dim mimeValue As Variant = "text/html"
   For Each field In ["attachmentsUploadMaxBytes", "attachmentsDownloadMaxBytes", "apiUploadMaxBytes", "apiDownloadMaxBytes"]
     data[field] = 0
   Next

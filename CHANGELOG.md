@@ -2,6 +2,21 @@
 
 This work adds the following features and fixes:
 
+- Preserve legacy MIME values in attachment list/info/JSON downloads and native/
+  API single-file export. Use lossless nullable metadata reads for NULL, empty,
+  NUL/Unicode/CRLF and long strings beyond the declared field length. Distinguish
+  an absent metadata row, which retains its existing application/octet-stream
+  default, from a present nullable MIME value. Keep raw-response default/control-
+  character guards separate from JSON fidelity so malformed metadata cannot inject
+  headers or cookies. Source/packaged API tests verify exact metadata/versions,
+  image flags, original bytes and no-write snapshots for owner/reader/assigned
+  scopes. Native model and six source/packaged UI export variants cover NULL,
+  empty and rich MIME with exact downloaded JSON and existing access/policy/
+  history checks. Full host/API/security/session/text and filename checks pass.
+  Broader board export/copy/import MIME and uploaded-name policy audits remain
+  open.
+  Thanks to xet7.
+
 - Distinguish legacy NULL and empty attachment names in list/info/JSON downloads
   and native/API single-file export. Read nullable text through the projection's
   SQL NULL marker so the SQLite driver's empty-text coercion cannot change JSON

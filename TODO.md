@@ -177,6 +177,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Completed distinct NULL/empty filename metadata/export values and source raw
   API fallback attachment, with nullable SQL marker reads and native/UI/HTTP
   evidence in CHANGELOG.md.
+- Completed nullable/full-text MIME reads for attachment metadata and native/API
+  single-file export, with distinct missing-row defaults, safe raw headers and
+  source/packaged API/UI/model evidence in CHANGELOG.md. Broader board export/
+  copy/import MIME remains under audit.
 - Next detail/content focus: remaining copy/model mutation audits, stored/uploaded
   filename-policy parity and any other display surfaces, legacy
   file fidelity, nullable fields and model readers/writers.
