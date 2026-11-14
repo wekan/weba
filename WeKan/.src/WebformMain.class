@@ -261,6 +261,7 @@ Private Sub RefreshTree()
       $view = If($archive, "Archive", "Boards")
       Editor.Hide()
       DetailsPanel.Hide()
+      DetailFileNames.Text = ""
       MembersPanel.Hide()
       CardPeoplePanel.Hide()
       ContextMenu.Hide()
@@ -397,6 +398,7 @@ Private Sub ValidateOpenCards()
     If Not OpenCardVisible($detailsBoard, $detailsCard, $archive) Then
       $detailsCard = 0
       DetailsPanel.Hide()
+      DetailFileNames.Text = ""
       DetailTree.Clear()
       DetailTitle.Text = ""
       DetailBody.Text = ""
@@ -1220,6 +1222,7 @@ Private Sub ClearCardEditor()
   Labels.Text = ""
   DueDay.Text = ""
   DetailsPanel.Hide()
+  DetailFileNames.Text = ""
   $detailsCard = 0
   $detailState = ""
   DetailTree.Clear()
@@ -1261,7 +1264,7 @@ Public Sub LanguageSelector_Render()
   Print "<base href=\"/\">"
   Print "<link rel=\"stylesheet\" href=\"kanban.css\">"
   Print "<link rel=\"stylesheet\" href=\"fontawesome.css\">"
-  Print "<script>" & File.Load(".public/i18n-catalog.js") & File.Load(".public/i18n.js") & File.Load(".public/ui.js") & File.Load(".public/filename-policy.js") & File.Load(".public/native-editor-startup.js") & File.Load(".public/popup.js") & File.Load(".public/drag.js") & File.Load(".public/board-view-order.js") & File.Load(".public/drag-handle-preference.js") & File.Load(".public/batch-export.js") & "</script>"
+  Print "<script>" & File.Load(".public/i18n-catalog.js") & File.Load(".public/i18n.js") & File.Load(".public/filename-policy.js") & File.Load(".public/filename-display.js") & File.Load(".public/ui.js") & File.Load(".public/native-editor-startup.js") & File.Load(".public/popup.js") & File.Load(".public/drag.js") & File.Load(".public/board-view-order.js") & File.Load(".public/drag-handle-preference.js") & File.Load(".public/batch-export.js") & "</script>"
   Print "<select data-weba-language aria-label=\"Language\" style=\"width:100%;height:32px;background:white;color:black\"></select>"
 End
 
@@ -1816,6 +1819,7 @@ Public Sub ActionConfirm_Click()
       ItemBrowser.Hide()
       Editor.Hide()
       DetailsPanel.Hide()
+      DetailFileNames.Text = ""
     Case "Add list"
       If $contextKind = "list" Then
         r = WorkspaceStore.Record($contextBoard, "list", $contextId)
@@ -1874,6 +1878,7 @@ Public Sub ActionConfirm_Click()
         WorkspaceActions.Move($contextBoard, $contextKind, $contextId, TargetBoard(), DestinationLane.Text, destination)
         Editor.Hide()
         DetailsPanel.Hide()
+        DetailFileNames.Text = ""
       Else
       Select $contextKind
         Case "card"
@@ -2231,6 +2236,9 @@ End
 
 Private Sub LoadDetails(Optional preserve As Boolean, Optional data As Collection)
   Dim row As Collection
+  Dim names As New Variant[]
+  Dim description As Collection
+  Dim filenames As New Collection
   Dim selected As Collection
   Dim draft As Collection
   Dim baseline As Collection = $entryBaseline
@@ -2246,6 +2254,7 @@ Private Sub LoadDetails(Optional preserve As Boolean, Optional data As Collectio
   $loadingDetails = True
   state = JsonText.Encode(data)
   DetailsTitle.Text = data["title"]
+  DetailFileNames.Text = ""
   DetailTree.Clear()
   For Each row In data["checklists"]
     checklists.Add(CStr(row["entryId"]) & " | " & row["title"])
@@ -2256,9 +2265,21 @@ Private Sub LoadDetails(Optional preserve As Boolean, Optional data As Collectio
   If checklists.Count Then DetailParent.Index = 0
   For Each row In data["attachmentHistory"]
     DetailTree.Add("h" & CStr(row["id"]), If(row["action"] = "removed", "− ", "+ ") & row["filename"] & " · " & row["actor"])
+    description = New Collection
+    description.Add("h" & CStr(row["id"]), "key")
+    description.Add(CStr(row["filename"]), "filename")
+    description.Add(If(row["action"] = "removed", "− ", "+ "), "prefix")
+    description.Add(" · " & row["actor"], "suffix")
+    names.Add(description)
   Next
   For Each row In data["files"]
     DetailTree.Add("f" & CStr(row["id"]), row["filename"])
+    description = New Collection
+    description.Add("f" & CStr(row["id"]), "key")
+    description.Add(CStr(row["filename"]), "filename")
+    description.Add("", "prefix")
+    description.Add("", "suffix")
+    names.Add(description)
   Next
   For Each row In data["entries"]
     value = row["title"]
@@ -2312,6 +2333,14 @@ Private Sub LoadDetails(Optional preserve As Boolean, Optional data As Collectio
     Next
   Else
     ClearDetailEditor()
+  Endif
+  If kind = "file" Then
+    filenames.Add(1, "v")
+    filenames.Add($detailsBoard, "board")
+    filenames.Add($detailsCard, "card")
+    filenames.Add(DetailTree.Name, "tree")
+    filenames.Add(names, "rows")
+    DetailFileNames.Text = Base64(JsonText.Encode(filenames))
   Endif
   UpdateDetailControls()
   Visual.Refresh()
@@ -2514,6 +2543,7 @@ Catch
 End
 Public Sub CloseDetails_Click()
   DetailsPanel.Hide()
+  DetailFileNames.Text = ""
 End
 
 Public Sub ContextComments_Click()

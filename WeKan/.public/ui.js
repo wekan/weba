@@ -273,6 +273,7 @@
     syncMarkdownPolicy();
     syncExternalLinks();
     syncCardTitles();
+    root.webaFileNameDisplay?.render();
     workspaceIcons();
     sortControls();
     const boardUrls=root.webaWorkspaceMarkdown?.boardUrls;

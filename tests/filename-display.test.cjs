@@ -1,0 +1,22 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),{createRequire}=require('node:module'),{TextDecoder}=require('node:util');
+let source=process.env.WEKAN_SOURCE,ancestor=path.resolve(__dirname,'..');while(!source&&path.dirname(ancestor)!==ancestor){if(fs.existsSync(path.join(ancestor,'imports/lib/fileNameDisplay.js')))source=ancestor;else ancestor=path.dirname(ancestor);}assert.ok(source);
+const {JSDOM}=createRequire(path.join(source,'package.json'))('jsdom'),dom=new JSDOM('<!doctype html><div id="fixture.DetailsPanel"><div id="fixture.DetailFileNames" class="gw-hidden"></div><div id="fixture.DetailTree"><table><tbody></tbody></table></div></div>',{runScripts:'outside-only'}),w=dom.window;w.TextDecoder=TextDecoder;
+try{
+ for(const name of ['filename-policy.js','filename-display.js'])w.eval(fs.readFileSync(path.join(__dirname,'../WeKan/.public',name),'utf8'));
+ const api=w.webaFileNameDisplay;w.eval(fs.readFileSync(path.join(__dirname,'../WeKan/.public/filename-display.js'),'utf8'));assert.equal(w.webaFileNameDisplay,api);assert.ok(Object.isFrozen(api));
+ const doc=w.document,tree=doc.getElementById('fixture.DetailTree'),state=doc.getElementById('fixture.DetailFileNames'),panel=doc.getElementById('fixture.DetailsPanel'),actions=[];
+ function row(key,text){const tr=doc.createElement('tr'),td=doc.createElement('td'),label=doc.createElement('div');tr.id=tree.id+':'+Buffer.from(key).toString('base64');label.className='gw-tree-text';label.textContent=text;td.append(label);tr.append(td);tree.querySelector('tbody').append(tr);tr.addEventListener('mousedown',()=>actions.push(key));return {tr,label};}
+ function send(rows,extra={}){state.textContent=Buffer.from(JSON.stringify({v:1,board:1,card:2,tree:tree.id,rows,...extra})).toString('base64');}
+ const filename='report%20\u200B<scr{{x}}ipt>safe</script>.pdf',actor='actor · <script>literal</script>\0Ω',live=row('f1',filename),history=row('h2','− '+filename+' · '+actor),other=row('e1','Unrelated <tag> title');
+ const records=[{key:'f1',filename,prefix:'',suffix:''},{key:'h2',filename,prefix:'− ',suffix:' · '+actor}];send(records);w.gw={update(){throw Error('Display sent native mutation');},raise(){throw Error('Display sent native event');}};
+ const observer=new w.MutationObserver(()=>{});observer.observe(panel,{subtree:true,childList:true,attributes:true,characterData:true});api.render();
+ assert.equal(live.label.textContent,w.webaFileNames.cleanFileName(filename));assert.equal(history.label.textContent,'− '+w.webaFileNames.cleanFileName(filename)+' · '+actor);assert.equal(other.label.textContent,'Unrelated <tag> title');assert.equal(live.label.title,w.webaFileNames.cleanFileName(filename));assert.equal(panel.querySelectorAll('script,img,svg').length,0);assert.ok(live.label.classList.contains('weba-user-text'));
+ live.label.dispatchEvent(new w.MouseEvent('mousedown',{bubbles:true}));assert.deepEqual(actions,['f1']);observer.takeRecords();api.render();assert.equal(observer.takeRecords().length,0,'observer feedback loop');
+ for(const data of [{tree:'other.DetailTree'},{v:2},{board:0},{card:0},{rows:[...records,records[0]]},{rows:[{...records[0],key:'e1'}]},{rows:[{...records[0],filename:{bad:true}}]}]){live.label.textContent='sentinel';send(records,data);api.render();assert.equal(live.label.textContent,'sentinel');}
+ for(const data of ['bad-base64','e30=']){live.label.textContent='sentinel';state.textContent=data;api.render();assert.equal(live.label.textContent,'sentinel');}
+ send(records);panel.classList.add('gw-hidden');api.render();assert.equal(live.label.textContent,'sentinel');state.textContent='';api.render();panel.classList.remove('gw-hidden');api.render();assert.equal(live.label.textContent,'sentinel');
+ send([{key:'f9',filename:'new%20scope.txt',prefix:'',suffix:''}],{card:3});api.render();assert.equal(live.label.textContent,'sentinel');const replacement=row('f9','raw');api.render();assert.equal(replacement.label.textContent,'new scope.txt');
+ replacement.tr.remove();api.render();assert.equal(replacement.label.textContent,'new scope.txt');observer.disconnect();
+ console.log('Filename display: live/history filename-only cleaning, exact actor text, plain text injection refusal, stable row selection, scoped/malformed/duplicate/hidden/cleared/replaced refusal, idempotent install and no observer feedback/native writes passed');
+}finally{w.close();}

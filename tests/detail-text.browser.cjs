@@ -14,8 +14,9 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   page.on('pageerror',e=>errors.push(e.message));const settle=()=>page.waitForFunction(()=>window.gw&&gw.commands.length===0),click=async n=>{await settle();await page.locator(c(n)).click();await settle();};
   await page.goto(process.env.WEBA_TEST_URL);await page.locator(input('WebTextName')).fill('rest-other');await page.locator(input('WebTextPass')).fill(process.env.WEBA_TEST_PASSWORD);await click('WebButtonLogin');await expect(page.locator('.weba-content')).toBeVisible();await page.goto(process.env.WEBA_TEST_URL+'/b/'+seed.board);await expect(page.locator('.weba-content')).toHaveAttribute('data-board',String(seed.board));
   await page.locator(`.weba-card[data-card-id="${seed.items[0].card}"] .weba-card-menu`).click();await click('ContextComments');
-  async function kind(label){await settle();await page.locator('[id$=".DetailKind:select"]').selectOption({label});await settle();}
-  async function row(text){await page.locator(c('DetailTree')+' tr[id]').filter({hasText:shown(text)}).last().click();await settle();}
+  let currentKind;
+  async function kind(label){currentKind=label;await settle();await page.locator('[id$=".DetailKind:select"]').selectOption({label});await settle();}
+  async function row(text){if(currentKind==='Attachments')text=fileNames.cleanFileName(text);await page.locator(c('DetailTree')+' tr[id]').filter({hasText:shown(text)}).last().click();await settle();}
   await kind('Custom fields');await row(custom.title);await expect(page.locator(input('DetailTitle'))).toHaveValue(custom.title);await expect(page.locator(input('DetailBody'))).toHaveValue(custom.body);
   fixture({...base,WEBA_NATIVE_MODE:'detail-update',WEBA_NATIVE_SUFFIX:'B'});await expect(page.locator(input('DetailBody'))).toHaveValue(custom.body+'B',{timeout:15000});
   const local=custom.title+' LOCAL';await page.locator(input('DetailTitle')).evaluate((e,t)=>{e.value=t;e.dispatchEvent(new Event('input',{bubbles:true}));},local);await settle();
@@ -34,13 +35,42 @@ with sqlite3.connect(sys.argv[1]) as d:
   await kind('Attachments');
   const setDownloadName=name=>execFileSync('python3',['-c',"import base64,sqlite3,sys;d=sqlite3.connect(sys.argv[1]);d.execute('UPDATE kb_files SET filename=? WHERE id=(SELECT MIN(id) FROM kb_files WHERE board_id=? AND card_id=?)',(base64.b64decode(sys.argv[4]).decode('utf8'),int(sys.argv[2]),int(sys.argv[3])));d.commit()",database,String(seed.board),String(seed.items[0].card),Buffer.from(name).toString('base64')]);
   for(const name of [initial.files[0].filename,'report%20name.pdf','pаypal.exe','Гр.txt','ＡＢＣ ﬁ ①.txt','<scr{{x}}ipt>safe</script>.pdf',String.fromCharCode(0)+'\u200B\u202E','x'.repeat(30)+' (copy).pdf','😀'.repeat(40)+'.txt']){
-   setDownloadName(name);await page.locator(c('DetailTree')+' tr[id]').first().click();await settle();
+   setDownloadName(name);await expect(page.locator(c('DetailTree')+' .gw-tree-text').first()).toHaveText(fileNames.cleanFileName(name),{timeout:15000});await page.locator(c('DetailTree')+' tr[id]').first().click();await settle();
    const beforeDownload=sql(),waitingDownload=page.waitForEvent('download');await click('DetailDownload');
    const nativeDownload=await waitingDownload;expect(nativeDownload.suggestedFilename()).toBe(fileNames.sanitizeDownloadFileName(name));
    const downloadStream=await nativeDownload.createReadStream(),downloadChunks=[];for await(const chunk of downloadStream)downloadChunks.push(chunk);
    expect(Buffer.concat(downloadChunks)).toEqual(Buffer.from(initial.files[0].data,'base64'));expect(sql()).toBe(beforeDownload);
   }
-  setDownloadName(initial.files[0].filename);await kind('Custom fields');await row(local);
+  setDownloadName(initial.files[0].filename);
+  const displayState=()=>page.locator(c('DetailFileNames')).evaluate(el=>{try{return JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(el.textContent),c=>c.charCodeAt(0))));}catch{return null;}});
+  const selectFileKey=async key=>{const packet=await displayState();await page.locator('tr[id="'+packet.tree+':'+Buffer.from(key).toString('base64')+'"]').click();await settle();};
+  const aliases=['shared\u200B.txt','shared.txt'];
+  for(const [index,name] of aliases.entries())sql('INSERT INTO kb_files (board_id,card_id,filename,content,author,created_at) VALUES ('+seed.board+','+seed.items[0].card+",CAST(X'"+Buffer.from(name).toString('hex')+"' AS TEXT),X'0"+(index+1)+"','rest-other',datetime('now'))");
+  await expect.poll(async()=>((await displayState())?.rows||[]).filter(r=>aliases.includes(r.filename)).length,{timeout:15000}).toBe(2);
+  const aliasRecords=(await displayState()).rows.filter(r=>aliases.includes(r.filename));
+  for(const [index,name] of aliases.entries()){
+   const record=aliasRecords.find(r=>r.filename===name);await selectFileKey(record.key);
+   const waiting=page.waitForEvent('download');await click('DetailDownload');const downloaded=await waiting;expect(downloaded.suggestedFilename()).toBe('shared.txt');
+   const stream=await downloaded.createReadStream(),chunks=[];for await(const chunk of stream)chunks.push(chunk);expect(Buffer.concat(chunks)).toEqual(Buffer.from([index+1]));
+  }
+  const firstAlias=aliasRecords.find(r=>r.filename===aliases[0]),secondAlias=aliasRecords.find(r=>r.filename===aliases[1]);
+  await selectFileKey(secondAlias.key);await click('DetailDelete');expect(read().files.some(f=>f.filename===aliases[0])).toBe(true);expect(read().files.some(f=>f.filename===aliases[1])).toBe(false);
+  const actor='actor · <tag>'+String.fromCharCode(0)+'Ω';
+  sql("UPDATE kb_attachment_history SET actor=CAST(X'"+Buffer.from(actor).toString('hex')+"' AS TEXT) WHERE file_id="+secondAlias.key.slice(1));
+  await click('DetailAttachmentHistory');await expect.poll(async()=>((await displayState())?.rows||[]).some(r=>r.filename===aliases[1]&&r.suffix===' · '+actor),{timeout:15000}).toBe(true);
+  const history=(await displayState()).rows.find(r=>r.filename===aliases[1]&&r.suffix===' · '+actor);await selectFileKey(history.key);
+  const historyLabel=page.locator('tr[id="'+(await displayState()).tree+':'+Buffer.from(history.key).toString('base64')+'"] .gw-tree-text');
+  await expect.poll(()=>historyLabel.evaluate(el=>el.textContent)).toBe('− shared.txt · '+actor);await expect(historyLabel.locator('tag')).toHaveCount(0);
+  const beforeDecoration=sql();await page.evaluate(()=>webaRender());expect(sql()).toBe(beforeDecoration);
+  await click('DetailRestoreAttachment');expect(read().files.find(f=>f.filename===aliases[1]).data).toBe('Ag==');
+  await click('DetailLiveAttachments');const renamedAlias='renamed%20\u200B.txt';sql("UPDATE kb_files SET filename=CAST(X'"+Buffer.from(renamedAlias).toString('hex')+"' AS TEXT) WHERE id="+firstAlias.key.slice(1));
+  await expect.poll(async()=>((await displayState())?.rows||[]).some(r=>r.key===firstAlias.key&&r.filename===renamedAlias),{timeout:15000}).toBe(true);
+  const renamedLabel=page.locator('tr[id="'+(await displayState()).tree+':'+Buffer.from(firstAlias.key).toString('base64')+'"] .gw-tree-text');await expect(renamedLabel).toHaveText(fileNames.cleanFileName(renamedAlias));
+  expect(read().files.find(f=>f.filename===renamedAlias).data).toBe('AQ==');
+  await click('CloseDetails');await expect(page.locator(c('DetailFileNames'))).toHaveText('');
+  const aliasIds=aliasRecords.map(r=>Number(r.key.slice(1))).join(',');for(const table of ['kb_attachment_data','kb_attachment_deletions','kb_attachment_history'])sql('DELETE FROM '+table+' WHERE file_id IN ('+aliasIds+')');sql("DELETE FROM kb_retired_authors WHERE kind='file' AND item_id IN ("+aliasIds+')');sql('DELETE FROM kb_files WHERE id IN ('+aliasIds+')');
+  await page.locator(`.weba-card[data-card-id="${seed.items[0].card}"] .weba-card-menu`).click();await click('ContextComments');await kind('Custom fields');await row(local);
+
   const pending=custom.body+'C pending final scope';
   await page.locator(input('DetailBody')).evaluate((e,t)=>{e.value=t;e.dispatchEvent(new Event('input',{bubbles:true}));},pending);await settle();
   const beforeFinalSave=sql();sql('CREATE TRIGGER detail_save_final AFTER INSERT ON kb_history BEGIN UPDATE kb_cards SET archived=1 WHERE id='+seed.items[0].card+'; END');
@@ -55,7 +85,7 @@ with sqlite3.connect(sys.argv[1]) as d:
   await click('DetailNew');await expect(page.locator(input('DetailTitle'))).toHaveValue('');await expect(page.locator(input('DetailBody'))).toHaveValue('');
   await kind('Comments');const comment=initial.entries.find(e=>e.kind==='comment');await row(comment.body);await expect(page.locator(input('DetailBody'))).toHaveValue(comment.body);await expect(page.locator(c('DetailTree'))).toContainText(shown(comment.author)+': '+shown(comment.body));
   await kind('Checklists');const checklist=initial.entries.find(e=>e.kind==='checklist');await row(checklist.title);await expect(page.locator(input('DetailTitle'))).toHaveValue(checklist.title);
-  await kind('Attachments');await expect(page.locator(c('DetailTree'))).toContainText(shown(initial.files[0].filename));await expect(page.locator(c('DetailsPanel')+' tag')).toHaveCount(0);
+  await kind('Attachments');await expect(page.locator(c('DetailTree'))).toContainText(fileNames.cleanFileName(initial.files[0].filename));await expect(page.locator(c('DetailsPanel')+' tag')).toHaveCount(0);
   await page.reload();await page.locator(`.weba-card[data-card-id="${seed.items[0].card}"] .weba-card-menu`).click();await click('ContextComments');await kind('Custom fields');await row(local);await expect(page.locator(input('DetailBody'))).toHaveValue(retryBody);const deleteDraft=retryBody+' pending delete';
   await page.locator(input('DetailBody')).evaluate((e,t)=>{e.value=t;e.dispatchEvent(new Event('input',{bubbles:true}));},deleteDraft);await settle();
   const beforeDelete=sql();sql("CREATE TRIGGER detail_delete_final AFTER DELETE ON kb_entries WHEN OLD.board_id="+seed.board+" AND OLD.card_id="+seed.items[0].card+" AND OLD.kind='custom' BEGIN UPDATE kb_cards SET archived=1 WHERE id="+seed.items[0].card+"; END");
@@ -126,7 +156,7 @@ with sqlite3.connect(sys.argv[1]) as d:
    sql('CREATE TRIGGER detail_upload_final '+stage+' BEGIN UPDATE '+table+' SET archived=1 WHERE id='+(table==='kb_boards'?seed.board:seed.items[0].card)+'; END');
    try{await upload(name);await expect(page.locator(c('Notice'))).toContainText(error);expect(sql()).toBe(beforeUpload);expect(read().files.some(f=>f.filename===name)).toBe(false);await expect(page.locator(c('DetailDownload'))).toBeEnabled();}
    finally{sql('DROP TRIGGER detail_upload_final');}
-   await upload(name);await expect(page.locator(c('DetailTree'))).toContainText(name);
+   await upload(name);await expect(page.locator(c('DetailTree'))).toContainText(fileNames.cleanFileName(name));
    expect(read().files.find(f=>f.filename===name)).toMatchObject({data:uploadBytes.toString('base64')});
    await expect(page.locator(c('DetailsPanel')+' literal')).toHaveCount(0);
   }
@@ -134,7 +164,7 @@ with sqlite3.connect(sys.argv[1]) as d:
   const beforeEmptyUpload=sql();sql("CREATE TRIGGER detail_empty_blob AFTER INSERT ON kb_files WHEN NEW.filename='"+emptyName+"' BEGIN UPDATE kb_files SET content=NULL WHERE id=NEW.id; END");
   try{await upload(emptyName,Buffer.alloc(0));await expect(page.locator(c('Notice'))).toHaveText('Attachment bytes became null');expect(sql()).toBe(beforeEmptyUpload);}
   finally{sql('DROP TRIGGER detail_empty_blob');}
-  await upload(emptyName,Buffer.alloc(0));await expect(page.locator(c('DetailTree'))).toContainText(emptyName);
+  await upload(emptyName,Buffer.alloc(0));await expect(page.locator(c('DetailTree'))).toContainText(fileNames.cleanFileName(emptyName));
   expect(read().files.find(f=>f.filename===emptyName).data).toBe('');
   expect(Number(execFileSync('python3',['-c',"import sqlite3,sys;d=sqlite3.connect(sys.argv[1]);print(d.execute(\"SELECT count(*) FROM kb_files WHERE board_id=? AND card_id=? AND filename=? AND typeof(content)='blob' AND length(content)=0\",(int(sys.argv[2]),int(sys.argv[3]),sys.argv[4])).fetchone()[0])",database,String(seed.board),String(seed.items[0].card),emptyName],{encoding:'utf8'}))).toBe(1);
   await row(initial.files[0].filename);await expect(page.locator(c('DetailDownload'))).toBeEnabled();
@@ -147,7 +177,7 @@ with sqlite3.connect(sys.argv[1]) as d:
   try{await click('DetailRestoreAttachment');await expect(page.locator(c('Notice'))).toContainText('Card archive state changed');expect(sql()).toBe(beforeFileRestore);expect(read().files.some(f=>f.filename===initial.files[0].filename)).toBe(false);await expect(page.locator(c('DetailRestoreAttachment'))).toBeVisible();}
   finally{sql('DROP TRIGGER detail_lifecycle_final');}
   await click('DetailRestoreAttachment');expect(read().files.find(f=>f.filename===initial.files[0].filename)).toMatchObject({data:initial.files[0].data});
-  await click('DetailLiveAttachments');await expect(page.locator(c('DetailTree'))).toContainText(shown(initial.files[0].filename));
+  await click('DetailLiveAttachments');await expect(page.locator(c('DetailTree'))).toContainText(fileNames.cleanFileName(initial.files[0].filename));
   await kind('Subtasks');await click('DetailNew');
   const childTitle="Child\0Ω😀'<literal> retry";
   await page.locator(input('DetailTitle')).evaluate((e,t)=>{e.value=t;e.dispatchEvent(new Event('input',{bubbles:true}));},childTitle);await settle();
@@ -163,6 +193,6 @@ with sqlite3.connect(sys.argv[1]) as d:
 `,database,String(seed.board),String(seed.items[0].card)],{encoding:'utf8'}));
   expect(children).toEqual([[childTitle,initial.lane,initial.status,childTitle]]);await expect(page.locator(c('DetailsPanel')+' literal')).toHaveCount(0);
   expect(errors).toEqual([]);
-  console.log('Detail complete-text browser: native custom/comment/checklist/file text, exact encoded editor values, external suffix heartbeat, dirty local title with independent external body save, post-history archive refusal keeps all board data and exact dirty draft, retry, New clears stale values, literal markup/reload and delete rollback with exact dirty/provenance retention and retry, timer start/stop post-history rollback and retry, file chooser upload data/history archive rollback, retained selection and exact-byte retry, attachment delete/restore post-history archive rollback with retained live/history selection and retry, subtask child-save parent archive rollback with retained exact draft and complete-field child/link retry, numeric near-ULP display/title-only saves and parsing, malformed/nonfinite full-state rollback and dirty retention, blank zero and precise custom normalization, nullable title-only retention, NULL-to-empty history rollback/dirty retry and isolated explicit NUL-body materialization and zero-byte upload NULL rollback plus empty-BLOB retry and unchanged-source Unicode/exploit/length browser download names with exact bytes/no writes passed');
+  console.log('Detail complete-text browser: native custom/comment/checklist/file text, exact encoded editor values, external suffix heartbeat, dirty local title with independent external body save, post-history archive refusal keeps all board data and exact dirty draft, retry, New clears stale values, literal markup/reload and delete rollback with exact dirty/provenance retention and retry, timer start/stop post-history rollback and retry, file chooser upload data/history archive rollback, retained selection and exact-byte retry, attachment delete/restore post-history archive rollback with retained live/history selection and retry, subtask child-save parent archive rollback with retained exact draft and complete-field child/link retry, numeric near-ULP display/title-only saves and parsing, malformed/nonfinite full-state rollback and dirty retention, blank zero and precise custom normalization, nullable title-only retention, NULL-to-empty history rollback/dirty retry and isolated explicit NUL-body materialization and zero-byte upload NULL rollback plus empty-BLOB retry and unchanged-source Unicode/exploit/length browser download names with exact bytes/no writes, live/history filename-only captions with exact actor text, colliding-name ID-based download/delete/restore, live rename and closed-state clearing passed');
  }finally{if(context)await context.close();if(browser)await browser.close();}
 })().catch(e=>{let message=e.stack||String(e);if(process.env.WEBA_TEST_PASSWORD)message=message.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(message);process.exitCode=1;});

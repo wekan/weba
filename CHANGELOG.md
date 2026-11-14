@@ -2,6 +2,23 @@
 
 This work adds the following features and fixes:
 
+- Clean live and history attachment captions with the source filename policy.
+  Send a scoped, binary-free description of native f/h rows and format only the
+  filename text with the unchanged cleaner. Preserve history action/actor text,
+  native row IDs/events and stored names; mark captions as user text so language
+  decoration cannot translate them. Clear descriptions on panel close/revocation,
+  reject malformed or mismatched descriptions, and avoid observer feedback.
+  A percent-encoded name previously appeared verbatim. Unit cases cover history
+  actor markup, plain-text rendering, selection, scope/duplicate/hidden/cleared/
+  replaced rows and no native writes. Source/packaged detail/live browser tests
+  cover source-style captions, colliding cleaned names with distinct download
+  bytes and correct delete/restore IDs, exact NUL/markup history actors, live
+  rename, no-write decoration, closed-state clearing and populated-history
+  descriptor removal on assignment loss. Full host/API/security/session checks,
+  70 Python tests and filename display/policy unit tests pass. Stored/uploaded/
+  public HTTP policy and broader legacy/source/model audits remain open.
+  Thanks to xet7.
+
 - Apply the source filename cleaner to native attachment Blob downloads.
   Ship the unchanged isomorphic fileNameDisplay helper in an offline, strict,
   namespaced bundle with a reproducible importer, source copy and hash manifest.

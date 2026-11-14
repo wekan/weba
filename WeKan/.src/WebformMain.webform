@@ -406,6 +406,10 @@
     { DetailKind WebComboBox
       Tooltip = ("Card detail type")
     }
+    { DetailFileNames WebLabel
+      Class = "weba-user-text"
+      Visible = False
+    }
     { DetailTree WebTree
       Height = "160px"
     }

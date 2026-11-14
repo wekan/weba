@@ -162,9 +162,12 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Completed source-style native attachment Blob download names using unchanged
   source helpers, with 8,016 source comparisons and source/packaged real download
   byte/no-write cases recorded in CHANGELOG.md.
+- Completed source-style live/history attachment captions with filename-only
+  formatting, actor/ID retention, private description clearing and collision-safe
+  actions. Unit and source/packaged detail/live evidence is in CHANGELOG.md.
 - Next detail/content focus: remaining copy/model mutation audits, stored/uploaded/
-  displayed/public-download filename-policy parity, other legacy file fidelity,
-  nullable fields and model readers/writers.
+  public-download filename-policy parity and any other display surfaces, legacy
+  file fidelity, nullable fields and model readers/writers.
   Atomic imported display-name provenance for owned entries/files and shared
   stored-placement guards are in CHANGELOG.md.
   Atomic subtask creation and its captured parent/new-child checkpoints are in

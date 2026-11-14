@@ -132,9 +132,10 @@ const secrets=[process.env.WEBA_TEST_PASSWORD];
   const restoreAssignees=await api.put(`/api/boards/${board}/lists/${fixture.otherListId}/cards/${card}`,{headers,data:{assignees:['rest-owner']}});expect(restoreAssignees.status()).toBe(200);
   const readonly=await api.post(`/api/boards/${board}/members/rest-member`,{headers,data:{role:'readonly'}});expect(readonly.status()).toBe(200);
   await member.bringToFront();await expect(member.locator(control('DetailSave'))).toBeHidden();
+  await kind(member,'Attachments');await click(member,'DetailAttachmentHistory');await expect(member.locator(control('DetailTree'))).toContainText('live.bin');await expect(member.locator(control('DetailFileNames'))).not.toHaveText('');
   const scoped=await api.post(`/api/boards/${board}/members/rest-member`,{headers,data:{isAdmin:true,isReadAssignedOnly:true}});expect(scoped.status()).toBe(200);
-  await expect(member.locator(control('DetailsPanel'))).toBeHidden();
+  await expect(member.locator(control('DetailsPanel'))).toBeHidden();await expect(member.locator(control('DetailFileNames'))).toHaveText('');
   expect(pageErrors).toEqual([]);
-  console.log('Live details browser: external comments/checklist changes, preserved drafts, selected clean fields, author/role/scope guards, deleted entries/parents, file metadata/removal, custom-type conflict safety and authorized live relationship labels passed');
+  console.log('Live details browser: external comments/checklist changes, preserved drafts, selected clean fields, author/role/scope guards, deleted entries/parents, file metadata/removal, custom-type conflict safety and authorized live relationship labels and populated attachment-history descriptor clearing on assignment loss passed');
  }finally{if(first)await first.close();if(second)await second.close();if(browser)await browser.close();await api.dispose();}
 })().catch(error=>{let message=error.stack||String(error);for(const secret of secrets)if(secret)message=message.split(secret).join('[redacted]');console.error(message);process.exitCode=1;});
