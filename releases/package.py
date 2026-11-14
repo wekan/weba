@@ -16,13 +16,13 @@ from release import ROOT, targets, version, checksum
 ARCH = {'x86_64':'amd64', 'aarch64':'arm64', 'arm64':'arm64', 'armv7l':'armhf', 'armv5tel':'armel',
         'i386':'i386', 'i686':'i386', 'ppc64le':'ppc64el', 'riscv64':'riscv64', 's390x':'s390x'}
 DEPENDENCIES = ['gambas3-runtime', 'gambas3-gb-crypt', 'gambas3-gb-db', 'gambas3-gb-db-sqlite3',
-                'gambas3-gb-signal', 'gambas3-gb-util', 'gambas3-gb-util-web', 'gambas3-gb-web', 'gambas3-gb-web-gui', 'python3']
+                'gambas3-gb-signal', 'gambas3-gb-util', 'gambas3-gb-util-web', 'gambas3-gb-web', 'gambas3-gb-web-gui', 'python3', 'file']
 
 
 def copy_runtime(destination):
     """Keep the host's offline filename policy/data beside its entrypoint."""
     destination.mkdir(parents=True, exist_ok=True)
-    for name in ('server.py', 'filename_policy.py'):
+    for name in ('server.py', 'filename_policy.py', 'mime_policy.py'):
         shutil.copy2(ROOT / 'runtime' / name, destination / name)
     shutil.copytree(ROOT / 'runtime/filename-data', destination / 'filename-data')
 

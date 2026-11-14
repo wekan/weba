@@ -181,7 +181,8 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   single-file export, with distinct missing-row defaults, safe raw headers and
   source/packaged API/UI/model evidence in CHANGELOG.md. Broader board export/
   copy/import MIME remains under audit.
-- Finish content-aware upload policy integration: actual detector chain, filename
+- Finish content-aware upload policy integration: primary file-type and portable
+  detector branches beyond the staged native fallback, filename
   correction in native/REST/import/copy handlers, SVG sanitization and full source
   response/storage semantics. Completed pre-cleaning, empty-file refusal, decoded
   name rejection, acknowledged private transport and source MIME helper/native bridge

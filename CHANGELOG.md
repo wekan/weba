@@ -2,6 +2,26 @@
 
 This work adds the following features and fixes:
 
+- Stage the source native MIME fallback in the private Gambas worker and
+  standalone packaged Python runtime. Clip to 64KiB; use file's fixed stdin
+  command, source SNAP/MAGIC precedence, a two-second selector deadline and
+  4096-byte stdout/stderr caps. Validate lowercase MIME tokens and return null
+  on failure. Keep the process-group PID reserved until cleanup and reaping.
+  Preserve full 4096-byte source MIME replies in a bounded JSON envelope; keep
+  filename response limits independent. Declare file as a package dependency.
+  Twenty unchanged nativeMime source outcomes match; actual project/archive
+  probes verify exact binary headers/hash/arguments, maximum MIME replies,
+  invalid typed replies, quiet timeout/overflow/missing-file cleanup and retry.
+  Four Python boundary tests cover byte views, empty input, MIME validation,
+  source magic precedence and process cleanup. Fix a native cleanup race by
+  waiting through pipe events before treating a killed worker as stopped;
+  normal and closed-stdout/stderr timeout fixtures verify it is reaped.
+  Full host/API/security/session/text/native/source/Unicode/client checks,
+  all 75 Python tests and source/packaged real chooser regressions pass.
+  Primary file-type, portable fallback and upload/REST/import/copy/SVG
+  integration remain open.
+  Thanks to xet7.
+
 - Frame private filename-worker requests in acknowledged 2048-byte chunks under
   one three-second deadline. Cap complete requests at 96KiB, responses at 4096
   bytes and acknowledgements at the current chunk phase. Refuse pre-sent ACKs

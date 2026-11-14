@@ -18,6 +18,7 @@ and in the [README](../README.md), rather than in duplicate instruction files.
 | Workspace menus, transfer and rich content | `WorkspaceStore.module`, `WorkspaceActions.module`, `BoardTransfer.module`, `CardContent.module` |
 | Embedded report components | `WeKan/.public/kanban.js`, `kanban.css`, `ui.js` |
 | Local CGI host | `runtime/server.py` |
+| Offline filename/MIME policy | `runtime/filename_policy.py`, `runtime/mime_policy.py`, `WeKan/.src/NativeFileNames.module` and embedded native policy resources |
 | Build, checks and packaging | `build.sh`, `tests/`, `releases/`, `.github/workflows/` |
 
 `TODO.md` records completed verification, current work and remaining parity gaps.
@@ -44,6 +45,14 @@ Create repository-local `.tools/tmp` and export its absolute path as `TMPDIR`
 before compilers/test runners. Tests create isolated projects/databases there;
 never point a test at deployed data. A passing local SQLite/Linux ARM64 run does
 not establish support for every writable Gambas driver or release platform.
+
+Offline policy execution requires Python 3's standard library. The staged native
+MIME fallback also uses the system `file` command and its magic database; the
+Debian package declares `file` as a dependency. Its bytes travel only through
+bounded stdin, and no runtime Node.js service is added. Primary/portable detector
+branches and upload integration remain tracked in TODO.md. Resource provenance,
+private framing and helper boundaries are documented in
+[vendor/wekan-filenames/README.md](../vendor/wekan-filenames/README.md).
 
 ## Persistence and verification details
 

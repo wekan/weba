@@ -21,7 +21,7 @@ Private Sub RequireAck(worker As Process, state As Collection, expected As Integ
   If state["invalid"] Then Error.Raise("Filename normalization failed")
 End
 
-Private Function Exchange(payload As String) As Variant
+Private Function Exchange(payload As String, Optional responseLimit As Integer = 4096) As Variant
   Dim worker As Process
   Dim state As New Collection
   Dim value As Variant
@@ -30,6 +30,8 @@ Private Function Exchange(payload As String) As Variant
   Dim expected As Integer = 2
   Dim piece As String
   If Not payload Or Len(payload) > 98304 Then Error.Raise("Filename normalization failed")
+  If responseLimit <> 4096 And responseLimit <> 8192 Then Error.Raise("Filename normalization failed")
+  state.Add(responseLimit, "responseLimit")
   state.Add("", "text")
   state.Add(False, "invalid")
   state.Add(0, "acks")
@@ -51,14 +53,17 @@ Private Function Exchange(payload As String) As Variant
     worker.Wait(Max(0.001, deadline - Timer))
   Wend
   If worker.State <> Process.Stopped Or worker.Value <> 0 Or state["invalid"] Then Error.Raise("Filename normalization failed")
-  value = JsonText.Decode(state["text"], 4096)
+  value = JsonText.Decode(state["text"], responseLimit)
   worker.Tag = Null
   Return value
 Catch
   If worker Then
     If worker.State = Process.Running Then
       Try worker.Kill()
-      Try worker.Wait(1)
+      deadline = Timer + 1
+      While worker.State = Process.Running And Timer < deadline
+        Try worker.Wait(Max(0.001, deadline - Timer))
+      Wend
     Endif
   Endif
   Error.Raise("Filename normalization failed")
@@ -72,7 +77,7 @@ Public Sub PolicyWorker_Read()
   If Not state Then Return
   plain = Replace(chunk, Chr(30), "")
   state["acks"] = state["acks"] + Len(chunk) - Len(plain)
-  If state["acks"] > state["ackLimit"] Or Len(state["text"]) + Len(plain) > 4096 Then
+  If state["acks"] > state["ackLimit"] Or Len(state["text"]) + Len(plain) > state["responseLimit"] Then
     state["invalid"] = True
     Try worker.Kill()
   Else
@@ -109,4 +114,25 @@ End
 
 Public Function CorrectUploadName(filename As String, mime As String) As String
   Return CheckedName(RunPolicy(filename, "correct", mime))
+End
+
+Public Function DetectMimeHeader(header As String) As Variant
+  Dim request As New Collection
+  Dim value As Variant
+  Dim mime As String
+  Dim slash As Integer
+  Dim i As Integer
+  request.Add("detect", "mode")
+  request.Add(Base64(Left(header, 65536)), "header")
+  value = Exchange(JsonText.Encode(request), 8192)
+  If IsNull(value) Then Return Null
+  If TypeOf(value) <> gb.String Then Error.Raise("Filename normalization failed")
+  mime = value
+  slash = InStr(mime, "/")
+  If slash <= 1 Or slash >= Len(mime) Or InStr(Mid(mime, slash + 1), "/") Then Error.Raise("Filename normalization failed")
+  For i = 1 To Len(mime)
+    If i = slash Then Continue
+    If Not InStr("abcdefghijklmnopqrstuvwxyz0123456789!#$&^_.+-", Mid(mime, i, 1)) Then Error.Raise("Filename normalization failed")
+  Next
+  Return mime
 End

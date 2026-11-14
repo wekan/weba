@@ -1,0 +1,13 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),{execFileSync}=require('node:child_process');
+let source=process.env.WEKAN_SOURCE,ancestor=path.resolve(__dirname,'..');while(!source&&path.dirname(ancestor)!==ancestor){if(fs.existsSync(path.join(ancestor,'models/lib/mimeDetection.js')))source=ancestor;else ancestor=path.dirname(ancestor);}assert.ok(source);
+const python=execFileSync(process.env.PYTHON||'python3',['-c','import sys;print(sys.executable)'],{encoding:'utf8'}).trim(),work=fs.mkdtempSync(path.join(process.env.TMPDIR,'weba-native-mime-source.'));
+const compare=(headers,env=process.env)=>{const encoded=headers.map(bytes=>bytes.toString('base64')),expected=JSON.parse(execFileSync(process.env.NODE||'node',[path.join(__dirname,'native-mime-source-probe.cjs')],{encoding:'utf8',input:JSON.stringify({source,headers:encoded}),env,maxBuffer:1024*1024})),actual=JSON.parse(execFileSync(python,[path.join(__dirname,'native-mime-policy-probe.py')],{encoding:'utf8',input:JSON.stringify(encoded),env,maxBuffer:1024*1024}));assert.deepEqual(actual,expected);return actual;};
+try{
+  const headers=[Buffer.alloc(0),Buffer.from('plain text\n'),Buffer.from('{"test":true}'),Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><rect/></svg>'),Buffer.from('%PDF-1.7\n'),Buffer.from('GIF89a\x01\0\x01\0\x80\0\0\0\0\0\xff\xff\xff;','latin1'),Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=','base64'),Buffer.from([255,216,255,224,0,16,74,70,73,70,0]),Buffer.from('504b0506000000000000000000000000000000000000','hex'),Buffer.from('RIFF\x04\0\0\0WEBP','latin1'),Buffer.from(Array.from({length:70000},(_,i)=>(i*59)%256))];
+  compare(headers);let count=headers.length;
+  for(const [raw,status] of [[' IMAGE/PNG \n',0],['text/plain; charset=utf-8',0],['\u0085image/png',0],['\ufeffimage/png\u00a0',0],['application/vnd.x+json',0],['a/'+'b'.repeat(4093)+'\n',0],['a/'+'b'.repeat(4094),0],['a/'+'b'.repeat(4095),0],['text/plain',7]]){
+    fs.writeFileSync(path.join(work,'file'),'#!'+python+'\nimport sys\nsys.stdin.buffer.read()\nsys.stdout.write('+JSON.stringify(raw)+')\nraise SystemExit('+status+')\n',{mode:0o700});compare([Buffer.from('private input')],{...process.env,PATH:work+path.delimiter+process.env.PATH});count++;
+  }
+  console.log('Native MIME fallback: '+count+' exact unchanged nativeMime outcomes for actual binary/text/empty/64KiB headers, MIME whitespace/parameters/ASCII tokens, 4096-byte output boundary and nonzero status; primary/portable branches remain separate');
+}finally{fs.rmSync(work,{recursive:true,force:true});}

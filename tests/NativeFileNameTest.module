@@ -11,6 +11,14 @@ Public Sub Main()
   Dim previousPath As String
   Dim failure As String
   Dim bytes As String = "exact" & Chr(0) & Chr(255)
+  If Env["WEBA_NATIVE_MIME_CASES"] Then
+    values = JsonText.Decode(File.Load(Env["WEBA_NATIVE_MIME_CASES"]))
+    For Each value In values
+      results.Add(NativeFileNames.DetectMimeHeader(UnBase64(value)))
+    Next
+    Print JsonText.Encode(results)
+    Return
+  Endif
   If Env["WEBA_NATIVE_CORRECTION_CASES"] Then
     values = JsonText.Decode(File.Load(Env["WEBA_NATIVE_CORRECTION_CASES"]))
     For Each value In values

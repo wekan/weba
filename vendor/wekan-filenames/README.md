@@ -44,7 +44,8 @@ Filename requests are Base64 inside JSON on stdin; only public script/table data
 appear in argv, within a 96KB budget. Requests use a decimal byte-length frame
 capped at 98304 bytes; the sender
 waits for worker readiness and each 2048-byte chunk acknowledgement. Responses
-are capped at 4096 bytes, ACKs at the current exchange phase, and the entire
+are capped at 4096 bytes for filename stages (8192 for MIME JSON envelopes),
+ACKs at the current exchange phase, and the entire
 exchange at three seconds. Worker stderr is discarded; errors are generic, and
 failed workers are killed/reaped. Real process probes verify
 argument privacy, malformed/oversized/noisy/nonzero/stalled workers and retry.
@@ -85,3 +86,22 @@ binary payloads in maximum-size frames, plus ready-only and mid-request stalled
 workers. Probe entry points and worker variants exist only in disposable test
 projects; production exposes only typed filename stages. No temporary header
 files or additional runtime dependencies are needed by this transport.
+
+`DetectMimeHeader` stages the native branch of `models/lib/mimeDetection.js`.
+It clips arbitrary binary input to 64KiB before private transport and returns a
+validated lowercase MIME token or null. The bundled `runtime/mime_policy.py`
+uses `file --mime-type -b -`, source SNAP/MAGIC lookup, a two-second selector
+loop for stdin/stdout/stderr, 4096-byte output bounds and owned-session cleanup.
+Exit is observed without reaping first so the process-group PID stays reserved
+until cleanup. Native worker cleanup also waits through pipe events until the
+killed worker stops or its cleanup deadline expires. The MIME JSON envelope has
+an 8192-byte bound to retain the source's full 4096-byte token plus JSON syntax;
+filename responses retain their separate 4096-byte cap. The package depends on
+`file`, and the standalone Python runtime includes the same helper.
+
+`native-mime-source.test.cjs` exposes the unchanged internal `nativeMime` only
+inside the oracle VM. Actual project/archive tests exercise binary headers,
+private hash/arguments, maximum MIME replies, quiet/null failures, invalid typed
+replies and retry. Primary `file-type`, portable libmagic and actual upload/
+REST/import/copy/SVG integration remain pending; native fallback coverage alone
+does not establish the complete detector chain.

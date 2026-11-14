@@ -31,6 +31,14 @@ _input = b''.join(_parts)
 if sys.stdin.buffer.read(1):
     raise ValueError('Trailing filename request data')
 _request = json.loads(_input)
+if isinstance(_request, dict) and _request.get('mode') == 'detect':
+    if set(_request) != {'mode', 'header'} or not isinstance(_request['header'], str):
+        raise ValueError('Invalid MIME request')
+    _header = base64.b64decode(_request['header'], validate=True)
+    if len(_header) > HEADER_BYTES:
+        raise ValueError('Oversized MIME header')
+    print(json.dumps(detect_native_mime(_header), ensure_ascii=True))
+    sys.exit(0)
 if not isinstance(_request, dict) or _request.get('mode') not in ('before', 'interactive', 'correct') or set(_request) != ({'filename', 'mode', 'mime'} if _request.get('mode') == 'correct' else {'filename', 'mode'}) or not isinstance(_request['filename'], str):
     raise ValueError('Invalid filename request')
 _name = base64.b64decode(_request['filename'], validate=True).decode('utf-8', 'surrogatepass')

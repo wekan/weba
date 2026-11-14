@@ -36,10 +36,13 @@ atexit.register(lambda:open(${JSON.stringify(trace)},'w').write(json.dumps({'arg
     ['ack-flood','print(chr(30)*100000,flush=True)'],
     ['stderr','import sys;sys.stderr.write("PRIVATE_WORKER_ERROR");sys.stderr.flush()'],
     ['timeout','import time;time.sleep(30)'],
+    ['closed-stdout-timeout','import os,time;os.close(1);time.sleep(30)'],
+    ['closed-stderr-timeout','import os,time;os.close(2);time.sleep(30)'],
     ['nonzero','raise SystemExit(7)']
   ]){try{fs.writeFileSync(scriptPath,'import os\nopen('+JSON.stringify(trace)+',"w").write(str(os.getpid()))\n'+body+'\n');const started=Date.now(),result=spawnSync(process.env.GBX,['-s','NativeFileNameTest',project],{encoding:'utf8',timeout:10000,env:{...process.env,WEBA_NATIVE_FILENAME_CASES:privateFile}});assert.equal(result.error,undefined,label);assert.notEqual(result.status,0,label);assert.match(result.stderr,/Filename normalization failed/,label);assert.ok(!(result.stdout+result.stderr).includes(privateName),label);assert.ok(!(result.stdout+result.stderr).includes('PRIVATE_WORKER_ERROR'),label);assert.ok(Date.now()-started<6000,label);const pid=Number(fs.readFileSync(trace,'utf8'));assert.throws(()=>process.kill(pid,0),{code:'ESRCH'},label+' worker was not reaped');}finally{fs.writeFileSync(scriptPath,script);}}
   assert.deepEqual(execute(privateFile),[original(privateName)]);
   fs.writeFileSync(correctionFile,JSON.stringify(correctionRows));const archive=path.join(work,'native-filename.gambas');execFileSync(process.env.GBA||'gba3',['-o',archive,project],{encoding:'utf8'});assert.deepEqual(JSON.parse(execFileSync(process.env.GBR||'gbr3',['-s','NativeFileNameTest',archive],{encoding:'utf8',timeout:15000,env:{...process.env,WEBA_NATIVE_CORRECTION_CASES:correctionFile}})),expectedCorrections);
   console.log('Native Gambas filename bridge: '+names.length+' exact source names; private framed stdin, malformed/oversized/ack-flood/stderr/nonzero/timeout cleanup and retry; '+correctionRows.length+' source/packaged MIME correction rows, private NUL/Unicode MIME transport and input boundaries passed');
   require('./native-filename-pipe.test.cjs');
+  require('./native-mime-model.test.cjs')();
 }finally{fs.rmSync(work,{recursive:true,force:true});}
