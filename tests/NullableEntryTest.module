@@ -1,0 +1,160 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim targetId As Integer
+  Dim parentId As Integer
+  Dim entryId As Integer
+  Dim kind As String
+  Dim field As String
+  Dim stage As String
+  Dim effect As String
+  Dim fields As String[]
+  Dim draft As Collection
+  Dim state As Collection
+  Dim conn As Connection
+  Dim before As String
+  Dim denied As Boolean
+  Dim suffix As String = Chr(0) & "Ω😀tail"
+  WebDatabase.Register("nullable-entry", "x")
+  Session["username"] = "nullable-entry"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("nullable-entry")
+  boardId = KanbanStore.AddBoard("Nullable entries")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Card", "", "Default", "Todo", "", "", "")
+  targetId = KanbanStore.SaveCard(boardId, 0, "Target" & suffix, "", "Default", "Todo", "", "", "")
+  parentId = CardContent.Save(boardId, cardId, 0, "checklist", "Parent", "", 0, False, 0)
+  conn = WebDatabase.OpenConnection()
+  For Each kind In ["custom", "comment", "checklist", "checkitem", "time", "subtask", "dependency"]
+    entryId = CardContent.Save(boardId, cardId, 0, kind, "Original", "Original body", If(kind = "checkitem", parentId, 0), False, If(kind = "subtask" Or kind = "dependency", targetId, 0), "text")
+    fields = ["parent_id", "done", "amount", "value_type", "body"]
+    If kind = "comment" Then fields = ["title", "parent_id", "done", "amount", "value_type"]
+    If kind = "checkitem" Then fields = ["body", "done", "amount", "value_type"]
+    If kind = "custom" Then fields = ["body", "parent_id", "done", "amount"]
+    If kind = "subtask" Or kind = "dependency" Then fields = ["body", "parent_id", "done", "value_type"]
+    For Each field In fields
+      conn.Exec("UPDATE kb_entries SET " & conn.Quote(field) & "=NULL WHERE id=&1", entryId)
+    Next
+    draft = EntryDraft.Read(boardId, cardId, entryId)
+    before = Frame()
+    EntryDraft.Read(boardId, cardId, entryId)
+    DetailLive.Read(boardId, cardId, kind)
+    If Frame() <> before Then Error.Raise("Nullable detail read wrote data")
+    SaveDraft(boardId, cardId, entryId, kind, draft, If(kind = "comment", "body", "title"), "Changed" & suffix)
+    state = CardContent.RecordState(CardContent.Entry(boardId, cardId, entryId, True))
+    For Each field In fields
+      If kind = "time" And field = "done" Then
+        If Not state[field] Then Error.Raise("Time save did not complete entry")
+      Else
+        If JsonText.Encode(state[field]) <> "null" Then Error.Raise("Unchanged NULL materialized: " & kind & "/" & field)
+      Endif
+    Next
+    If kind = "subtask" Or kind = "dependency" Then
+      If state["title"] <> "Target" & suffix Then Error.Raise("Relationship title normalization lost")
+    Endif
+  Next
+  entryId = CardContent.Save(boardId, cardId, 0, "custom", "Title", "", 0, False, 0, "text")
+  conn.Exec("UPDATE kb_entries SET body=NULL,parent_id=NULL,done=NULL,amount=NULL WHERE id=&1", entryId)
+  draft = EntryDraft.Read(boardId, cardId, entryId)
+  For Each stage In ["AFTER UPDATE OF title ON kb_entries WHEN NEW.id=" & CStr(entryId) & " AND NEW.title='Rejected'", "AFTER INSERT ON kb_history", "AFTER UPDATE ON kb_item_changes WHEN NEW.kind='card' AND NEW.item_id=" & CStr(cardId)]
+    For Each effect In ["body=''", "parent_id=0", "done=0", "amount=0", "body='foreign'", "amount=1", "title=NULL"]
+      before = Frame()
+      conn.Exec("CREATE TRIGGER nullable_entry_guard " & stage & " BEGIN UPDATE kb_entries SET " & effect & " WHERE id=" & CStr(entryId) & "; END")
+      Try SaveDraft(boardId, cardId, entryId, "custom", draft, "title", "Rejected")
+      denied = Error
+      conn.Exec("DROP TRIGGER nullable_entry_guard")
+      If Not denied Or Frame() <> before Then Error.Raise("NULL/value mutation was accepted or partly committed: " & effect)
+    Next
+  Next
+  SaveDraft(boardId, cardId, entryId, "custom", draft, "body", "Explicit" & suffix)
+  state = CardContent.RecordState(CardContent.Entry(boardId, cardId, entryId, True))
+  If state["body"] <> "Explicit" & suffix Or JsonText.Encode(state["amount"]) <> "null" Then Error.Raise("Explicit edit did not materialize only changed field")
+  draft = EntryDraft.Read(boardId, cardId, entryId)
+  conn.Exec("UPDATE kb_entries SET body=NULL,amount=0.10000000000000002 WHERE id=&1", entryId)
+  SaveDraft(boardId, cardId, entryId, "custom", draft, "title", "Stale title")
+  state = CardContent.RecordState(CardContent.Entry(boardId, cardId, entryId, True))
+  If JsonText.Encode(state["body"]) <> "null" Or state["amount"] <> JsonText.Decode("0.10000000000000002") Then Error.Raise("Stale draft lost locked NULL/exact amount")
+  draft = EntryDraft.Read(boardId, cardId, entryId)
+  SaveDraft(boardId, cardId, entryId, "custom", draft, "body", "")
+  If Not conn.Exec("SELECT id FROM kb_entries WHERE id=&1 AND body IS NULL", entryId).Available Then Error.Raise("Unchanged empty UI value cleared NULL")
+  CardContent.Save(boardId, cardId, entryId, "custom", "Explicit defaults", "", 0, False, 0, "text")
+  If Not conn.Exec("SELECT id FROM kb_entries WHERE id=&1 AND body IS NOT NULL AND parent_id IS NOT NULL AND done IS NOT NULL AND amount IS NOT NULL", entryId).Available Then Error.Raise("Non-draft explicit values did not materialize")
+  For Each kind In ["comment", "custom", "checkitem", "dependency"]
+    entryId = CardContent.Save(boardId, cardId, 0, kind, "Required", "Required body", If(kind = "checkitem", parentId, 0), False, If(kind = "dependency", targetId, 0), "text")
+    field = "title"
+    If kind = "comment" Then field = "body"
+    If kind = "checkitem" Then field = "parent_id"
+    If kind = "dependency" Then field = "amount"
+    conn.Exec("UPDATE kb_entries SET " & conn.Quote(field) & "=NULL WHERE id=&1", entryId)
+    draft = EntryDraft.Record(conn.Exec(ExportText.SelectRows(conn, "kb_entries") & " WHERE id=&1", entryId))
+    before = Frame()
+    Try SaveDraft(boardId, cardId, entryId, kind, draft, If(kind = "comment", "title", "body"), "Rejected")
+    denied = Error
+    If Not denied Or Frame() <> before Then Error.Raise("Required NULL bypassed semantic validation: " & kind)
+  Next
+  entryId = CardContent.Save(boardId, cardId, 0, "custom", "Numeric NULL body", "1", 0, False, 0, "number")
+  conn.Exec("UPDATE kb_entries SET body=NULL WHERE id=&1", entryId)
+  draft = EntryDraft.Read(boardId, cardId, entryId)
+  SaveDraft(boardId, cardId, entryId, "custom", draft, "title", "Numeric normalized")
+  state = CardContent.RecordState(CardContent.Entry(boardId, cardId, entryId, True))
+  If state["body"] <> "0" Then Error.Raise("Numeric normalization was suppressed by NULL retention")
+  Print "Nullable entries: seven-kind locked unchanged NULL retention, no-write reads, required semantic normalization, explicit edits, stale independent NULL/precise amount merge and immediate/history/clock NULL-value rollback passed"
+End
+
+Private Sub SaveDraft(boardId As Integer, cardId As Integer, entryId As Integer, kind As String, baseline As Collection, field As String, value As Variant)
+  Dim data As Collection = EntryDraft.Values(baseline["title"], baseline["body"], baseline["parent_id"], baseline["done"], baseline["amount"], baseline["value_type"])
+  EntryDraft.SetValue(data, field, value)
+  CardContent.Save(boardId, cardId, entryId, kind, data["title"], data["body"], data["parent_id"], data["done"], data["amount"], data["value_type"], baseline)
+End
+
+Private Function Frame() As String
+  Dim conn As Connection = WebDatabase.OpenConnection()
+  Dim table As Table
+  Dim tables As New String[]
+  Dim tableName As String
+  Dim order As String[]
+  Dim key As String
+  Dim rows As Result
+  Dim field As ResultField
+  Dim values As Collection
+  Dim data As Variant[]
+  Dim result As New Collection
+  For Each table In conn.Tables
+    If Left(table.Name, 7) <> "sqlite_" Then tables.Add(table.Name)
+  Next
+  tables.Sort()
+  For Each tableName In tables
+    order = New String[]
+    For Each key In conn.Tables[tableName].PrimaryKey
+      order.Add(conn.Quote(key))
+    Next
+    rows = conn.Exec(ExportText.SelectRows(conn, tableName) & If(order.Count, " ORDER BY " & order.Join(","), ""))
+    data = New Variant[]
+    For Each rows
+      values = New Collection
+      For Each field In rows.Fields
+        If Left(field.Name, 7) = "__weba_" Then Continue
+        If field.Type = DB.String Then
+          If rows.Fields.Exist("__weba_null_" & field.Name) Then
+            If rows["__weba_null_" & field.Name] Then
+              values[field.Name] = JSON.Null
+            Else
+              values[field.Name] = ExportText.ReadValue(rows, field.Name)
+            Endif
+          Else
+            values[field.Name] = rows[field.Name]
+          Endif
+        Else If field.Type = DB.Blob Then
+          If IsNull(rows[field.Name]) Then
+            values[field.Name] = JSON.Null
+          Else
+            values[field.Name] = Base64(rows[field.Name].Data)
+          Endif
+        Else
+          values[field.Name] = rows[field.Name]
+        Endif
+      Next
+      data.Add(values)
+    Next
+    result[tableName] = data
+  Next
+  Return JsonText.Encode(result)
+End

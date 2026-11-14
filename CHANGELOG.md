@@ -2,6 +2,20 @@
 
 This work adds the following features and fixes:
 
+- Retain untouched nullable fields when merging existing native entry drafts.
+  Capture NULL state after the locked read and retain it only when the submitted
+  field and its validated value remain unchanged. Keep explicit edits and required
+  time completion, relationship-title and numeric-body normalization authoritative.
+  Compare exact stored NULL/value states through data, history and clock guards
+  instead of requiring every saved column to be non-NULL. A title-only custom
+  baseline previously materialized four unrelated NULL fields. Seven-kind model
+  coverage now checks no-write reads, explicit defaults/edits, stale NULL/precise
+  amount merges, required-field rejection and immediate/history/clock rollback.
+  Source/packaged detail UI checks retain NULLs across rename, reject a history
+  NULL-to-empty mutation with dirty retry, and materialize only an explicitly edited
+  complete NUL body. Full host/API/security checks and 70 Python tests pass.
+  Remaining legacy/nullable models and copy audits stay open. Thanks to xet7.
+
 - Preserve numeric detail values through native display, editing and saving.
   Keep ordinary display text only when the exact finite parser recovers the same
   binary64 value; otherwise use the existing exact decimal encoder. Parse native

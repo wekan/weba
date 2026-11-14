@@ -90,6 +90,22 @@ with sqlite3.connect(sys.argv[1]) as d:
   numeric=read().entries.find(e=>e.title==='Precise custom renamed');expect(Number(numeric.body)).toBe(precise);
   const beforeInvalidCustom=sql();await row('Precise custom renamed');await page.locator(input('DetailBody')).fill('1e309');
   await click('DetailSave');await expect(page.locator(c('Notice'))).toHaveText('Invalid numeric field');expect(sql()).toBe(beforeInvalidCustom);
+  await click('DetailNew');await page.locator(input('DetailTitle')).fill('Nullable text entry');
+  await page.locator('[id$=".DetailType:select"]').selectOption({label:'text'});await click('DetailSave');
+  const nullableWhere="board_id="+seed.board+' AND card_id='+seed.items[0].card+" AND kind='custom' AND title LIKE 'Nullable%'";
+  sql('UPDATE kb_entries SET body=NULL,parent_id=NULL,done=NULL,amount=NULL WHERE '+nullableWhere);
+  const nullableCount=()=>Number(execFileSync('python3',['-c',"import sqlite3,sys;d=sqlite3.connect(sys.argv[1]);print(d.execute(sys.argv[2]).fetchone()[0])",database,'SELECT count(*) FROM kb_entries WHERE '+nullableWhere+' AND body IS NULL AND parent_id IS NULL AND done IS NULL AND amount IS NULL'],{encoding:'utf8'}));
+  await row('Nullable text entry');await expect(page.locator(input('DetailBody'))).toHaveValue('');
+  await page.locator(input('DetailTitle')).fill('Nullable renamed');await click('DetailSave');expect(nullableCount()).toBe(1);
+  await row('Nullable renamed');await page.locator(input('DetailTitle')).fill('Nullable retained draft');
+  const beforeNullGuard=sql();sql("CREATE TRIGGER detail_nullable_guard AFTER INSERT ON kb_history BEGIN UPDATE kb_entries SET body='' WHERE "+nullableWhere+'; END');
+  try{await click('DetailSave');await expect(page.locator(c('Notice'))).toHaveText('Entry changed during save');expect(sql()).toBe(beforeNullGuard);await expect(page.locator(input('DetailTitle'))).toHaveValue('Nullable retained draft');}
+  finally{sql('DROP TRIGGER detail_nullable_guard');}
+  await click('DetailSave');expect(nullableCount()).toBe(1);
+  await row('Nullable retained draft');const materialized='Explicit'+String.fromCharCode(0)+'Ω body';
+  await page.evaluate(value=>{const input=document.querySelector('[id$=".DetailBody:entry"],textarea[id$=".DetailBody"]');input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));},materialized);
+  await click('DetailSave');expect(read().entries.find(e=>e.title==='Nullable retained draft').body).toBe(materialized);
+  expect(Number(execFileSync('python3',['-c',"import sqlite3,sys;d=sqlite3.connect(sys.argv[1]);print(d.execute(sys.argv[2]).fetchone()[0])",database,'SELECT count(*) FROM kb_entries WHERE '+nullableWhere+' AND body IS NOT NULL AND parent_id IS NULL AND done IS NULL AND amount IS NULL'],{encoding:'utf8'}))).toBe(1);
   await kind('Attachments');await row(initial.files[0].filename);
   const uploadBytes=Buffer.from([0,1,255,10,32,39,194,169]);
   async function upload(name){const chooser=page.waitForEvent('filechooser');await click('DetailUpload');await(await chooser).setFiles({name,mimeType:'application/octet-stream',buffer:uploadBytes});}
@@ -129,6 +145,6 @@ with sqlite3.connect(sys.argv[1]) as d:
 `,database,String(seed.board),String(seed.items[0].card)],{encoding:'utf8'}));
   expect(children).toEqual([[childTitle,initial.lane,initial.status,childTitle]]);await expect(page.locator(c('DetailsPanel')+' literal')).toHaveCount(0);
   expect(errors).toEqual([]);
-  console.log('Detail complete-text browser: native custom/comment/checklist/file text, exact encoded editor values, external suffix heartbeat, dirty local title with independent external body save, post-history archive refusal keeps all board data and exact dirty draft, retry, New clears stale values, literal markup/reload and delete rollback with exact dirty/provenance retention and retry, timer start/stop post-history rollback and retry, file chooser upload data/history archive rollback, retained selection and exact-byte retry, attachment delete/restore post-history archive rollback with retained live/history selection and retry, subtask child-save parent archive rollback with retained exact draft and complete-field child/link retry, numeric near-ULP display/title-only saves and parsing, malformed/nonfinite full-state rollback and dirty retention, blank zero and precise custom normalization passed');
+  console.log('Detail complete-text browser: native custom/comment/checklist/file text, exact encoded editor values, external suffix heartbeat, dirty local title with independent external body save, post-history archive refusal keeps all board data and exact dirty draft, retry, New clears stale values, literal markup/reload and delete rollback with exact dirty/provenance retention and retry, timer start/stop post-history rollback and retry, file chooser upload data/history archive rollback, retained selection and exact-byte retry, attachment delete/restore post-history archive rollback with retained live/history selection and retry, subtask child-save parent archive rollback with retained exact draft and complete-field child/link retry, numeric near-ULP display/title-only saves and parsing, malformed/nonfinite full-state rollback and dirty retention, blank zero and precise custom normalization, nullable title-only retention, NULL-to-empty history rollback/dirty retry and isolated explicit NUL-body materialization passed');
  }finally{if(context)await context.close();if(browser)await browser.close();}
 })().catch(e=>{let message=e.stack||String(e);if(process.env.WEBA_TEST_PASSWORD)message=message.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(message);process.exitCode=1;});

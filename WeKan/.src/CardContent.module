@@ -265,6 +265,10 @@ Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Int
   Dim target As Result
   Dim id As Integer = entryId
   Dim merged As Collection
+  Dim submitted As Collection
+  Dim latest As Collection
+  Dim stored As Collection
+  Dim retainedNulls As New Collection
   Dim number As Float
   Dim actor As String = WebIdentity.Username
   Dim capability As String = If(kind = "comment" And Not isCopy, "comment", "write")
@@ -290,7 +294,13 @@ Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Int
     scope["authorNull"] = TextIsNull(r, "author")
     scope.Add(JSON.Encode(r["created_at"]), "createdAt")
     If baseline Then
-      merged = EntryDraft.Merge(boardId, cardId, entryId, r, EntryDraft.Values(title, body, parentId, done, amount, valueType), baseline)
+      submitted = EntryDraft.Values(title, body, parentId, done, amount, valueType)
+      merged = EntryDraft.Merge(boardId, cardId, entryId, r, submitted, baseline)
+      latest = EntryDraft.Record(r)
+      stored = RecordState(r)
+      For Each field In submitted.Keys
+        If JsonText.Encode(stored[field]) = "null" And submitted[field] = baseline[field] Then retainedNulls.Add(latest[field], field)
+      Next
       title = merged["title"]
       body = merged["body"]
       parentId = merged["parent_id"]
@@ -340,6 +350,10 @@ Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Int
   Endif
   If creation Then RequireSubtaskCreation(boardId, cardId, creation)
   values = EntryDraft.Values(Trim(title), body, parentId, done, amount, valueType)
+  ' Preserve only unchanged locked NULLs; semantic normalization stays authoritative.
+  For Each field In retainedNulls.Keys
+    If values[field] = retainedNulls[field] Then values[field] = Null
+  Next
   For Each field In values.Keys
     scope.Add(values[field], field)
   Next
@@ -354,12 +368,9 @@ Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Int
     r["created_at"] = scope["newCreatedAt"]
   Endif
   r["kind"] = kind
-  r["title"] = Trim(title)
-  r["body"] = body
-  r["parent_id"] = parentId
-  r["done"] = done
-  r["amount"] = amount
-  r["value_type"] = valueType
+  For Each field In values.Keys
+    r[field] = values[field]
+  Next
   If entryId Then
     DatabaseText.Save($db, r, "kb_entries", ["kind", "title", "body", "parent_id", "done", "amount", "value_type"], False)
   Else
@@ -450,16 +461,17 @@ End
 Private Sub RequireSavedEntry(boardId As Integer, cardId As Integer, entryId As Integer, scope As Collection, Optional creation As Collection)
   Dim row As Result
   Dim values As Collection
+  Dim stored As Collection
   Dim field As String
   Dim kind As String = scope["kind"]
   If creation Then RequireSubtaskCreation(boardId, cardId, creation)
   RequireDetailScope(boardId, cardId, scope)
   row = Entry(boardId, cardId, entryId, True)
   values = EntryDraft.Record(row)
-  If Not $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND id=&3 AND title IS NOT NULL AND body IS NOT NULL AND parent_id IS NOT NULL AND done IS NOT NULL AND amount IS NOT NULL AND value_type IS NOT NULL", boardId, cardId, entryId).Available Then Error.Raise("Entry value became null")
+  stored = RecordState(row)
   If values["kind"] <> kind Then Error.Raise("Entry type changed")
   For Each field In ["title", "body", "parent_id", "done", "amount", "value_type"]
-    If values[field] <> scope[field] Then Error.Raise("Entry changed during save")
+    If JsonText.Encode(stored[field]) <> JsonText.Encode(scope[field]) Then Error.Raise("Entry changed during save")
   Next
   If values["author"] <> scope["author"] Or TextIsNull(row, "author") <> scope["authorNull"] Then Error.Raise("Entry author changed")
   If scope.Exist("createdAt") And If JSON.Encode(row["created_at"]) <> scope["createdAt"] Then Error.Raise("Entry creation time changed")
