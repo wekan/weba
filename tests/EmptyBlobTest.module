@@ -1,0 +1,153 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim fileId As Integer
+  Dim copyId As Integer
+  Dim conn As Connection
+  Dim row As Result
+  Dim table As Table
+  Dim id As Integer
+  Dim stage As String
+  Dim before As String
+  Dim denied As Boolean
+  Dim blobs As Collection
+  WebDatabase.Register("empty-blob", "x")
+  WebDatabase.Register("empty-blob-reader", "x")
+  Session["username"] = "empty-blob"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("empty-blob")
+  boardId = KanbanStore.AddBoard("Empty blobs")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Card", "", "Default", "Todo", "", "", "")
+  CardContent.OpenStore()
+  conn = WebDatabase.OpenConnection()
+  table = conn.Tables.Add("empty_blob_probe")
+  table.Fields.Add("id", DB.Serial)
+  table.Fields.Add("payload", DB.Blob)
+  table.Fields.Add("other_blob", DB.Blob)
+  table.Fields.Add("label", DB.String)
+  table.PrimaryKey = ["id"]
+  table.Update()
+  row = conn.Create("empty_blob_probe")
+  row!payload = ""
+  row!other_blob = Null
+  row!label = "probe"
+  blobs = New Collection
+  blobs.Add("", "payload")
+  blobs.Add(Null, "other_blob")
+  DatabaseText.Save(conn, row, "empty_blob_probe", ["payload", "other_blob", "label"], True, blobs)
+  id = conn.LastInsertId
+  If Not conn.Exec("SELECT id FROM empty_blob_probe WHERE id=&1 AND typeof(payload)='blob' AND length(payload)=0 AND other_blob IS NULL", id).Available Then Error.Raise("Empty BLOB insert conflated NULL")
+  row = conn.Edit("empty_blob_probe", "id=&1", id)
+  row!label = "changed"
+  DatabaseText.Save(conn, row, "empty_blob_probe", ["label"], False)
+  If Not conn.Exec("SELECT id FROM empty_blob_probe WHERE id=&1 AND typeof(payload)='blob' AND length(payload)=0 AND other_blob IS NULL", id).Available Then Error.Raise("Unrelated edit changed BLOB state")
+  row = conn.Edit("empty_blob_probe", "id=&1", id)
+  row!payload = Null
+  row!other_blob = ""
+  blobs = New Collection
+  blobs.Add(Null, "payload")
+  blobs.Add("", "other_blob")
+  DatabaseText.Save(conn, row, "empty_blob_probe", ["payload", "other_blob"], False, blobs)
+  If Not conn.Exec("SELECT id FROM empty_blob_probe WHERE id=&1 AND payload IS NULL AND typeof(other_blob)='blob' AND length(other_blob)=0", id).Available Then Error.Raise("BLOB update conflated NULL")
+  before = Frame()
+  blobs = New Collection
+  blobs.Add("foreign", "label")
+  Try DatabaseText.Save(conn, row, "empty_blob_probe", ["payload"], False, blobs)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("BLOB override changed an unselected/text field")
+  blobs = New Collection
+  blobs.Add(42, "payload")
+  Try DatabaseText.Save(conn, row, "empty_blob_probe", ["payload"], False, blobs)
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Non-byte BLOB override wrote data")
+  before = Frame()
+  DatabaseTransactions.Begin(conn)
+  row = conn.Create("empty_blob_probe")
+  row!payload = ""
+  blobs = New Collection
+  blobs.Add("", "payload")
+  DatabaseText.Save(conn, row, "empty_blob_probe", ["payload"], True, blobs)
+  DatabaseTransactions.Rollback(conn)
+  If Frame() <> before Then Error.Raise("Empty BLOB writer committed caller transaction")
+  For Each stage In ["AFTER INSERT ON kb_files", "AFTER INSERT ON kb_attachment_data", "AFTER INSERT ON kb_history", "AFTER UPDATE ON kb_item_changes WHEN NEW.kind='card' AND NEW.item_id=" & CStr(cardId)]
+    before = Frame()
+    conn.Exec("CREATE TRIGGER empty_blob_guard " & stage & " BEGIN UPDATE kb_files SET content=NULL WHERE board_id=" & CStr(boardId) & " AND card_id=" & CStr(cardId) & "; END")
+    Try fileId = CardContent.UploadFile(boardId, cardId, "empty.bin", "")
+    denied = Error
+    conn.Exec("DROP TRIGGER empty_blob_guard")
+    If Not denied Or Frame() <> before Then Error.Raise("Empty attachment NULL mutation accepted: " & stage)
+  Next
+  fileId = CardContent.UploadFile(boardId, cardId, "empty.bin", "")
+  If Not conn.Exec("SELECT id FROM kb_files WHERE id=&1 AND typeof(content)='blob' AND length(content)=0", fileId).Available Then Error.Raise("New empty attachment is not an empty BLOB")
+  row = CardContent.DownloadFile(boardId, cardId, fileId, True)
+  If Len(row!content.Data) <> 0 Then Error.Raise("Empty file download changed bytes")
+  copyId = WorkspaceStore.Copy(boardId, "card", cardId, "Copy")
+  row = CardContent.Files(boardId, copyId, True)
+  If Not conn.Exec("SELECT id FROM kb_files WHERE id=&1 AND typeof(content)='blob' AND length(content)=0", row!id).Available Then Error.Raise("Copied empty attachment is not an empty BLOB")
+  conn.Exec("UPDATE kb_files SET content=NULL WHERE id=&1", fileId)
+  before = Frame()
+  row = CardContent.DownloadFile(boardId, cardId, fileId, True)
+  If Len(row!content.Data) <> 0 Or Frame() <> before Then Error.Raise("Legacy NULL read changed bytes or wrote data")
+  If Not conn.Exec("SELECT id FROM kb_files WHERE id=&1 AND content IS NULL", fileId).Available Then Error.Raise("Legacy NULL read materialized an empty BLOB")
+  BoardAccess.SetMember(boardId, "empty-blob-reader", "read-only")
+  Session["username"] = "empty-blob-reader"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("empty-blob-reader")
+  before = Frame()
+  Try CardContent.UploadFile(boardId, cardId, "denied.bin", "")
+  denied = Error
+  If Not denied Or Frame() <> before Then Error.Raise("Readonly empty upload wrote data")
+  Print "Empty BLOB storage: insert/update NULL distinction, unrelated field/caller rollback, upload data/metadata/history/clock NULL refusal, exact upload/download/copy retry, legacy NULL no-write read and readonly denial passed"
+End
+
+Private Function Frame() As String
+  Dim conn As Connection = WebDatabase.OpenConnection()
+  Dim table As Table
+  Dim tables As New String[]
+  Dim tableName As String
+  Dim order As String[]
+  Dim key As String
+  Dim rows As Result
+  Dim field As ResultField
+  Dim values As Collection
+  Dim data As Variant[]
+  Dim result As New Collection
+  For Each table In conn.Tables
+    If Left(table.Name, 7) <> "sqlite_" Then tables.Add(table.Name)
+  Next
+  tables.Sort()
+  For Each tableName In tables
+    order = New String[]
+    For Each key In conn.Tables[tableName].PrimaryKey
+      order.Add(conn.Quote(key))
+    Next
+    rows = conn.Exec(ExportText.SelectRows(conn, tableName) & If(order.Count, " ORDER BY " & order.Join(","), ""))
+    data = New Variant[]
+    For Each rows
+      values = New Collection
+      For Each field In rows.Fields
+        If Left(field.Name, 7) = "__weba_" Then Continue
+        If field.Type = DB.String Then
+          If rows.Fields.Exist("__weba_null_" & field.Name) Then
+            If rows["__weba_null_" & field.Name] Then
+              values[field.Name] = JSON.Null
+            Else
+              values[field.Name] = ExportText.ReadValue(rows, field.Name)
+            Endif
+          Else
+            values[field.Name] = rows[field.Name]
+          Endif
+        Else If field.Type = DB.Blob Then
+          If IsNull(rows[field.Name]) Then
+            values[field.Name] = JSON.Null
+          Else
+            values[field.Name] = Base64(rows[field.Name].Data)
+          Endif
+        Else
+          values[field.Name] = rows[field.Name]
+        Endif
+      Next
+      data.Add(values)
+    Next
+    result[tableName] = data
+  Next
+  Return JsonText.Encode(result)
+End

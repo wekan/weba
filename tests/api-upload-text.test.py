@@ -62,10 +62,10 @@ with sqlite3.connect(Path(os.environ['WEBA_DB_HOST'])/os.environ['WEBA_DB_NAME']
     other_lane=db.execute('SELECT id FROM kb_lanes WHERE board_id=? AND title=?',(board,seed['items'][1]['lane'])).fetchone()[0]
     target={'boardId':str(board),'swimlaneId':str(lane),'listId':str(list_id),'cardId':str(card),'fileName':"literal Ω😀'<tag>.bin",'fileType':'application/octet-stream'}
     binary=bytes(range(256))+b'\0\xfftail'
-    def upload(change=None,token=owner,raw=False):
+    def upload(change=None,token=owner,raw=False,data=binary):
         payload={**target,**(change or {})}
-        if not raw:return call('/api/attachment/upload',token,'POST',{**payload,'fileData':base64.b64encode(binary).decode()})
-        request=urllib.request.Request(base+'/api/attachment/upload?'+urllib.parse.urlencode(payload),data=binary,headers={'Content-Type':'application/octet-stream','Authorization':'Bearer '+token},method='POST')
+        if not raw:return call('/api/attachment/upload',token,'POST',{**payload,'fileData':base64.b64encode(data).decode()})
+        request=urllib.request.Request(base+'/api/attachment/upload?'+urllib.parse.urlencode(payload),data=data,headers={'Content-Type':'application/octet-stream','Authorization':'Bearer '+token},method='POST')
         try:response=urllib.request.urlopen(request,timeout=15)
         except urllib.error.HTTPError as error:response=error
         with response:
@@ -78,6 +78,19 @@ with sqlite3.connect(Path(os.environ['WEBA_DB_HOST'])/os.environ['WEBA_DB_NAME']
             before=frame();status,value,_=upload(change,raw=raw)
             assert status==400 and value['success'] is False,(raw,change,status,value)
             assert frame()==before
+    before=frame();status,value,_=upload({'fileName':'zero-byte.bin'},data=b'')
+    assert status==400 and value['error']=='Missing required parameters'
+    assert frame()==before
+    for raw in (True,):
+        status,value,_=upload({'fileName':'zero-byte.bin'},raw=raw,data=b'')
+        assert status==200,(raw,status,value)
+        assert db.execute("SELECT typeof(content),length(content),content FROM kb_files WHERE id=?",(value['attachmentId'],)).fetchone()==('blob',0,b'')
+        db.execute("CREATE TRIGGER empty_upload_guard AFTER INSERT ON kb_files WHEN NEW.filename='zero-byte.bin' BEGIN UPDATE kb_files SET content=NULL WHERE id=NEW.id; END");db.commit()
+        before=frame();status,value,body=upload({'fileName':'zero-byte.bin'},raw=raw,data=b'')
+        assert status==500 and value['success'] is False,(raw,status,value)
+        assert frame()==before
+        db.execute('DROP TRIGGER empty_upload_guard');db.commit()
+        assert upload({'fileName':'zero-byte.bin'},raw=raw,data=b'')[0]==200
     status,value,_=upload({'fileType':None})
     assert status==200
     assert db.execute('SELECT mime FROM kb_attachment_data WHERE file_id=?',(value['attachmentId'],)).fetchone()[0]=='application/octet-stream'
@@ -101,4 +114,4 @@ with sqlite3.connect(Path(os.environ['WEBA_DB_HOST'])/os.environ['WEBA_DB_NAME']
     request=urllib.request.Request(base+'/api/attachment/upload',data=envelope,method='POST',headers={'Content-Type':'application/json','Authorization':'Bearer '+owner})
     with urllib.request.urlopen(request,timeout=60) as response:
         value=json.loads(response.read());assert response.status==200 and value['fileSize']==1
-print('Upload complete text: raw/JSON exact shared-prefix lane targets, Unicode literal filename/binary bytes, NUL filename/MIME/all-ID refusal, wrong-suffix lane denial, reader/foreign/assigned/global scopes and SQL/late-suffix-lane full rollback/retry passed')
+print('Upload complete text: raw/JSON exact shared-prefix lane targets, Unicode literal filename/binary bytes, NUL filename/MIME/all-ID refusal, wrong-suffix lane denial, reader/foreign/assigned/global scopes and SQL/late-suffix-lane full rollback/retry, raw zero-byte empty-BLOB storage/NULL rollback/retry and source-shaped empty-JSON rejection passed')

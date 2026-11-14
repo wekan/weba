@@ -976,6 +976,7 @@ Private Function CreateFile(boardId As Integer, cardId As Integer, filename As S
   Dim actor As String = WebIdentity.Username
   Dim stamp As Date
   Dim scope As New Collection
+  Dim blobs As New Collection
   If api Then BoardAccess.RequireApiUploadGuard(api)
   RequireCard(boardId, cardId)
   BoardAccess.Require(boardId, "write")
@@ -1001,6 +1002,7 @@ Private Function CreateFile(boardId As Integer, cardId As Integer, filename As S
   If Not mime Then mime = "application/octet-stream"
   scope.Add(filename, "filename")
   scope.Add(data, "bytes")
+  scope.Add(False, "contentNull")
   scope.Add(mime, "mime")
   stamp = Now
   scope.Add(stamp, "created")
@@ -1011,7 +1013,8 @@ Private Function CreateFile(boardId As Integer, cardId As Integer, filename As S
   r["content"] = data
   r["author"] = actor
   r["created_at"] = stamp
-  DatabaseText.Save($db, r, "kb_files", ["board_id", "card_id", "filename", "content", "author", "created_at"], True)
+  blobs.Add(data, "content")
+  DatabaseText.Save($db, r, "kb_files", ["board_id", "card_id", "filename", "content", "author", "created_at"], True, blobs)
   id = $db.LastInsertId
   RequireFileCreation(boardId, cardId, id, scope, False)
   scope.Add(ItemChanges.UtcNow(), "uploaded")

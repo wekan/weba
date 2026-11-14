@@ -2,6 +2,22 @@
 
 This work adds the following features and fixes:
 
+- Store zero-byte attachments as explicit empty SQLite BLOBs.
+  Gambas FormatBlob of empty bytes returned SQL NULL, and editable Blob getters
+  lost the original NULL/empty assignment intent. Let the shared writer accept
+  validated explicit byte/NULL values for selected BLOB columns, encode empty
+  bytes as X'', and retain genuine NULL intent. New attachment creation passes
+  its original bytes and requires non-NULL content from the first data guard.
+  Model tests cover insert/update distinction, unrelated fields, invalid overrides,
+  caller rollback, upload data/metadata/history/clock NULL injection, empty
+  download/copy retry, legacy NULL no-write reads and readonly denial.
+  Source/packaged detail/live UI checks reject NULL mutation and retry zero-byte
+  file-chooser uploads with exact SQLite BLOB state; raw HTTP regressions cover
+  empty storage and atomic failure/retry, while empty JSON fileData retains the
+  source route's required-parameter rejection. The browser fixture now retains
+  the empty base64 string explicitly. Filename sanitization parity and remaining
+  legacy/source/model file audits stay open. Thanks to xet7.
+
 - Retain copied attachment state through the enclosing container-copy commit.
   Extend retained entry guards to file records, exact bytes/NULL state, metadata,
   lifecycle and author provenance. Capture the expected attachment IDs and the

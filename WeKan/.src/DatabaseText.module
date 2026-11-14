@@ -2,8 +2,11 @@ Export
 
 Private Function SqlValue(conn As Connection, value As Variant, fieldType As Integer) As String
   If fieldType = DB.Blob Then
+    If TypeOf(value) = gb.String Then
+      If Len(value) = 0 Then Return "X''"
+      Return conn.FormatBlob(value)
+    Endif
     If IsNull(value) Then Return "NULL"
-    If TypeOf(value) = gb.String Then Return conn.FormatBlob(value)
     Return conn.FormatBlob(value.Data)
   Endif
   If TypeOf(value) = gb.String Then
@@ -20,7 +23,8 @@ End
 ' The caller authorizes and owns the transaction. Only explicitly modified
 ' fields are written; untouched columns never pass through lossy text reads.
 ' A raw-insert result is discarded afterwards; callers use LastInsertId.
-Public Sub Save(conn As Connection, row As Result, tableName As String, fields As String[], isNew As Boolean)
+' Explicit BLOB bytes/NULL avoid editable-result coercion of empty blobs.
+Public Sub Save(conn As Connection, row As Result, tableName As String, fields As String[], isNew As Boolean, Optional blobs As Collection)
   Dim field As String
   Dim value As Variant
   Dim special As Boolean
@@ -30,6 +34,15 @@ Public Sub Save(conn As Connection, row As Result, tableName As String, fields A
   Dim predicates As New String[]
   Dim expression As String
   If Not row.Editable Then Error.Raise("Editable record required")
+  If blobs Then
+    For Each field In blobs.Keys
+      If fields.Find(field) < 0 Or row.Fields[field].Type <> DB.Blob Then Error.Raise("Modified BLOB field required")
+      value = blobs[field]
+      If TypeOf(value) <> gb.String And Not IsNull(value) Then Error.Raise("BLOB bytes or NULL required")
+    Next
+    If blobs.Count Then special = True
+  Endif
+
   If conn.Type <> "sqlite3" Then
     row.Update()
     Return
@@ -47,7 +60,11 @@ Public Sub Save(conn As Connection, row As Result, tableName As String, fields A
     Return
   Endif
   For Each field In fields
-    expression = SqlValue(conn, row[field], row.Fields[field].Type)
+    value = row[field]
+    If blobs Then
+      If blobs.Exist(field) Then value = blobs[field]
+    Endif
+    expression = SqlValue(conn, value, row.Fields[field].Type)
     columns.Add(conn.Quote(field))
     values.Add(expression)
     assignments.Add(conn.Quote(field) & "=" & expression)

@@ -130,7 +130,11 @@ Public Sub Main()
     For Each row
       item = New Collection
       item["filename"] = ExportText.ReadValue(row, "filename")
-      item["data"] = Base64(row!content.Data)
+      If Len(row!content.Data) Then
+        item.Add(Base64(row!content.Data), "data")
+      Else
+        item.Add("", "data")
+      Endif
       item["author"] = CardContent.AuthorName(boardId, cardId, "file", row!id)
       item["cover"] = AttachmentLifecycle.CoverId(boardId, cardId) = row!id
       items.Add(item)
