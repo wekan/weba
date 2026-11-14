@@ -19,4 +19,5 @@ const sha=value=>crypto.createHash('sha256').update(value).digest('hex');fs.writ
 const license=fs.readFileSync(path.join(path.dirname(process.execPath),'../LICENSE'),'utf8'),start=license.indexOf('    UNICODE LICENSE V3'),end=license.indexOf('    ----------------------------------------------------------------------',start);if(start<0||end<0)throw Error('Node Unicode license required');fs.writeFileSync(path.join(out,'LICENSE-Unicode.txt'),license.slice(start,end).replace(/^    /gm,''));
 console.log('Imported source Unicode '+data.unicode+': '+Object.keys(nfkd).length+' decompositions, '+Object.keys(compose).length+' compositions, '+marks.length+' nonstarters in '+rank+' ordering classes');
 
+require('./import-upload-mime.cjs');
 require('./import-native-filenames.cjs');

@@ -24,3 +24,12 @@ and compact tables support the interactive upload bridge without runtime Node.
 against the pinned original engine, the official Unicode 17 normalization corpus,
 and mixed filename/public-header/raw-API cases. The compressed corpus is retained
 under `vendor/wekan-filenames/NormalizationTest-17.txt.gz` with its original header.
+
+Upload filename correction additionally uses the original checkout's resolved
+`mime-types` extension and lookup maps. `tools/import-upload-mime.cjs` captures
+those maps, dependency/source hashes and both MIT licenses. They are versioned
+in `mime-manifest.json` and packaged with the Python host. The helper preserves
+source unknown/generic-type behavior, MIME parameters, alternate JPEG suffixes,
+application-owned `.gantt` names and the final 30-character cap. The source-oracle
+matrix covers every captured type/extension plus path, Unicode and invalid/unknown
+cases. Content detection and upload/storage integration remain separate work.

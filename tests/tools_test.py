@@ -123,12 +123,18 @@ class PackagedFilenameRuntimeTest(unittest.TestCase):
             destination = Path(work) / 'runtime'
             package.copy_runtime(destination)
             for name in ('server.py', 'filename_policy.py', 'filename-data/normalization.json.gz',
-                         'filename-data/manifest.json', 'filename-data/LICENSE-Unicode.txt'):
+                         'filename-data/manifest.json', 'filename-data/LICENSE-Unicode.txt',
+                         'filename-data/mime.json.gz', 'filename-data/mime-manifest.json',
+                         'filename-data/LICENSE-mime-types.txt', 'filename-data/LICENSE-mime-db.txt'):
                 self.assertTrue((destination / name).is_file(), name)
             result = subprocess.run([sys.executable, '-c',
                 'import server; print(server.public_attachment_disposition("Ｆｉｌｅ <tag>.txt")); '
-                'print(server.attachment_disposition("𜳖.txt"))'], cwd=destination,
+                'print(server.attachment_disposition("𜳖.txt")); '
+                'import filename_policy as p; print(p.sanitize_upload_filename("wrong.txt", "image/png")); '
+                'print(p.sanitize_upload_filename("schedule.gantt", "application/json")); '
+                'print(p.sanitize_upload_filename("secret.kdbx", "application/octet-stream"))'], cwd=destination,
                 check=True, capture_output=True, text=True)
             self.assertEqual(result.stdout.splitlines(), [
                 'attachment; filename="File .txt"',
-                "attachment; filename=\"A.txt\"; filename*=UTF-8''%F0%9C%B3%96.txt"])
+                "attachment; filename=\"A.txt\"; filename*=UTF-8''%F0%9C%B3%96.txt",
+                "wrong.png", "schedule.gantt", "secret.kdbx"])

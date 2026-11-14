@@ -210,6 +210,71 @@ def filename_looks_like_exploit(name):
         return True
     return '\0' in value or bool(re.search(r'(^|[\\/])\.\.([\\/]|$)', value))
 
+
+@functools.lru_cache(maxsize=1)
+def _mime_tables():
+    return json.loads(gzip.decompress((Path(__file__).parent / 'filename-data/mime.json.gz').read_bytes()))
+
+
+def base_name_for_mime(mime_type):
+    value = (mime_type or '').lower()
+    for prefix, name in [('image/', 'image'), ('video/', 'video'), ('audio/', 'audio')]:
+        if value.startswith(prefix):
+            return name
+    if re.search('spreadsheet|ms-excel|excel|csv', value):
+        return 'spreadsheet'
+    if re.search('word|pdf|presentation|powerpoint|opendocument|rtf|document', value):
+        return 'document'
+    if value.startswith('text/'):
+        return 'document'
+    if re.search('zip|tar|compressed|archive|rar|7z|gzip|bzip', value):
+        return 'archive'
+    return 'file'
+
+
+def extension_for_mime(mime_type):
+    value = (mime_type or '').lower()
+    if value.strip(_SPACE) in ('', 'application/octet-stream', 'binary/octet-stream',
+                              'application/binary', 'application/x-binary', 'application/unknown', '*/*'):
+        return ''
+    match = re.match('^[' + _SPACE + ']*([^;' + _SPACE + ']*)(?:;|[' + _SPACE + ']|$)', value)
+    extension = _mime_tables()['extensions'].get(match[1]) if match else None
+    return '.' + extension if extension else ''
+
+
+def _lookup_mime(name):
+    # mime-types.lookup uses POSIX extname('x.' + name), including dotfile rules.
+    basename = ('x.' + name).rstrip('/').rsplit('/', 1)[-1]
+    dot = basename.rfind('.')
+    extension = basename[dot + 1:].lower() if dot > 0 and basename != '..' else ''
+    return _mime_tables()['types'].get(extension)
+
+
+def sanitize_upload_filename(name, mime_type):
+    name = clean_filename(name)
+    wanted = extension_for_mime(mime_type)
+    wanted_mime = (mime_type or '').lower()
+    original = re.search(r'(?:^|[^.])(\.[^.]+)$', name)
+    if wanted_mime == 'application/json' and original and original[1].lower() == '.gantt':
+        wanted = '.gantt'
+    if not name:
+        return truncate_filename(base_name_for_mime(mime_type) + wanted)
+    if wanted:
+        dot = name.rfind('.')
+        current = name[dot:].lower() if dot > 0 else ''
+        current_mime = _lookup_mime(name)
+        if current == wanted:
+            pass
+        elif wanted_mime == 'image/jpeg' and current == '.jfif':
+            name = name[:dot] + wanted
+        elif current_mime == wanted_mime:
+            pass
+        elif current_mime:
+            name = name[:name.rfind('.')] + wanted
+        else:
+            name += wanted
+    return truncate_filename(name)
+
 # Appended to the unchanged runtime policy for the native, isolated Python bridge.
 import base64
 import sys

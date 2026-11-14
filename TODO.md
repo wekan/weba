@@ -198,6 +198,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   request/argv privacy, exact source results, malformed/noisy/oversized/nonzero/
   timeout refusal and retry evidence is in CHANGELOG.md. Content detection and
   remaining REST/import/copy policy audits remain open.
+- Completed offline source MIME-map/name-correction helpers with exact resolved
+  dependency tables, licenses, Node path rules and packaged-host coverage; 13,110
+  source comparison results are in CHANGELOG.md. Actual detector and native/REST/
+  import/copy/SVG integration remain open.
 - Next detail/content focus: remaining copy/model mutation audits, stored/uploaded
   filename-policy parity and any other display surfaces, legacy
   file fidelity, nullable fields and model readers/writers.

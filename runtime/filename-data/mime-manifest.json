@@ -1,0 +1,11 @@
+{
+  "sourceFile": "models/lib/uploadFileName.js",
+  "sourceSha256": "06fcb0d7d45b7a34f2342c2da69a2775fe64d10f97e774e0c18420bb784d455a",
+  "mimeTypes": "2.1.35",
+  "mimeDb": "1.52.0",
+  "mimeTypesSourceSha256": "8cfccaac306beb650d60c7f069ae0f4b39d648f1e3914696b18c133ab33e6419",
+  "mimeDbSourceSha256": "85c8e1ba609079947c8df83c092900ab0226e1d7b60e5e7105fb7dd701833263",
+  "dataSha256": "3e60cf267433f38875ab82b76eee65a3af8f0149690683358f2463b92d7621e7",
+  "extensions": 965,
+  "types": 1180
+}

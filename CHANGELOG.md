@@ -2,6 +2,20 @@
 
 This work adds the following features and fixes:
 
+- Port source MIME-based upload filename correction as an offline helper,
+  capturing the installed mime-types 2.1.35/mime-db 1.52.0 resolved maps with
+  source/dependency/data hashes and MIT licenses. Preserve MIME-group defaults,
+  uninformative/unknown types, MIME parameters, alternate JPEG suffixes, the
+  application-owned Gantt suffix and the final 30-code-point limit. Match Node
+  path extension rules explicitly, including trailing slashes and leading dots.
+  All 13,110 source-oracle rows match unchanged source helpers; the packaged
+  Python runtime includes and executes the maps without source-checkout access.
+  Full host/API/security/session/text/native/source/Unicode/client checks and
+  all 71 Python tests pass, including isolated packaged helper execution.
+  This stages correction only: native/REST/import/copy integration, actual content
+  detection and SVG handling remain open.
+  Thanks to xet7.
+
 - Send native filename policy requests through bounded private stdin rather
   than process arguments. Keep only public policy/code tables in argv, cap
   responses, enforce a deadline, suppress worker stderr and reap failed workers.
