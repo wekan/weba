@@ -11,6 +11,7 @@ Public Sub Main()
   Dim before As String
   Dim r As Result
   Dim denied As Boolean
+  Dim filename As String = "literal" & Chr(0) & "suffixΩ <file>.bin"
   If Env["WEBA_TEST_EXPORT_API"] = "1" Then
     WebIdentity.AuthenticateApi("native-export-owner")
     outcome = AttachmentExport.ReadNative(1, 1, "1")
@@ -33,11 +34,14 @@ Public Sub Main()
   fileId = CardContent.AddFile(boardId, cardId, "literal <file>.bin", bytes)
   emptyId = CardContent.AddFile(boardId, cardId, "empty.bin", "")
   db = WebDatabase.OpenConnection()
+  r = db.Edit("kb_files", "id=&1", fileId)
+  r["filename"] = filename
+  DatabaseText.Save(db, r, "kb_files", ["filename"], False)
   before = Frame()
   outcome = AttachmentExport.Read(boardId, CStr(fileId))
   If outcome["status"] <> 403 Or Frame() <> before Then Error.Raise("Native cookie entered API exporter")
   outcome = AttachmentExport.ReadNative(boardId, cardId, CStr(fileId))
-  If outcome["status"] <> 200 Or outcome["data"]["file"] <> Base64(bytes) Or outcome["data"]["name"] <> "literal <file>.bin" Or Frame() <> before Then Error.Raise("Native export changed data or lost bytes/metadata")
+  If outcome["status"] <> 200 Or outcome["data"]["file"] <> Base64(bytes) Or outcome["data"]["name"] <> filename Or Frame() <> before Then Error.Raise("Native export changed data or lost bytes/metadata")
   If db.Tables.Exist("api_tokens") Then Error.Raise("Native export prepared API credentials")
   outcome = AttachmentExport.ReadNative(boardId, cardId, CStr(emptyId))
   If outcome["status"] <> 200 Or Not outcome["data"].Exist("file") Or outcome["data"]["file"] <> "" Then Error.Raise("Native empty-file field lost")

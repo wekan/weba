@@ -32,6 +32,10 @@ Public Sub Main()
   Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
   If mode = "prepare" Then
     fileId = CardContent.UploadFile(boardId, cardId, name, "exact" & Chr(0) & Chr(255), "text/html")
+    name &= Chr(0) & "suffixΩ.txt"
+    r = WebDatabase.OpenConnection().Edit("kb_files", "id=&1", fileId)
+    r["filename"] = name
+    DatabaseText.Save(WebDatabase.OpenConnection(), r, "kb_files", ["filename"], False)
     data["fileId"] = fileId
     data["name"] = name
     data["type"] = "text/html"

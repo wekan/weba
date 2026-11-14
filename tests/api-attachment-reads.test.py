@@ -25,6 +25,19 @@ with sqlite3.connect(Path(os.environ['WEBA_DB_HOST'])/os.environ['WEBA_DB_NAME']
     db.execute('DELETE FROM kb_attachment_data WHERE file_id=?',(f['otherId'],));db.commit()
     legacy=call('/api/attachment/info/'+str(f['otherId']),token=owner)
     assert legacy[0]==200 and legacy[1]['fileType']=='application/octet-stream' and legacy[1]['createdAt'].endswith('Z'),legacy
+    legacy_name='legacy\0suffixΩ😀.bin'
+    db.execute('UPDATE kb_files SET filename=? WHERE id=?',(legacy_name,file));db.commit()
+    original=snapshot()
+    for token in (owner,reader,assigned):
+        for route in (listing,'/api/attachment/info/'+file,'/api/attachment/download/'+file):
+            status,info=call(route,token=token);assert status==200,(status,info)
+            if route==listing:info=next(row for row in info['attachments'] if row['attachmentId']==file)
+            assert info['fileName']==legacy_name,(route,info['fileName'],legacy_name)
+        status,body,headers=call('/api/attachment/download/'+file+'?raw=1',token=token,raw=True)
+        assert status==200 and body==binary
+        assert urllib.parse.unquote(headers['Content-Disposition'].split("filename*=UTF-8''")[1])==legacy_name
+    assert snapshot()==original
+    db.execute('UPDATE kb_files SET filename=? WHERE id=?',(name,file));db.commit()
     before=snapshot()
     for route in (listing,'/api/attachment/info/'+file,'/api/attachment/download/'+file):assert call(route)[0]==401
     assert call(listing,token=admin)==(403,{'success':False,'error':'You do not have permission to access this board'})

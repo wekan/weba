@@ -33,9 +33,9 @@ Private Function Query(boardId As Integer, Optional fileId As Integer) As Result
   Dim sql As String
   sql = "SELECT f.id,f.board_id,f.card_id,f.filename,f.created_at,COALESCE(LENGTH(f.content),0) AS file_size,d.mime,d.uploaded_ms,c.lane,cl.list_id,l.id AS lane_id FROM kb_files f LEFT JOIN kb_attachment_data d ON d.file_id=f.id AND d.board_id=f.board_id AND d.card_id=f.card_id LEFT JOIN kb_cards c ON c.id=f.card_id AND c.board_id=f.board_id LEFT JOIN kb_card_lists cl ON cl.card_id=c.id AND cl.board_id=c.board_id LEFT JOIN kb_lanes l ON l.board_id=c.board_id AND l.title=c.lane WHERE f.board_id=&1"
   If fileId > 0 Then
-    Return $db.Exec(sql & " AND f.id=&2", boardId, fileId)
+    Return $db.Exec(ExportText.Preserve($db, sql & " AND f.id=&2"), boardId, fileId)
   Endif
-  Return $db.Exec(sql & " AND " & AttachmentLifecycle.LiveSql("f") & " ORDER BY f.id", boardId)
+  Return $db.Exec(ExportText.Preserve($db, sql & " AND " & AttachmentLifecycle.LiveSql("f") & " ORDER BY f.id"), boardId)
 End
 
 Private Function Metadata(r As Result) As Collection
@@ -43,7 +43,7 @@ Private Function Metadata(r As Result) As Collection
   Dim mime As String = r!mime
   If Not mime Then mime = "application/octet-stream"
   data.Add(CStr(r!id), "attachmentId")
-  data.Add(CStr(r!filename), "fileName")
+  data.Add(ExportText.ReadValue(r, "filename"), "fileName")
   data.Add(CLong(r!file_size), "fileSize")
   data.Add(mime, "fileType")
   data.Add("database", "storageBackend")

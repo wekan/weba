@@ -89,13 +89,13 @@ Private Function Build(boardId As Integer, reference As String, apiContext As Bo
   If Not IdentityValid(actor, generation, apiContext) Then Error.Raise(If(apiContext, "Invalid token", "Sign in required"))
   BoardAccess.RequireContainer(boardId, "board", boardId)
   If expectedCard > 0 Then BoardAccess.RequireCard(boardId, expectedCard)
-  r = db.Exec("SELECT id,card_id,filename,COALESCE(LENGTH(content),0) AS size FROM kb_files WHERE board_id=&1 AND id=&2 AND (&3=0 OR card_id=&3) AND " & AttachmentLifecycle.LiveSql("kb_files"), boardId, fileId, expectedCard)
+  r = db.Exec(ExportText.Preserve(db, "SELECT id,card_id,filename,COALESCE(LENGTH(content),0) AS size FROM kb_files WHERE board_id=&1 AND id=&2 AND (&3=0 OR card_id=&3) AND " & AttachmentLifecycle.LiveSql("kb_files")), boardId, fileId, expectedCard)
   If r.Available Then
     TransferPolicy.RequireTransfer(transfer, r!size)
     cardId = r!card_id
     data["_id"] = CStr(r!id)
     data["cardId"] = CStr(cardId)
-    data.Add(CStr(r!filename), "name")
+    data.Add(ExportText.ReadValue(r, "filename"), "name")
     metadata = db.Find("kb_attachment_data", "board_id=&1 AND card_id=&2 AND file_id=&3", boardId, cardId, fileId)
     If metadata.Available Then
       If Not IsNull(metadata!mime) Then mime = metadata!mime

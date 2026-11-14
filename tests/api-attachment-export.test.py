@@ -26,7 +26,7 @@ def main():
     # Initialize policy through the fixture so every no-write frame is stable.
     subprocess.check_output([os.environ['GBX'],'-s','ImportExportPolicyFixture',os.environ['WEBA_TEST_PROJECT']],env={**os.environ,'WEBA_API_REQUEST':'0','WEBA_EXCHANGE_MODE':'save','WEBA_EXCHANGE_FLAGS':'{"import":false,"export":false}'})
     with sqlite3.connect(Path(os.environ['WEBA_DB_HOST'])/os.environ['WEBA_DB_NAME']) as db:
-        name='Résumé + <literal> 🚀.html';binary=bytes(range(256))+b'\x00\xff\r\nbytes'
+        name='Résumé + <literal> 🚀\0suffix.html';binary=bytes(range(256))+b'\x00\xff\r\nbytes'
         db.execute('UPDATE kb_files SET filename=?,content=? WHERE id=?',(name,binary,f['fileId']));db.execute('UPDATE kb_attachment_data SET mime=? WHERE file_id=?',('text/html',f['fileId']));db.commit()
         expected={'_id':file,'cardId':str(f['cardId']),'name':name,'type':'text/html','file':base64.b64encode(binary).decode()}
         def snapshot():

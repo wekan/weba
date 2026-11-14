@@ -2,6 +2,21 @@
 
 This work adds the following features and fixes:
 
+- Preserve legacy filename suffixes after embedded NULs in public attachment
+  downloads, bearer list/info/JSON/raw reads and shared native/API single-file
+  exports. Read filename text through existing lossless SQLite projections;
+  preserve stored rows, binary streams, MIME metadata and authorization/policy
+  checks. A name such as prefix\0suffixΩ.txt previously became prefix before
+  header formatting or export. Public downloads now clean the complete name;
+  raw API headers and JSON/export retain their separate source contracts.
+  Source/packaged HTTP tests cover complete NUL/Unicode names, exact bytes,
+  reader/assigned scopes and no-write snapshots. Native export model/UI tests
+  cover complete JSON names, read-only/keyboard downloads, stable file-ID row
+  selection and deleted/history refusal. Original source route/scope comparisons
+  and full host/API/security/session/filename checks pass. Uploaded-name policy,
+  nullable/MIME legacy fidelity and broader model audits remain open.
+  Thanks to xet7.
+
 - Clean anonymous guest attachment captions with the unchanged source filename
   helper. Send lossless filename text in an encoded span and decorate only that
   span, preserving file IDs, links, author/date text and stored names/bytes.

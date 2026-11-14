@@ -65,10 +65,10 @@ Public Function Read(boardId As Integer, cardId As Integer, fileId As Integer, a
   r = db.Exec("SELECT COALESCE(LENGTH(content),0) AS size FROM kb_files WHERE id=&1 AND board_id=&2 AND card_id=&3", fileId, boardId, cardId)
   If Not r.Available Then Error.Raise("Attachment not accessible")
   TransferPolicy.RequireTransfer("attachmentsDownload", r!size, True)
-  r = db.Exec("SELECT filename,content FROM kb_files WHERE id=&1 AND board_id=&2 AND card_id=&3 AND COALESCE(LENGTH(content),0)<=&4", fileId, boardId, cardId, TransferPolicy.Limit("attachmentsDownload", True))
+  r = db.Exec(ExportText.Preserve(db, "SELECT filename,content FROM kb_files WHERE id=&1 AND board_id=&2 AND card_id=&3 AND COALESCE(LENGTH(content),0)<=&4"), fileId, boardId, cardId, TransferPolicy.Limit("attachmentsDownload", True))
   If Not r.Available Then Error.Raise("Attachment not accessible")
   bytes = r!content.Data
-  data["filename"] = CStr(r!filename)
+  data["filename"] = ExportText.ReadValue(r, "filename")
   data["bytes"] = bytes
   Scope(db, boardId, cardId, fileId, actor)
   TransferPolicy.RequireTransfer("attachmentsDownload", Len(bytes), True)
