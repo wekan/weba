@@ -34,7 +34,7 @@ End
 Private Sub AddColumn(extra As String[], seen As Collection, expression As String, name As String)
   If seen.Exist(name) Then Return
   seen[name] = True
-  extra.Add("CAST(" & expression & " AS BLOB) AS " & Identifier("__weba_text_" & name))
+  extra.Add("COALESCE(CAST(" & expression & " AS BLOB),X'') AS " & Identifier("__weba_text_" & name))
   extra.Add("(" & expression & ") IS NULL AS " & Identifier("__weba_null_" & name))
 End
 

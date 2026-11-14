@@ -185,9 +185,17 @@ with sqlite3.connect(sys.argv[1]) as d:
   await page.locator('.weba-report .weba-card[data-card-id="'+createdId+'"] .weba-card-menu').click();await settle();await click('ContextRename');
   const renamedCard="Renamed card\0Ω😀'new";await actionValue(renamedCard);await click('ActionConfirm');
   expect(fixture('read',createdId).title).toBe(renamedCard);await expect(page.locator('[id$=".CardTitle:entry"]')).toHaveValue(renamedCard);
-  fixture('copy-seed',createdId);const copySource=fixture('copy-read',createdId);
+  fixture('copy-seed',createdId);
+  sql("UPDATE kb_entries SET amount=NULL,done=NULL,parent_id=CASE WHEN kind='checkitem' THEN parent_id ELSE NULL END WHERE board_id="+seed.board+' AND card_id='+createdId);
+  sql('UPDATE kb_entries SET title=NULL,value_type=NULL WHERE board_id='+seed.board+' AND card_id='+createdId+" AND kind='comment'");
+  sql("INSERT INTO kb_entries (board_id,card_id,kind,parent_id,title,body,value_type,done,amount,author,created_at) VALUES ("+seed.board+','+createdId+",'time',NULL,'Precise copied time',NULL,NULL,1,100000.00000000001,'rest-other',datetime('now'))");
+  const entryState=(card,board=seed.board)=>JSON.parse(execFileSync('python3',['-c',`import json,sqlite3,sys
+with sqlite3.connect(sys.argv[1]) as d:
+ print(json.dumps(d.execute("SELECT e.kind,e.title,e.body,e.done,e.amount,e.value_type,CASE WHEN e.parent_id IS NULL THEN NULL WHEN e.parent_id=0 THEN '0' ELSE p.title END,e.author FROM kb_entries e LEFT JOIN kb_entries p ON p.id=e.parent_id WHERE e.board_id=? AND e.card_id=? ORDER BY e.kind,e.id",(int(sys.argv[2]),int(sys.argv[3]))).fetchall()))
+`,database,String(board),String(card)],{encoding:'utf8'}));
+  const copySource=fixture('copy-read',createdId),copyEntryState=entryState(createdId);
   const copiedCardTitle="Copied browser card\0Ω😀",copiedListTitle="Copied browser list\0Ω😀",copiedLaneTitle="Copied browser lane\0Ω😀";
-  function checkCopied(id,expected,board=seed.board){expect(fixture('copy-read',id,board)).toEqual({...copySource,...expected});}
+  function checkCopied(id,expected,board=seed.board){expect(fixture('copy-read',id,board)).toEqual({...copySource,...expected});expect(entryState(id,board)).toEqual(copyEntryState);}
   await page.locator('.weba-report .weba-card[data-card-id="'+createdId+'"] .weba-card-menu').click();await settle();await click('ContextCopy');
   await expect(actionText).toHaveValue(renamedCard+' copy');await actionValue(copiedCardTitle);
   for(const table of ['kb_entries','kb_files']){
@@ -200,6 +208,9 @@ with sqlite3.connect(sys.argv[1]) as d:
    try{await click('ActionConfirm');await expect(page.locator(c('Notice'))).toContainText(table==='kb_files'?'Attachment bytes':'Author record changed');expect(sql()).toBe(beforeAuthor);await expect(page.locator(c('ActionPanel'))).toBeVisible();await expect(actionText).toHaveValue(copiedCardTitle);}
    finally{sql('DROP TRIGGER native_copy_author_final');}
   }
+  const beforeLateCopy=sql();sql("CREATE TRIGGER native_copy_nullable_final AFTER INSERT ON kb_history WHEN NEW.message LIKE 'Copied card:%' BEGIN UPDATE kb_entries SET amount=0 WHERE board_id="+seed.board+' AND card_id<>'+createdId+" AND kind='custom'; END");
+  try{await click('ActionConfirm');await expect(page.locator(c('Notice'))).toHaveText('Author record changed');expect(sql()).toBe(beforeLateCopy);await expect(actionText).toHaveValue(copiedCardTitle);}
+  finally{sql('DROP TRIGGER native_copy_nullable_final');}
   await click('ActionConfirm');
   const copiedCard=fixture('containers').cards.find(row=>row.title===copiedCardTitle);expect(copiedCard).toBeTruthy();checkCopied(copiedCard.id,{title:copiedCardTitle});
   await page.locator('.weba-report .weba-column[data-list-id="'+seed.items[1].list+'"] .weba-list-menu').click();await settle();await click('ContextCopy');
@@ -223,6 +234,6 @@ with sqlite3.connect(sys.argv[1]) as d:
   await page.evaluate(()=>gw.raise(document.querySelector('[id$=".SaveCard"]').id,'click',[],false));await settle();
   expect(fixture('read',createdId)).toEqual(before);
   expect(errors).toEqual([]);
-  console.log('Native complete text browser: shared-prefix NUL/Unicode/markup lane/list identities retain exact columns/card placement across views/reload/Finnish/mobile; readonly/assigned scope, native exact card/list/lane mouse and card dialog moves with editor refresh/reload, exact lane/list creation and board/card/list/lane native renames with SQL/dirty/reload checks, rich card/list/lane/board native copies with exact SQL/entries/files/numbered title/reload and stale-copy refusal, retired entry/file author-conversion archive and nonempty copied-author data/bytes rollback with retained exact copy title and rich retry, create/edit/NUL dirty refresh/reload and reopened full-status edit/save/reload, post-history archive refusal with full board-state rollback/dirty retention/retry and late-revocation refusal passed');
+  console.log('Native complete text browser: shared-prefix NUL/Unicode/markup lane/list identities retain exact columns/card placement across views/reload/Finnish/mobile; readonly/assigned scope, native exact card/list/lane mouse and card dialog moves with editor refresh/reload, exact lane/list creation and board/card/list/lane native renames with SQL/dirty/reload checks, rich card/list/lane/board native copies with exact SQL/entries/files/numbered title/reload and stale-copy refusal, retired entry/file author-conversion archive and nonempty copied-author data/bytes and final nullable-state rollback with retained exact copy title and rich retry; exact raw nullable/numeric entry-state comparison across card/list/lane/board copies, create/edit/NUL dirty refresh/reload and reopened full-status edit/save/reload, post-history archive refusal with full board-state rollback/dirty retention/retry and late-revocation refusal passed');
  }finally{try{if(context)await context.close();}finally{if(browser)await browser.close();}}
 })().catch(e=>{let s=e.stack||String(e);if(process.env.WEBA_TEST_PASSWORD)s=s.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(s);process.exitCode=1;});

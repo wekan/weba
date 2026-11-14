@@ -298,7 +298,7 @@ Public Function Save(boardId As Integer, cardId As Integer, entryId As Integer, 
   Return SaveEntry(boardId, cardId, entryId, kind, title, body, parentId, done, amount, valueType, False, baseline)
 End
 
-Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Integer, kind As String, title As String, body As String, parentId As Integer, done As Boolean, amount As Float, valueType As String, isCopy As Boolean, Optional baseline As Collection, Optional creation As Collection) As Integer
+Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Integer, kind As String, title As String, body As String, parentId As Integer, done As Boolean, amount As Float, valueType As String, isCopy As Boolean, Optional baseline As Collection, Optional creation As Collection, Optional copied As Collection) As Integer
   Dim transaction As Boolean
   Dim failure As String
   Dim r As Result
@@ -349,6 +349,13 @@ Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Int
       valueType = merged["value_type"]
     Endif
   Endif
+  If copied Then
+    If Not isCopy Or entryId Or baseline Or copied["kind"] <> kind Then Error.Raise("Invalid copied entry state")
+    submitted = EntryDraft.Values(title, body, parentId, done, amount, valueType)
+    For Each field In submitted.Keys
+      If JsonText.Encode(copied[field]) = "null" Then retainedNulls.Add(submitted[field], field)
+    Next
+  Endif
   Select kind
     Case "comment"
       If Not Trim(body) Then Error.Raise("Enter a comment")
@@ -389,7 +396,7 @@ Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Int
     End Select
   Endif
   If creation Then RequireSubtaskCreation(boardId, cardId, creation)
-  values = EntryDraft.Values(Trim(title), body, parentId, done, amount, valueType)
+  values = EntryDraft.Values(If(isCopy, title, Trim(title)), body, parentId, done, amount, valueType)
   ' Preserve only unchanged locked NULLs; semantic normalization stays authoritative.
   For Each field In retainedNulls.Keys
     If values[field] = retainedNulls[field] Then values[field] = Null
@@ -608,13 +615,13 @@ Public Function RecordState(row As Result, Optional omitContent As Boolean) As C
   For Each field In row.Fields
     If Left(field.Name, 7) = "__weba_" Then Continue
     If omitContent And field.Name = "content" Then Continue
-    If field.Type = DB.String Then
+    If row.Fields.Exist("__weba_text_" & field.Name) Or field.Type = DB.String Then
       If TextIsNull(row, field.Name) Then
         data.Add(JSON.Null, field.Name)
       Else
         data.Add(ExportText.ReadValue(row, field.Name), field.Name)
       Endif
-    Else If field.Type = DB.Float Then
+    Else If row.Fields.Exist("__weba_number_" & field.Name) Or field.Type = DB.Float Then
       value = ExportText.ReadNumber(row, field.Name)
       data.Add(If(IsNull(value), JSON.Null, value), field.Name)
     Else If field.Type = DB.Blob Then
@@ -1037,8 +1044,30 @@ Public Sub DeleteFile(boardId As Integer, cardId As Integer, fileId As Integer)
   AttachmentLifecycle.Delete(boardId, cardId, fileId)
 End
 
-Public Sub CopyRecords(sourceBoard As Integer, sourceCard As Integer, targetBoard As Integer, targetCard As Integer, Optional options As Collection)
+Private Sub RememberCopiedEntry(boardId As Integer, cardId As Integer, entryId As Integer, guards As Collection)
+  Dim scope As Collection = MutationScope(boardId, cardId, WebIdentity.Username, "write")
+  Dim row As Result = Entry(boardId, cardId, entryId, True)
+  scope.Add(boardId, "board")
+  scope.Add(cardId, "card")
+  scope.Add(entryId, "entry")
+  scope.Add(RecordState(row), "record")
+  row = $db.Exec(ExportText.SelectRows($db, "kb_retired_authors") & " WHERE kind='entry' AND item_id=&1", entryId)
+  scope.Add(row.Available, "hasProvenance")
+  If row.Available Then scope.Add(RecordState(row), "provenance")
+  guards.Add(scope, CStr(entryId))
+End
+
+' The enclosing container copy retains its transaction until this final check.
+Public Sub RequireCopiedEntries(guards As Collection)
+  Dim scope As Collection
+  For Each scope In guards
+    RequireProvenance(scope["board"], scope["card"], "entry", scope["entry"], scope)
+  Next
+End
+
+Public Sub CopyRecords(sourceBoard As Integer, sourceCard As Integer, targetBoard As Integer, targetCard As Integer, Optional options As Collection, Optional guards As Collection)
   Dim fields As Collection
+  Dim data As Collection
   Dim r As Result
   Dim kind As String
   Dim parents As New Collection
@@ -1056,14 +1085,16 @@ Public Sub CopyRecords(sourceBoard As Integer, sourceCard As Integer, targetBoar
     If kind = "custom" And Not fields["customFields"] Then Continue
     r = Entries(sourceBoard, sourceCard, kind, True)
     For Each r
-      If kind = "time" And Not r!done Then Continue
+      data = EntryDraft.Record(r)
+      If kind = "time" And Not data["done"] Then Continue
       parentId = 0
       If kind = "checkitem" Then
-        If Not parents.Exist(CStr(r!parent_id)) Then Continue
-        parentId = parents[CStr(r!parent_id)]
+        If Not parents.Exist(CStr(data["parent_id"])) Then Continue
+        parentId = parents[CStr(data["parent_id"])]
       Endif
-      id = SaveEntry(targetBoard, targetCard, 0, kind, ExportText.ReadValue(r, "title"), ExportText.ReadValue(r, "body"), parentId, r!done, r!amount, ExportText.ReadValue(r, "value_type"), True)
+      id = SaveEntry(targetBoard, targetCard, 0, kind, ExportText.ReadValue(r, "title"), ExportText.ReadValue(r, "body"), parentId, data["done"], data["amount"], ExportText.ReadValue(r, "value_type"), True, Null, Null, RecordState(r))
       CopyAuthor(targetBoard, targetCard, "entry", id, ExportText.ReadValue(r, "author"), AuthorName(sourceBoard, sourceCard, "entry", r!id))
+      If guards Then RememberCopiedEntry(targetBoard, targetCard, id, guards)
       If kind = "checklist" Then parents[CStr(r!id)] = id
     Next
   Next

@@ -2,6 +2,24 @@
 
 This work adds the following features and fixes:
 
+- Preserve nullable and precise entry state across native container copies.
+  Read typed validation values with the complete entry reader, retain source NULLs
+  when validation leaves them unchanged, and copy titles without display trimming.
+  Preserve stopped-time amounts and custom numeric text exactly, remap checklist
+  parents, and keep running/unknown-running time and orphan items excluded.
+  A NULL amount previously raised a Float type error. NULL-first SQLite text
+  projections now return an empty BLOB plus the independent NULL flag, preventing
+  Gambas from inferring a truncating type for later NUL text; record snapshots
+  prefer these complete text/number projections. Retain expected copied-entry,
+  provenance and card/container state through the enclosing copy's final commit,
+  so later history writes cannot silently materialize NULLs or change entries.
+  Card/list/lane/board model cases cover exact NULL/text/numbers, whitespace/NUL
+  titles, parent remapping and creation/history/clock rollback. Source/packaged
+  rich-copy browser checks compare raw SQLite entry state, refuse final-history
+  mutation, retain the exact title and retry successfully. Full host/API/security/
+  session checks and 70 Python tests pass. Other nullable fields, source/model
+  copy audits and full original parity remain open. Thanks to xet7.
+
 - Guard restoration of nonempty authors on newly copied entries and files.
   Capture the actor-owned target record, card/container scope, file bytes and
   metadata before locks; recheck them after record/provenance locks and author

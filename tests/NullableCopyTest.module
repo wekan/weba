@@ -1,0 +1,162 @@
+Public Sub Main()
+  Dim container As String
+  WebDatabase.Register("nullable-copy", "x")
+  Session["username"] = "nullable-copy"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("nullable-copy")
+  BoardViewPolicy.InitializeTransfer()
+  ImportExportPolicy.OpenStore()
+  For Each container In ["card", "list", "lane", "board"]
+    CheckCopy(container)
+  Next
+  Print "Nullable copy: card/list/lane/board exact nullable entry text/scalars, NUL/whitespace titles, precise stored time/custom numbers, remapped checklist parents, omitted running/NULL-done time/orphans, all-state creation/history/clock NULL-value rollback and retry passed"
+End
+
+Private Sub CheckCopy(container As String)
+  Dim boardId As Integer = KanbanStore.AddBoard("Nullable copy " & container)
+  Dim cardId As Integer = KanbanStore.SaveCard(boardId, 0, "Source card", "", "Default", "Todo", "", "", "")
+  Dim conn As Connection = WebDatabase.OpenConnection()
+  Dim entries As New Collection
+  Dim ids As New Integer[]
+  Dim names As String[] = ["checklist", "checkitem", "comment", "custom", "time"]
+  Dim kind As String
+  Dim field As String
+  Dim id As Integer
+  Dim parentId As Integer
+  Dim itemId As Integer
+  Dim copyId As Integer
+  Dim targetBoard As Integer
+  Dim targetCard As Integer
+  Dim copiedParent As Integer
+  Dim stage As String
+  Dim effect As String
+  Dim before As String
+  Dim denied As Boolean
+  Dim failure As String
+  Dim rows As Result
+  Dim expected As Collection
+  Dim actual As Collection
+  Dim suffix As String = Chr(0) & "Ω😀tail"
+  For Each kind In names
+    id = CardContent.Save(boardId, cardId, 0, kind, "Title " & kind, "Body" & suffix, If(kind = "checkitem", parentId, 0), False, JsonText.Decode("100000.00000000001"), "text")
+    If kind = "checklist" Then parentId = id
+    conn.Exec("UPDATE kb_entries SET parent_id=" & If(kind = "checkitem", CStr(parentId), "NULL") & ",done=" & If(kind = "time", "1", "NULL") & ",amount=" & If(kind = "time", "100000.00000000001", "NULL") & ",value_type=" & If(kind = "custom", "'text'", "NULL") & If(kind <> "comment", ",body=NULL", ",title=NULL") & " WHERE id=&1", id)
+    If kind <> "comment" Then conn.Exec("UPDATE kb_entries SET title=CAST(" & conn.FormatBlob(" Title " & kind & suffix & " ") & " AS TEXT) WHERE id=&1", id)
+    entries[CStr(id)] = CardContent.RecordState(CardContent.Entry(boardId, cardId, id, True))
+    ids.Add(id)
+  Next
+  id = CardContent.Save(boardId, cardId, 0, "time", "NULL minutes", "", 0, True, 0)
+  conn.Exec("UPDATE kb_entries SET amount=NULL WHERE id=&1", id)
+  entries[CStr(id)] = CardContent.RecordState(CardContent.Entry(boardId, cardId, id, True))
+  ids.Add(id)
+  id = CardContent.Save(boardId, cardId, 0, "custom", "Number", "100000.00000000001", 0, False, 0, "number")
+  conn.Exec("UPDATE kb_entries SET body='100000.00000000001' WHERE id=&1", id)
+  entries[CStr(id)] = CardContent.RecordState(CardContent.Entry(boardId, cardId, id, True))
+  ids.Add(id)
+  id = CardContent.Save(boardId, cardId, 0, "time", "Running", "", 0, True, 0)
+  conn.Exec("UPDATE kb_entries SET done=0 WHERE id=&1", id)
+  id = CardContent.Save(boardId, cardId, 0, "time", "Unknown running", "", 0, True, 0)
+  conn.Exec("UPDATE kb_entries SET done=NULL WHERE id=&1", id)
+  id = CardContent.Save(boardId, cardId, 0, "checkitem", "Orphan", "", parentId, False, 0)
+  conn.Exec("UPDATE kb_entries SET parent_id=NULL WHERE id=&1", id)
+  itemId = cardId
+  If container = "list" Then itemId = KanbanStore.CardListId(boardId, cardId)
+  If container = "lane" Then
+    rows = KanbanStore.Lanes(boardId)
+    itemId = rows!id
+  Endif
+  If container = "board" Then itemId = boardId
+  For Each stage In ["AFTER INSERT ON kb_entries WHEN NEW.card_id<>" & CStr(cardId) & " AND NEW.kind='custom'", "AFTER INSERT ON kb_history WHEN NEW.board_id=" & CStr(boardId), "AFTER UPDATE ON kb_item_changes WHEN NEW.kind='card' AND NEW.item_id<>" & CStr(cardId)]
+    For Each effect In ["body=''", "done=0", "amount=0", "parent_id=0"]
+      before = Frame()
+      conn.Exec("CREATE TRIGGER nullable_copy_guard " & stage & " BEGIN UPDATE kb_entries SET " & effect & " WHERE card_id<>" & CStr(cardId) & " AND kind='custom' AND title<>'Number'; END")
+      Try copyId = WorkspaceStore.Copy(boardId, container, itemId, "Rejected")
+      denied = Error
+      failure = Error.Text
+      conn.Exec("DROP TRIGGER nullable_copy_guard")
+      ' A new-board history event can precede any copied entry; its later events
+      ' still exercise this same trigger during actual entry creation.
+      If Not denied Or Frame() <> before Then Error.Raise("Nullable copy mutation accepted: " & container & ": " & stage & ": " & effect & ": denied=" & CStr(denied) & ": " & failure)
+    Next
+  Next
+  copyId = WorkspaceStore.Copy(boardId, container, itemId, "Exact copy")
+  targetBoard = If(container = "board", copyId, boardId)
+  rows = conn.Exec("SELECT id FROM kb_cards WHERE board_id=&1 AND id<>&2 ORDER BY id DESC", targetBoard, cardId)
+  targetCard = rows!id
+  rows = CardContent.Entries(targetBoard, targetCard, "checklist", True)
+  copiedParent = rows!id
+  rows = conn.Exec(ExportText.SelectRows(conn, "kb_entries") & " WHERE board_id=&1 AND card_id=&2 ORDER BY id", targetBoard, targetCard)
+  If rows.Count <> ids.Count Then Error.Raise("Nullable copy omitted/added entries")
+  For Each rows
+    ' CopyRecords groups by kind, with the second custom/time record following
+    ' the first; identify records by their exact kind/title rather than IDs.
+    actual = CardContent.RecordState(rows)
+    expected = Null
+    For Each id In ids
+      If entries[CStr(id)]["kind"] = actual["kind"] And JsonText.Encode(entries[CStr(id)]["title"]) = JsonText.Encode(actual["title"]) Then expected = entries[CStr(id)]
+    Next
+    If Not expected Then Error.Raise("Copied entry title changed")
+    For Each field In ["title", "body", "done", "amount", "value_type", "parent_id"]
+      If actual["kind"] = "checkitem" And field = "parent_id" Then
+        If actual[field] <> copiedParent Then Error.Raise("Checklist parent was not remapped")
+      Else
+        If JsonText.Encode(actual[field]) <> JsonText.Encode(expected[field]) Then
+          Error.Raise("Copied nullable/precise field changed: " & container & ":" & actual["kind"] & ":" & field & ":" & JsonText.Encode(actual[field]) & " expected=" & JsonText.Encode(expected[field]))
+        Endif
+      Endif
+    Next
+  Next
+End
+
+Private Function Frame() As String
+  Dim conn As Connection = WebDatabase.OpenConnection()
+  Dim table As Table
+  Dim tables As New String[]
+  Dim tableName As String
+  Dim order As String[]
+  Dim key As String
+  Dim rows As Result
+  Dim field As ResultField
+  Dim values As Collection
+  Dim data As Variant[]
+  Dim result As New Collection
+  For Each table In conn.Tables
+    If Left(table.Name, 7) <> "sqlite_" Then tables.Add(table.Name)
+  Next
+  tables.Sort()
+  For Each tableName In tables
+    order = New String[]
+    For Each key In conn.Tables[tableName].PrimaryKey
+      order.Add(conn.Quote(key))
+    Next
+    rows = conn.Exec(ExportText.SelectRows(conn, tableName) & If(order.Count, " ORDER BY " & order.Join(","), ""))
+    data = New Variant[]
+    For Each rows
+      values = New Collection
+      For Each field In rows.Fields
+        If Left(field.Name, 7) = "__weba_" Then Continue
+        If field.Type = DB.String Then
+          If rows.Fields.Exist("__weba_null_" & field.Name) Then
+            If rows["__weba_null_" & field.Name] Then
+              values[field.Name] = JSON.Null
+            Else
+              values[field.Name] = ExportText.ReadValue(rows, field.Name)
+            Endif
+          Else
+            values[field.Name] = rows[field.Name]
+          Endif
+        Else If field.Type = DB.Blob Then
+          If IsNull(rows[field.Name]) Then
+            values[field.Name] = JSON.Null
+          Else
+            values[field.Name] = Base64(rows[field.Name].Data)
+          Endif
+        Else
+          values[field.Name] = rows[field.Name]
+        Endif
+      Next
+      data.Add(values)
+    Next
+    result[tableName] = data
+  Next
+  Return JsonText.Encode(result)
+End

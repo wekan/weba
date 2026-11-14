@@ -2,6 +2,7 @@
 Export
 Private $db As Connection
 Private $copyMap As Collection
+Private $copyEntryGuards As Collection
 
 Public Sub OpenStore()
   Dim t As Table
@@ -328,7 +329,7 @@ Private Function CloneCard(sourceBoard As Integer, cardId As Integer, targetBoar
   BoardAccess.CopyCardMembers(sourceBoard, cardId, targetBoard, id)
   CardDates.CopyDates(sourceBoard, cardId, targetBoard, id)
   $copyMap[CStr(cardId)] = id
-  CardContent.CopyRecords(sourceBoard, cardId, targetBoard, id, fields)
+  CardContent.CopyRecords(sourceBoard, cardId, targetBoard, id, fields, $copyEntryGuards)
   CopySettings(sourceBoard, "card", cardId, targetBoard, id)
   Return id
 End
@@ -368,6 +369,7 @@ Public Function Copy(boardId As Integer, kind As String, itemId As Integer, titl
   If Not title Or String.Len(title) > If(kind = "list", 32, 255) Then Error.Raise("Enter a valid copy title")
   CardContent.OpenStore()
   $copyMap = New Collection
+  $copyEntryGuards = New Collection
   DatabaseTransactions.Begin($db)
   transaction = True
   If kind <> "board" Then
@@ -456,6 +458,7 @@ Public Function Copy(boardId As Integer, kind As String, itemId As Integer, titl
     r = Record(targetBoard, kind, newId)
     If ExportText.ReadValue(r, "title") <> title Or Archived(targetBoard, kind, newId) Then Error.Raise("Copied item changed")
   Endif
+  CardContent.RequireCopiedEntries($copyEntryGuards)
   DatabaseTransactions.Commit($db)
   transaction = False
   Return newId
