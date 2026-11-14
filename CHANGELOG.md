@@ -2,6 +2,22 @@
 
 This work adds the following features and fixes:
 
+- Refuse empty native interactive uploads before filename normalization or
+  transport, matching the installed Meteor-Files 3.0.1 and maintained upstream
+  3.1.0 upload-start guard. Show its original error reason, stop the native file
+  change, and clear only that owned notice on valid retry. Recheck emptiness in
+  the model's interactive path before bridge/transaction work, retaining existing
+  authorization/policy gates. Internal/raw zero-byte uploads remain valid empty
+  BLOBs. Preserve the unchanged source guard fragment, hash and upstream license.
+  DOM tests verify no hook/native transfer, retry and unrelated notice retention;
+  model tests prove early refusal even without Python, unchanged storage and
+  internal empty-BLOB fidelity. Source/packaged chooser tests compare every board
+  table before/after refusal and verify valid exact-byte/name retry alongside
+  existing bearer/native-pane behavior. Full host/API/security/session/text,
+  source filename/Unicode/client checks pass. Server content/extension/SVG and
+  REST/copy/import policy audits remain open.
+  Thanks to xet7.
+
 - Apply the source interactive onBeforeUpload filename policy at the native
   attachment chooser and model's explicit interactive entry point. Copy the
   unchanged client hook in a scoped, idempotent wrapper; preserve File bytes,

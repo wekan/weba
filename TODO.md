@@ -186,6 +186,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   rollback and source/packaged UI/model evidence in CHANGELOG.md. Upload-start
   validation, REST/import/server post-upload exploit/type/extension/SVG and copy
   policies remain open.
+- Completed source interactive empty-file start refusal before filename hooks/
+  native transport, with early model denial, unchanged board data, valid retry
+  and retained internal/raw empty-BLOB behavior. Source/packaged evidence is in
+  CHANGELOG.md; remaining server/REST/content/copy/import policies stay open.
 - Next detail/content focus: remaining copy/model mutation audits, stored/uploaded
   filename-policy parity and any other display surfaces, legacy
   file fidelity, nullable fields and model readers/writers.

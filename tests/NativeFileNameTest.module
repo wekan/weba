@@ -33,6 +33,17 @@ Public Sub Main()
     r = CardContent.FileRecord(boardId, cardId, id, True)
     If ExportText.ReadValue(r, "filename") <> NativeFileNames.BeforeUpload(value) Then Error.Raise("Interactive basename ran before source hook")
   Next
+  id = CardContent.UploadFile(boardId, cardId, "internal-empty.bin", "")
+  r = db.Exec("SELECT typeof(content) AS kind,LENGTH(content) AS size,content IS NULL AS missing FROM kb_files WHERE id=&1", id)
+  If r!kind <> "blob" Or r!size <> 0 Or r!missing Then Error.Raise("Internal zero-byte upload changed")
+  before = Frame()
+  previousPath = Env["PATH"]
+  Env["PATH"] = "/nonexistent-native-filename-test"
+  failure = ""
+  Try CardContent.UploadFile(boardId, cardId, "interactive-empty.bin", "", "application/octet-stream", True)
+  failure = Error.Text
+  Env["PATH"] = previousPath
+  If failure <> "Can't upload empty file" Or Frame() <> before Then Error.Raise("Interactive empty file reached bridge or changed storage")
   before = Frame()
   previousPath = Env["PATH"]
   Env["PATH"] = "/nonexistent-native-filename-test"

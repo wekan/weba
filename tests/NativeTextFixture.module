@@ -17,6 +17,18 @@ Public Sub Main()
   If Env["WEBA_TEST_FIXTURE"] <> "1" Then Error.Raise("Disposable fixture required")
   Session["username"] = "rest-other"
   Session["auth_generation"] = WebDatabase.SessionGeneration("rest-other")
+  If Env["WEBA_NATIVE_MODE"] = "empty-file" Then
+    boardId = CInt(Env["WEBA_NATIVE_BOARD"])
+    cardId = CInt(Env["WEBA_NATIVE_CARD"])
+    Try fileId = CardContent.UploadFile(boardId, cardId, Env["WEBA_NATIVE_FILENAME"], "")
+    If Error Then
+      result.Add(Error.Text, "error")
+    Else
+      result.Add(fileId, "id")
+    Endif
+    Print JsonText.Encode(result)
+    Return
+  Endif
   If Env["WEBA_NATIVE_MODE"] = "audit-seed" Then
     boardId = CInt(Env["WEBA_NATIVE_BOARD"])
     cardId = CInt(Env["WEBA_NATIVE_CARD"])

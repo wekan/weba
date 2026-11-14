@@ -3,6 +3,7 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
 (async()=>{
  let source=process.env.WEKAN_SOURCE,ancestor=path.resolve(__dirname,'..');
  while(!source&&path.dirname(ancestor)!==ancestor){if(fs.existsSync(path.join(ancestor,'tests/playwright/fixtures.js')))source=ancestor;else ancestor=path.dirname(ancestor);}
+ const interactiveName=require('./native-upload-filename-source.cjs')(source);
  const {chromium,expect}=createRequire(path.join(source,'tests/playwright/fixtures.js'))('@playwright/test');
  const fixture=extra=>JSON.parse(execFileSync(process.env.GBX,['-s','NativeTextFixture',process.env.WEBA_TEST_PROJECT],{encoding:'utf8',env:{...process.env,WEBA_API_REQUEST:'0',...extra}}));
  const seed=fixture({}),base={WEBA_NATIVE_BOARD:String(seed.board),WEBA_NATIVE_CARD:String(seed.items[0].card)};
@@ -152,19 +153,21 @@ with sqlite3.connect(sys.argv[1]) as d:
   async function upload(name,bytes=uploadBytes){const chooser=page.waitForEvent('filechooser');await click('DetailUpload');await(await chooser).setFiles({name,mimeType:'application/octet-stream',buffer:bytes});}
   for(const [stage,table,error] of [['AFTER INSERT ON kb_files','kb_boards','Board archive state changed'],['AFTER INSERT ON kb_history','kb_cards','Card archive state changed']]){
    await row(initial.files[0].filename);await expect(page.locator(c('DetailDownload'))).toBeEnabled();
-   const name=table+' native <literal> Ω.bin',beforeUpload=sql();
+   const name=table+' native <literal> Ω.bin',storedName=interactiveName(interactiveName(name)),beforeUpload=sql();
    sql('CREATE TRIGGER detail_upload_final '+stage+' BEGIN UPDATE '+table+' SET archived=1 WHERE id='+(table==='kb_boards'?seed.board:seed.items[0].card)+'; END');
-   try{await upload(name);await expect(page.locator(c('Notice'))).toContainText(error);expect(sql()).toBe(beforeUpload);expect(read().files.some(f=>f.filename===name)).toBe(false);await expect(page.locator(c('DetailDownload'))).toBeEnabled();}
+   try{await upload(name);await expect(page.locator(c('Notice'))).toContainText(error);expect(sql()).toBe(beforeUpload);expect(read().files.some(f=>f.filename===storedName)).toBe(false);await expect(page.locator(c('DetailDownload'))).toBeEnabled();}
    finally{sql('DROP TRIGGER detail_upload_final');}
    await upload(name);await expect(page.locator(c('DetailTree'))).toContainText(fileNames.cleanFileName(name));
-   expect(read().files.find(f=>f.filename===name)).toMatchObject({data:uploadBytes.toString('base64')});
+   expect(read().files.find(f=>f.filename===storedName)).toMatchObject({data:uploadBytes.toString('base64')});
    await expect(page.locator(c('DetailsPanel')+' literal')).toHaveCount(0);
   }
-  const emptyName='Native zero-byte Ω.bin';
-  const beforeEmptyUpload=sql();sql("CREATE TRIGGER detail_empty_blob AFTER INSERT ON kb_files WHEN NEW.filename='"+emptyName+"' BEGIN UPDATE kb_files SET content=NULL WHERE id=NEW.id; END");
-  try{await upload(emptyName,Buffer.alloc(0));await expect(page.locator(c('Notice'))).toHaveText('Attachment bytes became null');expect(sql()).toBe(beforeEmptyUpload);}
+  const emptyName='Native zero-byte Ω.bin',beforeEmptyUpload=sql();
+  await upload(emptyName,Buffer.alloc(0));await expect(page.locator(c('Notice'))).toHaveText("Can't upload empty file");expect(sql()).toBe(beforeEmptyUpload);
+  const internalEmpty=()=>fixture({...base,WEBA_NATIVE_MODE:'empty-file',WEBA_NATIVE_FILENAME:emptyName});
+  sql("CREATE TRIGGER detail_empty_blob AFTER INSERT ON kb_files WHEN NEW.filename='"+emptyName+"' BEGIN UPDATE kb_files SET content=NULL WHERE id=NEW.id; END");
+  try{expect(internalEmpty()).toEqual({error:'Attachment bytes became null'});expect(sql()).toBe(beforeEmptyUpload);}
   finally{sql('DROP TRIGGER detail_empty_blob');}
-  await upload(emptyName,Buffer.alloc(0));await expect(page.locator(c('DetailTree'))).toContainText(fileNames.cleanFileName(emptyName));
+  const emptyCreated=internalEmpty();expect(emptyCreated.id).toBeGreaterThan(0);await expect(page.locator(c('DetailTree'))).toContainText(fileNames.cleanFileName(emptyName));
   expect(read().files.find(f=>f.filename===emptyName).data).toBe('');
   expect(Number(execFileSync('python3',['-c',"import sqlite3,sys;d=sqlite3.connect(sys.argv[1]);print(d.execute(\"SELECT count(*) FROM kb_files WHERE board_id=? AND card_id=? AND filename=? AND typeof(content)='blob' AND length(content)=0\",(int(sys.argv[2]),int(sys.argv[3]),sys.argv[4])).fetchone()[0])",database,String(seed.board),String(seed.items[0].card),emptyName],{encoding:'utf8'}))).toBe(1);
   await row(initial.files[0].filename);await expect(page.locator(c('DetailDownload'))).toBeEnabled();
@@ -193,6 +196,6 @@ with sqlite3.connect(sys.argv[1]) as d:
 `,database,String(seed.board),String(seed.items[0].card)],{encoding:'utf8'}));
   expect(children).toEqual([[childTitle,initial.lane,initial.status,childTitle]]);await expect(page.locator(c('DetailsPanel')+' literal')).toHaveCount(0);
   expect(errors).toEqual([]);
-  console.log('Detail complete-text browser: native custom/comment/checklist/file text, exact encoded editor values, external suffix heartbeat, dirty local title with independent external body save, post-history archive refusal keeps all board data and exact dirty draft, retry, New clears stale values, literal markup/reload and delete rollback with exact dirty/provenance retention and retry, timer start/stop post-history rollback and retry, file chooser upload data/history archive rollback, retained selection and exact-byte retry, attachment delete/restore post-history archive rollback with retained live/history selection and retry, subtask child-save parent archive rollback with retained exact draft and complete-field child/link retry, numeric near-ULP display/title-only saves and parsing, malformed/nonfinite full-state rollback and dirty retention, blank zero and precise custom normalization, nullable title-only retention, NULL-to-empty history rollback/dirty retry and isolated explicit NUL-body materialization and zero-byte upload NULL rollback plus empty-BLOB retry and unchanged-source Unicode/exploit/length browser download names with exact bytes/no writes, live/history filename-only captions with exact actor text, colliding-name ID-based download/delete/restore, live rename and closed-state clearing passed');
+  console.log('Detail complete-text browser: native custom/comment/checklist/file text, exact encoded editor values, external suffix heartbeat, dirty local title with independent external body save, post-history archive refusal keeps all board data and exact dirty draft, retry, New clears stale values, literal markup/reload and delete rollback with exact dirty/provenance retention and retry, timer start/stop post-history rollback and retry, file chooser upload data/history archive rollback, retained selection and exact-byte retry, attachment delete/restore post-history archive rollback with retained live/history selection and retry, subtask child-save parent archive rollback with retained exact draft and complete-field child/link retry, numeric near-ULP display/title-only saves and parsing, malformed/nonfinite full-state rollback and dirty retention, blank zero and precise custom normalization, nullable title-only retention, NULL-to-empty history rollback/dirty retry and isolated explicit NUL-body materialization and interactive zero-byte refusal plus internal empty-BLOB NULL rollback/retry and unchanged-source Unicode/exploit/length browser download names with exact bytes/no writes, live/history filename-only captions with exact actor text, colliding-name ID-based download/delete/restore, live rename and closed-state clearing passed');
  }finally{if(context)await context.close();if(browser)await browser.close();}
 })().catch(e=>{let message=e.stack||String(e);if(process.env.WEBA_TEST_PASSWORD)message=message.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(message);process.exitCode=1;});

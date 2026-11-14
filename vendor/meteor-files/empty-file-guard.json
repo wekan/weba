@@ -1,0 +1,10 @@
+{
+  "sourcePackage": "ostrio:files@3.0.1",
+  "sourceFile": "upload.js",
+  "sourceSha256": "5bfc02098de11e6ca6aa62e5000aa3e8de975d6acdb48beef1bf5f2dfd729136",
+  "guardSha256": "26e9b91938531936703d95ff6fe8004fec2d80d9d04da08fe6fcde3b040ff5d9",
+  "upstreamCheckedVersion": "3.1.0",
+  "upstreamUploadBlob": "711e904490b3f4856e9d0603b1d4db920bfd6593",
+  "sourceUrl": "https://github.com/veliovgroup/Meteor-Files/blob/master/upload.js",
+  "guard": "    if (this.fileData.size <= 0) {\n      this.emit('error', new Meteor.Error(400, 'Can\\'t upload empty file'));\n      return this.result;\n    }"
+}

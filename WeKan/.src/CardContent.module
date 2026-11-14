@@ -1188,6 +1188,7 @@ Public Function UploadFile(boardId As Integer, cardId As Integer, filename As St
   BoardAccess.Require(boardId, "write")
   If WorkspaceStore.Setting(boardId, "board", boardId, "allowsAttachments", "1") <> "1" Then Error.Raise("Attachments are not allowed on this board")
   TransferPolicy.RequireTransfer("attachmentsUpload", Len(bytes))
+  If beforeUpload And Len(bytes) = 0 Then Error.Raise("Can't upload empty file")
   DatabaseTransactions.Begin($db)
   transaction = True
   $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
