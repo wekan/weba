@@ -159,8 +159,12 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Completed explicit empty SQLite BLOB storage for zero-byte attachments,
   non-NULL creation guards and exact byte/NULL writer inputs. Model, UI and HTTP
   regression scope is recorded in CHANGELOG.md.
-- Next detail/content focus: remaining copy/model mutation audits, filename-policy
-  parity, other legacy file fidelity, nullable fields and model readers/writers.
+- Completed source-style native attachment Blob download names using unchanged
+  source helpers, with 8,016 source comparisons and source/packaged real download
+  byte/no-write cases recorded in CHANGELOG.md.
+- Next detail/content focus: remaining copy/model mutation audits, stored/uploaded/
+  displayed/public-download filename-policy parity, other legacy file fidelity,
+  nullable fields and model readers/writers.
   Atomic imported display-name provenance for owned entries/files and shared
   stored-placement guards are in CHANGELOG.md.
   Atomic subtask creation and its captured parent/new-child checkpoints are in

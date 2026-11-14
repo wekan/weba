@@ -2,6 +2,21 @@
 
 This work adds the following features and fixes:
 
+- Apply the source filename cleaner to native attachment Blob downloads.
+  Ship the unchanged isomorphic fileNameDisplay helper in an offline, strict,
+  namespaced bundle with a reproducible importer, source copy and hash manifest.
+  Native downloads now URL-decode, normalize Unicode/confusables, remove invisible
+  and exploit text, enforce the source code-point/extension/bracket length rules,
+  and use the source empty-name fallback before assigning the browser filename.
+  A stored NUL previously became a browser-substituted underscore. All 8,016
+  helper outputs match the unchanged source; tests verify exact bodies/constants,
+  source/vendor/bundle hashes and idempotent installation. Source/packaged detail
+  browser tests check nine real Unicode/exploit/length downloads, exact binary
+  streams and no database writes. Full host/API/security/session checks and
+  70 Python tests pass. Raw API disposition keeps its separate source contract.
+  Stored/uploaded names, other display surfaces and public HTTP policy remain
+  open. Thanks to xet7.
+
 - Store zero-byte attachments as explicit empty SQLite BLOBs.
   Gambas FormatBlob of empty bytes returned SQL NULL, and editable Blob getters
   lost the original NULL/empty assignment intent. Let the shared writer accept

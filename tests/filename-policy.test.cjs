@@ -1,0 +1,18 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),crypto=require('node:crypto'),assert=require('node:assert/strict'),{createRequire}=require('node:module');
+let source=process.env.WEKAN_SOURCE,ancestor=path.resolve(__dirname,'..');
+while(!source&&path.dirname(ancestor)!==ancestor){if(fs.existsSync(path.join(ancestor,'imports/lib/fileNameDisplay.js')))source=ancestor;else ancestor=path.dirname(ancestor);}
+assert.ok(source,'Original filename source required');
+const root=path.resolve(__dirname,'..'),manifest=JSON.parse(fs.readFileSync(path.join(root,'vendor/wekan-filenames/manifest.json'),'utf8')),raw=fs.readFileSync(path.join(source,manifest.sourceFile)),bundle=fs.readFileSync(path.join(root,'WeKan/.public/filename-policy.js'),'utf8'),hash=value=>crypto.createHash('sha256').update(value).digest('hex');
+assert.equal(hash(raw),manifest.sourceSha256,'original source drift');assert.ok(bundle.includes(raw.toString('utf8').replace(/\nexport \{[\s\S]*?\};\s*$/,'')),'helper bodies/constants changed');assert.deepEqual(fs.readFileSync(path.join(root,'vendor/wekan-filenames/fileNameDisplay.js')),raw);assert.equal(hash(bundle),manifest.bundleSha256,'bundle drift');
+const req=createRequire(path.join(source,'package.json')),original=req(path.join(source,manifest.sourceFile)),context=vm.createContext({});vm.runInContext(bundle,context);const shipped=context.webaFileNames;assert.ok(Object.isFrozen(shipped));assert.deepEqual(Object.keys(shipped).sort(),manifest.exports.slice().sort());vm.runInContext(bundle,context);assert.equal(context.webaFileNames,shipped);
+const cases=[null,undefined,0,false,'','plain.txt','report%20name.pdf','bad%20%ZZ.pdf','%C0%AF','%F0%9F%98%80.txt','%ED%A0%80','pаypal.exe','Гр.txt','Журнал.txt','Αθήνα.pdf','ＡＢＣ ﬁ ①.txt','A\u0308.txt','\0\u200B\u202E\uFEFF','<scr{{x}}ipt>safe</script>.pdf','<?xml x?>document.pdf','<![CDATA[bad]]>.txt','${bad}.png','javascript:report.txt','x'.repeat(35)+' (copy).pdf','😀'.repeat(40)+'.txt','\ud800x\udfff.txt'];
+for(let cp=0;cp<0xA0;cp++)cases.push('pre'+String.fromCodePoint(cp)+'post.txt');
+for(const cp of [0xAD,0x61C,0x180E,0x200B,0x200F,0x2028,0x202E,0x2060,0x2064,0x2066,0x206F,0xFEFF,0xFFF9,0xFFFB,0x3000])cases.push('pre'+String.fromCodePoint(cp)+'post.txt');
+let seed=17;const chars=['a','Z','а','Α','Ж','é','\u0301','😀','\0','\u202E','%','2','0','<','>','{','}','(',')','[',']','.',' ','\t'];
+for(let i=0;i<300;i++){let value='';for(let j=0;j<i%80;j++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;value+=chars[seed%chars.length];}cases.push(value);}
+const plain=value=>value===undefined?undefined:JSON.parse(JSON.stringify(value));let checked=0;
+for(const name of ['decodeFileNameSafe','hasInvisibleChars','stripExploitPatterns','normalizeConfusables','classifyExploitKinds','cleanFileNameUnbounded','cleanFileName','sanitizeDownloadFileName'])for(const value of cases){assert.deepEqual(plain(shipped[name](value)),plain(original[name](value)),name+': '+JSON.stringify(value));checked++;}
+for(const value of cases)for(const limit of [0,1,2,5,29,30,31,100]){assert.equal(shipped.truncateAmigaFileName(value,limit),original.truncateAmigaFileName(value,limit));checked++;}
+assert.equal(shipped.sanitizeDownloadFileName('\0\u200B\u202E'),'download');assert.equal(shipped.sanitizeDownloadFileName('pаypal.exe'),'paypal.exe');assert.equal(shipped.sanitizeDownloadFileName('<scr{{x}}ipt>safe</script>.pdf'),'safe.pdf');
+console.log('Filename policy: '+checked+' outputs match unchanged source across decode/Unicode/confusables/invisible/exploit/extension/bracket/code-point limits; source/vendor/bundle hashes and idempotent namespaced install passed');

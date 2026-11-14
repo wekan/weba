@@ -30,6 +30,17 @@ with sqlite3.connect(sys.argv[1]) as d:
   names=[r[0] for r in d.execute("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'kb_%' ORDER BY name")]
   print(repr({n:sorted(d.execute('SELECT * FROM "'+n+'"').fetchall(),key=repr) for n in names}))
 `,database,...(statement?[statement]:[])],{encoding:'utf8'});
+  const fileNames=createRequire(path.join(source,'package.json'))(path.join(source,'imports/lib/fileNameDisplay.js'));
+  await kind('Attachments');
+  const setDownloadName=name=>execFileSync('python3',['-c',"import base64,sqlite3,sys;d=sqlite3.connect(sys.argv[1]);d.execute('UPDATE kb_files SET filename=? WHERE id=(SELECT MIN(id) FROM kb_files WHERE board_id=? AND card_id=?)',(base64.b64decode(sys.argv[4]).decode('utf8'),int(sys.argv[2]),int(sys.argv[3])));d.commit()",database,String(seed.board),String(seed.items[0].card),Buffer.from(name).toString('base64')]);
+  for(const name of [initial.files[0].filename,'report%20name.pdf','pаypal.exe','Гр.txt','ＡＢＣ ﬁ ①.txt','<scr{{x}}ipt>safe</script>.pdf',String.fromCharCode(0)+'\u200B\u202E','x'.repeat(30)+' (copy).pdf','😀'.repeat(40)+'.txt']){
+   setDownloadName(name);await page.locator(c('DetailTree')+' tr[id]').first().click();await settle();
+   const beforeDownload=sql(),waitingDownload=page.waitForEvent('download');await click('DetailDownload');
+   const nativeDownload=await waitingDownload;expect(nativeDownload.suggestedFilename()).toBe(fileNames.sanitizeDownloadFileName(name));
+   const downloadStream=await nativeDownload.createReadStream(),downloadChunks=[];for await(const chunk of downloadStream)downloadChunks.push(chunk);
+   expect(Buffer.concat(downloadChunks)).toEqual(Buffer.from(initial.files[0].data,'base64'));expect(sql()).toBe(beforeDownload);
+  }
+  setDownloadName(initial.files[0].filename);await kind('Custom fields');await row(local);
   const pending=custom.body+'C pending final scope';
   await page.locator(input('DetailBody')).evaluate((e,t)=>{e.value=t;e.dispatchEvent(new Event('input',{bubbles:true}));},pending);await settle();
   const beforeFinalSave=sql();sql('CREATE TRIGGER detail_save_final AFTER INSERT ON kb_history BEGIN UPDATE kb_cards SET archived=1 WHERE id='+seed.items[0].card+'; END');
@@ -152,6 +163,6 @@ with sqlite3.connect(sys.argv[1]) as d:
 `,database,String(seed.board),String(seed.items[0].card)],{encoding:'utf8'}));
   expect(children).toEqual([[childTitle,initial.lane,initial.status,childTitle]]);await expect(page.locator(c('DetailsPanel')+' literal')).toHaveCount(0);
   expect(errors).toEqual([]);
-  console.log('Detail complete-text browser: native custom/comment/checklist/file text, exact encoded editor values, external suffix heartbeat, dirty local title with independent external body save, post-history archive refusal keeps all board data and exact dirty draft, retry, New clears stale values, literal markup/reload and delete rollback with exact dirty/provenance retention and retry, timer start/stop post-history rollback and retry, file chooser upload data/history archive rollback, retained selection and exact-byte retry, attachment delete/restore post-history archive rollback with retained live/history selection and retry, subtask child-save parent archive rollback with retained exact draft and complete-field child/link retry, numeric near-ULP display/title-only saves and parsing, malformed/nonfinite full-state rollback and dirty retention, blank zero and precise custom normalization, nullable title-only retention, NULL-to-empty history rollback/dirty retry and isolated explicit NUL-body materialization and zero-byte upload NULL rollback plus empty-BLOB retry passed');
+  console.log('Detail complete-text browser: native custom/comment/checklist/file text, exact encoded editor values, external suffix heartbeat, dirty local title with independent external body save, post-history archive refusal keeps all board data and exact dirty draft, retry, New clears stale values, literal markup/reload and delete rollback with exact dirty/provenance retention and retry, timer start/stop post-history rollback and retry, file chooser upload data/history archive rollback, retained selection and exact-byte retry, attachment delete/restore post-history archive rollback with retained live/history selection and retry, subtask child-save parent archive rollback with retained exact draft and complete-field child/link retry, numeric near-ULP display/title-only saves and parsing, malformed/nonfinite full-state rollback and dirty retention, blank zero and precise custom normalization, nullable title-only retention, NULL-to-empty history rollback/dirty retry and isolated explicit NUL-body materialization and zero-byte upload NULL rollback plus empty-BLOB retry and unchanged-source Unicode/exploit/length browser download names with exact bytes/no writes passed');
  }finally{if(context)await context.close();if(browser)await browser.close();}
 })().catch(e=>{let message=e.stack||String(e);if(process.env.WEBA_TEST_PASSWORD)message=message.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(message);process.exitCode=1;});

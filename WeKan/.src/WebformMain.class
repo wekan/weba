@@ -1261,7 +1261,7 @@ Public Sub LanguageSelector_Render()
   Print "<base href=\"/\">"
   Print "<link rel=\"stylesheet\" href=\"kanban.css\">"
   Print "<link rel=\"stylesheet\" href=\"fontawesome.css\">"
-  Print "<script>" & File.Load(".public/i18n-catalog.js") & File.Load(".public/i18n.js") & File.Load(".public/ui.js") & File.Load(".public/native-editor-startup.js") & File.Load(".public/popup.js") & File.Load(".public/drag.js") & File.Load(".public/board-view-order.js") & File.Load(".public/drag-handle-preference.js") & File.Load(".public/batch-export.js") & "</script>"
+  Print "<script>" & File.Load(".public/i18n-catalog.js") & File.Load(".public/i18n.js") & File.Load(".public/ui.js") & File.Load(".public/filename-policy.js") & File.Load(".public/native-editor-startup.js") & File.Load(".public/popup.js") & File.Load(".public/drag.js") & File.Load(".public/board-view-order.js") & File.Load(".public/drag-handle-preference.js") & File.Load(".public/batch-export.js") & "</script>"
   Print "<select data-weba-language aria-label=\"Language\" style=\"width:100%;height:32px;background:white;color:black\"></select>"
 End
 
@@ -2508,7 +2508,7 @@ End
 Public Sub DetailDownload_Click()
   Dim r As Result = CardContent.DownloadFile($detailsBoard, $detailsCard, $fileId, True)
   Dim data As String = Base64(r!content.Data)
-  WebForm.Exec("(function(){const bytes=Uint8Array.from(atob(" & JS(data) & "),c=>c.charCodeAt(0));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([bytes],{type:'application/octet-stream'}));a.download=" & JS(ExportText.ReadValue(r, "filename")) & ";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);})();")
+  WebForm.Exec("(function(){const bytes=Uint8Array.from(atob(" & JS(data) & "),c=>c.charCodeAt(0));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([bytes],{type:'application/octet-stream'}));a.download=webaFileNames.sanitizeDownloadFileName(" & JS(ExportText.ReadValue(r, "filename")) & ");a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);})();")
 Catch
   Notice.Text = Error.Text
 End

@@ -1,0 +1,20 @@
+{
+  "sourceFile": "imports/lib/fileNameDisplay.js",
+  "sourceSha256": "4ec06b245f873c2d02b3bcad999ea49cf4acdcd2a449d27735289d2f2c186e1c",
+  "exports": [
+    "INVISIBLE_CHARS_SOURCE",
+    "INVISIBLE_CHARS_REGEX",
+    "INVISIBLE_CHARS_GLOBAL",
+    "MAX_AMIGA_FILENAME_CHARS",
+    "hasInvisibleChars",
+    "decodeFileNameSafe",
+    "stripExploitPatterns",
+    "classifyExploitKinds",
+    "normalizeConfusables",
+    "truncateAmigaFileName",
+    "cleanFileNameUnbounded",
+    "cleanFileName",
+    "sanitizeDownloadFileName"
+  ],
+  "bundleSha256": "a014e3021a03c80da350f40027da6a712addd73ee6486e33590ed3981f88e33b"
+}
