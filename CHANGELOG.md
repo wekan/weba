@@ -2,6 +2,24 @@
 
 This work adds the following features and fixes:
 
+- Reject exploit-looking interactive filenames after the client/server pre-clean
+  stages, using the exact decoded-name classifier from uploadFileName.js.
+  Match JavaScript ASCII word/case rules and ECMAScript whitespace for event
+  handlers, URI/XML/template/PHP payloads, NUL and traversal. The isolated native
+  policy returns a typed verdict; refuse before native storage/history writes
+  and clear stale upload errors only after a valid upload commits. Keep the pure
+  pre-hook interface and REST/import entry points independent.
+  All 4,021 classifier verdicts match unchanged source. Model cases cover event
+  handlers and encoded NUL with complete rollback; source/packaged chooser tests
+  verify a NUL revealed only by post-classification after two pre-clean passes,
+  unchanged board tables, exact valid bytes/names and successful error clearing.
+  Source/packaged detail/live regressions retain draft, actor, numeric/nullable,
+  timer, history, lifecycle and scope guarantees. Full host/API/security/session/
+  text/Unicode/filename/client checks pass. This completes only interactive name
+  rejection; REST response/storage adapters, MIME/content detection, extension
+  correction, SVG, copy and import policy audits remain open.
+  Thanks to xet7.
+
 - Refuse empty native interactive uploads before filename normalization or
   transport, matching the installed Meteor-Files 3.0.1 and maintained upstream
   3.1.0 upload-start guard. Show its original error reason, stop the native file

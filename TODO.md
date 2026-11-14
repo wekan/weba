@@ -190,6 +190,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   native transport, with early model denial, unchanged board data, valid retry
   and retained internal/raw empty-BLOB behavior. Source/packaged evidence is in
   CHANGELOG.md; remaining server/REST/content/copy/import policies stay open.
+- Completed interactive post-preclean filename exploit classification/refusal
+  with exact source verdicts, no-write model/UI checks and valid retry notice
+  clearing. REST/import/content/type/extension/SVG/copy stages remain open;
+  source/packaged detail/live and full check evidence is in CHANGELOG.md.
 - Next detail/content focus: remaining copy/model mutation audits, stored/uploaded
   filename-policy parity and any other display surfaces, legacy
   file fidelity, nullable fields and model readers/writers.

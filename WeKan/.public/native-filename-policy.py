@@ -188,6 +188,28 @@ def before_upload_filename(name):
         safe = 'unnamed'
     return clean_filename(safe) or 'unnamed'
 
+
+def filename_looks_like_exploit(name):
+    """Exact decoded-name classifier from uploadFileName.js (no NFKC here)."""
+    value = decode_filename_safe('' if name is None else name)
+    flags = re.I | re.ASCII
+    space = '[' + _SPACE + ']'
+    if re.search(r'<' + space + r'*(script|svg|iframe|object|embed|img|html|meta|link|style|foreignobject|base)\b', value, flags):
+        return True
+    if re.search(r'<\?xml|<!doctype|<!entity', value, flags):
+        return True
+    if re.search(r'javascript:|vbscript:|data:' + space + r'*text/html', value, flags):
+        return True
+    if re.search(space + r'on[A-Za-z0-9_]+' + space + r'*=', value, flags) or re.search(r'^on[A-Za-z0-9_]+' + space + r'*=', value, flags):
+        return True
+    if re.search(r'<[^>]*/on[a-z-]{1,40}' + space + r'*=', value, flags):
+        return True
+    if re.search(r'\{\{[\s\S]*\}\}|\$\{[\s\S]*\}|<%[\s\S]*%>', value):
+        return True
+    if re.search(r'<\?php|<\?=', value, flags):
+        return True
+    return '\0' in value or bool(re.search(r'(^|[\\/])\.\.([\\/]|$)', value))
+
 # Appended to the unchanged runtime policy for the native, isolated Python bridge.
 import base64
 import sys
@@ -199,4 +221,8 @@ _native_tables = ({int(cp): value for cp, value in _raw['nfkd'].items()},
 _tables = lambda: _native_tables
 _name = base64.b64decode(sys.argv[2], validate=True).decode('utf-8', 'surrogatepass')
 _name = _name.encode('utf-16-le', 'surrogatepass').decode('utf-16-le', 'surrogatepass')
-print(json.dumps(before_upload_filename(_name), ensure_ascii=True))
+_before = before_upload_filename(_name)
+if len(sys.argv) > 3 and sys.argv[3] == 'interactive':
+    print(json.dumps({'name': _before, 'exploit': filename_looks_like_exploit(_before)}, ensure_ascii=True))
+else:
+    print(json.dumps(_before, ensure_ascii=True))

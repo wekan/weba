@@ -36,6 +36,13 @@ Public Sub Main()
   id = CardContent.UploadFile(boardId, cardId, "internal-empty.bin", "")
   r = db.Exec("SELECT typeof(content) AS kind,LENGTH(content) AS size,content IS NULL AS missing FROM kb_files WHERE id=&1", id)
   If r!kind <> "blob" Or r!size <> 0 Or r!missing Then Error.Raise("Internal zero-byte upload changed")
+  For Each value In ["onerror=alert.txt", "prefix onload =x.txt", "deep%2500suffix.bin"]
+    before = Frame()
+    failure = ""
+    Try CardContent.UploadFile(boardId, cardId, value, bytes, "application/octet-stream", True)
+    failure = Error.Text
+    If failure <> "Invalid attachment name" Or Frame() <> before Then Error.Raise("Exploit-looking interactive filename persisted")
+  Next
   before = Frame()
   previousPath = Env["PATH"]
   Env["PATH"] = "/nonexistent-native-filename-test"

@@ -9,4 +9,8 @@ _native_tables = ({int(cp): value for cp, value in _raw['nfkd'].items()},
 _tables = lambda: _native_tables
 _name = base64.b64decode(sys.argv[2], validate=True).decode('utf-8', 'surrogatepass')
 _name = _name.encode('utf-16-le', 'surrogatepass').decode('utf-16-le', 'surrogatepass')
-print(json.dumps(before_upload_filename(_name), ensure_ascii=True))
+_before = before_upload_filename(_name)
+if len(sys.argv) > 3 and sys.argv[3] == 'interactive':
+    print(json.dumps({'name': _before, 'exploit': filename_looks_like_exploit(_before)}, ensure_ascii=True))
+else:
+    print(json.dumps(_before, ensure_ascii=True))

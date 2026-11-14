@@ -2501,6 +2501,7 @@ Public Sub DetailUpload_Finish()
   TransferPolicy.RequireTransfer("attachmentsUpload", 0)
   TransferPolicy.RequireTransfer("attachmentsUpload", Stat(DetailUpload.Path).Size)
   CardContent.UploadFile($detailsBoard, $detailsCard, DetailUpload.File, File.Load(DetailUpload.Path), "application/octet-stream", True)
+  Notice.Text = ""
   LoadDetails()
 Catch
   Notice.Text = Error.Text

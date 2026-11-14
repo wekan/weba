@@ -993,7 +993,7 @@ Private Function CreateFile(boardId As Integer, cardId As Integer, filename As S
     TransferPolicy.RequireTransfer("attachmentsUpload", Len(data))
   Endif
   If beforeUpload Then
-    filename = NativeFileNames.BeforeUpload(filename)
+    filename = NativeFileNames.InteractiveName(filename)
   Else
     filename = Replace(filename, "\\", "/")
     If InStr(filename, Chr(0)) Then

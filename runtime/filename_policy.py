@@ -187,3 +187,25 @@ def before_upload_filename(name):
     if not safe or safe in ('.', '..'):
         safe = 'unnamed'
     return clean_filename(safe) or 'unnamed'
+
+
+def filename_looks_like_exploit(name):
+    """Exact decoded-name classifier from uploadFileName.js (no NFKC here)."""
+    value = decode_filename_safe('' if name is None else name)
+    flags = re.I | re.ASCII
+    space = '[' + _SPACE + ']'
+    if re.search(r'<' + space + r'*(script|svg|iframe|object|embed|img|html|meta|link|style|foreignobject|base)\b', value, flags):
+        return True
+    if re.search(r'<\?xml|<!doctype|<!entity', value, flags):
+        return True
+    if re.search(r'javascript:|vbscript:|data:' + space + r'*text/html', value, flags):
+        return True
+    if re.search(space + r'on[A-Za-z0-9_]+' + space + r'*=', value, flags) or re.search(r'^on[A-Za-z0-9_]+' + space + r'*=', value, flags):
+        return True
+    if re.search(r'<[^>]*/on[a-z-]{1,40}' + space + r'*=', value, flags):
+        return True
+    if re.search(r'\{\{[\s\S]*\}\}|\$\{[\s\S]*\}|<%[\s\S]*%>', value):
+        return True
+    if re.search(r'<\?php|<\?=', value, flags):
+        return True
+    return '\0' in value or bool(re.search(r'(^|[\\/])\.\.([\\/]|$)', value))

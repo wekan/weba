@@ -47,3 +47,13 @@ legacy basename gate, preserving its dot/path-only `unnamed` fallback. Client
 metadata pre-cleaning and server pre-cleaning are independent;
 REST/post-upload exploit rejection, type detection, extension correction and
 SVG/copy/import policies remain under audit in TODO.md.
+
+
+The interactive model also checks `uploadFileName.filenameLooksLikeExploit` after
+its server pre-clean pass. `postPolicySourceSha256` pins that original module;
+`upload-filename-classifier.test.cjs` compares decoded-name verdicts including
+JavaScript ASCII case/word and whitespace behavior. Runtime verdicts carry only
+the normalized name and Boolean rejection flag. The pre-hook oracle interface
+stays independent, and REST/import/content/extension/SVG/copy policies are separate
+pending audits. Native rejection occurs before storage writes; source library
+post-upload storage/response behavior is not claimed by this adapter.

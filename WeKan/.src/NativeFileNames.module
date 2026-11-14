@@ -1,16 +1,32 @@
-' Interactive pre-upload policy; server REST/post-upload stages are independent.
+' Interactive filename stages; REST/import workflows have separate entry points.
 Export
 
-Public Function BeforeUpload(filename As String) As String
+Private Function RunPolicy(filename As String, mode As String) As Variant
   Dim responseText As String
-  Dim value As Variant
   If Len(filename) > 4096 Then Error.Raise("Filename input exceeds policy limit")
-  Exec ["python3", "-I", "-c", File.Load(".public/native-filename-policy.py"), File.Load(".public/native-filename-data.b64"), Base64(filename)] To responseText
+  Exec ["python3", "-I", "-c", File.Load(".public/native-filename-policy.py"), File.Load(".public/native-filename-data.b64"), Base64(filename), mode] To responseText
   If Process.LastValue <> 0 Then Error.Raise("Filename normalization failed")
-  value = JsonText.Decode(responseText, 4096)
-  If TypeOf(value) <> gb.String Then Error.Raise("Invalid filename normalization result")
-  If ExportText.Length(value) > 30 Then Error.Raise("Invalid filename normalization length")
-  Return value
+  Return JsonText.Decode(responseText, 4096)
 Catch
   Error.Raise("Filename normalization failed")
+End
+
+Private Function CheckedName(value As Variant) As String
+  If TypeOf(value) <> gb.String Then Error.Raise("Filename normalization failed")
+  If ExportText.Length(value) > 30 Then Error.Raise("Filename normalization failed")
+  Return value
+End
+
+Public Function BeforeUpload(filename As String) As String
+  Return CheckedName(RunPolicy(filename, "before"))
+End
+
+Public Function InteractiveName(filename As String) As String
+  Dim value As Variant = RunPolicy(filename, "interactive")
+  Dim verdict As Collection
+  If Not (value Is Collection) Then Error.Raise("Filename normalization failed")
+  verdict = value
+  If Not verdict.Exist("exploit") Or TypeOf(verdict["exploit"]) <> gb.Boolean Or Not verdict.Exist("name") Then Error.Raise("Filename normalization failed")
+  If verdict["exploit"] Then Error.Raise("Invalid attachment name")
+  Return CheckedName(verdict["name"])
 End
