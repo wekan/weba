@@ -1,0 +1,220 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim fileId As Integer
+  Dim otherId As Integer
+  Dim mode As String
+  Dim stage As String
+  Dim effect As String
+  Dim actor As String
+  Dim before As String
+  Dim denied As Boolean
+  Dim conn As Connection
+  Dim row As Result
+  Dim stages As String[]
+  Dim records As String
+  Dim filename As String = "Retained" & Chr(0) & "Ω😀'_.bin"
+  For Each actor In ["life-global", "life-owner", "life-writer", "life-reader", "life-outsider"]
+    WebDatabase.Register(actor, "x")
+  Next
+  SignIn("life-owner")
+  boardId = KanbanStore.AddBoard("Lifecycle final scope")
+  BoardAccess.SetMember(boardId, "life-writer", "normal")
+  BoardAccess.SetMember(boardId, "life-reader", "read-only")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Card", "", "Default", "Todo", "", "", "")
+  fileId = CardContent.AddFile(boardId, cardId, filename, "Bytes" & Chr(0) & Chr(255) & "Ω😀")
+  otherId = CardContent.AddFile(boardId, cardId, "Other.bin", "other")
+  conn = WebDatabase.OpenConnection()
+  SignIn("life-writer")
+  For Each mode In ["delete", "restore", "cover", "cover-existing"]
+    stages = New String[]
+    If mode = "delete" Then
+      AttachmentLifecycle.SetCover(boardId, cardId, fileId)
+      stages.Add("AFTER DELETE ON kb_meta WHEN OLD.setting='cover'")
+      stages.Add("AFTER INSERT ON kb_attachment_deletions")
+    Else If mode = "restore" Then
+      stages.Add("AFTER DELETE ON kb_attachment_deletions")
+    Else If mode = "cover" Then
+      stages.Add("AFTER INSERT ON kb_meta WHEN NEW.setting='cover'")
+    Else
+      AttachmentLifecycle.SetCover(boardId, cardId, otherId)
+      stages.Add("AFTER UPDATE OF value ON kb_meta WHEN NEW.setting='cover'")
+    Endif
+    If mode = "delete" Or mode = "restore" Then
+      stages.Add("AFTER INSERT ON kb_attachment_history")
+      stages.Add("AFTER INSERT ON kb_history")
+    Endif
+    stages.Add("AFTER UPDATE ON kb_item_changes WHEN NEW.kind='card' AND NEW.item_id=" & CStr(cardId))
+    For Each stage In stages
+      For Each effect In ["UPDATE kb_members SET role='read-only' WHERE board_id=" & CStr(boardId) & " AND username='life-writer'", "DELETE FROM kb_members WHERE board_id=" & CStr(boardId) & " AND username='life-writer'", "UPDATE account_sessions SET generation=generation+1 WHERE username='life-writer'", "INSERT INTO kb_member_flags (board_id,username,flag) VALUES (" & CStr(boardId) & ",'life-writer','isReadAssignedOnly')", "UPDATE kb_cards SET archived=1 WHERE id=" & CStr(cardId), "UPDATE kb_boards SET archived=1 WHERE id=" & CStr(boardId), "UPDATE kb_card_lists SET list_id=2147483647 WHERE card_id=" & CStr(cardId), "UPDATE kb_files SET author=NULL WHERE id=" & CStr(fileId), "UPDATE kb_files SET filename='changed' WHERE id=" & CStr(fileId), "UPDATE kb_files SET content=X'00FF' WHERE id=" & CStr(fileId), "UPDATE kb_files SET created_at=NULL WHERE id=" & CStr(fileId), "UPDATE kb_files SET board_id=-1 WHERE id=" & CStr(fileId), "DELETE FROM kb_files WHERE id=" & CStr(fileId), "UPDATE kb_attachment_data SET mime='changed' WHERE file_id=" & CStr(fileId), "UPDATE kb_attachment_data SET uploaded_ms=0 WHERE file_id=" & CStr(fileId), "UPDATE kb_attachment_data SET board_id=-1 WHERE file_id=" & CStr(fileId), "DELETE FROM kb_attachment_data WHERE file_id=" & CStr(fileId), "INSERT INTO kb_retired_authors (kind,item_id,board_id,card_id,display_name) VALUES ('file'," & CStr(fileId) & "," & CStr(boardId) & "," & CStr(cardId) & ",'other')", "INSERT OR REPLACE INTO kb_meta (board_id,kind,item_id,setting,value) VALUES (" & CStr(boardId) & ",'card'," & CStr(cardId) & ",'cover','corrupt')", "INSERT OR REPLACE INTO kb_attachment_deletions (file_id,board_id,card_id,batch_id) VALUES (" & CStr(fileId) & "," & CStr(boardId) & "," & CStr(cardId) & ",'changed')", "INSERT INTO kb_attachment_history (file_id,board_id,card_id,filename) VALUES (" & CStr(fileId) & "," & CStr(boardId) & "," & CStr(cardId) & ",'extra')", "SELECT RAISE(ABORT,'lifecycle-private-canary')"]
+        before = Frame()
+        conn.Exec("CREATE TRIGGER inject_life_scope " & stage & " BEGIN " & effect & "; END")
+        Try Apply(mode, boardId, cardId, fileId)
+        denied = Error
+        conn.Exec("DROP TRIGGER inject_life_scope")
+        If Not denied Or Frame() <> before Then Error.Raise("Lifecycle scope failed: " & mode & ": " & stage & ": " & effect)
+      Next
+      If stage = "AFTER INSERT ON kb_attachment_history" Or stage = "AFTER INSERT ON kb_history" Or Left(mode, 5) = "cover" Or InStr(stage, "kb_item_changes") Then
+        For Each effect In ["actor=NULL", "changed_at=NULL", "previous_at=NULL", "filename='changed'", "batch_id=NULL", "action='changed'", "board_id=-1", "card_id=-1"]
+          before = Frame()
+          conn.Exec("CREATE TRIGGER inject_life_scope " & stage & " BEGIN UPDATE kb_attachment_history SET " & effect & " WHERE id=(SELECT MAX(id) FROM kb_attachment_history WHERE file_id=" & CStr(fileId) & "); END")
+          Try Apply(mode, boardId, cardId, fileId)
+          denied = Error
+          conn.Exec("DROP TRIGGER inject_life_scope")
+          If Not denied Or Frame() <> before Then Error.Raise("Lifecycle history scalar escaped: " & mode & ": " & stage & ": " & effect)
+        Next
+      Endif
+      If mode = "delete" And stage <> "AFTER DELETE ON kb_meta WHEN OLD.setting='cover'" Then
+        For Each effect In ["actor=NULL", "deleted_at=NULL", "batch_id=NULL", "board_id=-1", "card_id=-1"]
+          before = Frame()
+          conn.Exec("CREATE TRIGGER inject_life_scope " & stage & " BEGIN UPDATE kb_attachment_deletions SET " & effect & " WHERE file_id=" & CStr(fileId) & "; END")
+          Try Apply(mode, boardId, cardId, fileId)
+          denied = Error
+          conn.Exec("DROP TRIGGER inject_life_scope")
+          If Not denied Or Frame() <> before Then Error.Raise("Lifecycle marker scalar escaped: " & stage & ": " & effect)
+        Next
+      Endif
+    Next
+    Apply(mode, boardId, cardId, fileId)
+    before = Frame()
+    Apply(mode, boardId, cardId, fileId)
+    If Frame() <> before Then Error.Raise("Repeated lifecycle action changed state: " & mode)
+  Next
+  For Each mode In ["delete", "restore", "cover"]
+    For Each effect In ["UPDATE kb_files SET content=X'00FF' WHERE id=" & CStr(fileId), "UPDATE kb_members SET role='read-only' WHERE username='life-writer'"]
+      before = Frame()
+      conn.Exec("CREATE TRIGGER inject_life_lock AFTER UPDATE OF filename ON kb_files WHEN NEW.id=" & CStr(fileId) & " AND NEW.filename=OLD.filename BEGIN " & effect & "; END")
+      Try Apply(mode, boardId, cardId, fileId)
+      denied = Error
+      conn.Exec("DROP TRIGGER inject_life_lock")
+      If Not denied Or Frame() <> before Then Error.Raise("Lifecycle lock change escaped: " & mode)
+    Next
+  Next
+  AttachmentLifecycle.SetCover(boardId, cardId, fileId)
+  before = Frame()
+  conn.Exec("CREATE TRIGGER lose_life_role AFTER DELETE ON kb_meta WHEN OLD.setting='cover' BEGIN UPDATE kb_members SET role='read-only' WHERE username='life-writer'; END")
+  conn.Exec("CREATE TRIGGER restore_life_role AFTER INSERT ON kb_attachment_deletions BEGIN UPDATE kb_members SET role='normal' WHERE username='life-writer'; END")
+  Try AttachmentLifecycle.Delete(boardId, cardId, fileId)
+  denied = Error
+  conn.Exec("DROP TRIGGER restore_life_role")
+  conn.Exec("DROP TRIGGER lose_life_role")
+  If Not denied Or Frame() <> before Then Error.Raise("Temporary delete cover-stage role loss escaped")
+  AttachmentLifecycle.Delete(boardId, cardId, fileId)
+  before = Frame()
+  conn.Exec("CREATE TRIGGER lose_life_role AFTER DELETE ON kb_attachment_deletions BEGIN UPDATE kb_members SET role='read-only' WHERE username='life-writer'; END")
+  conn.Exec("CREATE TRIGGER restore_life_role AFTER INSERT ON kb_attachment_history BEGIN UPDATE kb_members SET role='normal' WHERE username='life-writer'; END")
+  Try AttachmentLifecycle.Restore(boardId, cardId, fileId)
+  denied = Error
+  conn.Exec("DROP TRIGGER restore_life_role")
+  conn.Exec("DROP TRIGGER lose_life_role")
+  If Not denied Or Frame() <> before Then Error.Raise("Temporary restore marker-stage role loss escaped")
+  AttachmentLifecycle.Restore(boardId, cardId, fileId)
+  AttachmentLifecycle.SetCover(boardId, cardId, otherId)
+  before = Frame()
+  conn.Exec("CREATE TRIGGER lose_life_role AFTER UPDATE OF value ON kb_meta WHEN NEW.setting='cover' BEGIN UPDATE kb_members SET role='read-only' WHERE username='life-writer'; END")
+  conn.Exec("CREATE TRIGGER restore_life_role AFTER UPDATE ON kb_item_changes BEGIN UPDATE kb_members SET role='normal' WHERE username='life-writer'; END")
+  Try AttachmentLifecycle.SetCover(boardId, cardId, fileId)
+  denied = Error
+  conn.Exec("DROP TRIGGER restore_life_role")
+  conn.Exec("DROP TRIGGER lose_life_role")
+  If Not denied Or Frame() <> before Then Error.Raise("Temporary cover write-stage role loss escaped")
+  For Each actor In ["life-reader", "life-outsider", "life-global"]
+    SignIn(actor)
+    For Each mode In ["delete", "restore", "cover"]
+      before = Frame()
+      Try Apply(mode, boardId, cardId, fileId)
+      denied = Error
+      If Not denied Or Frame() <> before Then Error.Raise("Unauthorized lifecycle changed state: " & mode)
+    Next
+  Next
+  SignIn("life-writer")
+  conn.Exec("UPDATE kb_files SET author=NULL,created_at=NULL WHERE id=&1", fileId)
+  conn.Exec("UPDATE kb_attachment_data SET mime=NULL,uploaded_ms=NULL WHERE file_id=&1", fileId)
+  RetiredAuthors.Remember("file", fileId, boardId, cardId, "Retired" & Chr(0) & "Ω😀")
+  records = JsonText.Encode(CardContent.RecordState(conn.Exec(ExportText.SelectRows(conn, "kb_files") & " WHERE id=&1", fileId)))
+  AttachmentLifecycle.Delete(boardId, cardId, fileId)
+  conn.Exec("UPDATE kb_attachment_deletions SET actor=NULL,batch_id=NULL,deleted_at=NULL WHERE file_id=&1", fileId)
+  If Not AttachmentLifecycle.Restore(boardId, cardId, fileId) Then Error.Raise("Nullable legacy marker could not restore")
+  If JsonText.Encode(CardContent.RecordState(conn.Exec(ExportText.SelectRows(conn, "kb_files") & " WHERE id=&1", fileId))) <> records Then Error.Raise("Nullable retained file changed")
+  If Not conn.Exec("SELECT file_id FROM kb_attachment_data WHERE file_id=&1 AND mime IS NULL AND uploaded_ms IS NULL", fileId).Available Then Error.Raise("Nullable file metadata changed")
+  If CardContent.AuthorName(boardId, cardId, "file", fileId) <> "Retired" & Chr(0) & "Ω😀" Then Error.Raise("Retired file author lost")
+  AttachmentLifecycle.Delete(boardId, cardId, fileId)
+  row = conn.Edit("kb_attachment_deletions", "file_id=&1", fileId)
+  row!batch_id = "Batch" & Chr(0) & "Ω😀"
+  DatabaseText.Save(conn, row, "kb_attachment_deletions", ["batch_id"], False)
+  AttachmentLifecycle.Restore(boardId, cardId, fileId)
+  row = conn.Exec(ExportText.SelectRows(conn, "kb_attachment_history") & " WHERE file_id=&1 ORDER BY id DESC", fileId)
+  If ExportText.ReadValue(row, "batch_id") <> "Batch" & Chr(0) & "Ω😀" Then Error.Raise("Restore truncated legacy batch id")
+
+  Print "Lifecycle: delete/restore/new/existing cover data/history/clock actor/role/raw/archive/placement/file/metadata/provenance/marker/history/cover/SQL rollback, lock races, exact NUL/binary/nullable preservation, retry/idempotency and unauthorized refusal passed"
+End
+
+Private Sub Apply(mode As String, boardId As Integer, cardId As Integer, fileId As Integer)
+  Select mode
+    Case "delete"
+      AttachmentLifecycle.Delete(boardId, cardId, fileId)
+    Case "restore"
+      AttachmentLifecycle.Restore(boardId, cardId, fileId)
+    Case Else
+      AttachmentLifecycle.SetCover(boardId, cardId, fileId)
+  End Select
+End
+
+Private Sub SignIn(actor As String)
+  Session["username"] = actor
+  Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+End
+
+Private Function Frame() As String
+  Dim conn As Connection = WebDatabase.OpenConnection()
+  Dim table As Table
+  Dim tables As New String[]
+  Dim tableName As String
+  Dim order As String[]
+  Dim key As String
+  Dim rows As Result
+  Dim field As ResultField
+  Dim values As Collection
+  Dim data As Variant[]
+  Dim result As New Collection
+  For Each table In conn.Tables
+    If Left(table.Name, 7) <> "sqlite_" Then tables.Add(table.Name)
+  Next
+  tables.Sort()
+  For Each tableName In tables
+    order = New String[]
+    For Each key In conn.Tables[tableName].PrimaryKey
+      order.Add(conn.Quote(key))
+    Next
+    rows = conn.Exec(ExportText.SelectRows(conn, tableName) & If(order.Count, " ORDER BY " & order.Join(","), ""))
+    data = New Variant[]
+    For Each rows
+      values = New Collection
+      For Each field In rows.Fields
+        If Left(field.Name, 7) = "__weba_" Then Continue
+        If field.Type = DB.String Then
+          If rows.Fields.Exist("__weba_null_" & field.Name) Then
+            If rows["__weba_null_" & field.Name] Then
+              values[field.Name] = JSON.Null
+            Else
+              values[field.Name] = ExportText.ReadValue(rows, field.Name)
+            Endif
+          Else
+            values[field.Name] = rows[field.Name]
+          Endif
+        Else If field.Type = DB.Blob Then
+          If IsNull(rows[field.Name]) Then
+            values[field.Name] = JSON.Null
+          Else
+            values[field.Name] = Base64(rows[field.Name].Data)
+          Endif
+        Else
+          values[field.Name] = rows[field.Name]
+        Endif
+      Next
+      data.Add(values)
+    Next
+    result[tableName] = data
+  Next
+  Return JsonText.Encode(result)
+End

@@ -78,7 +78,18 @@ with sqlite3.connect(sys.argv[1]) as d:
    expect(read().files.find(f=>f.filename===name)).toMatchObject({data:uploadBytes.toString('base64')});
    await expect(page.locator(c('DetailsPanel')+' literal')).toHaveCount(0);
   }
+  await row(initial.files[0].filename);await expect(page.locator(c('DetailDownload'))).toBeEnabled();
+  const beforeFileDelete=sql();sql('CREATE TRIGGER detail_lifecycle_final AFTER INSERT ON kb_history BEGIN UPDATE kb_boards SET archived=1 WHERE id='+seed.board+'; END');
+  try{await click('DetailDelete');await expect(page.locator(c('Notice'))).toContainText('Board archive state changed');expect(sql()).toBe(beforeFileDelete);expect(read().files.some(f=>f.filename===initial.files[0].filename)).toBe(true);await expect(page.locator(c('DetailDownload'))).toBeEnabled();}
+  finally{sql('DROP TRIGGER detail_lifecycle_final');}
+  await click('DetailDelete');expect(read().files.some(f=>f.filename===initial.files[0].filename)).toBe(false);
+  await click('DetailAttachmentHistory');await row(initial.files[0].filename);await expect(page.locator(c('DetailRestoreAttachment'))).toBeVisible();
+  const beforeFileRestore=sql();sql('CREATE TRIGGER detail_lifecycle_final AFTER INSERT ON kb_history BEGIN UPDATE kb_cards SET archived=1 WHERE id='+seed.items[0].card+'; END');
+  try{await click('DetailRestoreAttachment');await expect(page.locator(c('Notice'))).toContainText('Card archive state changed');expect(sql()).toBe(beforeFileRestore);expect(read().files.some(f=>f.filename===initial.files[0].filename)).toBe(false);await expect(page.locator(c('DetailRestoreAttachment'))).toBeVisible();}
+  finally{sql('DROP TRIGGER detail_lifecycle_final');}
+  await click('DetailRestoreAttachment');expect(read().files.find(f=>f.filename===initial.files[0].filename)).toMatchObject({data:initial.files[0].data});
+  await click('DetailLiveAttachments');await expect(page.locator(c('DetailTree'))).toContainText(shown(initial.files[0].filename));
   expect(errors).toEqual([]);
-  console.log('Detail complete-text browser: native custom/comment/checklist/file text, exact encoded editor values, external suffix heartbeat, dirty local title with independent external body save, post-history archive refusal keeps all board data and exact dirty draft, retry, New clears stale values, literal markup/reload and delete rollback with exact dirty/provenance retention and retry, timer start/stop post-history rollback and retry, file chooser upload data/history archive rollback, retained selection and exact-byte retry passed');
+  console.log('Detail complete-text browser: native custom/comment/checklist/file text, exact encoded editor values, external suffix heartbeat, dirty local title with independent external body save, post-history archive refusal keeps all board data and exact dirty draft, retry, New clears stale values, literal markup/reload and delete rollback with exact dirty/provenance retention and retry, timer start/stop post-history rollback and retry, file chooser upload data/history archive rollback, retained selection and exact-byte retry, attachment delete/restore post-history archive rollback with retained live/history selection and retry passed');
  }finally{if(context)await context.close();if(browser)await browser.close();}
 })().catch(e=>{let message=e.stack||String(e);if(process.env.WEBA_TEST_PASSWORD)message=message.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(message);process.exitCode=1;});

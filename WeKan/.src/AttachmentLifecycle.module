@@ -53,10 +53,55 @@ Private Sub CheckWriter(boardId As Integer, cardId As Integer, actor As String)
   BoardAccess.Require(boardId, "write")
 End
 
-Private Function BeginChange(boardId As Integer, cardId As Integer, fileId As Integer) As String
+Private Function StateStamp(state As Collection) As String
+  Dim ordered As New Collection
+  Dim keys As String[] = state.Keys
+  Dim key As String
+  keys.Sort()
+  For Each key In keys
+    ordered.Add(state[key], key)
+  Next
+  Return JsonText.Encode(ordered)
+End
+
+Private Function Stamp(row As Result, Optional omitContent As Boolean) As String
+  Return StateStamp(CardContent.RecordState(row, omitContent))
+End
+
+Private Function Rows(tableName As String, filter As String, fileId As Integer, Optional boardId As Integer, Optional cardId As Integer) As String[]
+  Dim result As New String[]
+  Dim row As Result = $db.Exec(ExportText.SelectRows($db, tableName) & " WHERE " & filter, fileId, boardId, cardId)
+  For Each row
+    result.Add(Stamp(row))
+  Next
+  Return result
+End
+
+Private Function CoverRows(boardId As Integer, cardId As Integer) As String[]
+  Return Rows("kb_meta", "item_id=&1 AND board_id=&2 AND kind='card' AND setting='cover'", cardId, boardId)
+End
+
+Private Sub RequireState(boardId As Integer, cardId As Integer, fileId As Integer, scope As Collection)
+  Dim file As Result
+  Dim contentNull As Boolean
+  CardContent.RequireMutationScope(boardId, cardId, scope)
+  file = RawFile(boardId, cardId, fileId)
+  If Stamp(file, True) <> scope["file"] Or file!content.Data <> scope["bytes"] Then Error.Raise("Attachment changed during mutation")
+  contentNull = $db.Exec("SELECT id FROM kb_files WHERE id=&1 AND content IS NULL", fileId).Available
+  If contentNull <> scope["contentNull"] Then Error.Raise("Attachment byte state changed")
+  If JsonText.Encode(Rows("kb_attachment_data", "file_id=&1", fileId)) <> scope["metadata"] Then Error.Raise("Attachment metadata changed")
+  If JsonText.Encode(Rows("kb_retired_authors", "kind='file' AND item_id=&1", fileId)) <> scope["provenance"] Then Error.Raise("Attachment provenance changed")
+  If JsonText.Encode(Rows("kb_attachment_deletions", "file_id=&1", fileId)) <> JsonText.Encode(scope["marks"]) Then Error.Raise("Attachment deletion changed")
+  If JsonText.Encode(Rows("kb_attachment_history", "file_id=&1 ORDER BY id", fileId)) <> JsonText.Encode(scope["history"]) Then Error.Raise("Attachment history changed")
+  If JsonText.Encode(CoverRows(boardId, cardId)) <> JsonText.Encode(scope["cover"]) Then Error.Raise("Attachment cover changed")
+End
+
+Private Function BeginChange(boardId As Integer, cardId As Integer, fileId As Integer) As Collection
   Dim actor As String = WebIdentity.Username
   Dim transaction As Boolean
   Dim failure As String
+  Dim scope As Collection
+  Dim file As Result
   CardContent.OpenStore()
   OpenStore()
   CheckWriter(boardId, cardId, actor)
@@ -66,10 +111,22 @@ Private Function BeginChange(boardId As Integer, cardId As Integer, fileId As In
   $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
   $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
   $db.Exec("UPDATE kb_cards SET title=title WHERE board_id=&1 AND id=&2", boardId, cardId)
-  $db.Exec("UPDATE kb_files SET filename=filename WHERE board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, fileId)
   CheckWriter(boardId, cardId, actor)
-  RawFile(boardId, cardId, fileId)
-  Return actor
+  scope = CardContent.MutationScope(boardId, cardId, actor, "write")
+  file = RawFile(boardId, cardId, fileId)
+  scope.Add(Stamp(file, True), "file")
+  scope.Add(file!content.Data, "bytes")
+  scope.Add($db.Exec("SELECT id FROM kb_files WHERE id=&1 AND content IS NULL", fileId).Available, "contentNull")
+  scope.Add(JsonText.Encode(Rows("kb_attachment_data", "file_id=&1", fileId)), "metadata")
+  scope.Add(JsonText.Encode(Rows("kb_retired_authors", "kind='file' AND item_id=&1", fileId)), "provenance")
+  scope.Add(Rows("kb_attachment_deletions", "file_id=&1", fileId), "marks")
+  scope.Add(Rows("kb_attachment_history", "file_id=&1 ORDER BY id", fileId), "history")
+  scope.Add(CoverRows(boardId, cardId), "cover")
+  $db.Exec("UPDATE kb_files SET filename=filename WHERE board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, fileId)
+  $db.Exec("UPDATE kb_attachment_data SET file_id=file_id WHERE file_id=&1", fileId)
+  $db.Exec("UPDATE kb_attachment_deletions SET file_id=file_id WHERE file_id=&1", fileId)
+  RequireState(boardId, cardId, fileId, scope)
+  Return scope
 Catch
   failure = Error.Text
   If transaction Then Try DatabaseTransactions.Rollback($db)
@@ -77,7 +134,7 @@ Catch
 End
 
 Private Function Mark(boardId As Integer, cardId As Integer, fileId As Integer) As Result
-  Return $db.Find("kb_attachment_deletions", "board_id=&1 AND card_id=&2 AND file_id=&3", boardId, cardId, fileId)
+  Return $db.Exec(ExportText.SelectRows($db, "kb_attachment_deletions") & " WHERE board_id=&1 AND card_id=&2 AND file_id=&3", boardId, cardId, fileId)
 End
 
 Public Function IsDeleted(boardId As Integer, cardId As Integer, fileId As Integer) As Boolean
@@ -85,8 +142,9 @@ Public Function IsDeleted(boardId As Integer, cardId As Integer, fileId As Integ
   Return Mark(boardId, cardId, fileId).Available
 End
 
-Private Sub AddHistory(boardId As Integer, cardId As Integer, fileId As Integer, actor As String, filename As String, action As String, at As Long, batchId As String, previousAt As Long)
+Private Sub AddHistory(boardId As Integer, cardId As Integer, fileId As Integer, actor As String, filename As String, action As String, at As Long, batchId As String, previousAt As Long, scope As Collection)
   Dim r As Result = $db.Create("kb_attachment_history")
+  Dim expected As Collection
   r["board_id"] = boardId
   r["card_id"] = cardId
   r["file_id"] = fileId
@@ -96,46 +154,52 @@ Private Sub AddHistory(boardId As Integer, cardId As Integer, fileId As Integer,
   r["changed_at"] = at
   r["batch_id"] = batchId
   r["previous_at"] = previousAt
+  expected = CardContent.RecordState(r)
   DatabaseText.Save($db, r, "kb_attachment_history", ["board_id", "card_id", "file_id", "actor", "filename", "action", "changed_at", "batch_id", "previous_at"], True)
+  expected["id"] = $db.LastInsertId
+  scope["history"].Add(StateStamp(expected))
 End
 
 Public Function Delete(boardId As Integer, cardId As Integer, fileId As Integer) As String
-  Dim actor As String
+  Dim scope As Collection
   Dim file As Result
   Dim r As Result
   Dim batchId As String
   Dim at As Long
-  Dim changed As Boolean
+  Dim marks As New String[]
+  Dim empty As New String[]
   Dim transaction As Boolean
   Dim failure As String
-  actor = BeginChange(boardId, cardId, fileId)
+  scope = BeginChange(boardId, cardId, fileId)
   transaction = True
   file = RawFile(boardId, cardId, fileId)
   r = Mark(boardId, cardId, fileId)
   If r.Available Then
-    batchId = r!batch_id
+    batchId = ExportText.ReadValue(r, "batch_id")
   Else
-    changed = True
     at = ItemChanges.UtcNow()
     batchId = "attachment-" & Str(fileId) & "-" & Str(at)
-    If StoredCover(cardId, boardId) = fileId Then $db.Delete("kb_meta", "board_id=&1 AND kind=&2 AND item_id=&3 AND setting=&4", boardId, "card", cardId, "cover")
+    If StoredCover(cardId, boardId) = fileId Then
+      $db.Delete("kb_meta", "board_id=&1 AND kind=&2 AND item_id=&3 AND setting=&4", boardId, "card", cardId, "cover")
+      scope["cover"] = empty
+      RequireState(boardId, cardId, fileId, scope)
+    Endif
     r = $db.Create("kb_attachment_deletions")
     r["file_id"] = fileId
     r["board_id"] = boardId
     r["card_id"] = cardId
-    r["actor"] = actor
+    r["actor"] = scope["actor"]
     r["deleted_at"] = at
     r["batch_id"] = batchId
+    marks.Add(Stamp(r))
     r.Update()
-    AddHistory(boardId, cardId, fileId, actor, ExportText.ReadValue(file, "filename"), "removed", at, batchId, 0)
+    scope["marks"] = marks
+    RequireState(boardId, cardId, fileId, scope)
+    AddHistory(boardId, cardId, fileId, scope["actor"], ExportText.ReadValue(file, "filename"), "removed", at, batchId, 0, scope)
+    RequireState(boardId, cardId, fileId, scope)
     KanbanStore.Activity(boardId, "Deleted attachment: " & ExportText.ReadValue(file, "filename"), "card", cardId)
   Endif
-  CheckWriter(boardId, cardId, actor)
-  RawFile(boardId, cardId, fileId)
-  r = Mark(boardId, cardId, fileId)
-  If Not r.Available Then Error.Raise("Attachment deletion changed")
-  If r!batch_id <> batchId Then Error.Raise("Attachment deletion changed")
-  If changed And If StoredCover(cardId, boardId) = fileId Then Error.Raise("Deleted attachment cannot be the cover")
+  RequireState(boardId, cardId, fileId, scope)
   DatabaseTransactions.Commit($db)
   transaction = False
   Return batchId
@@ -146,29 +210,31 @@ Catch
 End
 
 Public Function Restore(boardId As Integer, cardId As Integer, fileId As Integer) As Boolean
-  Dim actor As String
+  Dim scope As Collection
   Dim file As Result
   Dim r As Result
   Dim batchId As String
   Dim at As Long
+  Dim empty As New String[]
   Dim changed As Boolean
   Dim transaction As Boolean
   Dim failure As String
-  actor = BeginChange(boardId, cardId, fileId)
+  scope = BeginChange(boardId, cardId, fileId)
   transaction = True
   file = RawFile(boardId, cardId, fileId)
   r = Mark(boardId, cardId, fileId)
   If r.Available Then
     changed = True
-    batchId = r!batch_id
-    at = r!deleted_at
-    $db.Delete("kb_attachment_deletions", "board_id=&1 AND card_id=&2 AND file_id=&3 AND batch_id=&4", boardId, cardId, fileId, batchId)
-    AddHistory(boardId, cardId, fileId, actor, ExportText.ReadValue(file, "filename"), "added", ItemChanges.UtcNow(), batchId, at)
+    batchId = ExportText.ReadValue(r, "batch_id")
+    If Not IsNull(r!deleted_at) Then at = r!deleted_at
+    $db.Delete("kb_attachment_deletions", "board_id=&1 AND card_id=&2 AND file_id=&3", boardId, cardId, fileId)
+    scope["marks"] = empty
+    RequireState(boardId, cardId, fileId, scope)
+    AddHistory(boardId, cardId, fileId, scope["actor"], ExportText.ReadValue(file, "filename"), "added", ItemChanges.UtcNow(), batchId, at, scope)
+    RequireState(boardId, cardId, fileId, scope)
     KanbanStore.Activity(boardId, "Restored attachment: " & ExportText.ReadValue(file, "filename"), "card", cardId)
   Endif
-  CheckWriter(boardId, cardId, actor)
-  RawFile(boardId, cardId, fileId)
-  If Mark(boardId, cardId, fileId).Available Then Error.Raise("Attachment deletion changed")
+  RequireState(boardId, cardId, fileId, scope)
   DatabaseTransactions.Commit($db)
   transaction = False
   Return changed
@@ -196,11 +262,12 @@ Public Function CoverId(boardId As Integer, cardId As Integer) As Integer
 End
 
 Public Sub SetCover(boardId As Integer, cardId As Integer, fileId As Integer)
-  Dim actor As String
+  Dim scope As Collection
   Dim r As Result
+  Dim cover As New String[]
   Dim transaction As Boolean
   Dim failure As String
-  actor = BeginChange(boardId, cardId, fileId)
+  scope = BeginChange(boardId, cardId, fileId)
   transaction = True
   If Mark(boardId, cardId, fileId).Available Then Error.Raise("Choose a live attachment")
   If StoredCover(cardId, boardId) <> fileId Then
@@ -213,10 +280,13 @@ Public Sub SetCover(boardId As Integer, cardId As Integer, fileId As Integer)
       r["setting"] = "cover"
     Endif
     r["value"] = CStr(fileId)
+    cover.Add(Stamp(r))
     r.Update()
+    scope["cover"] = cover
+    RequireState(boardId, cardId, fileId, scope)
     ItemChanges.Mark(boardId, "card", cardId)
   Endif
-  CheckWriter(boardId, cardId, actor)
+  RequireState(boardId, cardId, fileId, scope)
   If CoverId(boardId, cardId) <> fileId Then Error.Raise("Attachment cover changed")
   DatabaseTransactions.Commit($db)
   transaction = False

@@ -279,6 +279,20 @@ Catch
   Error.Raise(failure)
 End
 
+' Shared transaction scopes for native detail mutation services.
+Public Function MutationScope(boardId As Integer, cardId As Integer, actor As String, capability As String) As Collection
+  Dim scope As New Collection
+  scope.Add(actor, "actor")
+  scope.Add(capability, "capability")
+  CaptureDetailScope(boardId, cardId, scope)
+  RequireDetailScope(boardId, cardId, scope)
+  Return scope
+End
+
+Public Sub RequireMutationScope(boardId As Integer, cardId As Integer, scope As Collection)
+  RequireDetailScope(boardId, cardId, scope)
+End
+
 Private Sub CaptureDetailScope(boardId As Integer, cardId As Integer, scope As Collection)
   Dim r As Result
   Dim target As Result
@@ -433,12 +447,13 @@ Catch
   Error.Raise(failure)
 End
 
-Private Function EntryState(row As Result) As Collection
+Public Function RecordState(row As Result, Optional omitContent As Boolean) As Collection
   Dim data As New Collection
   Dim field As ResultField
   Dim value As Variant
   For Each field In row.Fields
     If Left(field.Name, 7) = "__weba_" Then Continue
+    If omitContent And field.Name = "content" Then Continue
     If field.Type = DB.String Then
       If TextIsNull(row, field.Name) Then
         data.Add(JSON.Null, field.Name)
@@ -463,7 +478,7 @@ Private Function EntryState(row As Result) As Collection
 End
 
 Private Function DeletionStamp(row As Result) As String
-  Return JsonText.Encode(EntryState(row))
+  Return JsonText.Encode(RecordState(row))
 End
 
 Private Sub RequireEntryDeletion(boardId As Integer, cardId As Integer, entryId As Integer, scope As Collection, ids As Integer[], stamps As Collection, removed As Integer[], cleaned As Boolean, Optional effectId As Integer)
@@ -539,7 +554,7 @@ Private Sub RequireTimer(boardId As Integer, cardId As Integer, scope As Collect
   RequireDetailScope(boardId, cardId, scope)
   row = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, scope["timerId"])
   If Not row.Available Then Error.Raise("Timer not accessible")
-  state = EntryState(row)
+  state = RecordState(row)
   If state.Count <> expected.Count Then Error.Raise("Timer changed during write")
   For Each key In expected.Keys
     If Not state.Exist(key) Then Error.Raise("Timer changed during write")
@@ -587,7 +602,7 @@ Public Sub StartTimer(boardId As Integer, cardId As Integer)
   If Not $db.Find("kb_entries", "board_id=&1 AND card_id=&2 AND id=&3 AND kind=&4 AND author=&5 AND title=&6 AND amount=0 AND done=&7 AND created_at=&8 AND parent_id IS NULL AND body IS NULL AND value_type IS NULL", boardId, cardId, id, "time", actor, "Running timer", False, stamp).Available Then Error.Raise("Timer changed during start")
   r = $db.Exec(ExportText.SelectRows($db, "kb_entries") & " WHERE board_id=&1 AND card_id=&2 AND id=&3", boardId, cardId, id)
   scope.Add(id, "timerId")
-  scope.Add(EntryState(r), "timerState")
+  scope.Add(RecordState(r), "timerState")
   scope.Add([id], "running")
   scope.Add(others, "others")
   RequireTimer(boardId, cardId, scope)
@@ -640,7 +655,7 @@ Public Sub StopTimer(boardId As Integer, cardId As Integer)
     If id = timerId Then
       If IsNull(r!created_at) Then Error.Raise("Timer start time unavailable")
       minutes = Max(0, DateDiff(r!created_at, Now, gb.Second)) / 60
-      expected = EntryState(r)
+      expected = RecordState(r)
       expected["amount"] = minutes
       expected["done"] = True
       expected["title"] = "Tracked time"

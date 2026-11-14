@@ -2,6 +2,28 @@
 
 This work adds the following features and fixes:
 
+- Guard retained attachment deletion, restore and new/replacement covers through
+  their complete transactions. Share captured current-actor/card/container/archive
+  scopes and exact record snapshots; capture file/metadata/marker state before
+  locking. Recheck retained bytes/scalars/NULL state, MIME/time metadata, retired
+  author provenance, exact deletion markers, ordered history and cover rows after
+  each intended effect and after history/clocks. Refuse unrelated field changes,
+  rebinds, extra/missing history and temporary role loss before a later restoration.
+  Keep retained bytes, unrelated covers, no-op/idempotent behavior and copy/move/
+  exchange semantics. Restore accepts a legacy NULL deletion timestamp as zero
+  previous time and carries complete embedded-NUL batch IDs into new history.
+  Native tests cover mutation/SQL failures with exact all-table rollback, lock
+  races, nullable legacy files/metadata/authors, scalar/NULL history/marker changes,
+  unauthorized users and successful retries. Source detail/live UI verifies
+  delete/history/restore archive refusal, unchanged data, retained live/history
+  selection and byte-exact retry; packaged detail/live checks also pass.
+  A disposable 64 MiB upload/cover/delete/restore/readback preserves exact bytes.
+  Shared snapshots omit retained BLOBs when raw bytes are compared separately,
+  avoiding duplicate Base64 guard payloads. The full pinned host/native/API/
+  security/session gate, 70 Python tests and JavaScript checks pass.
+  API caller-policy/other mutations, numeric editor/model readers, remaining
+  nullable consistency and full original parity remain open. Thanks to xet7.
+
 - Guard attachment creation and native upload after file insertion, metadata and
   history/clocks. Capture the actor and card/container/archive scope; verify exact
   normalized filename, bytes, author, creation time, MIME, upload timestamp and
