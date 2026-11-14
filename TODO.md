@@ -168,6 +168,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Completed source-style public HTTP download filename headers, with offline
   normalization pinned to the source Unicode engine and isolated packaged-runtime
   coverage. Raw API disposition retains its separate source contract.
+- Completed source-cleaned guest attachment captions for live/blocked downloads,
+  preserving file identity, bylines and raw stored text. Source/packaged guest and
+  complete-text browser evidence is in CHANGELOG.md.
 - Next detail/content focus: remaining copy/model mutation audits, stored/uploaded
   filename-policy parity and any other display surfaces, legacy
   file fidelity, nullable fields and model readers/writers.

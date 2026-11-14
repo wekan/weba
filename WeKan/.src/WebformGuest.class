@@ -148,7 +148,7 @@ Public Sub LanguageSelector_Render()
   Print "<base href='/'>"
   Print "<link rel='stylesheet' href='kanban.css'>"
   Print "<link rel='stylesheet' href='fontawesome.css'>"
-  Print "<script>" & File.Load(".public/i18n-catalog.js") & File.Load(".public/i18n.js") & File.Load(".public/ui.js") & "</script>"
+  Print "<script>" & File.Load(".public/i18n-catalog.js") & File.Load(".public/i18n.js") & File.Load(".public/filename-policy.js") & File.Load(".public/filename-display.js") & File.Load(".public/ui.js") & "</script>"
   Print "<select data-weba-language aria-label='Language' style='width:100%;height:32px'></select>"
 End
 
@@ -206,7 +206,7 @@ Public Sub GuestSurface_Render()
     For Each item In $data["attachments"]
       Print "<article class='weba-guest-attachment weba-user-text' data-file-id='" & CStr(item["id"]) & "'><strong>"
       If item["downloadAllowed"] Then Print "<a download href='/_weba/public-attachment/" & CStr($data["id"]) & "/" & CStr(card["id"]) & "/" & CStr(item["id"]) & "'>"
-      Print Html(item["filename"])
+      Print "<span class='weba-guest-file-name weba-user-text'" & TextData("filename", item["filename"]) & ">" & Html(item["filename"]) & "</span>"
       If item["downloadAllowed"] Then Print "</a>"
       Print "</strong><small>" & Html(item["author"]) & " · " & Html(Str(item["createdAt"])) & "</small></article>"
     Next

@@ -2,6 +2,19 @@
 
 This work adds the following features and fixes:
 
+- Clean anonymous guest attachment captions with the unchanged source filename
+  helper. Send lossless filename text in an encoded span and decorate only that
+  span, preserving file IDs, links, author/date text and stored names/bytes.
+  Apply the policy to live updates and blocked-download captions; guest filenames
+  stay user text during language changes. Reject malformed/non-string payloads
+  and leave hidden/detached elements alone without observer feedback or native
+  writes. Unit and source/packaged guest, public-download and complete-text
+  browsers verify markup/NUL/Unicode names, literal bylines, exact stored rows,
+  byte downloads, translated labels, view changes, scope and privacy revocation.
+  Full host/API/security/session and filename policy checks pass; stored/uploaded
+  names and further display/model/legacy audits remain open.
+  Thanks to xet7.
+
 - Match public HTTP attachment download filenames to the source universal file
   server. Clean percent encoding, Unicode/confusables, invisible/exploit text and
   length/bracket limits before building the distinct public Content-Disposition;

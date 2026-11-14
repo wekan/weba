@@ -24,7 +24,20 @@
     }catch{}
     cache.set(state,{encoded,value});return value;
   }
+  function renderGuest(){
+    if(!root.webaFileNames)return;
+    for(const label of root.document?.querySelectorAll('.weba-guest-board .weba-guest-attachment[data-file-id] .weba-guest-file-name[data-filename-text]')||[]){
+      if(!label.isConnected||!visible(label))continue;
+      let filename;
+      try{const bytes=Uint8Array.from(root.atob(label.getAttribute('data-filename-text')),char=>char.charCodeAt(0));filename=JSON.parse(new root.TextDecoder('utf-8',{fatal:true}).decode(bytes));}catch{continue;}
+      if(typeof filename!=='string')continue;
+      const name=root.webaFileNames.cleanFileName(filename);
+      if(label.textContent!==name)label.textContent=name;
+      if(label.getAttribute('title')!==name)label.setAttribute('title',name);
+    }
+  }
   function render(){
+    renderGuest();
     const state=root.document?.querySelector('[id$=".DetailFileNames"]');if(!state?.isConnected)return;
     const data=packet(state);if(!data||!root.webaFileNames)return;
     const expected=state.id.slice(0,-'.DetailFileNames'.length)+'.DetailTree';if(data.tree!==expected)return;
