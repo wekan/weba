@@ -700,9 +700,17 @@ Public Function AddFile(boardId As Integer, cardId As Integer, filename As Strin
   Return CreateFile(boardId, cardId, filename, data, mime, maxBytes, False)
 End
 
+' API callers retain their original target/actor and canonical failure result.
+Public Function AddApiFile(boardId As Integer, cardId As Integer, filename As String, data As String, mime As String, guard As Collection) As Integer
+  BoardAccess.RequireApiUploadGuard(guard)
+  If guard["board"] <> boardId Or guard["card"] <> cardId Or guard["size"] <> Len(data) Then Error.Raise("Upload scope mismatch")
+  Return CreateFile(boardId, cardId, filename, data, mime, CInt(Floor(AttachmentData.ApiUploadLimit())), False, guard)
+End
+
 Private Sub RequireFileCreation(boardId As Integer, cardId As Integer, fileId As Integer, scope As Collection, metadata As Boolean)
   Dim r As Result
   Dim contentNull As Boolean
+  If scope.Exist("api") Then BoardAccess.RequireApiUploadGuard(scope["api"])
   RequireDetailScope(boardId, cardId, scope)
   If scope["upload"] Then
     If WorkspaceStore.Setting(boardId, "board", boardId, "allowsAttachments", "1") <> "1" Then Error.Raise("Attachments are not allowed on this board")
@@ -737,7 +745,7 @@ Private Sub RequireFileCreation(boardId As Integer, cardId As Integer, fileId As
   Endif
 End
 
-Private Function CreateFile(boardId As Integer, cardId As Integer, filename As String, data As String, mime As String, maxBytes As Integer, upload As Boolean) As Integer
+Private Function CreateFile(boardId As Integer, cardId As Integer, filename As String, data As String, mime As String, maxBytes As Integer, upload As Boolean, Optional api As Collection) As Integer
   Dim transaction As Boolean
   Dim failure As String
   Dim r As Result
@@ -745,10 +753,12 @@ Private Function CreateFile(boardId As Integer, cardId As Integer, filename As S
   Dim actor As String = WebIdentity.Username
   Dim stamp As Date
   Dim scope As New Collection
+  If api Then BoardAccess.RequireApiUploadGuard(api)
   RequireCard(boardId, cardId)
   BoardAccess.Require(boardId, "write")
   BeginChange(boardId, cardId, "write", actor)
   transaction = True
+  If api Then scope.Add(api, "api")
   scope.Add(actor, "actor")
   scope.Add("write", "capability")
   scope.Add(upload, "upload")
@@ -784,7 +794,7 @@ Private Function CreateFile(boardId As Integer, cardId As Integer, filename As S
   scope.Add(ItemChanges.UtcNow(), "uploaded")
   AttachmentData.Record(boardId, cardId, id, mime, scope["uploaded"])
   RequireFileCreation(boardId, cardId, id, scope, True)
-  KanbanStore.Activity(boardId, "Attached file: " & filename, "card", cardId)
+  KanbanStore.Activity(boardId, "Attached file: " & filename, "card", cardId, True, api)
   RequireFileCreation(boardId, cardId, id, scope, True)
   DatabaseTransactions.Commit($db)
   transaction = False

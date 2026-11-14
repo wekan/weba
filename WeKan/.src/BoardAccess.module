@@ -1369,9 +1369,29 @@ Private Function ApiUploadTarget(boardId As Integer, laneId As Integer, listId A
   Return Null
 End
 
+' Called at each file/activity effect while the API transaction is retained.
+Public Sub RequireApiUploadGuard(guard As Collection)
+  Dim check As Collection
+  If Env["WEBA_API_REQUEST"] <> "1" Then
+    check = ApiFailure(403, "API context required")
+  Else If Not WebIdentity.Username Or WebIdentity.Username <> guard["actor"] Or Not WebDatabase.UserExists(guard["actor"]) Then
+    check = ApiFailure(401, "Invalid credentials")
+  Else If Env["WEBA_API_TOKEN_DIGEST"] And If ApiTokens.Authenticate() <> guard["actor"] Then
+    check = ApiFailure(401, "Invalid credentials")
+  Else
+    check = ApiUploadTarget(guard["board"], guard["lane"], guard["list"], guard["card"])
+    If Not check And If guard["size"] > AttachmentData.ApiUploadLimit() Then check = ApiFailure(413, "Attachment exceeds API upload limit")
+  Endif
+  If check Then
+    guard["failure"] = check
+    Error.Raise("API upload scope changed")
+  Endif
+End
+
 Public Function UploadApiAttachment(boardId As Integer, laneId As Integer, listId As Integer, cardId As Integer, filename As String, bytes As String, mime As String) As Collection
   Dim actor As String = WebIdentity.Username
   Dim data As New Collection
+  Dim guard As New Collection
   Dim check As Collection
   Dim fileId As Integer
   Dim transaction As Boolean
@@ -1385,30 +1405,23 @@ Public Function UploadApiAttachment(boardId As Integer, laneId As Integer, listI
   check = ApiUploadTarget(boardId, laneId, listId, cardId)
   If check Then Return AttachmentUploadFailure(check["status"], check["data"]["error"])
   If Len(bytes) > AttachmentData.ApiUploadLimit() Then Return AttachmentUploadFailure(413, "Attachment exceeds API upload limit")
+  guard.Add(actor, "actor")
+  guard.Add(boardId, "board")
+  guard.Add(laneId, "lane")
+  guard.Add(listId, "list")
+  guard.Add(cardId, "card")
+  guard.Add(Len(bytes), "size")
   DatabaseTransactions.Begin($db)
   transaction = True
   $db.Exec("UPDATE users SET username=username WHERE username=&1", actor)
   TransferPolicy.Lock()
   $db.Exec("UPDATE kb_boards SET title=title WHERE id=&1", boardId)
   $db.Exec("UPDATE kb_cards SET title=title WHERE board_id=&1 AND id=&2", boardId, cardId)
-  check = ApiUploadTarget(boardId, laneId, listId, cardId)
-  If check Then
-    status = check["status"]
-    Error.Raise(check["data"]["error"])
-  Endif
+  RequireApiUploadGuard(guard)
   If WebDatabase.GetIsAdmin(actor) Then $apiMemberBoard = boardId
-  fileId = CardContent.AddFile(boardId, cardId, filename, bytes, mime, CInt(Floor(AttachmentData.ApiUploadLimit())))
+  fileId = CardContent.AddApiFile(boardId, cardId, filename, bytes, mime, guard)
   $apiMemberBoard = 0
-  check = ApiUploadTarget(boardId, laneId, listId, cardId)
-  If check Then
-    status = check["status"]
-    Error.Raise(check["data"]["error"])
-  Endif
-  If Len(bytes) > AttachmentData.ApiUploadLimit() Then
-    status = 413
-    Error.Raise("Attachment exceeds API upload limit")
-  Endif
-  If WebIdentity.Username <> actor Then Error.Raise("Upload identity changed")
+  RequireApiUploadGuard(guard)
   DatabaseTransactions.Commit($db)
   transaction = False
   data.Add(True, "success")
@@ -1421,6 +1434,11 @@ Public Function UploadApiAttachment(boardId As Integer, laneId As Integer, listI
 Catch
   failure = Error.Text
   $apiMemberBoard = 0
+  If guard.Exist("failure") Then
+    check = guard["failure"]
+    status = check["status"]
+    failure = check["data"]["error"]
+  Endif
   If status = 500 And transaction Then
     Try check = ApiUploadTarget(boardId, laneId, listId, cardId)
     If Not Error And check Then

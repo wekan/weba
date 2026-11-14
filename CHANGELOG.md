@@ -2,6 +2,26 @@
 
 This work adds the following features and fixes:
 
+- Recheck API upload credentials, authorization, original target and transfer
+  policy after file insertion, metadata, activity, history and change-clock writes.
+  Carry the captured request actor/board/lane/list/card/byte count through storage
+  and activity checkpoints; HTTP requests revalidate the bearer principal, expiry
+  and account at each effect. Refuse temporary API block/size/board-allowance loss,
+  role/assignment/raw-flag/site-admin loss, target rebind and token invalidation
+  even when a later effect would restore the original state.
+  Preserve canonical 401/400/403/413 failure outcomes across nested rollback;
+  unrelated SQL failures retain the opaque 500 response. Native upload and
+  internal-copy policy semantics remain independent.
+  Source/packaged raw and JSON HTTP matrices compare every application table,
+  including credentials and policies, after each refusal and verify retry bytes.
+  Original direct wrapper probes now refuse and roll back all three policy cases;
+  140 unchanged-source upload conformance outcomes and focused native detail/file/
+  lifecycle/entry/timer/card compatibility pass. Source/packaged detail/live UI
+  retains exact text/bytes and rollback/retry behavior. The full pinned host/native/
+  API/security/session gate, 70 Python tests and JavaScript checks pass.
+  Remaining detail mutations, numeric editor/model readers, nullable consistency
+  and full original upload/DDP/eventlog/UI parity remain open. Thanks to xet7.
+
 - Guard retained attachment deletion, restore and new/replacement covers through
   their complete transactions. Share captured current-actor/card/container/archive
   scopes and exact record snapshots; capture file/metadata/marker state before

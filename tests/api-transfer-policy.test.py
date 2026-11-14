@@ -52,5 +52,28 @@ try:
         db.execute("CREATE TRIGGER policy_late_size AFTER INSERT ON kb_attachment_data BEGIN UPDATE attachment_transfer_settings SET apiUploadMaxBytes=1 WHERE id=1; END");db.commit()
         before=snapshot();assert upload(b'xx')==(413,{'success':False,'error':'Attachment exceeds API upload limit'});assert snapshot()==before
         db.execute('DROP TRIGGER policy_late_size');db.commit()
-    print('Transfer policy HTTP: persisted block/size/unlimited/env precedence, native/API independence, JSON/raw variants, metadata access, fractional byte limits and late block/limit atomic rollback passed')
+        db.execute("INSERT OR REPLACE INTO kb_meta (board_id,kind,item_id,setting,value) VALUES (?,'board',?,'allowsAttachments','1')",(f['boardId'],f['boardId']));db.commit()
+        all_tables=[r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")]
+        def full_snapshot():return {t:sorted(db.execute('SELECT * FROM "'+t+'"').fetchall(),key=repr) for t in all_tables}
+        restrictions=[('block',"UPDATE attachment_transfer_settings SET apiUploadBlocked=1 WHERE id=1","UPDATE attachment_transfer_settings SET apiUploadBlocked=0 WHERE id=1",403,'API uploads are disabled by administrator'),('limit',"UPDATE attachment_transfer_settings SET apiUploadMaxBytes=1 WHERE id=1","UPDATE attachment_transfer_settings SET apiUploadMaxBytes=0 WHERE id=1",413,'Attachment exceeds API upload limit'),('allowance',"UPDATE kb_meta SET value='0' WHERE setting='allowsAttachments' AND board_id="+str(f['boardId']),"UPDATE kb_meta SET value='1' WHERE setting='allowsAttachments' AND board_id="+str(f['boardId']),403,'Attachments are not allowed on this board')]
+        boundaries=[('AFTER INSERT ON kb_files','AFTER INSERT ON kb_attachment_data'),('AFTER INSERT ON kb_attachment_data','AFTER INSERT ON kb_activity'),('AFTER INSERT ON kb_activity','AFTER INSERT ON kb_history'),('AFTER INSERT ON kb_history',"AFTER UPDATE ON kb_item_changes WHEN NEW.kind='card' AND NEW.item_id="+str(f['cardId'])),("AFTER UPDATE ON kb_item_changes WHEN NEW.kind='card' AND NEW.item_id="+str(f['cardId']),None)]
+        for raw in (False,True):
+            for stage,restore_stage in boundaries:
+                for name,restrict,restore,status,error in restrictions:
+                    before=full_snapshot()
+                    db.execute('CREATE TRIGGER policy_boundary_loss '+stage+' BEGIN '+restrict+'; END')
+                    if restore_stage:db.execute('CREATE TRIGGER policy_boundary_restore '+restore_stage+' BEGIN '+restore+'; END')
+                    db.commit()
+                    try:
+                        result=upload(b'xx',raw)
+                        assert result==(status,{'success':False,'error':error}),(raw,stage,name,result)
+                        assert full_snapshot()==before,(raw,stage,name,'rollback')
+                    finally:
+                        db.execute('DROP TRIGGER policy_boundary_loss')
+                        if restore_stage:db.execute('DROP TRIGGER policy_boundary_restore')
+                        db.commit()
+            status,result=upload(b'xx',raw);assert status==200,(raw,status,result)
+            stored=db.execute('SELECT content FROM kb_files WHERE id=?',(result['attachmentId'],)).fetchone();assert stored==(b'xx',)
+
+    print('Transfer policy HTTP: persisted block/size/unlimited/env precedence, native/API independence, JSON/raw variants, metadata access, fractional byte limits and late block/limit atomic rollback, per-boundary transient API block/limit/board allowance all-table rollback and raw/JSON retry passed')
 finally:fixture('reset')

@@ -73,10 +73,32 @@ with sqlite3.connect(Path(os.environ['WEBA_DB_HOST'])/os.environ['WEBA_DB_NAME']
             assert data=={'success':True,'attachmentId':data['attachmentId'],'fileName':'literal <upload>.bin','fileSize':len(binary),'storageBackend':'database','message':'Attachment uploaded successfully'},(raw,data,len(binary))
             file=int(data['attachmentId']);assert db.execute('SELECT content FROM kb_files WHERE id=?',(file,)).fetchone()[0]==binary
             attr=db.execute('SELECT mime,uploaded_ms,board_id,card_id FROM kb_attachment_data WHERE file_id=?',(file,)).fetchone();assert attr[0]=='application/x-weba-test' and attr[1]>0 and attr[2:]==(f['boardId'],f['cardId'])
+    all_tables=[r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")]
+    def full_snapshot():return {t:sorted(db.execute('SELECT * FROM "'+t+'"').fetchall(),key=repr) for t in all_tables}
+    saved_expiry=db.execute("SELECT quote(expires_at) FROM api_tokens WHERE username='rest-member' ORDER BY expires_at DESC LIMIT 1").fetchone()[0]
+    saved_lane=db.execute('SELECT quote(title) FROM kb_lanes WHERE id=?',(f['swimlaneId'],)).fetchone()[0]
+    mutations=[('member role',member,"UPDATE kb_members SET role='read-only' WHERE username='rest-member' AND board_id="+str(f['boardId']),"UPDATE kb_members SET role='normal' WHERE username='rest-member' AND board_id="+str(f['boardId']),403,'You do not have permission to modify this card'),('assigned writer',assigned,"UPDATE kb_cards SET assignee='' WHERE id="+str(f['cardId']),"UPDATE kb_cards SET assignee='rest-file-assigned' WHERE id="+str(f['cardId']),403,'You do not have permission to modify this card'),('token expiry',member,"UPDATE api_tokens SET expires_at='2000-01-01' WHERE username='rest-member'","UPDATE api_tokens SET expires_at="+saved_expiry+" WHERE username='rest-member'",401,'Invalid credentials'),('token principal',member,"UPDATE api_tokens SET username='rest-file-reader' WHERE username='rest-member'","UPDATE api_tokens SET username='rest-member' WHERE username='rest-file-reader' AND expires_at="+saved_expiry,401,'Invalid credentials'),('raw assigned flag',member,"INSERT INTO kb_member_flags (board_id,username,flag) VALUES ("+str(f['boardId'])+",'rest-member','isReadAssignedOnly')","DELETE FROM kb_member_flags WHERE board_id="+str(f['boardId'])+" AND username='rest-member' AND flag='isReadAssignedOnly'",403,'You do not have permission to modify this card'),('site admin',admin,"UPDATE users SET admin=0 WHERE username='rest-owner'","UPDATE users SET admin=1 WHERE username='rest-owner'",403,'You do not have permission to modify this card'),('target list',owner,"UPDATE kb_card_lists SET list_id=2147483647 WHERE card_id="+str(f['cardId']),"UPDATE kb_card_lists SET list_id="+str(f['listId'])+" WHERE card_id="+str(f['cardId']),400,"List ID does not match the card's list"),('target lane',owner,"UPDATE kb_lanes SET title='changed target' WHERE id="+str(f['swimlaneId']),"UPDATE kb_lanes SET title="+saved_lane+" WHERE id="+str(f['swimlaneId']),400,"Swimlane ID does not match the card's swimlane")]
+    boundaries=[('AFTER INSERT ON kb_files','AFTER INSERT ON kb_attachment_data'),('AFTER INSERT ON kb_attachment_data','AFTER INSERT ON kb_activity'),('AFTER INSERT ON kb_activity','AFTER INSERT ON kb_history'),('AFTER INSERT ON kb_history',"AFTER UPDATE ON kb_item_changes WHEN NEW.kind='card' AND NEW.item_id="+str(f['cardId'])),("AFTER UPDATE ON kb_item_changes WHEN NEW.kind='card' AND NEW.item_id="+str(f['cardId']),None)]
+    for raw in (False,True):
+        for stage,restore_stage in boundaries:
+            for name,token,restrict,restore,status,error in mutations:
+                before=full_snapshot()
+                db.execute('CREATE TRIGGER upload_boundary_loss '+stage+' BEGIN '+restrict+'; END')
+                if restore_stage:db.execute('CREATE TRIGGER upload_boundary_restore '+restore_stage+' BEGIN '+restore+'; END')
+                db.commit()
+                try:
+                    result=upload(token=token,raw=raw)
+                    assert result==(status,{'success':False,'error':error}),(raw,stage,name,result)
+                    assert full_snapshot()==before,(raw,stage,name,'rollback')
+                finally:
+                    db.execute('DROP TRIGGER upload_boundary_loss')
+                    if restore_stage:db.execute('DROP TRIGGER upload_boundary_restore')
+                    db.commit()
+        assert upload(token=member,raw=raw)[0]==200
     # Permission is re-read after assignment removal; saved target IDs grant nothing.
     db.execute("UPDATE kb_cards SET assignee='' WHERE id=?",(f['cardId'],));db.commit();state=snapshot()
     assert upload(token=assigned,raw=True)[0]==403;assert upload(token=assigned)[0]==403;assert snapshot()==state
     db.execute("INSERT INTO kb_members (board_id,username,role) VALUES (?,?,'board-admin')",(f['boardId'],'rest-owner'))
     db.execute("INSERT INTO kb_member_flags (board_id,username,flag) VALUES (?,?,'isNormalAssignedOnly')",(f['boardId'],'rest-owner'));db.commit();state=snapshot()
     assert upload(token=admin)[0]==403;assert snapshot()==state
-print('Attachment upload REST: exact raw/JSON bytes/DTOs, full path, MIME/time metadata, four writer scopes, readonly/assignment-loss/raw-admin denial, configured byte limit and sanitized atomic rollback passed')
+print('Attachment upload REST: exact raw/JSON bytes/DTOs, full path, MIME/time metadata, four writer scopes, readonly/assignment-loss/raw-admin denial, configured byte limit and sanitized atomic rollback, per-boundary temporary role/assignment/raw/admin/target/token loss all-table rollback and retry passed')

@@ -346,7 +346,7 @@ Public Sub ArchiveCard(boardId As Integer, cardId As Integer, archived As Boolea
   CardArchive.Change(boardId, cardId, archived)
 End
 
-Public Sub Activity(boardId As Integer, message As String, Optional kind As String = "board", Optional itemId As Integer, Optional changed As Boolean = True)
+Public Sub Activity(boardId As Integer, message As String, Optional kind As String = "board", Optional itemId As Integer, Optional changed As Boolean = True, Optional apiUpload As Collection)
   Dim r As Result
   BoardAccess.RequireActivity(boardId)
   r = $db.Create("kb_activity")
@@ -355,8 +355,11 @@ Public Sub Activity(boardId As Integer, message As String, Optional kind As Stri
   r["message"] = message
   r["created_at"] = Now
   DatabaseText.Save($db, r, "kb_activity", ["board_id", "actor", "message", "created_at"], True)
+  If apiUpload Then BoardAccess.RequireApiUploadGuard(apiUpload)
   WorkspaceStore.Log(boardId, kind, itemId, message)
+  If apiUpload Then BoardAccess.RequireApiUploadGuard(apiUpload)
   If changed And (kind = "card" Or kind = "list") And itemId > 0 Then ItemChanges.Mark(boardId, kind, itemId)
+  If apiUpload Then BoardAccess.RequireApiUploadGuard(apiUpload)
 End
 
 Public Function Activities(boardId As Integer, Optional completeText As Boolean) As Result
