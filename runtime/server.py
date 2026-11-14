@@ -2,7 +2,6 @@
 """Local Gambas CGI host preserving runtime and database environment settings."""
 import argparse
 import base64
-import unicodedata
 import errno
 import ipaddress
 import hashlib
@@ -21,6 +20,7 @@ import os
 import subprocess
 import signal
 import urllib.parse
+from filename_policy import normalize_nfkd, public_attachment_disposition
 
 
 def all_boards_entry_section(path):
@@ -225,7 +225,7 @@ def canonical_upload_unicode(body):
 
 def attachment_disposition(filename):
     """ASCII fallback plus the source RFC 5987 UTF-8 filename."""
-    ascii_name = ''.join(char for char in unicodedata.normalize('NFKD', filename)
+    ascii_name = ''.join(char for char in normalize_nfkd(filename)
                          if 32 <= ord(char) <= 126).replace('\\', '-').replace('"', '-') or 'export'
     encoded = urllib.parse.quote(filename, safe="~!*'()-._")
     return f"attachment; filename=\"{ascii_name}\"; filename*=UTF-8''{encoded}"
@@ -820,7 +820,7 @@ def handler(application, runner, environment):
                                 and pieces[:3] == ['api', 'attachment', 'download']) and not public_attachment:
                             raise RuntimeError('Invalid download metadata')
                         filename = base64.b64decode(value.strip(), validate=True).decode('utf-8')
-                        parsed.append(('Content-Disposition', attachment_disposition(filename)))
+                        parsed.append(('Content-Disposition', public_attachment_disposition(filename) if public_attachment else attachment_disposition(filename)))
                     elif key.lower() not in ['content-length', 'connection', 'transfer-encoding']:
                         parsed.append((key, value.strip()))
                 if not api and (native or document):

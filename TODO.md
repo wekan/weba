@@ -165,8 +165,11 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Completed source-style live/history attachment captions with filename-only
   formatting, actor/ID retention, private description clearing and collision-safe
   actions. Unit and source/packaged detail/live evidence is in CHANGELOG.md.
-- Next detail/content focus: remaining copy/model mutation audits, stored/uploaded/
-  public-download filename-policy parity and any other display surfaces, legacy
+- Completed source-style public HTTP download filename headers, with offline
+  normalization pinned to the source Unicode engine and isolated packaged-runtime
+  coverage. Raw API disposition retains its separate source contract.
+- Next detail/content focus: remaining copy/model mutation audits, stored/uploaded
+  filename-policy parity and any other display surfaces, legacy
   file fidelity, nullable fields and model readers/writers.
   Atomic imported display-name provenance for owned entries/files and shared
   stored-placement guards are in CHANGELOG.md.

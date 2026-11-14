@@ -19,6 +19,14 @@ DEPENDENCIES = ['gambas3-runtime', 'gambas3-gb-crypt', 'gambas3-gb-db', 'gambas3
                 'gambas3-gb-signal', 'gambas3-gb-util', 'gambas3-gb-util-web', 'gambas3-gb-web', 'gambas3-gb-web-gui', 'python3']
 
 
+def copy_runtime(destination):
+    """Keep the host's offline filename policy/data beside its entrypoint."""
+    destination.mkdir(parents=True, exist_ok=True)
+    for name in ('server.py', 'filename_policy.py'):
+        shutil.copy2(ROOT / 'runtime' / name, destination / name)
+    shutil.copytree(ROOT / 'runtime/filename-data', destination / 'filename-data')
+
+
 def tar_bytes(directory, prefix='', epoch=0):
     buf = io.BytesIO()
     def normalize(info):
@@ -124,7 +132,7 @@ def package(tag, arch, source=False):
         subprocess.run([os.environ.get('GBA', 'gba3'), '-o', str(compiled), str(project)], check=True)
         bundle = work / 'bundle'; (bundle / 'runtime').mkdir(parents=True)
         shutil.copy2(compiled, bundle / 'weba.gambas')
-        shutil.copy2(ROOT / 'runtime/server.py', bundle / 'runtime/server.py')
+        copy_runtime(bundle / 'runtime')
         shutil.copy2(ROOT / 'LICENSE', bundle / 'LICENSE')
         shutil.copy2(ROOT / 'README.md', bundle / 'README.md')
         write(bundle / 'start-weba', '''#!/bin/sh
@@ -144,7 +152,7 @@ echo 'Installed. Install Gambas runtime/components and python3; then run weba.'
         tar_path = dist / f'weba-{tag}-linux-{arch}.tar.gz'
         tar_path.write_bytes(tar_bytes(bundle, f'weba-{tag}-linux-{arch}', epoch)); checksum(tar_path)
         data = work / 'data'; app = data / 'usr/share/weba'; app.mkdir(parents=True)
-        shutil.copy2(compiled, app / 'weba.gambas'); shutil.copy2(ROOT / 'runtime/server.py', app / 'server.py')
+        shutil.copy2(compiled, app / 'weba.gambas'); copy_runtime(app)
         write(data / 'usr/bin/weba', '#!/bin/sh\nexec python3 /usr/share/weba/server.py --app /usr/share/weba/weba.gambas "$@"\n', True)
         docs = data / 'usr/share/doc/weba'; docs.mkdir(parents=True)
         shutil.copy2(ROOT / 'LICENSE', docs / 'copyright'); shutil.copy2(ROOT / 'README.md', docs / 'README.md')

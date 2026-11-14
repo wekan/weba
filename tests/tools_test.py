@@ -115,3 +115,20 @@ class ReleaseToolsTest(unittest.TestCase):
 
 
 if __name__ == '__main__': unittest.main()
+
+
+class PackagedFilenameRuntimeTest(unittest.TestCase):
+    def test_offline_policy_and_unicode_data_are_self_contained(self):
+        with tempfile.TemporaryDirectory() as work:
+            destination = Path(work) / 'runtime'
+            package.copy_runtime(destination)
+            for name in ('server.py', 'filename_policy.py', 'filename-data/normalization.json.gz',
+                         'filename-data/manifest.json', 'filename-data/LICENSE-Unicode.txt'):
+                self.assertTrue((destination / name).is_file(), name)
+            result = subprocess.run([sys.executable, '-c',
+                'import server; print(server.public_attachment_disposition("Ｆｉｌｅ <tag>.txt")); '
+                'print(server.attachment_disposition("𜳖.txt"))'], cwd=destination,
+                check=True, capture_output=True, text=True)
+            self.assertEqual(result.stdout.splitlines(), [
+                'attachment; filename="File .txt"',
+                "attachment; filename=\"A.txt\"; filename*=UTF-8''%F0%9C%B3%96.txt"])

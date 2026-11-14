@@ -390,7 +390,7 @@ class AttachmentDownloadTransportTest(unittest.TestCase):
         filename = 'Résumé "quote"\r\nInjected: value.html'
         encoded = base64.b64encode(filename.encode()).decode()
         result = SimpleNamespace(returncode=0, stdout=(f"Status: 200\r\nContent-Type: text/html\r\nX-WeBa-Download-Name: {encoded}\r\n\r\n".encode() + b'\x00\xff<script>never run</script>'))
-        for route in ('/api/attachment/download/1?raw=1','/api/attachment/info/1','/'):
+        for route in ('/api/attachment/download/1?raw=1','/_weba/public-attachment/1/1/1','/api/attachment/info/1','/'):
             request = NativeOriginTest().request('GET', route)
             request.rfile = io.BytesIO()
             request.wfile = io.BytesIO()
@@ -402,10 +402,10 @@ class AttachmentDownloadTransportTest(unittest.TestCase):
                 request._run_cgi()
             headers = [call.args for call in request.send_header.call_args_list]
             self.assertFalse(any(key.lower()=='x-weba-download-name' for key,value in headers))
-            if '/download/' in route:
+            if '/download/' in route or '/public-attachment/' in route:
                 request.send_error.assert_not_called()
                 disposition = dict(headers)['Content-Disposition']
-                self.assertEqual(disposition, server.attachment_disposition(filename))
+                self.assertEqual(disposition, server.public_attachment_disposition(filename) if "/public-attachment/" in route else server.attachment_disposition(filename))
                 self.assertNotIn('\r', disposition)
                 self.assertNotIn('\n', disposition)
                 self.assertEqual(request.wfile.getvalue(), b'\x00\xff<script>never run</script>')

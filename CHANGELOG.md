@@ -2,6 +2,21 @@
 
 This work adds the following features and fixes:
 
+- Match public HTTP attachment download filenames to the source universal file
+  server. Clean percent encoding, Unicode/confusables, invisible/exploit text and
+  length/bracket limits before building the distinct public Content-Disposition;
+  preserve the separate raw API format and exact attachment bytes/access checks.
+  Include offline Unicode normalization data pinned to the original source engine
+  so older Python Unicode databases cannot change the result. Ship the policy,
+  data and Unicode license with tar/Debian runtimes. All 1,112,064 Unicode scalars,
+  100,170 official normalization test columns and 1,179 filename cases match the
+  unchanged source; source/packaged public browser downloads cover cleaned names,
+  exact bytes, scope/privacy/assignment and retained files. Isolated runtime
+  packaging and public/raw transport tests pass with the Python and full host/API/
+  security/session checks. Stored/uploaded filenames and other display surfaces
+  remain under audit.
+  Thanks to xet7.
+
 - Clean live and history attachment captions with the source filename policy.
   Send a scoped, binary-free description of native f/h rows and format only the
   filename text with the unchanged cleaner. Preserve history action/actor text,
