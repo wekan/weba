@@ -38,10 +38,14 @@ node tools/import-filename-normalization.cjs /path/to/wekan
 
 `native-upload-filename-policy.test.cjs` compares the source hook and resource
 hashes; native model and chooser tests also exercise the actual isolated bridge,
-failure rollback and exact bytes. Gambas uses an argument array with synchronous
-capture ([EXEC documentation](https://gambaswiki.org/wiki/lang/exec)); filenames
-are Base64 data, never shell commands. Script and table arguments stay under a
-96KB budget; the model bounds raw filename input to 4096 bytes and verifies
+failure rollback and exact bytes. Gambas uses an argument array and private
+stdin/stdout pipes ([EXEC documentation](https://gambaswiki.org/wiki/lang/exec)).
+Filename requests are Base64 inside JSON on stdin; only public script/table data
+appear in argv, within a 96KB budget. Requests are capped at 8192 bytes, responses
+at 4096 bytes and execution at three seconds. Worker stderr is discarded; errors
+are generic, and failed workers are killed/reaped. Real process probes verify
+argument privacy, malformed/oversized/noisy/nonzero/stalled workers and retry.
+The model bounds raw filename input to 4096 bytes and verifies
 the source 30-code-point result cap. The interactive source hook runs before the
 legacy basename gate, preserving its dot/path-only `unnamed` fallback. Client
 metadata pre-cleaning and server pre-cleaning are independent;

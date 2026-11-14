@@ -2,13 +2,56 @@
 Export
 
 Private Function RunPolicy(filename As String, mode As String) As Variant
-  Dim responseText As String
+  Dim worker As Process
+  Dim request As New Collection
+  Dim state As New Collection
+  Dim value As Variant
+  Dim deadline As Float
   If Len(filename) > 4096 Then Error.Raise("Filename input exceeds policy limit")
-  Exec ["python3", "-I", "-c", File.Load(".public/native-filename-policy.py"), File.Load(".public/native-filename-data.b64"), Base64(filename), mode] To responseText
-  If Process.LastValue <> 0 Then Error.Raise("Filename normalization failed")
-  Return JsonText.Decode(responseText, 4096)
+  request.Add(Base64(filename), "filename")
+  request.Add(mode, "mode")
+  state.Add("", "text")
+  state.Add(False, "invalid")
+  worker = Exec ["python3", "-I", "-S", "-c", File.Load(".public/native-filename-policy.py"), File.Load(".public/native-filename-data.b64")] For Read Write As "PolicyWorker"
+  worker.Tag = state
+  Print #worker, JsonText.Encode(request)
+  worker.CloseInput()
+  deadline = Timer + 3
+  While worker.State = Process.Running And Timer < deadline
+    worker.Wait(Max(0.001, deadline - Timer))
+  Wend
+  If worker.State <> Process.Stopped Or worker.Value <> 0 Or state["invalid"] Then Error.Raise("Filename normalization failed")
+  value = JsonText.Decode(state["text"], 4096)
+  worker.Tag = Null
+  Return value
 Catch
+  If worker Then
+    If worker.State = Process.Running Then
+      Try worker.Kill()
+      Try worker.Wait(1)
+    Endif
+  Endif
   Error.Raise("Filename normalization failed")
+End
+
+Public Sub PolicyWorker_Read()
+  Dim worker As Process = Last
+  Dim state As Collection = worker.Tag
+  Dim chunk As String = Read #worker, -4096
+  If Not state Then Return
+  If Len(state["text"]) + Len(chunk) > 4096 Then
+    state["invalid"] = True
+    Try worker.Kill()
+  Else
+    state["text"] = state["text"] & chunk
+  Endif
+End
+
+Public Sub PolicyWorker_Error(discarded As String)
+  Dim worker As Process = Last
+  Dim state As Collection = worker.Tag
+  If state Then state["invalid"] = True
+  Try worker.Kill()
 End
 
 Private Function CheckedName(value As Variant) As String

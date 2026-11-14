@@ -194,6 +194,10 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   with exact source verdicts, no-write model/UI checks and valid retry notice
   clearing. REST/import/content/type/extension/SVG/copy stages remain open;
   source/packaged detail/live and full check evidence is in CHANGELOG.md.
+- Completed bounded private native filename worker transport and failure cleanup;
+  request/argv privacy, exact source results, malformed/noisy/oversized/nonzero/
+  timeout refusal and retry evidence is in CHANGELOG.md. Content detection and
+  remaining REST/import/copy policy audits remain open.
 - Next detail/content focus: remaining copy/model mutation audits, stored/uploaded
   filename-policy parity and any other display surfaces, legacy
   file fidelity, nullable fields and model readers/writers.

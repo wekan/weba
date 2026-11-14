@@ -5,10 +5,10 @@
   "clientTemplateSha256": "fd516e74eacbda07f6b58a7c542b1ae68e6dec3d94043d1f5bd4b9a66a555015",
   "clientSha256": "0537e2c47ded6bf8e1309301c15311b972df43eef4dd470c2e19643a1c75cf2b",
   "policySha256": "36169bb29451cf8065e151704bc3f69551887ba550038d1bfc21e378d8c59541",
-  "driverSha256": "4a5d18f0c84015ba2bbb3a3ebfde3feb7269119e192db7046271763ac3bd4821",
-  "scriptSha256": "4cc6ba9fe29fa7e3af3d0edcca9c65ecc401dfd4a90829c8b3e29a6f03f1d84b",
+  "driverSha256": "78edcf9575cab5583f8238e0d26d50c0aad8331112626a9f84aee38cf3046fc8",
+  "scriptSha256": "020a1c408370758f6afd9063a5a13f3858bb2665cee644c7a812ebdb238012cc",
   "dataSha256": "5dd2cedf9e199960dd6a1e36c504ca87198b82137a3c275a16c2f7dcc04eb461",
   "base64Sha256": "20d550a65a17bdc33cee83e64855b2d72dbffa72e813d6d70911771c2eeba0b0",
-  "scriptBytes": 9143,
+  "scriptBytes": 9499,
   "dataArgumentBytes": 47636
 }

@@ -2,6 +2,17 @@
 
 This work adds the following features and fixes:
 
+- Send native filename policy requests through bounded private stdin rather
+  than process arguments. Keep only public policy/code tables in argv, cap
+  responses, enforce a deadline, suppress worker stderr and reap failed workers.
+  Actual Gambas probes verify exact source names, private request transport,
+  malformed/oversized/stderr/nonzero/timeout failures and successful retry.
+  Full host/API/security/session/text checks, 71 Python tests, Unicode/source
+  comparisons and source/packaged chooser/detail/live browser checks pass.
+  This prepares the bridge for content-policy work; MIME detection, extension
+  correction, SVG and remaining REST/import/copy stages remain open.
+  Thanks to xet7.
+
 - Reject exploit-looking interactive filenames after the client/server pre-clean
   stages, using the exact decoded-name classifier from uploadFileName.js.
   Match JavaScript ASCII word/case rules and ECMAScript whitespace for event
