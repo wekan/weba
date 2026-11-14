@@ -95,7 +95,7 @@ Private Function Build(boardId As Integer, reference As String, apiContext As Bo
     cardId = r!card_id
     data["_id"] = CStr(r!id)
     data["cardId"] = CStr(cardId)
-    data.Add(ExportText.ReadValue(r, "filename"), "name")
+    data.Add(ExportText.ReadNullableValue(r, "filename"), "name")
     metadata = db.Find("kb_attachment_data", "board_id=&1 AND card_id=&2 AND file_id=&3", boardId, cardId, fileId)
     If metadata.Available Then
       If Not IsNull(metadata!mime) Then mime = metadata!mime

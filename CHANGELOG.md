@@ -2,6 +2,20 @@
 
 This work adds the following features and fixes:
 
+- Distinguish legacy NULL and empty attachment names in list/info/JSON downloads
+  and native/API single-file export. Read nullable text through the projection's
+  SQL NULL marker so the SQLite driver's empty-text coercion cannot change JSON
+  scalar types. Raw API replies use the original sendRawFile fallback attachment
+  for either missing name; public downloads keep their distinct download policy.
+  Source/packaged HTTP tests verify NULL/empty/NUL-Unicode names, original bytes,
+  reader/assigned scope and unchanged SQL snapshots. Native model and source/
+  packaged UI export cases check null versus empty JSON names, read-only/keyboard
+  downloads, stable file-ID selection and deleted/history refusal. The unchanged
+  raw source helper body anchors the route fallback; full host/API/security/
+  session/text/filename checks pass. MIME and uploaded-name policy audits remain
+  open.
+  Thanks to xet7.
+
 - Preserve legacy filename suffixes after embedded NULs in public attachment
   downloads, bearer list/info/JSON/raw reads and shared native/API single-file
   exports. Read filename text through existing lossless SQLite projections;

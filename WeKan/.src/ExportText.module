@@ -149,6 +149,16 @@ Public Function ReadValue(row As Result, field As String) As String
   Return CStr(value)
 End
 
+Public Function ReadNullableValue(row As Result, field As String) As Variant
+  Dim marker As String = "__weba_null_" & field
+  If row.Fields.Exist(marker) Then
+    If CBool(row[marker]) Then Return Null
+  Else If IsNull(row[field]) Then
+    Return Null
+  Endif
+  Return ReadValue(row, field)
+End
+
 Public Function ReadNumber(row As Result, field As String) As Variant
   Dim number As Float
   Dim key As String = "__weba_number_" & field

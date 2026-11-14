@@ -32,6 +32,13 @@ def main():
         def snapshot():
             names=[r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table' AND (name LIKE 'kb_%' OR name IN ('api_tokens','import_export_settings','users'))")]
             return {t:sorted(db.execute('SELECT * FROM '+t).fetchall(),key=repr) for t in names}
+        for nullable_name in (None, ''):
+            db.execute('UPDATE kb_files SET filename=? WHERE id=?',(nullable_name,f['fileId']));db.commit()
+            frame=snapshot()
+            for token in (owner,reader):
+                assert pair(url,token=token)==(200,{**expected,'name':nullable_name})
+            assert snapshot()==frame
+        db.execute('UPDATE kb_files SET filename=? WHERE id=?',(name,f['fileId']));db.commit()
         before=snapshot()
         status,document,headers=call(url,token=owner)
         assert (status,document)==(200,expected)

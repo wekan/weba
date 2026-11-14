@@ -37,7 +37,19 @@ Public Sub Main()
     r["filename"] = name
     DatabaseText.Save(WebDatabase.OpenConnection(), r, "kb_files", ["filename"], False)
     data["fileId"] = fileId
-    data["name"] = name
+    If Env["WEBA_NATIVE_EXPORT_NAME_STATE"] = "null" Or Env["WEBA_NATIVE_EXPORT_NAME_STATE"] = "empty" Then
+      r = WebDatabase.OpenConnection().Edit("kb_files", "id=&1", fileId)
+      If Env["WEBA_NATIVE_EXPORT_NAME_STATE"] = "null" Then
+        r["filename"] = Null
+        data.Add(JSON.Null, "name")
+      Else
+        r["filename"] = ""
+        data.Add("", "name")
+      Endif
+      DatabaseText.Save(WebDatabase.OpenConnection(), r, "kb_files", ["filename"], False)
+    Else
+      data.Add(name, "name")
+    Endif
     data["type"] = "text/html"
     r = WebDatabase.OpenConnection().Find("kb_files", "id=&1", fileId)
     data["bytes"] = Base64(r!content.Data)

@@ -43,7 +43,7 @@ Private Function Metadata(r As Result) As Collection
   Dim mime As String = r!mime
   If Not mime Then mime = "application/octet-stream"
   data.Add(CStr(r!id), "attachmentId")
-  data.Add(ExportText.ReadValue(r, "filename"), "fileName")
+  data.Add(ExportText.ReadNullableValue(r, "filename"), "fileName")
   data.Add(CLong(r!file_size), "fileSize")
   data.Add(mime, "fileType")
   data.Add("database", "storageBackend")
