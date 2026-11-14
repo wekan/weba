@@ -3,9 +3,9 @@
   "unicode": "17.0",
   "sourceFile": "imports/lib/fileNameDisplay.js",
   "sourceSha256": "4ec06b245f873c2d02b3bcad999ea49cf4acdcd2a449d27735289d2f2c186e1c",
-  "dataSha256": "7e73316bfa8c70d6b8d733f8ba5278ce7ad7ecb2627c8200ed4c246ea6f46cdf",
-  "decompositions": 17086,
-  "compositions": 12133,
+  "dataSha256": "5dd2cedf9e199960dd6a1e36c504ca87198b82137a3c275a16c2f7dcc04eb461",
+  "decompositions": 5914,
+  "compositions": 961,
   "nonstarters": 964,
   "orderingClasses": 55
 }

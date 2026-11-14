@@ -2,6 +2,31 @@
 
 This work adds the following features and fixes:
 
+- Apply the source interactive onBeforeUpload filename policy at the native
+  attachment chooser and model's explicit interactive entry point. Copy the
+  unchanged client hook in a scoped, idempotent wrapper; preserve File bytes,
+  MIME/time metadata and the existing native change event. Recheck names in the
+  model with an isolated Python stdlib bridge embedded in the compiled app;
+  filenames are Base64 arguments, never shell commands. Run the interactive
+  source hook before the legacy basename gate so dot/path-only names retain its
+  unnamed fallback; bound bridge input/output. Preserve authorization,
+  limits and atomic failure/retry behavior. REST/import/post-upload stages keep
+  their independent source policies and remain under audit.
+  Compact the shared Unicode tables with standard algorithmic Hangul, reducing
+  gzip data from 134,998 to 35,725 bytes without changing any scalar/corpus/source
+  filename result. Record client/source/policy/driver/data/license hashes and keep
+  arguments below a portable budget. Source comparisons cover 1,017 hook inputs;
+  native bridge/model tests cover NUL/lone-surrogate/paths/Hangul/shell text,
+  missing Python, SQL rollback/retry and readonly denial. Source/packaged chooser
+  tests verify double client/server cleaning, nested encoding, exact stored text/
+  bytes/actors, stable IDs and no-write downloads using an original-source browser
+  filename reference. Client tests reject unrelated/import/hidden/disabled/
+  detached/mismatched inputs and preserve bytes/type/time. Full host/API/security/
+  session/text/filename checks pass. Upload-start validation, server exploit
+  rejection, content detection, extension correction, SVG and copy/import policy
+  audits remain open.
+  Thanks to xet7.
+
 - Preserve legacy MIME values in attachment list/info/JSON downloads and native/
   API single-file export. Use lossless nullable metadata reads for NULL, empty,
   NUL/Unicode/CRLF and long strings beyond the declared field length. Distinguish

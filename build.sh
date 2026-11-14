@@ -62,6 +62,8 @@ tests() {
   "${NODE:-node}" tests/filename-policy.test.cjs
   "${NODE:-node}" tests/filename-display.test.cjs
   "${NODE:-node}" tests/public-filename-policy.test.cjs
+  "${NODE:-node}" tests/native-upload-filename-policy.test.cjs
+  "${NODE:-node}" tests/native-upload-filename-client.test.cjs
   "${NODE:-node}" tests/drag.test.cjs
   "${NODE:-node}" tests/workspace-drag.test.cjs
   "${NODE:-node}" tests/board-drop.test.cjs

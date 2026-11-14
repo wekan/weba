@@ -1,0 +1,98 @@
+Public Sub Main()
+  Dim values As Variant[]
+  Dim value As Variant
+  Dim results As New Variant[]
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim id As Integer
+  Dim db As Connection
+  Dim r As Result
+  Dim before As String
+  Dim previousPath As String
+  Dim failure As String
+  Dim bytes As String = "exact" & Chr(0) & Chr(255)
+  If Env["WEBA_NATIVE_FILENAME_CASES"] Then
+    values = JsonText.Decode(File.Load(Env["WEBA_NATIVE_FILENAME_CASES"]))
+    For Each value In values
+      results.Add(NativeFileNames.BeforeUpload(value))
+    Next
+    Print JsonText.Encode(results)
+    Return
+  Endif
+  WebDatabase.Register("filename-admin", "x")
+  WebDatabase.Register("filename-owner", "x")
+  WebDatabase.Register("filename-reader", "x")
+  SignIn("filename-owner")
+  boardId = KanbanStore.AddBoard("Native pre-upload filename")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Card", "", "Default", "Todo", "", "", "")
+  BoardAccess.SetMember(boardId, "filename-reader", "read-only")
+  db = WebDatabase.OpenConnection()
+  id = CardContent.UploadFile(boardId, cardId, "baseline.bin", bytes)
+  For Each value In [".", "..", "/directory/", " /directory/ "]
+    id = CardContent.UploadFile(boardId, cardId, value, bytes, "application/octet-stream", True)
+    r = CardContent.FileRecord(boardId, cardId, id, True)
+    If ExportText.ReadValue(r, "filename") <> NativeFileNames.BeforeUpload(value) Then Error.Raise("Interactive basename ran before source hook")
+  Next
+  before = Frame()
+  previousPath = Env["PATH"]
+  Env["PATH"] = "/nonexistent-native-filename-test"
+  Try CardContent.UploadFile(boardId, cardId, "failed%20name.txt", bytes, "application/octet-stream", True)
+  failure = Error.Text
+  Env["PATH"] = previousPath
+  If failure <> "Filename normalization failed" Or Frame() <> before Then Error.Raise("Filename bridge failure changed storage")
+  id = CardContent.UploadFile(boardId, cardId, "retry%20<literal>.txt", bytes, "application/octet-stream", True)
+  r = CardContent.FileRecord(boardId, cardId, id, True)
+  If ExportText.ReadValue(r, "filename") <> "retry .txt" Or r!content.Data <> bytes Then Error.Raise("Normalized filename retry lost name/bytes")
+  db.Exec("CREATE TRIGGER native_filename_abort AFTER INSERT ON kb_files BEGIN SELECT RAISE(ABORT,'filename-insert-failure'); END")
+  before = Frame()
+  failure = ""
+  Try CardContent.UploadFile(boardId, cardId, "sql%20retry.txt", bytes, "application/octet-stream", True)
+  failure = Error.Text
+  If Not failure Or Frame() <> before Then Error.Raise("Normalized upload SQL failure changed storage")
+  db.Exec("DROP TRIGGER native_filename_abort")
+  id = CardContent.UploadFile(boardId, cardId, "sql%20retry.txt", bytes, "application/octet-stream", True)
+  r = CardContent.FileRecord(boardId, cardId, id, True)
+  If ExportText.ReadValue(r, "filename") <> "sql retry.txt" Or r!content.Data <> bytes Then Error.Raise("SQL retry lost normalized bytes/name")
+  SignIn("filename-reader")
+  before = Frame()
+  previousPath = Env["PATH"]
+  Env["PATH"] = "/nonexistent-native-filename-test"
+  failure = ""
+  Try CardContent.UploadFile(boardId, cardId, "denied.txt", bytes, "application/octet-stream", True)
+  failure = Error.Text
+  Env["PATH"] = previousPath
+  If Not failure Or failure = "Filename normalization failed" Or Frame() <> before Then Error.Raise("Readonly upload reached bridge or changed storage")
+  Print "Native filename policy: exact stored text/bytes, child failure and SQL rollback/retry, readonly denial before bridge and no partial rows passed"
+End
+
+Private Sub SignIn(username As String)
+  Session["username"] = username
+  Session["auth_generation"] = WebDatabase.SessionGeneration(username)
+End
+
+Private Function Frame() As String
+  Dim db As Connection = WebDatabase.OpenConnection()
+  Dim names As New String[]
+  Dim table As Table
+  Dim name As String
+  Dim field As Variant
+  Dim columns As String[]
+  Dim rows As New String[]
+  Dim r As Result
+  For Each table In db.Tables
+    names.Add(table.Name)
+  Next
+  names.Sort()
+  For Each name In names
+    columns = New String[]
+    For Each field In db.Tables[name].Fields
+      columns.Add("typeof(" & Chr(34) & field.Name & Chr(34) & ")||':'||hex(CAST(" & Chr(34) & field.Name & Chr(34) & " AS BLOB))")
+    Next
+    r = db.Exec("SELECT " & columns.Join("||','||") & " AS frame FROM " & Chr(34) & name & Chr(34) & " ORDER BY 1")
+    rows.Add(name)
+    For Each r
+      rows.Add(r!frame)
+    Next
+  Next
+  Return rows.Join(Chr(10))
+End

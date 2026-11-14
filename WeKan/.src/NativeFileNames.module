@@ -1,0 +1,16 @@
+' Interactive pre-upload policy; server REST/post-upload stages are independent.
+Export
+
+Public Function BeforeUpload(filename As String) As String
+  Dim responseText As String
+  Dim value As Variant
+  If Len(filename) > 4096 Then Error.Raise("Filename input exceeds policy limit")
+  Exec ["python3", "-I", "-c", File.Load(".public/native-filename-policy.py"), File.Load(".public/native-filename-data.b64"), Base64(filename)] To responseText
+  If Process.LastValue <> 0 Then Error.Raise("Filename normalization failed")
+  value = JsonText.Decode(responseText, 4096)
+  If TypeOf(value) <> gb.String Then Error.Raise("Invalid filename normalization result")
+  If ExportText.Length(value) > 30 Then Error.Raise("Invalid filename normalization length")
+  Return value
+Catch
+  Error.Raise("Filename normalization failed")
+End

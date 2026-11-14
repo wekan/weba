@@ -6,7 +6,7 @@ const sourceBytes=fs.readFileSync(path.join(source,'imports/lib/fileNameDisplay.
 const confusables=require('node:vm').runInNewContext('('+literal[1]+')');
 const nfkd={},compose={},marks=[],high='\u0345',low='\u0334';
 for(let cp=0;cp<=0x10FFFF;cp++){
- if(cp>=0xD800&&cp<=0xDFFF)continue;
+ if((cp>=0xD800&&cp<=0xDFFF)||(cp>=0xAC00&&cp<=0xD7A3))continue;
  const char=String.fromCodePoint(cp),kd=char.normalize('NFKD'),d=char.normalize('NFD');
  if(kd!==char)nfkd[cp]=Array.from(kd,c=>c.codePointAt(0));
  if(d===char){const probe=('A'+high+char+low).normalize('NFD');if(probe.indexOf(low)<probe.indexOf(high))marks.push(char);}
@@ -18,3 +18,5 @@ const data={unicode:process.versions.unicode,nfkd,compose,ranks,confusables},enc
 const sha=value=>crypto.createHash('sha256').update(value).digest('hex');fs.writeFileSync(path.join(out,'manifest.json'),JSON.stringify({node:process.versions.node,unicode:process.versions.unicode,sourceFile:'imports/lib/fileNameDisplay.js',sourceSha256:sha(sourceBytes),dataSha256:sha(encoded),decompositions:Object.keys(nfkd).length,compositions:Object.keys(compose).length,nonstarters:marks.length,orderingClasses:rank},null,2)+'\n');
 const license=fs.readFileSync(path.join(path.dirname(process.execPath),'../LICENSE'),'utf8'),start=license.indexOf('    UNICODE LICENSE V3'),end=license.indexOf('    ----------------------------------------------------------------------',start);if(start<0||end<0)throw Error('Node Unicode license required');fs.writeFileSync(path.join(out,'LICENSE-Unicode.txt'),license.slice(start,end).replace(/^    /gm,''));
 console.log('Imported source Unicode '+data.unicode+': '+Object.keys(nfkd).length+' decompositions, '+Object.keys(compose).length+' compositions, '+marks.length+' nonstarters in '+rank+' ordering classes');
+
+require('./import-native-filenames.cjs');

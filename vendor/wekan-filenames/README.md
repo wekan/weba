@@ -22,3 +22,28 @@ Public HTTP header normalization also uses offline data in
 https://www.unicode.org/Public/17.0.0/ucd/NormalizationTest.txt, compressed locally.
 Its copyright header is preserved; `runtime/filename-data/LICENSE-Unicode.txt`
 contains the Unicode license.
+
+
+Interactive upload pre-cleaning uses the unchanged `Attachments.onBeforeUpload`
+body in `native-upload-filenames.js`, scoped to the actual native chooser. The
+model's explicit interactive flag runs the corresponding offline Python policy;
+raw/JSON REST uploads and imports keep their separate source stages. The resource
+bundle includes the unchanged runtime Python policy plus a small isolated driver,
+the compact normalization table and Unicode license. `native-manifest.json`
+records source hook, template, policy, driver, script and data hashes. Regenerate:
+
+```sh
+node tools/import-filename-normalization.cjs /path/to/wekan
+```
+
+`native-upload-filename-policy.test.cjs` compares the source hook and resource
+hashes; native model and chooser tests also exercise the actual isolated bridge,
+failure rollback and exact bytes. Gambas uses an argument array with synchronous
+capture ([EXEC documentation](https://gambaswiki.org/wiki/lang/exec)); filenames
+are Base64 data, never shell commands. Script and table arguments stay under a
+96KB budget; the model bounds raw filename input to 4096 bytes and verifies
+the source 30-code-point result cap. The interactive source hook runs before the
+legacy basename gate, preserving its dot/path-only `unnamed` fallback. Client
+metadata pre-cleaning and server pre-cleaning are independent;
+REST/post-upload exploit rejection, type detection, extension correction and
+SVG/copy/import policies remain under audit in TODO.md.

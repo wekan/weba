@@ -181,6 +181,11 @@ DB operations. This is an initial implementation, not complete WeKan parity.
   single-file export, with distinct missing-row defaults, safe raw headers and
   source/packaged API/UI/model evidence in CHANGELOG.md. Broader board export/
   copy/import MIME remains under audit.
+- Completed interactive chooser/model pre-upload filename cleaning with the
+  unchanged client hook, offline compiled bridge, exact stored bytes/text, failure
+  rollback and source/packaged UI/model evidence in CHANGELOG.md. Upload-start
+  validation, REST/import/server post-upload exploit/type/extension/SVG and copy
+  policies remain open.
 - Next detail/content focus: remaining copy/model mutation audits, stored/uploaded
   filename-policy parity and any other display surfaces, legacy
   file fidelity, nullable fields and model readers/writers.

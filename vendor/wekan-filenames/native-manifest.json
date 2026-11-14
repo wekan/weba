@@ -1,0 +1,12 @@
+{
+  "sourceHookSha256": "fb269e3871f63b859e5a886b73255595c9acb691daf96bda38ae460dd449e3cf",
+  "clientTemplateSha256": "21857f9be0c2f1915dd1cbe8382a1cc0479ad9334ed98cb4fe26c899f4cc66e8",
+  "clientSha256": "2e45e28e357935cde50b5623980a95bd246e8182967359edc321f2396266eb14",
+  "policySha256": "cb1d28feab9cbba20a917427404772ac3046d75712172eab68df10a08ef146d0",
+  "driverSha256": "8681323f207dc86fef8cc3bfcdfdaf2ecdfc9dccbb0ee7a9cbe9f5c15b055da5",
+  "scriptSha256": "2c8224148c065a8133acebd00b8f7d246fc1c3bffb8c2c51590ac821018f28f4",
+  "dataSha256": "5dd2cedf9e199960dd6a1e36c504ca87198b82137a3c275a16c2f7dcc04eb461",
+  "base64Sha256": "20d550a65a17bdc33cee83e64855b2d72dbffa72e813d6d70911771c2eeba0b0",
+  "scriptBytes": 7877,
+  "dataArgumentBytes": 47636
+}

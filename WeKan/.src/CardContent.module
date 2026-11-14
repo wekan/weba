@@ -968,7 +968,7 @@ Private Sub RequireFileCreation(boardId As Integer, cardId As Integer, fileId As
   Endif
 End
 
-Private Function CreateFile(boardId As Integer, cardId As Integer, filename As String, data As String, mime As String, maxBytes As Integer, upload As Boolean, Optional api As Collection) As Integer
+Private Function CreateFile(boardId As Integer, cardId As Integer, filename As String, data As String, mime As String, maxBytes As Integer, upload As Boolean, Optional api As Collection, Optional beforeUpload As Boolean) As Integer
   Dim transaction As Boolean
   Dim failure As String
   Dim r As Result
@@ -992,11 +992,15 @@ Private Function CreateFile(boardId As Integer, cardId As Integer, filename As S
     If WorkspaceStore.Setting(boardId, "board", boardId, "allowsAttachments", "1") <> "1" Then Error.Raise("Attachments are not allowed on this board")
     TransferPolicy.RequireTransfer("attachmentsUpload", Len(data))
   Endif
-  filename = Replace(filename, "\\", "/")
-  If InStr(filename, Chr(0)) Then
-    filename = Mid(filename, RInStr(filename, "/") + 1)
+  If beforeUpload Then
+    filename = NativeFileNames.BeforeUpload(filename)
   Else
-    filename = File.Name(filename)
+    filename = Replace(filename, "\\", "/")
+    If InStr(filename, Chr(0)) Then
+      filename = Mid(filename, RInStr(filename, "/") + 1)
+    Else
+      filename = File.Name(filename)
+    Endif
   Endif
   If Not filename Or ExportText.Length(filename) > 255 Or maxBytes < 0 Or maxBytes > 67108864 Or Len(data) > maxBytes Then Error.Raise("Choose a file within the size limit with a valid name")
   If Not mime Then mime = "application/octet-stream"
@@ -1174,7 +1178,7 @@ Public Sub CopyRecords(sourceBoard As Integer, sourceCard As Integer, targetBoar
   If guards Then RememberCopiedFiles(targetBoard, targetCard, copiedFiles, copiedCover, guards)
 End
 
-Public Function UploadFile(boardId As Integer, cardId As Integer, filename As String, bytes As String, Optional mime As String = "application/octet-stream") As Integer
+Public Function UploadFile(boardId As Integer, cardId As Integer, filename As String, bytes As String, Optional mime As String = "application/octet-stream", Optional beforeUpload As Boolean) As Integer
   Dim actor As String = WebIdentity.Username
   Dim id As Integer
   Dim transaction As Boolean
@@ -1192,7 +1196,7 @@ Public Function UploadFile(boardId As Integer, cardId As Integer, filename As St
   BoardAccess.Require(boardId, "write")
   If WorkspaceStore.Setting(boardId, "board", boardId, "allowsAttachments", "1") <> "1" Then Error.Raise("Attachments are not allowed on this board")
   TransferPolicy.RequireTransfer("attachmentsUpload", Len(bytes))
-  id = CreateFile(boardId, cardId, filename, bytes, mime, CInt(Floor(TransferPolicy.Limit("attachmentsUpload"))), True)
+  id = CreateFile(boardId, cardId, filename, bytes, mime, CInt(Floor(TransferPolicy.Limit("attachmentsUpload"))), True, Null, beforeUpload)
   If WebIdentity.Username <> actor Then Error.Raise("Sign in required")
   RequireCard(boardId, cardId)
   BoardAccess.Require(boardId, "write")

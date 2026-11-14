@@ -24,7 +24,13 @@ def _ordered_points(text):
     points = []
     for char in text:
         cp = ord(char)
-        points.extend(decompose.get(cp, (cp,)))
+        syllable = cp - 0xAC00
+        if 0 <= syllable < 11172:
+            points.extend((0x1100 + syllable // 588, 0x1161 + (syllable % 588) // 28))
+            if syllable % 28:
+                points.append(0x11A7 + syllable % 28)
+        else:
+            points.extend(decompose.get(cp, (cp,)))
     # Stable order within each nonstarter run, never across a starter.
     ordered = []
     pending = []
@@ -54,6 +60,12 @@ def normalize_nfkc(text):
     for cp in ordered:
         rank = ranks.get(cp, 0)
         combined = compose.get((result[starter], cp)) if starter is not None else None
+        if combined is None and starter is not None:
+            first = result[starter]
+            if 0x1100 <= first < 0x1113 and 0x1161 <= cp < 0x1176:
+                combined = 0xAC00 + ((first - 0x1100) * 21 + cp - 0x1161) * 28
+            elif 0 <= first - 0xAC00 < 11172 and (first - 0xAC00) % 28 == 0 and 0x11A8 <= cp < 0x11C3:
+                combined = first + cp - 0x11A7
         if combined is not None and (last_rank == 0 or last_rank < rank):
             result[starter] = combined
         else:
@@ -159,3 +171,19 @@ def public_attachment_disposition(filename):
         fallback, encoded = value.split('|RFC5987:')[:2]
         return f"attachment; filename=\"{fallback}\"; filename*=UTF-8''{encoded}"
     return f'attachment; filename="{value}"'
+
+
+def before_upload_filename(name):
+    """Interactive onBeforeUpload name stage; REST/post-upload is separate."""
+    if not isinstance(name, str) or not name:
+        return name
+    safe = re.split(r'[\\/]', name)[-1].replace('\0', '')
+    while True:
+        previous = safe
+        safe = re.sub(r'\.\.[\\/]', '', safe)
+        if safe == previous:
+            break
+    safe = re.sub(r'^\.\.$', '', safe).strip(_SPACE)
+    if not safe or safe in ('.', '..'):
+        safe = 'unnamed'
+    return clean_filename(safe) or 'unnamed'

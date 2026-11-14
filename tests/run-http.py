@@ -218,6 +218,7 @@ with tempfile.TemporaryDirectory(prefix='weba-http.', dir=os.environ['TMPDIR']) 
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/attachment-reads-conformance.test.cjs')], check=True, env=env)
         elif '--attachment-upload' in sys.argv:
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/attachment-upload.browser.cjs')], check=True, env=env)
+            subprocess.run([env.get('NODE', 'node'), str(root / 'tests/native-upload-filenames.browser.cjs')], check=True, env=env)
         elif '--attachment-upload-api' in sys.argv:
             subprocess.run([sys.executable, str(root / 'tests/api-attachment-upload.test.py')], check=True, env=env)
             subprocess.run([env.get('NODE', 'node'), str(root / 'tests/attachment-upload-conformance.test.cjs')], check=True, env=env)

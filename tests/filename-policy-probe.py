@@ -35,7 +35,7 @@ else:
     rows = []
     for name in request['names']:
         row = {}
-        for key, function in [('clean', policy.clean_filename), ('public', policy.public_attachment_disposition), ('api', server.attachment_disposition)]:
+        for key, function in [('before', policy.before_upload_filename), ('clean', policy.clean_filename), ('public', policy.public_attachment_disposition), ('api', server.attachment_disposition)]:
             try:
                 row[key] = function(name)
             except UnicodeError:
