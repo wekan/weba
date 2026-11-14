@@ -328,7 +328,7 @@ Private Function SaveEntry(boardId As Integer, cardId As Integer, entryId As Int
       Case "text"
       Case "number"
         If Not ExportNumber.ParseFinite(body, ByRef number) Then Error.Raise("Invalid numeric field")
-        If Not isCopy Then body = CStr(number)
+        If Not isCopy Then body = ExportNumber.EditText(number)
       Case "date"
         If Len(body) <> 10 Or Mid(body, 5, 1) <> "-" Or Mid(body, 8, 1) <> "-" Then Error.Raise("Use YYYY-MM-DD")
         If Format(Date(CInt(Left(body, 4)), CInt(Mid(body, 6, 2)), CInt(Right(body, 2))), "yyyy-mm-dd") <> body Then Error.Raise("Invalid date")

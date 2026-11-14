@@ -2,6 +2,20 @@
 
 This work adds the following features and fixes:
 
+- Preserve numeric detail values through native display, editing and saving.
+  Keep ordinary display text only when the exact finite parser recovers the same
+  binary64 value; otherwise use the existing exact decimal encoder. Parse native
+  detail amounts with that finite parser and normalize custom numeric bodies with
+  round-trip text, preventing title-only saves from rounding stored values.
+  Preserve blank-as-zero input and reject malformed/nonfinite values without
+  writes or loss of the dirty draft. Original browser rendering and custom-model
+  baselines fail at 100000.00000000001; repaired model tests cover subnormal,
+  near-ULP, large finite values, title-only time/custom saves, independent stale
+  amounts and full-state invalid-number rollback. Source and packaged detail and
+  live browser flows, the full host/API/security suite and 70 Python tests pass.
+  Numeric NULL/legacy reader and broader model/copy audits remain open.
+  Thanks to xet7.
+
 - Preserve early existing-card edits through deferred native text setters.
   Gambas setText queues a callback that assigns and sends its initialization
   value; protecting outerHTML alone missed this path and could replace a newer

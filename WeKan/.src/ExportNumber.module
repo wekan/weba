@@ -316,3 +316,15 @@ Private Function ShortestInteger(number As Float, scientific As Boolean) As Stri
   Next
   Error.Raise("Invalid finite export number")
 End
+
+' Preserve ordinary display text when it round-trips; otherwise use the exact
+' binary64 decimal already used by exports, without locale or display rounding.
+Public Function EditText(number As Float) As String
+  Dim text As String = CStr(number)
+  Dim parsed As Float
+  If IsInf(number) Or IsNan(number) Then Error.Raise("Enter a finite number")
+  If ParseFinite(text, ByRef parsed) Then
+    If parsed = number Then Return text
+  Endif
+  Return JsonText.Encode(number)
+End

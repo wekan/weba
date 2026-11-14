@@ -2185,7 +2185,7 @@ Private Sub SetDetailField(field As String, value As Variant)
     Case "body"
       DetailBody.Text = CStr(value)
     Case "amount"
-      DetailNumber.Text = CStr(value)
+      DetailNumber.Text = ExportNumber.EditText(value)
     Case "done"
       DetailDone.Value = CBool(value)
     Case "value_type"
@@ -2415,7 +2415,9 @@ Public Sub DetailSave_Click()
   Dim parentId As Integer
   Dim kind As String = DetailCode()
   Dim number As Float
-  If DetailNumber.Text Then number = CFloat(DetailNumber.Text)
+  If DetailNumber.Text Then
+    If Not ExportNumber.ParseFinite(DetailNumber.Text, ByRef number) Then Error.Raise("Invalid numeric field")
+  Endif
   If kind = "checkitem" Then
     parentId = CurrentDetailParent()
     If parentId <= 0 Then Error.Raise("Choose a checklist")

@@ -1,0 +1,102 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim entryId As Integer
+  Dim text As String
+  Dim number As Float
+  Dim parsed As Float
+  Dim draft As Collection
+  Dim before As String
+  Dim denied As Boolean
+  WebDatabase.Register("numeric-detail", "x")
+  Session["username"] = "numeric-detail"
+  Session["auth_generation"] = WebDatabase.SessionGeneration("numeric-detail")
+  boardId = KanbanStore.AddBoard("Numeric details")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Card", "", "Default", "Todo", "", "", "")
+  For Each text In ["0", "0.1", "100000.00000000001", "525599.99999999994", "5e-324", "1e-200", "-1e250", "1.7976931348623157e308", "9007199254740991"]
+    If Not ExportNumber.ParseFinite(text, ByRef number) Then Error.Raise("Invalid numeric fixture")
+    If Not ExportNumber.ParseFinite(ExportNumber.EditText(number), ByRef parsed) Then Error.Raise("Numeric display not parseable")
+    If parsed <> number Then Error.Raise("Numeric display rounded " & text)
+    entryId = CardContent.Save(boardId, cardId, 0, "custom", "Numeric", text, 0, False, 0, "number")
+    draft = EntryDraft.Read(boardId, cardId, entryId)
+    If Not ExportNumber.ParseFinite(draft["body"], ByRef parsed) Then Error.Raise("Stored number not parseable")
+    If parsed <> number Then Error.Raise("Custom save rounded " & text)
+    CardContent.Save(boardId, cardId, entryId, "custom", "Renamed", draft["body"], 0, False, 0, "number", draft)
+    draft = EntryDraft.Read(boardId, cardId, entryId)
+    ExportNumber.ParseFinite(draft["body"], ByRef parsed)
+    If parsed <> number Then Error.Raise("Custom title save rounded " & text)
+    If number >= 0 And number <= 525600 Then
+      entryId = CardContent.Save(boardId, cardId, 0, "time", "Minutes", "", 0, True, number)
+      draft = EntryDraft.Read(boardId, cardId, entryId)
+      ExportNumber.ParseFinite(ExportNumber.EditText(draft["amount"]), ByRef parsed)
+      CardContent.Save(boardId, cardId, entryId, "time", "Renamed", "", 0, True, parsed, "text", draft)
+      draft = EntryDraft.Read(boardId, cardId, entryId)
+      If draft["amount"] <> number Then Error.Raise("Time title save rounded " & text)
+      CardContent.Save(boardId, cardId, entryId, "time", "Renamed", "", 0, True, 123.5)
+      CardContent.Save(boardId, cardId, entryId, "time", "Local title", "", 0, True, number, "text", draft)
+      draft = EntryDraft.Read(boardId, cardId, entryId)
+      If draft["amount"] <> 123.5 Then Error.Raise("Stale unchanged numeric draft lost external amount")
+    Endif
+  Next
+  For Each text In ["NaN", "Infinity", "-Infinity", "1e309", "1x", "12,5", "1" & Chr(0) & "tail"]
+    before = Frame()
+    Try CardContent.Save(boardId, cardId, 0, "custom", "Rejected", text, 0, False, 0, "number")
+    denied = Error
+    If Not denied Or Frame() <> before Then Error.Raise("Invalid numeric field wrote state")
+  Next
+  Print "Numeric details: readable round-trip display, finite custom normalization, subnormal/near-ULP/max values, exact title-only time saves, stale independent amount merge and malformed/nonfinite rollback passed"
+End
+
+Private Function Frame() As String
+  Dim conn As Connection = WebDatabase.OpenConnection()
+  Dim table As Table
+  Dim tables As New String[]
+  Dim tableName As String
+  Dim order As String[]
+  Dim key As String
+  Dim rows As Result
+  Dim field As ResultField
+  Dim values As Collection
+  Dim data As Variant[]
+  Dim result As New Collection
+  For Each table In conn.Tables
+    If Left(table.Name, 7) <> "sqlite_" Then tables.Add(table.Name)
+  Next
+  tables.Sort()
+  For Each tableName In tables
+    order = New String[]
+    For Each key In conn.Tables[tableName].PrimaryKey
+      order.Add(conn.Quote(key))
+    Next
+    rows = conn.Exec(ExportText.SelectRows(conn, tableName) & If(order.Count, " ORDER BY " & order.Join(","), ""))
+    data = New Variant[]
+    For Each rows
+      values = New Collection
+      For Each field In rows.Fields
+        If Left(field.Name, 7) = "__weba_" Then Continue
+        If field.Type = DB.String Then
+          If rows.Fields.Exist("__weba_null_" & field.Name) Then
+            If rows["__weba_null_" & field.Name] Then
+              values[field.Name] = JSON.Null
+            Else
+              values[field.Name] = ExportText.ReadValue(rows, field.Name)
+            Endif
+          Else
+            values[field.Name] = rows[field.Name]
+          Endif
+        Else If field.Type = DB.Blob Then
+          If IsNull(rows[field.Name]) Then
+            values[field.Name] = JSON.Null
+          Else
+            values[field.Name] = Base64(rows[field.Name].Data)
+          Endif
+        Else
+          values[field.Name] = rows[field.Name]
+        Endif
+      Next
+      data.Add(values)
+    Next
+    result[tableName] = data
+  Next
+  Return JsonText.Encode(result)
+End

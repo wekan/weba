@@ -65,6 +65,31 @@ with sqlite3.connect(sys.argv[1]) as d:
    const timers=read().entries.filter(e=>e.kind==='time');expect(timers).toHaveLength(1);expect(Boolean(timers[0].done)).toBe(action==='stop');
    await expect(page.locator(c('DetailTree'))).toContainText(action==='start'?'Running timer':'Tracked time');
   }
+  // Native numeric display/parser must not round an untouched amount on save.
+  const precise=100000.00000000001;
+  const storedAmount=()=>Number(execFileSync('python3',['-c',"import sqlite3,sys;d=sqlite3.connect(sys.argv[1]);print(d.execute(\"SELECT amount FROM kb_entries WHERE board_id=? AND card_id=? AND kind='time'\",(int(sys.argv[2]),int(sys.argv[3]))).fetchone()[0])",database,String(seed.board),String(seed.items[0].card)],{encoding:'utf8'}));
+  sql("UPDATE kb_entries SET amount=100000.00000000001,title='Precision time' WHERE board_id="+seed.board+' AND card_id='+seed.items[0].card+" AND kind='time'");
+  await row('Precision time');
+  expect(Number(await page.locator(input('DetailNumber')).inputValue())).toBe(precise);
+  await page.locator(input('DetailTitle')).fill('Precision time renamed');await click('DetailSave');
+  expect(storedAmount()).toBe(precise);await row('Precision time renamed');
+  await page.locator(input('DetailNumber')).fill('0.10000000000000002');await click('DetailSave');
+  expect(storedAmount()).toBe(0.10000000000000002);await row('Precision time renamed');
+  const beforeInvalidNumber=sql();
+  for(const value of ['NaN','Infinity','1e309','12,5','1'+String.fromCharCode(0)+'tail']){
+   await page.evaluate(value=>{const input=document.querySelector('[id$=".DetailNumber:entry"]');input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));},value);
+   await click('DetailSave');await expect(page.locator(c('Notice'))).toHaveText('Invalid numeric field');expect(sql()).toBe(beforeInvalidNumber);
+   await expect(page.locator(input('DetailNumber'))).toHaveValue(value);
+  }
+  await page.locator(input('DetailNumber')).fill('');await click('DetailSave');expect(storedAmount()).toBe(0);
+  await kind('Custom fields');await click('DetailNew');
+  await page.locator(input('DetailTitle')).fill('Precise custom number');await page.locator('[id$=".DetailType:select"]').selectOption({label:'number'});
+  await page.locator(input('DetailBody')).fill(String(precise));await click('DetailSave');
+  let numeric=read().entries.find(e=>e.title==='Precise custom number');expect(Number(numeric.body)).toBe(precise);
+  await row('Precise custom number');await page.locator(input('DetailTitle')).fill('Precise custom renamed');await click('DetailSave');
+  numeric=read().entries.find(e=>e.title==='Precise custom renamed');expect(Number(numeric.body)).toBe(precise);
+  const beforeInvalidCustom=sql();await row('Precise custom renamed');await page.locator(input('DetailBody')).fill('1e309');
+  await click('DetailSave');await expect(page.locator(c('Notice'))).toHaveText('Invalid numeric field');expect(sql()).toBe(beforeInvalidCustom);
   await kind('Attachments');await row(initial.files[0].filename);
   const uploadBytes=Buffer.from([0,1,255,10,32,39,194,169]);
   async function upload(name){const chooser=page.waitForEvent('filechooser');await click('DetailUpload');await(await chooser).setFiles({name,mimeType:'application/octet-stream',buffer:uploadBytes});}
@@ -104,6 +129,6 @@ with sqlite3.connect(sys.argv[1]) as d:
 `,database,String(seed.board),String(seed.items[0].card)],{encoding:'utf8'}));
   expect(children).toEqual([[childTitle,initial.lane,initial.status,childTitle]]);await expect(page.locator(c('DetailsPanel')+' literal')).toHaveCount(0);
   expect(errors).toEqual([]);
-  console.log('Detail complete-text browser: native custom/comment/checklist/file text, exact encoded editor values, external suffix heartbeat, dirty local title with independent external body save, post-history archive refusal keeps all board data and exact dirty draft, retry, New clears stale values, literal markup/reload and delete rollback with exact dirty/provenance retention and retry, timer start/stop post-history rollback and retry, file chooser upload data/history archive rollback, retained selection and exact-byte retry, attachment delete/restore post-history archive rollback with retained live/history selection and retry, subtask child-save parent archive rollback with retained exact draft and complete-field child/link retry passed');
+  console.log('Detail complete-text browser: native custom/comment/checklist/file text, exact encoded editor values, external suffix heartbeat, dirty local title with independent external body save, post-history archive refusal keeps all board data and exact dirty draft, retry, New clears stale values, literal markup/reload and delete rollback with exact dirty/provenance retention and retry, timer start/stop post-history rollback and retry, file chooser upload data/history archive rollback, retained selection and exact-byte retry, attachment delete/restore post-history archive rollback with retained live/history selection and retry, subtask child-save parent archive rollback with retained exact draft and complete-field child/link retry, numeric near-ULP display/title-only saves and parsing, malformed/nonfinite full-state rollback and dirty retention, blank zero and precise custom normalization passed');
  }finally{if(context)await context.close();if(browser)await browser.close();}
 })().catch(e=>{let message=e.stack||String(e);if(process.env.WEBA_TEST_PASSWORD)message=message.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(message);process.exitCode=1;});

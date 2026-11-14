@@ -140,8 +140,11 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Completed pre-ready existing-card deferred native setter/latest-draft and queued
   Save protection. Current-DOM source/packaged startup, ordinary rich-text and
   no-editor-readiness rich-text results are recorded in CHANGELOG.md.
-- Next detail/content focus: remaining copy-author/model mutation audits, numeric
-  editor rendering/parsing and remaining model readers/writers.
+- Completed finite numeric detail rendering/parsing and custom normalization
+  without binary64 display rounding; exact/invalid/stale model and source/packaged
+  detail/live browser results are recorded in CHANGELOG.md.
+- Next detail/content focus: remaining copy-author/model mutation audits, nullable
+  numeric fields and remaining model readers/writers.
   Atomic imported display-name provenance for owned entries/files and shared
   stored-placement guards are in CHANGELOG.md.
   Atomic subtask creation and its captured parent/new-child checkpoints are in
