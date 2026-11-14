@@ -14,7 +14,10 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   await expect(page.locator('.weba-content')).toBeVisible();await page.goto(process.env.WEBA_TEST_URL+'/b/'+seed.board);
   const settle=()=>page.waitForFunction(()=>window.gw&&gw.commands.length===0);
   const fixture=(mode,card=0,board=seed.board)=>JSON.parse(execFileSync(process.env.GBX,['-s','NativeTextFixture',process.env.WEBA_TEST_PROJECT],{encoding:'utf8',env:{...process.env,WEBA_API_REQUEST:'0',WEBA_NATIVE_MODE:mode,WEBA_NATIVE_BOARD:String(board),WEBA_NATIVE_CARD:String(card)}}));
-  async function click(name){await settle();await page.locator(c(name)).click();await settle();}
+  async function click(name){
+   await settle();const reply=['SaveCard','ActionConfirm'].includes(name)?page.waitForResponse(r=>new URL(r.url()).pathname==='/x'&&(new URLSearchParams(r.request().postData()||'').get('c')||'').includes(name)):null;
+   await page.locator(c(name)).click();if(reply)await(await reply).finished();await settle();
+  }
   async function columns(){for(const item of seed.items){
    const column=page.locator('.weba-report .weba-column[data-list-id="'+item.list+'"]');
    await expect(column).toHaveCount(1);expect(await column.getAttribute('data-lane')).toBe(item.lane);expect(await column.getAttribute('data-list')).toBe(item.title);
@@ -111,7 +114,8 @@ with sqlite3.connect(sys.argv[1]) as d:
   const createdId=Number(await page.locator('.weba-report .weba-card-link').filter({hasText:'Created in complete B'}).getAttribute('data-card-id'));
   expect(fixture('read',createdId)).toMatchObject({description:body,lane:seed.items[1].lane,status:seed.items[1].title,list:seed.items[1].list});
   // Startup must not replace an already-routed card's custom list with Todo.
-  await page.goto(process.env.WEBA_TEST_URL+'/b/'+seed.board+'/board/'+createdId);
+  async function editorReady(){await page.waitForFunction(card=>{try{return String(JSON.parse(document.querySelector('[id$=".OverviewRouteState"]').textContent).cardId)===String(card)&&window.webaNativeEditorStartup?.starting===false&&gw.commands.length===0;}catch{return false;}},createdId);}
+  await page.goto(process.env.WEBA_TEST_URL+'/b/'+seed.board+'/board/'+createdId);await editorReady();
   await expect(description).toHaveValue(body);
   const reopenedBody=body+' reopened ordinary edit';
   await description.evaluate((input,value)=>{input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));},reopenedBody);
@@ -119,7 +123,7 @@ with sqlite3.connect(sys.argv[1]) as d:
   await expect(page.locator('[id$=".Status:entry"]')).toHaveValue(seed.items[1].title);
   await click('SaveCard');await expect(page.locator(c('Notice'))).toHaveText('Card saved');
   expect(fixture('read',createdId)).toMatchObject({description:reopenedBody,lane:seed.items[1].lane,status:seed.items[1].title,list:seed.items[1].list});
-  await page.reload();await expect(description).toHaveValue(reopenedBody);
+  await page.reload();await editorReady();await expect(description).toHaveValue(reopenedBody);
   await description.evaluate((input,value)=>{input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));},body);
   await click('SaveCard');await expect(page.locator(c('Notice'))).toHaveText('Card saved');
   expect(fixture('read',createdId)).toMatchObject({description:body,lane:seed.items[1].lane,status:seed.items[1].title,list:seed.items[1].list});
@@ -184,7 +188,13 @@ with sqlite3.connect(sys.argv[1]) as d:
   const copiedCardTitle="Copied browser card\0Ω😀",copiedListTitle="Copied browser list\0Ω😀",copiedLaneTitle="Copied browser lane\0Ω😀";
   function checkCopied(id,expected,board=seed.board){expect(fixture('copy-read',id,board)).toEqual({...copySource,...expected});}
   await page.locator('.weba-report .weba-card[data-card-id="'+createdId+'"] .weba-card-menu').click();await settle();await click('ContextCopy');
-  await expect(actionText).toHaveValue(renamedCard+' copy');await actionValue(copiedCardTitle);await click('ActionConfirm');
+  await expect(actionText).toHaveValue(renamedCard+' copy');await actionValue(copiedCardTitle);
+  for(const table of ['kb_entries','kb_files']){
+   const beforeProvenance=sql();sql('CREATE TRIGGER native_provenance_final AFTER UPDATE OF author ON '+table+' WHEN NEW.author IS NULL AND NEW.board_id='+seed.board+' AND NEW.card_id<>'+createdId+' BEGIN UPDATE kb_cards SET archived=1 WHERE id=NEW.card_id; END');
+   try{await click('ActionConfirm');await expect(page.locator(c('Notice'))).toContainText('Card archive state changed');expect(sql()).toBe(beforeProvenance);await expect(page.locator(c('ActionPanel'))).toBeVisible();await expect(actionText).toHaveValue(copiedCardTitle);}
+   finally{sql('DROP TRIGGER native_provenance_final');}
+  }
+  await click('ActionConfirm');
   const copiedCard=fixture('containers').cards.find(row=>row.title===copiedCardTitle);expect(copiedCard).toBeTruthy();checkCopied(copiedCard.id,{title:copiedCardTitle});
   await page.locator('.weba-report .weba-column[data-list-id="'+seed.items[1].list+'"] .weba-list-menu').click();await settle();await click('ContextCopy');
   await expect(actionText).toHaveValue(seed.items[1].title+' copy');await actionValue(copiedListTitle);await destinationLane.selectOption({index:0});await settle();await click('ActionConfirm');
@@ -207,6 +217,6 @@ with sqlite3.connect(sys.argv[1]) as d:
   await page.evaluate(()=>gw.raise(document.querySelector('[id$=".SaveCard"]').id,'click',[],false));await settle();
   expect(fixture('read',createdId)).toEqual(before);
   expect(errors).toEqual([]);
-  console.log('Native complete text browser: shared-prefix NUL/Unicode/markup lane/list identities retain exact columns/card placement across views/reload/Finnish/mobile; readonly/assigned scope, native exact card/list/lane mouse and card dialog moves with editor refresh/reload, exact lane/list creation and board/card/list/lane native renames with SQL/dirty/reload checks, rich card/list/lane/board native copies with exact SQL/entries/files/numbered title/reload and stale-copy refusal, create/edit/NUL dirty refresh/reload and reopened full-status edit/save/reload, post-history archive refusal with full board-state rollback/dirty retention/retry and late-revocation refusal passed');
+  console.log('Native complete text browser: shared-prefix NUL/Unicode/markup lane/list identities retain exact columns/card placement across views/reload/Finnish/mobile; readonly/assigned scope, native exact card/list/lane mouse and card dialog moves with editor refresh/reload, exact lane/list creation and board/card/list/lane native renames with SQL/dirty/reload checks, rich card/list/lane/board native copies with exact SQL/entries/files/numbered title/reload and stale-copy refusal, retired entry/file author-conversion archive rollback with retained exact copy title and rich retry, create/edit/NUL dirty refresh/reload and reopened full-status edit/save/reload, post-history archive refusal with full board-state rollback/dirty retention/retry and late-revocation refusal passed');
  }finally{try{if(context)await context.close();}finally{if(browser)await browser.close();}}
 })().catch(e=>{let s=e.stack||String(e);if(process.env.WEBA_TEST_PASSWORD)s=s.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(s);process.exitCode=1;});

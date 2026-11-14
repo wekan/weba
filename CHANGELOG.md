@@ -2,6 +2,32 @@
 
 This work adds the following features and fixes:
 
+- Convert owned entry/file authors to imported display-only provenance atomically.
+  Capture and lock the original actor, record and metadata; require current write
+  authority and stable card/container/archive scope after locks, author clearing
+  and provenance save. Check exact untouched fields, numeric/NULL values, complete
+  imported names and file bytes/MIME/time/lifecycle state, rolling back both author
+  and metadata on mutation or SQL failure. Existing provenance must belong to the
+  same board/card. Empty-name no-write behavior and account-principal separation
+  remain intact, including names equal to local usernames and a single NUL.
+  Exact stored card-list mapping checks now supplement fallback-aware list IDs in
+  every shared detail scope, closing foreign-board rebinds without duplicating the
+  subtask check. Tests cover all seven entry kinds and files with new/existing
+  provenance, lock-time changes, metadata scope/key/NULL tampering, temporary role
+  loss, full-table rollback, near-ULP/byte/name retries and caller-owned preflight
+  transactions. Copy/backup/account-deletion/detail compatibility passes.
+  Source native rich-copy UI exercises retired entry/file author-conversion archive
+  refusals, unchanged board data, retained complete copy title and rich retry with
+  exact retired names and bytes; packaged copy and source/packaged detail/live
+  checks pass. Ordinary editor tests wait for route/startup acknowledgement and
+  matching Save/Confirm responses; separate source/packaged held-open early-edit
+  tests pass, with other pre-ready timing orderings retained in TODO.
+  A disposable 64 MiB retained-file conversion preserves exact bytes/name. The
+  full pinned host/native/API/security/session and backup gates, 70 Python tests
+  and JavaScript checks pass.
+  Remaining copy-author/model audits, numeric/nullable readers and full original
+  parity remain open. Thanks to xet7.
+
 - Keep new subtask creation atomic across child creation and parent linking.
   Capture actor and original parent placement/container/archive scope, resolve
   existing legacy list mappings within the owned transaction, and inherit complete

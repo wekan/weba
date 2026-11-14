@@ -137,8 +137,14 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Completed complete native people-pane titles and strict private snapshots;
   scope/no-write/duplicate/order and actual heartbeat/pending-control results
   are recorded in CHANGELOG.md.
-- Next detail/content focus: imported author provenance/other remaining detail
-  mutations, numeric editor rendering/parsing and remaining model readers/writers.
+- Next UI follow-up: reproduce pre-ready reopened-editor save timing observed in
+  packaged rich-text runs before initialization was acknowledged. Ordinary ready
+  editor saves and controlled held-open early edits pass; other queued early-input
+  orderings remain unproven and must not be marked complete from those checks.
+- Next detail/content focus: remaining copy-author/model mutation audits, numeric
+  editor rendering/parsing and remaining model readers/writers.
+  Atomic imported display-name provenance for owned entries/files and shared
+  stored-placement guards are in CHANGELOG.md.
   Atomic subtask creation and its captured parent/new-child checkpoints are in
   CHANGELOG.md.
   API upload caller-policy/credential checkpoints, attachment delete/restore/cover

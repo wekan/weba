@@ -1,0 +1,191 @@
+Public Sub Main()
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim targetId As Integer
+  Dim parentId As Integer
+  Dim itemId As Integer
+  Dim descriptor As String
+  Dim kind As String
+  Dim tableName As String
+  Dim valueField As String
+  Dim mode As String
+  Dim stage As String
+  Dim metaStage As String
+  Dim effect As String
+  Dim actor As String
+  Dim before As String
+  Dim denied As Boolean
+  Dim conn As Connection
+  Dim row As Result
+  Dim amount As Float
+  Dim suffix As String = Chr(0) & "Ω😀'"
+  Dim displayName As String = "Imported" & suffix
+  For Each actor In ["prov-global", "prov-owner", "prov-writer", "prov-reader", "prov-outsider"]
+    WebDatabase.Register(actor, "x")
+  Next
+  SignIn("prov-owner")
+  boardId = KanbanStore.AddBoard("Provenance final scope")
+  BoardAccess.SetMember(boardId, "prov-writer", "normal")
+  BoardAccess.SetMember(boardId, "prov-reader", "read-only")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Card", "", "Default", "Todo", "", "", "")
+  targetId = KanbanStore.SaveCard(boardId, 0, "Target", "", "Default", "Todo", "", "", "")
+  parentId = CardContent.Save(boardId, cardId, 0, "checklist", "Parent", "", 0, False, 0)
+  conn = WebDatabase.OpenConnection()
+  SignIn("prov-writer")
+  For Each descriptor In ["comment", "checklist", "checkitem", "custom", "time", "subtask", "dependency", "file"]
+    kind = If(descriptor = "file", "file", "entry")
+    tableName = If(kind = "file", "kb_files", "kb_entries")
+    valueField = If(kind = "file", "filename", "body")
+    For Each mode In ["new", "existing"]
+      amount = 0
+      If descriptor = "time" Then amount = JsonText.Decode("100000.00000000001")
+      If descriptor = "subtask" Or descriptor = "dependency" Then amount = targetId
+      If kind = "file" Then
+        itemId = CardContent.AddFile(boardId, cardId, "File" & suffix, "Bytes" & suffix & Chr(255))
+      Else
+        itemId = CardContent.Save(boardId, cardId, 0, descriptor, descriptor & suffix, "Body" & suffix, If(descriptor = "checkitem", parentId, 0), False, amount)
+      Endif
+      If mode = "existing" Then RetiredAuthors.Remember(kind, itemId, boardId, cardId, "Old" & suffix)
+      metaStage = If(mode = "new", "AFTER INSERT ON kb_retired_authors", "AFTER UPDATE OF display_name ON kb_retired_authors") & " WHEN NEW.kind='" & kind & "' AND NEW.item_id=" & CStr(itemId)
+      For Each stage In ["AFTER UPDATE OF author ON " & tableName & " WHEN NEW.id=" & CStr(itemId) & " AND NEW.author IS NULL", metaStage]
+        For Each effect In ["UPDATE kb_members SET role='read-only' WHERE board_id=" & CStr(boardId) & " AND username='prov-writer'", "DELETE FROM kb_members WHERE board_id=" & CStr(boardId) & " AND username='prov-writer'", "UPDATE account_sessions SET generation=generation+1 WHERE username='prov-writer'", "INSERT INTO kb_member_flags (board_id,username,flag) VALUES (" & CStr(boardId) & ",'prov-writer','isReadAssignedOnly')", "UPDATE kb_cards SET archived=1 WHERE id=" & CStr(cardId), "UPDATE kb_boards SET archived=1 WHERE id=" & CStr(boardId), "UPDATE kb_card_lists SET list_id=-1 WHERE card_id=" & CStr(cardId), "UPDATE kb_card_lists SET board_id=-1 WHERE card_id=" & CStr(cardId), "UPDATE " & tableName & " SET author='prov-owner' WHERE id=" & CStr(itemId), "UPDATE " & tableName & " SET author='' WHERE id=" & CStr(itemId), "UPDATE " & tableName & " SET " & valueField & "='changed' WHERE id=" & CStr(itemId), "UPDATE " & tableName & " SET created_at=NULL WHERE id=" & CStr(itemId), "DELETE FROM " & tableName & " WHERE id=" & CStr(itemId), "INSERT OR REPLACE INTO kb_retired_authors (kind,item_id,board_id,card_id,display_name) VALUES ('" & kind & "'," & CStr(itemId) & "," & CStr(boardId) & "," & CStr(cardId) & ",'changed')", "SELECT RAISE(ABORT,'provenance-private-canary')"]
+          before = Frame()
+          conn.Exec("CREATE TRIGGER inject_prov_scope " & stage & " BEGIN " & effect & "; END")
+          Try CardContent.RetainAuthorName(boardId, cardId, kind, itemId, displayName)
+          denied = Error
+          conn.Exec("DROP TRIGGER inject_prov_scope")
+          If Not denied Or Frame() <> before Then Error.Raise("Provenance scope failed: " & descriptor & ": " & mode & ": " & stage & ": " & effect)
+        Next
+        If kind = "file" Then
+          For Each effect In ["UPDATE kb_files SET content=X'00FF' WHERE id=" & CStr(itemId), "UPDATE kb_files SET content=NULL WHERE id=" & CStr(itemId), "UPDATE kb_attachment_data SET mime='changed' WHERE file_id=" & CStr(itemId), "UPDATE kb_attachment_data SET uploaded_ms=NULL WHERE file_id=" & CStr(itemId), "DELETE FROM kb_attachment_data WHERE file_id=" & CStr(itemId), "INSERT INTO kb_attachment_deletions (file_id,board_id,card_id) VALUES (" & CStr(itemId) & ",-1,-1)"]
+            before = Frame()
+            conn.Exec("CREATE TRIGGER inject_prov_file " & stage & " BEGIN " & effect & "; END")
+            Try CardContent.RetainAuthorName(boardId, cardId, kind, itemId, displayName)
+            denied = Error
+            conn.Exec("DROP TRIGGER inject_prov_file")
+            If Not denied Or Frame() <> before Then Error.Raise("Provenance file state failed: " & effect)
+          Next
+        Endif
+        If stage = metaStage Then
+          For Each effect In ["board_id=-1", "card_id=-1", "display_name=NULL", "kind='changed'", "item_id=-1"]
+            before = Frame()
+            conn.Exec("CREATE TRIGGER inject_prov_meta " & stage & " BEGIN UPDATE kb_retired_authors SET " & effect & " WHERE kind='" & kind & "' AND item_id=" & CStr(itemId) & "; END")
+            Try CardContent.RetainAuthorName(boardId, cardId, kind, itemId, displayName)
+            denied = Error
+            conn.Exec("DROP TRIGGER inject_prov_meta")
+            If Not denied Or Frame() <> before Then Error.Raise("Provenance metadata state failed: " & effect)
+          Next
+        Endif
+      Next
+      before = Frame()
+      conn.Exec("CREATE TRIGGER inject_prov_lock AFTER UPDATE OF author ON " & tableName & " WHEN NEW.id=" & CStr(itemId) & " AND NEW.author=OLD.author BEGIN UPDATE " & tableName & " SET " & valueField & "='lock changed' WHERE id=NEW.id; END")
+      Try CardContent.RetainAuthorName(boardId, cardId, kind, itemId, displayName)
+      denied = Error
+      conn.Exec("DROP TRIGGER inject_prov_lock")
+      If Not denied Or Frame() <> before Then Error.Raise("Provenance locked row changed")
+      conn.Exec("CREATE TRIGGER lose_prov_role AFTER UPDATE OF author ON " & tableName & " WHEN NEW.id=" & CStr(itemId) & " AND NEW.author IS NULL BEGIN UPDATE kb_members SET role='read-only' WHERE username='prov-writer'; END")
+      conn.Exec("CREATE TRIGGER restore_prov_role " & metaStage & " BEGIN UPDATE kb_members SET role='normal' WHERE username='prov-writer'; END")
+      Try CardContent.RetainAuthorName(boardId, cardId, kind, itemId, displayName)
+      denied = Error
+      conn.Exec("DROP TRIGGER restore_prov_role")
+      conn.Exec("DROP TRIGGER lose_prov_role")
+      If Not denied Or Frame() <> before Then Error.Raise("Temporary provenance role loss escaped")
+      CardContent.RetainAuthorName(boardId, cardId, kind, itemId, displayName)
+      If CardContent.AuthorName(boardId, cardId, kind, itemId) <> displayName Then Error.Raise("Provenance retry lost exact display name")
+      If Not conn.Exec("SELECT id FROM " & tableName & " WHERE id=&1 AND author IS NULL", itemId).Available Then Error.Raise("Imported name became an account principal")
+      If descriptor = "time" Then
+        If Not conn.Exec("SELECT id FROM kb_entries WHERE id=&1 AND amount=100000.00000000001", itemId).Available Then Error.Raise("Provenance lost exact time amount")
+      Else If kind = "file" Then
+        row = CardContent.FileRecord(boardId, cardId, itemId, True)
+        If row!content.Data <> "Bytes" & suffix & Chr(255) Then Error.Raise("Provenance changed binary bytes")
+      Endif
+      before = Frame()
+      Try CardContent.RetainAuthorName(boardId, cardId, kind, itemId, "Second conversion")
+      denied = Error
+      If Not denied Or Frame() <> before Then Error.Raise("Converted provenance was overwritten")
+    Next
+  Next
+  For Each effect In ["", Chr(0), "prov-owner"]
+    itemId = CardContent.Save(boardId, cardId, 0, "comment", "", "Name semantics", 0, False, 0)
+    CardContent.RetainAuthorName(boardId, cardId, "entry", itemId, effect)
+    If CardContent.AuthorName(boardId, cardId, "entry", itemId) <> effect Then Error.Raise("Imported blank/NUL/local-account name semantics changed")
+    If Not conn.Exec("SELECT id FROM kb_entries WHERE id=&1 AND author IS NULL", itemId).Available Then Error.Raise("Display-only name gained a principal")
+  Next
+  kind = "entry"
+  For Each actor In ["prov-reader", "prov-outsider", "prov-global"]
+    SignIn(actor)
+    before = Frame()
+    Try CardContent.RetainAuthorName(boardId, cardId, kind, itemId, "Denied")
+    denied = Error
+    If Not denied Or Frame() <> before Then Error.Raise("Unauthorized provenance changed state")
+  Next
+  SignIn("prov-writer")
+  before = Frame()
+  DatabaseTransactions.Begin(conn)
+  conn.Exec("UPDATE kb_cards SET description='caller-owned' WHERE id=&1", cardId)
+  Try CardContent.RetainAuthorName(boardId, cardId, kind, itemId, "Denied")
+  denied = Error
+  If Not denied Or conn.Exec("SELECT description FROM kb_cards WHERE id=&1", cardId)!description <> "caller-owned" Then Error.Raise("Provenance preflight discarded caller transaction")
+  DatabaseTransactions.Rollback(conn)
+  If Frame() <> before Then Error.Raise("Provenance caller rollback changed state")
+  Print "Provenance: seven entry kinds/files, new/existing metadata, author/metadata actor/role/raw/session/archive/placement/value/SQL exact rollback, temporary-role refusal, complete display/bytes/near-ULP retry, principal separation and caller transaction ownership passed"
+End
+
+Private Sub SignIn(actor As String)
+  Session["username"] = actor
+  Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+End
+
+Private Function Frame() As String
+  Dim conn As Connection = WebDatabase.OpenConnection()
+  Dim table As Table
+  Dim tables As New String[]
+  Dim tableName As String
+  Dim order As String[]
+  Dim key As String
+  Dim rows As Result
+  Dim field As ResultField
+  Dim values As Collection
+  Dim data As Variant[]
+  Dim result As New Collection
+  For Each table In conn.Tables
+    If Left(table.Name, 7) <> "sqlite_" Then tables.Add(table.Name)
+  Next
+  tables.Sort()
+  For Each tableName In tables
+    order = New String[]
+    For Each key In conn.Tables[tableName].PrimaryKey
+      order.Add(conn.Quote(key))
+    Next
+    rows = conn.Exec(ExportText.SelectRows(conn, tableName) & If(order.Count, " ORDER BY " & order.Join(","), ""))
+    data = New Variant[]
+    For Each rows
+      values = New Collection
+      For Each field In rows.Fields
+        If Left(field.Name, 7) = "__weba_" Then Continue
+        If field.Type = DB.String Then
+          If rows.Fields.Exist("__weba_null_" & field.Name) Then
+            If rows["__weba_null_" & field.Name] Then
+              values[field.Name] = JSON.Null
+            Else
+              values[field.Name] = ExportText.ReadValue(rows, field.Name)
+            Endif
+          Else
+            values[field.Name] = rows[field.Name]
+          Endif
+        Else If field.Type = DB.Blob Then
+          If IsNull(rows[field.Name]) Then
+            values[field.Name] = JSON.Null
+          Else
+            values[field.Name] = Base64(rows[field.Name].Data)
+          Endif
+        Else
+          values[field.Name] = rows[field.Name]
+        Endif
+      Next
+      data.Add(values)
+    Next
+    result[tableName] = data
+  Next
+  Return JsonText.Encode(result)
+End

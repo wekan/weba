@@ -83,9 +83,63 @@ Public Function AuthorName(boardId As Integer, cardId As Integer, kind As String
   Return RetiredAuthors.DisplayName(kind, itemId, ExportText.ReadValue(r, "author"))
 End
 
+Private Function ProvenanceFileState(fileId As Integer) As String
+  Dim state As New Collection
+  Dim records As String[]
+  Dim tableName As String
+  Dim row As Result
+  For Each tableName In ["kb_attachment_data", "kb_attachment_deletions", "kb_attachment_history"]
+    records = New String[]
+    row = $db.Exec(ExportText.SelectRows($db, tableName) & " WHERE file_id=&1", fileId)
+    For Each row
+      records.Add(JsonText.Encode(RecordState(row)))
+    Next
+    records.Sort()
+    state.Add(records, tableName)
+  Next
+  Return JsonText.Encode(state)
+End
+
+Private Sub RequireProvenance(boardId As Integer, cardId As Integer, kind As String, itemId As Integer, scope As Collection)
+  Dim row As Result
+  Dim actual As Collection
+  Dim expected As Collection = scope["record"]
+  Dim key As String
+  RequireDetailScope(boardId, cardId, scope)
+  If kind = "entry" Then
+    row = Entry(boardId, cardId, itemId, True)
+  Else
+    row = FileRecord(boardId, cardId, itemId, True)
+    If row!content.Data <> scope["bytes"] Then Error.Raise("Attachment bytes changed during author conversion")
+    If $db.Exec("SELECT id FROM kb_files WHERE id=&1 AND content IS NULL", itemId).Available <> scope["contentNull"] Then Error.Raise("Attachment byte state changed")
+    If ProvenanceFileState(itemId) <> scope["fileState"] Then Error.Raise("Attachment metadata changed during author conversion")
+  Endif
+  actual = RecordState(row, kind = "file")
+  If actual.Count <> expected.Count Then Error.Raise("Author record changed")
+  For Each key In expected.Keys
+    If Not actual.Exist(key) Then Error.Raise("Author record changed")
+    If JsonText.Encode(actual[key]) <> JsonText.Encode(expected[key]) Then Error.Raise("Author record changed")
+  Next
+  row = $db.Exec(ExportText.SelectRows($db, "kb_retired_authors") & " WHERE kind=&1 AND item_id=&2", kind, itemId)
+  If row.Available <> scope["hasProvenance"] Then Error.Raise("Author provenance changed")
+  If Not row.Available Then Return
+  actual = RecordState(row)
+  expected = scope["provenance"]
+  If actual.Count <> expected.Count Then Error.Raise("Author provenance changed")
+  For Each key In expected.Keys
+    If Not actual.Exist(key) Then Error.Raise("Author provenance changed")
+    If JsonText.Encode(actual[key]) <> JsonText.Encode(expected[key]) Then Error.Raise("Author provenance changed")
+  Next
+End
+
 Public Sub RetainAuthorName(boardId As Integer, cardId As Integer, kind As String, itemId As Integer, authorName As String)
   Dim r As Result
   Dim tableName As String
+  Dim actor As String = WebIdentity.Username
+  Dim scope As Collection
+  Dim expected As Collection
+  Dim transaction As Boolean
+  Dim failure As String
   If kind = "entry" Then
     r = Entry(boardId, cardId, itemId, True)
     tableName = "kb_entries"
@@ -96,11 +150,55 @@ Public Sub RetainAuthorName(boardId As Integer, cardId As Integer, kind As Strin
     Error.Raise("Unknown author record")
   Endif
   BoardAccess.Require(boardId, "write")
-  If ExportText.ReadValue(r, "author") <> WebIdentity.Username Then Error.Raise("Author provenance requires a newly created record")
+  If Not actor Or ExportText.ReadValue(r, "author") <> actor Then Error.Raise("Author provenance requires a newly created record")
   If ExportText.Length(authorName) > 255 Then Error.Raise("Author name is too long")
+  BeginChange(boardId, cardId, "write", actor)
+  transaction = True
+  scope = MutationScope(boardId, cardId, actor, "write")
+  If kind = "entry" Then
+    r = Entry(boardId, cardId, itemId, True)
+  Else
+    r = FileRecord(boardId, cardId, itemId, True)
+    scope.Add(r!content.Data, "bytes")
+    scope.Add($db.Exec("SELECT id FROM kb_files WHERE id=&1 AND content IS NULL", itemId).Available, "contentNull")
+    scope.Add(ProvenanceFileState(itemId), "fileState")
+  Endif
+  If ExportText.ReadValue(r, "author") <> actor Then Error.Raise("Author provenance requires a newly created record")
+  expected = RecordState(r, kind = "file")
+  scope.Add(expected, "record")
+  r = $db.Exec(ExportText.SelectRows($db, "kb_retired_authors") & " WHERE kind=&1 AND item_id=&2", kind, itemId)
+  scope.Add(r.Available, "hasProvenance")
+  If r.Available Then
+    If IsNull(r!board_id) Or IsNull(r!card_id) Or r!board_id <> boardId Or r!card_id <> cardId Then Error.Raise("Author provenance scope changed")
+    scope.Add(RecordState(r), "provenance")
+  Endif
+  $db.Exec("UPDATE " & tableName & " SET author=author WHERE id=&1 AND board_id=&2 AND card_id=&3", itemId, boardId, cardId)
+  RequireProvenance(boardId, cardId, kind, itemId, scope)
+  $db.Exec("UPDATE kb_retired_authors SET item_id=item_id WHERE kind=&1 AND item_id=&2", kind, itemId)
+  RequireProvenance(boardId, cardId, kind, itemId, scope)
   ' Imported names are display text, never a claim to a local account.
-  $db.Exec("UPDATE " & tableName & " SET author = NULL WHERE id = &1 AND board_id = &2 AND card_id = &3", itemId, boardId, cardId)
+  $db.Exec("UPDATE " & tableName & " SET author=NULL WHERE id=&1 AND board_id=&2 AND card_id=&3", itemId, boardId, cardId)
+  expected["author"] = JSON.Null
+  RequireProvenance(boardId, cardId, kind, itemId, scope)
+  If authorName Then
+    r = $db.Edit("kb_retired_authors", "kind=&1 AND item_id=&2", kind, itemId)
+    If Not r.Available Then r = $db.Create("kb_retired_authors")
+    r!kind = kind
+    r!item_id = itemId
+    r!board_id = boardId
+    r!card_id = cardId
+    r!display_name = authorName
+    scope["hasProvenance"] = True
+    scope["provenance"] = RecordState(r)
+  Endif
   RetiredAuthors.Remember(kind, itemId, boardId, cardId, authorName)
+  RequireProvenance(boardId, cardId, kind, itemId, scope)
+  DatabaseTransactions.Commit($db)
+  transaction = False
+Catch
+  failure = Error.Text
+  If transaction Then Try DatabaseTransactions.Rollback($db)
+  Error.Raise(failure)
 End
 
 Private Sub CopyAuthor(boardId As Integer, cardId As Integer, kind As String, itemId As Integer, author As String, displayName As String)
@@ -304,6 +402,7 @@ Private Sub CaptureDetailScope(boardId As Integer, cardId As Integer, scope As C
   scope.Add(ExportText.ReadValue(r, "lane"), "cardLane")
   scope.Add(ExportText.ReadValue(r, "status"), "cardStatus")
   scope.Add(KanbanStore.ReadCardListId(boardId, cardId), "listId")
+  scope.Add(CardPlacementState(cardId), "storedPlacement")
   If scope["listId"] > 0 Then
     r = WorkspaceStore.Record(boardId, "list", scope["listId"])
     scope.Add(ExportText.ReadValue(r, "lane"), "listLane")
@@ -327,6 +426,7 @@ Private Sub RequireDetailScope(boardId As Integer, cardId As Integer, scope As C
   row = WorkspaceStore.Record(boardId, "card", cardId)
   If CBool(row!archived) <> scope["cardArchived"] Then Error.Raise("Card archive state changed")
   If ExportText.ReadValue(row, "lane") <> scope["cardLane"] Or ExportText.ReadValue(row, "status") <> scope["cardStatus"] Then Error.Raise("Card placement changed")
+  If CardPlacementState(cardId) <> scope["storedPlacement"] Then Error.Raise("Card placement changed")
   If KanbanStore.ReadCardListId(boardId, cardId) <> listId Then Error.Raise("Card destination changed")
   If listId > 0 Then
     row = WorkspaceStore.Record(boardId, "list", listId)
@@ -553,7 +653,7 @@ Private Function SubtaskChildState(boardId As Integer, cardId As Integer) As Str
   Return JsonText.Encode(state)
 End
 
-Private Function SubtaskPlacement(cardId As Integer) As String
+Private Function CardPlacementState(cardId As Integer) As String
   Dim row As Result = $db.Exec(ExportText.SelectRows($db, "kb_card_lists") & " WHERE card_id=&1", cardId)
   If Not row.Available Then Return "missing"
   Return JsonText.Encode(RecordState(row))
@@ -561,7 +661,6 @@ End
 
 Public Sub RequireSubtaskParent(boardId As Integer, scope As Collection)
   RequireDetailScope(boardId, scope["newParent"], scope)
-  If SubtaskPlacement(scope["newParent"]) <> scope["newParentPlacement"] Then Error.Raise("Parent card placement changed")
 End
 
 Public Sub RequireSubtaskCreation(boardId As Integer, cardId As Integer, scope As Collection)
@@ -585,7 +684,6 @@ Public Function NewSubtask(boardId As Integer, cardId As Integer, title As Strin
   KanbanStore.CardListId(boardId, cardId)
   scope = MutationScope(boardId, cardId, actor, "write")
   scope.Add(cardId, "newParent")
-  scope.Add(SubtaskPlacement(cardId), "newParentPlacement")
   child = KanbanStore.SaveCard(boardId, 0, title, "", scope["cardLane"], scope["cardStatus"], actor, "", "", scope["listId"], Null, scope)
   RequireDetailScope(boardId, cardId, scope)
   childState = SubtaskChildState(boardId, child)
