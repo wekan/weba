@@ -137,10 +137,9 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Completed complete native people-pane titles and strict private snapshots;
   scope/no-write/duplicate/order and actual heartbeat/pending-control results
   are recorded in CHANGELOG.md.
-- Next UI follow-up: reproduce pre-ready reopened-editor save timing observed in
-  packaged rich-text runs before initialization was acknowledged. Ordinary ready
-  editor saves and controlled held-open early edits pass; other queued early-input
-  orderings remain unproven and must not be marked complete from those checks.
+- Completed pre-ready existing-card deferred native setter/latest-draft and queued
+  Save protection. Current-DOM source/packaged startup, ordinary rich-text and
+  no-editor-readiness rich-text results are recorded in CHANGELOG.md.
 - Next detail/content focus: remaining copy-author/model mutation audits, numeric
   editor rendering/parsing and remaining model readers/writers.
   Atomic imported display-name provenance for owned entries/files and shared

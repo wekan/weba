@@ -5,6 +5,7 @@
   const fields=new Set(['CardTitle','Description','Lane','Status','Assignee','Labels','DueDay']);
   const dirty=new Map(),state=root.webaNativeEditorStartup={starting:true};
   let responseCommand,opened=false;
+  const pendingSaves=[];
   function context(){
     const raw=document.querySelector('[id$=".OverviewRouteState"]')?.textContent;
     try{const data=JSON.parse(raw);return data.cardId?String(data.boardId)+':'+String(data.cardId):null;}catch{return null;}
@@ -32,6 +33,40 @@
       const target=String(responseCommand[3]).split('|');
       return target.length===4&&target[0]==='board'&&target[2]+':'+target[3]===context();
     }
+    // Native setters queue callbacks that otherwise replay an initialization
+    // value after a newer input event. Keep the native queue and wire behavior.
+    for(const name of ['textbox','textarea']){
+      const control=gw[name],setter=control?.setText;if(typeof setter!=='function'||typeof gw.command!=='function'||typeof gw.update!=='function')continue;
+      control.setText=function(id,...args){
+        const owner=context(),held=dirty.get(id),field=typeof id==='string'?id.slice(id.lastIndexOf('.')+1):'';
+        if(!state.starting||!responseCommand||!startupResponse()||!owner||!fields.has(field)||!held||held.owner!==owner)return setter.call(this,id,...args);
+        const command=gw.command;
+        gw.command=function(action,...rest){
+          return command.call(this,function(...values){
+            if(!state.starting||context()!==owner)return;
+            const input=document.getElementById(id+':entry')||document.getElementById(id),saved=dirty.get(id);
+            if(!input||!saved||saved.input!==input)return;
+            if(!editable(input))return action.apply(this,values);
+            const update=gw.update;
+            gw.update=function(target,property,value,...more){
+              const latest=dirty.get(id);
+              if(target===id&&property==='text'&&latest?.input===input&&latest.owner===owner&&context()===owner&&editable(input))input.value=value=latest.value;
+              return update.call(this,target,property,value,...more);
+            };
+            try{return action.apply(this,values);}finally{gw.update=update;}
+          },...rest);
+        };
+        try{return setter.call(this,id,...args);}finally{gw.command=command;}
+      };
+    }
+    const raise=gw.raise;
+    if(typeof raise==='function')gw.raise=function(id,event,...args){
+      const owner=context(),button=typeof id==='string'?document.getElementById(id):null;
+      if(state.starting&&owner&&typeof id==='string'&&id.endsWith('.SaveCard')&&event==='click'&&editable(button)){
+        pendingSaves.push({id,event,args,owner});return;
+      }
+      return raise.call(this,id,event,...args);
+    };
     const outer=gw.setOuterHtml;
     gw.setOuterHtml=function(id,html){
       if(!state.starting||!startupResponse())return outer.call(this,id,html);
@@ -65,7 +100,10 @@
       try{return answer.call(this,xhr,...args);}finally{
         if(xhr.readyState===4&&responseCommand?.[0]==='raise'&&responseCommand[1]===null&&responseCommand[2]==='open')opened=true;
         responseCommand=previous;
-        if(opened&&!gw.commands.length){state.starting=false;dirty.clear();document.removeEventListener('input',capture,true);}
+        if(opened&&!gw.commands.length){
+          state.starting=false;dirty.clear();document.removeEventListener('input',capture,true);
+          for(const save of pendingSaves.splice(0))if(context()===save.owner&&editable(document.getElementById(save.id)))raise.call(gw,save.id,save.event,...save.args);
+        }
       }
     };
   }

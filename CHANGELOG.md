@@ -2,6 +2,26 @@
 
 This work adds the following features and fixes:
 
+- Preserve early existing-card edits through deferred native text setters.
+  Gambas setText queues a callback that assigns and sends its initialization
+  value; protecting outerHTML alone missed this path and could replace a newer
+  draft. Keep native callback/transport behavior while choosing the latest dirty
+  text at callback execution in the same editable card context. Discard stale
+  callbacks after context/replacement changes, retain authoritative readonly and
+  normal Save updates, and restore temporary command/update wrappers on errors.
+  Queue an early Save until initialization drains, then send it only if its card
+  context and Save control remain valid; navigation/disablement cancels it.
+  Deterministic unit and real browser tests fail with the old script and pass
+  with the repair, using the actual native setter API in a held initial response.
+  Tests include later edits, NUL/Unicode textbox/textarea values, queued Save,
+  scope changes, normal normalization, exception cleanup and native event passthrough.
+  Current-DOM input avoids detached locator targets during native replacement;
+  board reload assertions wait for the expected lanes. Full host/API/security
+  checks, 70 Python tests and source/packaged controlled startup and ordinary
+  rich-text browser flows, including runs without editor-ready waits, pass.
+  Remaining copy-author/model audits, numeric/nullable
+  readers and full original parity remain open. Thanks to xet7.
+
 - Convert owned entry/file authors to imported display-only provenance atomically.
   Capture and lock the original actor, record and metadata; require current write
   authority and stable card/container/archive scope after locks, author clearing

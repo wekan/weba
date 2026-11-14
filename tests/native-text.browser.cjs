@@ -74,7 +74,7 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   const lanes=page.locator('.weba-report>.weba-swimlane');
   await containerGesture(lanes.nth(1).locator('.weba-swimlane-header h3'),lanes.first().locator('.weba-swimlane-header'));
   await expect.poll(()=>lanes.evaluateAll(nodes=>nodes.map(node=>node.dataset.lane))).toEqual([seed.items[1].lane,seed.items[0].lane]);
-  await page.reload();expect(await lanes.evaluateAll(nodes=>nodes.map(node=>node.dataset.lane))).toEqual([seed.items[1].lane,seed.items[0].lane]);
+  await page.reload();await expect.poll(()=>lanes.evaluateAll(nodes=>nodes.map(node=>node.dataset.lane))).toEqual([seed.items[1].lane,seed.items[0].lane]);
   await containerGesture(lanes.nth(1).locator('.weba-swimlane-header h3'),lanes.first().locator('.weba-swimlane-header'));
   await expect.poll(()=>lanes.evaluateAll(nodes=>nodes.map(node=>node.dataset.lane))).toEqual([seed.items[0].lane,seed.items[1].lane]);
   await columns();
@@ -85,9 +85,10 @@ const fs=require('node:fs'),path=require('node:path'),{createRequire}=require('n
   await expect(page.locator(c('Notice'))).toHaveText('Card saved');await expect(page.locator('[id$=".Lane:entry"]')).toHaveValue(seed.items[1].lane);await expect(page.locator('[id$=".Status:entry"]')).toHaveValue(seed.items[1].title);
   const body="Draft\0Ω😀'<script>literal</script>";
   const description=page.locator('[id$=".Description:entry"],textarea[id$=".Description"]');
+  async function setDescription(value){await page.evaluate(value=>{const input=document.querySelector('[id$=".Description:entry"],textarea[id$=".Description"]');if(!input?.isConnected||input.disabled||input.readOnly)throw Error('Current description is not editable');input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));},value);}
   await description.fill('Unsaved ordinary dirty edit');await page.evaluate(()=>webaRender());await expect(description).toHaveValue('Unsaved ordinary dirty edit');
   // A DOM input event explicitly exercises native wire bytes, including NUL.
-  await description.evaluate((input,value)=>{input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));},body);
+  await setDescription(body);
   await page.evaluate(()=>webaRender());await expect(description).toHaveValue(body);
   await click('SaveCard');await expect(page.locator(c('Notice'))).toHaveText('Card saved');await expect(description).toHaveValue(body);
   // Exercise the final saved-state guard through the actual editor transport.
@@ -101,14 +102,14 @@ with sqlite3.connect(sys.argv[1]) as d:
 `,database,...(statement?[statement]:[])],{encoding:'utf8'});
   await expect(description).toHaveValue(body);
   const refusedBody=body+' refused final archive';
-  await description.evaluate((input,value)=>{input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));},refusedBody);
+  await setDescription(refusedBody);
   await settle();const beforeLateSave=sql();
   sql('CREATE TRIGGER native_save_final AFTER INSERT ON kb_history BEGIN UPDATE kb_cards SET archived=1 WHERE board_id=NEW.board_id; END');
   try{
    await click('SaveCard');await expect(page.locator(c('Notice'))).toContainText('Card archive state changed');
    await expect(description).toHaveValue(refusedBody);expect(sql()).toBe(beforeLateSave);
   }finally{sql('DROP TRIGGER native_save_final');}
-  await description.evaluate((input,value)=>{input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));},body);
+  await setDescription(body);
   await click('SaveCard');await expect(page.locator(c('Notice'))).toHaveText('Card saved');
   await click('CloseEditor');await expect(page.locator('.weba-report .weba-column[data-list-id="'+seed.items[1].list+'"]')).toContainText('Created in complete B');
   const createdId=Number(await page.locator('.weba-report .weba-card-link').filter({hasText:'Created in complete B'}).getAttribute('data-card-id'));
@@ -118,13 +119,13 @@ with sqlite3.connect(sys.argv[1]) as d:
   await page.goto(process.env.WEBA_TEST_URL+'/b/'+seed.board+'/board/'+createdId);await editorReady();
   await expect(description).toHaveValue(body);
   const reopenedBody=body+' reopened ordinary edit';
-  await description.evaluate((input,value)=>{input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));},reopenedBody);
+  await setDescription(reopenedBody);
   await settle();await expect(page.locator('[id$=".Lane:entry"]')).toHaveValue(seed.items[1].lane);
   await expect(page.locator('[id$=".Status:entry"]')).toHaveValue(seed.items[1].title);
   await click('SaveCard');await expect(page.locator(c('Notice'))).toHaveText('Card saved');
   expect(fixture('read',createdId)).toMatchObject({description:reopenedBody,lane:seed.items[1].lane,status:seed.items[1].title,list:seed.items[1].list});
   await page.reload();await editorReady();await expect(description).toHaveValue(reopenedBody);
-  await description.evaluate((input,value)=>{input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));},body);
+  await setDescription(body);
   await click('SaveCard');await expect(page.locator(c('Notice'))).toHaveText('Card saved');
   expect(fixture('read',createdId)).toMatchObject({description:body,lane:seed.items[1].lane,status:seed.items[1].title,list:seed.items[1].list});
   await click('CloseEditor');
