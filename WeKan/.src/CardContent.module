@@ -1044,24 +1044,76 @@ Public Sub DeleteFile(boardId As Integer, cardId As Integer, fileId As Integer)
   AttachmentLifecycle.Delete(boardId, cardId, fileId)
 End
 
-Private Sub RememberCopiedEntry(boardId As Integer, cardId As Integer, entryId As Integer, guards As Collection)
+Private Sub RememberCopiedRecord(boardId As Integer, cardId As Integer, kind As String, itemId As Integer, guards As Collection)
   Dim scope As Collection = MutationScope(boardId, cardId, WebIdentity.Username, "write")
-  Dim row As Result = Entry(boardId, cardId, entryId, True)
+  Dim row As Result
   scope.Add(boardId, "board")
   scope.Add(cardId, "card")
-  scope.Add(entryId, "entry")
-  scope.Add(RecordState(row), "record")
-  row = $db.Exec(ExportText.SelectRows($db, "kb_retired_authors") & " WHERE kind='entry' AND item_id=&1", entryId)
+  scope.Add(kind, "kind")
+  scope.Add(itemId, "item")
+  If kind = "entry" Then
+    row = Entry(boardId, cardId, itemId, True)
+  Else
+    row = FileRecord(boardId, cardId, itemId, True)
+    scope.Add(row!content.Data, "bytes")
+    scope.Add($db.Exec("SELECT id FROM kb_files WHERE id=&1 AND content IS NULL", itemId).Available, "contentNull")
+    scope.Add(ProvenanceFileState(itemId), "fileState")
+  Endif
+  scope.Add(RecordState(row, kind = "file"), "record")
+  row = $db.Exec(ExportText.SelectRows($db, "kb_retired_authors") & " WHERE kind=&1 AND item_id=&2", kind, itemId)
   scope.Add(row.Available, "hasProvenance")
   If row.Available Then scope.Add(RecordState(row), "provenance")
-  guards.Add(scope, CStr(entryId))
+  guards.Add(scope, kind & ":" & CStr(itemId))
+End
+
+Private Function CopyFileIds(boardId As Integer, cardId As Integer) As Integer[]
+  Dim ids As New Integer[]
+  Dim row As Result = $db.Exec("SELECT id FROM kb_files WHERE board_id=&1 AND card_id=&2 ORDER BY id", boardId, cardId)
+  For Each row
+    ids.Add(row!id)
+  Next
+  Return ids
+End
+
+Private Function CopyCoverState(boardId As Integer, cardId As Integer) As String
+  Dim states As New String[]
+  Dim row As Result = $db.Exec(ExportText.SelectRows($db, "kb_meta") & " WHERE board_id=&1 AND kind='card' AND item_id=&2 AND setting='cover'", boardId, cardId)
+  For Each row
+    states.Add(JsonText.Encode(RecordState(row)))
+  Next
+  states.Sort()
+  Return JsonText.Encode(states)
+End
+
+Private Sub RememberCopiedFiles(boardId As Integer, cardId As Integer, ids As Integer[], cover As Integer, guards As Collection)
+  Dim scope As Collection = MutationScope(boardId, cardId, WebIdentity.Username, "write")
+  Dim row As Result = $db.Exec(ExportText.SelectRows($db, "kb_meta") & " WHERE board_id=&1 AND kind='card' AND item_id=&2 AND setting='cover'", boardId, cardId)
+  If cover > 0 Then
+    If Not row.Available Then Error.Raise("Copied cover missing")
+    If ExportText.ReadValue(row, "value") <> CStr(cover) Then Error.Raise("Copied cover changed")
+  Else
+    If row.Available Then Error.Raise("Unexpected copied cover")
+  Endif
+  scope.Add(boardId, "board")
+  scope.Add(cardId, "card")
+  scope.Add("file-set", "kind")
+  scope.Add(ids, "ids")
+  scope.Add(cover, "cover")
+  scope.Add(CopyCoverState(boardId, cardId), "coverState")
+  guards.Add(scope, "file-set:" & CStr(cardId))
 End
 
 ' The enclosing container copy retains its transaction until this final check.
-Public Sub RequireCopiedEntries(guards As Collection)
+Public Sub RequireCopiedContent(guards As Collection)
   Dim scope As Collection
   For Each scope In guards
-    RequireProvenance(scope["board"], scope["card"], "entry", scope["entry"], scope)
+    If scope["kind"] = "file-set" Then
+      RequireDetailScope(scope["board"], scope["card"], scope)
+      If JsonText.Encode(CopyFileIds(scope["board"], scope["card"])) <> JsonText.Encode(scope["ids"]) Then Error.Raise("Copied attachment set changed")
+      If AttachmentLifecycle.CoverId(scope["board"], scope["card"]) <> scope["cover"] Or CopyCoverState(scope["board"], scope["card"]) <> scope["coverState"] Then Error.Raise("Copied cover changed")
+    Else
+      RequireProvenance(scope["board"], scope["card"], scope["kind"], scope["item"], scope)
+    Endif
   Next
 End
 
@@ -1074,6 +1126,8 @@ Public Sub CopyRecords(sourceBoard As Integer, sourceCard As Integer, targetBoar
   Dim parentId As Integer
   Dim id As Integer
   Dim cover As Integer
+  Dim copiedCover As Integer
+  Dim copiedFiles As New Integer[]
   RequireCard(sourceBoard, sourceCard)
   RequireCard(targetBoard, targetCard)
   BoardAccess.Require(targetBoard, "write")
@@ -1094,18 +1148,27 @@ Public Sub CopyRecords(sourceBoard As Integer, sourceCard As Integer, targetBoar
       Endif
       id = SaveEntry(targetBoard, targetCard, 0, kind, ExportText.ReadValue(r, "title"), ExportText.ReadValue(r, "body"), parentId, data["done"], data["amount"], ExportText.ReadValue(r, "value_type"), True, Null, Null, RecordState(r))
       CopyAuthor(targetBoard, targetCard, "entry", id, ExportText.ReadValue(r, "author"), AuthorName(sourceBoard, sourceCard, "entry", r!id))
-      If guards Then RememberCopiedEntry(targetBoard, targetCard, id, guards)
+      If guards Then RememberCopiedRecord(targetBoard, targetCard, "entry", id, guards)
       If kind = "checklist" Then parents[CStr(r!id)] = id
     Next
   Next
-  If Not fields["attachments"] Then Return
+  If Not fields["attachments"] Then
+    If guards Then RememberCopiedFiles(targetBoard, targetCard, copiedFiles, 0, guards)
+    Return
+  Endif
   cover = AttachmentLifecycle.CoverId(sourceBoard, sourceCard)
   r = Files(sourceBoard, sourceCard, True)
   For Each r
     id = AddFile(targetBoard, targetCard, ExportText.ReadValue(r, "filename"), r!content.Data, AttachmentData.Mime(sourceBoard, sourceCard, r!id), 67108864)
-    If r!id = cover Then AttachmentLifecycle.SetCover(targetBoard, targetCard, id)
+    copiedFiles.Add(id)
+    If r!id = cover Then
+      AttachmentLifecycle.SetCover(targetBoard, targetCard, id)
+      copiedCover = id
+    Endif
     CopyAuthor(targetBoard, targetCard, "file", id, ExportText.ReadValue(r, "author"), AuthorName(sourceBoard, sourceCard, "file", r!id))
+    If guards Then RememberCopiedRecord(targetBoard, targetCard, "file", id, guards)
   Next
+  If guards Then RememberCopiedFiles(targetBoard, targetCard, copiedFiles, copiedCover, guards)
 End
 
 Public Function UploadFile(boardId As Integer, cardId As Integer, filename As String, bytes As String, Optional mime As String = "application/octet-stream") As Integer

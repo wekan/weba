@@ -152,8 +152,12 @@ DB operations. This is an initial implementation, not complete WeKan parity.
 - Completed nullable/precise copied entry fields, stable NULL-first complete-text
   projections and final enclosing-copy entry guards. Four-container model and raw
   SQLite source/packaged UI evidence is recorded in CHANGELOG.md.
-- Next detail/content focus: remaining copy/model mutation audits, other
-  nullable/legacy fields and remaining model readers/writers.
+- Completed enclosing-copy final attachment record/bytes/metadata/provenance,
+  attachment-set and cover guards, including empty/attachment-disabled copies.
+  Four-container rollback and source/packaged rich UI retry results are recorded
+  in CHANGELOG.md.
+- Next detail/content focus: remaining copy/model mutation audits, legacy file
+  fidelity, other nullable/legacy fields and remaining model readers/writers.
   Atomic imported display-name provenance for owned entries/files and shared
   stored-placement guards are in CHANGELOG.md.
   Atomic subtask creation and its captured parent/new-child checkpoints are in

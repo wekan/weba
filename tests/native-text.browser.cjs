@@ -211,6 +211,17 @@ with sqlite3.connect(sys.argv[1]) as d:
   const beforeLateCopy=sql();sql("CREATE TRIGGER native_copy_nullable_final AFTER INSERT ON kb_history WHEN NEW.message LIKE 'Copied card:%' BEGIN UPDATE kb_entries SET amount=0 WHERE board_id="+seed.board+' AND card_id<>'+createdId+" AND kind='custom'; END");
   try{await click('ActionConfirm');await expect(page.locator(c('Notice'))).toHaveText('Author record changed');expect(sql()).toBe(beforeLateCopy);await expect(actionText).toHaveValue(copiedCardTitle);}
   finally{sql('DROP TRIGGER native_copy_nullable_final');}
+  const targetFiles=' WHERE board_id='+seed.board+' AND card_id<>'+createdId;
+  for(const [statement,error] of [
+   ['UPDATE kb_files SET content=NULL'+targetFiles,'Attachment bytes'],
+   ['UPDATE kb_attachment_data SET mime=NULL WHERE file_id IN (SELECT id FROM kb_files'+targetFiles+')','Attachment metadata'],
+   ["UPDATE kb_meta SET value='0' WHERE board_id="+seed.board+" AND kind='card' AND item_id<>"+createdId+" AND setting='cover'",'Copied cover changed'],
+   ["INSERT INTO kb_files (board_id,card_id,filename) SELECT board_id,card_id,'foreign' FROM kb_files"+targetFiles,'Copied attachment set changed']
+  ]){
+   const beforeFileFinal=sql();sql("CREATE TRIGGER native_copy_file_final AFTER INSERT ON kb_history WHEN NEW.message LIKE 'Copied card:%' BEGIN "+statement+'; END');
+   try{await click('ActionConfirm');await expect(page.locator(c('Notice'))).toContainText(error);expect(sql()).toBe(beforeFileFinal);await expect(page.locator(c('ActionPanel'))).toBeVisible();await expect(actionText).toHaveValue(copiedCardTitle);}
+   finally{sql('DROP TRIGGER native_copy_file_final');}
+  }
   await click('ActionConfirm');
   const copiedCard=fixture('containers').cards.find(row=>row.title===copiedCardTitle);expect(copiedCard).toBeTruthy();checkCopied(copiedCard.id,{title:copiedCardTitle});
   await page.locator('.weba-report .weba-column[data-list-id="'+seed.items[1].list+'"] .weba-list-menu').click();await settle();await click('ContextCopy');
@@ -234,6 +245,6 @@ with sqlite3.connect(sys.argv[1]) as d:
   await page.evaluate(()=>gw.raise(document.querySelector('[id$=".SaveCard"]').id,'click',[],false));await settle();
   expect(fixture('read',createdId)).toEqual(before);
   expect(errors).toEqual([]);
-  console.log('Native complete text browser: shared-prefix NUL/Unicode/markup lane/list identities retain exact columns/card placement across views/reload/Finnish/mobile; readonly/assigned scope, native exact card/list/lane mouse and card dialog moves with editor refresh/reload, exact lane/list creation and board/card/list/lane native renames with SQL/dirty/reload checks, rich card/list/lane/board native copies with exact SQL/entries/files/numbered title/reload and stale-copy refusal, retired entry/file author-conversion archive and nonempty copied-author data/bytes and final nullable-state rollback with retained exact copy title and rich retry; exact raw nullable/numeric entry-state comparison across card/list/lane/board copies, create/edit/NUL dirty refresh/reload and reopened full-status edit/save/reload, post-history archive refusal with full board-state rollback/dirty retention/retry and late-revocation refusal passed');
+  console.log('Native complete text browser: shared-prefix NUL/Unicode/markup lane/list identities retain exact columns/card placement across views/reload/Finnish/mobile; readonly/assigned scope, native exact card/list/lane mouse and card dialog moves with editor refresh/reload, exact lane/list creation and board/card/list/lane native renames with SQL/dirty/reload checks, rich card/list/lane/board native copies with exact SQL/entries/files/numbered title/reload and stale-copy refusal, retired entry/file author-conversion archive and nonempty copied-author data/bytes and final nullable-state/file-byte/metadata/cover/attachment-set rollback with retained exact copy title and rich retry; exact raw nullable/numeric entry-state comparison across card/list/lane/board copies, create/edit/NUL dirty refresh/reload and reopened full-status edit/save/reload, post-history archive refusal with full board-state rollback/dirty retention/retry and late-revocation refusal passed');
  }finally{try{if(context)await context.close();}finally{if(browser)await browser.close();}}
 })().catch(e=>{let s=e.stack||String(e);if(process.env.WEBA_TEST_PASSWORD)s=s.split(process.env.WEBA_TEST_PASSWORD).join('[redacted]');console.error(s);process.exitCode=1;});

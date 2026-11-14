@@ -1,0 +1,154 @@
+Public Sub Main()
+  Dim container As String
+  WebDatabase.Register("copy-file-owner", "x")
+  WebDatabase.Register("copy-file-writer", "x")
+  SignIn("copy-file-owner")
+  BoardViewPolicy.InitializeTransfer()
+  ImportExportPolicy.OpenStore()
+  For Each container In ["card", "list", "lane", "board"]
+    CheckCopy(container)
+  Next
+  Print "Copied files final scope: four container kinds, later-file/history/clock record/bytes/NULL/metadata/provenance/attachment-set/cover mutation rollback, binary/empty/retired-name/cover remap retry, deleted exclusion and attachments-disabled empty-set guard passed"
+End
+
+Private Sub CheckCopy(container As String)
+  Dim boardId As Integer
+  Dim cardId As Integer
+  Dim firstId As Integer
+  Dim secondId As Integer
+  Dim thirdId As Integer
+  Dim itemId As Integer
+  Dim copyId As Integer
+  Dim targetBoard As Integer
+  Dim targetCard As Integer
+  Dim conn As Connection
+  Dim rows As Result
+  Dim before As String
+  Dim denied As Boolean
+  Dim stage As String
+  Dim effect As String
+  Dim filter As String
+  Dim effects As String[]
+  Dim options As Collection
+  Dim suffix As String = Chr(0) & "Ω😀tail"
+  SignIn("copy-file-owner")
+  boardId = KanbanStore.AddBoard("Copy files " & container)
+  BoardAccess.SetMember(boardId, "copy-file-writer", "board-admin")
+  cardId = KanbanStore.SaveCard(boardId, 0, "Source", "", "Default", "Todo", "copy-file-writer", "", "")
+  firstId = CardContent.AddFile(boardId, cardId, "First" & suffix, "B" & Chr(0) & Chr(255), "application/custom")
+  secondId = CardContent.AddFile(boardId, cardId, "Second" & suffix, "", "text/plain")
+  CardContent.RetainAuthorName(boardId, cardId, "file", secondId, "Retired" & suffix)
+  thirdId = CardContent.AddFile(boardId, cardId, "Deleted", "Not copied")
+  AttachmentLifecycle.Delete(boardId, cardId, thirdId)
+  AttachmentLifecycle.SetCover(boardId, cardId, secondId)
+  conn = WebDatabase.OpenConnection()
+  itemId = cardId
+  If container = "list" Then itemId = KanbanStore.CardListId(boardId, cardId)
+  If container = "lane" Then
+    rows = KanbanStore.Lanes(boardId)
+    itemId = rows!id
+  Endif
+  If container = "board" Then itemId = boardId
+  SignIn("copy-file-writer")
+  filter = " WHERE card_id<>" & CStr(cardId) & " AND filename LIKE 'First%'"
+  effects = ["UPDATE kb_files SET content=NULL" & filter, "UPDATE kb_files SET content=X'00FF'" & filter, "UPDATE kb_files SET filename='changed'" & filter, "UPDATE kb_files SET author=NULL" & filter, "UPDATE kb_files SET created_at=NULL" & filter, "DELETE FROM kb_files" & filter, "UPDATE kb_attachment_data SET mime=NULL WHERE file_id IN (SELECT id FROM kb_files" & filter & ")", "UPDATE kb_attachment_data SET uploaded_ms=NULL WHERE file_id IN (SELECT id FROM kb_files" & filter & ")", "DELETE FROM kb_attachment_data WHERE file_id IN (SELECT id FROM kb_files" & filter & ")", "INSERT INTO kb_attachment_deletions (file_id,board_id,card_id) SELECT id,board_id,card_id FROM kb_files" & filter, "INSERT INTO kb_attachment_history (file_id,board_id,card_id,actor,changed_at) SELECT id,board_id,card_id,'foreign',0 FROM kb_files" & filter, "INSERT INTO kb_retired_authors (kind,item_id,board_id,card_id,display_name) SELECT 'file',id,board_id,card_id,'foreign' FROM kb_files" & filter]
+  For Each stage In ["AFTER INSERT ON kb_files WHEN NEW.card_id<>" & CStr(cardId) & " AND NEW.filename LIKE 'Second%'", "AFTER INSERT ON kb_history WHEN NEW.message LIKE 'Copied %'", "AFTER UPDATE ON kb_item_changes WHEN NEW.kind='card' AND NEW.item_id<>" & CStr(cardId)]
+    For Each effect In effects
+      before = Frame()
+      conn.Exec("CREATE TRIGGER copy_file_guard " & stage & " BEGIN " & effect & "; END")
+      Try copyId = WorkspaceStore.Copy(boardId, container, itemId, "Rejected")
+      denied = Error
+      conn.Exec("DROP TRIGGER copy_file_guard")
+      If Not denied Or Frame() <> before Then Error.Raise("Copied file final guard failed: " & container & ":" & stage & ":" & effect)
+    Next
+  Next
+  For Each effect In ["UPDATE kb_meta SET value='0' WHERE kind='card' AND setting='cover' AND item_id<>" & CStr(cardId), "DELETE FROM kb_meta WHERE kind='card' AND setting='cover' AND item_id<>" & CStr(cardId), "INSERT INTO kb_files (board_id,card_id,filename,author) SELECT board_id,card_id,'foreign','foreign' FROM kb_files" & filter, "UPDATE kb_cards SET archived=1 WHERE id IN (SELECT card_id FROM kb_files" & filter & ")", "UPDATE account_sessions SET generation=generation+1 WHERE username='copy-file-writer'"]
+    before = Frame()
+    conn.Exec("CREATE TRIGGER copy_file_guard AFTER INSERT ON kb_history WHEN NEW.message LIKE 'Copied %' BEGIN " & effect & "; END")
+    Try copyId = WorkspaceStore.Copy(boardId, container, itemId, "Rejected")
+    denied = Error
+    conn.Exec("DROP TRIGGER copy_file_guard")
+    If Not denied Or Frame() <> before Then Error.Raise("Copied file set/cover guard failed: " & effect)
+  Next
+  copyId = WorkspaceStore.Copy(boardId, container, itemId, "Exact retry")
+  targetBoard = If(container = "board", copyId, boardId)
+  rows = conn.Exec("SELECT id FROM kb_cards WHERE board_id=&1 AND id<>&2 ORDER BY id DESC", targetBoard, cardId)
+  targetCard = rows!id
+  rows = CardContent.Files(targetBoard, targetCard, True)
+  If rows.Count <> 2 Then Error.Raise("Copied file count/deleted exclusion changed")
+  If ExportText.ReadValue(rows, "filename") <> "First" & suffix Or rows!content.Data <> "B" & Chr(0) & Chr(255) Then Error.Raise("Copied binary file changed")
+  rows.MoveNext()
+  If ExportText.ReadValue(rows, "filename") <> "Second" & suffix Or Len(rows!content.Data) <> 0 Or CardContent.AuthorName(targetBoard, targetCard, "file", rows!id) <> "Retired" & suffix Then Error.Raise("Copied empty/retired file changed")
+  If AttachmentLifecycle.CoverId(targetBoard, targetCard) <> rows!id Then Error.Raise("Copied cover was not remapped")
+  If container = "board" Then
+    options = CopyOptions.Defaults()
+    options["attachments"] = False
+    before = Frame()
+    conn.Exec("CREATE TRIGGER copy_file_guard AFTER INSERT ON kb_history WHEN NEW.message LIKE 'Copied board:%' BEGIN INSERT INTO kb_files (board_id,card_id,filename) SELECT board_id,id,'foreign' FROM kb_cards WHERE board_id=(SELECT MAX(id) FROM kb_boards); END")
+    Try copyId = WorkspaceStore.Copy(boardId, container, itemId, "No attachments rejected", "", options)
+    denied = Error
+    conn.Exec("DROP TRIGGER copy_file_guard")
+    If Not denied Or Frame() <> before Then Error.Raise("Attachments-disabled copy accepted inserted file")
+    copyId = WorkspaceStore.Copy(boardId, container, itemId, "No attachments", "", options)
+    If conn.Exec("SELECT id FROM kb_files WHERE board_id=&1", copyId).Available Then Error.Raise("Attachments-disabled copy included files")
+  Endif
+End
+
+Private Sub SignIn(actor As String)
+  Session["username"] = actor
+  Session["auth_generation"] = WebDatabase.SessionGeneration(actor)
+End
+
+Private Function Frame() As String
+  Dim conn As Connection = WebDatabase.OpenConnection()
+  Dim table As Table
+  Dim tables As New String[]
+  Dim tableName As String
+  Dim order As String[]
+  Dim key As String
+  Dim rows As Result
+  Dim field As ResultField
+  Dim values As Collection
+  Dim data As Variant[]
+  Dim result As New Collection
+  For Each table In conn.Tables
+    If Left(table.Name, 7) <> "sqlite_" Then tables.Add(table.Name)
+  Next
+  tables.Sort()
+  For Each tableName In tables
+    order = New String[]
+    For Each key In conn.Tables[tableName].PrimaryKey
+      order.Add(conn.Quote(key))
+    Next
+    rows = conn.Exec(ExportText.SelectRows(conn, tableName) & If(order.Count, " ORDER BY " & order.Join(","), ""))
+    data = New Variant[]
+    For Each rows
+      values = New Collection
+      For Each field In rows.Fields
+        If Left(field.Name, 7) = "__weba_" Then Continue
+        If field.Type = DB.String Then
+          If rows.Fields.Exist("__weba_null_" & field.Name) Then
+            If rows["__weba_null_" & field.Name] Then
+              values[field.Name] = JSON.Null
+            Else
+              values[field.Name] = ExportText.ReadValue(rows, field.Name)
+            Endif
+          Else
+            values[field.Name] = rows[field.Name]
+          Endif
+        Else If field.Type = DB.Blob Then
+          If IsNull(rows[field.Name]) Then
+            values[field.Name] = JSON.Null
+          Else
+            values[field.Name] = Base64(rows[field.Name].Data)
+          Endif
+        Else
+          values[field.Name] = rows[field.Name]
+        Endif
+      Next
+      data.Add(values)
+    Next
+    result[tableName] = data
+  Next
+  Return JsonText.Encode(result)
+End

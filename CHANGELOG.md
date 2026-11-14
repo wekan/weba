@@ -2,6 +2,21 @@
 
 This work adds the following features and fixes:
 
+- Retain copied attachment state through the enclosing container-copy commit.
+  Extend retained entry guards to file records, exact bytes/NULL state, metadata,
+  lifecycle and author provenance. Capture the expected attachment IDs and the
+  remapped cover, including empty and attachment-disabled copies. Recheck them
+  after later file creation, settings and final copy history writes; a final
+  history mutation previously replaced copied bytes with NULL and still committed.
+  Four-container model tests cover record/bytes/metadata/provenance mutations,
+  attachment insertion/deletion, cover changes, archive/session loss, full-state
+  rollback, binary/empty/retired-name retry, deleted-file exclusion and disabled
+  attachment injection refusal. Source/packaged rich-copy UI tests reject final
+  byte/metadata/cover/attachment-set changes, retain the exact pending title and
+  retry successfully. The full host/API/security/session suite and 70 Python
+  tests pass. Remaining legacy file fidelity and source/model copy audits stay
+  open. Thanks to xet7.
+
 - Preserve nullable and precise entry state across native container copies.
   Read typed validation values with the complete entry reader, retain source NULLs
   when validation leaves them unchanged, and copy titles without display trimming.
